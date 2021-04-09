@@ -8,6 +8,7 @@ package org.rust.ide.actions
 import com.google.gson.Gson
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TestDialog
 import okhttp3.mockwebserver.MockResponse
 import org.intellij.lang.annotations.Language
@@ -87,29 +88,10 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
         @Language("Rust") code: String,
         @Language("Rust") codeToShare: String
     ) {
-        var requestCode: String? = null
-        val notificationContent = launchAction(edition, code, TestDialog.OK) {
-            val gson = Gson()
-            requestCode = gson.fromJson(it.body.inputStream().reader(), ShareInPlaygroundAction.PlaygroundCode::class.java).code
-
-            val response = gson.toJson(mapOf(
-                "id" to MOCK_GIST_ID,
-                "url" to "https://gist.github.com/$MOCK_GIST_ID",
-                "code" to requestCode
-            ))
-
-            MockResponse()
-                .setBody(response)
-                .addHeader("Content-Type", "application/json")
-        }
-        check(notificationContent != null) { "Notification is not shown" }
-
-        assertEquals(codeToShare.trimIndent(), requestCode)
-
-        val url = HREF_REGEX.find(notificationContent)?.groups?.get(1)?.value
-            ?: error("Notification content doesn't contain hyperlink")
-        val channel = rustupFixture.toolchain?.rustc()?.queryVersion()?.channel?.channel ?: error("")
-        assertEquals("https://play.rust-lang.org/?version=$channel&edition=${edition.presentation}&gist=$MOCK_GIST_ID", url)
+        configure(code, edition)
+        val channel = rustupFixture.toolchain?.rustc()?.queryVersion()?.channel?.channel
+            ?: error("Can't get toolchain channel")
+        doTest(project, mockServerFixture, codeToShare, edition, channel, ::actionLauncher)
     }
 
     private fun launchAction(
@@ -118,6 +100,11 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
         testDialog: TestDialog,
         handler: ResponseHandler
     ): String? {
+        configure(code, edition)
+        return launchAction(project, mockServerFixture, testDialog, ::actionLauncher, handler)
+    }
+
+    private fun configure(@Language("Rust") code: String, edition: Edition) {
         val testProject = fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -130,29 +117,74 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
                 rust("main.rs", code)
             }
         }.create()
+
         val file = testProject.psiFile(testProject.fileWithCaretOrSelection)
         myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    }
 
-        mockServerFixture.withHandler(handler)
-
-        var notificationContent: String? = null
-        project.messageBus.connect(testRootDisposable).subscribe(Notifications.TOPIC, object : Notifications {
-            override fun notify(notification: Notification) {
-                notificationContent = notification.content
-            }
-        })
-
-        withTestDialog(testDialog) {
-            withMockPlaygroundHost(mockServerFixture.baseUrl) {
-                myFixture.launchAction("Rust.ShareInPlayground")
-            }
-        }
-
-        return notificationContent
+    private fun actionLauncher() {
+        myFixture.launchAction("Rust.ShareInPlayground")
     }
 
     companion object {
         private const val MOCK_GIST_ID = "1234567890"
         private val HREF_REGEX = """href="(.*)"""".toRegex()
+
+        fun doTest(
+            project: Project,
+            mockServerFixture: MockServerFixture,
+            @Language("Rust") codeToShare: String,
+            expectedEdition: Edition,
+            expectedChannel: String,
+            actionLauncher: () -> Unit
+        ) {
+            var requestCode: String? = null
+            val notificationContent = launchAction(project, mockServerFixture, TestDialog.OK, actionLauncher) {
+                val gson = Gson()
+                requestCode = gson.fromJson(it.body.inputStream().reader(), ShareInPlaygroundAction.PlaygroundCode::class.java).code
+
+                val response = gson.toJson(mapOf(
+                    "id" to MOCK_GIST_ID,
+                    "url" to "https://gist.github.com/$MOCK_GIST_ID",
+                    "code" to requestCode
+                ))
+
+                MockResponse()
+                    .setBody(response)
+                    .addHeader("Content-Type", "application/json")
+            }
+            check(notificationContent != null) { "Notification is not shown" }
+
+            assertEquals(codeToShare.trimIndent(), requestCode)
+
+            val url = HREF_REGEX.find(notificationContent)?.groups?.get(1)?.value
+                ?: error("Notification content doesn't contain hyperlink")
+            assertEquals("https://play.rust-lang.org/?version=$expectedChannel&edition=${expectedEdition.presentation}&gist=$MOCK_GIST_ID", url)
+        }
+
+        private fun launchAction(
+            project: Project,
+            mockServerFixture: MockServerFixture,
+            testDialog: TestDialog,
+            actionLauncher: () -> Unit,
+            handler: ResponseHandler
+        ): String? {
+            mockServerFixture.withHandler(handler)
+
+            var notificationContent: String? = null
+            project.messageBus.connect(mockServerFixture.testRootDisposable).subscribe(Notifications.TOPIC, object : Notifications {
+                override fun notify(notification: Notification) {
+                    notificationContent = notification.content
+                }
+            })
+
+            withTestDialog(testDialog) {
+                withMockPlaygroundHost(mockServerFixture.baseUrl) {
+                    actionLauncher()
+                }
+            }
+
+            return notificationContent
+        }
     }
 }

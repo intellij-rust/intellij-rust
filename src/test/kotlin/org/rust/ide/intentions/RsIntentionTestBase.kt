@@ -63,7 +63,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
-    private fun launchAction() {
+    protected fun launchAction() {
         UIUtil.dispatchAllInvocationEvents()
         myFixture.launchAction(intention)
     }
