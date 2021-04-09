@@ -18,6 +18,8 @@ import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.namespaces
+import org.rust.stdext.intersects
 
 class RsChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     override fun findUsages(changeInfo: ChangeInfo?): Array<UsageInfo> {
@@ -132,11 +134,14 @@ private fun findNameConflicts(
         if (item == function) continue
         if (!item.isEnabledByCfgSelf) continue
 
-        if (item.name == config.name) {
+        val namedItem = item as? RsNamedElement ?: continue
+
+        if (!function.namespaces.intersects(namedItem.namespaces)) continue
+        if (namedItem.name == config.name) {
             val presentation = getPresentation(owner)
             val prefix = if (owner is RsImplItem) "impl " else ""
             val ownerName = "${prefix}${presentation.presentableText.orEmpty()} ${presentation.locationString.orEmpty()}"
-            map.putValue(item, RsBundle.message("refactoring.change.signature.name.conflict", config.name, ownerName))
+            map.putValue(namedItem, RsBundle.message("refactoring.change.signature.name.conflict", config.name, ownerName))
         }
     }
 }
