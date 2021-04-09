@@ -5,11 +5,12 @@
 
 package org.rust.toml.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.rust.cargo.CargoConstants
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.toml.crates.local.CratesLocalIndexException
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.rust.toml.isDependencyKey
 import org.toml.lang.psi.*
@@ -55,7 +56,13 @@ class CrateNotFoundInspection : TomlLocalInspectionToolBase() {
             if (property in dependency.properties) return
         }
 
-        if (CratesLocalIndexService.getInstance().getCrate(dependency.crateName) == null) {
+        val crate = try {
+            CratesLocalIndexService.getInstance().getCrate(dependency.crateName)
+        } catch (e: CratesLocalIndexException) {
+            return
+        }
+
+        if (crate == null) {
             holder.registerProblem(dependency.crateNameElement, "Crate ${dependency.crateName} not found")
         }
     }

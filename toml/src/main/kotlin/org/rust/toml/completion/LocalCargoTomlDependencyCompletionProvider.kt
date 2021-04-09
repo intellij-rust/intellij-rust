@@ -18,6 +18,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.lang.core.completion.nextCharIs
 import org.rust.toml.StringValueInsertionHandler
+import org.rust.toml.crates.local.CratesLocalIndexException
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.toml.lang.psi.TomlKeyValue
 
@@ -25,9 +26,12 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val prefix = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
-        val indexService = CratesLocalIndexService.getInstance()
+        val crateNames = try {
+            CratesLocalIndexService.getInstance().getAllCrateNames()
+        } catch (e: CratesLocalIndexException) {
+            return
+        }
 
-        val crateNames = indexService.getAllCrateNames()
         val elements = crateNames.mapNotNull { crateName ->
             PrioritizedLookupElement.withPriority(
                 LookupElementBuilder
@@ -56,10 +60,14 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val name = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
-        val indexService = CratesLocalIndexService.getInstance()
+        val crate = try {
+            CratesLocalIndexService.getInstance().getCrate(name)
+        } catch (e: CratesLocalIndexException) {
+            return
+        }
+        val sortedVersions = crate?.sortedVersions ?: return
 
-        val versions = indexService.getCrate(name)?.sortedVersions ?: return
-        val elements = versions.mapIndexed { index, variant ->
+        val elements = sortedVersions.mapIndexed { index, variant ->
             val lookupElement = LookupElementBuilder.create(variant.version)
                 .withInsertHandler(StringValueInsertionHandler(keyValue))
                 .withTailText(if (variant.isYanked) " yanked" else null)

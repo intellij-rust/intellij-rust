@@ -126,7 +126,8 @@ class CratesLocalIndexServiceImpl
     }
 
     override fun getCrate(crateName: String): CargoRegistryCrate? {
-        if (isUpdating.get() || crates == null) return null
+        if (isUpdating.get()) throw CratesLocalIndexException("Index is being updated")
+        if (crates == null) throw CratesLocalIndexException("PersistentHashMap is not available")
 
         return try {
             crates.get(crateName)
@@ -137,7 +138,8 @@ class CratesLocalIndexServiceImpl
     }
 
     override fun getAllCrateNames(): List<String> {
-        if (isUpdating.get() || crates == null) return emptyList()
+        if (isUpdating.get()) throw CratesLocalIndexException("Index is being updated")
+        if (crates == null) throw CratesLocalIndexException("PersistentHashMap is not available")
 
         val crateNames = mutableListOf<String>()
 

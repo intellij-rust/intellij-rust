@@ -11,13 +11,28 @@ import com.vdurmont.semver4j.SemverException
 import org.jetbrains.annotations.TestOnly
 
 interface CratesLocalIndexService {
+    /**
+     * @throws CratesLocalIndexException if index is either being updated, or PersistentHashMap has failed to
+     * initialize and not available.
+     * @return [CargoRegistryCrate] if there is a crate with such [crateName], and `null` if it is not.
+     */
+    @Throws(CratesLocalIndexException::class)
     fun getCrate(crateName: String): CargoRegistryCrate?
+
+    /**
+     * @throws CratesLocalIndexException if index is either being updated, or PersistentHashMap has failed to
+     * initialize and not available.
+     * @return list of crate names in the index.
+     */
+    @Throws(CratesLocalIndexException::class)
     fun getAllCrateNames(): List<String>
 
     companion object {
         fun getInstance(): CratesLocalIndexService = service()
     }
 }
+
+class CratesLocalIndexException(message: String) : Exception(message)
 
 data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>) {
     val sortedVersions: List<CargoRegistryCrateVersion>
