@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.RsFile
-import java.util.*
 
 class DoctestCrate(
     private val parentCrate: Crate,
@@ -44,6 +44,7 @@ class DoctestCrate(
     override val areDoctestsEnabled: Boolean get() = false
     override val presentableName: String get() = parentCrate.presentableName + "-doctest"
     override val normName: String get() = parentCrate.normName + "_doctest"
+    override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? get() = null
 
     override fun toString(): String = "Doctest in ${parentCrate.cargoTarget?.name}"
 

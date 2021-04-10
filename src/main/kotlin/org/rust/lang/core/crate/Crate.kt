@@ -10,10 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsFile
-import java.util.*
 
 /**
  * An immutable object describes a *crate* from the *rustc* point of view.
@@ -88,14 +89,22 @@ interface Crate {
      */
     val normName: String
 
+    @JvmDefault
+    val project: Project get() = cargoProject.project
+
+    /**
+     * A procedural macro compiler artifact (compiled binary).
+     * Non-null only if this crate is a procedural macro, the crate is successfully compiled during
+     * the Cargo sync phase and [RsExperiments.EVALUATE_BUILD_SCRIPTS] experimental feature is enabled.
+     */
+    val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?
+
     data class Dependency(
         /** A name of the dependency that can be used in `extern crate name;` or in absolute paths */
         val normName: String,
 
         val crate: Crate
     )
-
-    val project: Project get() = cargoProject.project
 }
 
 fun Crate.findDependency(normName: String): Crate? =
