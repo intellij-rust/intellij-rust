@@ -7,13 +7,12 @@ package org.rust.ide.refactoring
 
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
-import org.rust.RsTestBase
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.changeSignature.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.types.type
 import org.rust.stdext.removeLast
 
 class RsChangeSignatureTest : RsTestBase() {
@@ -1189,6 +1188,34 @@ Cannot change signature of function with cfg-disabled parameters""")
         }
     """) {
         name = "foo2"
+    }
+
+    fun `test do not import default type arguments`() = doTest("""
+        mod foo {
+            pub struct S;
+            pub struct Vec<T = S>(T);
+
+            fn bar(t: Vec) {}
+                      //^
+        }
+
+        fn bar/*caret*/() {}
+    """, """
+        use foo::Vec;
+
+        mod foo {
+            pub struct S;
+            pub struct Vec<T = S>(T);
+
+            fn bar(t: Vec) {}
+                      //^
+        }
+
+        fn bar/*caret*/(a: Vec) -> Vec {}
+    """) {
+        val vec = findElementInEditor<RsTypeReference>()
+        parameters.add(parameter("a", vec))
+        returnTypeDisplay = vec
     }
 
     private fun RsChangeFunctionSignatureConfig.swapParameters(a: Int, b: Int) {
