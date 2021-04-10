@@ -1375,6 +1375,14 @@ sealed class RsDiagnostic(
             "Only traits defined in the current crate can be implemented for arbitrary types"
         )
     }
+
+    class IllegalLifetimeName(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "lifetimes cannot use keyword names"
+        )
+    }
 }
 
 enum class RsErrorCode {

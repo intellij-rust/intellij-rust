@@ -582,6 +582,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLifetimeParameter(holder: RsAnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+        if (lifetimeParameter.name.isIllegalLifetimeName(lifetimeParameter.edition)) {
+            RsDiagnostic.IllegalLifetimeName(lifetimeParameter).addToHolder(holder)
+        }
+
         checkReservedLifetimeName(holder, lifetimeParameter)
         checkDuplicates(holder, lifetimeParameter)
     }
@@ -625,6 +629,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLifetime(holder: RsAnnotationHolder, lifetime: RsLifetime) {
+        if (lifetime.name.isIllegalLifetimeName(lifetime.edition)) {
+            RsDiagnostic.IllegalLifetimeName(lifetime).addToHolder(holder)
+        }
+
         if (lifetime.isPredefined || !hasResolve(lifetime)) return
 
         val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
@@ -1487,3 +1495,44 @@ private fun RsAttr.isBuiltinWithName(target: String): Boolean {
 
 private val RsPat.isTopLevel: Boolean
     get() = findBinding()?.topLevelPattern == this
+
+private fun String?.isIllegalLifetimeName(edition: Edition?): Boolean {
+    if (this == null || this in RESERVED_LIFETIME_NAMES) return false
+    val name = this.drop(1)
+
+    return name.isEdition2015Keywords
+        || (edition == Edition.EDITION_2018 && name.isEdition2018Keywords)
+}
+
+private val String.isEdition2015Keywords: Boolean
+    get() = this in EDITION_STRICT_KEYWORDS || this in EDITION_RESERVED_KEYWORDS
+
+private val String.isEdition2018Keywords: Boolean
+    get() = this in EDITION_2018_STRICT_KEYWORDS || this in EDITION_2018_RESERVED_KEYWORDS
+
+// from https://doc.rust-lang.org/reference/keywords.html#keywords
+
+private val EDITION_STRICT_KEYWORDS = arrayOf(
+    "as", "break", "const", "continue", "crate",
+    "else", "enum", "extern", "false", "fn",
+    "for", "if", "impl", "in", "let",
+    "loop", "match", "mod", "move", "mut",
+    "pub", "ref", "return", "self", "Self",
+    "static", "struct", "super", "trait",
+    "true", "type", "unsafe", "use", "where",
+    "while"
+)
+
+private val EDITION_2018_STRICT_KEYWORDS = arrayOf(
+    "async", "await", "dyn"
+)
+
+private val EDITION_RESERVED_KEYWORDS = arrayOf(
+    "abstract", "become", "box", "do", "final",
+    "macro", "override", "priv", "typeof", "unsized",
+    "virtual", "yield"
+)
+
+private val EDITION_2018_RESERVED_KEYWORDS = arrayOf(
+    "try"
+)
