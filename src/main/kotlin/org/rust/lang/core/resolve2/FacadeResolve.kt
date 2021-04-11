@@ -290,12 +290,19 @@ private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement): Int {
 
 private val RsMacroCall.pathSegments: List<String>?
     get() {
-        val segments = generateSequence(path) { it.path }
-            .map { it.referenceName }
-            .toMutableList()
-        if (segments.any { it == null }) return null
+        val segments = mutableListOf<String>()
+        var path: RsPath? = path
+        while (path != null) {
+            segments += path.referenceName ?: return null
+            val qualifier = path.path
+            if (qualifier == null && path.hasColonColon) {
+                // ::crate_name::macro!()
+                segments += ""
+            }
+            path = qualifier
+        }
         segments.reverse()
-        return segments.requireNoNulls()
+        return segments
     }
 
 /**
