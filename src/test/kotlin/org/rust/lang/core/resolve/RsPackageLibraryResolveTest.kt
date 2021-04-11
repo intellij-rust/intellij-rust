@@ -356,6 +356,19 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro with absolute path`() = stubOnlyResolve("""
+    //- main.rs
+        mod test_package {}
+        ::test_package::foo!();
+                      //^ lib.rs
+        fn main() {}
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {} }
+                   //X
+    """)
+
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3642
     fun `test issue 3642 1`() = stubOnlyResolve("""
     //- lib.rs
