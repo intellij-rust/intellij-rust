@@ -98,7 +98,7 @@ private fun couldUseElision(fn: RsFunction): Boolean {
     }
 }
 
-private class LifetimesCollector(val isForInputParams: Boolean = false) : RsVisitor() {
+private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecursiveVisitor() {
     var abort: Boolean = false
     val lifetimes = mutableListOf<ReferenceLifetime>()
 
@@ -230,7 +230,7 @@ private fun hasWhereLifetimes(whereClause: RsWhereClause?): Boolean {
         // now walk the bounds
         predicate.typeParamBounds?.polyboundList?.map { it.bound }?.forEach { it.accept(collector) }
         // and check that all lifetimes are allowed
-        if (!allowedLifetimes.containsAll(collector.lifetimes)) return false
+        if (!allowedLifetimes.containsAll(collector.lifetimes)) return true
     }
     return false
 }
