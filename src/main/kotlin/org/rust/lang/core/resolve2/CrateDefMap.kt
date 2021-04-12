@@ -113,12 +113,14 @@ class CrateDefMap(
         return defMap.doGetMacroInfo(macroDef)
     }
 
-    // TODO: [RsMacro2]
     private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo {
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
         val procMacroKind = containingMod.procMacros[macroDef.name]
         if (procMacroKind != null) {
             return ProcMacroDefInfo(containingMod.crate, macroDef.path, procMacroKind, metaData.procMacroArtifact)
+        }
+        containingMod.macros2[macroDef.name]?.let {
+            return it
         }
         val macroInfos = containingMod.legacyMacros[macroDef.name]
             ?: error("Can't find definition for macro $macroDef")
@@ -136,6 +138,7 @@ class CrateDefMap(
         for ((name, def) in from.root.visibleItems) {
             // `macro_use` only bring things into legacy scope.
             for (macroDef in def.macros) {
+                // TODO: DeclMacro2DefInfo
                 val macroInfo = from.getMacroInfo(macroDef) as? DeclMacroDefInfo ?: continue
                 root.addLegacyMacro(name, macroInfo)
             }
@@ -268,6 +271,9 @@ class ModData(
      */
     // TODO: Custom map? (Profile memory usage)
     val legacyMacros: THashMap<String, SmartList<DeclMacroDefInfo>> = THashMap()
+
+    /** Explicitly declared macros 2.0 (`pub macro $name ...`) */
+    val macros2: MutableMap<String, DeclMacro2DefInfo> = THashMap()
 
     /** Explicitly declared proc macros */
     val procMacros: MutableMap<String, RsProcMacroKind> = hashMapOf()

@@ -323,6 +323,20 @@ private class ModCollector(
         }
     }
 
+    override fun collectMacro2Def(def: Macro2DefLight) {
+        // save macro body for later use
+        modData.macros2[def.name] = DeclMacro2DefInfo(
+            crate = modData.crate,
+            path = modData.path.append(def.name)
+        )
+
+        // add macro to scope
+        val visibility = convertVisibility(def.visibility, isDeeplyEnabledByCfg = true)
+        val visItem = VisItem(modData.path.append(def.name), visibility)
+        val perNs = PerNs.macros(visItem)
+        onAddItem(modData, def.name, perNs, visibility)
+    }
+
     /**
      * Propagates macro defs expanded from `foo!()` to `mod2`:
      * ```

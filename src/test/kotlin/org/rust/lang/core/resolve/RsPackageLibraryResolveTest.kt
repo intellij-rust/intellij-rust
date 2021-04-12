@@ -515,7 +515,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test import macro 2 by qualified path`() = stubOnlyResolve("""
+    fun `test macro reexported as macro 2`() = stubOnlyResolve("""
     //- lib.rs
         fn bar() {
             dep_lib_target::foo!();
@@ -524,6 +524,75 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         #[macro_export]
         macro_rules! foo_ { () => {}; }
         pub use foo_ as foo;
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (same mod)`() = stubOnlyResolve("""
+    //- lib.rs
+        mod inner {
+            foo!();
+            //^ lib.rs
+            pub macro foo() {}
+        }           //X
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (different mod same crate)`() = stubOnlyResolve("""
+    //- lib.rs
+        inner::foo!();
+             //^ lib.rs
+        mod inner {
+            pub macro foo() {}
+        }           //X
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (different crate)`() = stubOnlyResolve("""
+    //- main.rs
+        test_package::foo!();
+                    //^ lib.rs
+    //- lib.rs
+        pub macro foo() {}
+                //X
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (inside function body)`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- lib.rs
+            fn main() {
+                foo!();
+                //^ lib.rs
+                pub macro foo() {}
+            }           //X
+        """)
+    }
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (import)`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::foo;
+        fn main() {
+            foo!();
+        } //^ lib.rs
+    //- lib.rs
+        pub macro foo() {}
+                //X
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2 (unresolved in textual scope)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub macro foo() {}
+        mod inner {
+            foo!();
+        } //^ unresolved
     """)
 
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""

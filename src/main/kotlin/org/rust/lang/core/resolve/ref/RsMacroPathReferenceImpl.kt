@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.resolve.pickFirstResolveVariant
 import org.rust.lang.core.resolve.processMacroCallPathResolveVariants
@@ -41,7 +41,7 @@ class RsMacroPathReferenceImpl(
     RsPathReference {
 
     override fun isReferenceTo(element: PsiElement): Boolean =
-        (element is RsMacro || element is RsFunction /* proc macro */) && super.isReferenceTo(element)
+        (element is RsMacroDefinitionBase || element is RsFunction /* proc macro */) && super.isReferenceTo(element)
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
         return resolve()?.let { arrayOf(PsiElementResolveResult(it)) } ?: ResolveResult.EMPTY_ARRAY

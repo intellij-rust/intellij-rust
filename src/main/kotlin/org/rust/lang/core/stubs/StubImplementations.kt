@@ -1495,7 +1495,7 @@ class RsMacro2Stub(
     RsNamedStub {
 
     object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.elementType in RS_MOD_OR_FILE
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.treeParent.elementType in RS_MOD_OR_FILE
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacro2Stub(
