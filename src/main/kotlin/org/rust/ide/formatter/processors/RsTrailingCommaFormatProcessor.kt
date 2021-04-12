@@ -14,8 +14,10 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.rust
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.psi.RsBlockFields
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
@@ -83,7 +85,12 @@ fun CommaList.addTrailingCommaForElement(list: PsiElement): Boolean {
     )
     if (!trailingSpace.contains('\n')) return false
 
-    if (list.firstChild.getNextNonCommentSibling() == lastElement) return false
+    if (list.firstChild.getNextNonCommentSibling() == lastElement) {
+        // allow trailing comma only for struct block fields with a single item
+        if (list !is RsBlockFields || list.parent !is RsStructItem) {
+            return false
+        }
+    }
 
     val comma = RsPsiFactory(list.project).createComma()
     list.addAfter(comma, lastElement)

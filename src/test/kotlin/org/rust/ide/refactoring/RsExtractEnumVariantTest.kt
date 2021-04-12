@@ -42,7 +42,11 @@ class RsExtractEnumVariantTest : RsTestBase() {
             V2
         }
     """, """
-        struct /*caret*/V1 { pub a: i32, pub b: bool, pub c: String }
+        struct /*caret*/V1 {
+            pub a: i32,
+            pub b: bool,
+            pub c: String
+        }
 
         enum A {
             V1(V1),
@@ -107,7 +111,9 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """, """
         trait Trait {}
 
-        struct /*caret*/V1<T> where T: Trait { pub a: T }
+        struct /*caret*/V1<T> where T: Trait {
+            pub a: T
+        }
 
         enum A<T> where T: Trait {
             V1(V1<T>),
@@ -133,7 +139,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
             fn foo() -> S;
         }
 
-        struct /*caret*/V1<'a, 'b, T, S, U> where 'a: 'b, T: Trait + Trait2<S, Item=U> { pub a: &'a T, pub b: &'b T }
+        struct /*caret*/V1<'a, 'b, T, S, U> where 'a: 'b, T: Trait + Trait2<S, Item=U> {
+            pub a: &'a T,
+            pub b: &'b T
+        }
 
         enum A<'a, 'b, 'c, T, S, R, U> where T: Trait + Trait2<S, Item=U>, R: Trait, 'a: 'b + 'c, 'b: 'c {
             V1(V1<'a, 'b, T, S, U>),
@@ -146,7 +155,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
             /*caret*/V1 { a: &'a u32, b: &'b u32 }
         }
     """, """
-        struct /*caret*/V1<'a: 'b, 'b: 'a> { pub a: &'a u32, pub b: &'b u32 }
+        struct /*caret*/V1<'a: 'b, 'b: 'a> {
+            pub a: &'a u32,
+            pub b: &'b u32
+        }
 
         enum A<'a: 'b, 'b: 'a> {
             V1(V1<'a, 'b>)
@@ -198,7 +210,9 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """, """
         trait Trait {}
 
-        struct /*caret*/V1<const T: usize> { pub a: [u32; T] }
+        struct /*caret*/V1<const T: usize> {
+            pub a: [u32; T]
+        }
 
         enum A<const T: usize> {
             V1(V1<{ T }>),
@@ -309,7 +323,11 @@ class RsExtractEnumVariantTest : RsTestBase() {
             }
         }
     """, """
-        struct /*caret*/V1 { pub x: u32, pub y: bool, pub z: i32 }
+        struct /*caret*/V1 {
+            pub x: u32,
+            pub y: bool,
+            pub z: i32
+        }
 
         enum A {
             V1(V1)
@@ -340,7 +358,11 @@ class RsExtractEnumVariantTest : RsTestBase() {
             let v = E::V1 { x: 42, y: 50 /* comment */, z: 3 };
         }
     """, """
-        struct /*caret*/V1 { pub x: i32, pub y: u32, pub z: u32 }
+        struct /*caret*/V1 {
+            pub x: i32,
+            pub y: u32,
+            pub z: u32
+        }
 
         enum E {
             V1(V1),
@@ -384,7 +406,11 @@ class RsExtractEnumVariantTest : RsTestBase() {
             V2
         }
     """, """
-        pub struct /*caret*/V1 { pub a: i32, pub b: bool, pub c: String }
+        pub struct /*caret*/V1 {
+            pub a: i32,
+            pub b: bool,
+            pub c: String
+        }
 
         pub enum A {
             V1(V1),
@@ -398,7 +424,12 @@ class RsExtractEnumVariantTest : RsTestBase() {
             V2
         }
     """, """
-        struct /*caret*/V1 { /* comment */pub a: i32, /* comment */pub b: i32, pub c: i32, pub(crate) d: i32 }
+        struct /*caret*/V1 {
+            /* comment */pub a: i32,
+            /* comment */pub b: i32,
+            pub c: i32,
+            pub(crate) d: i32
+        }
 
         enum A {
             V1(V1),
@@ -437,7 +468,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
         use a::{E, V1};
 
         mod a {
-            pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+            pub struct /*caret*/V1 {
+                pub x: i32,
+                pub y: i32
+            }
 
             pub enum E {
                 V1(V1),
@@ -502,7 +536,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
         struct V1;
 
         mod a {
-            pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+            pub struct /*caret*/V1 {
+                pub x: i32,
+                pub y: i32
+            }
 
             pub enum E {
                 V1(V1),
@@ -525,7 +562,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """, """
         #[derive(Debug, Clone)]
         #[repr(C)]
-        pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+        pub struct /*caret*/V1 {
+            pub x: i32,
+            pub y: i32
+        }
 
         #[derive(Debug, Clone)]
         #[repr(C)]
@@ -542,7 +582,10 @@ class RsExtractEnumVariantTest : RsTestBase() {
             V2
         }
     """, """
-        pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+        pub struct /*caret*/V1 {
+            pub x: i32,
+            pub y: i32
+        }
 
         #[attr]
         pub enum E {

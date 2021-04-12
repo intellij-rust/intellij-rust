@@ -127,10 +127,14 @@ class RsConvertToNamedFieldsProcessor(
             }
         }
 
-        //convert struct itself
+        val isStruct = element is RsStructItem
+        val separator = if (isStruct) ",\n" else ", "
+        val end = if (isStruct && types.isNotEmpty()) ",\n}" else "}"
+
+        // convert struct itself
         val fields = types
             .zip(newNames)
-            .joinToString(",\n", "{", "}") { (tupleField, name) ->
+            .joinToString(separator, "{", end) { (tupleField, name) ->
                 "${tupleField.text.substring(0, tupleField.typeReference.startOffsetInParent)}$name: ${tupleField.typeReference.text}"
             }
         val newFieldsElement = rsPsiFactory.createStruct("struct A$fields")

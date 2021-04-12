@@ -45,10 +45,12 @@ class CreateStructFieldFromConstructorFix(
             val rBrace = structBlockFields.rbrace ?: return
             ensureTrailingComma(structBlockFields.namedFieldDeclList)
             structBlockFields.addBefore(psiFactory.createBlockFields(pub, fieldName, fieldType).children.first(), rBrace)
+            structBlockFields.addBefore(psiFactory.createComma(), rBrace)
         } else {
             val identifier = struct.identifier ?: return
-            struct.addAfter(psiFactory.createBlockFields(pub, fieldName, fieldType), identifier)
+            val blockFields = struct.addAfter(psiFactory.createBlockFields(pub, fieldName, fieldType), identifier) as RsBlockFields
             struct.semicolon?.delete()
+            blockFields.addBefore(psiFactory.createComma(), blockFields.rbrace)
         }
     }
 

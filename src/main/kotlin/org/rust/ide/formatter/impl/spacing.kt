@@ -159,6 +159,14 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
             elementType2 == RustParserDefinition.EOL_COMMENT ->
                 return createKeepingFirstColumnSpacing(1, Int.MAX_VALUE, true, ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
+        // struct S {\n a: u32...
+            elementType1 == LBRACE &&
+                child2.node?.treeParent?.elementType == BLOCK_FIELDS &&
+                psi2.parent?.parent is RsStructItem &&
+                elementType2 != RBRACE -> {
+                return createSpacing(1, 1, 1, true, 0)
+            }
+
         // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
             psi1 is RsOuterAttr && psi2 is PsiComment
             -> return createSpacing(1, 1, 0, true, 0)
