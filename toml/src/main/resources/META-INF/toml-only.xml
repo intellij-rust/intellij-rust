@@ -32,6 +32,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"/>
 
+        <intentionAction>
+            <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
+            <category>Rust/Cargo.toml</category>
+        </intentionAction>
+
         <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
                             serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
                             testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
