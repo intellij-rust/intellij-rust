@@ -60,7 +60,7 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
-        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin")
+        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") + file("build-cache")
     }
 }
 
@@ -380,6 +380,10 @@ project(":") {
                 into("bin")
                 include("**")
             }
+        }
+
+        clean {
+            delete(*(File("${rootDir}/build-cache").listFiles() ?: emptyArray()))
         }
     }
 
