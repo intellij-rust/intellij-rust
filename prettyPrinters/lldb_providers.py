@@ -41,7 +41,7 @@ if PY3:
 
 class ValueBuilder:
     def __init__(self, valobj):
-        # type: (SBValue) -> ValueBuilder
+        # type: (SBValue) -> None
         self.valobj = valobj
         process = valobj.GetProcess()
         self.endianness = process.GetByteOrder()
@@ -62,7 +62,7 @@ class ValueBuilder:
 
 class DefaultSyntheticProvider:
     def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> DefaultSyntheticProvider
+        # type: (SBValue, dict) -> None
         self.valobj = valobj
 
     def num_children(self):
@@ -88,7 +88,7 @@ class DefaultSyntheticProvider:
 
 class EmptySyntheticProvider:
     def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> EmptySyntheticProvider
+        # type: (SBValue, dict) -> None
         self.valobj = valobj
 
     def num_children(self):
@@ -158,7 +158,7 @@ class StructSyntheticProvider:
     """Pretty-printer for structs and struct enum variants"""
 
     def __init__(self, valobj, _dict, is_variant=False):
-        # type: (SBValue, dict, bool) -> StructSyntheticProvider
+        # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
         self.is_variant = is_variant
         self.type = valobj.GetType()
@@ -203,7 +203,7 @@ class TupleSyntheticProvider:
     """Pretty-printer for tuples and tuple enum variants"""
 
     def __init__(self, valobj, _dict, is_variant=False):
-        # type: (SBValue, dict, bool) -> TupleSyntheticProvider
+        # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
         self.is_variant = is_variant
         self.type = valobj.GetType()
@@ -253,7 +253,7 @@ class StdVecSyntheticProvider:
     """
 
     def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> StdVecSyntheticProvider
+        # type: (SBValue, dict) -> None
         self.valobj = valobj
         self.update()
 
@@ -298,7 +298,7 @@ class StdVecDequeSyntheticProvider:
     """
 
     def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> StdVecDequeSyntheticProvider
+        # type: (SBValue, dict) -> None
         self.valobj = valobj
         self.update()
 
@@ -343,7 +343,7 @@ class StdHashMapSyntheticProvider:
     """Pretty-printer for hashbrown's HashMap"""
 
     def __init__(self, valobj, _dict, show_values=True):
-        # type: (SBValue, dict, bool) -> StdHashMapSyntheticProvider
+        # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
         self.show_values = show_values
         self.update()
@@ -448,7 +448,7 @@ class StdRcSyntheticProvider:
     """
 
     def __init__(self, valobj, _dict, is_atomic=False):
-        # type: (SBValue, dict, bool) -> StdRcSyntheticProvider
+        # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
 
         self.ptr = self.valobj.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
@@ -502,7 +502,7 @@ class StdCellSyntheticProvider:
     """Pretty-printer for std::cell::Cell"""
 
     def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> StdCellSyntheticProvider
+        # type: (SBValue, dict) -> None
         self.valobj = valobj
         self.value = valobj.GetChildMemberWithName("value").GetChildAtIndex(0)
 
@@ -541,7 +541,7 @@ class StdRefSyntheticProvider:
     """Pretty-printer for std::cell::Ref, std::cell::RefMut, and std::cell::RefCell"""
 
     def __init__(self, valobj, _dict, is_cell=False):
-        # type: (SBValue, dict, bool) -> StdRefSyntheticProvider
+        # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
 
         borrow = valobj.GetChildMemberWithName("borrow")
