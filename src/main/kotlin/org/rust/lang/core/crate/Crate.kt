@@ -109,6 +109,3 @@ interface Crate {
 
 fun Crate.findDependency(normName: String): Crate? =
     dependencies.find { it.normName == normName }?.crate
-
-fun Crate.hasDirectDependency(other: Crate): Boolean =
-    dependencies.any { it.crate == other }

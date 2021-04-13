@@ -33,7 +33,6 @@ import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.runWithEnabledFeatures
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
@@ -238,7 +237,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO),
             externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2"),
             externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2"),
-            externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null)
+            externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null),
+            externalPackage("$contentRoot/dep-lib-to-be-renamed", "lib.rs", "dep-lib-to-be-renamed-target"),
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
@@ -248,7 +248,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 Dependency(packages[2].id),
                 Dependency(packages[5].id),
                 Dependency(packages[6].id),
-                Dependency(packages[8].id)
+                Dependency(packages[8].id),
+                Dependency(packages[9].id, "dep_lib_renamed"),
             ),
             // dep_lib 0.0.1 depends on trans-lib and dep_lib 0.0.2
             packages[1].id to setOf(
