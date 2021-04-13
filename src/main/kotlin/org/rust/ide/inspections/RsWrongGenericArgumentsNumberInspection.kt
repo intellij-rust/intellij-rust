@@ -20,7 +20,7 @@ import org.rust.lang.utils.addToHolder
  * Inspection that detects the E0107 error.
  */
 class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
                 if (!isPathValid(type.path)) return

@@ -17,7 +17,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
                 // Don't apply generic declaration checks to Fn-traits and `Self`

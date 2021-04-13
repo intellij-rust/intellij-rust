@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
@@ -26,7 +25,7 @@ import org.rust.lang.core.psi.ext.startOffset
 class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Suspicious assignment"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 if (expr.operator.text != "=") return
@@ -63,6 +62,8 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                 }
             }
         }
+
+    override val isSyntaxOnly: Boolean = true
 
     /**
      * Computes the distance between the start points of this PSI element and another one.

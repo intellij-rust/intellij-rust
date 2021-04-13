@@ -27,7 +27,7 @@ class RsLivenessInspection : RsLintInspection() {
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedVariables
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFunction(func: RsFunction) {
                 // Disable inside doc tests

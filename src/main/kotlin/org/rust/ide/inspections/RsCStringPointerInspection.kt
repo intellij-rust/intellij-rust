@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.parentDotExpr
 class RsCStringPointerInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Unsafe CString pointer"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitMethodCall(asPtrCall: RsMethodCall) {
                 if (asPtrCall.referenceName != "as_ptr") return

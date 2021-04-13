@@ -24,7 +24,7 @@ import org.rust.lang.core.psi.ext.startOffset
 class RsMissingElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Missing else"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitExprStmt(expr: RsExprStmt) {
                 val firstIf = expr.extractIf() ?: return

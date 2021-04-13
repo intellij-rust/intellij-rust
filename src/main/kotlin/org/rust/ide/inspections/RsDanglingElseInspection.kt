@@ -26,7 +26,7 @@ import org.rust.lang.core.psi.ext.startOffset
 class RsDanglingElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Dangling else"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
                 val elseEl = expr.`else`
@@ -53,6 +53,8 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
                     ))
             }
         }
+
+    override val isSyntaxOnly: Boolean = true
 
     private val PsiElement.rightSiblings: Sequence<PsiElement>
         get() = generateSequence(this.nextSibling) { it.nextSibling }

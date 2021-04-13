@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
@@ -16,7 +15,7 @@ import org.rust.lang.core.psi.ext.owner
 class RsDuplicatedTraitMethodBindingInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Duplicated trait method parameter binding"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFunction(function: RsFunction) {
                 if (function.owner !is RsAbstractableOwner.Trait) return

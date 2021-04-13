@@ -25,7 +25,7 @@ import org.rust.lang.utils.evaluation.evaluate
 class RsRedundantElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Redundant else"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
                 if (!expr.isRedundant) return

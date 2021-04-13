@@ -8,16 +8,52 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import org.rust.cargo.project.settings.toolchain
 import org.rust.ide.utils.isEnabledByCfg
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsVisitor
 
 abstract class RsLocalInspectionTool : LocalInspectionTool() {
+    final override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+        session: LocalInspectionToolSession
+    ): PsiElementVisitor {
+        val file = session.file
+        return if (file is RsFile && isApplicableTo(file)) {
+            buildVisitor(holder, isOnTheFly)
+        } else {
+            PsiElementVisitor.EMPTY_VISITOR
+        }
+    }
+
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         buildVisitor(RsProblemsHolder(holder), isOnTheFly) ?: super.buildVisitor(holder, isOnTheFly)
 
-    open fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? = null
+    open fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor? = null
+
+    open val isSyntaxOnly: Boolean = false
+
+    /**
+     * Syntax-only inspections are applicable to any [RsFile].
+     *
+     * Other inspections should analyze only files that:
+     * - belong to a workspace
+     * - are included in module tree, i.e. have a crate root
+     * - belong to a project with a configured and valid Rust toolchain
+     */
+    private fun isApplicableTo(file: RsFile): Boolean {
+        if (isUnitTestMode) return true
+        if (isSyntaxOnly) return true
+
+        return file.cargoWorkspace != null
+            && file.crateRoot != null
+            && file.project.toolchain?.looksLikeValidToolchain() == true
+    }
 }
 
 class RsProblemsHolder(private val holder: ProblemsHolder) {

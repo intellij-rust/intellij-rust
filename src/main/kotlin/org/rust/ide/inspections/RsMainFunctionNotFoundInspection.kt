@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFile
@@ -19,7 +18,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file is RsFile) {

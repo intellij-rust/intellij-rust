@@ -10,13 +10,12 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 
 class RsLiftInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor {
         return object : RsVisitor() {
             override fun visitIfExpr(o: RsIfExpr) {
                 if (o.parent is RsElseBranch) return
@@ -34,6 +33,8 @@ class RsLiftInspection : RsLocalInspectionTool() {
             }
         }
     }
+
+    override val isSyntaxOnly: Boolean = true
 
     private fun RsProblemsHolder.register(expr: RsExpr, keyword: PsiElement) {
         val keywordName = keyword.text

@@ -6,7 +6,6 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.RsElementTypes.CSELF
 import org.rust.lang.core.psi.RsFile
@@ -20,7 +19,7 @@ class RsDeprecationInspection : RsLintInspection() {
 
     override fun getLint(element: PsiElement): RsLint = RsLint.Deprecated
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitElement(ref: RsElement) {
             // item is non-inline module declaration or not reference element
             if (ref is RsModDeclItem || ref !is RsReferenceElement) return

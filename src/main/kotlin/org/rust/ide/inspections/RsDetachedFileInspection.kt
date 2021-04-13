@@ -62,6 +62,8 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
         return null
     }
 
+    override val isSyntaxOnly: Boolean = true
+
     private fun isInspectionEnabled(project: Project, file: VirtualFile): Boolean =
         !PropertiesComponent.getInstance(project).getBoolean(file.disablingKey, false)
 

@@ -24,7 +24,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
     @Suppress("DialogTitleCapitalization")
     override fun getDisplayName(): String = "try! macro usage"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitMacroCall(o: RsMacroCall) {
             val isApplicable = o.isExprOrStmtContext && o.macroName == "try" && o.exprMacroArgument?.expr != null
             if (!isApplicable) return
