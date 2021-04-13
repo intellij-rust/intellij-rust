@@ -8,6 +8,7 @@ package org.rust.openapiext
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ElevationService
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
@@ -22,8 +23,15 @@ import java.nio.file.Path
 
 private val LOG: Logger = Logger.getInstance("org.rust.openapiext.CommandLineExt")
 
-@Suppress("FunctionName")
-fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(path.systemIndependentPath, *args)
+@Suppress("FunctionName", "UnstableApiUsage")
+fun GeneralCommandLine(path: Path, withSudo: Boolean = false, vararg args: String) =
+    object : GeneralCommandLine(path.systemIndependentPath, *args) {
+        override fun createProcess(): Process = if (withSudo) {
+            ElevationService.getInstance().createProcess(this)
+        } else {
+            super.createProcess()
+        }
+    }
 
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 

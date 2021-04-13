@@ -42,7 +42,8 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): Cargo
         environmentVariables = default.env,
         requiredFeatures = default.requiredFeatures,
         allFeatures = default.allFeatures,
-        emulateTerminal = default.emulateTerminal
+        emulateTerminal = default.emulateTerminal,
+        withSudo = default.withSudo,
     )
 
 fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {

@@ -81,10 +81,11 @@ abstract class RsToolchainBase(val location: Path) {
         environmentVariables: EnvironmentVariablesData,
         parameters: List<String>,
         emulateTerminal: Boolean,
+        withSudo: Boolean,
         patchToRemote: Boolean = true,
         http: HttpConfigurable = HttpConfigurable.getInstance()
     ): GeneralCommandLine {
-        var commandLine = GeneralCommandLine(executable)
+        var commandLine = GeneralCommandLine(executable, withSudo)
             .withWorkDirectory(workingDirectory)
             .withInput(redirectInputFrom)
             .withEnvironment("TERM", "ansi")

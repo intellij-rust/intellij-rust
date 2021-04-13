@@ -34,7 +34,12 @@ object RsDebugRunnerUtils {
         environment: ExecutionEnvironment,
         runExecutable: GeneralCommandLine
     ): RunContentDescriptor {
-        val runParameters = RsDebugRunParameters(environment.project, runExecutable, state.cargoProject)
+        val runParameters = RsDebugRunParameters(
+            environment.project,
+            runExecutable,
+            state.cargoProject,
+            state.runConfiguration.withSudo
+        )
         return XDebuggerManager.getInstance(environment.project)
             .startSession(environment, object : XDebugProcessStarter() {
                 override fun start(session: XDebugSession): XDebugProcess =

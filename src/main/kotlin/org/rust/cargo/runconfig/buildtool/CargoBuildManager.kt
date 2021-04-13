@@ -228,6 +228,9 @@ object CargoBuildManager {
             "test" -> ParametersListUtil.join("test", "--no-run", *commandArguments.toTypedArray())
             else -> return null
         }
+        // building does not require root privileges anyway
+        buildConfiguration.withSudo = false
+
         return buildConfiguration
     }
 

@@ -91,6 +91,10 @@ class CargoCommandConfigurationEditor(project: Project)
     private val requiredFeatures = CheckBox("Implicitly add required features if possible", true)
     private val allFeatures = CheckBox("Use all features in tests", false)
     private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
+    private val withSudo = CheckBox(
+        if (SystemInfo.isWindows) "Run with Administrator privileges" else "Run with root privileges",
+        false
+    )
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         super.resetEditorFrom(configuration)
@@ -99,6 +103,7 @@ class CargoCommandConfigurationEditor(project: Project)
         requiredFeatures.isSelected = configuration.requiredFeatures
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
+        withSudo.isSelected = configuration.withSudo
         backtraceMode.selectedIndex = configuration.backtrace.index
         environmentVariables.envData = configuration.env
 
@@ -124,6 +129,7 @@ class CargoCommandConfigurationEditor(project: Project)
         configuration.requiredFeatures = requiredFeatures.isSelected
         configuration.allFeatures = allFeatures.isSelected
         configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
+        configuration.withSudo = withSudo.isSelected
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.env = environmentVariables.envData
 
@@ -151,6 +157,7 @@ class CargoCommandConfigurationEditor(project: Project)
         if (!SystemInfo.isWindows) {
             row { emulateTerminal() }
         }
+        row { withSudo() }
 
         row(environmentVariables.label) {
             environmentVariables(growX)

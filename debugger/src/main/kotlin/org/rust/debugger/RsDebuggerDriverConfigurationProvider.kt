@@ -11,7 +11,7 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 
 interface RsDebuggerDriverConfigurationProvider {
 
-    fun getDebuggerDriverConfiguration(project: Project): DebuggerDriverConfiguration?
+    fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration?
 
     companion object {
         @JvmField

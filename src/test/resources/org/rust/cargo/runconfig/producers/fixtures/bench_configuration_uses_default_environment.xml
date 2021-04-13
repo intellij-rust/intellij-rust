@@ -6,6 +6,7 @@
     <option name="requiredFeatures" value="false" />
     <option name="allFeatures" value="true" />
     <option name="emulateTerminal" value="true" />
+    <option name="withSudo" value="true" />
     <option name="backtrace" value="FULL" />
     <envs>
       <env name="FOO" value="BAR" />

@@ -394,6 +394,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
                 environmentVariables,
                 parameters,
                 emulateTerminal,
+                withSudo,
                 http = http
             ).withEnvironment("RUSTC", rustcExecutable)
         }

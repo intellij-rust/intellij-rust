@@ -56,6 +56,7 @@ open class CargoCommandConfiguration(
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
+    var withSudo: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
@@ -89,6 +90,7 @@ open class CargoCommandConfiguration(
         element.writeBool("requiredFeatures", requiredFeatures)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
+        element.writeBool("withSudo", withSudo)
         element.writeEnum("backtrace", backtrace)
         env.writeExternal(element)
         element.writeBool("isRedirectInput", isRedirectInput)
@@ -105,6 +107,7 @@ open class CargoCommandConfiguration(
         element.readBool("requiredFeatures")?.let { requiredFeatures = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
+        element.readBool("withSudo")?.let { withSudo = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         env = EnvironmentVariablesData.readExternal(element)
         element.readBool("isRedirectInput")?.let { isRedirectInput = it }
@@ -117,6 +120,7 @@ open class CargoCommandConfiguration(
         requiredFeatures = cmd.requiredFeatures
         allFeatures = cmd.allFeatures
         emulateTerminal = cmd.emulateTerminal
+        withSudo = cmd.withSudo
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
@@ -199,7 +203,8 @@ open class CargoCommandConfiguration(
                 env,
                 requiredFeatures,
                 allFeatures,
-                emulateTerminal
+                emulateTerminal,
+                withSudo
             )
         }
 

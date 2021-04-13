@@ -13,8 +13,8 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
-    override fun getDebuggerDriverConfiguration(project: Project): DebuggerDriverConfiguration? {
+    override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
         val toolchain = CPPToolchains.getInstance().defaultToolchain ?: return null
-        return createDriverConfiguration(project, CPPEnvironment(toolchain))
+        return createDriverConfiguration(project, CPPEnvironment(toolchain), isElevated)
     }
 }
