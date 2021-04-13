@@ -222,7 +222,13 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
             })
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
-            val cfgOptions = toolchain.rustc().getCfgOptions(projectDirectory)
+            val cfgOptions = try {
+                cargo.getCfgOption(childContext.project, projectDirectory)
+            } catch (e: ExecutionException) {
+                // BACKCOMPAT: Rust 1.51. Drop fallback `rustc --print cfg` call
+                toolchain.rustc().getCfgOptions(projectDirectory)
+            }
+
             val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             TaskResult.Ok(ws)
         } catch (e: ExecutionException) {
