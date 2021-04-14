@@ -4,6 +4,7 @@
 out/
 bin/
 build/
+build-cache
 gen/
 deps/
 exampleProject
