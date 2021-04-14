@@ -16,6 +16,9 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
     protected fun checkAutoImportFixIsUnavailable(@Language("Rust") text: String, testmark: Testmark? = null) =
         doTest { checkFixIsUnavailable(AutoImportFix.NAME, text, testmark = testmark) }
 
+    protected fun checkAutoImportFixIsUnavailableByFileTree(@Language("Rust") text: String, testmark: Testmark? = null) =
+        doTest { checkFixIsUnavailableByFileTree(AutoImportFix.NAME, text, testmark = testmark) }
+
     protected fun checkAutoImportFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
