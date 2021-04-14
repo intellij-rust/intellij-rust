@@ -1,0 +1,54 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.ide.intentions
+
+import org.intellij.lang.annotations.Language
+import org.rust.MockCargoFeatures
+import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.FeatureState
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.singleProject
+import org.rust.workspaceOrFail
+
+class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::class) {
+    fun `test unknown feature`() = doUnavailableTest(
+        """
+        #[cfg(feature = "bar"/*caret*/)]
+        fn foo() {}
+    """
+    )
+
+    @MockCargoFeatures("foo")
+    fun `test enable`() = doTest(
+        """
+        #[cfg(feature = "foo"/*caret*/)]
+        fn foo() {}
+    """, "foo", FeatureState.Disabled
+    )
+
+    @MockCargoFeatures("foo")
+    fun `test disable`() = doTest(
+        """
+        #[cfg(feature = "foo"/*caret*/)]
+        fn foo() {}
+    """, "foo", FeatureState.Enabled
+    )
+
+    private fun doTest(@Language("Rust") code: String, featureName: String, initialState: FeatureState) {
+        val cargoProject = project.cargoProjects.singleProject()
+        val pkg = cargoProject.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
+        val feature = pkg.features.find { it.name == featureName } ?: error("Feature $featureName not found in test")
+        project.cargoProjects.modifyFeatures(cargoProject, setOf(feature), initialState)
+
+        InlineFile(code.trimIndent()).withCaret()
+        launchAction()
+
+        val cargoProjectRefreshed = project.cargoProjects.singleProject()
+        val pkgRefreshed = cargoProjectRefreshed.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
+
+        assertEquals(!initialState, pkgRefreshed.featureState[featureName])
+    }
+}

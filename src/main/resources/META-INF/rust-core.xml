@@ -883,6 +883,10 @@
             <className>org.rust.ide.intentions.ShareInPlaygroundIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ToggleFeatureIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
