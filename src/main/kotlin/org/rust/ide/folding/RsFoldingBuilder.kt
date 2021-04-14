@@ -31,7 +31,6 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.document
 import java.lang.Integer.max
-import java.util.*
 
 class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String =
@@ -206,13 +205,18 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
     override fun isRegionCollapsedByDefault(node: ASTNode): Boolean =
         (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
-            || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType in RS_DOC_COMMENTS)
+            || CodeFoldingSettings.getInstance().isDefaultCollapsedNode(node)
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
         const val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
     }
 }
+
+private fun CodeFoldingSettings.isDefaultCollapsedNode(node: ASTNode) =
+    (this.COLLAPSE_DOC_COMMENTS && node.elementType in RS_DOC_COMMENTS)
+        || (this.COLLAPSE_IMPORTS && node.elementType == USE_ITEM)
+        || (this.COLLAPSE_METHODS && node.elementType == BLOCK && node.psi.parent is RsFunction)
 
 private fun Document.areOnAdjacentLines(first: PsiElement, second: PsiElement): Boolean =
     getLineNumber(first.endOffset) + 1 == getLineNumber(second.startOffset)
