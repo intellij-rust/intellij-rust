@@ -2306,4 +2306,37 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test import item from a renamed crate (2015 edition)`() = checkAutoImportFixByFileTree("""
+        //- dep-lib-to-be-renamed/lib.rs
+        pub mod foo {
+            pub struct Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """, """
+        //- main.rs
+        extern crate dep_lib_renamed;
+
+        use dep_lib_renamed::foo::Bar;
+
+        fn foo(t: Bar/*caret*/) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from a renamed crate (2018 edition)`() = checkAutoImportFixByFileTree("""
+        //- dep-lib-to-be-renamed/lib.rs
+        pub mod foo {
+            pub struct Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """, """
+        //- main.rs
+        use dep_lib_renamed::foo::Bar;
+
+        fn foo(t: Bar/*caret*/) {}
+    """)
 }

@@ -11,7 +11,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.crate.hasDirectDependency
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
@@ -157,8 +156,9 @@ object ImportCandidatesCollector {
         if (item !is RsVisible) return null
         val ourCrate = containingCrate ?: return null
         val targetCrate = superMods.last().containingCrate ?: return null
+        val ourCrateAsDependency = targetCrate.dependencies.find { it.crate == ourCrate }
         // filter out transitive dependencies
-        if (targetCrate != ourCrate && !targetCrate.hasDirectDependency(ourCrate)) return null
+        if (targetCrate != ourCrate && ourCrateAsDependency == null) return null
 
         val ourSuperMods = this.superMods ?: return null
         val parentMod = ourSuperMods.getOrNull(0) ?: return null
@@ -168,7 +168,7 @@ object ImportCandidatesCollector {
         val lca = ourSuperMods.find { it.modItem in superMods }
         val crateRelativePath = crateRelativePath ?: return null
 
-        val (shouldBePublicMods, importInfo) = if (lca == null) {
+        val (shouldBePublicMods, importInfo) = if (lca == null && ourCrateAsDependency != null) {
             if (!isPublic) return null
             val externCrateMod = ourSuperMods.last().modItem
 
@@ -180,7 +180,7 @@ object ImportCandidatesCollector {
             }.singleOrNull()
 
             val (externCrateName, needInsertExternCrateItem, depth) = if (externCrateWithDepth == null) {
-                Triple(ourCrate.normName, true, null)
+                Triple(ourCrateAsDependency.normName, true, null)
             } else {
                 val (externCrateItem, depth) = externCrateWithDepth
                 Triple(externCrateItem.nameWithAlias, false, depth)
