@@ -191,7 +191,7 @@ object ImportCandidatesCollector {
             ourSuperMods to importInfo
         } else {
             val targetMod = superMods.first()
-            val relativePath = if (targetMod.isEdition2018) {
+            val relativePath = if (targetMod.isAtLeastEdition2018) {
                 "crate::$crateRelativePath"
             } else {
                 crateRelativePath

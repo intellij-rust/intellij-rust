@@ -792,7 +792,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
-        if (fieldLookup.identifier?.text == "await" && fieldLookup.isEdition2018) {
+        if (fieldLookup.identifier?.text == "await" && fieldLookup.isAtLeastEdition2018) {
             return receiver.lookupFutureOutputTy(lookup)
         }
 

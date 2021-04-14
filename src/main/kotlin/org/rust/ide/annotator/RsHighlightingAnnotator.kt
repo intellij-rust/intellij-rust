@@ -116,7 +116,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
             parent is RsMacroCall -> if (shouldHighlightMacroCall(parent, holder)) RsColor.MACRO else null
             element is RsMethodCall -> RsColor.METHOD_CALL
-            element is RsFieldLookup && element.identifier?.text == "await" && element.isEdition2018 -> RsColor.KEYWORD
+            element is RsFieldLookup && element.identifier?.text == "await" && element.isAtLeastEdition2018 -> RsColor.KEYWORD
             element is RsPath && element.isCall() -> {
                 val ref = reference?.resolve() ?: return null
                 if (ref is RsFunction) {

@@ -25,7 +25,7 @@ fun ImportCandidate.import(context: RsElement) {
     // we uses this info to create correct relative use item path if needed
     var relativeDepth: Int? = null
 
-    val isEdition2018 = context.isEdition2018
+    val isAtLeastEdition2018 = context.isAtLeastEdition2018
     val info = info
     // if crate of importing element differs from current crate
     // we need to add new extern crate item
@@ -42,7 +42,7 @@ fun ImportCandidate.import(context: RsElement) {
             // we don't add corresponding extern crate item manually for the same reason
             attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
             else -> {
-                if (info.needInsertExternCrateItem && !isEdition2018) {
+                if (info.needInsertExternCrateItem && !isAtLeastEdition2018) {
                     crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
                 } else {
                     if (info.depth != null) {

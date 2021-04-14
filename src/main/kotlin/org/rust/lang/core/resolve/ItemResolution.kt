@@ -110,12 +110,12 @@ fun processItemDeclarations(
         }
     }
 
-    val isEdition2018 = scope.isEdition2018
+    val isAtLeastEdition2018 = scope.isAtLeastEdition2018
     for ((isPublic, path, name, isAtom) in cachedItems.namedImports) {
         if (!(isPublic || withPrivateImports)) continue
 
-        if (isEdition2018 && isAtom) {
-            // Use items like `use foo;` or `use foo::{self}` are meaningful on 2018 edition
+        if (isAtLeastEdition2018 && isAtom) {
+            // Use items like `use foo;` or `use foo::{self}` are meaningful since 2018 edition
             // only if `foo` is a crate, and it is `pub use` item. Otherwise,
             // we should ignore it or it breaks resolve of such `foo` in other places.
             ItemResolutionTestmarks.extraAtomUse.hit()
@@ -131,7 +131,7 @@ fun processItemDeclarations(
         }
     }
 
-    if (withPrivateImports && Namespace.Types in ns && scope is RsFile && !isEdition2018 && scope.isCrateRoot) {
+    if (withPrivateImports && Namespace.Types in ns && scope is RsFile && !isAtLeastEdition2018 && scope.isCrateRoot) {
         // Rust injects implicit `extern crate std` in every crate root module unless it is
         // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
         // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
@@ -154,7 +154,7 @@ fun processItemDeclarations(
     }
 
     if (ipm.withExternCrates && Namespace.Types in ns && scope is RsMod) {
-        if (isEdition2018 && !scope.isCrateRoot) {
+        if (isAtLeastEdition2018 && !scope.isCrateRoot) {
             val crateRoot = scope.crateRoot
             if (crateRoot != null) {
                 val result = processWithShadowingAndUpdateScope(directlyDeclaredNames, originalProcessor) { shadowingProcessor ->

@@ -20,7 +20,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.isEdition2018
+import org.rust.lang.core.psi.ext.isAtLeastEdition2018
 import org.rust.stdext.mapToSet
 
 class RsMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
@@ -118,5 +118,5 @@ private fun RsFile.canBeMoved(): Boolean =
         && crateRoot != null
         && crateRelativePath != null
         && !isCrateRoot
-        && isEdition2018  // TODO: support 2015 edition
+        && isAtLeastEdition2018  // TODO: support 2015 edition
         && pathAttribute == null  // TODO: support path attribute on mod declaration

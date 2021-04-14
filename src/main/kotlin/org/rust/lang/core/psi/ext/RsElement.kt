@@ -65,8 +65,11 @@ val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containing
 val PsiElement.edition: CargoWorkspace.Edition?
     get() = contextOrSelf<RsElement>()?.containingCrate?.edition
 
-val PsiElement.isEdition2018: Boolean
-    get() = edition == CargoWorkspace.Edition.EDITION_2018
+val PsiElement.isAtLeastEdition2018: Boolean
+    get() {
+        val edition = edition ?: return false
+        return edition >= CargoWorkspace.Edition.EDITION_2018
+    }
 
 /**
  * It is possible to match value with constant-like element, e.g.

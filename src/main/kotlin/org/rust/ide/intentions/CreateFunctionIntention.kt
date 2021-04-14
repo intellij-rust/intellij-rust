@@ -38,7 +38,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
 
     sealed class Context(val name: String, val callElement: PsiElement) {
         abstract val visibility: String
-        open val isAsync: Boolean = callElement.isEdition2018
+        open val isAsync: Boolean = callElement.isAtLeastEdition2018
         abstract val arguments: RsValueArgumentList
         abstract val returnType: Ty?
         open val implItem: RsImplItem? = null

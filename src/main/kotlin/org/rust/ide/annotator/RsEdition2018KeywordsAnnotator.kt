@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
@@ -21,18 +20,18 @@ import org.rust.lang.core.psi.ext.*
 
 class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
-        val edition = element.edition ?: return
+        if (element.edition == null) return
 
         if (!isEdition2018Keyword(element)) return
 
-        val isEdition2018 = edition == CargoWorkspace.Edition.EDITION_2018
+        val isAtLeastEdition2018 = element.isAtLeastEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
         val isEnabledByCfg = element.isEnabledByCfg
         when {
-            isEdition2018 && isIdentifier && isNameIdentifier(element) ->
+            isAtLeastEdition2018 && isIdentifier && isNameIdentifier(element) ->
                 holder.newAnnotation(HighlightSeverity.ERROR, "`${element.text}` is reserved keyword in Edition 2018").create()
 
-            isEdition2018 && !isIdentifier && isEnabledByCfg -> {
+            isAtLeastEdition2018 && !isIdentifier && isEnabledByCfg -> {
                 if (!holder.isBatchMode) {
                     val severity = if (isUnitTestMode) RsColor.KEYWORD.testSeverity else HighlightSeverity.INFORMATION
                     holder.newSilentAnnotation(severity)
@@ -40,7 +39,7 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
                 }
             }
 
-            isEdition2018 && !isIdentifier && !isEnabledByCfg -> {
+            isAtLeastEdition2018 && !isIdentifier && !isEnabledByCfg -> {
                 if (!holder.isBatchMode) {
                     val colorScheme = EditorColorsManager.getInstance().globalScheme
                     val keywordTextAttributes = colorScheme.getAttributes(RsColor.KEYWORD.textAttributesKey)
@@ -52,7 +51,7 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
                 }
             }
 
-            !isEdition2018 && !isIdentifier ->
+            !isAtLeastEdition2018 && !isIdentifier ->
                 holder.newAnnotation(HighlightSeverity.ERROR, "This feature is only available in Edition 2018").create()
         }
     }
