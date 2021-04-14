@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
+import com.intellij.util.text.SemVer
 import org.rust.RsTask
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
@@ -109,9 +110,10 @@ class CargoSyncTask(
                         } else {
                             val context = SyncContext(project, cargoProject, toolchain, indicator, childProgress)
                             val rustcInfoResult = fetchRustcInfo(context)
+                            val rustcInfo = (rustcInfoResult as? TaskResult.Ok)?.value
                             cargoProject.withRustcInfo(rustcInfoResult)
-                                .withWorkspace(fetchCargoWorkspace(context))
-                                .withStdlib(fetchStdlib(context, (rustcInfoResult as? TaskResult.Ok)?.value))
+                                .withWorkspace(fetchCargoWorkspace(context, rustcInfo))
+                                .withStdlib(fetchStdlib(context, rustcInfo))
                         }
                     }
                 )
@@ -157,7 +159,7 @@ class CargoSyncTask(
         val oldCargoProject: CargoProjectImpl,
         val toolchain: RsToolchain,
         val progress: ProgressIndicator,
-        private val syncProgress: BuildProgress<BuildProgressDescriptor>
+        val syncProgress: BuildProgress<BuildProgressDescriptor>
     ) {
         fun <T> runWithChildProgress(
             title: String,
@@ -200,7 +202,7 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
     }
 }
 
-private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<CargoWorkspace> {
+private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
     return context.runWithChildProgress("Updating workspace info") { childContext ->
 
         val toolchain = childContext.toolchain
@@ -222,7 +224,23 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
             })
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
-            val cfgOptions = toolchain.rustc().getCfgOptions(projectDirectory)
+            val cfgOptions = try {
+                cargo.getCfgOption(childContext.project, projectDirectory)
+            } catch (e: ExecutionException) {
+                val rustcVersion = rustcInfo?.version?.semver
+                if (rustcVersion == null || rustcVersion > RUST_1_51) {
+                    val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n${e.message.orEmpty()}"
+                    @Suppress("DialogTitleCapitalization")
+                    childContext.syncProgress.message(
+                        "Fetching target specific `cfg` options",
+                        message,
+                        MessageEvent.Kind.WARNING,
+                        null
+                    )
+                }
+                toolchain.rustc().getCfgOptions(projectDirectory)
+            }
+
             val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             TaskResult.Ok(ws)
         } catch (e: ExecutionException) {
@@ -300,3 +318,5 @@ private fun <T, R> BuildProgress<BuildProgressDescriptor>.runWithChildProgress(
         throw e
     }
 }
+
+private val RUST_1_51: SemVer = SemVer.parseFromText("1.51.0")!!

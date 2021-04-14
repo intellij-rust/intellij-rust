@@ -26,6 +26,7 @@ import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -165,6 +166,22 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     ) {
         val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
         commandLine.execute(owner)
+    }
+
+    /**
+     * Execute `cargo rustc --print cfg` and parse output as [CfgOptions].
+     * Available since Rust 1.52
+     */
+    @Throws(ExecutionException::class)
+    fun getCfgOption(
+        owner: Project,
+        projectDirectory: Path?
+    ): CfgOptions {
+        val output = createBaseCommandLine(
+            listOf("rustc", "-Z", "unstable-options", "--print", "cfg"),
+            workingDirectory = projectDirectory,
+        ).withEnvironment(RUSTC_BOOTSTRAP, "1").execute(owner, ignoreExitCode = false)
+        return CfgOptions.parse(output.stdoutLines)
     }
 
     private fun fetchBuildScriptsInfo(
