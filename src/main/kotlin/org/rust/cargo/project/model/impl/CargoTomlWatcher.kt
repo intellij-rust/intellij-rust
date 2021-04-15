@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 
 /**
@@ -46,7 +47,9 @@ class CargoTomlWatcher(
             is VFileContentChangeEvent -> event.file
             else -> return true
         }
+        val fileParentPath = file.pathAsPath.parent
         return cargoProjects.findPackageForFile(file)?.origin == PackageOrigin.WORKSPACE
+            || cargoProjects.allProjects.any { it.manifest.parent == fileParentPath }
     }
 
     companion object {
