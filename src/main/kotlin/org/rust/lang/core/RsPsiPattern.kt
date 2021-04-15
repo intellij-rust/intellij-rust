@@ -25,70 +25,6 @@ import org.rust.lang.core.psi.ext.*
 object RsPsiPattern {
     private val STATEMENT_BOUNDARIES = TokenSet.create(SEMICOLON, LBRACE, RBRACE)
 
-    /**
-     * Source of attributes: [https://doc.rust-lang.org/1.41.1/reference/attributes.html#built-in-attributes-index]
-     */
-    val STD_ATTRIBUTES: Set<String> = setOf(
-        "cfg",
-        "cfg_attr",
-
-        "test",
-        "ignore",
-        "should_panic",
-
-        "derive",
-
-        "macro_export",
-        "macro_use",
-        "proc_macro",
-        "proc_macro_derive",
-        "proc_macro_attribute",
-
-        "allow",
-        "warn",
-        "deny",
-        "forbid",
-
-        "deprecated",
-        "must_use",
-
-        "link",
-        "link_name",
-        "no_link",
-        "repr",
-        "crate_type",
-        "no_main",
-        "export_name",
-        "link_section",
-        "no_mangle",
-        "used",
-        "crate_name",
-
-        "inline",
-        "cold",
-        "no_builtins",
-        "target_feature",
-
-        "doc",
-
-        "no_std",
-        "no_implicit_prelude",
-
-        "path",
-
-        "recursion_limit",
-        "type_length_limit",
-
-        "panic_handler",
-        "global_allocator",
-        "windows_subsystem",
-
-        "non_exhaustive",
-
-        // unstable attr
-        "start"
-    )
-
     private val LINT_ATTRIBUTES: Set<String> = setOf(
         "allow",
         "warn",
@@ -175,7 +111,7 @@ object RsPsiPattern {
      */
     val nonStdOuterAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         psiElement<RsMetaItem>()
-            .with("nonStdAttributeCondition") { e -> e.name !in STD_ATTRIBUTES }
+            .with("nonBuiltinAttributeCondition") { e -> e.name !in RS_BUILTIN_ATTRIBUTES }
             .with(RootMetaItemCondition)
             .with("RsOuterAttr") { _, context ->
                 context?.get(META_ITEM_ATTR) is RsOuterAttr

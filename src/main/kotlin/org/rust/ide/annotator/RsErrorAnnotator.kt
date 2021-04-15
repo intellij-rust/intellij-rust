@@ -26,7 +26,6 @@ import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.*
-import org.rust.lang.core.RsPsiPattern.STD_ATTRIBUTES
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
@@ -1480,7 +1479,7 @@ private fun RsAttr.isBuiltinWithName(target: String): Boolean {
     val name = metaItem.name ?: return false
 
     if (name != target) return false
-    if (name !in STD_ATTRIBUTES) return false
+    if (name !in RS_BUILTIN_ATTRIBUTES) return false
 
     return !hasInScope(name, MACROS)
 }
