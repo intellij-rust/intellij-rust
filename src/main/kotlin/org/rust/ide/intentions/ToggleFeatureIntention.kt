@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -19,7 +20,7 @@ import org.rust.lang.core.psi.ext.cargoProject
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.stringValue
 
-class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntention.Context>() {
+class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntention.Context>(), HighPriorityAction {
     private val matcher = insideAnyCfgFeature
 
     data class Context(val featureName: String, val element: RsElement)
