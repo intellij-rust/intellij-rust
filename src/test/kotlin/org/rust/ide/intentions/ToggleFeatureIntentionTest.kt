@@ -14,28 +14,33 @@ import org.rust.singleProject
 import org.rust.workspaceOrFail
 
 class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::class) {
-    fun `test unknown feature`() = doUnavailableTest(
-        """
+    @MockCargoFeatures("foo")
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        #[cfg(<selection>feature = "foo"</selection>)]
+        #[cfg(not(<selection>feature = "foo"</selection>))]
+        #[cfg_attr(<selection>feature = "foo"</selection>, foobar)]
+        #[cfg_attr(foo, cfg_attr(<selection>feature = "foo"</selection>, foobar))]
+        #[cfg_attr(foobar, feature = "foo")]
+        #[foobar(feature = "foo")]
+        fn foo() {}
+    """)
+
+    fun `test unknown feature`() = doUnavailableTest("""
         #[cfg(feature = "bar"/*caret*/)]
         fn foo() {}
-    """
-    )
+    """)
 
     @MockCargoFeatures("foo")
-    fun `test enable`() = doTest(
-        """
+    fun `test enable`() = doTest("""
         #[cfg(feature = "foo"/*caret*/)]
         fn foo() {}
-    """, "foo", FeatureState.Disabled
-    )
+    """, "foo", FeatureState.Disabled)
 
     @MockCargoFeatures("foo")
-    fun `test disable`() = doTest(
-        """
+    fun `test disable`() = doTest("""
         #[cfg(feature = "foo"/*caret*/)]
         fn foo() {}
-    """, "foo", FeatureState.Enabled
-    )
+    """, "foo", FeatureState.Enabled)
 
     private fun doTest(@Language("Rust") code: String, featureName: String, initialState: FeatureState) {
         val cargoProject = project.cargoProjects.singleProject()
