@@ -277,8 +277,10 @@ project(":plugin") {
         withType<RunIdeTask> {
             // Default args for IDEA installation
             jvmArgs("-Xmx768m", "-XX:+UseConcMarkSweepGC", "-XX:SoftRefLRUPolicyMSPerMB=50")
-            // Disable auto plugin resloading. See `com.intellij.ide.plugins.DynamicPluginVfsListener`
+            // Disable plugin auto reloading. See `com.intellij.ide.plugins.DynamicPluginVfsListener`
             jvmArgs("-Didea.auto.reload.plugins=false")
+            // Don't show "Tip of the Day" at startup
+            jvmArgs("-Dide.show.tips.on.startup.default.value=false")
             // uncomment if `unexpected exception ProcessCanceledException` prevents you from debugging a running IDE
             // jvmArgs("-Didea.ProcessCanceledException=disabled")
         }
