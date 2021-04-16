@@ -253,6 +253,8 @@
         <elementDescriptionProvider implementation="org.rust.ide.presentation.RsDescriptionProvider"/>
         <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
 
+        <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/>
+
         <!-- Spell-checker -->
 
         <spellchecker.support language="Rust" implementationClass="org.rust.ide.spelling.RsSpellcheckingStrategy"/>
