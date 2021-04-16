@@ -353,4 +353,22 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
             println!("{}", variable);/*caret*/
         }
     """)
+
+    fun `test match arm with a single arm`() = doTest("""
+        enum E<T> { A(T), B }
+
+        fn main() {
+            match E::A(22) {
+                E::A(value) => value.println/*caret*/
+            };
+        }
+    """, """
+        enum E<T> { A(T), B }
+
+        fn main() {
+            match E::A(22) {
+                E::A(value) => println!("{:?}", value),/*caret*/
+            };
+        }
+    """)
 }

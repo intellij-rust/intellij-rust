@@ -82,7 +82,7 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
             }
             is RsMatchArm -> {
                 val matchBody = parent.ancestorStrict<RsMatchBody>() ?: return
-                if (matchBody.containsUnitArm) {
+                if (matchBody.matchArmList.size == 1 || matchBody.containsUnitArm) {
                     val newElement = macroCreator.replaceWithMacro(expression)
                     val caretAnchor = if (parent.comma == null) {
                         parent.addAfter(psiFactory.createComma(), newElement)
