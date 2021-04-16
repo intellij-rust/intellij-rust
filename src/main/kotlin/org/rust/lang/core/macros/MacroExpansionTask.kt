@@ -25,16 +25,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.RsTask
 import org.rust.ide.utils.isEnabledByCfg
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsMembers
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.bodyHash
-import org.rust.lang.core.psi.ext.macroBody
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RESOLVE_LOG
-import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
@@ -329,7 +324,7 @@ abstract class MacroExpansionTaskBase(
         get() = true
 }
 
-class Extractable(val sf: SourceFile, private val workspaceOnly: Boolean, private val calls: List<RsMacroCall>?) {
+class Extractable(val sf: SourceFile, private val workspaceOnly: Boolean, private val calls: List<RsPossibleMacroCall>?) {
     fun extract(): List<Pipeline.Stage1ResolveAndExpand>? {
         return sf.extract(workspaceOnly, calls)
     }
@@ -394,7 +389,7 @@ class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Sta
 
 object ExpansionPipeline {
     class Stage1(
-        val call: RsMacroCall,
+        val call: RsPossibleMacroCall,
         val info: ExpandedMacroInfo
     ) : Pipeline.Stage1ResolveAndExpand {
         override fun expand(project: Project, expander: FunctionLikeMacroExpander): Pipeline.Stage2WriteToFs {
@@ -408,7 +403,7 @@ object ExpansionPipeline {
 
             if (oldExpansionFile != null && !oldExpansionFile.isValid) throw CorruptedExpansionStorageException()
 
-            if (!call.isEnabledByCfg) return nextStageFail(callHash, null)
+            if (!call.isEnabledByCfg || call.shouldSkipMacroExpansion) return nextStageFail(callHash, null)
 
             val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacroWithoutPsi() }
                 ?: return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, null)
@@ -424,7 +419,7 @@ object ExpansionPipeline {
                 ?: return nextStageFail(callHash, defHash)
             val expansion = MacroExpansionSharedCache.getInstance().cachedExpand(expander, def.data, callData, mixHash)
             if (expansion == null) {
-                MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName.orEmpty()}!(${call.macroBody})`")
+                MACRO_LOG.debug("Failed to expand macro: `${call.path?.referenceName.orEmpty()}!(${call.macroBody})`")
                 return nextStageFail(callHash, defHash)
             }
 
@@ -453,7 +448,7 @@ object ExpansionPipeline {
             Stage2Fail(info, callHash, defHash)
 
         override fun toString(): String =
-            "ExpansionPipeline.Stage1(call=${call.path.referenceName.orEmpty()}!(${call.macroBody}))"
+            "ExpansionPipeline.Stage1(call=${call.path?.referenceName.orEmpty()}!(${call.macroBody}))"
     }
 
     class Stage2Ok(
@@ -538,6 +533,3 @@ private class CorruptedExpansionStorageException : RuntimeException {
     constructor() : super()
     constructor(cause: Exception) : super(cause)
 }
-
-val RsMacroCall.isTopLevelExpansion: Boolean
-    get() = parent is RsMod || parent is RsMembers

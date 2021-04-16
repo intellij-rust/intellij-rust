@@ -18,6 +18,7 @@ import gnu.trove.THashMap
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.Visibility.*
@@ -115,8 +116,9 @@ class CrateDefMap(
     // TODO: [RsMacro2]
     private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo {
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
-        if (macroDef.name in containingMod.procMacros) {
-            return ProcMacroDefInfo(containingMod.crate, macroDef.path, metaData.procMacroArtifact)
+        val procMacroKind = containingMod.procMacros[macroDef.name]
+        if (procMacroKind != null) {
+            return ProcMacroDefInfo(containingMod.crate, macroDef.path, procMacroKind, metaData.procMacroArtifact)
         }
         val macroInfos = containingMod.legacyMacros[macroDef.name]
             ?: error("Can't find definition for macro $macroDef")
@@ -268,7 +270,7 @@ class ModData(
     val legacyMacros: THashMap<String, SmartList<DeclMacroDefInfo>> = THashMap()
 
     /** Explicitly declared proc macros */
-    val procMacros: MutableSet<String> = hashSetOf()
+    val procMacros: MutableMap<String, RsProcMacroKind> = hashMapOf()
 
     /** Traits imported via `use Trait as _;` */
     val unnamedTraitImports: MutableMap<ModPath, Visibility> = THashMap()

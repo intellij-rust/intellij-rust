@@ -7,12 +7,8 @@ package org.rust
 
 import com.intellij.TestCase
 import com.intellij.findAnnotationInstance
-import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.lang.LanguageCommenters
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.StreamUtil
@@ -23,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -41,9 +36,8 @@ import org.rust.cargo.project.workspace.FeatureDep
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
@@ -365,44 +359,13 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         psiClass: Class<T>,
         marker: String
     ): List<Triple<T, String, Int>> {
-        val commentPrefix = LanguageCommenters.INSTANCE.forLanguage(myFixture.file.language).lineCommentPrefix ?: "//"
-        val caretMarker = "$commentPrefix$marker"
-        val text = myFixture.file.text
-        val result = mutableListOf<Triple<T, String, Int>>()
-        var markerOffset = -caretMarker.length
-        while (true) {
-            markerOffset = text.indexOf(caretMarker, markerOffset + caretMarker.length)
-            if (markerOffset == -1) break
-            val data = text.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
-            val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
-            val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
-            val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-            val elementAtMarker = myFixture.file.findElementAt(elementOffset)!!
-
-            if (followMacroExpansions) {
-                val expandedElementAtMarker = elementAtMarker.findExpansionElements()?.singleOrNull()
-                val expandedElement = expandedElementAtMarker?.let { PsiTreeUtil.getParentOfType(it, psiClass, false) }
-                if (expandedElement != null) {
-                    val offset = expandedElementAtMarker.startOffset + (elementOffset - elementAtMarker.startOffset)
-                    result.add(Triple(expandedElement, data, offset))
-                    continue
-                }
-            }
-
-            val element = PsiTreeUtil.getParentOfType(elementAtMarker, psiClass, false)
-            if (element != null) {
-                result.add(Triple(element, data, elementOffset))
-            } else {
-                val injectionElement = InjectedLanguageManager.getInstance(project)
-                    .findInjectedElementAt(myFixture.file, elementOffset)
-                    ?.let { PsiTreeUtil.getParentOfType(it, psiClass, false) }
-                    ?: error("No ${psiClass.simpleName} at ${elementAtMarker.text}")
-                val injectionOffset = (injectionElement.containingFile.virtualFile as VirtualFileWindow)
-                    .documentWindow.hostToInjected(elementOffset)
-                result.add(Triple(injectionElement, data, injectionOffset))
-            }
-        }
-        return result
+        return findElementsWithDataAndOffsetInEditor(
+            myFixture.file,
+            myFixture.file.document!!,
+            followMacroExpansions,
+            psiClass,
+            marker
+        )
     }
 
     protected open val followMacroExpansions: Boolean get() = false

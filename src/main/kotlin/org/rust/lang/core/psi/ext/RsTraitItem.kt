@@ -42,6 +42,7 @@ val RsTraitItem.isAuto: Boolean
 val RsTraitItem.isKnownDerivable: Boolean
     get() {
         val derivableTrait = KNOWN_DERIVABLE_TRAITS[name] ?: return false
+        if (!derivableTrait.shouldUseHardcodedTraitDerive()) return false
         return derivableTrait.findTrait(knownItems) == this
     }
 

@@ -6,11 +6,19 @@
 package org.rust
 
 import com.intellij.openapi.Disposable
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.LanguageCommenters
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
@@ -23,8 +31,93 @@ import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.lang.core.macros.MACRO_EXPANSION_VFS_ROOT
 import org.rust.lang.core.macros.MacroExpansionFileSystem
+import org.rust.lang.core.macros.findExpansionElements
+import org.rust.lang.core.macros.isExpandedFromMacro
+import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.resolve.ref.RsReference
+import kotlin.math.min
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.setFeatureEnabled
+
+fun <T : PsiElement> findElementsWithDataAndOffsetInEditor(
+    file: PsiFile,
+    doc: Document,
+    followMacroExpansions: Boolean,
+    psiClass: Class<T>,
+    marker: String
+): List<Triple<T, String, Int>> {
+    val commentPrefix = LanguageCommenters.INSTANCE.forLanguage(file.language).lineCommentPrefix ?: "//"
+    val caretMarker = "$commentPrefix$marker"
+    val text = file.text
+    val result = mutableListOf<Triple<T, String, Int>>()
+    var markerOffset = -caretMarker.length
+    while (true) {
+        markerOffset = text.indexOf(caretMarker, markerOffset + caretMarker.length)
+        if (markerOffset == -1) break
+        val data = text.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
+        val markerEndOffset = markerOffset + caretMarker.length - 1
+        val markerLine = doc.getLineNumber(markerEndOffset)
+        val makerColumn = markerEndOffset - doc.getLineStartOffset(markerLine)
+        val elementOffset = min(doc.getLineStartOffset(markerLine - 1) + makerColumn, doc.getLineEndOffset(markerLine - 1))
+        val elementAtMarker = file.findElementAt(elementOffset)!!
+
+        if (followMacroExpansions) {
+            val expandedElementAtMarker = elementAtMarker.findExpansionElements()?.singleOrNull()
+            val expandedElement = expandedElementAtMarker?.let { PsiTreeUtil.getParentOfType(it, psiClass, false) }
+            if (expandedElement != null) {
+                val offset = expandedElementAtMarker.startOffset + (elementOffset - elementAtMarker.startOffset)
+                result.add(Triple(expandedElement, data, offset))
+                continue
+            }
+        }
+
+        val element = PsiTreeUtil.getParentOfType(elementAtMarker, psiClass, false)
+        if (element != null) {
+            result.add(Triple(element, data, elementOffset))
+        } else {
+            val injectionElement = InjectedLanguageManager.getInstance(file.project)
+                .findInjectedElementAt(file, elementOffset)
+                ?.let { PsiTreeUtil.getParentOfType(it, psiClass, false) }
+                ?: error("No ${psiClass.simpleName} at ${elementAtMarker.text}")
+            val injectionOffset = (injectionElement.containingFile.virtualFile as VirtualFileWindow)
+                .documentWindow.hostToInjected(elementOffset)
+            result.add(Triple(injectionElement, data, injectionOffset))
+        }
+    }
+    return result
+}
+
+fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - startOffset)
+
+fun PsiElement.checkedResolve(offset: Int, errorMessagePrefix: String = ""): PsiElement {
+    val reference = findReference(offset) ?: error("element doesn't have reference")
+    val resolved = reference.resolve() ?: run {
+        val multiResolve = (reference as? RsReference)?.multiResolve().orEmpty()
+        check(multiResolve.size != 1)
+        if (multiResolve.isEmpty()) {
+            error("${errorMessagePrefix}Failed to resolve $text")
+        } else {
+            error("${errorMessagePrefix}Failed to resolve $text, multiple variants:\n${multiResolve.joinToString()}")
+        }
+    }
+
+    check(reference.isReferenceTo(resolved)) {
+        "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
+    }
+
+    checkSearchScope(this, resolved)
+
+    return resolved
+}
+
+private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElement) {
+    if (resolvedTo.isExpandedFromMacro) return
+    val virtualFile = referenceElement.containingFile.virtualFile ?: return
+    check(resolvedTo.useScope.contains(virtualFile)) {
+        "Incorrect `getUseScope` implementation in `${resolvedTo.javaClass.name}`;" +
+            "also this can means that `pub` visibility is missed somewhere in the test"
+    }
+}
 
 fun checkMacroExpansionFileSystemAfterTest() {
     val vfs = MacroExpansionFileSystem.getInstance()

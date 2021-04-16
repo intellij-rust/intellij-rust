@@ -239,7 +239,7 @@ fun <T : RsMetaItemPsiOrStub> Sequence<T>.withFlattenCfgAttrsAttributes(withCfgA
         }
     }
 
-private val <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.rawAttributes: QueryAttributes<T>
+val <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.rawAttributes: QueryAttributes<T>
     get() = QueryAttributes(rawMetaItems)
 
 class StubbedAttributeProperty<P, S>(
@@ -398,6 +398,9 @@ val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
     get() = evaluateCfg() != ThreeValuedLogic.False
 
 fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
+    isEnabledByCfgSelfInner(crate)
+
+fun RsDocAndAttributeOwner.isEnabledByCfgSelfInner(crate: Crate?): Boolean =
     evaluateCfg(crate) != ThreeValuedLogic.False
 
 val RsDocAndAttributeOwner.isCfgUnknownSelf: Boolean

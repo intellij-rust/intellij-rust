@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.MockAdditionalCfgOptions
+
 class RsAttrWithoutParenthesesInspectionTest : RsInspectionsTestBase(RsAttrWithoutParenthesesInspection::class) {
 
     fun `test allow without parentheses`() = checkErrors("""
@@ -28,8 +30,9 @@ class RsAttrWithoutParenthesesInspectionTest : RsInspectionsTestBase(RsAttrWitho
         struct Foo(i32);
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test error in cfg attr items`() = checkErrors("""
-        #[cfg_attr(unix, <error descr="Malformed `repr` attribute input: missing parentheses">repr</error>)]
+        #[cfg_attr(intellij_rust, <error descr="Malformed `repr` attribute input: missing parentheses">repr</error>)]
         struct Foo(u8);
     """)
 

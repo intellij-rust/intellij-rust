@@ -7,15 +7,25 @@ package org.rust.ide.utils
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 
-val PsiElement.isEnabledByCfg: Boolean
-    get() = ancestors.filterIsInstance<RsDocAndAttributeOwner>().all { it.isEnabledByCfgSelf }
+val PsiElement.isEnabledByCfg: Boolean get() = isEnabledByCfgInner(null)
 
-fun PsiElement.isEnabledByCfg(crate: Crate): Boolean =
-    ancestors.filterIsInstance<RsDocAndAttributeOwner>().all { it.isEnabledByCfgSelf(crate) }
+fun PsiElement.isEnabledByCfg(crate: Crate): Boolean = isEnabledByCfgInner(crate)
+
+private fun PsiElement.isEnabledByCfgInner(crate: Crate?): Boolean =
+    ancestors.all {
+        when (it) {
+            is RsDocAndAttributeOwner -> it.isEnabledByCfgSelfInner(crate)
+            is RsMetaItem -> !it.isRootMetaItem()
+                || it.name == "cfg_attr"
+                || it in it.owner?.getQueryAttributes(crate)?.metaItems.orEmpty()
+            else -> true
+        }
+    }
 
 val PsiElement.isCfgUnknown: Boolean
     get() = ancestors.filterIsInstance<RsDocAndAttributeOwner>().any { it.isCfgUnknownSelf }

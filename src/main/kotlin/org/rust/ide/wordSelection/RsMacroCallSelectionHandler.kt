@@ -33,6 +33,7 @@ import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
 import org.rust.lang.core.psi.RsMacroArgument
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.startOffset
@@ -50,7 +51,7 @@ class RsMacroCallSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
         val elementInExpansion = e.findExpansionElements()?.firstOrNull() ?: return null
         val offsetInExpansion = elementInExpansion.startOffset + (cursorOffset - e.startOffset)
-        val macroCall = elementInExpansion.findMacroCallExpandedFromNonRecursive() ?: return null // impossible?
+        val macroCall = elementInExpansion.findMacroCallExpandedFromNonRecursive() as? RsMacroCall ?: return null
         val expansion = macroCall.expansion ?: return null // impossible?
         val expansionText = expansion.file.text
 

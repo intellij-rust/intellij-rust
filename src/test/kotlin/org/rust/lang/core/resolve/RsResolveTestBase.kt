@@ -10,15 +10,12 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapiext.TestmarkPred
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
-import org.rust.FileTree
-import org.rust.RsTestBase
-import org.rust.TestProject
-import org.rust.fileTreeFromText
-import org.rust.lang.core.macros.isExpandedFromMacro
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.*
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElementBase
+import org.rust.lang.core.psi.ext.contextualFile
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) =
@@ -140,37 +137,5 @@ abstract class RsResolveTestBase : RsTestBase() {
 
     protected fun check(actualResolveFile: VirtualFile, expectedFilePath: String): ResolveResult {
         return checkResolvedFile(actualResolveFile, expectedFilePath) { path -> myFixture.findFileInTempDir(path) }
-    }
-}
-
-fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - startOffset)
-
-fun PsiElement.checkedResolve(offset: Int): PsiElement {
-    val reference = findReference(offset) ?: error("element doesn't have reference")
-    val resolved = reference.resolve() ?: run {
-        val multiResolve = (reference as? RsReference)?.multiResolve().orEmpty()
-        check(multiResolve.size != 1)
-        if (multiResolve.isEmpty()) {
-            error("Failed to resolve $text")
-        } else {
-            error("Failed to resolve $text, multiple variants:\n${multiResolve.joinToString()}")
-        }
-    }
-
-    check(reference.isReferenceTo(resolved)) {
-        "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
-    }
-
-    checkSearchScope(this, resolved)
-
-    return resolved
-}
-
-private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElement) {
-    if (resolvedTo.isExpandedFromMacro) return
-    val virtualFile = referenceElement.containingFile.virtualFile ?: return
-    check(resolvedTo.useScope.contains(virtualFile)) {
-        "Incorrect `getUseScope` implementation in `${resolvedTo.javaClass.name}`;" +
-            "also this can means that `pub` visibility is missed somewhere in the test"
     }
 }

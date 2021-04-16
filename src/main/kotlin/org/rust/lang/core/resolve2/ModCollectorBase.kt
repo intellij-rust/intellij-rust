@@ -113,7 +113,11 @@ class ModCollectorBase private constructor(
     }
 
     private fun collectItem(item: RsNamedStub, macroIndexInParent: Int) {
-        val procMacroName = if (item is RsFunctionStub && item.isProcMacroDef) item.procMacroName else null
+        val (procMacroName, procMacroKind) = if (item is RsFunctionStub && item.isProcMacroDef) {
+            item.procMacroNameAndKind
+        } else {
+            null to null
+        }
         val name = procMacroName ?: item.name ?: return
         if (item !is RsAttributeOwnerStub) return
 
@@ -128,7 +132,7 @@ class ModCollectorBase private constructor(
             visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
             namespaces = item.getNamespaces(crate),
-            isProcMacroDef = procMacroName != null,
+            procMacroKind = procMacroKind,
             macroIndexInParent = macroIndexInParent,
             isModItem = item is RsModItemStub,
             isModDecl = item is RsModDeclItemStub,
@@ -186,10 +190,12 @@ class ModCollectorBase private constructor(
     private val RsFunctionStub.isProcMacroDef: Boolean
         get() = IS_PROC_MACRO_DEF_PROP.getByStub(this, crate)
 
-    private val RsFunctionStub.procMacroName: String?
+    private val RsFunctionStub.procMacroNameAndKind: Pair<String?, RsProcMacroKind?>
         get() {
             val attributes = getQueryAttributes(crate)
-            return attributes.getFirstArgOfSingularAttribute("proc_macro_derive") ?: name
+            val kind = RsProcMacroKind.fromDefAttributes(attributes)
+            val name = attributes.getFirstArgOfSingularAttribute("proc_macro_derive") ?: name
+            return name to kind
         }
 
     private val RsUseItemStub.hasPreludeImport: Boolean
@@ -287,7 +293,8 @@ data class ItemLight(
     val visibility: VisibilityLight,
     val isDeeplyEnabledByCfg: Boolean,
     val namespaces: Set<Namespace>,
-    val isProcMacroDef: Boolean,
+    /** `null` if not a proc macro */
+    val procMacroKind: RsProcMacroKind?,
     /** See [MacroIndex] */
     val macroIndexInParent: Int,
 

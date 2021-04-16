@@ -12,6 +12,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.ProcMacroExpansionError
+import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree
 import org.rust.lang.core.macros.tt.toDebugString
 import org.rust.lang.core.parser.createRustPsiBuilder
@@ -118,20 +119,20 @@ class RsProcMacroExpansionTest : RsWithToolchainTestBase() {
         val expander = ProcMacroExpander(project, server)
 
         with(expander) {
-            checkExpansion(lib, "as_is", "", "")
-            checkExpansion(lib, "as_is", ".", ".")
-            checkExpansion(lib, "as_is", "..", "..")
-            checkExpansion(lib, "as_is", "fn foo() {}", "fn foo() {}")
-            checkExpansion(lib, "as_is", "\"Привет\"", "\"Привет\"") // "Hello" in russian, a test for non-ASCII chars
+            checkExpandedAsIs(lib, "as_is", "")
+            checkExpandedAsIs(lib, "as_is", ".")
+            checkExpandedAsIs(lib, "as_is", "..")
+            checkExpandedAsIs(lib, "as_is", "fn foo() {}")
+            checkExpandedAsIs(lib, "as_is", "\"Привет\"") // "Hello" in russian, a test for non-ASCII chars
             checkExpansion(lib, "read_env_var", "", "\"foo value\"", env = mapOf("FOO_ENV_VAR" to "foo value"))
-            checkExpansion(lib, "do_println", "", "")
-            checkExpansion(lib, "do_eprintln", "", "")
+            checkExpandedAsIs(lib, "do_println", "")
+            checkExpandedAsIs(lib, "do_eprintln", "")
             checkError<ProcMacroExpansionError.ServerSideError>(lib, "do_panic", "")
             checkError<ProcMacroExpansionError.ServerSideError>(lib, "unknown_macro", "")
             checkError<ProcMacroExpansionError.Timeout>(lib, "wait_100_seconds", "")
             checkError<ProcMacroExpansionError.ExceptionThrown>(lib, "process_exit", "")
             checkError<ProcMacroExpansionError.ExceptionThrown>(lib, "process_abort", "")
-            checkExpansion(lib, "as_is", "", "") // Insure it works after errors
+            checkExpandedAsIs(lib, "as_is", "") // Insure it works after errors
         }
     }
 
@@ -148,21 +149,31 @@ class RsProcMacroExpansionTest : RsWithToolchainTestBase() {
         expander.checkError<ProcMacroExpansionError.ExecutableNotFound>("", "", "")
     }
 
+    private fun ProcMacroExpander.checkExpandedAsIs(
+        lib: String,
+        name: String,
+        macroBodyAndExpansion: String,
+    ) = checkExpansion(lib, name, macroBodyAndExpansion, macroBodyAndExpansion, checkTokenIds = true)
+
     private fun ProcMacroExpander.checkExpansion(
         lib: String,
         name: String,
         macroCall: String,
         expected: String,
-        env: Map<String, String> = emptyMap()
+        env: Map<String, String> = emptyMap(),
+        checkTokenIds: Boolean = false
     ) {
         val macroCallSubtree = project.createRustPsiBuilder(macroCall).parseSubtree().subtree
-        val expansion = when (val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, name, lib, env)) {
+        val expansionTtWithIds = when (val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, name, lib, env)) {
             is RsResult.Ok -> expansionResult.ok
             is RsResult.Err -> error("Expanded with error: ${expansionResult.err}")
         }
+        val expectedTtWithIds = project.createRustPsiBuilder(expected).parseSubtree().subtree
+        val expectedTt = if (checkTokenIds) expectedTtWithIds else expectedTtWithIds.discardIds()
+        val expansionTt = if (checkTokenIds) expansionTtWithIds else expansionTtWithIds.discardIds()
         assertEquals(
-            project.createRustPsiBuilder(expected).parseSubtree().subtree.toDebugString(),
-            expansion.toDebugString()
+            expectedTt.toDebugString(),
+            expansionTt.toDebugString()
         )
     }
 
@@ -181,5 +192,21 @@ class RsProcMacroExpansionTest : RsWithToolchainTestBase() {
             return
         }
         super.runTestRunnable(testRunnable)
+    }
+
+    private fun TokenTree.discardIds(): TokenTree = when (this) {
+        is TokenTree.Leaf -> discardIds()
+        is TokenTree.Subtree -> discardIds()
+    }
+
+    private fun TokenTree.Subtree.discardIds(): TokenTree.Subtree = TokenTree.Subtree(
+        delimiter?.copy(id = -1),
+        tokenTrees.map { it.discardIds() }
+    )
+
+    private fun TokenTree.Leaf.discardIds(): TokenTree.Leaf = when (this) {
+        is TokenTree.Leaf.Ident -> copy(id = -1)
+        is TokenTree.Leaf.Literal -> copy(id = -1)
+        is TokenTree.Leaf.Punct -> copy(id = -1)
     }
 }

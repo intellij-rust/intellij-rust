@@ -11,12 +11,14 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import org.rust.ide.annotator.RsErrorAnnotator
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
+import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.openapiext.toPsiFile
 
 open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
@@ -38,7 +40,9 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
     protected fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
         val errorConsumer = if (failOnFirstFileWithErrors) FAIL_FAST else COLLECT_ALL_EXCEPTIONS
-        doTest(info, errorConsumer)
+        runWithEnabledFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS) {
+            doTest(info, errorConsumer)
+        }
     }
 
     protected fun doTest(info: RealProjectInfo, consumer: AnnotationConsumer) {

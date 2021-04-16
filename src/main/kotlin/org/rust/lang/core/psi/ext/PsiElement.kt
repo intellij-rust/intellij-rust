@@ -163,9 +163,8 @@ fun <T : PsiElement> getStubDescendantsOfType(
             val child = childStub.psi
             if (aClass.isInstance(child)) {
                 result.add(aClass.cast(child))
-            } else {
-                go(childStub.childrenStubs)
             }
+            go(childStub.childrenStubs)
         }
 
     }

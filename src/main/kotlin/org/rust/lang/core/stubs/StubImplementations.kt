@@ -64,11 +64,13 @@ class RsFileStub(
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
     override val mayHaveMacroUse: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
+    override val mayHaveCustomDerive: Boolean
+        get() = false
 
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 211
+        private const val STUB_VERSION = 212
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -345,7 +347,8 @@ abstract class RsAttributeOwnerStubBase<T : RsElement>(
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
     override val mayHaveMacroUse: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
-
+    override val mayHaveCustomDerive: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_DERIVE)
     protected abstract val flags: Int
 }
 
@@ -472,9 +475,12 @@ class RsUseSpeckStub(
 class RsStructItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
+    override val stubbedText: String?,
+    override val bodyHash: HashCode?,
+    override val endOfAttrsOffset: Int,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsStructItem>(parent, elementType),
-    RsNamedStub {
+    RsNamedStub, RsAttrProcMacroOwnerStub {
 
     val blockFields: StubElement<RsBlockFields>?
         get() = findChildStubByType(RsStubElementTypes.BLOCK_FIELDS)
@@ -487,12 +493,18 @@ class RsStructItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
+                dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
+                dataStream.readVarInt(),
                 dataStream.readUnsignedByte()
             )
 
         override fun serialize(stub: RsStructItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
+                writeUTFFastAsNullable(stub.stubbedText)
+                writeHashCodeNullable(stub.bodyHash)
+                writeVarInt(stub.endOfAttrsOffset)
                 writeByte(stub.flags)
             }
 
@@ -502,7 +514,8 @@ class RsStructItemStub(
         override fun createStub(psi: RsStructItem, parentStub: StubElement<*>?): RsStructItemStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, IS_UNION_MASK, psi.kind == RsStructKind.UNION)
-            return RsStructItemStub(parentStub, this, psi.name, flags)
+            val (procMacroBody, bodyHash, endOfAttrsOffset) = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsStructItemStub(parentStub, this, psi.name, procMacroBody, bodyHash, endOfAttrsOffset, flags)
         }
 
         override fun indexStub(stub: RsStructItemStub, sink: IndexSink) = sink.indexStructItem(stub)
@@ -517,9 +530,12 @@ class RsStructItemStub(
 class RsEnumItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
+    override val stubbedText: String?,
+    override val bodyHash: HashCode?,
+    override val endOfAttrsOffset: Int,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsEnumItem>(parent, elementType),
-    RsNamedStub {
+    RsNamedStub, RsAttrProcMacroOwnerStub {
 
     val enumBody: StubElement<RsEnumBody>?
         get() = findChildStubByType(RsStubElementTypes.ENUM_BODY)
@@ -530,20 +546,29 @@ class RsEnumItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
+                dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
+                dataStream.readVarInt(),
                 dataStream.readUnsignedByte()
             )
 
         override fun serialize(stub: RsEnumItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
+                writeUTFFastAsNullable(stub.stubbedText)
+                writeHashCodeNullable(stub.bodyHash)
+                writeVarInt(stub.endOfAttrsOffset)
                 writeByte(stub.flags)
             }
 
         override fun createPsi(stub: RsEnumItemStub) =
             RsEnumItemImpl(stub, this)
 
-        override fun createStub(psi: RsEnumItem, parentStub: StubElement<*>?) =
-            RsEnumItemStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsEnumItem, parentStub: StubElement<*>?): RsEnumItemStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val (procMacroBody, bodyHash, endOfAttrsOffset) = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsEnumItemStub(parentStub, this, psi.name, procMacroBody, bodyHash, endOfAttrsOffset, flags)
+        }
 
 
         override fun indexStub(stub: RsEnumItemStub, sink: IndexSink) = sink.indexEnumItem(stub)

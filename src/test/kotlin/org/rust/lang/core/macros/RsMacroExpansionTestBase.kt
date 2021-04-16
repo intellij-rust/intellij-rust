@@ -107,7 +107,8 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun expandMacroOrFail(call: RsMacroCall): MacroExpansion {
+    private fun expandMacroOrFail(call: RsPossibleMacroCall): MacroExpansion {
+        require(call is RsMacroCall)
         val def = call.resolveToMacro() ?: error("Failed to resolve macro `${call.path.text}`")
         return expandMacroAsTextWithErr(call, def).unwrapOrElse { err ->
             val description = err.formatError(call)
