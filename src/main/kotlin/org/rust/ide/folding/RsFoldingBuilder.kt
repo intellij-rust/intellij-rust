@@ -31,7 +31,6 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.document
 import java.lang.Integer.max
-import java.util.*
 
 class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String =
@@ -41,6 +40,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             node.elementType == USE_ITEM -> "/* uses */"
             node.psi is RsModDeclItem -> "/* mods */"
             node.psi is RsExternCrateItem -> "/* crates */"
+            node.psi is RsWhereClause -> "/* where */"
             node.psi is PsiComment -> "/* ... */"
             node.psi is RsValueParameterList -> "(...)"
             else -> "{...}"
@@ -90,6 +90,8 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         override fun visitMatchBody(o: RsMatchBody) = fold(o)
 
         override fun visitUseGroup(o: RsUseGroup) = fold(o)
+
+        override fun visitWhereClause(o: RsWhereClause) = fold(o)
 
         override fun visitMembers(o: RsMembers) = foldBetween(o, o.lbrace, o.rbrace)
 
