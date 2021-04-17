@@ -276,6 +276,34 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    fun `test guess return unknown type`() = doAvailableTest("""
+        fn foo() {
+            let x: S = bar/*caret*/();
+        }
+    """, """
+        fn foo() {
+            let x: S = bar();
+        }
+
+        fn bar() -> _/*caret*/ {
+            todo!()
+        }
+    """)
+
+    fun `test guess return type empty let decl`() = doAvailableTest("""
+        fn foo() {
+            let x = bar/*caret*/();
+        }
+    """, """
+        fn foo() {
+            let x = bar();
+        }
+
+        fn bar() -> _/*caret*/ {
+            todo!()
+        }
+    """)
+
     fun `test guess return type assignment`() = doAvailableTest("""
         fn foo() {
             let mut x: u32 = 0;

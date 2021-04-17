@@ -36,11 +36,31 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         }
     }
 
+    class ReturnType(val type: Ty, val needsTemplate: Boolean) {
+        companion object {
+            fun create(expr: RsExpr): ReturnType {
+                val expected = expr.expectedType ?: TyUnknown
+
+                // Show template if the type is unknown and there is something that expects the return value
+                val parent = expr.parent
+                val needsTemplate = expected is TyUnknown && when (parent) {
+                    is RsExprStmt -> false
+                    is RsDotExpr -> parent.fieldLookup?.identifier?.text != "await"
+                    else -> true
+                }
+                if (needsTemplate) {
+                    return ReturnType(expected, true)
+                }
+                return ReturnType(expected.takeIf { it !is TyUnknown } ?: TyUnit, false)
+            }
+        }
+    }
+
     sealed class Context(val name: String, val callElement: RsElement) {
         abstract val visibility: String
         open val isAsync: Boolean = callElement.isAtLeastEdition2018
         abstract val arguments: RsValueArgumentList
-        abstract val returnType: Ty?
+        abstract val returnType: ReturnType
         open val implItem: RsImplItem? = null
 
         open class Function(callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
@@ -48,7 +68,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             override val isAsync: Boolean = super.isAsync
                 && (callExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
             override val arguments: RsValueArgumentList = callExpr.valueArgumentList
-            override val returnType: Ty? = callExpr.expectedType
+            override val returnType: ReturnType = ReturnType.create(callExpr)
         }
 
         class AssociatedFunction(
@@ -79,7 +99,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             override val isAsync: Boolean = super.isAsync
                 && (methodCall.parentDotExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
             override val arguments: RsValueArgumentList = methodCall.valueArgumentList
-            override val returnType: Ty? = methodCall.parentDotExpr.expectedType
+            override val returnType: ReturnType = ReturnType.create(methodCall.parentDotExpr)
         }
     }
 
@@ -121,8 +141,15 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val inserted = insertCallable(ctx, function) ?: return
 
         if (inserted.containingFile == ctx.callElement.containingFile) {
-            val toBeReplaced = inserted.rawValueParameters.flatMap { listOfNotNull(it.pat, it.typeReference) } +
-                listOfNotNull(inserted.block?.expr)
+            val toBeReplaced = inserted.rawValueParameters
+                .flatMap { listOfNotNull(it.pat, it.typeReference) }
+                .toMutableList()
+
+            if (ctx.returnType.needsTemplate) {
+                toBeReplaced += listOfNotNull(inserted.retType?.typeReference)
+            }
+
+            toBeReplaced += listOfNotNull(inserted.block?.expr)
             editor.buildAndRunTemplate(inserted, toBeReplaced.map { it.createSmartPointer() })
         } else {
             // template builder cannot be used for a different file
@@ -177,7 +204,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             "p$index: ${expr.type.renderInsertionSafe(useAliasNames = true)}"
         }
 
-        val returnType = ctx.returnType.takeIf { it != TyUnknown } ?: TyUnit
+        val returnType = ctx.returnType.type.takeIf { it != TyUnknown } ?: TyUnit
         val genericConstraints = GenericConstraints.create(callExpr)
             .filterByTypes(arguments.exprList.map { it.type }.plus(returnType))
 
@@ -186,7 +213,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             genericConstraints.withoutTypes(params)
         } else genericConstraints
 
-        return CallableConfig(parameters, returnType, filteredConstraints)
+        return CallableConfig(parameters, ctx.returnType.type, filteredConstraints)
     }
 
     private fun insertCallable(ctx: Context, function: RsFunction): RsFunction? {
