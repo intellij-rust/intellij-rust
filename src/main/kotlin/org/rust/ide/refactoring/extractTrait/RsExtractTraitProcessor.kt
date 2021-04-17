@@ -223,7 +223,7 @@ private fun RsImplItem.getMembersWithNames(names: Set<String>): List<RsItemEleme
     }
 }
 
-private fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
+fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
     if (this is RsVisibilityOwner) vis?.delete()
     when (this) {
         is RsFunction -> {
