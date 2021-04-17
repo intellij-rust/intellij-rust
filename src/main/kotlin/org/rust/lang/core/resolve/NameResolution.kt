@@ -133,9 +133,8 @@ fun processStructLiteralFieldResolveVariants(
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val resolved = field.parentStructLiteral.path.reference?.deepResolve()
-    val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
-    if (processFieldDeclarations(structOrEnumVariant, processor)) return true
+    val resolved = field.parentStructLiteral.path.reference?.deepResolve() as? RsFieldsOwner
+    if (resolved != null && processFieldDeclarations(resolved, processor)) return true
     if (!isCompletion && field.expr == null) {
         processNestedScopesUpwards(field, VALUES, processor)
     }

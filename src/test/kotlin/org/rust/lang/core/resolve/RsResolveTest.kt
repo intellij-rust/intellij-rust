@@ -689,7 +689,7 @@ class RsResolveTest : RsResolveTestBase() {
     """)
 
     fun `test struct field positional`() = checkByCodeGeneric<RsFieldDecl>("""
-        struct S(i32, i32)
+        struct S(i32, i32);
                      //X
         fn main() {
             let _ = S { 1: 92 };
@@ -704,6 +704,14 @@ class RsResolveTest : RsResolveTestBase() {
         fn main() {
             let _ = T2 { foo: 92 };
         }              //^
+    """)
+
+    fun `test unknown struct field shorthand`() = checkByCode("""
+        fn main() {
+            let foo = 62;
+              //X
+            let _ = UnknownStruct { foo };
+        }                          //^
     """)
 
     fun `test cyclic type aliases`() = checkByCode("""
