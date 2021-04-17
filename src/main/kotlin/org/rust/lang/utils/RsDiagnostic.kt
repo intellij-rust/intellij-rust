@@ -447,7 +447,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0407,
-            errorText()
+            errorText(),
+            fixes = listOf(AddDefinitionToTraitFix(member))
         )
 
         private fun errorText(): String {

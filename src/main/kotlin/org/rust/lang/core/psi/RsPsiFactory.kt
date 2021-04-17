@@ -243,6 +243,14 @@ class RsPsiFactory(
         return createFromText(text) ?: error("Failed to create mod item with name: `$modName` from text: `$modText`")
     }
 
+    fun createTraitConstantMember(text: String): RsConstant {
+        return createFromText("trait Foo { $text }") ?: error("Failed to create a constant member from text: `$text`")
+    }
+
+    fun createTraitTypeAliasMember(text: String): RsTypeAlias {
+        return createFromText("trait Foo { $text }") ?: error("Failed to create a type alias member from text: `$text`")
+    }
+
     fun createTraitMethodMember(text: String): RsFunction {
         return createFromText("trait Foo { $text }") ?: error("Failed to create a method member from text: `$text`")
     }
