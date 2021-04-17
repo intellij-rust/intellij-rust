@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
 import org.rust.lang.core.types.ty.Ty
+import java.lang.Math.max
 
 class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
     override fun getText() = "Generate documentation stub"
@@ -42,9 +43,9 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
         val document = editor.document
         var commentStartOffset: Int = targetFunc.textRange.startOffset
         val lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset))
-        if (lineStartOffset > 0 && lineStartOffset < commentStartOffset) {
+        if (lineStartOffset in 1 until commentStartOffset) {
             val nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(document.charsSequence, commentStartOffset - 1, " \t")
-            commentStartOffset = Math.max(nonWhiteSpaceOffset, lineStartOffset)
+            commentStartOffset = max(nonWhiteSpaceOffset, lineStartOffset)
         }
         val buffer = StringBuilder()
         var commentBodyRelativeOffset = 0
@@ -66,26 +67,25 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
     }
 }
 
-
-private fun generateDocumentStub(indentation: String, params: List<RsValueParameter>, returnType: Ty): String {
-    val builder = StringBuilder()
-    builder.append("$indentation/// \n")
-    builder.append("$indentation/// # Arguments \n")
-    builder.append("$indentation/// \n")
-    var paramName: String?
+private fun generateDocumentStub(
+    indentation: String,
+    params: List<RsValueParameter>,
+    returnType: Ty
+): String = buildString {
+    append("$indentation/// \n")
+    append("$indentation/// # Arguments \n")
+    append("$indentation/// \n")
     for (param in params) {
-        paramName = param.patText
-        builder.append("$indentation/// * `$paramName`: \n")
+        append("$indentation/// * `${param.patText}`: \n")
     }
-    builder.append("$indentation/// \n")
-    if (returnType != null) {
-        builder.append("$indentation/// returns: $returnType \n")
-    }
-    builder.append("$indentation/// \n")
-    builder.append("$indentation/// # Examples \n")
-    builder.append("$indentation/// \n")
-    builder.append("$indentation/// ```\n")
-    builder.append("$indentation/// \n")
-    builder.append("$indentation/// ```\n")
-    return builder.toString()
+    append("$indentation/// \n")
+
+    append("$indentation/// returns: $returnType \n")
+
+    append("$indentation/// \n")
+    append("$indentation/// # Examples \n")
+    append("$indentation/// \n")
+    append("$indentation/// ```\n")
+    append("$indentation/// \n")
+    append("$indentation/// ```\n")
 }
