@@ -858,7 +858,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.CreateFunctionIntention</className>
+            <className>org.rust.ide.intentions.createFromUsage.CreateFunctionIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
@@ -887,6 +887,10 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleFeatureIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.createFromUsage.CreateStructIntention</className>
             <category>Rust</category>
         </intentionAction>
 
