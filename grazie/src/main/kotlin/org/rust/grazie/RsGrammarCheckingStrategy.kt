@@ -20,12 +20,16 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
     override fun isMyContextRoot(element: PsiElement): Boolean =
         getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
-    // BACKCOMPAT: 2020.2
-    @Suppress("UnstableApiUsage", "OverridingDeprecatedMember")
-    override fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange): Boolean {
-        if (root !is RsDocCommentImpl) return true
+    override fun isTypoAccepted(
+        parent: PsiElement,
+        roots: List<PsiElement>,
+        typoRange: IntRange,
+        ruleRange: IntRange
+    ): Boolean {
+        val docCommentRoots = roots.filterIsInstance<RsDocCommentImpl>()
+        if (docCommentRoots.isEmpty()) return true
 
-        return findDoctestInjectableRanges(root)
+        return docCommentRoots.flatMap { findDoctestInjectableRanges(it) }
             .flatten()
             .none { it.intersects(typoRange.first, typoRange.last) }
     }
@@ -49,5 +53,17 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
             in RS_REGULAR_COMMENTS -> TextDomain.COMMENTS
             else -> TextDomain.NON_TEXT
         }
+    }
+
+    override fun getRootsChain(root: PsiElement): List<PsiElement> {
+        return if (root.elementType in RS_REGULAR_COMMENTS) {
+            StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, RS_REGULAR_COMMENTS_SET).toList()
+        } else {
+            super.getRootsChain(root)
+        }
+    }
+
+    companion object {
+        private val RS_REGULAR_COMMENTS_SET = RS_REGULAR_COMMENTS.types.toSet()
     }
 }
