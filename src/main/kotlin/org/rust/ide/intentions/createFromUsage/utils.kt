@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 
 @Suppress("UNCHECKED_CAST")
@@ -36,4 +37,37 @@ fun getWritablePathTarget(path: RsPath): RsQualifiedNamedElement? {
     if (item?.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
     if (!isUnitTestMode && !item.isWritable) return null
     return item
+}
+
+sealed class CallableInsertionTarget {
+    abstract val module: RsMod
+
+    class Module(val target: RsMod) : CallableInsertionTarget() {
+        override val module: RsMod = target
+    }
+
+    class Item(val item: RsStructOrEnumItemElement) : CallableInsertionTarget() {
+        override val module: RsMod = item.containingMod
+    }
+}
+
+/**
+ * Find either a module or an ADT which qualifies the passed path.
+ */
+fun getTargetItemForFunctionCall(path: RsPath): CallableInsertionTarget? {
+    if (path.qualifier != null) {
+        return when (val item = getWritablePathTarget(path)) {
+            is RsMod -> CallableInsertionTarget.Module(item)
+            is RsStructOrEnumItemElement -> CallableInsertionTarget.Item(item)
+            else -> null
+        }
+    }
+    return CallableInsertionTarget.Module(path.containingMod)
+}
+
+fun insertStruct(targetModule: RsMod, struct: RsStructItem, sourceFunction: RsElement): RsStructItem {
+    if (targetModule == sourceFunction.containingMod) {
+        return sourceFunction.parent.addBefore(struct, sourceFunction) as RsStructItem
+    }
+    return addToModule(targetModule, struct)
 }

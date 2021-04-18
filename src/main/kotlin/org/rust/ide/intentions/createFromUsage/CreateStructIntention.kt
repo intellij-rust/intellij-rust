@@ -23,7 +23,7 @@ import org.rust.openapiext.createSmartPointer
 class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention.Context>() {
     override fun getFamilyName() = "Create struct"
 
-    class Context(val name: String, val literalElement: RsStructLiteral, val target: RsMod) {}
+    class Context(val name: String, val literalElement: RsStructLiteral, val target: RsMod)
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>()
@@ -79,13 +79,6 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
         }
 
         return factory.tryCreateStruct("${visibility}struct ${ctx.name}$suffix")
-    }
-
-    private fun insertStruct(targetModule: RsMod, struct: RsStructItem, sourceFunction: RsElement): RsStructItem {
-        if (targetModule == sourceFunction.containingMod) {
-            return sourceFunction.parent.addBefore(struct, sourceFunction) as RsStructItem
-        }
-        return addToModule(targetModule, struct)
     }
 }
 

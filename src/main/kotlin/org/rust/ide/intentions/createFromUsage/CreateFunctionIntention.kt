@@ -24,18 +24,6 @@ import org.rust.openapiext.createSmartPointer
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {
     override fun getFamilyName() = "Create function"
 
-    sealed class FunctionInsertionTarget {
-        abstract val module: RsMod
-
-        class Module(val target: RsMod) : FunctionInsertionTarget() {
-            override val module: RsMod = target
-        }
-
-        class Item(val item: RsStructOrEnumItemElement) : FunctionInsertionTarget() {
-            override val module: RsMod = item.containingMod
-        }
-    }
-
     class ReturnType(val type: Ty, val needsTemplate: Boolean) {
         companion object {
             fun create(expr: RsExpr): ReturnType {
@@ -110,10 +98,10 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             if (!functionCall.expr.isAncestorOf(path)) return null
             if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
-            val target = getTargetItemForFunction(path) ?: return null
+            val target = getTargetItemForFunctionCall(path) ?: return null
             val name = path.referenceName ?: return null
 
-            return if (target is FunctionInsertionTarget.Item) {
+            return if (target is CallableInsertionTarget.Item) {
                 text = "Create associated function `${target.item.name}::$name`"
                 Context.AssociatedFunction(functionCall, name, target.module, target.item)
             } else {
@@ -177,17 +165,6 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val paramsText = parameters.joinToString(", ")
 
         return factory.tryCreateFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    todo!()\n}")
-    }
-
-    private fun getTargetItemForFunction(path: RsPath): FunctionInsertionTarget? {
-        if (path.qualifier != null) {
-            return when (val item = getWritablePathTarget(path)) {
-                is RsMod -> FunctionInsertionTarget.Module(item)
-                is RsStructOrEnumItemElement -> FunctionInsertionTarget.Item(item)
-                else -> null
-            }
-        }
-        return FunctionInsertionTarget.Module(path.containingMod)
     }
 
     private data class CallableConfig(
