@@ -53,6 +53,28 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     """, checkInComments = true)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/7024
+    fun `test check single sentence in sequential comments 1`() = doTest("""
+        fn main() {
+            // Path to directory where someone <TYPO>write</TYPO>
+            // and from where someone reads
+            let path1 = "/foo/bar";
+            /* Path to directory where someone <TYPO>write</TYPO> */
+            /* and from where someone reads */
+            let path2 = "/foo/bar";
+        }
+    """, checkInComments = true)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/7024
+    fun `test check single sentence in sequential comments 2`() = doTest("""
+        fn main() {
+            // Path to directory where someone writes
+
+            // <TYPE>and</TYPE> from where someone reads
+            let path = "/foo/bar";
+        }
+    """, checkInComments = true)
+
     fun `test check doc comments`() = doTest("""
         /// <TYPO>There is two apples</TYPO>
         mod foo {
