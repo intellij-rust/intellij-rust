@@ -11,12 +11,8 @@ import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.*
 
 class RsInspectionSuppressor : InspectionSuppressor {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<out SuppressQuickFix> = arrayOf(
@@ -50,6 +46,14 @@ class RsInspectionSuppressor : InspectionSuppressor {
     }
 }
 
-private fun RsItemElement.leadingComments(): Sequence<PsiComment>
-    = generateSequence(firstChild) { psi -> psi.nextSibling.takeIf { it.elementType in RS_COMMENTS || it is PsiWhiteSpace } }
-    .filterIsInstance<PsiComment>()
+private fun RsItemElement.leadingComments(): Sequence<PsiComment> {
+    val comments = generateSequence(prevSibling) { psi ->
+        psi.getPrevNonWhitespaceSibling()?.takeIf { it.elementType in RS_COMMENTS }
+    }
+    val docComments = generateSequence(firstChild) { psi ->
+        psi.getNextNonWhitespaceSibling()?.takeIf { it.elementType in RS_COMMENTS }
+    }
+
+    return (comments + docComments).filterIsInstance<PsiComment>()
+}
+

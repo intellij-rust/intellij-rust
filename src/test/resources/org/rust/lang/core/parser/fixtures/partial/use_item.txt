@@ -1,7 +1,7 @@
 FILE
+  PsiComment(<EOL_COMMENT>)('// #1')
+  PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
-    PsiComment(<EOL_COMMENT>)('// #1')
-    PsiWhiteSpace('\n')
     PsiElement(use)('use')
     PsiWhiteSpace(' ')
     RsUseSpeckImpl(USE_SPECK)
@@ -26,9 +26,9 @@ FILE
     PsiErrorElement:';' expected, got 'fn'
       <empty list>
   PsiWhiteSpace(' ')
+  PsiComment(<EOL_COMMENT>)('// missing ';'')
+  PsiWhiteSpace('\n')
   RsFunctionImpl(FUNCTION)
-    PsiComment(<EOL_COMMENT>)('// missing ';'')
-    PsiWhiteSpace('\n')
     PsiElement(fn)('fn')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
@@ -42,9 +42,9 @@ FILE
   PsiWhiteSpace(' ')
   PsiComment(<EOL_COMMENT>)('// should be recovered after missing ';'')
   PsiWhiteSpace('\n\n')
+  PsiComment(<EOL_COMMENT>)('// #2 speck recover')
+  PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
-    PsiComment(<EOL_COMMENT>)('// #2 speck recover')
-    PsiWhiteSpace('\n')
     PsiElement(use)('use')
     PsiWhiteSpace(' ')
     RsUseSpeckImpl(USE_SPECK)
