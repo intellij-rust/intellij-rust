@@ -18,6 +18,16 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
+    calculate-git-info:
+        needs: [ cancel-previous ]
+        runs-on: ubuntu-18.04
+        outputs:
+            is_bors_branch: ${{ steps.calculate-git-info.outputs.is_bors_branch }}
+        steps:
+            - name: Calculate git info
+              id: calculate-git-info
+              run: echo "::set-output name=is_bors_branch::${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}"
+
     check-license:
         needs: [ cancel-previous ]
         runs-on: ubuntu-18.04
@@ -85,9 +95,10 @@ jobs:
                   path: ${{ matrix.config.artifact_path }}
 
     check-plugin:
-        needs: [ cancel-previous, build-native-code ]
+        needs: [ cancel-previous, calculate-git-info, build-native-code ]
         strategy:
-            fail-fast: false
+            # `fromJSON` is used here to convert string output to boolean
+            fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-18.04, windows-latest ]
                 rust-version: [ 1.51.0, nightly-2021-03-24 ]
