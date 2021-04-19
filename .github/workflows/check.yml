@@ -23,10 +23,30 @@ jobs:
         runs-on: ubuntu-18.04
         outputs:
             is_bors_branch: ${{ steps.calculate-git-info.outputs.is_bors_branch }}
+            is_master_branch: ${{ steps.calculate-git-info.outputs.is_master_branch }}
+            is_merge_commit: ${{ steps.calculate-git-info.outputs.is_merge_commit }}
         steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
             - name: Calculate git info
               id: calculate-git-info
-              run: echo "::set-output name=is_bors_branch::${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}"
+              run: |
+                  echo "::set-output name=is_bors_branch::${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}"
+                  echo "::set-output name=is_master_branch::${{ github.ref == 'refs/heads/master'}}"
+                  if git rev-parse HEAD^2 >/dev/null 2>/dev/null
+                  then
+                      echo "::set-output name=is_merge_commit::true"
+                  else
+                      echo "::set-output name=is_merge_commit::false"
+                  fi
+
+            - name: Check git info
+              run: |
+                  echo "is_bors_branch: ${{ steps.calculate-git-info.outputs.is_bors_branch }}"
+                  echo "is_master_branch: ${{ steps.calculate-git-info.outputs.is_master_branch }}"
+                  echo "is_merge_commit: ${{ steps.calculate-git-info.outputs.is_merge_commit }}"
 
     check-license:
         needs: [ cancel-previous ]
@@ -38,7 +58,9 @@ jobs:
               run: ./check-license.sh
 
     build-native-code:
-        needs: [ cancel-previous ]
+        needs: [ cancel-previous, calculate-git-info ]
+        # `fromJSON` is used here to convert string output to boolean
+        if: ${{ !(fromJSON(needs.calculate-git-info.outputs.is_master_branch) && fromJSON(needs.calculate-git-info.outputs.is_merge_commit)) }}
         strategy:
             fail-fast: true
             matrix:
