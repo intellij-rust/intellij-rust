@@ -795,11 +795,22 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
     return simple.any { processor(it) }
 }
 
-/**
- * Attribute macro can only be resolved to its definition.
- */
-fun processAttributeProcMacroResolveVariants(element: RsPath, processor: RsResolveProcessor): Boolean =
-    processNestedScopesUpwards(element, MACROS, processor)
+fun processAttributeProcMacroResolveVariants(path: RsPath, originalProcessor: RsResolveProcessor): Boolean {
+    val qualifier = path.qualifier
+
+    val processor = createProcessor(originalProcessor.name) {
+        if (it.element !is RsMacro) {
+            originalProcessor(it)
+        } else {
+            false
+        }
+    }
+    return if (qualifier == null) {
+        processMacroCallVariantsInScope(path, processor)
+    } else {
+        processMacroCallPathResolveVariants(path, isCompletion = false, processor)
+    }
+}
 
 fun processDeriveTraitResolveVariants(element: RsPath, traitName: String, processor: RsResolveProcessor): Boolean {
     processNestedScopesUpwards(element, MACROS, processor)
@@ -839,7 +850,6 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
 }
 
 fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    // Allowed only 1 or 2-segment paths: `foo!()` or `foo::bar!()`, but not foo::bar::baz!();
     val qualifier = path.qualifier
     return if (qualifier == null) {
         if (isCompletion) {
@@ -884,6 +894,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 ) ?: false
             }
         } else {
+            // Allowed only 1 or 2-segment paths: `foo!()` or `foo::bar!()`, but not foo::bar::baz!();
             if (qualifier.path != null) return false
             processMacrosExportedByCratePath(path, qualifier, processor)
         }
