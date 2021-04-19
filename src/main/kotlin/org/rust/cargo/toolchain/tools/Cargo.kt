@@ -129,15 +129,10 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     ): CargoWorkspaceData {
         val rawData = fetchMetadata(owner, projectDirectory, listener)
         val buildScriptsInfo = fetchBuildScriptsInfo(owner, projectDirectory, listener)
-        val buildPlan = if (buildScriptsInfo?.containsOutDirInfo != true) {
-            fetchBuildPlan(owner, projectDirectory, listener)
-        } else {
-            null
-        }
 
         val (rawDataAdjusted, buildScriptsInfoAdjusted) =
             replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
-        return CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted, buildPlan)
+        return CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted)
     }
 
     @Throws(ExecutionException::class)
@@ -214,29 +209,6 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             CompilerMessage.fromJson(jsonObject)?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
         }
         return BuildMessages(messages)
-    }
-
-    private fun fetchBuildPlan(
-        owner: Project,
-        projectDirectory: Path,
-        listener: ProcessListener?
-    ): CargoBuildPlan? {
-        if (!isFeatureEnabled(RsExperiments.FETCH_OUT_DIR)) return null
-        Testmarks.fetchBuildPlan.hit()
-        val additionalArgs = mutableListOf("-Z", "unstable-options", "--all-targets", "--build-plan")
-        // Hack to make cargo think that unstable options are available because we need unstable `--build-plan` option here
-        val envs = EnvironmentVariablesData.create(mapOf(
-            RUSTC_BOOTSTRAP to "1"
-        ), true)
-        return try {
-            val json = CargoCommandLine("build", projectDirectory, additionalArgs, environmentVariables = envs)
-                .execute(owner, listener = listener)
-                .stdout
-            Gson().fromJson(json, CargoBuildPlan::class.java)
-        } catch (e: Exception) {
-            LOG.warn("Failed to fetch build-plan", e)
-            null
-        }
     }
 
     /**
@@ -586,10 +558,6 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
 
             return needInstall
         }
-    }
-
-    object Testmarks {
-        val fetchBuildPlan = Testmark("fetchBuildPlan")
     }
 }
 
