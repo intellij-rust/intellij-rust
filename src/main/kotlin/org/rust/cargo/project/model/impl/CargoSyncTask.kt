@@ -35,6 +35,7 @@ import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
@@ -44,6 +45,8 @@ import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.openapiext.TaskResult
+import org.rust.stdext.mapNotNullToSet
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -117,7 +120,7 @@ class CargoSyncTask(
                         }
                     }
                 )
-            }
+            }.deduplicateProjects()
         }
 
         return refreshedProjects
@@ -184,6 +187,62 @@ class CargoSyncTask(
             syncProgress.progress(text)
         }
     }
+}
+
+/**
+ * There are 2 kinds of possible cargo project duplication:
+ *
+ * 1. Direct duplication: when there are 2 projects with the same [CargoProject.manifest] value.
+ *    Looks like it's impossible to make such duplication without editing workspace.xml.
+ * 2. Duplication of workspace members: when there is a project with cargo workspace consist of
+ *    several packages and one of them is also added as a separate CargoProject. It's possible to
+ *    make such duplication: initially, there should be 2 independent CargoProjects, but then,
+ *    one of them should become a workspace member of the other project (a user can do this by
+ *    modifying Cargo.toml)
+ *
+ * See tests in `CargoProjectDeduplicationTest`
+ *
+ * Keep in sync with [org.rust.cargo.project.model.impl.isExistingProject]
+ */
+private fun List<CargoProjectImpl>.deduplicateProjects(): List<CargoProjectImpl> {
+    val projects = distinctBy { it.manifest }
+
+    // Maps `project root` -> [package root] for workspace packages
+    val projectRootToWorkspacePackages: Map<Path, Set<Path>> = projects.associate { project ->
+        project.manifest.parent to run {
+            val workspace = project.rawWorkspace ?: return@run emptySet()
+            workspace.packages.mapNotNullToSet { pkg ->
+                if (pkg.origin != PackageOrigin.WORKSPACE) return@mapNotNullToSet null
+                pkg.rootDirectory
+            }
+        }
+    }
+
+    val projectsToRemove = mutableSetOf<CargoProjectImpl>()
+
+    // Consider this setup:
+    // ```
+    // +-- root-project // <- attached as cargo project
+    // |   +-- Cargo.toml // workspace.members = ["subpackage"]
+    // |   +-- subpackage // <- attached as cargo project (should be removed)
+    // |       +-- Cargo.toml
+    // ```
+    // In this case, we want to remove `subpackage` project and leave only `root-project`.
+    // Note that we want to remove it ONLY if `subpackage` is a workspace member of `root-project`.
+    // Cargo requires that a workspace root is always an ancestor of its members in file hierarchy,
+    // so here we iterate ancestor directories of each cargo project root and removing the project if
+    // there is a project that includes this one as a workspace package
+    for (project in projects) {
+        val projectRootPath = project.manifest.parent
+        for (ancestorPath in generateSequence(projectRootPath.parent) { it.parent }) {
+            val ancestorProjectPackageRoots = projectRootToWorkspacePackages[ancestorPath]
+            if (ancestorProjectPackageRoots != null && projectRootPath in ancestorProjectPackageRoots) {
+                projectsToRemove += project
+            }
+        }
+    }
+
+    return projects.filter { it !in projectsToRemove }
 }
 
 private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<RustcInfo> {
