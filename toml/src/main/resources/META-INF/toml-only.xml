@@ -44,6 +44,13 @@
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"/>
+        <localInspection language="TOML"
+                         displayName="New crate version available"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"/>
 
         <intentionAction>
             <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
