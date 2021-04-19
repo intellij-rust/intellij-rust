@@ -14,11 +14,12 @@ jobs:
         runs-on: ubuntu-18.04
         steps:
             - name: Cancel Previous Runs
-              uses: styfle/cancel-workflow-action@0.4.1
+              uses: styfle/cancel-workflow-action@0.9.0
               with:
                   access_token: ${{ github.token }}
 
     check-license:
+        needs: [ cancel-previous ]
         runs-on: ubuntu-18.04
         steps:
             - uses: actions/checkout@v2
@@ -27,6 +28,7 @@ jobs:
               run: ./check-license.sh
 
     build-native-code:
+        needs: [ cancel-previous ]
         strategy:
             fail-fast: true
             matrix:
@@ -83,7 +85,7 @@ jobs:
                   path: ${{ matrix.config.artifact_path }}
 
     check-plugin:
-        needs: [ build-native-code ]
+        needs: [ cancel-previous, build-native-code ]
         strategy:
             fail-fast: false
             matrix:
