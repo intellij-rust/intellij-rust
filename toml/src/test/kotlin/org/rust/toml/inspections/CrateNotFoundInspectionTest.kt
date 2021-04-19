@@ -5,15 +5,9 @@
 
 package org.rust.toml.inspections
 
-import org.intellij.lang.annotations.Language
-import org.rust.cargo.CargoConstants.MANIFEST_FILE
-import org.rust.ide.experiments.RsExperiments
-import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.toml.crates.local.CargoRegistryCrate
-import org.rust.toml.crates.local.withMockedCrates
 
-class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspection::class) {
+class CrateNotFoundInspectionTest : CargoTomlCrateInspectionTestBase(CrateNotFoundInspection::class) {
     fun `test missing crate in dependencies`() = doTest("""
         [dependencies]
         <warning descr="Crate foo not found">foo</warning> = "1"
@@ -77,13 +71,21 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
         registry = "foo"
     """)
 
-    private fun doTest(@Language("TOML") code: String, vararg crates: Pair<String, CargoRegistryCrate>) {
-        myFixture.configureByText(MANIFEST_FILE, code)
+    fun `test renamed package inline`() = doTest("""
+        [dependencies]
+        foo1 = { version = "1", package = "foo" }
+        foo2 = { version = "1", package = <warning descr="Crate bar not found">"bar"</warning> }
+    """,
+        "foo" to CargoRegistryCrate.of("1"),
+    )
 
-        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
-            withMockedCrates(crates.toMap()) {
-                myFixture.checkHighlighting()
-            }
-        }
-    }
+    fun `test renamed package table`() = doTest("""
+        [dependencies.foo1]
+        package = "foo"
+
+        [dependencies.foo2]
+        package = <warning descr="Crate bar not found">"bar"</warning>
+    """,
+        "foo" to CargoRegistryCrate.of("1"),
+    )
 }

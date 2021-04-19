@@ -6,8 +6,6 @@
 package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
-import org.rust.cargo.CargoConstants
 import org.rust.toml.isFeatureListHeader
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -21,10 +19,8 @@ import org.toml.lang.psi.ext.kind
  *       #^ Shows error that "foo" feature depends on itself
  * ```
  */
-class CargoTomlCyclicFeatureInspection : TomlLocalInspectionToolBase() {
-    override fun buildVisitorInternal(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
-        if (holder.file.name != CargoConstants.MANIFEST_FILE) return null
-
+class CargoTomlCyclicFeatureInspection : CargoTomlInspectionToolBase() {
+    override fun buildCargoTomlVisitor(holder: ProblemsHolder): TomlVisitor {
         return object : TomlVisitor() {
             override fun visitLiteral(element: TomlLiteral) {
                 val parentArray = element.parent as? TomlArray ?: return
