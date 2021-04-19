@@ -39,3 +39,13 @@ def create_milestone(repo: str, token: str, title: str, description: str = "", d
     data = json.dumps(params).encode()
     request = Request(f"https://api.github.com/repos/{repo}/milestones", data, headers, method="POST")
     urlopen(request)
+
+
+def get_check_statuses(repo: str, token: str, ref: str, check_name: str) -> Dict[str, List[Dict]]:
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    request = Request(
+        f"https://api.github.com/repos/{repo}/commits/{ref}/check-runs?check_name={check_name}&status=completed",
+        headers=headers)
+    response = urlopen(request)
+    return json.load(response)
