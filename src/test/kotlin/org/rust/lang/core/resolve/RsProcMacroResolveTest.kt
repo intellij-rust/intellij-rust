@@ -112,19 +112,31 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         struct S;
     """)
 
-    // FIXME
-    fun `test resolve attr proc macro from macro call with full path`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test resolve attr proc macro from macro call with full path`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
             pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
         //- lib.rs
-            use dep_proc_macro
             #[dep_proc_macro::example_proc_macro]
                                 //^ dep-proc-macro/lib.rs
             struct S;
     """)
-    }
+
+    fun `test attr proc macro is not resolved to a declarative macro`() = stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro_attribute]
+            pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        //- lib.rs
+            use dep_proc_macro::example_proc_macro;
+
+            macro_rules! example_proc_macro {
+                () => {};
+            }
+
+            #[example_proc_macro]
+               //^ dep-proc-macro/lib.rs
+            struct S;
+    """)
 
     fun `test resolve custom derive proc macro in use item`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
