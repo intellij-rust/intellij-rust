@@ -115,6 +115,9 @@ jobs:
             ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
+            GRADLE_REMOTE_CACHE_URL: ${{ secrets.GRADLE_REMOTE_CACHE_URL }}
+            GRADLE_REMOTE_CACHE_USERNAME: ${{ secrets.GRADLE_REMOTE_CACHE_USERNAME }}
+            GRADLE_REMOTE_CACHE_PASSWORD: ${{ secrets.GRADLE_REMOTE_CACHE_PASSWORD }}
 
         steps:
             - uses: actions/checkout@v2
