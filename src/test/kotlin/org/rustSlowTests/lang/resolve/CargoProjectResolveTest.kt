@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
@@ -1030,6 +1031,74 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.run {
         checkReferenceIsResolved<RsPath>("build.rs")
+    }
+
+    fun `test change crate name`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [lib]
+            name = "foo1"
+        """)
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    foo2::func();
+                }       //^
+            """)
+            rust("lib.rs", "pub fn func() {}")
+        }
+    }.run {
+        val projectManifest = cargoProjectDirectory.findFileByRelativePath("Cargo.toml")!!
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+        runWriteAction {
+            VfsUtil.saveText(projectManifest, VfsUtil.loadText(projectManifest).replace("foo1", "foo2"))
+        }
+        project.testCargoProjects.refreshAllProjectsSync()
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
+    fun `test change dependency name`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [dependencies]
+            foo1 = { path = "./foo", package = "foo" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    foo2::func();
+                }       //^
+            """)
+        }
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+            """)
+
+            dir("src") {
+                rust("lib.rs", "pub fn func() {}")
+            }
+        }
+    }.run {
+        val projectManifest = cargoProjectDirectory.findFileByRelativePath("Cargo.toml")!!
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+        runWriteAction {
+            val textOld = """foo1 = { path = "./foo", package = "foo" }"""
+            val textNew = """foo2 = { path = "./foo", package = "foo" }"""
+            VfsUtil.saveText(projectManifest, VfsUtil.loadText(projectManifest).replace(textOld, textNew))
+        }
+        project.testCargoProjects.refreshAllProjectsSync()
+        checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
     private fun excludeDirectoryFromIndex(path: String) {

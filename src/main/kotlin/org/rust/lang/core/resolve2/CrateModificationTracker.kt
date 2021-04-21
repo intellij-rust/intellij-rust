@@ -23,6 +23,7 @@ import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.mapNotNullToSet
+import org.rust.stdext.mapToSet
 
 /**
  * Calculates new value of [DefMapHolder.shouldRebuild] field.
@@ -89,6 +90,7 @@ data class CrateMetaData(
     val env: Map<String, String>,
     // TODO: Probably we need to store modificationStamp of DefMap for each dependency
     private val dependencies: Set<CratePersistentId>,
+    private val dependenciesNames: Set<String>,
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
 ) {
     constructor(crate: Crate) : this(
@@ -97,6 +99,7 @@ data class CrateMetaData(
         cfgOptions = crate.cfgOptions,
         env = crate.env,
         dependencies = crate.flatDependencies.mapNotNullToSet { it.id },
+        dependenciesNames = crate.dependencies.mapToSet { it.normName },
         procMacroArtifact = crate.procMacroArtifact
     )
 }
