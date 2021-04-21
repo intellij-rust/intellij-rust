@@ -795,11 +795,11 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
     return simple.any { processor(it) }
 }
 
-fun processAttributeProcMacroResolveVariants(path: RsPath, originalProcessor: RsResolveProcessor): Boolean {
+fun processProcMacroResolveVariants(path: RsPath, originalProcessor: RsResolveProcessor): Boolean {
     val qualifier = path.qualifier
 
     val processor = createProcessor(originalProcessor.name) {
-        if (it.element !is RsMacro) {
+        if (it.element !is RsMacroDefinitionBase) {
             originalProcessor(it)
         } else {
             false

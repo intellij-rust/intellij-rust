@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.completion.RsMacroCompletionProvider
@@ -478,9 +479,11 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
         .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
     if (legacyMacros.isNotEmpty()) return legacyMacros.singlePublicOrFirst()
 
-    items.named[name]
-        ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
-        ?.let { return it as RsMacro2 }
+    if (name !in KNOWN_DERIVABLE_TRAITS || containingMod.containingCrate?.origin != PackageOrigin.STDLIB) {
+        items.named[name]
+            ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
+            ?.let { return it as RsMacro2 }
+    }
 
     return items.named.values
         .flatten()

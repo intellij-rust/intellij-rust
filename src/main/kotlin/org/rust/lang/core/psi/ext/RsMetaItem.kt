@@ -12,6 +12,7 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsMetaItemStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 
@@ -33,6 +34,7 @@ val RsMetaItem.id: String?
         ?.map { it.referenceName ?: return null }
         ?.joinToString("::")
 
+/** Works only for [KNOWN_DERIVABLE_TRAITS] */
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
     path?.reference?.multiResolve()?.filterIsInstance<RsTraitItem>()?.singleOrNull()
 
