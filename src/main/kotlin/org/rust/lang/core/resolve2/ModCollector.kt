@@ -404,8 +404,7 @@ private class ModCollector(
             val parentDirectory = if (modData.isRsFile) {
                 // For path attributes on modules not inside inline module blocks,
                 // the file path is relative to the directory the source file is located.
-                val containingFile = modData.asVirtualFile() ?: return null
-                containingFile.parent
+                includeMacroParent ?: modData.asVirtualFile()?.parent ?: return null
             } else {
                 // Paths for path attributes inside inline module blocks are relative to
                 // the directory of file including the inline module components as directories.
@@ -496,6 +495,5 @@ private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String
 
     // Don't use `FileUtil#getNameWithoutExtension` to correctly process relative paths like `./foo`
     val directoryPath = FileUtil.toSystemIndependentName(path).removeSuffix(".${RsFileType.defaultExtension}")
-    val p = parentDirectory.findFileByMaybeRelativePath(directoryPath)
-    return p
+    return parentDirectory.findFileByMaybeRelativePath(directoryPath)
 }
