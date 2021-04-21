@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDirectory
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.isExpandedFromIncludeMacro
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
@@ -54,7 +55,7 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
 
         val explicitPath = pathAttribute
         val superMod = `super`
-        val superModDir = { superMod?.getOwnedDirectory(createIfNotExists) }
+        val superModDir = { if (this is RsFile && declaration?.isExpandedFromIncludeMacro == true) contextualFile.originalFile.parent else superMod?.getOwnedDirectory(createIfNotExists) }
         val (parentDirectory, path) = if (explicitPath != null) {
             when {
                 this is RsFile -> return contextualFile.originalFile.parent

@@ -17,6 +17,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.RangeMap
+import org.rust.lang.core.macros.includedFrom
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -54,7 +55,7 @@ fun collectFileAndCalculateHash(
     modData: ModData,
     modMacroIndex: MacroIndex,
     context: ModCollectorContext,
-    includeMacroParent: VirtualFile?,
+    includeMacroParent: VirtualFile? = null,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
     val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null, includeMacroParent)
@@ -70,7 +71,7 @@ fun collectExpandedElements(
     context: ModCollectorContext,
     dollarCrateHelper: DollarCrateHelper?
 ) {
-    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper, includeMacroParent = null)
+    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper)
     collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
@@ -88,7 +89,7 @@ private class ModCollector(
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
     private val dollarCrateHelper: DollarCrateHelper?,
-    private val includeMacroParent: VirtualFile?,
+    private val includeMacroParent: VirtualFile? = null,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -245,8 +246,7 @@ private class ModCollector(
                     context,
                     childModData.macroIndex,
                     hashCalculator,
-                    dollarCrateHelper,
-                    includeMacroParent = null
+                    dollarCrateHelper
                 )
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
@@ -255,8 +255,7 @@ private class ModCollector(
                 childMod.file,
                 childModData,
                 childModData.macroIndex,
-                context,
-                includeMacroParent = null
+                context
             )
         }
         return Pair(childModData, childModLegacyMacros)
