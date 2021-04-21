@@ -51,19 +51,24 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
      */
     @JvmDefault
     fun getOwnedDirectory(createIfNotExists: Boolean = false): PsiDirectory? {
-        if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
+        if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return containingFile.originalFile.parent
 
         val explicitPath = pathAttribute
         val superMod = `super`
-        val superModDir = { if (this is RsFile && declaration?.isExpandedFromIncludeMacro == true) contextualFile.originalFile.parent else superMod?.getOwnedDirectory(createIfNotExists) }
+        val parentDir = {
+            if (this is RsFile && declaration?.isExpandedFromIncludeMacro == true || this.isExpandedFromIncludeMacro)
+                containingFile.originalFile.parent
+            else
+                superMod?.getOwnedDirectory(createIfNotExists)
+        }
         val (parentDirectory, path) = if (explicitPath != null) {
             when {
-                this is RsFile -> return contextualFile.originalFile.parent
-                superMod is RsFile -> contextualFile.originalFile.parent to explicitPath
-                else -> superModDir() to explicitPath
+                this is RsFile -> return containingFile.originalFile.parent
+                superMod is RsFile -> containingFile.originalFile.parent to explicitPath
+                else -> parentDir() to explicitPath
             }
         } else {
-            superModDir() to name
+            parentDir() to name
         }
         if (parentDirectory == null || path == null) return null
 
