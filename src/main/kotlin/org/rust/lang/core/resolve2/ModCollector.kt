@@ -53,10 +53,11 @@ fun collectFileAndCalculateHash(
     file: RsFile,
     modData: ModData,
     modMacroIndex: MacroIndex,
-    context: ModCollectorContext
+    context: ModCollectorContext,
+    includeMacroParent: VirtualFile?,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null)
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null, includeMacroParent)
     collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
     val fileHash = hashCalculator.getFileHash()
     context.defMap.addVisitedFile(file, modData, fileHash)
@@ -69,7 +70,7 @@ fun collectExpandedElements(
     context: ModCollectorContext,
     dollarCrateHelper: DollarCrateHelper?
 ) {
-    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper)
+    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper, includeMacroParent = null)
     collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
@@ -87,6 +88,7 @@ private class ModCollector(
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
     private val dollarCrateHelper: DollarCrateHelper?,
+    private val includeMacroParent: VirtualFile?,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -227,7 +229,7 @@ private class ModCollector(
             isEnabledByCfgInner = isEnabledByCfgInner,
             fileId = fileId,
             fileRelativePath = fileRelativePath,
-            ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
+            ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute, includeMacroParent)?.fileId,
             hasPathAttribute = pathAttribute != null,
             hasMacroUse = childMod.hasMacroUse,
             crateDescription = defMap.crateDescription
@@ -243,7 +245,8 @@ private class ModCollector(
                     context,
                     childModData.macroIndex,
                     hashCalculator,
-                    dollarCrateHelper
+                    dollarCrateHelper,
+                    includeMacroParent = null
                 )
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
@@ -252,7 +255,8 @@ private class ModCollector(
                 childMod.file,
                 childModData,
                 childModData.macroIndex,
-                context
+                context,
+                includeMacroParent = null
             )
         }
         return Pair(childModData, childModLegacyMacros)
@@ -393,7 +397,7 @@ private class ModCollector(
     /** See also [processModDeclResolveVariants] */
     private fun resolveModDecl(name: String, pathAttribute: String?): RsFile? {
         val (parentDirectory, fileNames) = if (pathAttribute == null) {
-            val parentDirectory = modData.getOwnedDirectory() ?: return null
+            val parentDirectory =  includeMacroParent ?: modData.getOwnedDirectory() ?: return null
             val fileNames = arrayOf("$name.rs", "$name/mod.rs")
             parentDirectory to fileNames
         } else {
@@ -477,7 +481,7 @@ private sealed class ChildMod(val name: String, val hasMacroUse: Boolean) {
  * Have to pass [pathAttribute], because [RsFile.pathAttribute] triggers resolve.
  * See also: [RsMod.getOwnedDirectory]
  */
-private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String?): VirtualFile? {
+private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String?, includeMacroParent: VirtualFile?): VirtualFile? {
     if (this is ChildMod.File && name == RsConstants.MOD_RS_FILE) return file.virtualFile.parent
 
     val (parentDirectory, path) = if (pathAttribute != null) {
@@ -487,11 +491,12 @@ private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String
             else -> parentMod.getOwnedDirectory() to pathAttribute
         }
     } else {
-        parentMod.getOwnedDirectory() to name
+        (includeMacroParent ?: parentMod.getOwnedDirectory()) to name
     }
     if (parentDirectory == null) return null
 
     // Don't use `FileUtil#getNameWithoutExtension` to correctly process relative paths like `./foo`
     val directoryPath = FileUtil.toSystemIndependentName(path).removeSuffix(".${RsFileType.defaultExtension}")
-    return parentDirectory.findFileByMaybeRelativePath(directoryPath)
+    val p = parentDirectory.findFileByMaybeRelativePath(directoryPath)
+    return p
 }
