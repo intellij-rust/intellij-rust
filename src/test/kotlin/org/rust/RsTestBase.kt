@@ -69,6 +69,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockEdition()
         setupMockCfgOptions()
         setupMockCargoFeatures()
+        setupExperimentalFeatures()
         setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
@@ -138,6 +139,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }.toMap()
 
         testCargoProjects.setCargoFeatures(packageFeatures, testRootDisposable)
+    }
+
+    private fun setupExperimentalFeatures() {
+        for (feature in findAnnotationInstance<WithExperimentalFeatures>()?.features.orEmpty()) {
+            setExperimentalFeatureEnabled(feature, true, testRootDisposable)
+        }
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {
