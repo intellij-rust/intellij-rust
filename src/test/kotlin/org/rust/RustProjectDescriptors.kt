@@ -6,6 +6,7 @@
 package org.rust
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
@@ -29,11 +30,15 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.RsPathManager
+import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
@@ -56,6 +61,11 @@ object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectD
     }
     path
 })
+
+/**
+ * Constructs a project with dependency `testData/test-proc-macros`
+ */
+object WithProcMacroRustProjectDescriptor : WithProcMacros(DefaultDescriptor)
 
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
@@ -126,12 +136,7 @@ open class WithRustup(
         }
 
     override val rustcInfo: RustcInfo?
-        get() {
-            val rustc = toolchain?.rustc() ?: return null
-            val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
-            val rustcVersion = rustc.queryVersion()
-            return RustcInfo(sysroot, rustcVersion)
-        }
+        get() = toolchain?.getRustcInfo()
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val disposable = Disposer.newDisposable("testCargoProject")
@@ -160,6 +165,62 @@ open class WithRustup(
         rustSettings.modifyTemporary(fixture.testRootDisposable) {
             it.toolchain = toolchain
         }
+    }
+}
+
+/** Adds `testData/test-proc-macros` package to dependencies of each package of the project */
+open class WithProcMacros(
+    private val delegate: RustProjectDescriptorBase
+) : RustProjectDescriptorBase() {
+    private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
+
+    private var procMacroPackageIsInitialized: Boolean = false
+    private var procMacroPackage: Package? = null
+
+    override val skipTestReason: String?
+        get() {
+            if (toolchain == null) {
+                return "No toolchain"
+            }
+            if (RsPathManager.nativeHelper() == null && System.getenv("CI") == null) {
+                return "no native-helper executable"
+            }
+            return delegate.skipTestReason
+        }
+
+    override val rustcInfo: RustcInfo?
+        get() = delegate.rustcInfo ?: toolchain?.getRustcInfo()
+
+    private fun getOrFetchMacroPackage(project: Project): Package? = if (procMacroPackageIsInitialized) {
+        procMacroPackage
+    } else {
+        procMacroPackageIsInitialized = true
+        val disposable = Disposer.newDisposable("testCargoProject")
+        try {
+            setExperimentalFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS, true, disposable)
+            val testProcMacroProjectPath = Path.of("testData/$TEST_PROC_MACROS")
+            fullyRefreshDirectoryInUnitTests(LocalFileSystem.getInstance().findFileByNioFile(testProcMacroProjectPath)!!)
+            val testProcMacroProject = toolchain!!.cargo().fullProjectDescription(project, testProcMacroProjectPath)
+            procMacroPackage = testProcMacroProject.packages.find { it.name == TEST_PROC_MACROS }!!
+                .copy(origin = PackageOrigin.DEPENDENCY)
+            procMacroPackage
+        } finally {
+            Disposer.dispose(disposable)
+        }
+    }
+
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val procMacroPackage1 = getOrFetchMacroPackage(module.project)
+        check(procMacroPackage1 != null) { "Proc macro crate is not compiled successfully" }
+        return delegate.testCargoProject(module, contentRoot).withImplicitDependency(procMacroPackage1)
+    }
+
+    override fun setUp(fixture: CodeInsightTestFixture) {
+        delegate.setUp(fixture)
+    }
+
+    companion object {
+        const val TEST_PROC_MACROS: String = "test-proc-macros"
     }
 }
 
@@ -262,4 +323,11 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             )
         ), emptyMap()), CfgOptions.DEFAULT)
     }
+}
+
+private fun RsToolchain.getRustcInfo(): RustcInfo? {
+    val rustc = rustc()
+    val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
+    val rustcVersion = rustc.queryVersion()
+    return RustcInfo(sysroot, rustcVersion)
 }

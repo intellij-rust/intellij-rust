@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isDispatchThread
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
@@ -46,7 +45,6 @@ import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildMessages
-import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
@@ -220,8 +218,9 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     private fun replacePathsSymlinkIfNeeded(
         project: CargoMetadata.Project,
         buildMessages: BuildMessages?,
-        projectDirectory: Path
+        projectDirectoryRel: Path
     ): Pair<CargoMetadata.Project, BuildMessages?> {
+        val projectDirectory = projectDirectoryRel.toAbsolutePath()
         val workspaceRoot = project.workspace_root
 
         if (projectDirectory.toString() == workspaceRoot) {

@@ -1,0 +1,15 @@
+[package]
+name = "test-proc-macros"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+proc-macro = true
+path = "src/lib.rs"
+
+# A binary target is needed in order to make Cargo compile our proc macro as a shared library
+[[bin]]
+path = "src/main.rs"
+name = "placeholder"
+
+[dependencies]
