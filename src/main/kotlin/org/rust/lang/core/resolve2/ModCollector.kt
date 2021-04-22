@@ -485,6 +485,7 @@ private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String
     val (parentDirectory, path) = if (pathAttribute != null) {
         when {
             this is ChildMod.File -> return file.virtualFile.parent
+            includeMacroParent != null -> includeMacroParent to pathAttribute
             parentMod.isRsFile -> parentMod.asVirtualFile()?.parent to pathAttribute
             else -> parentMod.getOwnedDirectory() to pathAttribute
         }

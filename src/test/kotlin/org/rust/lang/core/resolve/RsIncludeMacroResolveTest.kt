@@ -230,7 +230,7 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve function from file attribute module declared in included file`() = checkResolve("""
+    fun `test resolve function from file attribute module declared in included file 1`() = checkResolve("""
     //- lib.rs
         include!("foo/bar.rs");
         fn foobar() {
@@ -240,6 +240,20 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     //- foo/bar.rs
         #[path = "yin.rs"]
         pub mod baz;
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yang();
+        }
+    //- foo/bar.rs
+        #[path = "yin.rs"]
+        pub mod baz;
+               //^ foo/yin.rs
     //- foo/yin.rs
         pub fn yang() {}
     """)
@@ -275,6 +289,73 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
             }
         }
     //- foo/foobaz/bak/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from inner file attribute module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+                         //^ foo/biz/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+                  //^ foo/biz/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+                    //^ foo/biz/yin.rs
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+        }
+    //- foo/bar.rs
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+                    //^ foo/baz/yin.rs
+        }
+    //- foo/baz/yin.rs
         pub fn yang() {}
     """)
 
@@ -328,33 +409,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                    //^ foo/baz/foobar/yin.rs
         }
     //- foo/baz/foobar/yin.rs
-        pub fn yang() {}
-    """)
-
-    fun `test resolve inline file attribute module declared in included file 1`() = checkResolve("""
-    //- lib.rs
-        include!("foo/bar.rs");
-    //- foo/bar.rs
-        mod baz {
-            #[path = "yin.rs"]
-            pub mod foobar;
-                     //^ foo/baz/yin.rs
-        }
-    //- foo/baz/yin.rs
-        pub fn yang() {}
-    """)
-
-    fun `test resolve inline file attribute module declared in included file 2`() = checkResolve("""
-    //- lib.rs
-        include!("foo/bar.rs");
-    //- foo/bar.rs
-        #[path = "biz"]
-        mod baz {
-            #[path = "yin.rs"]
-            pub mod foobar;
-                     //^ foo/biz/yin.rs
-        }
-    //- foo/biz/yin.rs
         pub fn yang() {}
     """)
 

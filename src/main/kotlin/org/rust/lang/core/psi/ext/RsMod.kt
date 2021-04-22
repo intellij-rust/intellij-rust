@@ -54,18 +54,17 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
         if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return containingFile.originalFile.parent
 
         val explicitPath = pathAttribute
-        val superMod = `super`
         val parentDir = {
             if (this is RsFile && declaration?.isExpandedFromIncludeMacro == true || this.isExpandedFromIncludeMacro)
                 containingFile.originalFile.parent
             else
-                superMod?.getOwnedDirectory(createIfNotExists)
+                `super`?.getOwnedDirectory(createIfNotExists)
         }
         val (parentDirectory, path) = if (explicitPath != null) {
-            when {
-                this is RsFile -> return containingFile.originalFile.parent
-                superMod is RsFile -> containingFile.originalFile.parent to explicitPath
-                else -> parentDir() to explicitPath
+            if (this is RsFile) {
+                return containingFile.originalFile.parent
+            } else {
+                parentDir() to explicitPath
             }
         } else {
             parentDir() to name
