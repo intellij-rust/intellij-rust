@@ -135,7 +135,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             "version" -> { /* version is currently experimental */ }
             else -> {
                 val path = item.path ?: return
-                RsDiagnostic.UnknownCfgPredicate(path, itemName).addToHolder(holder, checkExistsAfterExpansion = false)
+                val fixes = NameSuggestionFix.createApplicable(path, itemName, listOf("all", "any", "not"), 1) { name ->
+                    RsPsiFactory(path.project).tryCreatePath(name) ?: error("Cannot create path out of $name")
+                }
+                RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(
+                    holder,
+                    checkExistsAfterExpansion = false
+                )
             }
         }
     }
