@@ -108,9 +108,36 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatTupleStruct(o: RsPatTupleStruct) = checkRsPatTupleStruct(rsHolder, o)
             override fun visitPatTup(o: RsPatTup) = checkRsPatTup(rsHolder, o)
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
+            override fun visitMetaItem(o: RsMetaItem) = checkMetaItem(rsHolder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkMetaItem(holder: RsAnnotationHolder, metaItem: RsMetaItem) {
+        val args = metaItem.metaItemArgs
+        val name = metaItem.name
+        if (metaItem.isRootMetaItem() && args != null && name in listOf("cfg", "cfg_attr")) {
+            val item = args.metaItemList.getOrNull(0) ?: return
+            checkCfgPredicate(holder, item)
+        }
+    }
+
+    private fun checkCfgPredicate(holder: RsAnnotationHolder, item: RsMetaItem) {
+        val itemName = item.name ?: return
+        val args = item.metaItemArgs ?: return
+        when (itemName) {
+            "all", "any" -> args.metaItemList.forEach { checkCfgPredicate(holder, it) }
+            "not" -> {
+                val parameter = args.metaItemList.getOrNull(0) ?: return
+                checkCfgPredicate(holder, parameter)
+            }
+            "version" -> { /* version is currently experimental */ }
+            else -> {
+                val path = item.path ?: return
+                RsDiagnostic.UnknownCfgPredicate(path, itemName).addToHolder(holder, checkCfg = false)
+            }
+        }
     }
 
     private fun checkRsPatTup(holder: RsAnnotationHolder, pattern: RsPatTup) {
