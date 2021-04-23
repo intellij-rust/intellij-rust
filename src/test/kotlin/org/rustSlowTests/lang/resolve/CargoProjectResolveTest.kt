@@ -1101,6 +1101,50 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
+    // we test that there are no exceptions (and not resolve result)
+    fun `test remove crate from workspace`() = buildProject {
+        toml("Cargo.toml", """
+            [workspace]
+            members = [
+                "foo1",
+                "foo2"
+            ]
+        """)
+        dir("foo1") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo1"
+                version = "0.1.0"
+            """)
+            dir("src") {
+                rust("lib.rs", "")
+            }
+        }
+        dir("foo2") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo2"
+                version = "0.1.0"
+            """)
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {
+                        func();
+                    } //^
+                    fn func() {}
+                """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("foo2/src/main.rs")
+        val projectManifest = cargoProjectDirectory.findFileByRelativePath("Cargo.toml")!!
+        runWriteAction {
+            VfsUtil.saveText(projectManifest, VfsUtil.loadText(projectManifest).replace(""""foo2"""", ""))
+        }
+        project.testCargoProjects.refreshAllProjectsSync()
+        checkReferenceIsResolved<RsPath>("foo2/src/main.rs")
+    }
+
     private fun excludeDirectoryFromIndex(path: String) {
         runWriteAction {
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
