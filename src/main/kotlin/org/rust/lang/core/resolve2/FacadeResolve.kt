@@ -59,6 +59,7 @@ fun processItemDeclarations2(
             if (namespace !in ns) continue
             for (visItem in visItems) {
                 if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
+                if (namespace == Namespace.Types && visItem.visibility.isInvisible && name in defMap.externPrelude) continue
                 val visibilityFilter = visItem.visibility.createFilter(project)
                 for (element in visItem.toPsi(defMap, project, namespace)) {
                     if (!elements.add(element)) continue
@@ -81,7 +82,7 @@ fun processItemDeclarations2(
     if (ipm.withExternCrates && Namespace.Types in ns) {
         for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
             val existingItemInScope = modData.visibleItems[name]
-            if (existingItemInScope != null && existingItemInScope.types.isNotEmpty()) continue
+            if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
             val externCrateRoot = externCrateDefMap.root.toRsMod(project)
                 // crate root can't multiresolve
