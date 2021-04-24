@@ -66,6 +66,7 @@
         <lang.syntaxHighlighter language="Rust"
                                 implementationClass="org.rust.ide.highlight.RsHighlighter"/>
         <highlightUsagesHandlerFactory implementation="org.rust.ide.highlight.RsHighlightExitPointsHandlerFactory"/>
+        <highlightUsagesHandlerFactory implementation="org.rust.ide.highlight.RsHighlightAwaitHandlerFactory"/>
 
         <!-- Formatter -->
 
