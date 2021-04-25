@@ -38,7 +38,6 @@ import org.rust.ide.annotator.createAnnotationsForFile
 import org.rust.ide.annotator.createDisposableOnAnyPsiChange
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.stdext.buildList
 import java.util.*
 
@@ -89,7 +88,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
             }
             val futures = cargoProjects.map {
                 ApplicationManager.getApplication().executeOnPooledThread<RsExternalLinterResult?> {
-                    checkProjectLazily(it, project)?.value
+                    checkProjectLazily(it, disposable)?.value
                 }
             }
             val annotationResults = futures.mapNotNull { it.get() }
