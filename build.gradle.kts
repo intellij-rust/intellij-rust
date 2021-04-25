@@ -79,6 +79,13 @@ allprojects {
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
+    configurations {
+        all {
+            // Allows using project dependencies instead of IDE dependencies during compilation and test running
+            resolutionStrategy.sortArtifacts(ResolutionStrategy.SortOrder.DEPENDENCY_FIRST)
+        }
+    }
+
     idea {
         module {
             generatedSourceDirs.add(file("src/gen"))
@@ -357,22 +364,6 @@ project(":") {
                 generateRustLexer, generateRustDocHighlightingLexer,
                 generateRustParser
             )
-
-            doFirst {
-                // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
-                // that conflicts with the corresponding project dependency
-                // TODO: find out a better way to avoid wrong dependency during compilation
-                classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
-            }
-        }
-
-        withType<Test> {
-            doFirst {
-                // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
-                // that conflicts with the corresponding project dependency
-                // TODO: find out a better way to avoid wrong dependency during test execution
-                classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
-            }
         }
 
         // In tests `resources` directory is used instead of `sandbox`
