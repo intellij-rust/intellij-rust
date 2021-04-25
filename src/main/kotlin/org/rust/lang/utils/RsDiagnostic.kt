@@ -930,7 +930,7 @@ sealed class RsDiagnostic(
         private val crateName: String
     ) : RsDiagnostic(startElement) {
         override fun prepare() = PreparedAnnotation(
-            ERROR,
+            UNKNOWN_SYMBOL,
             E0463,
             errorText()
         )
