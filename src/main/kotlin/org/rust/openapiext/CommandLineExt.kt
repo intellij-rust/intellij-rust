@@ -56,7 +56,10 @@ fun GeneralCommandLine.execute(
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
         // https://github.com/rust-lang/cargo/issues/3566
-        handler.destroyProcess()
+        if (!handler.isProcessTerminated) {
+            handler.process.destroyForcibly() // Send SIGKILL
+            handler.destroyProcess()
+        }
     }
 
     val alreadyDisposed = runReadAction {
