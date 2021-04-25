@@ -54,6 +54,18 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(x: &str) -> Box<Iterator<Item=&str>> { unimplemented!() }
     """)
 
+    fun `test check struct, enum, trait, alias`() = checkByText("""
+        struct S<'a>;
+        enum E<'a> {}
+        trait T<'a> {}
+        type A<'a> = S<'a>;
+
+        fn foo1<'a>(d: &'a S) -> &'a () { unimplemented!() }
+        fn foo2<'a>(d: &'a E) -> &'a () { unimplemented!() }
+        fn foo3<'a>(d: &'a T) -> &'a () { unimplemented!() }
+        fn foo4<'a>(d: &'a A) -> &'a () { unimplemented!() }
+    """, checkWeakWarn = true)
+
     fun `test two input lifetimes no output lifetimes 1`() = doTest("""
         <weak_warning>fn <caret>foo<'a>(a: &'a str, b: &str)</weak_warning> { unimplemented!() }
     """, """
