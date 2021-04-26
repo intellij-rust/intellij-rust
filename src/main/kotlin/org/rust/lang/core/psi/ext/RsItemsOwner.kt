@@ -129,7 +129,8 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
 class RsCachedItems(
     val namedImports: List<CachedNamedImport>,
     val starImports: List<CachedStarImport>,
-    val macros: List<RsMacro>,
+    /** [RsMacro2] are stored in [named] */
+    val legacyMacros: List<RsMacro>,
     val named: Map<String, List<RsItemElement>>,
     val namedCfgDisabled: Map<String, List<RsItemElement>>,
 ) {

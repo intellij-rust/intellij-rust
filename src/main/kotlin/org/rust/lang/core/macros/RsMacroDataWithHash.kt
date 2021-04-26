@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.DeclMacro2DefInfo
 import org.rust.lang.core.resolve2.DeclMacroDefInfo
 import org.rust.lang.core.resolve2.MacroDefInfo
 import org.rust.lang.core.resolve2.ProcMacroDefInfo
@@ -52,6 +53,7 @@ class RsMacroDataWithHash<T : RsMacroData>(
                 } else {
                     RsMacroDataWithHash(RsDeclMacroData(def.body), def.bodyHash)
                 }
+                is DeclMacro2DefInfo -> null  // TODO
                 is ProcMacroDefInfo -> {
                     val name = def.path.name
                     val procMacroArtifact = def.procMacroArtifact ?: return null

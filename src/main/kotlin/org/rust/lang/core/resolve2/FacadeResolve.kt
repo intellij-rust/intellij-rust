@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.completion.RsMacroCompletionProvider
@@ -474,9 +475,15 @@ private fun VisItem.scopedMacroToPsi(defMap: CrateDefMap, project: Project): RsN
 
 private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
     val items = containingMod.expandedItemsCached
-    val macros = items.macros
+    val legacyMacros = items.legacyMacros
         .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
-    if (macros.isNotEmpty()) return macros.singlePublicOrFirst()
+    if (legacyMacros.isNotEmpty()) return legacyMacros.singlePublicOrFirst()
+
+    if (name !in KNOWN_DERIVABLE_TRAITS || containingMod.containingCrate?.origin != PackageOrigin.STDLIB) {
+        items.named[name]
+            ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
+            ?.let { return it as RsMacro2 }
+    }
 
     return items.named.values
         .flatten()
@@ -488,7 +495,7 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
 
 private fun DeclMacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap): RsMacro? {
     val items = containingMod.expandedItemsCached
-    return items.macros.singleOrNull {
+    return items.legacyMacros.singleOrNull {
         val defIndex = getMacroIndex(it, defMap) ?: return@singleOrNull false
         MacroIndex.equals(defIndex, macroIndex)
     }

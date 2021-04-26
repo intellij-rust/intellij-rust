@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.processAttributeProcMacroResolveVariants
+import org.rust.lang.core.resolve.processProcMacroResolveVariants
 
 class RsAttributeProcMacroReferenceImpl(
     element: RsPath
@@ -18,7 +18,7 @@ class RsAttributeProcMacroReferenceImpl(
     RsPathReference {
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.referenceName) { processAttributeProcMacroResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) { processProcMacroResolveVariants(element, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean =
         element is RsFunction && super.isReferenceTo(element)

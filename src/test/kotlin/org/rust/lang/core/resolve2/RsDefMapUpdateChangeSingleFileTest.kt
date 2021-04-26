@@ -325,6 +325,26 @@ class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
         }
     """)
 
+    fun `test change macro 2 def name`() = doTestChanged("""
+        macro foo() {}
+    """, """
+        macro bar() {}
+    """)
+
+    fun `test change macro 2 def visibility`() = doTestChanged("""
+        macro foo() {}
+    """, """
+        pub macro foo() {}
+    """)
+
+    fun `test swap macro 2 defs`() = doTestNotChanged("""
+        macro foo() {}
+        macro bar() {}
+    """, """
+        macro bar() {}
+        macro foo() {}
+    """)
+
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test add file level cfg attribute`() = doTestChanged("""
     """, """

@@ -67,6 +67,7 @@ class ModCollectorBase private constructor(
 
             is RsMacroCallStub -> collectMacroCall(element, macroIndexInParent)
             is RsMacroStub -> collectMacroDef(element, macroIndexInParent)
+            is RsMacro2Stub -> collectMacro2Def(element)
 
             // Should be after macro stubs (they are [RsNamedStub])
             is RsNamedStub -> collectItem(element, macroIndexInParent)
@@ -175,6 +176,16 @@ class ModCollectorBase private constructor(
         visitor.collectMacroDef(defLight)
     }
 
+    private fun collectMacro2Def(def: RsMacro2Stub) {
+        val isDefDeeplyEnabledByCfg = isDeeplyEnabledByCfg && def.isEnabledByCfgSelf(crate)
+        if (!isDefDeeplyEnabledByCfg) return
+        val defLight = Macro2DefLight(
+            name = def.name ?: return,
+            visibility = VisibilityLight.from(def),
+        )
+        visitor.collectMacro2Def(defLight)
+    }
+
     private val RsExternCrateItemStub.hasMacroUse: Boolean
         get() = EXTERN_CRATE_HAS_MACRO_USE_PROP.getByStub(this, crate)
 
@@ -215,6 +226,7 @@ interface ModVisitor {
     fun collectImport(import: ImportLight)
     fun collectMacroCall(call: MacroCallLight, stub: RsMacroCallStub)
     fun collectMacroDef(def: MacroDefLight)
+    fun collectMacro2Def(def: Macro2DefLight)
     fun afterCollectMod() {}
 }
 
@@ -240,6 +252,11 @@ class CompositeModVisitor(
     override fun collectMacroDef(def: MacroDefLight) {
         visitor1.collectMacroDef(def)
         visitor2.collectMacroDef(def)
+    }
+
+    override fun collectMacro2Def(def: Macro2DefLight) {
+        visitor1.collectMacro2Def(def)
+        visitor2.collectMacro2Def(def)
     }
 
     override fun afterCollectMod() {
@@ -421,6 +438,17 @@ data class MacroDefLight(
         private val HAS_MACRO_EXPORT_MASK: Int = nextBitMask()
         private val HAS_LOCAL_INNER_MACROS_MASK: Int = nextBitMask()
         private val HAS_RUSTC_BUILTIN_MACRO_MASK: Int = nextBitMask()
+    }
+}
+
+data class Macro2DefLight(
+    val name: String,
+    val visibility: VisibilityLight,
+) : Writeable {
+
+    override fun writeTo(data: DataOutput) {
+        IOUtil.writeUTF(data, name)
+        visibility.writeTo(data)
     }
 }
 
