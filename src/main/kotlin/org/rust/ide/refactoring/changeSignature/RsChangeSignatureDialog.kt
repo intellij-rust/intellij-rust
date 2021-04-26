@@ -49,7 +49,7 @@ fun showChangeFunctionSignatureDialog(
     if (isUnitTestMode) {
         val mock = MOCK ?: error("You should set mock UI via `withMockChangeFunctionSignature`")
         mock(config)
-        RsChangeSignatureProcessor(project, config.createChangeInfo()).run()
+        runChangeSignatureRefactoring(config)
     } else {
         ChangeSignatureDialog(project, SignatureDescriptor(config)).show()
     }

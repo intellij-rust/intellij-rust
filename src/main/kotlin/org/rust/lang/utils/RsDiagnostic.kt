@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
@@ -543,13 +544,15 @@ sealed class RsDiagnostic(
         private val expectedCount: Int,
         private val realCount: Int,
         private val functionType: FunctionType = FunctionType.FUNCTION,
-        private val fixes: List<LocalQuickFix> = emptyList()
+        private val fixes: List<LocalQuickFix> = emptyList(),
+        private val textAttributes: TextAttributesKey? = null
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             functionType.errorCode,
             errorText(),
-            fixes = fixes
+            fixes = fixes,
+            textAttributes = textAttributes
         )
 
         private fun errorText(): String {
@@ -1414,7 +1417,8 @@ class PreparedAnnotation(
     val errorCode: RsErrorCode?,
     val header: String,
     val description: String = "",
-    val fixes: List<LocalQuickFix> = emptyList()
+    val fixes: List<LocalQuickFix> = emptyList(),
+    val textAttributes: TextAttributesKey? = null
 )
 
 fun RsDiagnostic.addToHolder(holder: RsAnnotationHolder, checkExistsAfterExpansion: Boolean = true) {
@@ -1441,6 +1445,10 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
         .tooltip(prepared.fullDescription)
         .range(textRange)
         .highlightType(prepared.severity.toProblemHighlightType())
+
+    if (prepared.textAttributes != null) {
+        annotationBuilder.textAttributes(prepared.textAttributes)
+    }
 
     for (fix in prepared.fixes) {
         if (fix is IntentionAction) {

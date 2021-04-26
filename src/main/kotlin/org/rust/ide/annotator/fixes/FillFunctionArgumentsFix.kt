@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.rust.ide.annotator.expectedParamsCount
+import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
@@ -37,8 +37,8 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
 
         val parameters = getParameterTypes(parent) ?: return
         val requiredParameterCount = when (parent) {
-            is RsCallExpr -> parent.expectedParamsCount()?.first
-            is RsMethodCall -> parent.expectedParamsCount()?.first
+            is RsCallExpr -> parent.getFunctionCallContext()?.expectedParameterCount
+            is RsMethodCall -> parent.getFunctionCallContext()?.expectedParameterCount
             else -> null
         } ?: return
 

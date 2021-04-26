@@ -28,3 +28,7 @@ class RsChangeSignatureProcessor(project: Project, changeInfo: ChangeInfo) : Cha
         return showConflicts(conflicts, refUsages.get())
     }
 }
+
+fun runChangeSignatureRefactoring(config: RsChangeFunctionSignatureConfig) {
+    RsChangeSignatureProcessor(config.function.project, config.createChangeInfo()).run()
+}

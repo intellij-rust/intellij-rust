@@ -10,11 +10,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.deleteWithSurroundingComma
+import org.rust.lang.core.psi.RsValueArgumentList
+import org.rust.lang.core.psi.ext.deleteWithSurroundingCommaAndWhitespace
 
-class RemoveFunctionArgumentFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-    override fun getText(): String = "Remove argument"
+class RemoveRedundantFunctionArgumentsFix(
+    element: RsValueArgumentList,
+    private val expectedCount: Int
+) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+    override fun getText(): String = "Remove redundant arguments"
     override fun getFamilyName(): String = text
     override fun invoke(
         project: Project,
@@ -23,7 +26,10 @@ class RemoveFunctionArgumentFix(element: RsElement) : LocalQuickFixAndIntentionA
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val element = startElement as? RsElement ?: return
-        element.deleteWithSurroundingComma()
+        val args = startElement as? RsValueArgumentList ?: return
+        val extraArgs = args.exprList.drop(expectedCount)
+        for (arg in extraArgs) {
+            arg.deleteWithSurroundingCommaAndWhitespace()
+        }
     }
 }
