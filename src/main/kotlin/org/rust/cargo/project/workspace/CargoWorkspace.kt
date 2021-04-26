@@ -58,6 +58,9 @@ interface CargoWorkspace {
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == STDLIB }
 
     @TestOnly
+    fun withImplicitDependency(pkgToAdd: CargoWorkspaceData.Package): CargoWorkspace
+
+    @TestOnly
     fun withEdition(edition: Edition): CargoWorkspace
 
     @TestOnly
@@ -457,6 +460,44 @@ private class WorkspaceImpl(
                 }
             }
         }
+    }
+
+    @TestOnly
+    override fun withImplicitDependency(pkgToAdd: CargoWorkspaceData.Package): CargoWorkspace {
+        val newPackagesData = packages.map { it.asPackageData() } + listOf(pkgToAdd)
+
+        val result = WorkspaceImpl(
+            manifestPath,
+            workspaceRootPath,
+            newPackagesData,
+            cfgOptions,
+            featuresState
+        )
+
+        run {
+            @Suppress("DuplicatedCode")
+            val oldIdToPackage = packages.associateBy { it.id }
+            val newIdToPackage = result.packages.associateBy { it.id }
+            val stdlibDependencies = result.packages.filter { it.origin == STDLIB }
+                .map { DependencyImpl(it, depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Stdlib))) }
+            val pkgToAddDependency = DependencyImpl(
+                result.packages.find { it.id == pkgToAdd.id }!!,
+                depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Stdlib))
+            )
+            newIdToPackage.forEach { (id, pkg) ->
+                if (id == pkgToAdd.id) {
+                    pkg.dependencies.addAll(stdlibDependencies)
+                } else {
+                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { dep ->
+                        val dependencyPackage = newIdToPackage[dep.pkg.id] ?: return@mapNotNull null
+                        dep.withPackage(dependencyPackage)
+                    })
+                    pkg.dependencies.add(pkgToAddDependency)
+                }
+            }
+        }
+
+        return result
     }
 
     @TestOnly

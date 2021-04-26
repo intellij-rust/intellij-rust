@@ -15,7 +15,9 @@ import kotlin.reflect.KClass
  *
  * Example values:
  * - [WithStdlibRustProjectDescriptor]
+ * - [WithDependencyRustProjectDescriptor]
  * - [WithStdlibAndDependencyRustProjectDescriptor]
+ * - [WithProcMacroRustProjectDescriptor]
  *
  * @see RsTestBase.getProjectDescriptor
  */

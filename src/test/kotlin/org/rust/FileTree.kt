@@ -220,6 +220,7 @@ class TestProject(
         }
     }
 
+    @Suppress("unused")
     fun checkResolveInAllFiles() {
         for (path in filesWithCaret) {
             val file = file(path).toPsiFile(project)!!
