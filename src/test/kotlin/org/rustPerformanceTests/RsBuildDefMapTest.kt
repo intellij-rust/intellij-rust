@@ -8,11 +8,9 @@ package org.rustPerformanceTests
 import com.intellij.openapi.util.Disposer
 import com.sun.management.HotSpotDiagnosticMXBean
 import org.rust.UseNewResolve
-import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.lang.core.resolve2.defMapService
-import org.rust.lang.core.resolve2.getOrUpdateIfNeeded
+import org.rust.lang.core.resolve2.getAllDefMaps
 import java.lang.management.ManagementFactory
 
 private const val DUMP_HEAP: Boolean = false
@@ -37,10 +35,7 @@ class RsBuildDefMapTest : RsRealProjectTestBase() {
         try {
             openRealProject(info)
 
-            val defMaps = project.crateGraph.topSortedCrates.mapNotNull {
-                val id = it.id ?: return@mapNotNull null
-                project.defMapService.getOrUpdateIfNeeded(id)
-            }
+            val defMaps = project.getAllDefMaps()
             if (DUMP_HEAP) {
                 dumpHeap(info.name)
             }
