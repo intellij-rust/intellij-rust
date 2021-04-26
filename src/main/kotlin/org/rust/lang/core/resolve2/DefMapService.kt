@@ -66,7 +66,7 @@ class DefMapHolder(private val structureModificationTracker: ModificationTracker
     }
 
     fun checkHasLatestStamp() {
-        if (!hasLatestStamp()) {
+        if (defMap != null && !hasLatestStamp()) {
             RESOLVE_LOG.error(
                 "DefMapHolder must have latest stamp right after DefMap($defMap) was updated. " +
                     "$defMapStamp vs ${structureModificationTracker.modificationCount}"
@@ -186,6 +186,8 @@ class DefMapService(val project: Project) : Disposable {
     fun getDefMapHolder(crate: CratePersistentId): DefMapHolder {
         return defMaps.computeIfAbsent(crate) { DefMapHolder(structureModificationTracker) }
     }
+
+    fun hasDefMapFor(crate: CratePersistentId): Boolean = defMaps[crate] != null
 
     fun setDefMap(crate: CratePersistentId, defMap: CrateDefMap?) {
         updateFilesMaps(crate, defMap)

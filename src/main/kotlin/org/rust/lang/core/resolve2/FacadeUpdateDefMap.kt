@@ -46,7 +46,9 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
             val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
             // TODO: Invoke outside of read action ?
             DefMapUpdater(crate, this, pool, indicator, multithread = true).run()
-            if (holder.defMap != null) holder.checkHasLatestStamp()
+            if (hasDefMapFor(crate)) {
+                holder.checkHasLatestStamp()
+            }
             holder.defMap
         } finally {
             pool.shutdown()
@@ -157,16 +159,13 @@ private class DefMapUpdater(
 
     private fun doRun() {
         check(defMapService.project.isNewResolveEnabled)
-        if (crates.isEmpty()) return
         indicator.checkCanceled()
 
         val cratesToCheck = findCratesToCheck()
-        if (cratesToCheck.isEmpty()) return
-
         val cratesToUpdate = findCratesToUpdate(cratesToCheck)
-        if (cratesToUpdate.isEmpty()) return
 
         defMapService.removeStaleDefMaps(topSortedCrates)
+        if (cratesToUpdate.isEmpty()) return
 
         val cratesToUpdateAll = getCratesToUpdateWithReversedDependencies(cratesToUpdate)
         val builtDefMaps = getBuiltDefMaps(cratesToUpdateAll)
