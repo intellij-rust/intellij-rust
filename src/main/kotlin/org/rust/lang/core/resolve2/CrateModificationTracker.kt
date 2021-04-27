@@ -62,7 +62,7 @@ private fun CrateDefMap.getAllChangedFiles(project: Project, ignoredFiles: Set<R
             ?: return null  // file was deleted - should rebuilt DefMap
         file.takeIf {
             it !in ignoredFiles
-                && it.modificationStampForResolve == fileInfo.modificationStamp
+                && it.modificationStampForResolve != fileInfo.modificationStamp
         }
     }
 }

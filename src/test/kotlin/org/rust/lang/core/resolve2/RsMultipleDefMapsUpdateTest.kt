@@ -22,9 +22,7 @@ class RsMultipleDefMapsUpdateTest : RsTestBase() {
     override fun setUp() {
         super.setUp()
         fileTreeFromText(codeAllCrates).create()
-        for (crate in project.crateGraph.topSortedCrates) {
-            project.defMapService.getOrUpdateIfNeeded(crate.id ?: continue)
-        }
+        project.getAllDefMaps()
     }
 
     private fun modifyCrates(vararg crates: CrateInfo) {

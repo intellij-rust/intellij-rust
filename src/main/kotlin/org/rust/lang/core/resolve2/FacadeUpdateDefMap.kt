@@ -110,6 +110,11 @@ fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
     doUpdateDefMapForAllCrates(this, SameThreadExecutor(), EmptyProgressIndicator(), multithread = false, crateId)
 }
 
+fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapNotNull {
+    val id = it.id ?: return@mapNotNull null
+    defMapService.getOrUpdateIfNeeded(id)
+}
+
 private class DefMapUpdater(
     /**
      * If null, DefMap is updated for all crates.
