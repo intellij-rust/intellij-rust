@@ -111,6 +111,7 @@ fun processMacros(
      * null if path is qualified.
      */
     macroPath: PsiElement?,
+    isAttrOrDerive: Boolean,
     runBeforeResolve: (() -> Boolean)? = null
 ): Boolean? {
     val (project, defMap, modData) = when (val info = getModInfo(scope)) {
@@ -120,12 +121,13 @@ fun processMacros(
     }
     if (runBeforeResolve != null && runBeforeResolve()) return true
 
-    return modData.processMacros(macroPath, processor, defMap, project)
+    return modData.processMacros(macroPath, isAttrOrDerive, processor, defMap, project)
 }
 
 private fun ModData.processMacros(
     /** null if path is qualified */
     macroPath: PsiElement?,
+    isAttrOrDerive: Boolean,
     processor: RsResolveProcessor,
     defMap: CrateDefMap,
     project: Project,
@@ -135,7 +137,11 @@ private fun ModData.processMacros(
         check(macroPath != null)
         val macroIndex = getMacroIndex(macroPath, defMap)
         for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
-            val macroInfo = filterMacrosByIndex(macroInfos, macroIndex) ?: continue
+            val macroInfo = if (!isAttrOrDerive) {
+                filterMacrosByIndex(macroInfos, macroIndex)
+            } else {
+                macroInfos.lastOrNull { it is ProcMacroDefInfo }
+            } ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             if (visibleItems[name]?.macros?.any { it.path == visItem.path } == true) {
                 // macros will be handled in [visibleItems] loop
@@ -159,7 +165,7 @@ private fun ModData.processMacros(
     return false
 }
 
-private fun filterMacrosByIndex(macroInfos: List<DeclMacroDefInfo>, macroIndex: MacroIndex?): DeclMacroDefInfo? =
+private fun filterMacrosByIndex(macroInfos: List<MacroDefInfo>, macroIndex: MacroIndex?): MacroDefInfo? =
     when {
         macroIndex != null -> macroInfos.getLastBefore(macroIndex)
         else -> macroInfos.last()  // this is kind of error, can choose anything here
@@ -214,6 +220,7 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
         val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
         defMap.root.processMacros(
             macroPath = null,  // null because we resolve qualified macro path
+            isAttrOrDerive = false,
             processor = processor,
             defMap = defMap,
             project = project
@@ -254,6 +261,13 @@ fun RsMetaItem.resolveToProcMacroWithoutPsi(): ProcMacroDefInfo? {
         is RsModInfo -> {
             val (_, defMap, modData) = info
             val macroPath = path?.pathSegmentsAdjustedForAttrMacro?.toTypedArray() ?: return null
+            if (macroPath.size == 1) {
+                val name = macroPath.single()
+                modData.legacyMacros[name]
+                    ?.filterIsInstance<ProcMacroDefInfo>()
+                    ?.lastOrNull()
+                    ?.let { return it }
+            }
             val perNs = defMap.resolvePathFp(
                 modData,
                 macroPath,
@@ -493,11 +507,14 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
         }
 }
 
-private fun DeclMacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap): RsMacro? {
+private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap): RsElement? {
     val items = containingMod.expandedItemsCached
-    return items.legacyMacros.singleOrNull {
-        val defIndex = getMacroIndex(it, defMap) ?: return@singleOrNull false
-        MacroIndex.equals(defIndex, macroIndex)
+    return when (this) {
+        is DeclMacroDefInfo -> items.legacyMacros.singleOrNull {
+            val defIndex = getMacroIndex(it, defMap) ?: return@singleOrNull false
+            MacroIndex.equals(defIndex, macroIndex)
+        }
+        is ProcMacroDefInfo, is DeclMacro2DefInfo -> items.named[path.name]?.firstOrNull()
     }
     // Note that we can return null, e.g. if old macro engine is enabled and macro definition is itself expanded
 }

@@ -102,8 +102,10 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(
     return getMacroInfo(defItem)
 }
 
-fun List<DeclMacroDefInfo>.getLastBefore(macroIndex: MacroIndex): DeclMacroDefInfo? =
-    filter { it.macroIndex < macroIndex }.maxBy { it.macroIndex }
+fun List<MacroDefInfo>.getLastBefore(macroIndex: MacroIndex): MacroDefInfo? =
+    filter { it !is DeclMacroDefInfo || it.macroIndex < macroIndex }
+        .asReversed()
+        .maxByOrNull { if (it is DeclMacroDefInfo) it.macroIndex else MacroIndex(intArrayOf(0)) }
 
 private fun CrateDefMap.resolveNameInExternPrelude(name: String): PerNs {
     val defMap = externPrelude[name] ?: return PerNs.Empty
@@ -147,8 +149,8 @@ private fun CrateDefMap.resolveNameInModule(modData: ModData, name: String, with
  */
 private fun ModData.getFirstLegacyMacro(name: String): PerNs? {
     val def = legacyMacros[name]?.firstOrNull() ?: return null
-    val visibility = if (def.hasMacroExport) Visibility.Public else visibilityInSelf
-    val visItem = VisItem(path.append(name), visibility)
+    val visibility = if (def is DeclMacroDefInfo && def.hasMacroExport) Visibility.Public else visibilityInSelf
+    val visItem = VisItem(def.path, visibility)
     return PerNs.macros(visItem)
 }
 

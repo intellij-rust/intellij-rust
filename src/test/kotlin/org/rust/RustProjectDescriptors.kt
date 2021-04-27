@@ -291,9 +291,13 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val testProcMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(
+        val testProcMacroArtifact1 = CargoWorkspaceData.ProcMacroArtifact(
             Path.of("/test/proc_macro_artifact"), // The file does not exists
             HashCode.compute("test")
+        )
+        val testProcMacroArtifact2 = CargoWorkspaceData.ProcMacroArtifact(
+            Path.of("/test/proc_macro_artifact2"), // The file does not exists
+            HashCode.compute("test2")
         )
 
         val testPackage = testCargoPackage(contentRoot)
@@ -313,12 +317,14 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         val transLib2 = externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2")
         val depProcMacro = externalPackage(
             "$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO,
-            procMacroArtifact = testProcMacroArtifact
+            procMacroArtifact = testProcMacroArtifact1
         )
+        val depProcMacro2 = externalPackage("$contentRoot/dep-proc-macro-2", "lib.rs", "dep-proc-macro-2", libKind = LibKind.PROC_MACRO,
+            procMacroArtifact = testProcMacroArtifact2)
 
         val packages = listOf(
             testPackage, depLib, depLibNew, depLib2, depLibToBeRenamed,
-            noSrcLib, noSourceLib, transLib, transLib2, depProcMacro
+            noSrcLib, noSourceLib, transLib, transLib2, depProcMacro, depProcMacro2
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
@@ -329,6 +335,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 Dependency(noSrcLib.id),
                 Dependency(noSourceLib.id),
                 Dependency(depProcMacro.id),
+                Dependency(depProcMacro2.id),
             ),
             depLib.id to setOf(
                 Dependency(transLib.id),

@@ -124,7 +124,7 @@ class CrateDefMap(
         }
         val macroInfos = containingMod.legacyMacros[macroDef.name]
             ?: error("Can't find definition for macro $macroDef")
-        return macroInfos.singlePublicOrFirst()
+        return macroInfos.filterIsInstance<DeclMacroDefInfo>().singlePublicOrFirst()
     }
 
     /**
@@ -139,7 +139,7 @@ class CrateDefMap(
             // `macro_use` only bring things into legacy scope.
             for (macroDef in def.macros) {
                 // TODO: DeclMacro2DefInfo
-                val macroInfo = from.getMacroInfo(macroDef) as? DeclMacroDefInfo ?: continue
+                val macroInfo = from.getMacroInfo(macroDef) ?: continue
                 root.addLegacyMacro(name, macroInfo)
             }
         }
@@ -270,7 +270,7 @@ class ModData(
      * Currently stores only cfg-enabled macros.
      */
     // TODO: Custom map? (Profile memory usage)
-    val legacyMacros: THashMap<String, SmartList<DeclMacroDefInfo>> = THashMap()
+    val legacyMacros: THashMap<String, SmartList<MacroDefInfo>> = THashMap()
 
     /** Explicitly declared macros 2.0 (`pub macro $name ...`) */
     val macros2: MutableMap<String, DeclMacro2DefInfo> = THashMap()
@@ -328,7 +328,7 @@ class ModData(
         return current
     }
 
-    fun addLegacyMacro(name: String, defInfo: DeclMacroDefInfo) {
+    fun addLegacyMacro(name: String, defInfo: MacroDefInfo) {
         val existing = legacyMacros.putIfAbsent(name, SmartList(defInfo)) ?: return
         existing += defInfo
     }
