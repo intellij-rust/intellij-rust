@@ -5,39 +5,42 @@
 
 package org.rust
 
-import com.intellij.openapi.Disposable
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import junit.framework.TestCase.assertEquals
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
-import org.rust.lang.core.macros.MACRO_EXPANSION_VFS_ROOT
-import org.rust.lang.core.macros.MacroExpansionFileSystem
-import org.rust.lang.core.macros.findExpansionElements
-import org.rust.lang.core.macros.isExpandedFromMacro
+import org.rust.lang.core.macros.*
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsPossibleMacroCall
+import org.rust.lang.core.psi.ext.resolveToMacroWithoutPsi
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.resolve.ref.RsDeriveTraitReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
-import kotlin.math.min
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.setFeatureEnabled
+import kotlin.math.min
 
 fun <T : PsiElement> findElementsWithDataAndOffsetInEditor(
     file: PsiFile,
@@ -107,6 +110,8 @@ fun PsiElement.checkedResolve(offset: Int, errorMessagePrefix: String = ""): Psi
 
     checkSearchScope(this, resolved)
 
+    checkProcMacroResolve(reference, resolved)
+
     return resolved
 }
 
@@ -116,6 +121,17 @@ private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElemen
     check(resolvedTo.useScope.contains(virtualFile)) {
         "Incorrect `getUseScope` implementation in `${resolvedTo.javaClass.name}`;" +
             "also this can means that `pub` visibility is missed somewhere in the test"
+    }
+}
+
+private fun checkProcMacroResolve(reference: PsiReference, resolved: PsiElement) {
+    if ((reference is RsDeriveTraitReferenceImpl) && reference.element.project.isNewResolveEnabled) {
+        val macroCall = reference.element.parent as RsPossibleMacroCall
+        assertEquals(
+            "different procedural macros resolved using PSI reference and CrateDefMap-based resolution without PSI",
+            RsMacroDataWithHash.fromPsi(resolved as RsNamedElement)?.data,
+            macroCall.resolveToMacroWithoutPsi()?.data
+        )
     }
 }
 

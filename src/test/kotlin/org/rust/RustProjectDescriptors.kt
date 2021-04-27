@@ -36,6 +36,7 @@ import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
+import org.rust.stdext.HashCode
 import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 import java.io.File
 import java.nio.file.Path
@@ -256,7 +257,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         targetName: String = name,
         version: String = "0.0.1",
         origin: PackageOrigin = PackageOrigin.DEPENDENCY,
-        libKind: LibKind = LibKind.LIB
+        libKind: LibKind = LibKind.LIB,
+        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
     ): Package {
         return Package(
             id = "$name $version",
@@ -276,7 +278,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             enabledFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
-            outDirUrl = null
+            outDirUrl = null,
+            procMacroArtifact = procMacroArtifact
         )
     }
 
@@ -288,6 +291,10 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val testProcMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(
+            Path.of("/test/proc_macro_artifact"), // The file does not exists
+            HashCode.compute("test")
+        )
         val packages = listOf(
             testCargoPackage(contentRoot),
             externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target"),
@@ -295,7 +302,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib"),
             externalPackage("$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
                 version = "0.0.2"),
-            externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO),
+            externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO,
+                procMacroArtifact = testProcMacroArtifact),
             externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2"),
             externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2"),
             externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null),
