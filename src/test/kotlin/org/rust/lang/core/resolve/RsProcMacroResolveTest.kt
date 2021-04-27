@@ -158,13 +158,23 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         struct S;
     """)
 
-    fun `test resolve custom derive proc macro from derive attribute with full path`() = stubOnlyResolve("""
+    fun `test resolve custom derive proc macro from derive attribute with full path 1`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_derive(ProcMacroName)]
         pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
     //- lib.rs
         #[derive(dep_proc_macro::ProcMacroName)]
                   //^ dep-proc-macro/lib.rs
+        struct S;
+    """)
+
+    fun `test resolve custom derive proc macro from derive attribute with full path 2`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(ProcMacroName)]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[derive(dep_proc_macro::ProcMacroName)]
+                                //^ dep-proc-macro/lib.rs
         struct S;
     """)
 
