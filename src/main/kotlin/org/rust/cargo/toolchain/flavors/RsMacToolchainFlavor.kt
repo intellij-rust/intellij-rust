@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 object RsMacToolchainFlavor : RsToolchainFlavor() {
     override fun getHomePathCandidates(): List<Path> {
-        val path = "/usr/local/Cellar/rust/bin".toPath()
+        val path = "/opt/homebrew/bin".toPath()
         return if (path.isDirectory()) {
             listOf(path)
         } else {
