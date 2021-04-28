@@ -15,11 +15,10 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
 import org.rust.ide.annotator.fixes.RemoveRedundantParenthesesFix
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve
-import java.util.*
 
 class RsExpressionAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
@@ -63,7 +62,7 @@ class RsExpressionAnnotator : AnnotatorBase() {
             }
         } else {
             if (calculateMissingFields(body, decl).isNotEmpty()) {
-                if (!literal.isEnabledByCfg) return
+                if (!literal.existsAfterExpansion) return
 
                 val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
                 if (structNameRange != null) {

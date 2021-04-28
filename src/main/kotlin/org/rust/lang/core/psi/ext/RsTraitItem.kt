@@ -168,7 +168,7 @@ class TraitImplementationInfo private constructor(
     traitMembers: RsMembers,
     implMembers: RsMembers
 ) {
-    val declared = traitMembers.abstractable().filter { it.isEnabledByCfgSelf }
+    val declared = traitMembers.abstractable().filter { it.existsAfterExpansionSelf }
     private val implemented = implMembers.abstractable()
     private val declaredByName = declared.associateBy { it.name!! }
     private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }

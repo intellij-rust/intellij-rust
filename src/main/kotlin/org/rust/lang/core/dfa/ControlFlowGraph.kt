@@ -6,7 +6,7 @@
 package org.rust.lang.core.dfa
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ScopeTree
@@ -139,10 +139,10 @@ class ControlFlowGraph private constructor(
              */
             fun isUnreachable(unexecuted: RsElement, innerExpr: RsExpr?): Boolean {
                 // Ignore conditionally disabled elements
-                if (!unexecuted.isEnabledByCfg) {
+                if (!unexecuted.existsAfterExpansion) {
                     return false
                 }
-                if (innerExpr != null && !innerExpr.isEnabledByCfg) {
+                if (innerExpr != null && !innerExpr.existsAfterExpansion) {
                     return false
                 }
 

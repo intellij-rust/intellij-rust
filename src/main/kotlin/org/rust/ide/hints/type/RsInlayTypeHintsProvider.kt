@@ -16,7 +16,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -68,7 +68,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (file.project.service<DumbService>().isDumb) return true
                 if (element !is RsElement) return true
-                if (!element.isEnabledByCfg) return true
+                if (!element.existsAfterExpansion) return true
 
                 if (settings.showForVariables) {
                     presentVariable(element)

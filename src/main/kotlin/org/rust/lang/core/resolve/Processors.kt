@@ -95,7 +95,7 @@ fun collectPathResolveVariants(
 
         if (e.name == referenceName) {
             val element = e.element ?: return@createProcessor false
-            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
+            if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 val boundElement = BoundElement(element, e.subst)
                 val visibilityStatus = e.getVisibilityStatusFrom(path)
                 if (visibilityStatus != VisibilityStatus.CfgDisabled) {
@@ -118,7 +118,7 @@ fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Un
 
         if (e.name == referenceName) {
             val element = e.element ?: return@createProcessor false
-            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
+            if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result += element
             }
         }
@@ -142,7 +142,7 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
         if (e.name == referenceName) {
             // de-lazying. See `RsResolveProcessor.lazy`
             val element = e.element ?: return@createProcessorGeneric false
-            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
+            if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result += e
             }
         }
@@ -161,7 +161,7 @@ fun pickFirstResolveEntry(referenceName: String?, f: (RsResolveProcessor) -> Uni
     val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {
             val element = e.element
-            if (element != null && (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf)) {
+            if (element != null && (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf)) {
                 result = e
                 return@createProcessor true
             }
@@ -180,7 +180,7 @@ fun collectCompletionVariants(
     val processor = createProcessor { e ->
         val element = e.element ?: return@createProcessor false
         if (element is RsFunction && element.isTest) return@createProcessor false
-        if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
+        if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
             result.addElement(createLookupElement(
                 scopeEntry = e,
                 context = context

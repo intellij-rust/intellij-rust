@@ -22,8 +22,8 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.ide.utils.isCfgUnknown
-import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.macros.MacroExpansionMode
@@ -135,7 +135,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             "version" -> { /* version is currently experimental */ }
             else -> {
                 val path = item.path ?: return
-                RsDiagnostic.UnknownCfgPredicate(path, itemName).addToHolder(holder, checkCfg = false)
+                RsDiagnostic.UnknownCfgPredicate(path, itemName).addToHolder(holder, checkExistsAfterExpansion = false)
             }
         }
     }
@@ -1363,7 +1363,7 @@ private fun AnnotationSession.duplicatesByNamespace(
                 val name = it.nameOrImportedName()
                 name != null && name != "_"
             }
-            .filter { it.isEnabledByCfg && !it.isCfgUnknown }
+            .filter { it.existsAfterExpansion && !it.isCfgUnknown }
             .flatMap { it.namespaced() }
             .groupBy { it.first }       // Group by namespace
             .map { entry ->

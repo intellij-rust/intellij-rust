@@ -158,7 +158,7 @@ class CFGBuilder(
 
         // Conditionally disabled code should be ignored since it does not affect the execution
         // https://doc.rust-lang.org/reference/expressions.html#expression-attributes
-        if (element is RsOuterAttributeOwner && !element.isEnabledByCfgSelf) {
+        if (element is RsOuterAttributeOwner && !element.existsAfterExpansionSelf) {
             return pred
         }
 

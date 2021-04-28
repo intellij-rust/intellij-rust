@@ -11,7 +11,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 
 class RsAnnotationHolder(val holder: AnnotationHolder) {
 
@@ -42,7 +42,7 @@ class RsAnnotationHolder(val holder: AnnotationHolder) {
         message: String?,
         vararg fixes: IntentionAction
     ): AnnotationBuilder? {
-        if (!element.isEnabledByCfg) return null
+        if (!element.existsAfterExpansion) return null
         val builder = if (message == null) {
             holder.newSilentAnnotation(severity)
         } else {

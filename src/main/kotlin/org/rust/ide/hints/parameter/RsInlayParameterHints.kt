@@ -9,7 +9,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
@@ -31,7 +31,7 @@ object RsInlayParameterHints {
             is RsMethodCall -> (CallInfo.resolve(elem) to elem.valueArgumentList)
             else -> return emptyList()
         }
-        if (!elem.isEnabledByCfg) return emptyList()
+        if (!elem.existsAfterExpansion) return emptyList()
         if (callInfo == null) return emptyList()
 
         val hints = buildList<String> {
