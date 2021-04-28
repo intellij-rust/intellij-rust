@@ -1376,11 +1376,16 @@ sealed class RsDiagnostic(
         )
     }
 
-    class UnknownCfgPredicate(element: PsiElement, private val name: String) : RsDiagnostic(element) {
+    class UnknownCfgPredicate(
+        element: PsiElement,
+        private val name: String,
+        private val fixes: List<LocalQuickFix> = emptyList()
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0537,
-            "Invalid predicate `$name`"
+            "Invalid predicate `$name`",
+            fixes = fixes
         )
     }
 }

@@ -4209,4 +4209,33 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[cfg(version())]
         fn foo() {}
     """)
+
+    fun `test E0537 quick fix any`() = checkFixByText("Change to `any`", """
+        #[cfg(<error descr="Invalid predicate `an` [E0537]">an/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(any(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 quick fix all`() = checkFixByText("Change to `all`", """
+        #[cfg(<error descr="Invalid predicate `allx` [E0537]">allx/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(all(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 quick fix not`() = checkFixByText("Change to `not`", """
+        #[cfg(<error descr="Invalid predicate `noo` [E0537]">noo/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(not(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 no quick fix high distance`() = checkFixIsUnavailable("Change to", """
+        #[cfg(<error descr="Invalid predicate `a` [E0537]">a/*caret*/</error>(foo))]
+        fn foo() {}
+    """)
 }
