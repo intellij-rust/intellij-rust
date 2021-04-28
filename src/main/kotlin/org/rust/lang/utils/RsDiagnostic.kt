@@ -34,8 +34,8 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
-import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.CONST_GENERICS
 import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.MIN_CONST_GENERICS
@@ -1413,8 +1413,8 @@ class PreparedAnnotation(
     val fixes: List<LocalQuickFix> = emptyList()
 )
 
-fun RsDiagnostic.addToHolder(holder: RsAnnotationHolder, checkCfg: Boolean = true) {
-    if (!checkCfg || element.isEnabledByCfg) {
+fun RsDiagnostic.addToHolder(holder: RsAnnotationHolder, checkExistsAfterExpansion: Boolean = true) {
+    if (!checkExistsAfterExpansion || element.existsAfterExpansion) {
         addToHolder(holder.holder)
     }
 }

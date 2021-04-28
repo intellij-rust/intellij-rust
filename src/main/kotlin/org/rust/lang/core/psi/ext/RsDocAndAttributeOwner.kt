@@ -397,6 +397,14 @@ class QueryAttributes<out T: RsMetaItemPsiOrStub>(
 val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
     get() = evaluateCfg() != ThreeValuedLogic.False
 
+/**
+ * TODO at the moment it's equivalent to [isEnabledByCfgSelf]
+ *
+ * Returns `true` if it [isEnabledByCfgSelf] and is not under attribute procedural macro
+ */
+val RsDocAndAttributeOwner.existsAfterExpansionSelf: Boolean
+    get() = isEnabledByCfgSelf
+
 fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
     isEnabledByCfgSelfInner(crate)
 

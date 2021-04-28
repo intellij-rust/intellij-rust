@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.settings.toolchain
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsVisitor
 
@@ -63,7 +63,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
     val isOnTheFly: Boolean get() = holder.isOnTheFly
 
     fun registerProblem(element: PsiElement, descriptionTemplate: String, vararg fixes: LocalQuickFix?) {
-        if (element.isEnabledByCfg) {
+        if (element.existsAfterExpansion) {
             holder.registerProblem(element, descriptionTemplate, *fixes)
         }
     }
@@ -74,19 +74,19 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         highlightType: ProblemHighlightType,
         vararg fixes: LocalQuickFix
     ) {
-        if (element.isEnabledByCfg) {
+        if (element.existsAfterExpansion) {
             holder.registerProblem(element, descriptionTemplate, highlightType, *fixes)
         }
     }
 
     fun registerProblem(problemDescriptor: ProblemDescriptor) {
-        if (problemDescriptor.psiElement.isEnabledByCfg) {
+        if (problemDescriptor.psiElement.existsAfterExpansion) {
             holder.registerProblem(problemDescriptor)
         }
     }
 
     fun registerProblem(element: PsiElement, rangeInElement: TextRange, message: String, vararg fixes: LocalQuickFix?) {
-        if (element.isEnabledByCfg) {
+        if (element.existsAfterExpansion) {
             holder.registerProblem(element, rangeInElement, message, *fixes)
         }
     }
@@ -98,7 +98,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         rangeInElement: TextRange,
         vararg fixes: LocalQuickFix?
     ) {
-        if (element.isEnabledByCfg) {
+        if (element.existsAfterExpansion) {
             holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
         }
     }

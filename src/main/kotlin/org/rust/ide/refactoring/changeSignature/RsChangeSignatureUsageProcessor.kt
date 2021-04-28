@@ -132,7 +132,7 @@ private fun findNameConflicts(
     }
     for (item in items) {
         if (item == function) continue
-        if (!item.isEnabledByCfgSelf) continue
+        if (!item.existsAfterExpansionSelf) continue
 
         val namedItem = item as? RsNamedElement ?: continue
 

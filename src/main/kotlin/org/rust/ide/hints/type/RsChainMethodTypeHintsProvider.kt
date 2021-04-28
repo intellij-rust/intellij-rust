@@ -18,7 +18,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsFile
@@ -77,7 +77,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 if (DumbService.isDumb(element.project)) return true
                 if (element !is RsMethodCall) return true
                 if (!element.isLastInChain) return true
-                if (!element.isEnabledByCfg) return true
+                if (!element.existsAfterExpansion) return true
 
                 val (lookup, iterator) = lookupAndIteratorTrait
 

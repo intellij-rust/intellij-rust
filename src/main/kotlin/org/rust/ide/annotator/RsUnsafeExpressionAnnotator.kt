@@ -12,7 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
-import org.rust.ide.utils.isEnabledByCfg
+import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPointer
@@ -34,7 +34,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
     }
 
     private fun annotateUnsafeCall(expr: RsExpr, holder: RsAnnotationHolder) {
-        if (!expr.isEnabledByCfg) return
+        if (!expr.existsAfterExpansion) return
 
         if (expr.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
             val textRange = when (expr) {

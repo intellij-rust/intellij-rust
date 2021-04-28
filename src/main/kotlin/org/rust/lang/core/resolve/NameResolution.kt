@@ -1090,14 +1090,14 @@ private class MacroResolvingVisitor(
     }
 
     override fun visitModItem(item: RsModItem) {
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.isEnabledByCfgSelf) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.existsAfterExpansionSelf) {
             val elements = visibleMacros(item)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
         }
     }
 
     override fun visitModDeclItem(item: RsModDeclItem) {
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.isEnabledByCfgSelf) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.existsAfterExpansionSelf) {
             val mod = item.reference.resolve() as? RsMod ?: return
             val elements = visibleMacros(mod)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
@@ -1105,7 +1105,7 @@ private class MacroResolvingVisitor(
     }
 
     override fun visitExternCrateItem(item: RsExternCrateItem) {
-        if (!item.isEnabledByCfgSelf) return
+        if (!item.existsAfterExpansionSelf) return
         val mod = item.reference.resolve() as? RsFile ?: return
         if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
             // If extern crate has `#[macro_use]` attribute
@@ -1193,7 +1193,7 @@ private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
 
         val externCrates = scope.stubChildrenOfType<RsExternCrateItem>()
         for (item in externCrates) {
-            if (!item.isEnabledByCfgSelf) continue
+            if (!item.existsAfterExpansionSelf) continue
             val reexportedMacros = reexportedMacros(item)
             if (reexportedMacros != null) {
                 addAll(reexportedMacros.toScopeEntries())
@@ -1259,7 +1259,7 @@ private fun collectMacrosImportedWithUseItem(
     val twoSegmentPaths = collect2segmentPaths(root)
 
     // Check cfg only if there are paths we interested in
-    if (twoSegmentPaths.isEmpty() || !useItem.isEnabledByCfgSelf) return emptyList()
+    if (twoSegmentPaths.isEmpty() || !useItem.existsAfterExpansionSelf) return emptyList()
 
     return buildList {
         for ((crateName, macroName) in twoSegmentPaths) {

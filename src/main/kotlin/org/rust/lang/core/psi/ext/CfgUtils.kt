@@ -14,6 +14,20 @@ import org.rust.lang.utils.evaluation.ThreeValuedLogic
 
 val PsiElement.isEnabledByCfg: Boolean get() = isEnabledByCfgInner(null)
 
+/**
+ * TODO at the moment it's equivalent to [isEnabledByCfg]
+ *
+ * Returns `true` if it [isEnabledByCfg] and not inside an element under attribute procedural macro.
+ *
+ * A one exception is that it returns `true` for attribute macro itself:
+ *
+ * ```
+ * #[a_macro]  // `true` for the attribute
+ * fn foo() {} // `false` for the function
+ * ```
+ */
+val PsiElement.existsAfterExpansion: Boolean get() = isEnabledByCfg
+
 fun PsiElement.isEnabledByCfg(crate: Crate): Boolean = isEnabledByCfgInner(crate)
 
 private fun PsiElement.isEnabledByCfgInner(crate: Crate?): Boolean =

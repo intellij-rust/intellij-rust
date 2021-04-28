@@ -70,7 +70,7 @@ val RsFunction.abiName: String?
  * Should be used in code analysis: name resolution, type inference, inspections, annotations, etc.
  */
 val RsFunction.valueParameters: List<RsValueParameter>
-    get() = rawValueParameters.filter { it.isEnabledByCfgSelf }
+    get() = rawValueParameters.filter { it.existsAfterExpansionSelf }
 
 /**
  * All function parameters.
