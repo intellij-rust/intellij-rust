@@ -36,6 +36,7 @@ import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
+import org.rust.stdext.HashCode
 import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 import java.io.File
 import java.nio.file.Path
@@ -256,7 +257,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         targetName: String = name,
         version: String = "0.0.1",
         origin: PackageOrigin = PackageOrigin.DEPENDENCY,
-        libKind: LibKind = LibKind.LIB
+        libKind: LibKind = LibKind.LIB,
+        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
     ): Package {
         return Package(
             id = "$name $version",
@@ -276,7 +278,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             enabledFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
-            outDirUrl = null
+            outDirUrl = null,
+            procMacroArtifact = procMacroArtifact
         )
     }
 
@@ -288,38 +291,58 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val testProcMacroArtifact1 = CargoWorkspaceData.ProcMacroArtifact(
+            Path.of("/test/proc_macro_artifact"), // The file does not exists
+            HashCode.compute("test")
+        )
+        val testProcMacroArtifact2 = CargoWorkspaceData.ProcMacroArtifact(
+            Path.of("/test/proc_macro_artifact2"), // The file does not exists
+            HashCode.compute("test2")
+        )
+
+        val testPackage = testCargoPackage(contentRoot)
+        val depLib = externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target")
+        val depLibNew = externalPackage(
+            "$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
+            version = "0.0.2"
+        )
+        val depLib2 = externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2")
+        val depLibToBeRenamed = externalPackage(
+            "$contentRoot/dep-lib-to-be-renamed", "lib.rs", "dep-lib-to-be-renamed",
+            "dep-lib-to-be-renamed-target"
+        )
+        val noSrcLib = externalPackage("", null, "nosrc-lib", "nosrc-lib-target")
+        val noSourceLib = externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null)
+        val transLib = externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib")
+        val transLib2 = externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2")
+        val depProcMacro = externalPackage(
+            "$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO,
+            procMacroArtifact = testProcMacroArtifact1
+        )
+        val depProcMacro2 = externalPackage("$contentRoot/dep-proc-macro-2", "lib.rs", "dep-proc-macro-2", libKind = LibKind.PROC_MACRO,
+            procMacroArtifact = testProcMacroArtifact2)
+
         val packages = listOf(
-            testCargoPackage(contentRoot),
-            externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target"),
-            externalPackage("", null, "nosrc-lib", "nosrc-lib-target"),
-            externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib"),
-            externalPackage("$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
-                version = "0.0.2"),
-            externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO),
-            externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2"),
-            externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2"),
-            externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null),
-            externalPackage("$contentRoot/dep-lib-to-be-renamed", "lib.rs", "dep-lib-to-be-renamed-target"),
+            testPackage, depLib, depLibNew, depLib2, depLibToBeRenamed,
+            noSrcLib, noSourceLib, transLib, transLib2, depProcMacro, depProcMacro2
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
-            // Our package depends on dep_lib 0.0.1, nosrc_lib, dep-proc-macro, dep_lib-2 and no-source-lib
-            packages[0].id to setOf(
-                Dependency(packages[1].id),
-                Dependency(packages[2].id),
-                Dependency(packages[5].id),
-                Dependency(packages[6].id),
-                Dependency(packages[8].id),
-                Dependency(packages[9].id, "dep_lib_renamed"),
+            testPackage.id to setOf(
+                Dependency(depLib.id),
+                Dependency(depLib2.id),
+                Dependency(depLibToBeRenamed.id, "dep_lib_renamed"),
+                Dependency(noSrcLib.id),
+                Dependency(noSourceLib.id),
+                Dependency(depProcMacro.id),
+                Dependency(depProcMacro2.id),
             ),
-            // dep_lib 0.0.1 depends on trans-lib and dep_lib 0.0.2
-            packages[1].id to setOf(
-                Dependency(packages[3].id),
-                Dependency(packages[4].id)
+            depLib.id to setOf(
+                Dependency(transLib.id),
+                Dependency(depLibNew.id),
             ),
-            // trans-lib depends on trans-lib-2
-            packages[3].id to setOf(
-                Dependency(packages[7].id)
+            transLib.id to setOf(
+                Dependency(transLib2.id),
             )
         ), emptyMap()), CfgOptions.DEFAULT)
     }

@@ -66,7 +66,7 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
                 val firstSegmentText = leftSiblings[1].unescapedText
                 processMacrosExportedByCrateName(rsElement, firstSegmentText, processor)
             } else {
-                processMacroCallVariantsInScope(position, processor)
+                processMacroCallVariantsInScope(position, isAttrOrDerive = false, processor)
             }
         }
     }

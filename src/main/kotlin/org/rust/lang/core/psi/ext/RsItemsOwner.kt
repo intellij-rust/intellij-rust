@@ -97,6 +97,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                     } else {
                         val name = when (it) {
                             is RsExternCrateItem -> it.nameWithAlias
+                            is RsFunction -> if (it.isProcMacroDef) it.procMacroName else it.name
                             else -> it.name
                         } ?: return@processExpandedItemsInternal false
                         named.getOrPut(name) { SmartList() }.add(it)
