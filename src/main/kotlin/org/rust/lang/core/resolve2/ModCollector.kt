@@ -135,42 +135,50 @@ private class ModCollector(
         }
     }
 
-    override fun collectItem(item: ItemLight, stub: RsNamedStub) {
+    override fun collectSimpleItem(item: SimpleItemLight) {
+        val name = item.name
+
+        val visItem = convertToVisItem(item, isModOrEnum = false, forceCfgDisabledVisibility = false)
+        val perNs = PerNs.from(visItem, item.namespaces)
+        onAddItem(modData, name, perNs, visItem.visibility)
+
+        if (item.procMacroKind != null) {
+            modData.procMacros[name] = item.procMacroKind
+        }
+    }
+
+    override fun collectModOrEnumItem(item: ModOrEnumItemLight, stub: RsNamedStub) {
         val name = item.name
 
         // could be null if `.resolve()` on `RsModDeclItem` returns null
         val childModData = tryCollectChildModule(item, stub, item.macroIndexInParent)
 
         val forceCfgDisabledVisibility = childModData != null && !childModData.isEnabledByCfgInner
-        val visItem = convertToVisItem(item, stub, forceCfgDisabledVisibility)
+        val visItem = convertToVisItem(item, isModOrEnum = true, forceCfgDisabledVisibility)
         childModData?.asVisItem = visItem
-        if (visItem.isModOrEnum && childModData == null) return
-        val perNs = PerNs.from(visItem, item.namespaces)
+        check(visItem.isModOrEnum)
+        if (childModData == null) return
+        val perNs = PerNs.types(visItem)
         val changed = onAddItem(modData, name, perNs, visItem.visibility)
-
-        if (item.procMacroKind != null) {
-            modData.procMacros[name] = item.procMacroKind
-        }
 
         // We have to check `changed` to be sure that `childModules` and `visibleItems` are consistent.
         // Note that here we choose first mod if there are multiple mods with same visibility (e.g. CfgDisabled).
-        if (childModData != null && changed) {
+        if (changed) {
             modData.childModules[name] = childModData
         }
     }
 
-    private fun convertToVisItem(item: ItemLight, stub: RsNamedStub, forceCfgDisabledVisibility: Boolean): VisItem {
+    private fun convertToVisItem(item: ItemLight, isModOrEnum: Boolean, forceCfgDisabledVisibility: Boolean): VisItem {
         val visibility = if (forceCfgDisabledVisibility) {
             Visibility.CfgDisabled
         } else {
             convertVisibility(item.visibility, item.isDeeplyEnabledByCfg)
         }
         val itemPath = modData.path.append(item.name)
-        val isModOrEnum = stub is RsModItemStub || stub is RsModDeclItemStub || stub is RsEnumItemStub
         return VisItem(itemPath, visibility, isModOrEnum)
     }
 
-    private fun tryCollectChildModule(item: ItemLight, stub: RsNamedStub, index: Int): ModData? {
+    private fun tryCollectChildModule(item: ModOrEnumItemLight, stub: RsNamedStub, index: Int): ModData? {
         if (stub is RsEnumItemStub) return collectEnumAsModData(item, stub)
 
         val childMod = when (stub) {
@@ -246,7 +254,7 @@ private class ModCollector(
         return Pair(childModData, childModLegacyMacros)
     }
 
-    private fun collectEnumAsModData(enum: ItemLight, enumStub: RsEnumItemStub): ModData {
+    private fun collectEnumAsModData(enum: ModOrEnumItemLight, enumStub: RsEnumItemStub): ModData {
         val enumName = enum.name
         val enumPath = modData.path.append(enumName)
         val enumData = ModData(

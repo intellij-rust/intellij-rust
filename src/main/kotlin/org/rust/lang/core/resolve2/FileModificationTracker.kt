@@ -126,7 +126,11 @@ private class ModLightCollector(
 
     val modData: ModDataLight = ModDataLight()
 
-    override fun collectItem(item: ItemLight, stub: RsNamedStub) {
+    override fun collectSimpleItem(item: SimpleItemLight) {
+        modData.items += item
+    }
+
+    override fun collectModOrEnumItem(item: ModOrEnumItemLight, stub: RsNamedStub) {
         if (stub is RsEnumItemStub) {
             collectEnum(item, stub)
             return
@@ -138,7 +142,7 @@ private class ModLightCollector(
         }
     }
 
-    private fun collectEnum(enum: ItemLight, enumStub: RsEnumItemStub) {
+    private fun collectEnum(enum: ModOrEnumItemLight, enumStub: RsEnumItemStub) {
         val variants = enumStub.variants.mapNotNullTo(mutableListOf()) {
             EnumVariantLight(
                 name = it.name ?: return@mapNotNullTo null,
@@ -204,7 +208,7 @@ private class EnumVariantLight(
 }
 
 private class EnumLight(
-    val item: ItemLight,
+    val item: ModOrEnumItemLight,
     val variants: List<EnumVariantLight>,
 ) : Writeable {
     override fun writeTo(data: DataOutput) {
