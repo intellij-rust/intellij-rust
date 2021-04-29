@@ -114,13 +114,15 @@ class ModCollectorBase private constructor(
     }
 
     private fun collectItem(item: RsNamedStub, macroIndexInParent: Int) {
-        val (procMacroName, procMacroKind) = if (item is RsFunctionStub && item.isProcMacroDef) {
-            item.procMacroNameAndKind
-        } else {
-            null to null
+        when (item) {
+            is RsEnumItemStub, is RsModItemStub, is RsModDeclItemStub -> collectModOrEnum(item, macroIndexInParent)
+            else -> collectSimpleItem(item)
         }
-        val name = procMacroName ?: item.name ?: return
+    }
+
+    private fun collectModOrEnum(item: RsNamedStub, macroIndexInParent: Int) {
         if (item !is RsAttributeOwnerStub) return
+        val name = item.name ?: return
 
         val (hasMacroUse, pathAttribute) = when (item) {
             is RsModItemStub -> item.hasMacroUse to item.pathAttribute
@@ -128,19 +130,43 @@ class ModCollectorBase private constructor(
             else -> false to null
         }
         @Suppress("UNCHECKED_CAST")
-        val itemLight = ItemLight(
+        val itemLight = ModOrEnumItemLight(
             name = name,
             visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
-            namespaces = item.getNamespaces(crate),
-            procMacroKind = procMacroKind,
             macroIndexInParent = macroIndexInParent,
             isModItem = item is RsModItemStub,
             isModDecl = item is RsModDeclItemStub,
             hasMacroUse = hasMacroUse,
             pathAttribute = pathAttribute
         )
-        visitor.collectItem(itemLight, item)
+        visitor.collectModOrEnumItem(itemLight, item)
+    }
+
+    private fun collectSimpleItem(item: RsNamedStub) {
+        val itemLight = lowerSimpleItem(item) ?: return
+        visitor.collectSimpleItem(itemLight)
+    }
+
+    private fun lowerSimpleItem(item: RsNamedStub): SimpleItemLight? {
+        check(item !is RsEnumItemStub && item !is RsModItemStub && item !is RsModDeclItemStub)
+        if (item !is RsAttributeOwnerStub) return null
+
+        val (procMacroName, procMacroKind) = if (item is RsFunctionStub && item.isProcMacroDef) {
+            item.procMacroNameAndKind
+        } else {
+            null to null
+        }
+        val name = procMacroName ?: item.name ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        return SimpleItemLight(
+            name = name,
+            visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
+            isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
+            namespaces = item.getNamespaces(crate),
+            procMacroKind = procMacroKind,
+        )
     }
 
     private fun collectMacroCall(call: RsMacroCallStub, macroIndexInParent: Int) {
@@ -222,7 +248,8 @@ class ModCollectorBase private constructor(
 }
 
 interface ModVisitor {
-    fun collectItem(item: ItemLight, stub: RsNamedStub)
+    fun collectSimpleItem(item: SimpleItemLight)
+    fun collectModOrEnumItem(item: ModOrEnumItemLight, stub: RsNamedStub)
     fun collectImport(import: ImportLight)
     fun collectMacroCall(call: MacroCallLight, stub: RsMacroCallStub)
     fun collectMacroDef(def: MacroDefLight)
@@ -234,9 +261,14 @@ class CompositeModVisitor(
     private val visitor1: ModVisitor,
     private val visitor2: ModVisitor,
 ) : ModVisitor {
-    override fun collectItem(item: ItemLight, stub: RsNamedStub) {
-        visitor1.collectItem(item, stub)
-        visitor2.collectItem(item, stub)
+    override fun collectSimpleItem(item: SimpleItemLight) {
+        visitor1.collectSimpleItem(item)
+        visitor2.collectSimpleItem(item)
+    }
+
+    override fun collectModOrEnumItem(item: ModOrEnumItemLight, stub: RsNamedStub) {
+        visitor1.collectModOrEnumItem(item, stub)
+        visitor2.collectModOrEnumItem(item, stub)
     }
 
     override fun collectImport(import: ImportLight) {
@@ -305,13 +337,44 @@ sealed class VisibilityLight : Writeable {
     }
 }
 
-data class ItemLight(
-    val name: String,
-    val visibility: VisibilityLight,
-    val isDeeplyEnabledByCfg: Boolean,
+interface ItemLight : Writeable {
+    val name: String
+    val visibility: VisibilityLight
+    val isDeeplyEnabledByCfg: Boolean
+}
+
+data class SimpleItemLight(
+    override val name: String,
+    override val visibility: VisibilityLight,
+    override val isDeeplyEnabledByCfg: Boolean,
     val namespaces: Set<Namespace>,
     /** `null` if not a proc macro */
     val procMacroKind: RsProcMacroKind?,
+) : ItemLight {
+    override fun writeTo(data: DataOutput) {
+        IOUtil.writeUTF(data, name)
+        visibility.writeTo(data)
+
+        var flags = 0
+        if (Namespace.Types in namespaces) flags += NAMESPACE_TYPES_MASK
+        if (Namespace.Values in namespaces) flags += NAMESPACE_VALUES_MASK
+        if (Namespace.Macros in namespaces) flags += NAMESPACE_MACROS_MASK
+        if (isDeeplyEnabledByCfg) flags += IS_DEEPLY_ENABLED_BY_CFG_MASK
+        data.writeByte(flags)
+    }
+
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        private val NAMESPACE_TYPES_MASK: Int = nextBitMask()
+        private val NAMESPACE_VALUES_MASK: Int = nextBitMask()
+        private val NAMESPACE_MACROS_MASK: Int = nextBitMask()
+        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
+    }
+}
+
+data class ModOrEnumItemLight(
+    override val name: String,
+    override val visibility: VisibilityLight,
+    override val isDeeplyEnabledByCfg: Boolean,
     /** See [MacroIndex] */
     val macroIndexInParent: Int,
 
@@ -320,16 +383,13 @@ data class ItemLight(
     /** Only for [RsModItem] or [RsModDeclItem] */
     val hasMacroUse: Boolean,
     val pathAttribute: String?,
-) : Writeable {
+) : ItemLight {
     override fun writeTo(data: DataOutput) {
         IOUtil.writeUTF(data, name)
         visibility.writeTo(data)
         data.writeVarInt(macroIndexInParent)
 
         var flags = 0
-        if (Namespace.Types in namespaces) flags += NAMESPACE_TYPES_MASK
-        if (Namespace.Values in namespaces) flags += NAMESPACE_VALUES_MASK
-        if (Namespace.Macros in namespaces) flags += NAMESPACE_MACROS_MASK
         if (isDeeplyEnabledByCfg) flags += IS_DEEPLY_ENABLED_BY_CFG_MASK
         if (isModItem) flags += IS_MOD_ITEM_MASK
         if (isModDecl) flags += IS_MOD_DECL_MASK
@@ -341,9 +401,6 @@ data class ItemLight(
     }
 
     companion object : BitFlagsBuilder(Limit.BYTE) {
-        private val NAMESPACE_TYPES_MASK: Int = nextBitMask()
-        private val NAMESPACE_VALUES_MASK: Int = nextBitMask()
-        private val NAMESPACE_MACROS_MASK: Int = nextBitMask()
         private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
         private val IS_MOD_ITEM_MASK: Int = nextBitMask()
         private val IS_MOD_DECL_MASK: Int = nextBitMask()

@@ -66,7 +66,7 @@ class RsExternalLinterPass(
         annotationInfo = RsExternalLinterUtils.checkLazily(
             project.toolchain ?: return,
             project,
-            moduleOrProject,
+            disposable,
             cargoTarget.pkg.workspace.contentRoot,
             args
         )
