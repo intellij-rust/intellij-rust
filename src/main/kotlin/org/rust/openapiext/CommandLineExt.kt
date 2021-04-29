@@ -51,7 +51,8 @@ fun GeneralCommandLine.execute(
     listener: ProcessListener? = null
 ): ProcessOutput {
 
-    val handler = CapturingProcessHandler(this)
+    val handler = CapturingProcessHandler(this) // The OS process is started here
+
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
         // https://github.com/rust-lang/cargo/issues/3566
@@ -68,6 +69,8 @@ fun GeneralCommandLine.execute(
     }
 
     if (alreadyDisposed) {
+        Disposer.dispose(cargoKiller) // Kill the process
+
         // On the one hand, this seems fishy,
         // on the other hand, this is isomorphic
         // to the scenario where cargoKiller triggers.
