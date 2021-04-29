@@ -39,6 +39,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.cargo.toolchain.tools.rustc
@@ -107,20 +108,23 @@ class CargoSyncTask(
                     createContext = { it },
                     action = { childProgress ->
                         if (!cargoProject.workingDirectory.exists()) {
-                            cargoProject.copy(
-                                stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
-                            )
+                            val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
+                            CargoProjectWithStdlib(cargoProject.copy(stdlibStatus = stdlibStatus), null)
                         } else {
                             val context = SyncContext(project, cargoProject, toolchain, indicator, childProgress)
                             val rustcInfoResult = fetchRustcInfo(context)
                             val rustcInfo = (rustcInfoResult as? TaskResult.Ok)?.value
-                            cargoProject.withRustcInfo(rustcInfoResult)
+                            val cargoProjectWithRustcInfoAndWorkspace = cargoProject.withRustcInfo(rustcInfoResult)
                                 .withWorkspace(fetchCargoWorkspace(context, rustcInfo))
-                                .withStdlib(fetchStdlib(context, rustcInfo))
+                            CargoProjectWithStdlib(
+                                cargoProjectWithRustcInfoAndWorkspace,
+                                fetchStdlib(context, rustcInfo)
+                            )
                         }
                     }
                 )
-            }.deduplicateProjects()
+            }.chooseAndAttachStdlib()
+                .deduplicateProjects()
         }
 
         return refreshedProjects
@@ -185,6 +189,42 @@ class CargoSyncTask(
         fun withProgressText(text: String) {
             progress.text = text
             syncProgress.progress(text)
+        }
+    }
+}
+
+private class CargoProjectWithStdlib(
+    val cargoProject: CargoProjectImpl,
+    val stdlib: TaskResult<StandardLibrary>?
+)
+
+private class CargoProjectWithExistingStdlib(
+    val cargoProject: CargoProjectImpl,
+    val rustcVersion: RustcVersion,
+    val stdlib: StandardLibrary
+)
+
+/**
+ * Intellij-Rust plugin currently supports only one stdlib at a time. If there are different standard libraries in
+ * different cargo projects, select and use the most recent of them.
+ * A cargo project may have a different stdlib if there is a `rust-toolchain.toml` file,
+ * or if it uses `rustup override`
+ */
+private fun List<CargoProjectWithStdlib>.chooseAndAttachStdlib(): List<CargoProjectImpl> {
+    val projectsWithStdlib = mapNotNull {
+        val rustcVersion = it.cargoProject.rustcInfo?.version ?: return@mapNotNull null
+        val stdlib = (it.stdlib as? TaskResult.Ok)?.value ?: return@mapNotNull null
+        CargoProjectWithExistingStdlib(it.cargoProject, rustcVersion, stdlib)
+    }
+    val embeddedStdlib = projectsWithStdlib.find { it.stdlib.isPartOfCargoProject }
+    val theMostRecentStdlib = embeddedStdlib
+        ?: projectsWithStdlib.maxByOrNull { it.rustcVersion.semver }
+    return map {
+        when {
+            it.stdlib == null -> it.cargoProject
+            it.stdlib is TaskResult.Err -> it.cargoProject.withStdlib(it.stdlib)
+            theMostRecentStdlib != null -> it.cargoProject.withStdlib(TaskResult.Ok(theMostRecentStdlib.stdlib))
+            else -> it.cargoProject.withStdlib(it.stdlib)
         }
     }
 }
