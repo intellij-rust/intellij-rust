@@ -11,13 +11,13 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
-import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsSelfParameter
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type

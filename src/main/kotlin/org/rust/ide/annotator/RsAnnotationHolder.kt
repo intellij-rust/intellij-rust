@@ -11,7 +11,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.existsAfterExpansion
+import org.rust.lang.core.psi.ext.existsAfterExpansion
 
 class RsAnnotationHolder(val holder: AnnotationHolder) {
 

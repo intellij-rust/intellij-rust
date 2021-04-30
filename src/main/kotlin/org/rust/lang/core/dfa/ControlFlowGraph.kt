@@ -6,7 +6,6 @@
 package org.rust.lang.core.dfa
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ScopeTree

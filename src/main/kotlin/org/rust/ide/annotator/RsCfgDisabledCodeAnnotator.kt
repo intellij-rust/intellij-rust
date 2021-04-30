@@ -11,11 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
-import org.rust.ide.utils.isDisabledCfgAttrAttribute
-import org.rust.lang.core.psi.ext.RsAttr
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
-import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
-import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.*
 
 class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {

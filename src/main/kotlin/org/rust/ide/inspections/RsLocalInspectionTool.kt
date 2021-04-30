@@ -13,9 +13,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.settings.toolchain
-import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.existsAfterExpansion
 
 abstract class RsLocalInspectionTool : LocalInspectionTool() {
     final override fun buildVisitor(

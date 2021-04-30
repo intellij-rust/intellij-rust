@@ -12,15 +12,11 @@ import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveParameterFix
 import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix
-import org.rust.ide.utils.isCfgUnknown
 import org.rust.lang.core.dfa.liveness.DeclarationKind
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Parameter
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Variable
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.liveness
 
 class RsLivenessInspection : RsLintInspection() {

@@ -19,8 +19,6 @@ import com.intellij.psi.search.PsiTodoSearchHelper
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.ide.todo.isTodoPattern
-import org.rust.ide.utils.existsAfterExpansion
-import org.rust.ide.utils.isDisabledCfgAttrAttribute
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*

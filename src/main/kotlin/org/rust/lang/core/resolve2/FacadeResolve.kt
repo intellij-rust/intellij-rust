@@ -14,7 +14,6 @@ import com.intellij.psi.StubBasedPsiElement
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
-import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
