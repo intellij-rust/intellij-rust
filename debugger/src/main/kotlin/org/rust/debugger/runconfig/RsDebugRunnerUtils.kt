@@ -17,8 +17,10 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult
 import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.toolchain.RsRemoteToolchain
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
 
@@ -44,8 +46,13 @@ object RsDebugRunnerUtils {
             .runContentDescriptor
     }
 
-    fun checkToolchainSupported(host: String): BuildResult.ToolchainError? {
+    fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? {
         if (SystemInfo.isWindows) {
+            // BACKCOMPAT: 2020.3
+            if (project.toolchain is RsRemoteToolchain) {
+                return BuildResult.ToolchainError.UnsupportedWSL
+            }
+
             val isGNURustToolchain = "gnu" in host
             if (isGNURustToolchain) {
                 return BuildResult.ToolchainError.UnsupportedGNU

@@ -11,21 +11,33 @@ import com.intellij.openapi.ui.Messages
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
 import com.jetbrains.cidr.toolchains.OSType
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.BuildResult.ToolchainError.*
+import org.rust.cargo.toolchain.RsRemoteToolchain
 import org.rust.debugger.runconfig.RsDebugRunnerUtils.ERROR_MESSAGE_TITLE
 
 object RsCLionDebugRunnerUtils {
 
-    fun checkToolchainSupported(host: String): ToolchainError? {
+    fun checkToolchainSupported(project: Project, host: String): ToolchainError? {
         val toolSet = CPPToolchains.getInstance().defaultToolchain?.toolSet ?: return null
         if (CPPToolchains.getInstance().osType == OSType.WIN) {
-            val isMSVCRustToolchain = "msvc" in host
-            val isGNURustToolchain = "gnu" in host
+            // BACKCOMPAT: 2020.3
+            if (project.toolchain is RsRemoteToolchain && !toolSet.isWSL) {
+                return WSLWithNonWSL
+            }
 
+            // BACKCOMPAT: 2020.3
+            if (project.toolchain !is RsRemoteToolchain && toolSet.isWSL) {
+                return NonWSLWithWSL
+            }
+
+            val isGNURustToolchain = "gnu" in host
             if (isGNURustToolchain && toolSet.isMSVC) {
                 return MSVCWithRustGNU
             }
+
+            val isMSVCRustToolchain = "msvc" in host
             if (isMSVCRustToolchain && !toolSet.isMSVC) {
                 return GNUWithRustMSVC
             }
@@ -46,10 +58,10 @@ object RsCLionDebugRunnerUtils {
 
     fun processInvalidToolchain(project: Project, toolchainError: ToolchainError) {
         when (toolchainError) {
-            UnsupportedMSVC, UnsupportedGNU, is Other -> {
+            UnsupportedMSVC, UnsupportedGNU, UnsupportedWSL, is Other -> {
                 Messages.showErrorDialog(project, toolchainError.message, ERROR_MESSAGE_TITLE)
             }
-            MSVCWithRustGNU, GNUWithRustMSVC -> {
+            MSVCWithRustGNU, GNUWithRustMSVC, WSLWithNonWSL, NonWSLWithWSL -> {
                 showConfigureToolchainDialog(project, toolchainError.message)
             }
         }

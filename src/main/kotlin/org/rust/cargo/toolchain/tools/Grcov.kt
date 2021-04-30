@@ -7,13 +7,13 @@ package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import org.rust.cargo.CargoConstants.ProjectLayout
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import java.io.File
 import java.nio.file.Path
 
-fun RsToolchain.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
+fun RsToolchainBase.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
 
-class Grcov(toolchain: RsToolchain) : CargoBinary(NAME, toolchain) {
+class Grcov(toolchain: RsToolchainBase) : CargoBinary(NAME, toolchain) {
 
     fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
         createBaseCommandLine(

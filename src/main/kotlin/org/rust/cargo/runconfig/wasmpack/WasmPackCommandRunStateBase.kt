@@ -10,7 +10,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.util.execution.ParametersListUtil
-import org.rust.cargo.runconfig.RsKillableColoredProcessHandler
+import org.rust.cargo.runconfig.RsProcessHandler
 import org.rust.cargo.toolchain.tools.WasmPack
 import java.io.File
 
@@ -28,7 +28,7 @@ abstract class WasmPackCommandRunStateBase(
             params.drop(1)
         )
 
-        val handler = RsKillableColoredProcessHandler(commandLine)
+        val handler = RsProcessHandler(commandLine)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }

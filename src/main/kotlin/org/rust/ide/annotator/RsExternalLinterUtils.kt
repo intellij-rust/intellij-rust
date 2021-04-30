@@ -32,7 +32,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.ErrorCode
 import org.rust.cargo.toolchain.impl.RustcMessage
@@ -51,7 +51,6 @@ import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkReadAccessNotAllowed
 import org.rust.openapiext.saveAllDocumentsAsTheyAre
 import java.nio.file.Path
-import java.util.*
 
 object RsExternalLinterUtils {
     private val LOG: Logger = logger<RsExternalLinterUtils>()
@@ -66,7 +65,7 @@ object RsExternalLinterUtils {
      * @see PsiModificationTracker.MODIFICATION_COUNT
      */
     fun checkLazily(
-        toolchain: RsToolchain,
+        toolchain: RsToolchainBase,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -98,7 +97,7 @@ object RsExternalLinterUtils {
     }
 
     private fun checkWrapped(
-        toolchain: RsToolchain,
+        toolchain: RsToolchainBase,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -127,7 +126,7 @@ object RsExternalLinterUtils {
     }
 
     private fun check(
-        toolchain: RsToolchain,
+        toolchain: RsToolchainBase,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -148,7 +147,7 @@ object RsExternalLinterUtils {
     }
 
     private data class Key(
-        val toolchain: RsToolchain,
+        val toolchain: RsToolchainBase,
         val workingDirectory: Path,
         val args: CargoCheckArgs
     )

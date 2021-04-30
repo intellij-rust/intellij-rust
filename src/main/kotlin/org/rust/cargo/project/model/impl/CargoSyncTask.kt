@@ -38,7 +38,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.cargo.toolchain.tools.rustc
@@ -160,7 +160,7 @@ class CargoSyncTask(
     data class SyncContext(
         val project: Project,
         val oldCargoProject: CargoProjectImpl,
-        val toolchain: RsToolchain,
+        val toolchain: RsToolchainBase,
         val progress: ProgressIndicator,
         val syncProgress: BuildProgress<BuildProgressDescriptor>
     ) {

@@ -128,7 +128,7 @@ class CargoTest : RsTestBase() {
         return result
     }
 
-    private val toolchain get() = RsToolchain(Paths.get("/usr/bin"))
+    private val toolchain get() = RsLocalToolchain(Paths.get("/usr/bin"))
     private val cargo = toolchain.cargo()
     private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
     private val wd = Paths.get("/my-crate")
