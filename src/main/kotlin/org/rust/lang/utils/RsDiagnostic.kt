@@ -34,7 +34,6 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
-import org.rust.ide.utils.existsAfterExpansion
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.lang.core.CONST_GENERICS
 import org.rust.lang.core.CompilerFeature

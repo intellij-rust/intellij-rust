@@ -9,11 +9,11 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
-import org.rust.ide.utils.existsAfterExpansion
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.stdext.buildList
 
