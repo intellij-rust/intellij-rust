@@ -32,7 +32,7 @@ import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
@@ -158,7 +158,7 @@ open class CargoCommandConfiguration(
     sealed class CleanConfiguration {
         class Ok(
             val cmd: CargoCommandLine,
-            val toolchain: RsToolchain
+            val toolchain: RsToolchainBase
         ) : CleanConfiguration()
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()

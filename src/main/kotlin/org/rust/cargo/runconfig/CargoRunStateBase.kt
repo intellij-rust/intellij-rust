@@ -6,7 +6,6 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
-import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -16,7 +15,7 @@ import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
@@ -28,7 +27,7 @@ abstract class CargoRunStateBase(
     val runConfiguration: CargoCommandConfiguration,
     val config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
-    val toolchain: RsToolchain = config.toolchain
+    val toolchain: RsToolchainBase = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
     val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
         environment.project,
@@ -65,11 +64,7 @@ abstract class CargoRunStateBase(
      */
     fun startProcess(processColors: Boolean): ProcessHandler {
         val commandLine = cargo().toColoredCommandLine(environment.project, prepareCommandLine())
-        val handler = if (processColors) {
-            RsKillableColoredProcessHandler(commandLine)
-        } else {
-            KillableProcessHandler(commandLine)
-        }
+        val handler = RsProcessHandler(commandLine, processColors)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }

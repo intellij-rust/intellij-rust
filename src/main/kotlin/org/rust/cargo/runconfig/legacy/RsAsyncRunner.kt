@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.CapturingProcessAdapter
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -31,10 +30,10 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RsRemoteToolchain
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
-import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.openapiext.saveAllDocuments
@@ -74,14 +73,15 @@ abstract class RsAsyncRunner(
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
-                createGeneralCommandLine(
+                state.toolchain.createGeneralCommandLine(
                     executablePath,
                     workingDirectory,
                     redirectInputFrom,
                     backtraceMode,
                     environmentVariables,
                     executableArguments,
-                    emulateTerminal
+                    emulateTerminal,
+                    patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
                 )
             }
         }
@@ -109,7 +109,7 @@ abstract class RsAsyncRunner(
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
 
-    open fun checkToolchainSupported(host: String): BuildResult.ToolchainError? = null
+    open fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? = null
 
     open fun processUnsupportedToolchain(
         project: Project,
@@ -127,10 +127,11 @@ abstract class RsAsyncRunner(
         isTestBuild: Boolean
     ): Promise<Binary?> {
         val promise = AsyncPromise<Binary?>()
+        val toolchain = state.toolchain
         val cargo = state.cargo()
 
         val processForUserOutput = ProcessOutput()
-        val processForUser = RsKillableColoredProcessHandler(cargo.toColoredCommandLine(project, command))
+        val processForUser = RsProcessHandler(cargo.toColoredCommandLine(project, command))
 
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
@@ -154,12 +155,13 @@ abstract class RsAsyncRunner(
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
                             val host = state.rustVersion()?.host.orEmpty()
-                            result = checkToolchainSupported(host)
+                            result = checkToolchainSupported(project, host)
                             if (result != null) return
 
-                            val processForJson = CapturingProcessHandler(
+                            val processForJson = RsCapturingProcessHandler(
                                 cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
                             )
+                            processForJson.setHasPty(toolchain is RsRemoteToolchain)
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {
                                 promise.setResult(null)

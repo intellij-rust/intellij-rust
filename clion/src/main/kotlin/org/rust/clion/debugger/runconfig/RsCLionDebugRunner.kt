@@ -11,8 +11,8 @@ import org.rust.debugger.runconfig.RsDebugRunnerBase
 
 class RsCLionDebugRunner : RsDebugRunnerBase() {
 
-    override fun checkToolchainSupported(host: String): ToolchainError? =
-        RsCLionDebugRunnerUtils.checkToolchainSupported(host)
+    override fun checkToolchainSupported(project: Project, host: String): ToolchainError? =
+        RsCLionDebugRunnerUtils.checkToolchainSupported(project, host)
 
     override fun checkToolchainConfigured(project: Project): Boolean =
         RsCLionDebugRunnerUtils.checkToolchainConfigured(project)

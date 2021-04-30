@@ -24,7 +24,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
-import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
@@ -50,7 +49,7 @@ abstract class RsExecutableRunner(
             state.rustVersion()?.host.orEmpty()
         }
         if (!checkToolchainConfigured(project)) return
-        val toolchainError = checkToolchainSupported(host)
+        val toolchainError = checkToolchainSupported(project, host)
         if (toolchainError != null) {
             processInvalidToolchain(project, toolchainError)
             return
@@ -79,14 +78,15 @@ abstract class RsExecutableRunner(
         val runCargoCommand = state.prepareCommandLine()
         val workingDirectory = getWorkingDirectory(environment.project, runCargoCommand, artifact)
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
-        val runExecutable = createGeneralCommandLine(
+        val runExecutable = state.toolchain.createGeneralCommandLine(
             binaries.single().toPath(),
             workingDirectory,
             runCargoCommand.redirectInputFrom,
             runCargoCommand.backtraceMode,
             runCargoCommand.environmentVariables,
             executableArguments,
-            runCargoCommand.emulateTerminal
+            runCargoCommand.emulateTerminal,
+            patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
         )
         return showRunContent(state, environment, runExecutable)
     }
@@ -116,7 +116,7 @@ abstract class RsExecutableRunner(
         environment: ExecutionEnvironment
     ): DefaultExecutionResult = state.executeCommandLine(commandLine, environment)
 
-    open fun checkToolchainSupported(host: String): BuildResult.ToolchainError? = null
+    open fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? = null
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
 

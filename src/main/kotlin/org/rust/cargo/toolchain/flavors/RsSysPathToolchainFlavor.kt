@@ -10,11 +10,12 @@ import org.rust.stdext.toPath
 import java.io.File
 import java.nio.file.Path
 
-object RsSysPathToolchainFlavor : RsToolchainFlavor() {
-    override fun getHomePathCandidates(): List<Path> =
+class RsSysPathToolchainFlavor : RsToolchainFlavor() {
+    override fun getHomePathCandidates(): Sequence<Path> =
         System.getenv("PATH")
             .orEmpty()
             .split(File.pathSeparator)
+            .asSequence()
             .filter { it.isNotEmpty() }
             .map { it.toPath() }
             .filter { it.isDirectory() }

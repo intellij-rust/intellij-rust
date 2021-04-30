@@ -44,18 +44,14 @@ class LcovCoverageReport {
         private const val LINE_HIT_PREFIX: String = "DA:"
         private const val END_OF_RECORD: String = "end_of_record"
 
-        fun readLcov(
-            lcovFile: File,
-            localBaseDir: String? = null,
-            toLocalPathConverter: (String) -> String = { it }
-        ): LcovCoverageReport {
+        fun readLcov(lcovFile: File, localBaseDir: String? = null): LcovCoverageReport {
             val report = LcovCoverageReport()
             var currentFileName: String? = null
             var lineDataList: MutableList<LineHits>? = null
             lcovFile.forEachLine { line ->
                 when {
                     line.startsWith(SOURCE_FILE_PREFIX) -> {
-                        currentFileName = toLocalPathConverter(line.substring(SOURCE_FILE_PREFIX.length))
+                        currentFileName = line.substring(SOURCE_FILE_PREFIX.length)
                         lineDataList = mutableListOf()
                     }
                     line.startsWith(LINE_HIT_PREFIX) -> {

@@ -5,13 +5,22 @@
 
 package org.rust.debugger.runconfig
 
+import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.RsRemoteToolchain
 
 class RsDebugRunner : RsDebugRunnerBase() {
 
-    override fun checkToolchainSupported(host: String): BuildResult.ToolchainError? =
-        RsDebugRunnerUtils.checkToolchainSupported(host)
+    override fun canRun(executorId: String, profile: RunProfile): Boolean =
+        super.canRun(executorId, profile) &&
+            profile is CargoCommandConfiguration &&
+            profile.project.toolchain !is RsRemoteToolchain
+
+    override fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? =
+        RsDebugRunnerUtils.checkToolchainSupported(project, host)
 
     override fun checkToolchainConfigured(project: Project): Boolean =
         RsDebugRunnerUtils.checkToolchainConfigured(project)

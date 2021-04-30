@@ -22,7 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.notifications.showBalloon
@@ -141,7 +141,7 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
 }
 
 private fun discoverToolchain(project: Project) {
-    val toolchain = RsToolchain.suggest() ?: return
+    val toolchain = RsToolchainBase.suggest() ?: return
     invokeLater {
         if (project.isDisposed) return@invokeLater
 

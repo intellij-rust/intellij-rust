@@ -29,7 +29,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
@@ -120,7 +120,7 @@ open class WithRustup(
     private val delegate: RustProjectDescriptorBase,
     private val fetchActualStdlibMetadata: Boolean = false
 ) : RustProjectDescriptorBase() {
-    private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
+    private val toolchain: RsToolchainBase? by lazy { RsToolchainBase.suggest() }
 
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
@@ -173,7 +173,7 @@ open class WithRustup(
 open class WithProcMacros(
     private val delegate: RustProjectDescriptorBase
 ) : RustProjectDescriptorBase() {
-    private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
+    private val toolchain: RsToolchainBase? by lazy { RsToolchainBase.suggest() }
 
     private var procMacroPackageIsInitialized: Boolean = false
     private var procMacroPackage: Package? = null
@@ -348,7 +348,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     }
 }
 
-private fun RsToolchain.getRustcInfo(): RustcInfo? {
+private fun RsToolchainBase.getRustcInfo(): RustcInfo? {
     val rustc = rustc()
     val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
     val rustcVersion = rustc.queryVersion()

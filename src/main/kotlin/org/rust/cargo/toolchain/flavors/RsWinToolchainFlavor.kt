@@ -5,6 +5,7 @@
 
 package org.rust.cargo.toolchain.flavors
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
@@ -12,10 +13,11 @@ import org.rust.stdext.list
 import org.rust.stdext.toPath
 import java.nio.file.Path
 
-object RsWinToolchainFlavor : RsToolchainFlavor() {
-    override fun getHomePathCandidates(): List<Path> {
-        val programFiles = System.getenv("ProgramFiles")?.toPath() ?: return emptyList()
-        if (!programFiles.exists() || !programFiles.isDirectory()) return emptyList()
+class RsWinToolchainFlavor : RsToolchainFlavor() {
+
+    override fun getHomePathCandidates(): Sequence<Path> {
+        val programFiles = System.getenv("ProgramFiles")?.toPath() ?: return emptySequence()
+        if (!programFiles.exists() || !programFiles.isDirectory()) return emptySequence()
         return programFiles.list()
             .filter { it.isDirectory() }
             .filter {
@@ -24,6 +26,7 @@ object RsWinToolchainFlavor : RsToolchainFlavor() {
             }
             .map { it.resolve("bin") }
             .filter { it.isDirectory() }
-            .toList()
     }
+
+    override fun isApplicable(): Boolean = SystemInfo.isWindows
 }

@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
+import org.rust.cargo.runconfig.RsCapturingProcessHandler
 import java.nio.file.Path
 
 private val LOG: Logger = Logger.getInstance("org.rust.openapiext.CommandLineExt")
@@ -26,9 +27,9 @@ fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(pat
 
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
-fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
+fun GeneralCommandLine.execute(timeoutInMilliseconds: Int?): ProcessOutput? {
     val output = try {
-        val handler = CapturingProcessHandler(this)
+        val handler = RsCapturingProcessHandler(this)
         LOG.info("Executing `$commandLineString`")
         handler.runProcessWithGlobalProgress(timeoutInMilliseconds)
     } catch (e: ExecutionException) {
@@ -51,7 +52,7 @@ fun GeneralCommandLine.execute(
     listener: ProcessListener? = null
 ): ProcessOutput {
 
-    val handler = CapturingProcessHandler(this) // The OS process is started here
+    val handler = RsCapturingProcessHandler(this) // The OS process is started here
 
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.

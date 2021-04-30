@@ -15,7 +15,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.RunCargoCommandActionBase
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.actions.ui.showCargoNewCrateUI
 import org.rust.openapiext.pathAsPath
@@ -43,7 +43,7 @@ class RsCreateCrateAction : RunCargoCommandActionBase() {
 
     private fun createProject(
         project: Project,
-        toolchain: RsToolchain,
+        toolchain: RsToolchainBase,
         root: VirtualFile,
         name: String,
         binary: Boolean

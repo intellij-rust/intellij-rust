@@ -16,16 +16,16 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.nio.file.Path
 
-fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(this)
+fun RsToolchainBase.rustfmt(): Rustfmt = Rustfmt(this)
 
-class Rustfmt(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
+class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {

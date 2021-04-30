@@ -6,12 +6,12 @@
 package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.PtyCommandLine
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import java.io.File
 
-fun RsToolchain.evcxr(): Evcxr? = if (hasCargoExecutable(Evcxr.NAME)) Evcxr(this) else null
+fun RsToolchainBase.evcxr(): Evcxr? = if (hasCargoExecutable(Evcxr.NAME)) Evcxr(this) else null
 
-class Evcxr(toolchain: RsToolchain) : CargoBinary(NAME, toolchain) {
+class Evcxr(toolchain: RsToolchainBase) : CargoBinary(NAME, toolchain) {
 
     fun createCommandLine(workingDirectory: File): PtyCommandLine {
         val commandLine = createBaseCommandLine(

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider.Companion.WASM_TARGET
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.actions.InstallTargetAction
@@ -27,14 +27,14 @@ import java.nio.file.Path
 
 private val LOG: Logger = logger<Rustup>()
 
-val RsToolchain.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
+val RsToolchainBase.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
 
-fun RsToolchain.rustup(cargoProjectDirectory: Path): Rustup? {
+fun RsToolchainBase.rustup(cargoProjectDirectory: Path): Rustup? {
     if (!isRustupAvailable) return null
     return Rustup(this, cargoProjectDirectory)
 }
 
-class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsTool(NAME, toolchain) {
+class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : RsTool(NAME, toolchain) {
 
     data class Component(val name: String, val isInstalled: Boolean) {
         companion object {
@@ -60,13 +60,13 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
         createBaseCommandLine(
             "component", "list",
             workingDirectory = projectDirectory
-        ).execute()?.stdoutLines?.map { Component.from(it) }.orEmpty()
+        ).execute(toolchain.executionTimeoutInMilliseconds)?.stdoutLines?.map { Component.from(it) }.orEmpty()
 
     private fun listTargets(): List<Target> =
         createBaseCommandLine(
             "target", "list",
             workingDirectory = projectDirectory
-        ).execute()?.stdoutLines?.map { Target.from(it) }.orEmpty()
+        ).execute(toolchain.executionTimeoutInMilliseconds)?.stdoutLines?.map { Target.from(it) }.orEmpty()
 
     fun downloadStdlib(owner: Disposable? = null, listener: ProcessListener? = null): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)

@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
-import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
+import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.checkIsBackgroundThread
@@ -19,16 +19,16 @@ import org.rust.openapiext.execute
 import org.rust.openapiext.isSuccess
 import java.nio.file.Path
 
-fun RsToolchain.rustc(): Rustc = Rustc(this)
+fun RsToolchainBase.rustc(): Rustc = Rustc(this)
 
-class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
+class Rustc(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun queryVersion(workingDirectory: Path? = null): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
         val lines = createBaseCommandLine("--version", "--verbose", workingDirectory = workingDirectory)
-            .execute()
+            .execute(toolchain.executionTimeoutInMilliseconds)
             ?.stdoutLines
         return lines?.let { parseRustcVersion(it) }
     }
@@ -42,7 +42,9 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
             "--print", "sysroot",
             workingDirectory = projectDirectory
         ).execute(timeoutMs)
-        return if (output?.isSuccess == true) output.stdout.trim() else null
+
+        if (output?.isSuccess != true) return null
+        return toolchain.toLocalPath(output.stdout.trim())
     }
 
     fun getStdlibPathFromSysroot(projectDirectory: Path): String? {
