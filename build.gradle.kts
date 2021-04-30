@@ -290,6 +290,9 @@ project(":plugin") {
             jvmArgs("-Dide.show.tips.on.startup.default.value=false")
             // uncomment if `unexpected exception ProcessCanceledException` prevents you from debugging a running IDE
             // jvmArgs("-Didea.ProcessCanceledException=disabled")
+
+            // Uncomment to enable FUS testing mode
+            // jvmArgs("-Dfus.internal.test.mode=true")
         }
 
         withType<PatchPluginXmlTask> {

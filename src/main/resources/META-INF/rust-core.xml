@@ -1046,6 +1046,10 @@
 
         <!-- Statistics -->
         <fileTypeStatisticProvider implementation="org.rust.ide.statistics.RsFileTypeStatisticProvider"/>
+        <!--suppress PluginXmlValidity -->
+        <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsToolchainUsagesCollector"/>
+        <!--suppress PluginXmlValidity -->
+        <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsProjectUsagesCollector"/>
 
         <!-- Registry keys -->
 
