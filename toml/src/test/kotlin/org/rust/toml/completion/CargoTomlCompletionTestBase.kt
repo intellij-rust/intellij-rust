@@ -36,4 +36,14 @@ abstract class CargoTomlCompletionTestBase : RsTestBase() {
     ) = completionFixture.doSingleCompletionByFileTree(fileTree, after)
 
     protected fun checkNoCompletion(@Language("TOML") code: String) = completionFixture.checkNoCompletion(code)
+
+    protected fun checkContainsCompletion(
+        @Language("TOML") code: String,
+        variants: List<String>
+    ) = completionFixture.checkContainsCompletion(code, variants)
+
+    protected fun checkNotContainsCompletion(
+        @Language("TOML") code: String,
+        variant: String
+    ) = completionFixture.checkNotContainsCompletion(code, variant)
 }

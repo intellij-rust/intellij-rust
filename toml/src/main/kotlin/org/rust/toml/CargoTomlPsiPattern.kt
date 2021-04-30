@@ -252,6 +252,27 @@ object CargoTomlPsiPattern {
                 or onSpecificDependencyTable
         )
 
+    fun anyDependencyProperty(): PsiElementPattern.Capture<TomlKeyValue> = psiElement<TomlKeyValue>()
+        .withParent(
+            psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                or onSpecificDependencyTable
+        )
+
+    val inAnyDependencyKeyValue: PsiElementPattern.Capture<PsiElement> =
+        cargoTomlPsiElement<PsiElement>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .with("anyDependencyKeyValueCondition") { _, context ->
+                val keyValue = context?.get(TOML_KEY_VALUE_CONTEXT_NAME) ?: return@with false
+                anyDependencyProperty().accepts(keyValue)
+            }
+
+    val onAnyDependencyProperty: PsiElementPattern.Capture<TomlKeyValue>
+        get() = psiElement<TomlKeyValue>()
+            .withParent(
+                psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                    or onSpecificDependencyTable
+            )
+
     /**
      * ```
      * [dependencies]
