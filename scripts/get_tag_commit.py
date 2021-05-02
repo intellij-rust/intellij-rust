@@ -1,7 +1,7 @@
 import argparse
 from subprocess import CalledProcessError
 
-from common import git_command
+from git import git_command
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

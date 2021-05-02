@@ -1,7 +1,8 @@
 import re
 from datetime import date
 
-from common import get_patch_version, git_command
+from common import get_patch_version
+from git import git_command
 
 PLUGIN_XML = "plugin/src/main/resources/META-INF/plugin.xml"
 
