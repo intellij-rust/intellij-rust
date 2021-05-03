@@ -42,7 +42,7 @@ def execute_command(*args, print_stdout=True, check=True, cwd: Optional[str] = N
                                 cwd=cwd)
     except subprocess.CalledProcessError as e:
         if print_stdout:
-            print(e.output)
+            print(e.output.decode("utf-8"))
         raise e
 
     stdout_str = result.stdout.decode("utf-8").strip()
