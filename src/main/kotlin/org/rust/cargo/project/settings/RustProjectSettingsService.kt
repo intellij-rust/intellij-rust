@@ -12,10 +12,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchainBase
-import org.rust.cargo.toolchain.RsToolchainProvider
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.*
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Paths
@@ -63,7 +60,7 @@ interface RustProjectSettingsService {
 
         @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
         @Deprecated("Use toolchain property")
-        fun setToolchain(toolchain: RustToolchain?) {
+        fun setToolchain(toolchain: RsToolchain?) {
             toolchainHomeDirectory = toolchain?.location?.systemIndependentPath
         }
     }
@@ -112,7 +109,7 @@ interface RustProjectSettingsService {
 
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")
-    fun getToolchain(): RustToolchain?
+    fun getToolchain(): RsToolchain?
 
     /*
      * Show a dialog for toolchain configuration
