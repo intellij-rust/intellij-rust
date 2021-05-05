@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -20,7 +21,7 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
     override fun getMetrics(project: Project): Set<MetricEvent> {
         val metrics = mutableSetOf<MetricEvent>()
         val cargoProjects = project.cargoProjects.allProjects
-        metrics += CARGO_PROJECTS_EVENT.metric(cargoProjects.size)
+        metrics += CARGO_PROJECTS_EVENT.metric(getNextPowerOfTwo(cargoProjects.size))
 
         val workspaceInfo = PackagesInfo()
         val dependenciesInfo = PackagesInfo()
@@ -41,12 +42,15 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
             }
         }
 
-        metrics += PACKAGES.metric(workspaceInfo.packageCount, dependenciesInfo.packageCount)
+        metrics += PACKAGES.metric(
+            getNextPowerOfTwo(workspaceInfo.packageCount),
+            getNextPowerOfTwo(dependenciesInfo.packageCount)
+        )
         metrics += COMPILE_TIME_TARGETS.metric(
-            BUILD_SCRIPT_WORKSPACE.with(workspaceInfo.buildScriptCount),
-            BUILD_SCRIPT_DEPENDENCY.with(dependenciesInfo.buildScriptCount),
-            PROC_MACRO_WORKSPACE.with(workspaceInfo.procMacroLibCount),
-            PROC_MACRO_DEPENDENCY.with(dependenciesInfo.procMacroLibCount)
+            BUILD_SCRIPT_WORKSPACE.with(getNextPowerOfTwo(workspaceInfo.buildScriptCount)),
+            BUILD_SCRIPT_DEPENDENCY.with(getNextPowerOfTwo(dependenciesInfo.buildScriptCount)),
+            PROC_MACRO_WORKSPACE.with(getNextPowerOfTwo(workspaceInfo.procMacroLibCount)),
+            PROC_MACRO_DEPENDENCY.with(getNextPowerOfTwo(dependenciesInfo.procMacroLibCount))
         )
         return metrics
     }
@@ -57,6 +61,7 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
         var procMacroLibCount: Int = 0
     )
 
+    // BACKCOMPAT: 2021.1. use `EventFields.RoundedInt` instead of `EventFields.Int`
     companion object {
         private val GROUP = EventLogGroup("rust.project", 1)
 
