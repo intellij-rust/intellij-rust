@@ -78,7 +78,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
                 )
             }
         }.map { ranges ->
-            val commonIndent = ranges.filter { it.isCodeNotEmpty() }.map { it.indent }.min()
+            val commonIndent = ranges.filter { it.isCodeNotEmpty() }.map { it.indent }.minOrNull()
             val indentedRanges = if (commonIndent != null) ranges.mapNotNull { it.offsetIndent(commonIndent) } else ranges
 
             indentedRanges.map { (start, end, codeStart) ->

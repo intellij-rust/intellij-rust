@@ -33,7 +33,7 @@ fun profile(label: String, warmupIterations: Int = 10, action: () -> Unit) {
             "warmup"
         } else {
             times += time
-            val timeMin = times.min()
+            val timeMin = times.minOrNull()
             val timeMedian = ObjectUtils.median(*times.toTypedArray())
             "min = $timeMin ms, median = $timeMedian ms"
         }

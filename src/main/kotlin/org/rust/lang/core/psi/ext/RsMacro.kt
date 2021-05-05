@@ -118,7 +118,7 @@ private fun RsMacro.guessPreferredBraces(): MacroBraces {
         map.merge(braces, 1, Int::plus)
     }
 
-    return map.maxBy { it.value }?.key ?: MacroBraces.PARENS
+    return map.maxByOrNull { it.value }?.key ?: MacroBraces.PARENS
 }
 
 private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")

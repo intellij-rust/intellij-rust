@@ -157,7 +157,7 @@ private val RsUseItem.pathAsList: List<String>?
     get() = useSpeck?.path?.text?.split("::")
 
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr && it !is RsVis }
-val <T : RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
+val <T : RsElement> List<T>.lastElement: T? get() = maxByOrNull { it.textOffset }
 
 val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.stdlibAttributes ?: RsFile.Attributes.NONE

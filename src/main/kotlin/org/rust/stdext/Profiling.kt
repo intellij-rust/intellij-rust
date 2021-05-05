@@ -91,8 +91,8 @@ class ListTimings {
     }
 
     private fun calculate(values: MutableList<Long>): Statistics {
-        val min = values.min() ?: error("Empty timings!")
-        val max = values.max() ?: error("Empty timings!")
+        val min = values.minOrNull() ?: error("Empty timings!")
+        val max = values.maxOrNull() ?: error("Empty timings!")
         val avg = values.sum() / values.size.toDouble()
         val variance = if (values.size > 1) {
             values.fold(0.0) { acc, i -> acc + (i - avg).pow(2.0) } / (values.size - 1)

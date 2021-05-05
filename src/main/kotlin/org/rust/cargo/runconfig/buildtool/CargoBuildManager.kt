@@ -64,7 +64,7 @@ object CargoBuildManager {
             if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
             val minVersion = cargoProjects.allProjects
                 .mapNotNull { it.rustcInfo?.version?.semver }
-                .min() ?: return false
+                .minOrNull() ?: return false
             return minVersion >= MIN_RUSTC_VERSION
         }
 
