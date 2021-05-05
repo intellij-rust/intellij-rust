@@ -175,8 +175,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
             return needInstall
         }
 
-        @Suppress("SameParameterValue")
-        private fun checkNeedInstallTarget(
+        fun checkNeedInstallTarget(
             project: Project,
             cargoProjectDirectory: Path,
             targetName: String
