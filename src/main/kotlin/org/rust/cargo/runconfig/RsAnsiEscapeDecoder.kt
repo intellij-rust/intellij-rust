@@ -114,7 +114,7 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
         }
 
         private fun getNearestAnsiColor(color: Color): Ansi4BitColor? =
-            Ansi4BitColor.values().minBy { calcEuclideanDistance(it.value, color) }
+            Ansi4BitColor.values().minByOrNull { calcEuclideanDistance(it.value, color) }
 
         private fun calcEuclideanDistance(from: Color, to: Color): Int {
             val redDiff = from.red.toDouble() - to.red

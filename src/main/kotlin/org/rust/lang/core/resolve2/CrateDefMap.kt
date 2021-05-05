@@ -407,7 +407,7 @@ class PerNs(
 
         fun Array<VisItem>.adjustMultiresolve(): Array<VisItem> {
             if (size <= 1) return this
-            val visibilityType = map2Array { it.visibility.type }.max()!!
+            val visibilityType = map2Array { it.visibility.type }.maxOrNull()!!
             if (visibilityType == VisibilityType.CfgDisabled) return arrayOf(first())
             return filter { it.visibility.type == visibilityType }.toTypedArray()
         }

@@ -125,7 +125,7 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
 private fun findAnchor(exprs: List<PsiElement>, chosenExpr: RsExpr): PsiElement? {
     val commonParent = PsiTreeUtil.findCommonParent(chosenExpr, *exprs.toTypedArray())
         ?: return null
-    val firstExpr = exprs.minBy { it.startOffset } ?: chosenExpr
+    val firstExpr = exprs.minByOrNull { it.startOffset } ?: chosenExpr
     return findAnchor(commonParent, firstExpr)
 }
 

@@ -365,7 +365,7 @@ open class CargoProjectsServiceImpl(
     private fun checkRustVersion(projects: List<CargoProjectImpl>) {
         val minToolchainVersion = projects.asSequence()
             .mapNotNull { it.rustcInfo?.version?.semver }
-            .min()
+            .minOrNull()
         val isUnsupportedRust = minToolchainVersion != null &&
             minToolchainVersion < RsToolchainBase.MIN_SUPPORTED_TOOLCHAIN
         @Suppress("LiftReturnOrAssignment")

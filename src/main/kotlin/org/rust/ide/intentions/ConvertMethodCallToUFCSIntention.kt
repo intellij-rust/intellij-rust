@@ -67,7 +67,7 @@ class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMet
 }
 
 private fun getOwnerName(methodVariants: List<MethodResolveVariant>): String {
-    val variant = methodVariants.minBy {
+    val variant = methodVariants.minByOrNull {
         if (it.source is TraitImplSource.ExplicitImpl) {
             0
         } else {

@@ -63,7 +63,7 @@ private fun buildDefMapContainingExplicitItems(
     val crateRootOwnedDirectory = crateRoot.virtualFile?.parent
         ?: error("Can't find parent directory for crate root of $crate crate")
     val crateDescription = crate.toString()
-    val rootModMacroIndex = allDependenciesDefMaps.values.map { it.rootModMacroIndex + 1 }.max() ?: 0
+    val rootModMacroIndex = allDependenciesDefMaps.values.map { it.rootModMacroIndex + 1 }.maxOrNull() ?: 0
     val crateRootData = ModData(
         parent = null,
         crate = crateId,

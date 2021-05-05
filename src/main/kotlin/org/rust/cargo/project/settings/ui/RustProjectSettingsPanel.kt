@@ -125,7 +125,7 @@ class RustProjectSettingsPanel(
                 downloadStdlibLink.isVisible = hasRustup && stdlibLocation == null
 
                 pathToStdlibField.isEditable = !hasRustup
-                pathToStdlibField.button.isEnabled = !hasRustup
+                pathToStdlibField.setButtonEnabled(!hasRustup)
                 if (stdlibLocation != null && (pathToStdlibField.text.isBlank() || hasRustup)) {
                     pathToStdlibField.text = stdlibLocation
                 }
