@@ -12,7 +12,7 @@ import com.jetbrains.cidr.execution.debugger.CidrDebuggerLanguageSupport
 import com.jetbrains.cidr.execution.debugger.CidrEvaluator
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver.StandardDebuggerLanguage.RUST
-import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
+import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelperBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
 class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
@@ -23,7 +23,7 @@ class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
         return createEditorProvider()
     }
 
-    override fun createTypesHelper(process: CidrDebugProcess): CidrDebuggerTypesHelper =
+    override fun createDebuggerTypesHelper(process: CidrDebugProcess): CidrDebuggerTypesHelperBase =
         RsDebuggerTypesHelper(process)
 
     override fun createEvaluator(frame: CidrStackFrame): CidrEvaluator =

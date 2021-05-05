@@ -6,6 +6,7 @@
 package org.rust.ide.template
 
 import com.intellij.codeInsight.template.EverywhereContextType
+import com.intellij.codeInsight.template.TemplateActionContext
 import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.psi.PsiComment
@@ -28,12 +29,12 @@ sealed class RsContextType(
     baseContextType: KClass<out TemplateContextType>
 ) : TemplateContextType(id, presentableName, baseContextType.java) {
 
-    final override fun isInContext(file: PsiFile, offset: Int): Boolean {
-        if (!PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(RsLanguage)) {
+    final override fun isInContext(context: TemplateActionContext): Boolean {
+        if (!PsiUtilCore.getLanguageAtOffset(context.file, context.startOffset).isKindOf(RsLanguage)) {
             return false
         }
 
-        val element = file.findElementAt(offset)
+        val element = context.file.findElementAt(context.startOffset)
         if (element == null || element is PsiComment || element.parent is RsLitExpr) {
             return false
         }

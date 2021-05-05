@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 
 class RsGeneratedSourcesWritingAccessProvider(private val project: Project) : WritingAccessProvider() {
-    override fun requestWriting(vararg files: VirtualFile): Collection<VirtualFile> {
+    override fun requestWriting(files: Collection<VirtualFile>): Collection<VirtualFile> {
         val cargoProjects = project.cargoProjects
         return files.filter { cargoProjects.isGeneratedFile(it) }
     }
