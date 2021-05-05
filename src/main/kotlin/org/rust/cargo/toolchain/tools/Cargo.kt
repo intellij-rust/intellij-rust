@@ -38,12 +38,9 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.find
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoTargets
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.*
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
@@ -62,6 +59,10 @@ import java.nio.file.Paths
 
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
 
+// BACKCOMPAT: 2021.1. Added not to break binary compatibility with EduTools plugin
+@Suppress("DEPRECATION")
+fun RsToolchain.cargo(): Cargo = (this as RsToolchainBase).cargo()
+
 fun RsToolchainBase.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
     val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
         ?.let { Files.isRegularFile(it) } == true
@@ -78,7 +79,7 @@ fun RsToolchainBase.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-open class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
+class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     : RustupComponent(if (useWrapper) WRAPPER_NAME else NAME, toolchain) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
