@@ -7,6 +7,7 @@ package org.rust.toml.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType.BASIC
+import org.rust.toml.CargoTomlPsiPattern.inAnyDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inDependencyPackageFeatureArray
 import org.rust.toml.CargoTomlPsiPattern.inFeatureDependencyArray
@@ -27,6 +28,8 @@ class CargoTomlCompletionContributor : CompletionContributor() {
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
 
             extend(BASIC, inDependencyKeyValue, CargoTomlDependencyCompletionProvider())
+
+            extend(BASIC, inAnyDependencyKeyValue, CargoTomlDependencyAttributeCompletionProvider())
         }
     }
 }

@@ -155,6 +155,38 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0<caret>"
     """, "dep" to "1.0")
 
+    private val ATTRIBUTE_COMPLETION_LIST = listOf(
+        "default-features = true",
+        "optional = false",
+        "features = []",
+        "git = \"\"",
+        "package = \"\"",
+        "path = \"\"",
+        "registry = \"\""
+    )
+
+    fun `test complete inline dependency keys`() = checkContainsCompletion("""
+        [dependencies]
+        foo = { <caret> }
+    """, ATTRIBUTE_COMPLETION_LIST)
+
+    fun `test complete do not offer existing inline dependency keys`() = checkNotContainsCompletion("""
+        [dependencies]
+        foo = { optional = false, <caret> }
+        <caret>
+    """, "optional = false")
+
+    fun `test complete specific dependency keys`() = checkContainsCompletion("""
+        [dependencies.dep]
+        <caret>
+    """, ATTRIBUTE_COMPLETION_LIST)
+
+    fun `test complete do not offer existing specific dependency keys`() = checkNotContainsCompletion("""
+        [dependencies.dep]
+        optional = false
+        <caret>
+    """, "optional = false")
+
     private fun doTest(
         @Language("TOML") before: String,
         @Language("TOML") after: String,
@@ -168,6 +200,18 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
     private fun checkNoCompletion(@Language("TOML") code: String, vararg crates: Pair<String, String>) {
         withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
             checkNoCompletion(code.trimIndent())
+        }
+    }
+
+    private fun checkContainsCompletion(@Language("TOML") code: String, variants: List<String>, vararg crates: Pair<String, String>) {
+        withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
+            checkContainsCompletion(code.trimIndent(), variants)
+        }
+    }
+
+    private fun checkNotContainsCompletion(@Language("TOML") code: String, variant: String, vararg crates: Pair<String, String>) {
+        withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
+            checkNotContainsCompletion(code.trimIndent(), variant)
         }
     }
 }
