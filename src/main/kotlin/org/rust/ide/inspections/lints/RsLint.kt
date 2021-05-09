@@ -63,7 +63,15 @@ enum class RsLint(
             }
     },
 
-    BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms"));
+    BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms")),
+
+    NonShorthandFieldPatterns("non_shorthand_field_patterns") {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.WEAK_WARNING
+                else -> super.toHighlightingType(level)
+            }
+    };
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {
