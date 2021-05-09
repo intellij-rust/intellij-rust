@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.ide.inspections.lints.RsBareTraitObjectsInspection
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObjectsInspection::class) {
