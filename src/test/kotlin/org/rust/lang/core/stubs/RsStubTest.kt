@@ -303,6 +303,32 @@ class RsStubTest : RsTestBase() {
                   PATH:RsPathStub
     """)
 
+    fun `test local macro definition is stubbed`() = doTest("""
+        fn foo() {
+            macro_rules! foo {}
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              MACRO:RsMacroStub
+    """)
+
+    fun `test local macro definition is stubbed in a nested block, but the block is not stubbed`() = doTest("""
+        fn foo() {
+            {
+                macro_rules! foo {}
+            };
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              MACRO:RsMacroStub
+    """)
+
     private fun doTest(@Language("Rust") code: String, expectedStubText: String) {
         val fileName = "main.rs"
         fileTreeFromText("//- $fileName\n$code").create()

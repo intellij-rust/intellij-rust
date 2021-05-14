@@ -26,6 +26,22 @@ class RsLazyBlockStubCreationTest : RsLazyBlockStubCreationTestBase() {
         }
     """)
 
+    fun `test macro_rules`() = doTest("""
+    //- main.rs
+        fn main() {
+            macro_rules! foo {}
+        }
+    """)
+
+    fun `test nested macro_rules`() = doTest("""
+    //- main.rs
+        fn main() {
+            {
+                macro_rules! foo {}
+            };
+        }
+    """)
+
     private fun doTest(@Language("Rust") fileTreeText: String) {
         fileTreeFromText(fileTreeText).create()
         checkRustFiles(myFixture.findFileInTempDir("."), emptyList())

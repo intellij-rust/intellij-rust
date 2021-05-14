@@ -70,7 +70,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 213
+        private const val STUB_VERSION = 214
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -193,6 +193,8 @@ private object BlockMayHaveStubsHeuristic {
                 || token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
                 // `#!`
                 || token == EXCL && prevToken == SHA
+                // `macro_rules!`
+                || token == EXCL && prevToken == IDENTIFIER && prevTokenText == "macro_rules"
                 // `fn foo` (but not `fn()`)
                 || token == IDENTIFIER && prevToken == FN
                 || token == IDENTIFIER && b.tokenText == "union" && b.lookAhead(1) == IDENTIFIER
@@ -1435,9 +1437,6 @@ class RsMacroStub(
         get() = BitUtil.isSet(flags, HAS_RUSTC_BUILTIN_MACRO)
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
-        override fun shouldCreateStub(node: ASTNode): Boolean =
-            node.treeParent.elementType in RS_MOD_OR_FILE
-
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroStub(
                 parentStub,
@@ -1495,8 +1494,6 @@ class RsMacro2Stub(
     RsNamedStub {
 
     object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.treeParent.elementType in RS_MOD_OR_FILE
-
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacro2Stub(
                 parentStub,
@@ -1744,7 +1741,8 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
         private var hasItemsOrAttrs = false
 
         override fun visitNode(element: TreeElement) {
-            if (element.elementType in RS_ITEMS) {
+            val elementType = element.elementType
+            if (elementType in RS_ITEMS || elementType == MACRO) {
                 hasItemsOrAttrs = true
                 stopWalking()
             } else {
@@ -1762,7 +1760,7 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
     }
 
     private object Holder {
-        val RS_ITEMS_AND_INNER_ATTR = TokenSet.orSet(RS_ITEMS, tokenSetOf(INNER_ATTR))
+        val RS_ITEMS_AND_INNER_ATTR = TokenSet.orSet(RS_ITEMS, tokenSetOf(MACRO, INNER_ATTR))
     }
 }
 
