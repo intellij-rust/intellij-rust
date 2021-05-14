@@ -234,7 +234,32 @@ class RsStubTest : RsTestBase() {
                 STRUCT_ITEM:RsStructItemStub
     """)
 
-    fun `test expressions are stubbed inside function local module`() = doTest("""
+    fun `test macro call is not stubbed inside a code block without items`() = doTest("""
+        fn foo() {
+            bar!();
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+    """)
+
+    fun `test macro call is stubbed inside a stubbed code block`() = doTest("""
+        fn foo() {
+            bar!();
+            struct S;
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              MACRO_CALL:RsMacroCallStub
+                PATH:RsPathStub
+              STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test macro call is stubbed inside function local module`() = doTest("""
         fn foo() {
             mod bar {
                 include!("a.rs");
@@ -252,7 +277,7 @@ class RsStubTest : RsTestBase() {
                     LIT_EXPR:RsLitExprStub
     """)
 
-    fun `test expressions are stubs inside file`() = doTest("""
+    fun `test macro call is stubbed inside a file`() = doTest("""
         include!("foo.rs");
     """, """
         RsFileStub
