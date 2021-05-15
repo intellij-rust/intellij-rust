@@ -7,6 +7,7 @@ package org.rust.toml
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import java.net.URL
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase() {
@@ -70,4 +71,28 @@ class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase(
         [dependencies]
         base64 = "=0.8.0"  # - Open documentation for `base64@=0.8.0`
     """)
+
+    fun `test docs link with semver major`() {
+        val link = CargoCrateDocLineMarkerProvider.prepareDocsLink("abc", "1");
+        assertEquals("https://docs.rs/abc/%5E1", link);
+        assertNotNull(URL(link));
+    }
+
+    fun `test docs link with exact version`() {
+        val link = CargoCrateDocLineMarkerProvider.prepareDocsLink("abc", "=1.2.3");
+        assertEquals("https://docs.rs/abc/%3D1.2.3", link);
+        assertNotNull(URL(link));
+    }
+
+    fun `test docs link with non-semver version`() {
+        val link = CargoCrateDocLineMarkerProvider.prepareDocsLink("abc", "latest");
+        assertEquals("https://docs.rs/abc/latest", link);
+        assertNotNull(URL(link));
+    }
+
+    fun `test docs link with wildcard`() {
+        val link = CargoCrateDocLineMarkerProvider.prepareDocsLink("abc", "*");
+        assertEquals("https://docs.rs/abc/*", link);
+        assertNotNull(URL(link));
+    }
 }
