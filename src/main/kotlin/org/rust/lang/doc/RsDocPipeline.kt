@@ -18,12 +18,12 @@ import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
-import org.intellij.markdown.html.GeneratingProvider
-import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.html.SimpleTagProvider
+import org.intellij.markdown.html.*
+import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -137,6 +137,18 @@ private class RustDocMarkdownFlavourDescriptor(
         generatingProviders[MarkdownElementTypes.ATX_1] = SimpleTagProvider("h2")
         generatingProviders[MarkdownElementTypes.ATX_2] = SimpleTagProvider("h3")
         generatingProviders[MarkdownElementTypes.CODE_FENCE] = RsCodeFenceProvider(context, renderMode)
+
+        val (resolveAnchors, useSafeLinks) = true to true
+        generatingProviders[MarkdownElementTypes.SHORT_REFERENCE_LINK] = RsReferenceLinksGeneratingProvider(
+            context, linkMap, uri ?: baseURI, resolveAnchors, useSafeLinks
+        )
+        generatingProviders[MarkdownElementTypes.FULL_REFERENCE_LINK] = RsReferenceLinksGeneratingProvider(
+            context, linkMap, uri ?: baseURI, resolveAnchors, useSafeLinks
+        )
+        generatingProviders[MarkdownElementTypes.INLINE_LINK] = RsInlineLinkGeneratingProvider(
+            context, uri ?: baseURI, resolveAnchors, useSafeLinks
+        )
+
         return generatingProviders
     }
 }
@@ -240,4 +252,82 @@ private class RsCodeFenceProvider(
 enum class RsDocRenderMode {
     QUICK_DOC_POPUP,
     INLINE_DOC_COMMENT
+}
+
+
+// heavily inspired by and mostly copied from org.intellij.markdown.html.LinkGeneratingProvider
+abstract class RsLinkGeneratingProvider(val context: PsiElement, val baseURI: URI?, val resolveAnchors: Boolean = false, val useSafeLinks: Boolean = true) : GeneratingProvider {
+    final override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
+        var info = getRenderInfo(text, node) ?: return fallbackProvider.processNode(visitor, text, node)
+
+        // ignore safety for rust paths as `makeXssSafeDestination` may break them
+        if (useSafeLinks && !info.destination.isProbablyValidRustPath())
+            info = info.copy(destination = makeXssSafeDestination(info.destination))
+
+        renderLink(visitor, text, node, info)
+    }
+
+    fun CharSequence.isProbablyValidRustPath(): Boolean {
+        return RsPsiFactory(context.project).tryCreatePath(this.toString()) != null
+    }
+
+    private fun makeAbsoluteUrl(destination: CharSequence): CharSequence {
+        if (!resolveAnchors && destination.startsWith('#')) {
+            return destination
+        }
+
+        if (destination.isProbablyValidRustPath())
+            return "${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$destination"
+
+        return baseURI?.resolveToStringSafe(destination.toString()) ?: destination
+    }
+
+    open fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
+        visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(info.destination)}\"", info.title?.let { "title=\"$it\"" })
+        labelProvider.processNode(visitor, text, info.label)
+        visitor.consumeTagClose("a")
+    }
+
+    abstract fun getRenderInfo(text: String, node: ASTNode): RenderInfo?
+
+    data class RenderInfo(val label: ASTNode, val destination: CharSequence, val title: CharSequence?)
+
+    companion object {
+        val fallbackProvider = TransparentInlineHolderProvider()
+        val labelProvider = TransparentInlineHolderProvider(1, -1)
+    }
+}
+
+open class RsReferenceLinksGeneratingProvider(
+    context: PsiElement, private val linkMap: LinkMap, baseURI: URI?, resolveAnchors: Boolean = false, useSafeLinks: Boolean = true
+) : RsLinkGeneratingProvider(context, baseURI, resolveAnchors, useSafeLinks) {
+    override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
+        val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
+            ?: return null
+        val linkInfo = linkMap.getLinkInfo(label.getTextInNode(text))
+            ?: return null
+        val linkTextNode = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
+
+        return RenderInfo(
+            linkTextNode ?: label,
+            EntityConverter.replaceEntities(linkInfo.destination, processEntities = true, processEscapes = true),
+            linkInfo.title?.let { EntityConverter.replaceEntities(it, processEntities = true, processEscapes = true) }
+        )
+    }
+}
+
+open class RsInlineLinkGeneratingProvider(
+    context: PsiElement, baseURI: URI?, resolveAnchors: Boolean = false, useSafeLinks: Boolean = true
+) : RsLinkGeneratingProvider(context, baseURI, resolveAnchors, useSafeLinks) {
+    override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
+        val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT) ?: return null
+        return RenderInfo(label,
+            node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.let {
+                LinkMap.normalizeDestination(it, true)
+            } ?: "",
+            node.findChildOfType(MarkdownElementTypes.LINK_TITLE)?.getTextInNode(text)?.let {
+                LinkMap.normalizeTitle(it)
+            }
+        )
+    }
 }
