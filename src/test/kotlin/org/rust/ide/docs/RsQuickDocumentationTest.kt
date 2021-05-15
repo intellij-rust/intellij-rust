@@ -713,7 +713,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>test_package::Bar
         </pre></div>
         <div class='content'><p>Outer doc
-        <a href="psi_element://test_package/Foo">link</a></p></div>
+        <a href="psi_element://Foo">link</a></p></div>
     """)
 
     fun `test qualified name`() = doTest("""
