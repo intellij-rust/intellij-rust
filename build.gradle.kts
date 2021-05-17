@@ -218,7 +218,7 @@ val Project.dependencyCachePath
 
 val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
-val majorVersion = "0.3"
+val majorVersion = "0.4"
 val patchVersion = prop("patchVersion").toInt()
 
 // Special module with run, build and publish tasks
