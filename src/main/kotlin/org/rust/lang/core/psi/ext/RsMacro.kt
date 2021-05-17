@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.decl.MacroGraph
 import org.rust.lang.core.macros.decl.MacroGraphBuilder
 import org.rust.lang.core.psi.*
@@ -45,6 +46,8 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
         modificationTracker.incModificationCount()
         return false // force rustStructureModificationTracker to be incremented
     }
+
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
 /** "macro_rules" identifier of `macro_rules! foo {}`; guaranteed to be non-null by the grammar */
