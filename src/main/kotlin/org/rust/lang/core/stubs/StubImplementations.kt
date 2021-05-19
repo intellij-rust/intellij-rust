@@ -99,8 +99,7 @@ class RsFileStub(
             }
 
             /** Note: if returns `true` then [RsBlockStubType.shouldCreateStub] MUST return `false` for the [child] */
-            private fun skipChildForFunctionBody(child: ASTNode): Boolean =
-                !BlockMayHaveStubsHeuristic.getAndClearCached(child)
+            private fun skipChildForFunctionBody(child: ASTNode): Boolean = !getAndClearCached(child)
         }
 
         override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
@@ -838,8 +837,7 @@ class RsFunctionStub(
 
         override fun createStub(psi: RsFunction, parentStub: StubElement<*>?): RsFunctionStub {
             val block = psi.block
-            val useInnerAttrs = block != null && ((block.node as LazyParseableElement).isParsed ||
-                BlockMayHaveStubsHeuristic.computeAndCache(block.node))
+            val useInnerAttrs = block != null && ((block.node as LazyParseableElement).isParsed || computeAndCache(block.node))
             val attrs = if (useInnerAttrs && block != null) {
                 TreeUtil.ensureParsed(block.node) // profiler hint
                 psi.getTraversedRawAttributes(withCfgAttrAttribute = true)

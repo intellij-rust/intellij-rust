@@ -7,12 +7,16 @@ package org.rust.ide.refactoring
 
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
-import org.rust.*
+import org.rust.MockAdditionalCfgOptions
+import org.rust.MockEdition
+import org.rust.RsTestBase
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.ide.refactoring.changeSignature.*
+import org.rust.ide.refactoring.changeSignature.Parameter
+import org.rust.ide.refactoring.changeSignature.ParameterProperty
+import org.rust.ide.refactoring.changeSignature.RsChangeFunctionSignatureConfig
+import org.rust.ide.refactoring.changeSignature.withMockChangeFunctionSignature
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.types.type
 import org.rust.stdext.removeLast
 
 class RsChangeSignatureTest : RsTestBase() {

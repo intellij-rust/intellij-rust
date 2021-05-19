@@ -7,7 +7,6 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.ext.hasColonColon
 
 /**
  * These are "atomic" ty (not type constructors, singletons).

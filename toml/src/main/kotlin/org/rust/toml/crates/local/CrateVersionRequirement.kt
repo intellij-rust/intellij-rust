@@ -7,7 +7,6 @@ package org.rust.toml.crates.local
 
 import com.vdurmont.semver4j.Requirement
 import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.SemverException
 
 class CrateVersionRequirement private constructor(private val requirements: List<Requirement>) {
     fun matches(version: Semver): Boolean = requirements.all {

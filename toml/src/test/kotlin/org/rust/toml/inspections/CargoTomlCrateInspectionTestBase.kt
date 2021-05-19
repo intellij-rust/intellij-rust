@@ -12,7 +12,6 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.toml.crates.local.CargoRegistryCrate
-import org.rust.toml.crates.local.CargoRegistryCrateVersion
 import org.rust.toml.crates.local.withMockedCrates
 import kotlin.reflect.KClass
 
