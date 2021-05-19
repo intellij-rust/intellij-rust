@@ -6,8 +6,10 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsMacro2
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsMacro2Stub
@@ -23,4 +25,6 @@ abstract class RsMacro2ImplMixin : RsStubbedNamedElementImpl<RsMacro2Stub>,
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
