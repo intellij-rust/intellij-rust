@@ -302,6 +302,22 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.inAnyLoop)
 
+    fun `test in any loop expression`() = testPattern("""
+        fn foo(x: u32) {
+            loop {
+                let x = ;
+                     //^
+            }
+        }
+    """, RsPsiPattern.inAnyLoop)
+
+    fun `test in any loop negative expression outside of loop`() = testPatternNegative("""
+        fn foo(x: u32) {
+            let x = ;
+                 //^
+        }
+    """, RsPsiPattern.inAnyLoop)
+
     fun `test in any loop negative before block`() = testPatternNegative("""
         fn foo() {
             for _ in 1..5 {}
