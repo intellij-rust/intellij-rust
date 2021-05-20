@@ -9,10 +9,7 @@ import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.RuntimeConfigurationError
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
@@ -20,6 +17,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.exists
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -37,6 +35,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.stdext.toPath
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -128,8 +127,12 @@ open class CargoCommandConfiguration(
     fun canBeFrom(cmd: CargoCommandLine): Boolean =
         command == ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
 
-    @Throws(RuntimeConfigurationError::class)
+    @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
+        if (isRedirectInput && redirectInputPath?.toPath()?.exists() != true) {
+            throw RuntimeConfigurationWarning("Input file doesn't exist")
+        }
+
         val config = clean()
         if (config is CleanConfiguration.Err) throw config.error
     }
