@@ -539,7 +539,7 @@ project(":ml-completion") {
         setPlugins(*plugins.toTypedArray())
     }
     dependencies {
-        implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.0.4")
+        implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.2")
         implementation(project(":"))
         implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
