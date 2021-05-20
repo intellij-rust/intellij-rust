@@ -18,6 +18,17 @@
     </template>
 
     <!-- TODO: Convert this to Generate... action -->
+    <template name="tests" description="test module" toReformat="false" toShortenFQNames="true"
+              value="#[cfg(test)]&#10;mod tests {&#10;    $END$&#10;}">
+        <context>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_ITEM" value="false"/>
+            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
+
+    <!-- TODO: Convert this to Generate... action -->
     <template name="tfn" description="test function" toReformat="false" toShortenFQNames="true"
               value="#[test]&#10;fn $NAME$() {&#10;    $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>

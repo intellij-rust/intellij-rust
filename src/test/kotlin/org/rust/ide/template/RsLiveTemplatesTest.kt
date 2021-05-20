@@ -119,6 +119,15 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test test available in file`() = expandSnippet("""
+        tests/*caret*/
+    """, """
+        #[cfg(test)]
+        mod tests {
+        $indent/*caret*/
+        }
+    """)
+
     fun `test module level context not available in function`() = noSnippet("""
         fn foo() {
             x.tfn/*caret*/
