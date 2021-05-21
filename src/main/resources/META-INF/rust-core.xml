@@ -507,6 +507,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Non-shorthand field patterns"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsNonShorthandFieldPatternsInspection"/>
+
         <localInspection language="Rust" groupName="Rust"
                          displayName="Assert Equal"
                          enabledByDefault="true" level="WEAK WARNING"
