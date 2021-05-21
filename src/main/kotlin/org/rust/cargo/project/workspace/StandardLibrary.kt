@@ -279,9 +279,6 @@ private class StdlibDataFetcher private constructor(
             testPackageSrcDir: VirtualFile,
             version: RustcVersion
         ): Path? {
-            val stdlibDependenciesDir = srcDir.pathAsPath.resolve("../vendor").normalize()
-            if (stdlibDependenciesDir.exists()) return stdlibDependenciesDir
-
             val stdlibHash = stdlibHash(srcDir, version)
 
             val stdlibVendor = RsPathManager.stdlibDependenciesDir().resolve("${version.semver.parsedVersion}-$stdlibHash/vendor")
