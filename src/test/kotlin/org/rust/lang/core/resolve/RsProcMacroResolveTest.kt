@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.UseNewResolve
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+@WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsProcMacroResolveTest : RsResolveTestBase() {
     // FIXME

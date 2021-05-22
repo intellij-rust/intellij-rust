@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.isHardcodedNotAMacro
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.Visibility.*
 import org.rust.lang.core.resolve2.util.PerNsHashMap
@@ -117,7 +118,8 @@ class CrateDefMap(
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
         val procMacroKind = containingMod.procMacros[macroDef.name]
         if (procMacroKind != null) {
-            return ProcMacroDefInfo(containingMod.crate, macroDef.path, procMacroKind, metaData.procMacroArtifact)
+            val isNotAMacro = isHardcodedNotAMacro(metaData.name, macroDef.name)
+            return ProcMacroDefInfo(containingMod.crate, macroDef.path, procMacroKind, metaData.procMacroArtifact, isNotAMacro)
         }
         containingMod.macros2[macroDef.name]?.let {
             return it

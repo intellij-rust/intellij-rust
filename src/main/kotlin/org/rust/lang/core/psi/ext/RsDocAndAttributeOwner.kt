@@ -14,6 +14,7 @@ import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.NotNull
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsAttributeOwnerStub
@@ -66,6 +67,10 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
     @JvmDefault
     val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
+
+    @JvmDefault
+    override val rawMetaItemsFromOuterAttrs: Sequence<RsMetaItem>
+        get() = outerAttrList.asSequence().map { it.metaItem }
 }
 
 object RsInnerAttributeOwnerRegistry {
@@ -107,7 +112,7 @@ object RsInnerAttributeOwnerRegistry {
             }
             is AttrInfo.Nested -> {
                 val childrenStubs = stub.childrenStubs
-                val outer = childrenStubs.asSequence().filter { it.stubType == RsElementTypes.OUTER_ATTR }
+                val outer = filterOuterAttrs(childrenStubs)
                 val inner = childrenStubs
                     .find { it.stubType == info.elementType }
                     ?.childrenStubs
@@ -121,9 +126,19 @@ object RsInnerAttributeOwnerRegistry {
 
     fun <S> rawMetaItemsForStub(stub: S): Sequence<RsMetaItemStub> where S : StubBase<*>,
                                                                          S : RsAttributeOwnerStub {
-        val attrs = allAttrsForStub(stub)
-        return attrs.mapNotNull { it.findChildStubByType(RsMetaItemStub.Type) }
+        return allAttrsForStub(stub).mapToMetaItems()
     }
+
+    fun <S> rawMetaItemsFromOuterAttrsForStub(stub: S): Sequence<RsMetaItemStub> where S : StubBase<*>,
+                                                                         S : RsAttributeOwnerStub {
+        return filterOuterAttrs(stub.childrenStubs).mapToMetaItems()
+    }
+
+    private fun filterOuterAttrs(childrenStubs: @NotNull List<StubElement<PsiElement>>): Sequence<StubElement<PsiElement>> =
+        childrenStubs.asSequence().filter { it.stubType == RsElementTypes.OUTER_ATTR }
+
+    private fun Sequence<StubElement<*>>.mapToMetaItems(): Sequence<RsMetaItemStub> =
+        mapNotNull { it.findChildStubByType(RsMetaItemStub.Type) }
 
     private sealed class AttrInfo {
         object Direct : AttrInfo()
@@ -168,36 +183,60 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes<RsMetaItem>
 /** [explicitCrate] is passed to avoid resolve triggering */
 fun RsDocAndAttributeOwner.getQueryAttributes(
     explicitCrate: Crate?,
-    stub: RsAttributeOwnerStub? = attributeStub
+    stub: RsAttributeOwnerStub? = attributeStub,
+    fromOuterAttrsOnly: Boolean = false
 ): QueryAttributes<RsMetaItem> {
     testAssert { !DumbService.isDumb(project) }
     return if (stub != null) {
-        QueryAttributes(stub.getQueryAttributes(explicitCrate).metaItems.map { it.psi })
+        QueryAttributes(stub.getQueryAttributes(explicitCrate, fromOuterAttrsOnly).metaItems.map { it.psi })
     } else {
-        getExpandedAttributesNoStub(explicitCrate)
+        getExpandedAttributesNoStub(explicitCrate, fromOuterAttrsOnly)
     }
 }
 
 /** [explicitCrate] is passed to avoid resolve triggering */
+fun <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.getQueryAttributes(
+    explicitCrate: Crate?,
+    stub: RsAttributeOwnerStub?,
+    fromOuterAttrsOnly: Boolean = false
+): QueryAttributes<T> {
+    @Suppress("UNCHECKED_CAST")
+    return if (this is RsAttributeOwnerStub) {
+        getQueryAttributes(explicitCrate, fromOuterAttrsOnly)
+    } else {
+        (this as RsDocAndAttributeOwner).getQueryAttributes(explicitCrate, stub, fromOuterAttrsOnly)
+    } as QueryAttributes<T>
+}
+
+/** [explicitCrate] is passed to avoid resolve triggering */
 fun RsAttributeOwnerStub.getQueryAttributes(
-    explicitCrate: Crate?
+    explicitCrate: Crate?,
+    fromOuterAttrsOnly: Boolean = false
 ): QueryAttributes<RsMetaItemStub> {
     return when {
         // No attributes - return empty sequence
         !hasAttrs -> QueryAttributes.empty()
 
         // No `#[cfg_attr()]` attributes - return attributes without `cfg_attr` expansion
-        !hasCfgAttr -> rawAttributes
+        !hasCfgAttr -> QueryAttributes(if (fromOuterAttrsOnly) rawMetaItemsFromOuterAttrs else rawMetaItems)
 
         // Slow path. There are `#[cfg_attr()]` attributes - expand them and return expanded attributes
-        else -> getExpandedAttributesNoStub(explicitCrate)
+        else -> getExpandedAttributesNoStub(explicitCrate, fromOuterAttrsOnly)
     }
 }
 
 /** [explicitCrate] is passed to avoid resolve triggering */
-private fun <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.getExpandedAttributesNoStub(explicitCrate: Crate?): QueryAttributes<T> {
-    if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return rawAttributes
-    val crate = explicitCrate ?: containingCrate ?: return rawAttributes
+private fun <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.getExpandedAttributesNoStub(
+    explicitCrate: Crate?,
+    fromOuterAttrsOnly: Boolean = false
+): QueryAttributes<T> {
+    val rawMetaItems = if (fromOuterAttrsOnly) {
+        rawMetaItemsFromOuterAttrs
+    } else {
+        rawMetaItems
+    }
+    if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return QueryAttributes(rawMetaItems)
+    val crate = explicitCrate ?: containingCrate ?: return QueryAttributes(rawMetaItems)
     val evaluator = CfgEvaluator.forCrate(crate)
     return QueryAttributes(evaluator.expandCfgAttrs(rawMetaItems))
 }
@@ -398,12 +437,10 @@ val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
     get() = evaluateCfg() != ThreeValuedLogic.False
 
 /**
- * TODO at the moment it's equivalent to [isEnabledByCfgSelf]
- *
  * Returns `true` if it [isEnabledByCfgSelf] and is not under attribute procedural macro
  */
 val RsDocAndAttributeOwner.existsAfterExpansionSelf: Boolean
-    get() = isEnabledByCfgSelf
+    get() = isEnabledByCfgSelf && ProcMacroAttribute.getProcMacroAttribute(this) !is ProcMacroAttribute.Attr
 
 fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
     isEnabledByCfgSelfInner(crate)

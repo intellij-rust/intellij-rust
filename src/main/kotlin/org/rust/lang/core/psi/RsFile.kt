@@ -287,7 +287,9 @@ private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("C
 
 private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<PsiFile, Boolean> {
     if (this is RsDocAndAttributeOwner && !existsAfterExpansionSelf) return contextualFile to false
-    val contextOrMacro = (this as? RsExpandedElement)?.expandedFrom ?: context!!
+    val contextOrMacro = (this as? RsExpandedElement)?.expandedFrom?.let {
+        if (it is RsMetaItem) it.owner?.context else it
+    } ?: context!!
     return if (contextOrMacro is PsiFile) {
         contextOrMacro to (contextOrMacro !is RsDocAndAttributeOwner || contextOrMacro.existsAfterExpansionSelf)
     } else {

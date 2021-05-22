@@ -928,8 +928,20 @@ private class MacroExpansionServiceImplInner(
         return null
     }
 
-    /** Optimized equivalent for `getExpandedFrom(element)?.context` */
+    /**
+     * Optimized equivalent for `getExpandedFrom(element)?.context`
+     * TODO a comment about proc macros
+     */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement? {
+        val (macroCall, parent) = getContextOfMacroCallExpandedFromInner(stubParent) ?: return null
+        return when (macroCall) {
+            is RsMacroCall -> parent
+            is RsMetaItem -> macroCall.owner?.context
+            else -> null
+        }
+    }
+
+    fun getContextOfMacroCallExpandedFromInner(stubParent: RsFile): kotlin.Pair<RsPossibleMacroCall, PsiElement?>? {
         checkReadAccessAllowed()
         var parentVirtualFile = stubParent.virtualFile ?: return null
         if (parentVirtualFile !is VirtualFileWithId) return null
@@ -944,10 +956,10 @@ private class MacroExpansionServiceImplInner(
                     parentVirtualFile = macroCallContainingFile
                     // continue
                 } else {
-                    return parent
+                    return macroCall to parent
                 }
             } else {
-                return macroCall.context
+                return macroCall to macroCall.context
             }
         }
     }

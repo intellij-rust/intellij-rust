@@ -79,7 +79,7 @@ class RsProcMacroExpanderTest : RsTestBase() {
         checkTokenIds: Boolean = false
     ) {
         val macroCallSubtree = project.createRustPsiBuilder(macroCall).parseSubtree().subtree
-        val expansionTtWithIds = when (val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, name, lib, env)) {
+        val expansionTtWithIds = when (val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, null, name, lib, env)) {
             is RsResult.Ok -> expansionResult.ok
             is RsResult.Err -> error("Expanded with error: ${expansionResult.err}")
         }
@@ -97,7 +97,7 @@ class RsProcMacroExpanderTest : RsTestBase() {
         name: String,
         macroCall: String
     ) {
-        val result = expandMacroAsTtWithErr(project.createRustPsiBuilder(macroCall).parseSubtree().subtree, name, lib)
+        val result = expandMacroAsTtWithErr(project.createRustPsiBuilder(macroCall).parseSubtree().subtree, null, name, lib)
         check(result.err() is T) { "Expected error ${T::class}, got result $result" }
     }
 

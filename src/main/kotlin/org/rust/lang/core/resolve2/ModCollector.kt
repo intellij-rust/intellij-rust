@@ -16,6 +16,7 @@ import com.intellij.util.SmartList
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.macros.MacroCallBody
 import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -297,10 +298,31 @@ private class ModCollector(
             modData,
             macroIndex,
             path,
-            call.body,
+            MacroCallBody.FunctionLike(call.body),
             bodyHash,
             macroDepth,
             dollarCrateMap
+        )
+    }
+
+    override fun collectProcMacroCall(call: ProcMacroCallLight) {
+        check(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
+        val (body, bodyHash) = call.lowerBody(project, crate) ?: return
+        val dollarCrateMap = RangeMap.EMPTY
+        val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
+        val originalItem = call.originalItem?.let {
+            val visItem = convertToVisItem(it, isModOrEnum = false, forceCfgDisabledVisibility = false)
+            visItem to it.namespaces
+        }
+        context.context.macroCalls += MacroCallInfo(
+            modData,
+            macroIndex,
+            call.path,
+            body,
+            bodyHash,
+            macroDepth,
+            dollarCrateMap,
+            originalItem
         )
     }
 

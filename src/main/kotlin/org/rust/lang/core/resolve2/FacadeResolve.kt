@@ -113,14 +113,14 @@ fun processMacros(
     isAttrOrDerive: Boolean,
     runBeforeResolve: (() -> Boolean)? = null
 ): Boolean? {
-    val (project, defMap, modData) = when (val info = getModInfo(scope)) {
+    val (project, defMap, modData, crate) = when (val info = getModInfo(scope)) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
     }
     if (runBeforeResolve != null && runBeforeResolve()) return true
 
-    return modData.processMacros(macroPath, isAttrOrDerive, processor, defMap, project)
+    return modData.processMacros(macroPath, isAttrOrDerive, processor, defMap, crate, project)
 }
 
 private fun ModData.processMacros(
@@ -129,12 +129,13 @@ private fun ModData.processMacros(
     isAttrOrDerive: Boolean,
     processor: RsResolveProcessor,
     defMap: CrateDefMap,
+    crate: Crate,
     project: Project,
 ): Boolean {
     val isQualified = macroPath == null || macroPath is RsPath && macroPath.qualifier != null
     if (!isQualified) {
         check(macroPath != null)
-        val macroIndex = getMacroIndex(macroPath, defMap)
+        val macroIndex = getMacroIndex(macroPath, defMap, crate)
         for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
             val macroInfo = if (!isAttrOrDerive) {
                 filterMacrosByIndex(macroInfos, macroIndex)
@@ -148,7 +149,8 @@ private fun ModData.processMacros(
             }
             val macroContainingMod = visItem.containingMod.toRsMod(defMap, project).singleOrNull() ?: continue
             val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
-            val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap) ?: continue
+            val macroCrate = project.crateGraph.findCrateById(macroInfo.crate) ?: continue
+            val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap, macroCrate) ?: continue
             if (processor(name, macro)) return true
         }
     }
@@ -217,11 +219,13 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
         if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return@resolveToMacroAndThen null
         val project = info.project
         val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
+        val crate = project.crateGraph.findCrateById(def.crate) ?: return@resolveToMacroAndThen null
         defMap.root.processMacros(
             macroPath = null,  // null because we resolve qualified macro path
             isAttrOrDerive = false,
             processor = processor,
             defMap = defMap,
+            crate = crate,
             project = project
         )
     }
@@ -250,46 +254,65 @@ private fun <T> RsMacroCall.resolveToMacroAndThen(
 }
 
 fun RsMetaItem.resolveToProcMacroWithoutPsi(): ProcMacroDefInfo? {
+    val resolvedMacro = resolveToProcMacroWithoutPsiWOHC(check = true) ?: return null
+    if (resolvedMacro.isHardcodedNotAMacro) return null
+    return resolvedMacro
+}
+
+/**
+ * TODO rename. WOHC = without hardcoded check.
+ *   rename `check`
+ */
+fun RsMetaItem.resolveToProcMacroWithoutPsiWOHC(check: Boolean): ProcMacroDefInfo? {
+    val owner = owner ?: return null
+
     val info = when {
         !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
-        RsProcMacroPsiUtil.canBeCustomDerive(this) -> getModInfo(containingMod)
+        RsProcMacroPsiUtil.canBeProcMacroCall(this) -> getModInfo(owner.containingMod)
         else -> CantUseNewResolve("not a proc macro")
-    }
-    return when (info) {
-        is CantUseNewResolve, InfoNotFound -> null
-        is RsModInfo -> {
-            val (_, defMap, modData) = info
-            val macroPath = path?.pathSegmentsAdjustedForAttrMacro?.toTypedArray() ?: return null
-            if (macroPath.size == 1) {
-                val name = macroPath.single()
-                modData.legacyMacros[name]
-                    ?.filterIsInstance<ProcMacroDefInfo>()
-                    ?.lastOrNull()
-                    ?.let { return it }
-            }
-            val perNs = defMap.resolvePathFp(
-                modData,
-                macroPath,
-                ResolveMode.OTHER,
-                withInvisibleItems = false  // because we expand only cfg-enabled macros
-            )
-            val defItem = perNs.resolvedDef.macros.singleOrNull() ?: return null
-            return defMap.getMacroInfo(defItem) as? ProcMacroDefInfo
+    } as? RsModInfo ?: return null
+
+    if (check) {
+        val ok = when (val attr = ProcMacroAttribute.getProcMacroAttributeRaw(owner)) {
+            is ProcMacroAttribute.Attr -> attr.attr == this
+            ProcMacroAttribute.Derive -> RsProcMacroPsiUtil.canBeCustomDerive(this)
+            ProcMacroAttribute.None -> false
         }
+        if (!ok) return null
     }
+
+    if (owner.context?.existsAfterExpansion != true) return null
+
+    val (_, defMap, modData) = info
+    val macroPath = path?.pathSegmentsAdjustedForAttrMacro?.toTypedArray() ?: return null
+    if (macroPath.size == 1) {
+        val name = macroPath.single()
+        modData.legacyMacros[name]
+            ?.filterIsInstance<ProcMacroDefInfo>()
+            ?.lastOrNull()
+            ?.let { return it }
+    }
+    val perNs = defMap.resolvePathFp(
+        modData,
+        macroPath,
+        ResolveMode.OTHER,
+        withInvisibleItems = false  // because we expand only cfg-enabled macros
+    )
+    val defItem = perNs.resolvedDef.macros.singleOrNull() ?: return null
+    return defMap.getMacroInfo(defItem) as? ProcMacroDefInfo
 }
 
 private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): MacroDefInfo? {
-    val (project, defMap, modData) = containingModInfo
+    val (project, defMap, modData, crate) = containingModInfo
     return RsResolveCache.getInstance(project)
         .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
             val callPath = path.pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
-            val macroIndex = getMacroIndex(this, defMap) ?: return@resolveWithCaching null
+            val macroIndex = getMacroIndex(this, defMap, crate) ?: return@resolveWithCaching null
             defMap.resolveMacroCallToMacroDefInfo(modData, callPath, macroIndex)
         }
 }
 
-private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap): MacroIndex? {
+private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap, crate: Crate): MacroIndex? {
     val itemAndCallExpandedFrom = element.stubAncestors
         .filterIsInstance<RsExpandedElement>()
         .mapNotNull { it to (it.expandedOrIncludedFrom ?: return@mapNotNull null) }
@@ -298,30 +321,30 @@ private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap): MacroIndex?
         if (element.containingFile is RsCodeFragment) return MacroIndex(intArrayOf(Int.MAX_VALUE))
         val (item, parent) = element.ancestorPairs.first { (_, parent) -> parent is RsMod }
         val modData = defMap.getModData(parent as RsMod) ?: return null
-        val indexInParent = getMacroIndexInParent(item, parent)
+        val indexInParent = getMacroIndexInParent(item, parent, crate)
         return modData.macroIndex.append(indexInParent)
     } else {
         val (item, callExpandedFrom) = itemAndCallExpandedFrom
         val parent = item.parent
         // TODO: Possible optimization - store macro index in [resolveToMacroDefInfo] cache
-        val parentIndex = getMacroIndex(callExpandedFrom, defMap) ?: return null
+        val parentIndex = getMacroIndex(callExpandedFrom, defMap, crate) ?: return null
         if (parent !is RsMod) return parentIndex  // not top level expansion
-        val indexInParent = getMacroIndexInParent(item, parent)
+        val indexInParent = getMacroIndexInParent(item, parent, crate)
         return parentIndex.append(indexInParent)
     }
 }
 
-private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement): Int {
+private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement, crate: Crate): Int {
     val itemStub = (item as? StubBasedPsiElement<*>)?.greenStub
     val parentStub = if (parent is PsiFileBase) parent.greenStub else (parent as? StubBasedPsiElement<*>)?.greenStub
     return if (itemStub != null && parentStub != null) {
         parentStub.childrenStubs.asSequence()
             .takeWhile { it !== itemStub }
-            .count { it.hasMacroIndex() }
+            .count { it.hasMacroIndex(crate) }
     } else {
         parent.children.asSequence()
             .takeWhile { it !== item }
-            .count { it.hasMacroIndex() }
+            .count { it.hasMacroIndex(crate) }
     }
 }
 
@@ -404,7 +427,12 @@ private sealed class RsModInfoBase {
     /** [reason] is only for debug */
     class CantUseNewResolve(val reason: String) : RsModInfoBase()
     object InfoNotFound : RsModInfoBase()
-    data class RsModInfo(val project: Project, val defMap: CrateDefMap, val modData: ModData) : RsModInfoBase()
+    data class RsModInfo(
+        val project: Project,
+        val defMap: CrateDefMap,
+        val modData: ModData,
+        val crate: Crate
+    ) : RsModInfoBase()
 }
 
 private fun getModInfo(scope: RsMod): RsModInfoBase {
@@ -422,7 +450,7 @@ private fun getModInfo(scope: RsMod): RsModInfoBase {
 
     if (isModShadowedByOtherMod(scope, modData, crate)) return CantUseNewResolve("mod shadowed by other mod")
 
-    return RsModInfo(project, defMap, modData)
+    return RsModInfo(project, defMap, modData, crate)
 }
 
 private fun Project.getDefMap(crate: Crate): CrateDefMap? {
@@ -506,11 +534,11 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
         }
 }
 
-private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap): RsElement? {
+private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap, crate: Crate): RsElement? {
     val items = containingMod.expandedItemsCached
     return when (this) {
         is DeclMacroDefInfo -> items.legacyMacros.singleOrNull {
-            val defIndex = getMacroIndex(it, defMap) ?: return@singleOrNull false
+            val defIndex = getMacroIndex(it, defMap, crate) ?: return@singleOrNull false
             MacroIndex.equals(defIndex, macroIndex)
         }
         is ProcMacroDefInfo, is DeclMacro2DefInfo -> items.named[path.name]?.firstOrNull()

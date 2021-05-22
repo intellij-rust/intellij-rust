@@ -28,10 +28,10 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.fragmentSpecifier
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.RsResult
-import org.rust.stdext.RsResult.*
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.removeLast
-import java.util.*
 import java.util.Collections.singletonMap
 
 /**
@@ -147,7 +147,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
         def: RsDeclMacroData,
         call: RsMacroCallData
     ): RsResult<MatchedPattern, DeclMacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(DeclMacroExpansionError.DefSyntax)
+        val macroCallBodyText = (call.macroBody as? MacroCallBody.FunctionLike)?.text ?: return Err(DeclMacroExpansionError.DefSyntax)
         val (macroCallBody, ranges) = project
             .createAdaptedRustPsiBuilder(macroCallBodyText)
             .lowerDocCommentsToAdaptedPsiBuilder(project)
@@ -272,7 +272,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     private fun checkRanges(call: RsMacroCallData, expandedText: CharSequence, ranges: RangeMap) {
         if (!isUnitTestMode) return
-        val callBody = call.macroBody ?: return
+        val callBody = (call.macroBody as? MacroCallBody.FunctionLike)?.text ?: return
 
         for (range in ranges.ranges) {
             val callBodyFragment = callBody.subSequence(range.srcOffset, range.srcEndOffset)

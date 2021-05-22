@@ -78,6 +78,14 @@ fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String>? {
     return segments.toTypedArray()
 }
 
+fun RsMetaItemStub.getPathWithAdjustedDollarCrate(): Array<String>? {
+    val segments = arrayListOf<String>()
+
+    val path = path ?: return null
+    if (!addPathSegments(path, segments)) return null
+    return segments.toTypedArray()
+}
+
 fun RsVisStub.getRestrictedPath(): Array<String>? {
     val path = visRestrictionPath ?: error("no visibility restriction")
     val segments = arrayListOf<String>()

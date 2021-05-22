@@ -65,6 +65,7 @@ private fun calculateModHash(modData: ModDataLight): HashCode {
     data.writeElements(modData.enums)
     data.writeElements(modData.imports)
     data.writeElements(modData.macroCalls)
+    data.writeElements(modData.procMacroCalls)
     data.writeElements(modData.macroDefs)
     data.writeElements(modData.macro2Defs)
     data.writeByte(modData.attributes?.ordinal ?: RsFile.Attributes.values().size)
@@ -77,6 +78,7 @@ private class ModDataLight {
     val enums: MutableList<EnumLight> = mutableListOf()
     val imports: MutableList<ImportLight> = mutableListOf()
     val macroCalls: MutableList<MacroCallLight> = mutableListOf()
+    val procMacroCalls: MutableList<ProcMacroCallLight> = mutableListOf()
     val macroDefs: MutableList<MacroDefLight> = mutableListOf()
     val macro2Defs: MutableList<Macro2DefLight> = mutableListOf()
     var attributes: RsFile.Attributes? = null  // not null only for crate root
@@ -160,6 +162,10 @@ private class ModLightCollector(
 
     override fun collectMacroCall(call: MacroCallLight, stub: RsMacroCallStub) {
         modData.macroCalls += call
+    }
+
+    override fun collectProcMacroCall(call: ProcMacroCallLight) {
+        modData.procMacroCalls += call
     }
 
     override fun collectMacroDef(def: MacroDefLight) {

@@ -120,4 +120,89 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
             Foo.foo().bar()
         }           //^ unresolved
     """)
+
+    @UseNewResolve
+    fun `test attr legacy macro`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        struct S;
+
+        macro_rules! foo {
+            () => {};//X
+        }
+
+        foo!{}
+        //^
+    """)
+
+    @UseNewResolve
+    fun `test attr impl`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        struct S;
+
+        #[attr_as_is]
+        impl S {
+            fn foo(&self) {}
+        }    //X
+
+        fn main() {
+            S.foo();
+        }   //^
+    """)
+
+    @UseNewResolve
+    fun `test attr mod`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        mod m {
+            pub fn foo() {}
+        }        //X
+
+        fn main() {
+            m::foo();
+        }    //^
+    """)
+
+    @UseNewResolve
+    fun `test attr fn`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    @UseNewResolve
+    fun `test attr fn2`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        #[attr_as_is]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    @UseNewResolve
+    fun `test hardcoded not a macro`() = checkByCode("""
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        #[attr_hardcoded_not_a_macro]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    override val followMacroExpansions: Boolean
+        get() = true
 }

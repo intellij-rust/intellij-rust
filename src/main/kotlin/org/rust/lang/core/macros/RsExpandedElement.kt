@@ -9,10 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroArgument
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
@@ -103,7 +100,7 @@ val PsiElement.isExpandedFromMacro: Boolean
 val PsiElement.isExpandedFromIncludeMacro: Boolean
     get() = includedFrom != null
 
-private data class MacroCallAndOffset(val call: RsMacroCall, val absoluteOffset: Int)
+private data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
 
 /**
  * If [this] is inside a **macro expansion**, returns a leaf element inside a macro call from which
@@ -173,17 +170,17 @@ private fun findMacroCallAndOffsetExpandedFromUnchecked(anchor: PsiElement, star
 }
 
 private fun findMacroCallAndOffsetExpandedFromNonRecursive(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
-    val call = anchor.findMacroCallExpandedFromNonRecursive() as? RsMacroCall ?: return null
+    val call = anchor.findMacroCallExpandedFromNonRecursive() ?: return null
     val mappedOffset = mapOffsetFromExpansionToCallBody(call, startOffset) ?: return null
     return MacroCallAndOffset(call, mappedOffset)
 }
 
-private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): Int? {
+private fun mapOffsetFromExpansionToCallBody(call: RsPossibleMacroCall, offset: Int): Int? {
     return mapOffsetFromExpansionToCallBodyRelative(call, offset)
         ?.fromBodyRelativeOffset(call)
 }
 
-private fun mapOffsetFromExpansionToCallBodyRelative(call: RsMacroCall, offset: Int): Int? {
+private fun mapOffsetFromExpansionToCallBodyRelative(call: RsPossibleMacroCall, offset: Int): Int? {
     val expansion = call.expansion ?: return null
     val fileOffset = call.expansionContext.expansionFileStartOffset
     return expansion.ranges.mapOffsetFromExpansionToCallBody(offset - fileOffset)
@@ -201,7 +198,7 @@ fun PsiElement.cameFromMacroCall(): Boolean {
  */
 fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsMacroCall? {
     val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
-    return findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset)?.call
+    return findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset)?.call as? RsMacroCall
 }
 
 /**
@@ -245,7 +242,13 @@ fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
 private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
-    val call = ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return null
+    val call = ancestors.mapNotNull {
+        when (it) {
+            is RsMacroArgument -> it.ancestorStrict<RsMacroCall>()
+            is RsDocAndAttributeOwner -> (ProcMacroAttribute.getProcMacroAttribute(it) as? ProcMacroAttribute.Attr)?.attr
+            else -> null
+        }
+    }.firstOrNull() ?: return null
     val expansion = call.expansion ?: return null
     val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
     val expansionFile = expansion.file
@@ -256,7 +259,7 @@ private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
 }
 
 private fun mapOffsetFromCallBodyToExpansion(
-    call: RsMacroCall,
+    call: RsPossibleMacroCall,
     expansion: MacroExpansion,
     absOffsetInCallBody: Int
 ): List<Int>? {
@@ -266,7 +269,7 @@ private fun mapOffsetFromCallBodyToExpansion(
         .map { it + fileOffset }
 }
 
-private fun Int.toBodyRelativeOffset(call: RsMacroCall): Int? {
+private fun Int.toBodyRelativeOffset(call: RsPossibleMacroCall): Int? {
     val bodyTextRange = call.bodyTextRange ?: return null
     if (this !in bodyTextRange) return null
     val macroOffset = bodyTextRange.startOffset
@@ -275,7 +278,7 @@ private fun Int.toBodyRelativeOffset(call: RsMacroCall): Int? {
     return elementOffset
 }
 
-private fun Int.fromBodyRelativeOffset(call: RsMacroCall): Int? {
+private fun Int.fromBodyRelativeOffset(call: RsPossibleMacroCall): Int? {
     val macroRange = call.bodyTextRange ?: return null
     val elementOffset = this + macroRange.startOffset
     check(elementOffset <= macroRange.endOffset)

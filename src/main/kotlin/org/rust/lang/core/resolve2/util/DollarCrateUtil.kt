@@ -7,7 +7,10 @@ package org.rust.lang.core.resolve2.util
 
 import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
-import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.MacroCallBody
+import org.rust.lang.core.macros.MappedTextRange
+import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
@@ -111,8 +114,8 @@ private fun findCrateIdForEachDollarCrate(
             val indexInCallBody = ranges.mapOffsetFromExpansionToCallBody(indexInExpandedText)
             val crateId: CratePersistentId = if (indexInCallBody != null) {
                 testAssert {
-                    val fragmentInCallBody = call.body
-                        .subSequence(indexInCallBody, indexInCallBody + MACRO_DOLLAR_CRATE_IDENTIFIER.length)
+                    val fragmentInCallBody = (call.body as? MacroCallBody.FunctionLike)?.text
+                        ?.subSequence(indexInCallBody, indexInCallBody + MACRO_DOLLAR_CRATE_IDENTIFIER.length)
                     fragmentInCallBody == MACRO_DOLLAR_CRATE_IDENTIFIER
                 }
                 call.dollarCrateMap.mapOffsetFromExpansionToCallBody(indexInCallBody)

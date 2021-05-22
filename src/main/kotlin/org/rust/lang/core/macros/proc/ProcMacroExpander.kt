@@ -27,20 +27,28 @@ class ProcMacroExpander(
         def: RsProcMacroData,
         call: RsMacroCallData
     ): RsResult<Pair<CharSequence, RangeMap>, ProcMacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(ProcMacroExpansionError.MacroCallSyntax)
+        val (macroCallBodyText, attrText) = when (val macroBody = call.macroBody) {
+            is MacroCallBody.Attribute -> macroBody.item to macroBody.attr
+            is MacroCallBody.Derive -> MappedText.single(macroBody.item, 0) to null
+            is MacroCallBody.FunctionLike -> MappedText.single(macroBody.text, 0) to null
+            null -> return Err(ProcMacroExpansionError.MacroCallSyntax)
+        }
         val env = call.packageEnv
         val (macroCallBodyLowered, rangesLowering) = project
-            .createRustPsiBuilder(macroCallBodyText)
+            .createRustPsiBuilder(macroCallBodyText.text)
             .lowerDocCommentsToPsiBuilder(project)
         val (macroCallBodyTt, tokenMap) = macroCallBodyLowered.parseSubtree()
-        return expandMacroAsTtWithErr(macroCallBodyTt, def.name, def.artifact.path.toString(), env).map {
+        // TODO support mapping for the attribute value
+        val attrSubtree = attrText?.let { project.createRustPsiBuilder(it.text).parseSubtree() }?.subtree?.copy(delimiter = null)
+        return expandMacroAsTtWithErr(macroCallBodyTt, attrSubtree, def.name, def.artifact.path.toString(), env).map {
             val (text, ranges) = MappedSubtree(it, tokenMap).toMappedText()
-            text to rangesLowering.mapAll(ranges)
+            text to macroCallBodyText.ranges.mapAll(rangesLowering.mapAll(ranges))
         }
     }
 
     fun expandMacroAsTtWithErr(
         macroCallBody: TokenTree.Subtree,
+        attributes: TokenTree.Subtree?,
         macroName: String,
         lib: String,
         env: Map<String, String> = emptyMap()
@@ -48,7 +56,7 @@ class ProcMacroExpander(
         val server = server ?: return Err(ProcMacroExpansionError.ExecutableNotFound)
         val envList = env.map { listOf(it.key, it.value) }
         val response = try {
-            server.send(Request.ExpansionMacro(macroCallBody, macroName, null, lib, envList))
+            server.send(Request.ExpansionMacro(macroCallBody, macroName, attributes, lib, envList))
         } catch (ignored: TimeoutException) {
             return Err(ProcMacroExpansionError.Timeout)
         } catch (e: ProcessCreationException) {

@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.macroBody
 
 class RsMacroCallData(
-    val macroBody: String?,
+    val macroBody: MacroCallBody?,
     val packageEnv: Map<String, String>
 ) {
 

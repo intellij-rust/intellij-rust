@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsPathStub
+import org.rust.lang.core.stubs.common.RsPathPsiOrStub
 import org.rust.lang.core.types.ty.TyPrimitive
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
@@ -22,14 +23,16 @@ private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
 val RsPath.hasCself: Boolean get() = kind == PathKind.CSELF
 
 /** For `Foo::bar::baz::quux` path returns `Foo` */
+// TODO remove
 tailrec fun RsPath.basePath(): RsPath {
     val qualifier = path
     return if (qualifier === null) this else qualifier.basePath()
 }
 
 /** For `Foo::bar::baz::quux` path returns `Foo` */
-tailrec fun RsPathStub.basePath(): RsPathStub {
-    val qualifier = path
+tailrec fun <T : RsPathPsiOrStub> T.basePath(): T {
+    @Suppress("UNCHECKED_CAST")
+    val qualifier = path as T?
     return if (qualifier === null) this else qualifier.basePath()
 }
 
