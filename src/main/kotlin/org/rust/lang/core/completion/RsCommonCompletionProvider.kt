@@ -6,10 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapiext.Testmark
@@ -19,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
+import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector
@@ -35,13 +33,11 @@ import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.stubs.index.ReexportKey
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.containsTyOfClass
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyPrimitive
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 object RsCommonCompletionProvider : RsCompletionProvider() {
@@ -207,8 +203,16 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             candidates
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
+                    val scopeEntry = SimpleScopeEntry(elementName, item)
+
+                    if (item is RsEnumItem
+                        && (context.expectedTy?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
+                        val variants = collectVariantsForEnumCompletion(item, context, scopeEntry.subst, candidate)
+                        result.addAllElements(variants)
+                    }
+
                     createLookupElement(
-                        scopeEntry = SimpleScopeEntry(elementName, item),
+                        scopeEntry = scopeEntry,
                         context = context,
                         locationString = candidate.info.usePath,
                         insertHandler = object : RsDefaultInsertHandler() {
@@ -434,5 +438,39 @@ private class RsImportLookupElement(
         var result = super.hashCode()
         result = 31 * result + candidate.hashCode()
         return result
+    }
+}
+
+fun collectVariantsForEnumCompletion(
+    element: RsEnumItem, context: RsCompletionContext, substitution: Substitution, candidate: ImportCandidate? = null
+): List<LookupElement> {
+    val enumName = element.name ?: return emptyList()
+
+    return element.enumBody?.childrenOfType<RsEnumVariant>().orEmpty().mapNotNull { enumVariant ->
+        val variantName = enumVariant.name ?: return@mapNotNull null
+
+        return@mapNotNull createLookupElement(
+            scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, substitution),
+            context = context,
+            null,
+            object : RsDefaultInsertHandler() {
+                override fun handleInsert(element: RsElement, scopeName: String, context: InsertionContext, item: LookupElement) {
+                    // move start offset from enum to its variant to escape it
+                    val enumStartOffset = context.startOffset
+                    val variantStartOffset = enumStartOffset + (enumName.length + 2)
+                    context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, variantStartOffset)
+                    super.handleInsert(enumVariant, variantName, context, item)
+
+                    // escape enum name if needed
+                    if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(enumName) && enumName !in CAN_NOT_BE_ESCAPED)
+                        context.document.insertString(enumStartOffset, RS_RAW_PREFIX)
+
+                    if (candidate != null && RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+                        context.commitDocument()
+                        context.getElementOfType<RsElement>()?.let { it -> candidate.import(it) }
+                    }
+                }
+            }
+        ).let { if (candidate != null) it.withImportCandidate(candidate) else it }
     }
 }
