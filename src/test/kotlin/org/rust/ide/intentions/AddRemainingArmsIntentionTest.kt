@@ -76,4 +76,24 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
             }
         }
     """)
+
+    fun `test match with raw identifier-keyword as name and variant`() = doAvailableTest("""
+        enum r#type { A, r#if, r#fn }
+        fn main() {
+            let a = r#type::A;
+            match a/*caret*/ {
+
+            }
+        }
+    """, """
+        enum r#type { A, r#if, r#fn }
+        fn main() {
+            let a = r#type::A;
+            match a {
+                r#type::A => {}
+                r#type::r#if => {}
+                r#type::r#fn => {}
+            }
+        }
+    """)
 }

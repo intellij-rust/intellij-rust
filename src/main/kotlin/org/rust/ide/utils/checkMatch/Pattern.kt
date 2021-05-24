@@ -5,9 +5,7 @@
 
 package org.rust.ide.utils.checkMatch
 
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsEnumVariant
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.findInScope
@@ -23,10 +21,10 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
             is PatternKind.Binding -> kind.name
 
             is PatternKind.Variant -> {
-                val variantName = kind.variant.name.orEmpty()
-                val itemName = kind.item.name
+                val variantName = kind.variant.name.orEmpty().escapeIdentifierIfNeeded()
+                val itemName = kind.item.name.orEmpty().escapeIdentifierIfNeeded()
 
-                val variantInScope = ctx?.findInScope(variantName, VALUES)
+                val variantInScope = ctx?.findInScope(variantName.unescapeIdentifier(), VALUES)
                     ?.takeIf { (it as? RsEnumVariant)?.parentEnum == kind.item }
 
                 // if the variant is already in scope, it can be used as just `A` instead of full `MyEnum::A`
@@ -45,8 +43,9 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
                     is TyTuple -> subPatterns.joinToString(", ", "(", ")") { it.text(ctx) }
                     is TyAdt -> {
                         val name = (ty.item as? RsStructItem)?.name ?: (ty.item as? RsEnumVariant)?.name
+                        val escapedName = name.orEmpty().escapeIdentifierIfNeeded()
                         val initializer = (ty.item as RsFieldsOwner).initializer(subPatterns, ctx)
-                        "$name$initializer"
+                        "$escapedName$initializer"
                     }
                     else -> ""
                 }
