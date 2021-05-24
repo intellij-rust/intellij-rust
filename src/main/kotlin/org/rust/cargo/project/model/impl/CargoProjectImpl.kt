@@ -57,7 +57,6 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.CachedVirtualFile
 import org.rust.openapiext.TaskResult
 import org.rust.openapiext.modules
 import org.rust.openapiext.pathAsPath
@@ -487,7 +486,7 @@ data class CargoProjectImpl(
             return file
         }
 
-    override val workspaceRootDir: VirtualFile? by CachedVirtualFile(rawWorkspace?.workspaceRootPath?.toUri()?.toString())
+    override val workspaceRootDir: VirtualFile? get() = rawWorkspace?.workspaceRoot
 
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)

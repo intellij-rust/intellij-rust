@@ -88,7 +88,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
     open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(testCargoPackage(contentRoot))
         return CargoWorkspace.deserialize(Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap()), CfgOptions.DEFAULT)
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
 
     protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
@@ -344,7 +344,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             transLib.id to setOf(
                 Dependency(transLib2.id),
             )
-        ), emptyMap()), CfgOptions.DEFAULT)
+        ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
 }
 
