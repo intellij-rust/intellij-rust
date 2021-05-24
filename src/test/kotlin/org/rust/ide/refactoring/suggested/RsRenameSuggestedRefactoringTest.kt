@@ -89,15 +89,19 @@ class RsRenameSuggestedRefactoringTest : RsSuggestedRefactoringTestBase() {
         fn foo/*caret*/() {
             let a = 5;
         }
+        fn baz<T>(t: T) {}
         fn bar() {
             foo();
+            baz(foo);
         }
     """, """
         fn foox/*caret*/() {
             let a = 5;
         }
+        fn baz<T>(t: T) {}
         fn bar() {
             foox();
+            baz(foox);
         }
     """, "foo", "foox"
     ) { myFixture.type("x") }
