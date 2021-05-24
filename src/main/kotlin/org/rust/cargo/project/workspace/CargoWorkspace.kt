@@ -34,7 +34,7 @@ interface CargoWorkspace {
     val manifestPath: Path
     val contentRoot: Path get() = manifestPath.parent
 
-    val workspaceRootPath: Path?
+    val workspaceRoot: VirtualFile?
 
     val cfgOptions: CfgOptions
 
@@ -218,11 +218,13 @@ interface CargoWorkspace {
 
 private class WorkspaceImpl(
     override val manifestPath: Path,
-    override val workspaceRootPath: Path?,
+    val workspaceRootUrl: String?,
     packagesData: Collection<CargoWorkspaceData.Package>,
     override val cfgOptions: CfgOptions,
     val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>
 ) : CargoWorkspace {
+
+    override val workspaceRoot: VirtualFile? by CachedVirtualFile(workspaceRootUrl)
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
             this,
@@ -329,7 +331,7 @@ private class WorkspaceImpl(
 
         val result = WorkspaceImpl(
             manifestPath,
-            workspaceRootPath,
+            workspaceRootUrl,
             newPackagesData,
             cfgOptions,
             featuresState
@@ -377,7 +379,7 @@ private class WorkspaceImpl(
 
         return WorkspaceImpl(
             manifestPath,
-            workspaceRootPath,
+            workspaceRootUrl,
             packages.map { it.asPackageData() },
             cfgOptions,
             featuresState
@@ -468,7 +470,7 @@ private class WorkspaceImpl(
 
         val result = WorkspaceImpl(
             manifestPath,
-            workspaceRootPath,
+            workspaceRootUrl,
             newPackagesData,
             cfgOptions,
             featuresState
@@ -503,7 +505,7 @@ private class WorkspaceImpl(
     @TestOnly
     override fun withEdition(edition: CargoWorkspace.Edition): CargoWorkspace = WorkspaceImpl(
         manifestPath,
-        workspaceRootPath,
+        workspaceRootUrl,
         packages.map { pkg ->
             // Currently, stdlib doesn't use 2018 edition
             val packageEdition = if (pkg.origin == STDLIB) pkg.edition else edition
@@ -516,7 +518,7 @@ private class WorkspaceImpl(
     @TestOnly
     override fun withCfgOptions(cfgOptions: CfgOptions): CargoWorkspace = WorkspaceImpl(
         manifestPath,
-        workspaceRootPath,
+        workspaceRootUrl,
         packages.map { it.asPackageData() },
         cfgOptions,
         featuresState
@@ -529,7 +531,7 @@ private class WorkspaceImpl(
             .mapValues { (_, v) -> v.associate { it.key.name to it.value } }
         return WorkspaceImpl(
             manifestPath,
-            workspaceRootPath,
+            workspaceRootUrl,
             packages.map { it.asPackageData().copy(features = packageToFeatures[it].orEmpty(), enabledFeatures = packageToFeatures[it].orEmpty().keys) },
             cfgOptions,
             featuresState
@@ -549,8 +551,7 @@ private class WorkspaceImpl(
             // are used only for tests), then `X`, and then `P`s tests. So we need to
             // handle cycles here.
 
-            val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions, emptyMap())
+            val result = WorkspaceImpl(manifestPath, data.workspaceRootUrl, data.packages, cfgOptions, emptyMap())
 
             // Fill package dependencies
             run {

@@ -60,7 +60,7 @@ object CargoMetadata {
         val workspace_members: List<String>,
 
         /**
-         * Path to workspace root folder. Can be null for old cargo version
+         * Path to workspace root folder
          */
         val workspace_root: String
     ) {
@@ -321,6 +321,9 @@ object CargoMetadata {
         buildMessages: BuildMessages? = null
     ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
+        val workspaceRoot = fs.refreshAndFindFileByPath(project.workspace_root)
+        requireNotNull(workspaceRoot) { "`cargo metadata` reported a workspace path which does not exist at `${project.workspace_root}`" }
+
         val members = project.workspace_members
         val packageIdToNode = project.resolve.nodes.associateBy { it.id }
         return CargoWorkspaceData(
@@ -347,7 +350,7 @@ object CargoMetadata {
                 node.id to dependencySet
             },
             project.packages.associate { it.id to it.dependencies },
-            project.workspace_root
+            workspaceRoot.url
         )
     }
 

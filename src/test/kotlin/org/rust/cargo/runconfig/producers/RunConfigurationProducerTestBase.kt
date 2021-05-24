@@ -182,13 +182,14 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                 }
             }
 
+            val contentRootUrl = myFixture.tempDirFixture.getFile(".")!!.url
             val projectDescription = CargoWorkspace.deserialize(
                 Paths.get("/my-crate/Cargo.toml"),
                 CargoWorkspaceData(
                     packages = listOf(
                         CargoWorkspaceData.Package(
                             id = "test-package 0.0.1",
-                            contentRootUrl = myFixture.tempDirFixture.getFile(".")!!.url,
+                            contentRootUrl = contentRootUrl,
                             name = "test-package",
                             version = "0.0.1",
                             targets = targets.map {
@@ -212,7 +213,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                         )
                     ),
                     dependencies = emptyMap(),
-                    rawDependencies = emptyMap()
+                    rawDependencies = emptyMap(),
+                    workspaceRootUrl = contentRootUrl
                 ),
                 CfgOptions.DEFAULT
             )
