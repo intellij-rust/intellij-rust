@@ -10,53 +10,69 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.crate.crateGraph
 
 @Suppress("UnstableApiUsage")
 class RsProjectUsagesCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        val metrics = mutableSetOf<MetricEvent>()
         val cargoProjects = project.cargoProjects.allProjects
-        metrics += CARGO_PROJECTS_EVENT.metric(getNextPowerOfTwo(cargoProjects.size))
+        if (cargoProjects.isEmpty()) return emptySet()
 
+        val metrics = mutableSetOf<MetricEvent>()
+        metrics += CARGO_PROJECTS_EVENT.metric(zeroOrGetNextPowerOfTwo(cargoProjects.size))
+
+        val crates = runReadAction {
+            project.crateGraph.topSortedCrates
+        }
+
+        val directDependencyIds = mutableSetOf<String>()
         val workspaceInfo = PackagesInfo()
         val dependenciesInfo = PackagesInfo()
-        for (cargoProject in cargoProjects) {
-            for (pkg in cargoProject.workspace?.packages.orEmpty()) {
-                val info = when (pkg.origin) {
-                    PackageOrigin.WORKSPACE -> workspaceInfo
-                    PackageOrigin.DEPENDENCY -> dependenciesInfo
-                    else -> continue
-                }
-                info.packageCount += 1
-                for (target in pkg.targets) {
-                    when  {
-                        target.kind.isCustomBuild -> info.buildScriptCount += 1
-                        target.kind.isProcMacro -> info.procMacroLibCount += 1
+        for (crate in crates) {
+            val target = crate.cargoTarget ?: continue
+            val pkg = target.pkg
+            val info = when (pkg.origin) {
+                PackageOrigin.WORKSPACE -> workspaceInfo
+                PackageOrigin.DEPENDENCY -> dependenciesInfo
+                else -> continue
+            }
+            info.packageIds += pkg.id
+            when {
+                target.kind.isCustomBuild -> info.buildScriptCount += 1
+                target.kind.isProcMacro -> info.procMacroLibCount += 1
+            }
+            if (pkg.origin == PackageOrigin.WORKSPACE) {
+                for ((_, dependencyCrate) in crate.dependencies) {
+                    if (dependencyCrate.origin == PackageOrigin.DEPENDENCY) {
+                        directDependencyIds += dependencyCrate.cargoTarget?.pkg?.id ?: continue
                     }
                 }
             }
         }
 
         metrics += PACKAGES.metric(
-            getNextPowerOfTwo(workspaceInfo.packageCount),
-            getNextPowerOfTwo(dependenciesInfo.packageCount)
+            zeroOrGetNextPowerOfTwo(workspaceInfo.packageIds.size),
+            zeroOrGetNextPowerOfTwo(directDependencyIds.size),
+            zeroOrGetNextPowerOfTwo(dependenciesInfo.packageIds.size)
         )
         metrics += COMPILE_TIME_TARGETS.metric(
-            BUILD_SCRIPT_WORKSPACE.with(getNextPowerOfTwo(workspaceInfo.buildScriptCount)),
-            BUILD_SCRIPT_DEPENDENCY.with(getNextPowerOfTwo(dependenciesInfo.buildScriptCount)),
-            PROC_MACRO_WORKSPACE.with(getNextPowerOfTwo(workspaceInfo.procMacroLibCount)),
-            PROC_MACRO_DEPENDENCY.with(getNextPowerOfTwo(dependenciesInfo.procMacroLibCount))
+            BUILD_SCRIPT_WORKSPACE.with(zeroOrGetNextPowerOfTwo(workspaceInfo.buildScriptCount)),
+            BUILD_SCRIPT_DEPENDENCY.with(zeroOrGetNextPowerOfTwo(dependenciesInfo.buildScriptCount)),
+            PROC_MACRO_WORKSPACE.with(zeroOrGetNextPowerOfTwo(workspaceInfo.procMacroLibCount)),
+            PROC_MACRO_DEPENDENCY.with(zeroOrGetNextPowerOfTwo(dependenciesInfo.procMacroLibCount))
         )
         return metrics
     }
 
     private data class PackagesInfo(
-        var packageCount: Int = 0,
+        val packageIds: MutableSet<PackageId> = mutableSetOf(),
         var buildScriptCount: Int = 0,
         var procMacroLibCount: Int = 0
     )
@@ -69,6 +85,7 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
 
         private val PACKAGES = GROUP.registerEvent("packages",
             EventFields.Int("workspace"),
+            EventFields.Int("direct_dependency"),
             EventFields.Int("dependency")
         )
 
@@ -83,5 +100,10 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
             PROC_MACRO_WORKSPACE,
             PROC_MACRO_DEPENDENCY,
         )
+
+        private fun zeroOrGetNextPowerOfTwo(value: Int): Int {
+            require(value >= 0)
+            return if (value == 0) 0 else getNextPowerOfTwo(value)
+        }
     }
 }

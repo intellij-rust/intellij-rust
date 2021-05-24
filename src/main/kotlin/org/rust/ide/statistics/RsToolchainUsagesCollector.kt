@@ -15,6 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RsLocalToolchain
+import org.rust.cargo.toolchain.RsRemoteToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 
@@ -23,9 +26,11 @@ class RsToolchainUsagesCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        val metrics = mutableSetOf<MetricEvent>()
         val cargoProjects = project.cargoProjects.allProjects
-        val rustcVersion = cargoProjects.firstOrNull()?.rustcInfo?.version
+        if (cargoProjects.isEmpty()) return emptySet()
+
+        val metrics = mutableSetOf<MetricEvent>()
+        val rustcVersion = cargoProjects.first().rustcInfo?.version
         if (rustcVersion != null) {
             val version = Version(rustcVersion.semver.major, rustcVersion.semver.minor, rustcVersion.semver.patch)
             metrics += COMPILER_EVENT.metric(
@@ -34,9 +39,9 @@ class RsToolchainUsagesCollector : ProjectUsagesCollector() {
                 rustcVersion.host
             )
         }
-        metrics += RUSTUP_EVENT.metric(project.toolchain?.isRustupAvailable ?: false)
-        // TODO: check wsl toolchains
-        metrics += TYPE_EVENT.metric("local")
+        val toolchain = project.toolchain
+        metrics += RUSTUP_EVENT.metric(toolchain?.isRustupAvailable ?: false)
+        metrics += TYPE_EVENT.metric(ToolchainType.from(toolchain))
 
         return metrics
     }
@@ -73,6 +78,25 @@ class RsToolchainUsagesCollector : ProjectUsagesCollector() {
         )
 
         private val RUSTUP_EVENT = GROUP.registerEvent("rustup", EventFields.Boolean("used"))
-        private val TYPE_EVENT = GROUP.registerEvent("type", EventFields.String("type", listOf("local", "wsl")))
+        private val TYPE_EVENT = GROUP.registerEvent("type", EventFields.Enum<ToolchainType>("type"))
+    }
+
+    private enum class ToolchainType {
+        LOCAL,
+        WSL,
+        NONE,
+        OTHER;
+
+        companion object {
+            fun from(toolchain: RsToolchainBase?): ToolchainType {
+                return when (toolchain) {
+                    null -> NONE
+                    is RsLocalToolchain -> LOCAL
+                    // BACKCOMPAT: 2020.3. Use RsWslToolchain
+                    is RsRemoteToolchain -> WSL
+                    else -> OTHER
+                }
+            }
+        }
     }
 }
