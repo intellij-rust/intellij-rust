@@ -77,7 +77,7 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
         }
     """)
 
-    fun `test match with raw identifier-keyword as name and variant`() = doAvailableTest("""
+    fun `test match with escaped keyword as enum name and variant`() = doAvailableTest("""
         enum r#type { A, r#if, r#fn }
         fn main() {
             let a = r#type::A;
@@ -93,6 +93,45 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
                 r#type::A => {}
                 r#type::r#if => {}
                 r#type::r#fn => {}
+            }
+        }
+    """)
+
+    fun `test match with imported escaped keyword as enum name and variant`() = doAvailableTest("""
+        enum r#type { A, r#if, r#fn }
+        fn main() {
+            use r#type::*;
+            let a = A;
+            match a/*caret*/ {
+
+            }
+        }
+    """, """
+        enum r#type { A, r#if, r#fn }
+        fn main() {
+            use r#type::*;
+            let a = A;
+            match a/*caret*/ {
+                A => {}
+                r#if => {}
+                r#fn => {}
+            }
+        }
+    """)
+
+    fun `test match with escaped keyword as struct name and field`() = doAvailableTest("""
+        struct r#type { r#if: bool }
+        fn foo(s: r#type) {
+            match s/*caret*/ {
+                r#type { r#if: true } => {}
+            }
+        }
+    """, """
+        struct r#type { r#if: bool }
+        fn foo(s: r#type) {
+            match s/*caret*/ {
+                r#type { r#if: true } => {}
+                r#type { r#if: false } => {}
             }
         }
     """)

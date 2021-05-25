@@ -21,17 +21,17 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
             is PatternKind.Binding -> kind.name
 
             is PatternKind.Variant -> {
-                val variantName = kind.variant.name.orEmpty().escapeIdentifierIfNeeded()
-                val itemName = kind.item.name.orEmpty().escapeIdentifierIfNeeded()
+                val variantName = kind.variant.name.orEmpty()
+                val itemName = kind.item.name.orEmpty()
 
-                val variantInScope = ctx?.findInScope(variantName.unescapeIdentifier(), VALUES)
+                val variantInScope = ctx?.findInScope(variantName, VALUES)
                     ?.takeIf { (it as? RsEnumVariant)?.parentEnum == kind.item }
 
                 // if the variant is already in scope, it can be used as just `A` instead of full `MyEnum::A`
                 val name = if (variantInScope != null) {
-                    variantName
+                    variantName.escapeIdentifierIfNeeded()
                 } else {
-                    "$itemName::$variantName"
+                    "${itemName.escapeIdentifierIfNeeded()}::${variantName.escapeIdentifierIfNeeded()}"
                 }
                 val initializer = kind.variant.initializer(kind.subPatterns, ctx)
                 "$name$initializer"
@@ -99,7 +99,7 @@ private fun RsFieldsOwner.initializer(subPatterns: List<Pattern>, ctx: RsElement
             "{ .. }"
         } else {
             subPatterns.withIndex().joinToString(",", "{", "}") { (index, pattern) ->
-                "${blockFields!!.namedFieldDeclList[index].name}: ${pattern.text(ctx)}"
+                "${blockFields!!.namedFieldDeclList[index].name.orEmpty().escapeIdentifierIfNeeded()}: ${pattern.text(ctx)}"
             }
         }
     }
