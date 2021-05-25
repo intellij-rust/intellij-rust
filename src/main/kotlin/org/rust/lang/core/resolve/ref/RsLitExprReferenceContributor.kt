@@ -59,7 +59,12 @@ private class RsLiteralFileReferenceSet(
                 val item = parent.ancestorStrict<RsModDeclItem>() ?: parent.ancestorStrict<RsMod>()
                 listOfNotNull(item?.containingMod?.getOwnedDirectory())
             }
-            else -> parentDirectoryContext
+            is RsIncludeMacroArgument -> parentDirectoryContext
+            else -> {
+                val rsElement = element as? RsElement ?: return emptyList()
+                val workspaceRoot = rsElement.containingCargoPackage?.workspace?.workspaceRoot ?: return emptyList()
+                return toFileSystemItems(workspaceRoot)
+            }
         }
     }
 
