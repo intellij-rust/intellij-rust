@@ -20,6 +20,7 @@ import org.rust.cargo.toolchain.RsRemoteToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
+import java.util.*
 
 @Suppress("UnstableApiUsage")
 class RsToolchainUsagesCollector : ProjectUsagesCollector() {
@@ -78,7 +79,9 @@ class RsToolchainUsagesCollector : ProjectUsagesCollector() {
         )
 
         private val RUSTUP_EVENT = GROUP.registerEvent("rustup", EventFields.Boolean("used"))
-        private val TYPE_EVENT = GROUP.registerEvent("type", EventFields.Enum<ToolchainType>("type"))
+        private val TYPE_EVENT = GROUP.registerEvent("type",
+            EventFields.Enum<ToolchainType>("type") { it.toString().toLowerCase(Locale.ENGLISH) }
+        )
     }
 
     private enum class ToolchainType {
