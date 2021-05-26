@@ -236,9 +236,11 @@ project(":plugin") {
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
-            javaScriptPlugin,
             mlCompletionPlugin
         )
+        if (platformVersion < 212) {
+            plugins += javaScriptPlugin
+        }
         if (baseIDE == "idea") {
             plugins += listOf(
                 copyrightPlugin,
@@ -260,7 +262,9 @@ project(":plugin") {
         implementation(project(":intelliLang"))
         implementation(project(":duplicates"))
         implementation(project(":grazie"))
-        implementation(project(":js"))
+        if (platformVersion < 212) {
+            implementation(project(":js"))
+        }
         implementation(project(":ml-completion"))
     }
 
@@ -521,15 +525,17 @@ project(":grazie") {
     }
 }
 
-project(":js") {
-    intellij {
-        setPlugins(javaScriptPlugin)
-    }
-    dependencies {
-        implementation(project(":"))
-        implementation(project(":common"))
-        testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
+if (platformVersion < 212) {
+    project(":js") {
+        intellij {
+            setPlugins(javaScriptPlugin)
+        }
+        dependencies {
+            implementation(project(":"))
+            implementation(project(":common"))
+            testImplementation(project(":", "testOutput"))
+            testImplementation(project(":common", "testOutput"))
+        }
     }
 }
 

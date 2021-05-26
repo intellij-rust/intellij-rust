@@ -12,10 +12,15 @@ include(
     "intelliLang",
     "duplicates",
     "grazie",
-    "js",
     "ml-completion",
     "intellij-toml"
 )
+
+val platformVersion: String by extra
+
+if (platformVersion.toInt() < 212) {
+    include("js")
+}
 
 // Configure Gradle Build Cache. It is enabled in `gradle.properties` via `org.gradle.caching`.
 // Also, `gradle clean` task is configured to delete `build-cache` directory.
