@@ -85,7 +85,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test don't analyze macro def-call bodies and use items`() = checkErrors("""
+    fun `test don't analyze macro def-call bodies, attributes and use items`() = checkErrors("""
         use dummy::async;
         use dummy::await;
         use dummy::{async, await};
@@ -94,8 +94,23 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
             () => { async };
         }
 
+        #[<error descr="`async` is reserved keyword in Edition 2018">async</error>]
+        fn foo1() {
+            #![<error descr="`async` is reserved keyword in Edition 2018">async</error>]
+        }
+
+        #[foo::<error descr="`async` is reserved keyword in Edition 2018">async</error>]
+        fn foo2() {
+            #![foo::<error descr="`async` is reserved keyword in Edition 2018">async</error>]
+        }
+
+        #[bar(async)]
+        fn foo3() {
+            #![bar(async)]
+        }
+
         fn main() {
-            foo!(async)
+            foo!(async);
         }
     """)
 
