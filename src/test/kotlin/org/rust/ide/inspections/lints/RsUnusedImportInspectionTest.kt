@@ -7,9 +7,11 @@ package org.rust.ide.inspections.lints
 
 import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
+import org.rust.UseNewResolve
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsInspectionsTestBase
 
+@UseNewResolve
 class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
     fun `test unused import`() = checkByText("""
         mod foo {

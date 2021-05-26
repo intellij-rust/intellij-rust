@@ -12,6 +12,8 @@ import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.exportedItems
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.stdext.intersects
 
 class RsUnusedImportInspection : RsLintInspection() {
@@ -19,6 +21,7 @@ class RsUnusedImportInspection : RsLintInspection() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitUseSpeck(o: RsUseSpeck) {
+            if (!holder.project.isNewResolveEnabled) return
             val item = o.ancestorStrict<RsUseItem>() ?: return
             if (item.isReexport) return
             if (o.path?.resolveStatus != PathResolveStatus.RESOLVED) return
@@ -56,8 +59,6 @@ private fun RsUseSpeck.isUsed(): Boolean {
     return isUseSpeckUsed(this, usage)
 }
 
-private data class NamedItem(val name: String, val item: RsElement)
-
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     // Use speck with an empty group is always unused
     val useGroup = useSpeck.useGroup
@@ -67,7 +68,7 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
         val module = useSpeck.path?.reference?.resolve() as? RsMod ?: return true
 
         // Extract all visible items from the target module
-        val candidateItems = module.exportedItems(useSpeck)
+        val candidateItems = module.exportedItems(useSpeck.containingMod)
 
         // Find path usages with names of the extracted items
         val usedItems = candidateItems.mapNotNull {
@@ -89,29 +90,4 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     }
 
     return candidateItems.intersects(usedItems) || candidateItems.intersects(usage.traitUsages)
-}
-
-private fun RsMod.exportedItems(context: RsElement): List<NamedItem> {
-    val allItems = expandedItemsCached
-    val items = allItems.rest.filter {
-        (it as? RsVisible)?.isVisibleFrom(context.containingMod) != null
-    }.mapNotNull {
-        val name = (it as? RsNamedElement)?.name ?: return@mapNotNull null
-        NamedItem(name, it)
-    }
-    val exports = allItems.namedImports.filter {
-        it.isPublic
-    }.mapNotNull {
-        val item = it.path.reference?.resolve() ?: return@mapNotNull null
-        val name = it.nameInScope
-        NamedItem(name, item)
-    }
-    val starExports = allItems.starImports.filter {
-        it.isPublic
-    }.flatMap {
-        val module = it.speck.path?.reference?.resolve() as? RsMod ?: return@flatMap emptyList()
-        module.exportedItems(it.speck)
-    }
-
-    return items + exports + starExports
 }
