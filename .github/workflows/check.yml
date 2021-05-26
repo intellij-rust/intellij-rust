@@ -138,6 +138,19 @@ jobs:
                       platform-version: 211
                       resolve-engine: resolve-old
                       verify-plugin: true
+                    # BACKCOMPAT: 2020.3
+                    - os: windows-latest
+                      rust-version: 1.52.1
+                      base-ide: idea
+                      platform-version: 212
+                      resolve-engine: resolve-new
+                      verify-plugin: false
+                    - os: ubuntu-18.04
+                      rust-version: 1.52.1
+                      base-ide: clion
+                      platform-version: 212
+                      resolve-engine: resolve-new
+                      verify-plugin: false
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
