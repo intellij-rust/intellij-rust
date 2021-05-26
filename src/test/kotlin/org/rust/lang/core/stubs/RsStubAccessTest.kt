@@ -13,8 +13,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
-import com.intellij.testFramework.LoggedErrorProcessor
-import org.apache.log4j.Logger
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
@@ -61,25 +59,15 @@ class RsStubAccessTest : RsTestBase() {
 
     fun `test parent works correctly for stubbed elements`() {
         val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
-        try {
-            LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-                override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
-                    logger.info(message, t)
-                    throw AssertionError(message)
-                }
-            })
-            processStubsWithoutAstAccess<RsElement> {
-                val parent = try {
-                    it.parent
-                } catch (e: AssertionError) {
-                    null
-                }
-                if (parent != null) {
-                    parentsByStub += it to it.parent
-                }
+        processStubsWithoutAstAccess<RsElement> {
+            val parent = try {
+                it.parent
+            } catch (e: AssertionError) {
+                null
             }
-        } finally {
-            LoggedErrorProcessor.restoreDefaultProcessor()
+            if (parent != null) {
+                parentsByStub += it to it.parent
+            }
         }
 
         checkAstNotLoaded(VirtualFileFilter.NONE)

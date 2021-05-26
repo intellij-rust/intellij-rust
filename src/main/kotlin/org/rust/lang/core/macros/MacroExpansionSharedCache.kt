@@ -16,11 +16,12 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.stubs.*
 import com.intellij.testFramework.ReadOnlyLightVirtualFile
 import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.*
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
-import org.rust.lang.core.macros.decl.*
+import org.rust.lang.core.macros.decl.DeclMacroExpander
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.stubs.RsFileStub
@@ -177,9 +178,7 @@ class MacroExpansionSharedCache : Disposable {
         val result = cachedExpand(expander, def.data, call.data, hash) ?: return null
         val serializedStub = cachedBuildStub(hash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
-            FileContentImpl.createByText(file, result.text).also {
-                (it as FileContentImpl).project = project
-            }
+            createFileContentByText(file, result.text, project)
         } ?: return null
 
         val stub = try {

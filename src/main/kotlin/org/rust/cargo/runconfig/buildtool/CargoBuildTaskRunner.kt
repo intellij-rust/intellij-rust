@@ -13,10 +13,14 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.task.*
@@ -73,7 +77,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
 
         CargoBuildSessionsQueueManager.getInstance(project)
             .buildSessionsQueue
-            .run(queuedTask, null, EmptyProgressIndicator())
+            .run(queuedTask, ModalityState.defaultModalityState(), EmptyProgressIndicator())
 
         return resultPromise
     }

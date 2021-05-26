@@ -36,7 +36,12 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-val graziePlugin = if (baseIDE == "idea") "tanvd.grazi" else "tanvd.grazi:${prop("graziePluginVersion")}"
+// BACKCOMAPT: 2021.1
+val graziePlugin = if (platformVersion >= 212 || baseIDE == "idea") {
+    "tanvd.grazi"
+} else {
+    "tanvd.grazi:${prop("graziePluginVersion")}"
+}
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
@@ -52,7 +57,7 @@ plugins {
     idea
     kotlin("jvm") version "1.4.32"
     id("org.jetbrains.intellij") version "0.7.2"
-    id("org.jetbrains.grammarkit") version "2021.1.2"
+    id("org.jetbrains.grammarkit") version "2021.1.3"
     id("net.saliman.properties") version "1.5.1"
     id("org.gradle.test-retry") version "1.2.0"
 }
