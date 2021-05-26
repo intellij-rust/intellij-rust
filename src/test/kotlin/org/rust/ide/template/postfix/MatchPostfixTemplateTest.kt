@@ -29,24 +29,43 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
         fn process_message() {
             let msg = Message::ChangeColor(255, 255, 255);
             match msg {
-                _ => {}
+                Message::Quit => {/*caret*/}
+                Message::ChangeColor(_, _, _) => {}
+                Message::Move { .. } => {}
+                Message::Write(_) => {}
             }
         }
     """)
 
-    fun `test can match constant`() = doTest("""
+    fun `test constant`() = doTest("""
         const THE_ANSWER: i32 = 42;
 
-        fn check(x: i32) -> bool {
+        fn check(x: i32) {
             x.match/*caret*/
         }
     """, """
         const THE_ANSWER: i32 = 42;
 
-        fn check(x: i32) -> bool {
-            match x {
-                _ => {}
-            }
+        fn check(x: i32) {
+            match x { _ => {/*caret*/} }
+        }
+    """)
+
+    fun `test struct literal`() = doTest("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            S { a: 0 }.match/*caret*/
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            match (S { a: 0 }) { S { .. } => {/*caret*/} }
         }
     """)
 
@@ -59,11 +78,18 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
     """, """
         fn main() {
             match a {
-                _ => match b {
-                    _ => {/*caret*/}
-                }
+                _ => match b { _ => {/*caret*/} }
             }
         }
     """)
 
+    fun `test subexpression`() = doTest("""
+        fn main() {
+            let x = 1 + 2.match/*caret*/;
+        }
+    """, """
+        fn main() {
+            let x = match 1 + 2 { _ => {/*caret*/} };
+        }
+    """)
 }

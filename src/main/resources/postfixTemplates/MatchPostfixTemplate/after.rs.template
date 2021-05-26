@@ -4,6 +4,8 @@ enum Foo {
 
 fn foo(x: Foo) {
     match x {
-        <spot>_</spot> => {}
+        Foo::A => {<spot></spot>}
+        Foo::B => {}
+        Foo::C => {}
     }
 }
