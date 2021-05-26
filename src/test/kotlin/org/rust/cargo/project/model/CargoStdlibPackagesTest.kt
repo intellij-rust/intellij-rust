@@ -5,45 +5,79 @@
 
 package org.rust.cargo.project.model
 
-import org.rust.MinRustcVersion
+import com.intellij.util.io.delete
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.FeatureState
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.runWithEnabledFeatures
+import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.cargo.project.workspace.*
 import org.rust.singleProject
 import org.rust.workspaceOrFail
 
-@MinRustcVersion("1.41.0")
 class CargoStdlibPackagesTest : RsWithToolchainTestBase() {
 
-    fun `test stdlib dependency`() {
-        runWithEnabledFeatures(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) {
-            buildProject {
-                toml("Cargo.toml", """
-                    [package]
-                    name = "sandbox"
-                    version = "0.1.0"
-                    authors = []
-                """)
+    override val fetchActualStdlibMetadata: Boolean get() = true
 
-                dir("src") {
-                    rust("lib.rs", "")
-                }
+    fun `test stdlib dependency`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
             }
         }
 
         val cargoProject = project.cargoProjects.singleProject()
         val workspace = cargoProject.workspaceOrFail()
-        val hashbrownPkg = workspace.packages.first { it.name == "hashbrown" }
+        val hashbrownPkg = workspace.packages.first { it.name == HASHBROWN }
         assertEquals(PackageOrigin.STDLIB_DEPENDENCY, hashbrownPkg.origin)
         hashbrownPkg.checkFeature("rustc-dep-of-std", FeatureState.Enabled)
         hashbrownPkg.checkFeature("default", FeatureState.Disabled)
     }
 
+    fun `test recover corrupted stdlib dependency directory`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
+            }
+        }
+
+        val cargoProjectService = project.testCargoProjects
+        val cargoProject = cargoProjectService.singleProject()
+        val version = cargoProject.rustcInfo?.version ?: error("")
+        val srcDir = rustupFixture.stdlib?.let { StandardLibrary.findSrcDir(it) } ?: error("")
+
+        val path = StdlibDataFetcher.stdlibVendorDir(srcDir, version)
+        // Corrupt vendor directory
+        path.resolve(HASHBROWN).delete(true)
+
+        cargoProjectService.refreshAllProjectsSync()
+
+        val hashbrownPkg = cargoProjectService
+            .singleProject()
+            .workspaceOrFail()
+            .packages
+            .firstOrNull { it.name == HASHBROWN }
+        assertNotNull("Stdlib must contain `$HASHBROWN` package", hashbrownPkg)
+
+    }
+
     private fun CargoWorkspace.Package.checkFeature(featureName: String, expectedState: FeatureState) {
         val featureState = featureState.getValue(featureName)
-        assertEquals("Feature `$featureName` in pakcage `$name` should be in $expectedState", expectedState, featureState)
+        assertEquals("Feature `$featureName` in package `$name` should be in $expectedState", expectedState, featureState)
+    }
+
+    companion object {
+        private const val HASHBROWN = "hashbrown"
     }
 }

@@ -363,7 +363,7 @@ object CargoMetadata {
         val rootPath = PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-        checkNotNull(root) { "`cargo metadata` reported a package which does not exist at `$manifest_path`" }
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
 
         val features = features.toMutableMap()
 

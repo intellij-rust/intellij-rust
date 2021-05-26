@@ -5,18 +5,22 @@
 
 package org.rust.cargo.project.workspace
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
+import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoMetadataException
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.cargo
@@ -28,6 +32,7 @@ import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import org.rust.stdext.toPath
+import java.io.IOException
 import java.nio.file.Path
 
 data class StandardLibrary(
@@ -58,13 +63,7 @@ data class StandardLibrary(
             rustcInfo: RustcInfo?,
             isPartOfCargoProject: Boolean = false
         ): StandardLibrary? {
-            if (!sources.isDirectory) return null
-
-            val srcDir = if (sources.name in SRC_ROOTS) {
-                sources
-            } else {
-                sources.findFirstFileByRelativePaths(SRC_ROOTS) ?: sources
-            }
+            val srcDir = findSrcDir(sources) ?: return null
 
             val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
                 val rustcVersion = rustcInfo?.version
@@ -73,7 +72,9 @@ data class StandardLibrary(
                     LOG.warn("Toolchain version is unknown. Hardcoded stdlib struture will be used")
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    fetchActualStdlib(project, srcDir, rustcVersion)
+                    val result = fetchActualStdlib(project, srcDir, rustcVersion)
+                    // TODO: show some warning to users if result is null
+                    result ?: fetchHardcodedStdlib(srcDir)
                 }
             } else {
                 fetchHardcodedStdlib(srcDir)
@@ -82,8 +83,34 @@ data class StandardLibrary(
             return stdlib?.copy(isPartOfCargoProject = isPartOfCargoProject)
         }
 
-        private fun fetchActualStdlib(project: Project, srcDir: VirtualFile, version: RustcVersion): StandardLibrary? {
-            return StdlibDataFetcher.create(project, srcDir, version)?.fetchStdlibData()
+        @VisibleForTesting
+        fun findSrcDir(sources: VirtualFile): VirtualFile? {
+            if (!sources.isDirectory) return null
+            return if (sources.name in SRC_ROOTS) {
+                sources
+            } else {
+                sources.findFirstFileByRelativePaths(SRC_ROOTS) ?: sources
+            }
+        }
+
+        private fun fetchActualStdlib(
+            project: Project,
+            srcDir: VirtualFile,
+            version: RustcVersion,
+            cleanVendorDir: Boolean = false
+        ): StandardLibrary? {
+            try {
+                return StdlibDataFetcher.create(project, srcDir, version, cleanVendorDir)?.fetchStdlibData()
+            } catch (e: Throwable) {
+                if (!isUnitTestMode) {
+                    // Logger.error in tests, fail the test
+                    LOG.error(e)
+                }
+                if (!cleanVendorDir && e is CargoMetadataException) {
+                    return fetchActualStdlib(project, srcDir, version, cleanVendorDir = true)
+                }
+            }
+            return null
         }
 
         private fun fetchHardcodedStdlib(srcDir: VirtualFile): StandardLibrary? {
@@ -142,7 +169,7 @@ data class StandardLibrary(
     }
 }
 
-private class StdlibDataFetcher private constructor(
+class StdlibDataFetcher private constructor(
     private val project: Project,
     private val cargo: Cargo,
     private val srcDir: VirtualFile,
@@ -261,15 +288,28 @@ private class StdlibDataFetcher private constructor(
     companion object {
         private val LOG: Logger = logger<StdlibDataFetcher>()
 
-        fun create(project: Project, srcDir: VirtualFile, version: RustcVersion): StdlibDataFetcher? {
+        fun create(project: Project, srcDir: VirtualFile, version: RustcVersion, cleanVendorDir: Boolean): StdlibDataFetcher? {
             val cargo = project.toolchain?.cargo() ?: return null
 
             val testPackageSrcPaths = listOf(AutoInjectedCrates.TEST, "lib${AutoInjectedCrates.TEST}")
             val testPackageSrcDir = srcDir.findFirstFileByRelativePaths(testPackageSrcPaths)?.canonicalFile
                 ?: return null
-            val stdlibDependenciesDir = findStdlibDependencyDirectory(project, cargo, srcDir, testPackageSrcDir, version)
+            val stdlibDependenciesDir = findStdlibDependencyDirectory(
+                project,
+                cargo,
+                srcDir,
+                testPackageSrcDir,
+                version,
+                cleanVendorDir
+            )
                 ?: return null
             return StdlibDataFetcher(project, cargo, srcDir, testPackageSrcDir, stdlibDependenciesDir)
+        }
+
+        @VisibleForTesting
+        fun stdlibVendorDir(srcDir: VirtualFile, version: RustcVersion): Path {
+            val stdlibHash = stdlibHash(srcDir, version)
+            return RsPathManager.stdlibDependenciesDir().resolve("${version.semver.parsedVersion}-$stdlibHash/vendor")
         }
 
         private fun findStdlibDependencyDirectory(
@@ -277,15 +317,22 @@ private class StdlibDataFetcher private constructor(
             cargo: Cargo,
             srcDir: VirtualFile,
             testPackageSrcDir: VirtualFile,
-            version: RustcVersion
+            version: RustcVersion,
+            cleanVendorDir: Boolean
         ): Path? {
-            val stdlibDependenciesDir = srcDir.pathAsPath.resolve("../vendor").normalize()
-            if (stdlibDependenciesDir.exists()) return stdlibDependenciesDir
+            val stdlibVendor = stdlibVendorDir(srcDir, version)
+            var stdlibVendorExists = stdlibVendor.exists()
+            if (stdlibVendorExists && cleanVendorDir) {
+                try {
+                    stdlibVendor.delete(recursively = true)
+                } catch (e: IOException) {
+                    LOG.error(e)
+                    return null
+                }
+                stdlibVendorExists = false
+            }
 
-            val stdlibHash = stdlibHash(srcDir, version)
-
-            val stdlibVendor = RsPathManager.stdlibDependenciesDir().resolve("${version.semver.parsedVersion}-$stdlibHash/vendor")
-            if (!stdlibVendor.exists()) {
+            if (!stdlibVendorExists) {
                 try {
                     // `test` package depends on all other stdlib packages,
                     // so it's enough to vendor only its dependencies
