@@ -1184,7 +1184,7 @@ class RsTypeInferenceWalker(
 
         inferChildExprsRecursively(macroCall)
         return when {
-            macroCall.assertMacroArgument != null || macroCall.logMacroArgument != null -> TyUnit
+            macroCall.assertMacroArgument != null -> TyUnit
             macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
             macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
             name == "env" -> TyReference(TyStr, Mutability.IMMUTABLE)
@@ -1195,7 +1195,7 @@ class RsTypeInferenceWalker(
             name == "stringify" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "module_path" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "cfg" -> TyBool
-            else -> (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
+            else -> inferMacroAsExpr(macroCall)
         }
     }
 
@@ -1207,6 +1207,9 @@ class RsTypeInferenceWalker(
         }
     }
 
+    private fun inferMacroAsExpr(macroCall: RsMacroCall): Ty
+        = (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
+
     private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
         val name = macroCall.macroName
         return when {
@@ -1214,9 +1217,7 @@ class RsTypeInferenceWalker(
             name == "format" -> items.String.asTy()
             name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
-            name == "write" || name == "writeln" -> {
-                (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
-            }
+            name == "write" || name == "writeln" -> inferMacroAsExpr(macroCall)
             else -> TyUnknown
         }
     }

@@ -134,4 +134,17 @@ class RsMacroTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ <unknown>
     """, TypeInferenceMarks.macroExprDepthLimitReached)
+
+    fun `test custom log-like macro`() = testExpr("""
+        enum Data {
+            Value
+        }
+
+        macro_rules! error { () => { Data::Value } }
+
+        fn main() {
+            let a = error!();
+            a;
+        } //^ Data
+    """)
 }

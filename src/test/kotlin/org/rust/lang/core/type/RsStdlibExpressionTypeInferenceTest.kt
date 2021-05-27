@@ -430,6 +430,53 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //From the log crate
     fun `test warn!`() = stubOnlyTypeInfer("""
     //- main.rs
+        #[derive(PartialOrd, Ord, PartialEq, Eq)]
+        enum Level {
+            Warn
+        }
+
+        const STATIC_MAX_LEVEL: Level = Level::Warn;
+
+        fn max_level() -> Level { unimplemented!() }
+
+        fn __private_api_log(
+            args: std::fmt::Arguments,
+            level: Level,
+            &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
+        ) {}
+
+        #[macro_export]
+        macro_rules! __log_format_args {
+            (${'$'}($ args:tt)*) => {
+                format_args!(${'$'}($ args)*)
+            };
+        }
+
+        #[macro_export(local_inner_macros)]
+        macro_rules! log {
+            (target: $ target:expr, $ lvl:expr, ${'$'}($ arg:tt)+) => ({
+                let lvl = $ lvl;
+                if lvl <= STATIC_MAX_LEVEL && lvl <= max_level() {
+                    __private_api_log(
+                        __log_format_args!(${'$'}($ arg)+),
+                        lvl,
+                        &($ target, std::module_path!(), std::file!(), std::line!()),
+                    );
+                }
+            });
+            ($ lvl:expr, ${'$'}($ arg:tt)+) => (log!(target: std::module_path!(), $ lvl, ${'$'}($ arg)+))
+        }
+
+        #[macro_export(local_inner_macros)]
+        macro_rules! warn {
+            (target: ${'$'} target:expr, ${'$'}(${'$'} arg:tt)+) => (
+                log!(target: ${'$'} target, Level::Warn, ${'$'}(${'$'} arg)+)
+            );
+            (${'$'}(${'$'} arg:tt)+) => (
+                log!(Level::Warn, ${'$'}(${'$'} arg)+)
+            )
+        }
+
         fn main() {
             let x = warn!("Something went wrong");
             x;
