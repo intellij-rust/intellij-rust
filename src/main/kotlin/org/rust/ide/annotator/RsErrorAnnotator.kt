@@ -192,7 +192,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkReexports(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
         val item = useSpeck.ancestorStrict<RsUseItem>() ?: return
-        if (item.visibility == RsVisibility.Private) return
+        if (!item.isReexport) return
 
         val path = useSpeck.path ?: return
         val targets = path.reference?.multiResolve()?.filterIsInstance<RsItemElement>() ?: emptyList()
