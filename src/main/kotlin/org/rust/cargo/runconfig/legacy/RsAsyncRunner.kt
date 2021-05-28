@@ -18,6 +18,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -131,7 +133,9 @@ abstract class RsAsyncRunner(
         val cargo = state.cargo()
 
         val processForUserOutput = ProcessOutput()
-        val processForUser = RsProcessHandler(cargo.toColoredCommandLine(project, command))
+        val commandLine = cargo.toColoredCommandLine(project, command)
+        LOG.debug("Executing Cargo command: `${commandLine.commandLineString}`")
+        val processForUser = RsProcessHandler(commandLine)
 
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
@@ -227,5 +231,7 @@ abstract class RsAsyncRunner(
 
     companion object {
         class Binary(val path: Path)
+
+        private val LOG: Logger = logger<RsAsyncRunner>()
     }
 }

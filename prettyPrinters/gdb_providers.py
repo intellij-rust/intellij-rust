@@ -11,7 +11,7 @@ FIRST_FIELD = "__1"
 
 class StructProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StructProvider
+        # type: (Value) -> None
         self.valobj = valobj
         self.fields = self.valobj.type.fields()
 
@@ -25,7 +25,7 @@ class StructProvider:
 
 class TupleProvider:
     def __init__(self, valobj):
-        # type: (Value) -> TupleProvider
+        # type: (Value) -> None
         self.valobj = valobj
         self.fields = self.valobj.type.fields()
 
@@ -44,7 +44,7 @@ class TupleProvider:
 # BACKCOMPAT: 2020.3 (gdb <= 9.1)
 class OldEnumProvider:
     def __init__(self, valobj):
-        # type: (Value) -> OldEnumProvider
+        # type: (Value) -> None
         content = valobj[valobj.type.fields()[0]]
         fields = content.type.fields()
         self.empty = len(fields) == 0
@@ -70,7 +70,7 @@ class OldEnumProvider:
 # gdb >= 10.1
 class NewEnumProvider:
     def __init__(self, valobj):
-        # type: (Value) -> NewEnumProvider
+        # type: (Value) -> None
         self.valobj = valobj
         fields = valobj.type.fields()
         variant_field = None
@@ -92,7 +92,7 @@ class NewEnumProvider:
 
 class StdStringProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdStringProvider
+        # type: (Value) -> None
         self.valobj = valobj
         vec = valobj["vec"]
         self.length = int(vec["len"])
@@ -108,7 +108,7 @@ class StdStringProvider:
 
 class StdOsStringProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdOsStringProvider
+        # type: (Value) -> None
         self.valobj = valobj
         buf = self.valobj["inner"]["inner"]
         is_windows = "Wtf8Buf" in buf.type.name
@@ -127,7 +127,7 @@ class StdOsStringProvider:
 
 class StdStrProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdStrProvider
+        # type: (Value) -> None
         self.valobj = valobj
         self.length = int(valobj["length"])
         self.data_ptr = valobj["data_ptr"]
@@ -142,7 +142,7 @@ class StdStrProvider:
 
 class StdVecProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdVecProvider
+        # type: (Value) -> None
         self.valobj = valobj
         self.length = int(valobj["len"])
         self.data_ptr = valobj["buf"]["ptr"]["pointer"]
@@ -161,7 +161,7 @@ class StdVecProvider:
 
 class StdVecDequeProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdVecDequeProvider
+        # type: (Value) -> None
         self.valobj = valobj
         self.head = int(valobj["head"])
         self.tail = int(valobj["tail"])
@@ -186,7 +186,7 @@ class StdVecDequeProvider:
 
 class StdRcProvider:
     def __init__(self, valobj, is_atomic=False):
-        # type: (Value, bool) -> StdRcProvider
+        # type: (Value, bool) -> None
         self.valobj = valobj
         self.ptr = valobj["ptr"]["pointer"]
         self.value = self.ptr["data" if is_atomic else "value"]
@@ -212,7 +212,7 @@ class StdCellProvider:
 
 class StdRefProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdRefProvider
+        # type: (Value) -> None
         self.value = valobj["value"].dereference()
         self.borrow = valobj["borrow"]["borrow"]["value"]["value"]
 
@@ -227,7 +227,7 @@ class StdRefProvider:
 
 class StdRefCellProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdRefCellProvider
+        # type: (Value) -> None
         self.value = valobj["value"]["value"]
         self.borrow = valobj["borrow"]["value"]["value"]
 
@@ -242,7 +242,7 @@ class StdRefCellProvider:
 
 class StdNonZeroNumberProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdNonZeroNumberProvider
+        # type: (Value) -> None
         fields = valobj.type.fields()
         assert len(fields) == 1
         field = list(fields)[0]
@@ -296,7 +296,7 @@ def children_of_btree_map(map):
 
 class StdBTreeSetProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdBTreeSetProvider
+        # type: (Value) -> None
         self.valobj = valobj
 
     def to_string(self):
@@ -314,7 +314,7 @@ class StdBTreeSetProvider:
 
 class StdBTreeMapProvider:
     def __init__(self, valobj):
-        # type: (Value) -> StdBTreeMapProvider
+        # type: (Value) -> None
         self.valobj = valobj
 
     def to_string(self):
@@ -332,7 +332,7 @@ class StdBTreeMapProvider:
 
 class StdHashMapProvider:
     def __init__(self, valobj, show_values=True):
-        # type: (Value, bool) -> StdHashMapProvider
+        # type: (Value, bool) -> None
         self.valobj = valobj
         self.show_values = show_values
 

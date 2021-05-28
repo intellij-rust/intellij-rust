@@ -24,11 +24,18 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.document
 import org.rust.openapiext.toPsiDirectory
 import org.rust.openapiext.toPsiFile
+import java.nio.file.Path
 
 abstract class RsMoveTopLevelItemsTestBase : RsTestBase() {
 
     protected fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkByDirectory(before.trimIndent(), after.trimIndent(), false, ::performMove)
+
+    protected fun doTestCreateFile(
+        targetFile: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = checkByDirectory(before.trimIndent(), after.trimIndent(), false) { performMove(it, targetFile) }
 
     protected fun doTestConflictsError(@Language("Rust") before: String) =
         expect<BaseRefactoringProcessor.ConflictsInTestsException> {
@@ -38,16 +45,30 @@ abstract class RsMoveTopLevelItemsTestBase : RsTestBase() {
     protected fun doTestNoConflicts(@Language("Rust") before: String) =
         checkByDirectory(before.trimIndent(), "", true, ::performMove)
 
-    private fun performMove(testProject: TestProject) {
+    private fun prepareSourceFile(testProject: TestProject): PsiFile {
         val fileWithCaret = testProject.fileWithCaretOrSelection
         val sourceFile = myFixture.findFileInTempDir(fileWithCaret).toPsiFile(project)!!
         myFixture.configureFromExistingVirtualFile(sourceFile.virtualFile)
+        return sourceFile
+    }
+
+    private fun performMove(testProject: TestProject) {
+        val sourceFile = prepareSourceFile(testProject)
 
         val root = myFixture.findFileInTempDir(".").toPsiDirectory(project)!!
         val targetMod = searchElementInAllFiles(root.virtualFile) { it.getElementAtMarker(TARGET_MARKER) }
             ?.ancestorOrSelf<RsMod>()
             ?: error("Please add $TARGET_MARKER marker for target mod")
         sourceFile.putUserData(MOVE_TARGET_MOD_KEY, targetMod)
+
+        myFixture.performEditorAction(IdeActions.ACTION_MOVE)
+    }
+
+    private fun performMove(testProject: TestProject, targetFile: String? = null) {
+        val sourceFile = prepareSourceFile(testProject)
+
+        val targetFilePath = Path.of(myFixture.findFileInTempDir(".").path, targetFile)
+        sourceFile.putUserData(MOVE_TARGET_FILE_PATH_KEY, targetFilePath)
 
         myFixture.performEditorAction(IdeActions.ACTION_MOVE)
     }
