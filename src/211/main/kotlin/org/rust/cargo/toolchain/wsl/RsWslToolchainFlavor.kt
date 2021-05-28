@@ -13,6 +13,7 @@ import com.intellij.util.io.isDirectory
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.stdext.resolveOrNull
 import java.nio.file.Path
 
 class RsWslToolchainFlavor : RsToolchainFlavor() {
@@ -44,7 +45,7 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
             val sysPath = environment["PATH"]
             for (remotePath in sysPath.orEmpty().split(":")) {
                 if (remotePath.isEmpty()) continue
-                val localPath = root.resolve(remotePath)
+                val localPath = root.resolveOrNull(remotePath) ?: continue
                 if (!localPath.isDirectory()) continue
                 yield(localPath)
             }

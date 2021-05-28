@@ -6,7 +6,7 @@
 package org.rust.cargo.toolchain.flavors
 
 import com.intellij.util.io.isDirectory
-import org.rust.stdext.toPath
+import org.rust.stdext.toPathOrNull
 import java.io.File
 import java.nio.file.Path
 
@@ -17,6 +17,6 @@ class RsSysPathToolchainFlavor : RsToolchainFlavor() {
             .split(File.pathSeparator)
             .asSequence()
             .filter { it.isNotEmpty() }
-            .map { it.toPath() }
+            .mapNotNull { it.toPathOrNull() }
             .filter { it.isDirectory() }
 }
