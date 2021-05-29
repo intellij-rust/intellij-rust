@@ -2,6 +2,12 @@ name: regressions
 
 on: [ workflow_dispatch, pull_request ]
 
+# Allow cancelling all previous runs for the same branch
+# See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     calculate-base-commit:
         runs-on: ubuntu-18.04
