@@ -8,18 +8,14 @@ on:
             - trying
     pull_request:
 
-jobs:
-    # TODO: drop it when GitHub supports its by itself
-    cancel-previous:
-        runs-on: ubuntu-18.04
-        steps:
-            - name: Cancel Previous Runs
-              uses: styfle/cancel-workflow-action@0.9.0
-              with:
-                  access_token: ${{ github.token }}
+# Allow cancelling all previous runs for the same branch
+# See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
+jobs:
     calculate-git-info:
-        needs: [ cancel-previous ]
         runs-on: ubuntu-18.04
         outputs:
             is_bors_branch: ${{ steps.calculate-git-info.outputs.is_bors_branch }}
@@ -49,7 +45,6 @@ jobs:
                   echo "checked: ${{ steps.calculate-git-info.outputs.checked }}"
 
     check-license:
-        needs: [ cancel-previous ]
         runs-on: ubuntu-18.04
         steps:
             - uses: actions/checkout@v2
@@ -58,7 +53,7 @@ jobs:
               run: ./check-license.sh
 
     build-native-code:
-        needs: [ cancel-previous, calculate-git-info ]
+        needs: [ calculate-git-info ]
         # `fromJSON` is used here to convert string output to boolean
         if: ${{ !(fromJSON(needs.calculate-git-info.outputs.is_master_branch) && fromJSON(needs.calculate-git-info.outputs.checked)) }}
         strategy:
@@ -117,7 +112,7 @@ jobs:
                   path: ${{ matrix.config.artifact_path }}
 
     check-plugin:
-        needs: [ cancel-previous, calculate-git-info, build-native-code ]
+        needs: [ calculate-git-info, build-native-code ]
         strategy:
             # `fromJSON` is used here to convert string output to boolean
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
