@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
@@ -63,7 +64,7 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
                 element.parent !is RsMacro && element.parent?.parent !is RsMacroCall &&
                 element.parent !is RsFieldLookup ||
                 element.elementType in RS_EDITION_2018_KEYWORDS) &&
-                element.ancestorStrict<RsUseItem>() == null
+                PsiTreeUtil.getParentOfType(element, RsUseItem::class.java, RsMetaItemArgs::class.java) == null
 
         fun isNameIdentifier(element: PsiElement): Boolean {
             val parent = element.parent
