@@ -11,6 +11,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,6 +27,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.notifications.showBalloon
+import org.rust.openapiext.pathAsPath
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -141,7 +143,8 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
 }
 
 private fun discoverToolchain(project: Project) {
-    val toolchain = RsToolchainBase.suggest() ?: return
+    val projectPath = project.guessProjectDir()?.pathAsPath
+    val toolchain = RsToolchainBase.suggest(projectPath) ?: return
     invokeLater {
         if (project.isDisposed) return@invokeLater
 
