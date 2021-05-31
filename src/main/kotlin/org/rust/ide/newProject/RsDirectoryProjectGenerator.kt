@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.computeWithCancelableProgress
@@ -46,6 +47,11 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
             cargo.makeProject(project, module, baseDir, name, template)
         } ?: return
+
+        project.rustSettings.modify {
+            it.toolchain = settings.toolchain
+            it.explicitPathToStdlib = settings.explicitPathToStdlib
+        }
 
         project.makeDefaultRunConfiguration(template)
         project.openFiles(generatedFiles)
