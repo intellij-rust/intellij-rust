@@ -16,18 +16,22 @@ abstract class RsTool(toolName: String, val toolchain: RsToolchainBase) {
 
     protected fun createBaseCommandLine(
         vararg parameters: String,
-        workingDirectory: Path? = null
+        workingDirectory: Path? = null,
+        environment: Map<String, String> = emptyMap()
     ): GeneralCommandLine = createBaseCommandLine(
         parameters.toList(),
-        workingDirectory = workingDirectory
+        workingDirectory = workingDirectory,
+        environment = environment
     )
 
     protected open fun createBaseCommandLine(
         parameters: List<String>,
-        workingDirectory: Path? = null
+        workingDirectory: Path? = null,
+        environment: Map<String, String> = emptyMap()
     ): GeneralCommandLine = GeneralCommandLine(executable)
         .withWorkDirectory(workingDirectory)
         .withParameters(parameters)
+        .withEnvironment(environment)
         .withCharset(Charsets.UTF_8)
         .also { toolchain.patchCommandLine(it) }
 }

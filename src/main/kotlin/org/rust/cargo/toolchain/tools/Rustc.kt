@@ -63,7 +63,8 @@ class Rustc(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         val output = createBaseCommandLine(
             "--print", "cfg",
             workingDirectory = projectDirectory,
-        ).withEnvironment(RUSTC_BOOTSTRAP, "1").execute(timeoutMs)
+            environment = mapOf(RUSTC_BOOTSTRAP to "1")
+        ).execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 
