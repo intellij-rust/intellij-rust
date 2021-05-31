@@ -832,4 +832,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             #[cfg(not(intellij_rust))] a;
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dead variable builtin macro`() = checkByText("""
+        fn foo() {
+            let <warning descr="Variable `x` is never used">x</warning> = 42;
+            concat!("hello", 10);
+        }
+    """)
 }

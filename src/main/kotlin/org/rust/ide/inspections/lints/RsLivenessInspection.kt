@@ -30,7 +30,11 @@ class RsLivenessInspection : RsLintInspection() {
                 if (func.isDoctestInjection) return
 
                 // Don't analyze functions with unresolved macro calls
-                if (func.descendantsWithMacrosOfType<RsMacroCall>().any { it.expansion == null }) return
+                val hasUnresolvedMacroCall = func.descendantsWithMacrosOfType<RsMacroCall>().any { macroCall ->
+                    val macro = macroCall.resolveToMacro()
+                    macro == null || (!macro.hasRustcBuiltinMacro && macroCall.expansion == null)
+                }
+                if (hasUnresolvedMacroCall) return
 
                 // Don't analyze functions with unresolved struct literals, e.g.:
                 // let x = 1;
