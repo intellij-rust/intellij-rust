@@ -10,6 +10,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.checkWriteAccessAllowed
@@ -174,4 +175,26 @@ object Testmarks {
     val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
     val doctestInjectionImport = Testmark("doctestInjectionImport")
     val insertNewLineBeforeUseItem = Testmark("insertNewLineBeforeUseItem")
+}
+
+/**
+ * Create a fake mod that can be used for completion in code fragments to avoid importing
+ * types into the real mod of the element.
+ *
+ * Use this mod as the importContext of code fragments.
+ */
+fun RsElement.createVirtualImportContext(): RsMod {
+    val factory = RsPsiFactory(project)
+    val sourceContext = containingFile as RsFile
+
+    val qualifiedPath = containingMod.qualifiedNameInCrate(this)
+    val defaultUseItem = if (qualifiedPath != null) {
+        "use $qualifiedPath::*;"
+    } else {
+        ""
+    }
+    val module = factory.createModItem(TMP_MOD_NAME, defaultUseItem)
+
+    module.setContext(sourceContext)
+    return module
 }

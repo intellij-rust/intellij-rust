@@ -43,8 +43,9 @@ class RsSuggestedRefactoringExecution(support: RsSuggestedRefactoringSupport) : 
         val oldSignature = data.oldSignature
         val newSignature = data.newSignature
 
-        var newParameterIndex = 0
+
         // We need to mark "new" parameters with the new parameter index and find parameters swaps.
+        var newParameterIndex = 0
         val parameters = newSignature.parameters.zip(config.parameters).map { (signatureParameter, parameter) ->
             val oldParameter = oldSignature.parameterById(signatureParameter.id)
             val isNewParameter = oldParameter == null
@@ -54,7 +55,19 @@ class RsSuggestedRefactoringExecution(support: RsSuggestedRefactoringSupport) : 
                 else -> oldSignature.parameterIndex(oldParameter)
             }
 
-            Parameter(parameter.factory, parameter.patText, parameter.type, index)
+            val defaultValue: ParameterProperty<RsExpr> = when (isNewParameter) {
+                true -> {
+                    val newParameter = newParameterValues.getOrNull(newParameterIndex)
+                    newParameterIndex++
+                    when (newParameter) {
+                        is NewParameterValue.Expression -> ParameterProperty.fromItem(newParameter.expression as? RsExpr)
+                        else -> null
+                    }
+                }
+                false -> null
+            } ?: ParameterProperty.Empty()
+
+            Parameter(parameter.factory, parameter.patText, parameter.type, index, defaultValue)
         }
         originalConfig.parameters.clear()
         originalConfig.parameters.addAll(parameters)
