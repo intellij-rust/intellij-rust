@@ -270,8 +270,15 @@ class MacroExpansionManagerImpl(
         this.dirs = dir
         this.inner = impl
         impl.macroExpansionMode = mode
+
+        runWriteAction {
+            ProjectRootManagerEx.getInstanceEx(project)
+                .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+        }
+
         val saveCacheOnDispose = cacheDirectory.isNotEmpty()
         val disposable = impl.setupForUnitTests(saveCacheOnDispose)
+
         Disposer.register(disposable) {
             this.inner = null
             this.dirs = null

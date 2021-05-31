@@ -31,10 +31,10 @@ class InstallTargetAction(
             override fun shouldStartInBackground(): Boolean = false
 
             override fun run(indicator: ProgressIndicator) {
-                val result = rustup.downloadTarget(myProject, targetName)
+                val result = rustup.downloadTarget(project, targetName)
 
                 if (result is DownloadResult.Err) {
-                    myProject.showBalloon(result.error, NotificationType.ERROR)
+                    project.showBalloon(result.error, NotificationType.ERROR)
                 }
             }
         }.queue()

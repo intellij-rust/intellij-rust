@@ -28,8 +28,8 @@ class InstallComponentAction(
         object : Task.Backgroundable(project, "Installing $componentName...") {
             override fun shouldStartInBackground(): Boolean = false
             override fun run(indicator: ProgressIndicator) {
-                val result = rustup.downloadComponent(myProject, componentName) as? DownloadResult.Err ?: return
-                myProject.showBalloon(result.error, NotificationType.ERROR)
+                val result = rustup.downloadComponent(project, componentName) as? DownloadResult.Err ?: return
+                project.showBalloon(result.error, NotificationType.ERROR)
             }
         }.queue()
     }

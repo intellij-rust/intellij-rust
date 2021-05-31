@@ -8,6 +8,8 @@ package org.rust.ml
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.util.RelevanceUtil.asRelevanceMaps
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.UsefulTestCase
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
@@ -78,8 +80,8 @@ class RsElementFeatureProviderTest : RsTestBase() {
             prin/*caret*/
         }
     """, mapOf(
-        "println" to "1",
-        "my_print" to "0",
+        "println" to true.toMLValue(),
+        "my_print" to false.toMLValue(),
     ))
 
     fun `test all keywords are covered`() {
@@ -124,5 +126,16 @@ class RsElementFeatureProviderTest : RsTestBase() {
         val featuresMap = asRelevanceMaps(relevanceObjects).second
         val actualValue = featuresMap[feature]
         assertEquals("Invalid value for `$feature` of `$lookupString`", expectedValue, actualValue)
+    }
+
+    companion object {
+
+        private val BUILD_212: BuildNumber = BuildNumber.fromString("212")!!
+
+        // BACKCOMPAT: 2021.1. Use 0 or 1 integer values
+        private fun Boolean.toMLValue(): Any {
+            val value = if (this) 1 else 0
+            return if (ApplicationInfo.getInstance().build < BUILD_212) value.toString() else value
+        }
     }
 }
