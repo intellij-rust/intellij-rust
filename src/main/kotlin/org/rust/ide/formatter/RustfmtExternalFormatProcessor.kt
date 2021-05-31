@@ -9,9 +9,11 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiFile
@@ -64,13 +66,20 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
 
     override fun getId(): String = "rustfmt"
 
-    override fun activeForFile(source: PsiFile): Boolean = isActiveForFile(source)
+    override fun activeForFile(source: PsiFile): Boolean {
+        return (ApplicationInfo.getInstance().build < BUILD_212 || !reformatInProcess.get()) && isActiveForFile(source)
+    }
 
     // Never used by the platform?
     override fun indent(source: PsiFile, lineStartOffset: Int): String? = null
 
     companion object {
-        fun isActiveForFile(source: PsiFile): Boolean =
+        // BACKCOMPAT: 2021.1
+        private val BUILD_212: BuildNumber = BuildNumber.fromString("212")!!
+        // TODO: implement `FormattingService` instead
+        private val reformatInProcess: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+        fun isActiveForFile(source: PsiFile): Boolean = !reformatInProcess.get() &&
             source is RsFile && source.project.rustSettings.useRustfmt
 
         private data class RustfmtContext(
@@ -104,8 +113,13 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
                 }
             }
 
-            // Delegate unsupported cases to the built-in formatter
-            return formatWithBuiltin(source, range, canChangeWhiteSpacesOnly)
+            try {
+                reformatInProcess.set(true)
+                // Delegate unsupported cases to the built-in formatter
+                return formatWithBuiltin(source, range, canChangeWhiteSpacesOnly)
+            } finally {
+                reformatInProcess.set(false)
+            }
         }
 
         private fun formatWithRustfmt(source: PsiFile, range: TextRange, context: RustfmtContext): TextRange {
