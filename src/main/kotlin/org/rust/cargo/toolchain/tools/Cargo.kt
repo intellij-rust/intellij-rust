@@ -176,9 +176,10 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         projectDirectory: Path?
     ): CfgOptions {
         val output = createBaseCommandLine(
-            listOf("rustc", "-Z", "unstable-options", "--print", "cfg"),
+            "rustc", "-Z", "unstable-options", "--print", "cfg",
             workingDirectory = projectDirectory,
-        ).withEnvironment(RUSTC_BOOTSTRAP, "1").execute(owner, ignoreExitCode = false)
+            environment = mapOf(RUSTC_BOOTSTRAP to "1")
+        ).execute(owner, ignoreExitCode = false)
         return CfgOptions.parse(output.stdoutLines)
     }
 
