@@ -1091,6 +1091,35 @@ class RsControlFlowGraphTest : RsTestBase() {
         Termination
     """)
 
+    fun `test asm! macro call`() = testCFG("""
+        fn main() {
+            1;
+            let x: u64;
+            unsafe {
+                asm!("mov {}, 5", out(reg) x);
+            }
+            2;
+        }
+    """, """
+        Entry
+        1
+        1;
+        x
+        x
+        let x: u64;
+        x
+        asm!("mov {}, 5", out(reg) x)
+        asm!("mov {}, 5", out(reg) x);
+        BLOCK
+        BLOCK
+        BLOCK;
+        2
+        2;
+        BLOCK
+        Exit
+        Termination
+    """)
+
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val function = myFixture.file.descendantsOfType<RsFunction>().firstOrNull() ?: return

@@ -290,6 +290,11 @@ class CFGBuilder(
                     .fold(pred) { acc, subExpr -> process(subExpr, acc) }
             }
 
+            is RsAsmMacroArgument -> {
+                // TODO: Handle this case when type inference is implemented for `asm!` macro calls
+                null
+            }
+
             is RsMacroArgument -> {
                 val expansion = macroCall.expansion
                 val expandedElementsExit = expansion?.elements?.fold(pred) { pred, element -> process(element, pred) }
