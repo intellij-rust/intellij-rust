@@ -840,4 +840,39 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             concat!("hello", 10);
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test use in asm! macro call`() = checkByText("""
+        #![feature(asm)]
+
+        fn main() {
+            let x: u64 = 3;
+            let o: u64;
+            unsafe {
+                asm!(
+                    "mov {0}, {1}",
+                    "add {0}, {number}",
+                    out(reg) o,
+                    in(reg) x,
+                    number = const 5,
+                );
+            }
+            o;
+        }
+    """)
+
+    // TODO: Handle this case when type inference is implemented for `asm!` macro calls
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dead variable asm! macro call`() = expect<AssertionError> {
+        checkByText("""
+        #![feature(asm)]
+
+        fn main() {
+            let <warning descr="Variable `x` is never used">x</warning> = 42;
+            unsafe {
+                asm!("nop");
+            }
+        }
+    """)
+    }
 }

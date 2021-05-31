@@ -41,6 +41,9 @@ class RsLivenessInspection : RsLintInspection() {
                 // S { x }
                 if (func.descendantsWithMacrosOfType<RsStructLiteral>().any { it.path.reference?.resolve() == null }) return
 
+                // TODO: Remove this check when type inference is implemented for `asm!` macro calls
+                if (func.descendantsWithMacrosOfType<RsAsmMacroArgument>().isNotEmpty()) return
+
                 val liveness = func.liveness ?: return
 
                 for (deadDeclaration in liveness.deadDeclarations) {

@@ -7,6 +7,7 @@ package org.rust.ide.inspections.borrowck
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -239,4 +240,33 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             value;
         }
     """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no E0381 asm! macro`() = checkByText("""
+        #![feature(asm)]
+
+        fn main() {
+            let x: u64;
+            unsafe {
+                asm!("mov {}, 5", out(reg) x);
+            }
+            x;
+        }
+    """, checkWarn = false)
+
+    // TODO: Handle this case when type inference is implemented for `asm!` macro calls
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test E0381 asm! macro`() = expect<AssertionError> {
+        checkByText("""
+        #![feature(asm)]
+
+        fn main() {
+            let x: u64;
+            unsafe {
+                asm!("nop");
+            }
+            <error descr="Use of possibly uninitialized variable">x</error>;
+        }
+        """, checkWarn = false)
+    }
 }

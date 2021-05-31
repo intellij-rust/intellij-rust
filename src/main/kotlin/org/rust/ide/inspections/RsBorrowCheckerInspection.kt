@@ -38,6 +38,9 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
             override fun visitFunction(func: RsFunction) {
                 val borrowCheckResult = func.borrowCheckResult ?: return
 
+                // TODO: Remove this check when type inference is implemented for `asm!` macro calls
+                if (func.descendantsWithMacrosOfType<RsAsmMacroArgument>().isNotEmpty()) return
+
                 borrowCheckResult.usesOfMovedValue.forEach {
                     registerUseOfMovedValueProblem(holder, it.use)
                 }
