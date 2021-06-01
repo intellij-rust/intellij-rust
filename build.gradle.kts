@@ -123,7 +123,8 @@ allprojects {
         buildSearchableOptions {
             // buildSearchableOptions task doesn't make sense for non-root subprojects
             val isRootProject = project.name in listOf("plugin", "intellij-toml")
-            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
+            // TODO: enable buildSearchableOptions task for 212 platform
+            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean() && platformVersion < 212
         }
 
         test {
