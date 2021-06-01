@@ -7,7 +7,9 @@ package org.rust.lang.core.resolve2.util
 
 import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
-import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.ExpansionResultOk
+import org.rust.lang.core.macros.MappedTextRange
+import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
@@ -30,7 +32,7 @@ import org.rust.openapiext.testAssert
 fun createDollarCrateHelper(
     call: MacroCallInfo,
     def: DeclMacroDefInfo,
-    expansion: ExpansionResult
+    expansion: ExpansionResultOk
 ): DollarCrateHelper? {
     val rangesInFile = findCrateIdForEachDollarCrate(expansion, call, def)
     if (rangesInFile.isEmpty() && !def.hasLocalInnerMacros) return null
@@ -101,7 +103,7 @@ class DollarCrateHelper(
  * `expansion.text` starting from `index` contains [MACRO_DOLLAR_CRATE_IDENTIFIER] which corresponds to `crateId`
  */
 private fun findCrateIdForEachDollarCrate(
-    expansion: ExpansionResult,
+    expansion: ExpansionResultOk,
     call: MacroCallInfo,
     def: DeclMacroDefInfo
 ): Map<Int, CratePersistentId> {

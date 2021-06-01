@@ -10,20 +10,19 @@ import org.rust.lang.core.macros.MacroExpander
 import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.macros.RsBuiltinMacroData
 import org.rust.lang.core.macros.RsMacroCallData
-import org.rust.lang.core.macros.errors.DeclMacroExpansionError
+import org.rust.lang.core.macros.errors.BuiltinMacroExpansionError
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 
 /**
  * A macro expander for built-in macros like `concat!()` and `stringify!()`
  */
-class BuiltinMacroExpander(val project: Project) : MacroExpander<RsBuiltinMacroData, DeclMacroExpansionError>() {
+class BuiltinMacroExpander(val project: Project) : MacroExpander<RsBuiltinMacroData, BuiltinMacroExpansionError>() {
     override fun expandMacroAsTextWithErr(
         def: RsBuiltinMacroData,
         call: RsMacroCallData
-    ): RsResult<Pair<CharSequence, RangeMap>, out DeclMacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(DeclMacroExpansionError.DefSyntax)
-        return Err(DeclMacroExpansionError.DefSyntax)
+    ): RsResult<Pair<CharSequence, RangeMap>, BuiltinMacroExpansionError> {
+        return Err(BuiltinMacroExpansionError)
     }
 
     companion object {

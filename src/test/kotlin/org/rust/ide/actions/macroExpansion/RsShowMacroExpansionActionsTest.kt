@@ -14,6 +14,7 @@ import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
 class RsShowMacroExpansionActionsTest : RsTestBase() {
 
@@ -175,7 +176,7 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
                 error("Expected expansion fail, but got expansion: `${expansionDetails.expansion.elements.map { it.text }}`")
             }
 
-            override fun showError(editor: Editor) {
+            override fun showError(editor: Editor, error: GetMacroExpansionError) {
                 failed = true
             }
         }

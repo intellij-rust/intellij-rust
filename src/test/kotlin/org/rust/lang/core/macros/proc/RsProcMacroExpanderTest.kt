@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.exists
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree
@@ -45,8 +46,9 @@ class RsProcMacroExpanderTest : RsTestBase() {
             checkError<ProcMacroExpansionError.ServerSideError>(lib, "function_like_do_panic", "")
             checkError<ProcMacroExpansionError.ServerSideError>(lib, "unknown_macro", "")
             checkError<ProcMacroExpansionError.Timeout>(lib, "function_like_wait_100_seconds", "")
-            checkError<ProcMacroExpansionError.ExceptionThrown>(lib, "function_like_process_exit", "")
-            checkError<ProcMacroExpansionError.ExceptionThrown>(lib, "function_like_process_abort", "")
+            checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_process_exit", "")
+            checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_process_abort", "")
+            checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_do_brace_println_and_process_exit", "")
             checkExpandedAsIs(lib, "function_like_as_is", "") // Insure it works after errors
         }
     }
@@ -59,9 +61,22 @@ class RsProcMacroExpanderTest : RsTestBase() {
         expander.checkError<ProcMacroExpansionError.CantRunExpander>("", "", "")
     }
 
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     fun `test ExecutableNotFound error`() {
         val expander = ProcMacroExpander(project, null)
         expander.checkError<ProcMacroExpansionError.ExecutableNotFound>("", "", "")
+    }
+
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+    fun `test ProcMacroExpansionIsDisabled error 1`() {
+        val expander = ProcMacroExpander(project, null)
+        expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
+    }
+
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    fun `test ProcMacroExpansionIsDisabled error 2`() {
+        val expander = ProcMacroExpander(project, null)
+        expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
     }
 
     private fun ProcMacroExpander.checkExpandedAsIs(

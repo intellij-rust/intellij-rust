@@ -8,13 +8,14 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileWithId
 import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
-import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError.ExpansionError
-import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError.ParsingError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError.*
+import org.rust.lang.core.macros.errors.MacroExpansionError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.unwrapOrElse
 
 enum class MacroExpansionContext {
     EXPR, PAT, TYPE, STMT, ITEM
@@ -125,13 +126,14 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
     }
 }
 
-fun <T : RsMacroData, E> MacroExpander<T, E>.expandMacro(
+fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacro(
     def: T,
     call: RsMacroCall,
     factory: RsPsiFactory,
     storeRangeMap: Boolean
 ): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
-    val (expandedText, ranges) = expandMacroAsTextWithErr(def, RsMacroCallData.fromPsi(call))
+    val callData = RsMacroCallData.fromPsi(call) ?: return Err(MacroCallSyntaxError)
+    val (expandedText, ranges) = expandMacroAsTextWithErr(def, callData)
         .unwrapOrElse { return Err(ExpansionError(it)) }
     val context = call.expansionContext
     val expansion = parseExpandedTextWithContext(context, factory, expandedText)

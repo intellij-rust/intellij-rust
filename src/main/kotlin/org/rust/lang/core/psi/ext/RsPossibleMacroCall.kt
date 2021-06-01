@@ -17,6 +17,8 @@ import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.RsMacroDataWithHash
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
+import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
@@ -32,6 +34,11 @@ import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.andThen
+import org.rust.stdext.toResult
 
 /**
  * A PSI element that can be a declarative or (function-like, derive or attribute) procedural macro call.
@@ -213,14 +220,24 @@ private val RsStructOrEnumItemElement.bodyHash: HashCode?
         }
     }
 
-fun RsPossibleMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash<*>? = when (val kind = kind) {
+fun RsPossibleMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash<*>? = resolveToMacroWithoutPsiWithErr().ok()
+
+fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> = when (val kind = kind) {
     is MacroCall -> kind.call.resolveToMacroWithoutPsi()
-    is MetaItem -> kind.meta.resolveToProcMacroWithoutPsi()
-        ?.takeIf { it.procMacroKind == RsProcMacroKind.fromMacroCall(kind.meta) }
-        ?.let { RsMacroDataWithHash.fromDefInfo(it) }
+    is MetaItem -> kind.meta.resolveToProcMacroWithoutPsi().toResult().mapErr { ResolveMacroWithoutPsiError.Unresolved }
+        .andThen {
+            val callKind = RsProcMacroKind.fromMacroCall(kind.meta)
+                ?: return Err(ResolveMacroWithoutPsiError.Unresolved)
+            val defKind = it.procMacroKind
+            if (defKind == callKind) Ok(it) else Err(ResolveMacroWithoutPsiError.UnmatchedProcMacroKind(callKind, defKind))
+        }
+        .andThen { RsMacroDataWithHash.fromDefInfo(it) }
 }
 
 val RsPossibleMacroCall.expansion: MacroExpansion?
+    get() = expansionResult.ok()
+
+val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpansionError>
     get() {
         val mgr = project.macroExpansionManager
         if (mgr.expansionState != null) return mgr.getExpansionFor(this).value

@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.*
@@ -13,8 +14,11 @@ import org.rust.lang.core.resolve2.DeclMacroDefInfo
 import org.rust.lang.core.resolve2.MacroDefInfo
 import org.rust.lang.core.resolve2.ProcMacroDefInfo
 import org.rust.stdext.HashCode
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 
-class RsMacroDataWithHash<T : RsMacroData>(
+class RsMacroDataWithHash<out T : RsMacroData>(
     val data: T,
     val bodyHash: HashCode?
 ) {
@@ -29,7 +33,7 @@ class RsMacroDataWithHash<T : RsMacroData>(
     }
 
     companion object {
-        fun fromPsi(def: RsNamedElement): RsMacroDataWithHash<out RsMacroData>? {
+        fun fromPsi(def: RsNamedElement): RsMacroDataWithHash<*>? {
             return when {
                 def is RsMacro -> if (def.hasRustcBuiltinMacro) {
                     RsBuiltinMacroData(def.name ?: return null).withHash()
@@ -46,19 +50,22 @@ class RsMacroDataWithHash<T : RsMacroData>(
             }
         }
 
-        fun fromDefInfo(def: MacroDefInfo): RsMacroDataWithHash<out RsMacroData>? {
+        fun fromDefInfo(def: MacroDefInfo): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> {
             return when (def) {
-                is DeclMacroDefInfo -> if (def.hasRustcBuiltinMacro) {
-                    RsBuiltinMacroData(def.path.name).withHash()
-                } else {
-                    RsMacroDataWithHash(RsDeclMacroData(def.body), def.bodyHash)
-                }
-                is DeclMacro2DefInfo -> null  // TODO
+                is DeclMacroDefInfo -> Ok(
+                    if (def.hasRustcBuiltinMacro) {
+                        RsBuiltinMacroData(def.path.name).withHash()
+                    } else {
+                        RsMacroDataWithHash(RsDeclMacroData(def.body), def.bodyHash)
+                    }
+                )
+                is DeclMacro2DefInfo -> Err(ResolveMacroWithoutPsiError.Macro2IsNotSupported) // TODO
                 is ProcMacroDefInfo -> {
                     val name = def.path.name
-                    val procMacroArtifact = def.procMacroArtifact ?: return null
+                    val procMacroArtifact = def.procMacroArtifact
+                        ?: return Err(ResolveMacroWithoutPsiError.NoProcMacroArtifact)
                     val hash = HashCode.mix(procMacroArtifact.hash, HashCode.compute(name))
-                    RsMacroDataWithHash(RsProcMacroData(name, procMacroArtifact), hash)
+                    Ok(RsMacroDataWithHash(RsProcMacroData(name, procMacroArtifact), hash))
                 }
             }
         }

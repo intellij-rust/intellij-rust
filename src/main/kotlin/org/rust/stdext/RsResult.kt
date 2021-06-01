@@ -5,9 +5,9 @@
 
 package org.rust.stdext
 
-sealed class RsResult<T, E> {
-    data class Ok<T, E>(val ok: T) : RsResult<T, E>()
-    data class Err<T, E>(val err: E) : RsResult<T, E>()
+sealed class RsResult<out T, out E> {
+    data class Ok<T>(val ok: T) : RsResult<T, Nothing>()
+    data class Err<E>(val err: E) : RsResult<Nothing, E>()
 
     val isOk: Boolean get() = this is Ok
     val isErr: Boolean get() = this is Err
@@ -27,13 +27,20 @@ sealed class RsResult<T, E> {
         is Err -> Err(err)
     }
 
-    inline fun <U> andThen(action: (T) -> RsResult<U, E>): RsResult<U, E> = when (this) {
-        is Ok -> action(ok)
-        is Err -> Err(err)
-    }
-
-    inline fun unwrapOrElse(op: (E) -> T): T = when (this) {
-        is Ok -> ok
-        is Err -> op(err)
+    inline fun <U> mapErr(mapper: (E) -> U): RsResult<T, U> = when (this) {
+        is Ok -> Ok(ok)
+        is Err -> Err(mapper(err))
     }
 }
+
+inline fun <T, E, U> RsResult<T, E>.andThen(action: (T) -> RsResult<U, E>): RsResult<U, E> = when (this) {
+    is RsResult.Ok -> action(ok)
+    is RsResult.Err -> RsResult.Err(err)
+}
+
+inline fun <T, E> RsResult<T, E>.unwrapOrElse(op: (E) -> T): T = when (this) {
+    is RsResult.Ok -> ok
+    is RsResult.Err -> op(err)
+}
+
+fun <T : Any> T?.toResult(): RsResult<T, Unit> = if (this != null) RsResult.Ok(this) else RsResult.Err(Unit)

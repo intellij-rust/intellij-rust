@@ -7,10 +7,11 @@ package org.rust.lang.core.macros.errors
 
 import org.rust.lang.core.macros.MacroExpansionContext
 
-sealed class MacroExpansionAndParsingError<E> {
+sealed class MacroExpansionAndParsingError<out E> {
     data class ExpansionError<E>(val error: E) : MacroExpansionAndParsingError<E>()
     class ParsingError<E>(
         val expansionText: CharSequence,
         val context: MacroExpansionContext
     ) : MacroExpansionAndParsingError<E>()
+    object MacroCallSyntaxError : MacroExpansionAndParsingError<Nothing>()
 }

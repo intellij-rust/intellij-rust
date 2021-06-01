@@ -6,13 +6,17 @@
 package org.rust.lang.core.macros.proc
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
+import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ExecutableNotFound
+import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ProcMacroExpansionIsDisabled
 import org.rust.lang.core.macros.tt.MappedSubtree
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree
 import org.rust.lang.core.macros.tt.toMappedText
 import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
@@ -21,14 +25,16 @@ import java.util.concurrent.TimeoutException
 
 class ProcMacroExpander(
     private val project: Project,
-    private val server: ProcMacroServerPool? = ProcMacroApplicationService.getInstance().getServer()
+    private val server: ProcMacroServerPool? = ProcMacroApplicationService.getInstance().getServer(),
+    private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
 ) : MacroExpander<RsProcMacroData, ProcMacroExpansionError>() {
+    private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isEnabled()
 
     override fun expandMacroAsTextWithErr(
         def: RsProcMacroData,
         call: RsMacroCallData
     ): RsResult<Pair<CharSequence, RangeMap>, ProcMacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(ProcMacroExpansionError.MacroCallSyntax)
+        val macroCallBodyText = call.macroBody
         val env = call.packageEnv
         val (macroCallBodyLowered, rangesLowering) = project
             .createRustPsiBuilder(macroCallBodyText)
@@ -46,17 +52,20 @@ class ProcMacroExpander(
         lib: String,
         env: Map<String, String> = emptyMap()
     ): RsResult<TokenTree.Subtree, ProcMacroExpansionError> {
-        val server = server ?: return Err(ProcMacroExpansionError.ExecutableNotFound)
+        val server = server ?: return Err(if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled)
         val envList = env.map { listOf(it.key, it.value) }
         val response = try {
-            server.send(Request.ExpansionMacro(macroCallBody, macroName, null, lib, envList))
+            server.send(Request.ExpansionMacro(macroCallBody, macroName, null, lib, envList), timeout)
         } catch (ignored: TimeoutException) {
-            return Err(ProcMacroExpansionError.Timeout)
+            return Err(ProcMacroExpansionError.Timeout(timeout))
         } catch (e: ProcessCreationException) {
-            MACRO_LOG.warn("Failed to run proc macro expander", e)
+            MACRO_LOG.warn("Failed to run `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
             return Err(ProcMacroExpansionError.CantRunExpander)
+        } catch (e: ProcessAbortedException) {
+            return Err(ProcMacroExpansionError.ProcessAborted(e.exitCode))
         } catch (e: IOException) {
-            return Err(ProcMacroExpansionError.ExceptionThrown(e))
+            MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
+            return Err(ProcMacroExpansionError.IOExceptionThrown)
         }
         return when (response) {
             is Response.ExpansionMacro -> Ok(response.expansion)

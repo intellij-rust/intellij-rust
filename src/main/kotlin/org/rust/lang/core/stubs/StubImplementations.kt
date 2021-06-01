@@ -38,12 +38,9 @@ import org.rust.lang.core.stubs.common.RsPathPsiOrStub
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
-import org.rust.stdext.BitFlagsBuilder
+import org.rust.stdext.*
 import org.rust.stdext.BitFlagsBuilder.Limit.BYTE
 import org.rust.stdext.BitFlagsBuilder.Limit.INT
-import org.rust.stdext.HashCode
-import org.rust.stdext.readHashCodeNullable
-import org.rust.stdext.writeHashCodeNullable
 
 class RsFileStub(
     file: RsFile?,
@@ -2047,9 +2044,6 @@ class RsVisStub(
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 private fun StubInputStream.readUTFFastAsNullable(): String? = readNullable(this, this::readUTFFast)
 private fun StubOutputStream.writeUTFFastAsNullable(value: String?) = writeNullable(this, value, this::writeUTFFast)
-
-private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
-private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readUnsignedByte()]
 
 private fun StubOutputStream.writeLongAsNullable(value: Long?) = writeNullable(this, value, this::writeLong)
 private fun StubInputStream.readLongAsNullable(): Long? = readNullable(this, this::readLong)

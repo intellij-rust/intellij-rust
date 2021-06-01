@@ -21,6 +21,7 @@ import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
@@ -29,6 +30,7 @@ import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.RsResult
 
 val Project.isNewResolveEnabled: Boolean
     get() = rustSettings.newResolveEnabled
@@ -192,14 +194,14 @@ fun <T> RsMacroCall.resolveToMacroUsingNewResolveAndThen(
  *   which is prevented by returning null from macro expansion,
  *   therefore result of [expandedItemsCached] is incomplete (and cached)
  */
-fun RsMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash<*>? =
+fun RsMacroCall.resolveToMacroWithoutPsi(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> =
     resolveToMacroAndThen(
         withNewResolve = { def, _ -> RsMacroDataWithHash.fromDefInfo(def) },
         withoutNewResolve = {
             val psi = path.reference?.resolve() as? RsNamedElement
-            psi?.let { RsMacroDataWithHash.fromPsi(it) }
+            psi?.let { RsMacroDataWithHash.fromPsi(it) }?.let { RsResult.Ok(it) }
         }
-    )
+    ) ?: RsResult.Err(ResolveMacroWithoutPsiError.Unresolved)
 
 /** See [resolveToMacroWithoutPsi] */
 fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? =

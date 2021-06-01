@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.RsResult
+import org.rust.stdext.unwrapOrElse
 import kotlin.math.min
 
 abstract class RsMacroExpansionTestBase : RsTestBase() {
@@ -135,6 +136,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     private fun MacroExpansionAndParsingError<DeclMacroExpansionError>.formatError(call: RsMacroCall) = when (this) {
         is MacroExpansionAndParsingError.ExpansionError -> error.formatError(call)
         is MacroExpansionAndParsingError.ParsingError -> "can't parse expansion text `$expansionText` as $context"
+        MacroExpansionAndParsingError.MacroCallSyntaxError -> "there is a syntax error in the macro call"
     }
 
     private fun DeclMacroExpansionError.formatError(call: RsMacroCall) = when (this) {

@@ -22,12 +22,11 @@ import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABL
 import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX
+import org.rust.lang.core.macros.errors.*
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.stubs.RsFileStub
-import org.rust.stdext.HashCode
-import org.rust.stdext.readVarInt
-import org.rust.stdext.writeVarInt
+import org.rust.stdext.*
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -95,9 +94,10 @@ class MacroExpansionSharedCache : Disposable {
 
     private fun <Key, Value : Any> getOrPut(
         getMap: (PersistentCacheData) -> PersistentHashMap<Key, Value>,
+        cacheRetrievingStrategy: CacheRetrievingStrategy<Value>,
         key: Key,
-        computeValue: (SerializationManagerEx) -> Value?,
-    ): Value? {
+        computeValue: (SerializationManagerEx) -> Value,
+    ): Value {
         if (!CACHE_ENABLED.asBoolean()) return computeValue(globalSerMgr)
 
         val data = data.get() ?: return computeValue(globalSerMgr)
@@ -110,10 +110,10 @@ class MacroExpansionSharedCache : Disposable {
             return computeValue(globalSerMgr)
         }
 
-        return if (existingValue != null) {
+        return if (existingValue != null && cacheRetrievingStrategy.isRetrievedValueReusable(existingValue)) {
             existingValue
         } else {
-            val newValue: Value = computeValue(data.localSerMgr) ?: return null
+            val newValue = computeValue(data.localSerMgr)
 
             try {
                 map.put(key, newValue)
@@ -125,6 +125,28 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
+    private interface CacheRetrievingStrategy<in T> {
+        /**
+         * The [value] is just retrieved from the cache.
+         * If returns `true`, the [value] is used.
+         * If returns `false`, the [value] is dropped and new value is computed and cached.
+         */
+        fun isRetrievedValueReusable(value: T): Boolean
+    }
+
+    private object RetrieveEverythingStrategy : CacheRetrievingStrategy<Any> {
+        override fun isRetrievedValueReusable(value: Any): Boolean = true
+    }
+
+    private object DontRetrieveSomeErrorsStrategy : CacheRetrievingStrategy<RsResult<ExpansionResultOk, MacroExpansionError>> {
+        override fun isRetrievedValueReusable(value: RsResult<ExpansionResultOk, MacroExpansionError>): Boolean {
+            return when (value) {
+                is RsResult.Ok -> true
+                is RsResult.Err -> value.err.canCacheError()
+            }
+        }
+    }
+
     private fun onError(lastData: PersistentCacheData, e: IOException) {
         if (data.compareAndSet(lastData, null)) {
             lastData.close()
@@ -132,20 +154,33 @@ class MacroExpansionSharedCache : Disposable {
         MACRO_LOG.warn(e)
     }
 
-    fun <T : RsMacroData> cachedExpand(
-        expander: MacroExpander<T, *>,
+    /**
+     * Note: here we're caching all possible results (hence they are available using [getExpansionIfCached]),
+     * but (thanks to [DontRetrieveSomeErrorsStrategy]) we're not retrieving some *error* results from the
+     * cache (i.e. recompute them all the time [cachedExpand] is used). This is done for the most of the
+     * procedural macro expansion errors [ProcMacroExpansionError] (because proc macros are pretty unstable
+     * and a subsequent macro invocation may be successful)
+     */
+    fun <T : RsMacroData, E : MacroExpansionError> cachedExpand(
+        expander: MacroExpander<T, E>,
         def: T,
         call: RsMacroCallData,
         /** mixed hash of [def] and [call], passed as optimization */
         hash: HashCode
-    ): ExpansionResult? {
-        return getOrPut(PersistentCacheData::expansions, hash) {
-            val result = expander.expandMacroAsText(def, call) ?: return@getOrPut null
-            ExpansionResult(result.first.toString(), result.second)
+    ): RsResult<ExpansionResultOk, E> {
+        return getOrPut(PersistentCacheData::expansions, DontRetrieveSomeErrorsStrategy, hash) {
+            expander.expandMacroAsTextWithErr(def, call)
+                .map { ExpansionResultOk(it.first.toString(), it.second) }
+        }.mapErr {
+            // It's strictly impossible that `expander` returns an error other than `E`, but in theory
+            // the cache can be outdated or corrupted in such a way that it returns another error
+            // for the same `hash`
+            @Suppress("UNCHECKED_CAST")
+            it as E
         }
     }
 
-    fun getExpansionIfCached(hash: HashCode): ExpansionResult? {
+    fun getExpansionIfCached(hash: HashCode): RsResult<ExpansionResultOk, MacroExpansionError>? {
         if (!CACHE_ENABLED.asBoolean()) return null
         val data = data.get() ?: return null
         val map = data.expansions
@@ -157,13 +192,15 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
-    fun cachedBuildStub(fileContent: FileContent, hash: HashCode): SerializedStubTree? {
+    fun cachedBuildStub(fileContent: FileContent, hash: HashCode): SerializedStubTree {
         return cachedBuildStub(hash) { fileContent }
     }
 
-    private fun cachedBuildStub(hash: HashCode, fileContent: () -> FileContent?): SerializedStubTree? {
-        return getOrPut(PersistentCacheData::stubs, hash) { serMgr ->
-            val stub = StubTreeBuilder.buildStubTree(fileContent() ?: return@getOrPut null) ?: return@getOrPut null
+    private fun cachedBuildStub(hash: HashCode, fileContent: () -> FileContent): SerializedStubTree {
+        return getOrPut(PersistentCacheData::stubs, RetrieveEverythingStrategy, hash) { serMgr ->
+            val fc = fileContent()
+            val stub = StubTreeBuilder.buildStubTree(fc)
+                ?: error("Failed to build Stub for macro expansion. File: `${fc.file}`, fileType: `${fc.fileType}`")
             SerializedStubTree.serializeStub(stub, serMgr, stubExternalizer)
         }
     }
@@ -173,13 +210,13 @@ class MacroExpansionSharedCache : Disposable {
         expander: MacroExpander<T, *>,
         def: RsMacroDataWithHash<T>,
         call: RsMacroCallDataWithHash
-    ): Pair<RsFileStub, ExpansionResult>? {
+    ): Pair<RsFileStub, ExpansionResultOk>? {
         val hash = def.mixHash(call) ?: return null
-        val result = cachedExpand(expander, def.data, call.data, hash) ?: return null
+        val result = cachedExpand(expander, def.data, call.data, hash).ok() ?: return null
         val serializedStub = cachedBuildStub(hash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
             createFileContentByText(file, result.text, project)
-        } ?: return null
+        }
 
         val stub = try {
             serializedStub.stub
@@ -208,7 +245,7 @@ class MacroExpansionSharedCache : Disposable {
 @Suppress("UnstableApiUsage")
 private class PersistentCacheData(
     val localSerMgr: SerializationManagerImpl,
-    val expansions: PersistentHashMap<HashCode, ExpansionResult>,
+    val expansions: PersistentHashMap<HashCode, RsResult<ExpansionResultOk, MacroExpansionError>>,
     val stubs: PersistentHashMap<HashCode, SerializedStubTree>
 ) {
     fun flush() {
@@ -255,7 +292,7 @@ private class PersistentCacheData(
                     ExpansionResultExternalizer,
                     1 * 1024 * 1024,
                     DeclMacroExpander.EXPANDER_VERSION + ProcMacroExpander.EXPANDER_VERSION
-                        + RustParserDefinition.PARSER_VERSION + 1
+                        + RustParserDefinition.PARSER_VERSION + 2
                 )
                 cleaners += expansions::close
 
@@ -313,10 +350,12 @@ private object HashCodeKeyDescriptor : KeyDescriptor<HashCode>, DifferentSeriali
         return Objects.equals(val1, val2)
     }
 
+    @Throws(IOException::class)
     override fun save(out: DataOutput, value: HashCode) {
         out.write(value.toByteArray())
     }
 
+    @Throws(IOException::class)
     override fun read(inp: DataInput): HashCode {
         val bytes = ByteArray(HashCode.ARRAY_LEN)
         inp.readFully(bytes)
@@ -324,7 +363,7 @@ private object HashCodeKeyDescriptor : KeyDescriptor<HashCode>, DifferentSeriali
     }
 }
 
-class ExpansionResult(
+class ExpansionResultOk(
     val text: String,
     val ranges: RangeMap,
     /** Optimization: occurrences of [MACRO_DOLLAR_CRATE_IDENTIFIER] */
@@ -333,20 +372,34 @@ class ExpansionResult(
         .toIntArray()
 )
 
-private object ExpansionResultExternalizer : DataExternalizer<ExpansionResult> {
-    override fun save(out: DataOutput, value: ExpansionResult) {
-        IOUtil.writeUTF(out, value.text)
-        value.ranges.writeTo(out)
-        out.writeIntArray(value.dollarCrateOccurrences)
+private object ExpansionResultExternalizer : DataExternalizer<RsResult<ExpansionResultOk, MacroExpansionError>> {
+    @Throws(IOException::class)
+    override fun save(out: DataOutput, value: RsResult<ExpansionResultOk, MacroExpansionError>) {
+        out.writeRsResult(value, DataOutput::saveExpansionResultOk, DataOutput::writeMacroExpansionError)
     }
 
-    override fun read(inp: DataInput): ExpansionResult {
-        return ExpansionResult(
-            IOUtil.readUTF(inp),
-            RangeMap.readFrom(inp),
-            inp.readIntArray()
-        )
+    @Throws(IOException::class)
+    override fun read(inp: DataInput): RsResult<ExpansionResultOk, MacroExpansionError> {
+        return inp.readRsResult(DataInput::readExpansionResultOk, DataInput::readMacroExpansionError)
     }
+}
+
+
+
+@Throws(IOException::class)
+private fun DataOutput.saveExpansionResultOk(value: ExpansionResultOk) {
+    IOUtil.writeUTF(this, value.text)
+    value.ranges.writeTo(this)
+    writeIntArray(value.dollarCrateOccurrences)
+}
+
+@Throws(IOException::class)
+private fun DataInput.readExpansionResultOk(): ExpansionResultOk {
+    return ExpansionResultOk(
+        IOUtil.readUTF(this),
+        RangeMap.readFrom(this),
+        readIntArray()
+    )
 }
 
 private fun DataOutput.writeIntArray(array: IntArray) {

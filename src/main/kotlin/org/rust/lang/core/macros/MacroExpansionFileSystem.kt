@@ -178,7 +178,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         if (fsItem !is FSFile) throw FileNotFoundException(file.path + " (Is a directory)")
         return fsItem.fetchAndRemoveContent() ?: run {
             val cachedExpansion = file.loadMixHash()?.let {
-                MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)
+                MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)?.ok()
             }
             if (cachedExpansion != null) {
                 cachedExpansion.text.toByteArray()
