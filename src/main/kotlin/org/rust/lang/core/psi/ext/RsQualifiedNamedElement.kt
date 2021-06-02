@@ -149,7 +149,7 @@ data class RsQualifiedName private constructor(
         return psiManager.findFile(crateRoot)?.rustFile
     }
 
-    private inline fun <reified T : RsElement, K> lookupInIndex(
+    private inline fun <reified T : RsElement, K : Any> lookupInIndex(
         project: Project,
         indexKey: StubIndexKey<K, T>,
         keyProducer: (String) -> K,
@@ -356,9 +356,13 @@ data class RsQualifiedName private constructor(
         private fun RsQualifiedNamedElement.toParentItem(): Item? {
             val name = ((this as? RsMod)?.modName ?: name) ?: return null
             val itemType = when (this) {
-                is RsStructItem -> STRUCT
+                is RsStructItem -> when (kind) {
+                    RsStructKind.STRUCT -> STRUCT
+                    RsStructKind.UNION -> UNION
+                }
                 is RsEnumItem -> ENUM
                 is RsTraitItem -> TRAIT
+                is RsTraitAlias -> TRAITALIAS
                 is RsTypeAlias -> TYPE
                 is RsFunction -> FN
                 is RsConstant -> CONSTANT
@@ -433,8 +437,10 @@ data class RsQualifiedName private constructor(
 
     enum class ParentItemType : ItemType {
         STRUCT,
+        UNION,
         ENUM,
         TRAIT,
+        TRAITALIAS,
         TYPE,
         FN,
         CONSTANT,
@@ -455,8 +461,10 @@ data class RsQualifiedName private constructor(
             fun fromString(name: String): ParentItemType? {
                 return when (name) {
                     "struct" -> STRUCT
+                    "union" -> UNION
                     "enum" -> ENUM
                     "trait" -> TRAIT
+                    "traitalias" -> TRAITALIAS
                     "type" -> TYPE
                     "fn" -> FN
                     "constant" -> CONSTANT

@@ -36,6 +36,20 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/enum.Foo.html#variant.Bar.field.baz")
 
+    fun `test union`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub union Foo { x: i32, y: f32 }
+                 //^
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/union.Foo.html")
+
+    fun `test trait alias`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub trait Foo {}
+        pub trait Bar {}
+        pub trait FooBar = Foo + Bar;
+                 //^
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/traitalias.FooBar.html")
+
     fun `test item with restricted visibility`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         pub(crate) enum Foo { V1, V2 }
