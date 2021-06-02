@@ -83,6 +83,13 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/struct.Foo.html")
 
+    fun `test union fqn link`() = doTest("""
+        union Foo { x: i32, y: f32 }
+              //X
+        struct Bar;
+              //^
+    """, "test_package/union.Foo.html")
+
     fun `test enum fqn link`() = doTest("""
         enum Foo { V }
             //X
@@ -104,12 +111,21 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/type.Foo.html")
 
-    fun `test trait alias fqn link`() = doTest("""
+    fun `test trait fqn link`() = doTest("""
         trait Foo {}
              //X
         struct Bar;
               //^
     """, "test_package/trait.Foo.html")
+
+    fun `test trait alias fqn link`() = doTest("""
+        pub trait Foo {}
+        pub trait Bar {}
+        pub trait FooBar = Foo + Bar;
+                  //X
+        struct Qwe;
+              //^
+    """, "test_package/traitalias.FooBar.html")
 
     fun `test mod fqn link`() = doTest("""
         mod foo {
