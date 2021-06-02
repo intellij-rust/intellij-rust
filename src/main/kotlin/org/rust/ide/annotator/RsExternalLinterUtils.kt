@@ -273,8 +273,12 @@ private data class RsExternalLinterFilteredMessage(
 fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)
 
-private fun ErrorCode?.formatAsLink(): String? =
-    if (this?.code.isNullOrBlank()) null else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
+private val ERROR_REGEX: Regex = """E\d{4}""".toRegex()
+
+private fun ErrorCode?.formatAsLink(): String? {
+    if (this?.code?.matches(ERROR_REGEX) != true) return null
+    return "<a href=\"${RsConstants.ERROR_INDEX_URL}#$code\">$code</a>"
+}
 
 private fun RustcMessage.collectQuickFixes(file: PsiFile, document: Document): List<ApplySuggestionFix> {
     val quickFixes = mutableListOf<ApplySuggestionFix>()
