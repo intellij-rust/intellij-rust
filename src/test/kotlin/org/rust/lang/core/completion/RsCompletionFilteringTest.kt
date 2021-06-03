@@ -282,4 +282,26 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
             <S<X>>::cl/*caret*/;
         }
     """)
+
+    fun `test trait implementation on multiple dereference levels`() = doSingleCompletion("""
+        struct S;
+        trait T { fn foo(&self); }
+
+        impl T for S { fn foo(&self) {} }
+        impl T for &S { fn foo(&self) {} }
+
+        fn main(a: &S) {
+            a.f/*caret*/
+        }
+    """, """
+        struct S;
+        trait T { fn foo(&self); }
+
+        impl T for S { fn foo(&self) {} }
+        impl T for &S { fn foo(&self) {} }
+
+        fn main(a: &S) {
+            a.foo()/*caret*/
+        }
+    """)
 }

@@ -115,11 +115,11 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     filterAssocTypes(
                         element,
                         filterCompletionVariantsByVisibility(
+                            element,
                             filterPathCompletionVariantsByTraitBounds(
                                 addProcessedPathName(processor, processedPathNames),
                                 lookup
-                            ),
-                            element
+                            )
                         )
                     )
                 )
@@ -148,8 +148,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             receiverTy,
             element,
             filterCompletionVariantsByVisibility(
-                filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy),
-                receiver
+                receiver,
+                filterMethodCompletionVariantsByTraitBounds(
+                    lookup,
+                    receiverTy,
+                    deduplicateMethodCompletionVariants(processor)
+                )
             )
         )
     }
@@ -284,9 +288,9 @@ private fun filterPathCompletionVariantsByTraitBounds(
 }
 
 private fun filterMethodCompletionVariantsByTraitBounds(
-    processor: RsResolveProcessor,
     lookup: ImplLookup,
-    receiver: Ty
+    receiver: Ty,
+    processor: RsResolveProcessor
 ): RsResolveProcessor {
     // Don't filter partially unknown types
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
@@ -302,6 +306,27 @@ private fun filterMethodCompletionVariantsByTraitBounds(
             lookup.ctx.canEvaluateBounds(it.source, receiver)
         }
         if (canEvaluate) return@createProcessor processor(it)
+
+        false
+    }
+}
+
+/**
+ * There can be multiple impls of the same trait on different dereference levels.
+ * For example, trait `Debug` is implemented for `str` and for `&str`. In this case
+ * we receive completion variants for both `str` and `&str` implementation, but they
+ * are absolutely identical for a user.
+ *
+ * Here we deduplicate method completion variants by a method name and a trait.
+ *
+ * Should be applied after [filterMethodCompletionVariantsByTraitBounds]
+ */
+private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): RsResolveProcessor {
+    val processedNamesAndTraits = mutableSetOf<Pair<String, RsTraitItem?>>()
+    return createProcessor(processor.name) {
+        if (it !is MethodResolveVariant) return@createProcessor processor(it)
+        val shouldProcess = processedNamesAndTraits.add(it.name to it.source.implementedTrait?.element)
+        if (shouldProcess) return@createProcessor processor(it)
 
         false
     }
