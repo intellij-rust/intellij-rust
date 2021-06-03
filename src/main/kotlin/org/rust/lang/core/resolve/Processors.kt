@@ -289,7 +289,7 @@ fun processAllWithSubst(
     return false
 }
 
-fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, context: RsElement): RsResolveProcessor {
+fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolveProcessor): RsResolveProcessor {
     val mod = context.containingMod
     return createProcessor(processor.name) {
         val element = it.element
