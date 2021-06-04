@@ -27,6 +27,7 @@ object RsPathManager {
         @Suppress("UnstableApiUsage", "DEPRECATION")
         val arch = when {
             CpuArch.isIntel64() -> "x86-64"
+            SystemInfo.isMac && CpuArch.isArm64() -> "arm64"
             else -> return null
         }
 
