@@ -742,4 +742,16 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
+
+    fun `test no duplication for fmt`() = checkAutoImportFixByTextWithMultipleChoice("""
+        fn main() {
+            1.<error descr="Unresolved reference: `fmt`">fmt/*caret*/</error>();
+        }
+    """, listOf("std::fmt::Debug", "std::fmt::Display"), "std::fmt::Debug", """
+        use std::fmt::Debug;
+        
+        fn main() {
+            1.fmt();
+        }
+    """)
 }

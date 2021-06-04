@@ -144,7 +144,8 @@ object ImportCandidatesCollector {
         val traits = sources.mapNotNull { source ->
             if (source.isInherent) return null
             source.requiredTraitInScope
-        }
+        }.distinct()
+
         return if (traits.filterInScope(scope).isNotEmpty()) null else traits
     }
 
