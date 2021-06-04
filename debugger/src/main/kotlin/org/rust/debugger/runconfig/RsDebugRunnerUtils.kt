@@ -20,6 +20,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult
 import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.runconfig.CargoTestRunState
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
@@ -38,7 +39,9 @@ object RsDebugRunnerUtils {
             environment.project,
             runExecutable,
             state.cargoProject,
-            state.runConfiguration.withSudo
+            // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
+            // https://github.com/intellij-rust/intellij-rust/issues/7320
+            if (state is CargoTestRunState) false else state.runConfiguration.withSudo
         )
         return XDebuggerManager.getInstance(environment.project)
             .startSession(environment, object : XDebugProcessStarter() {

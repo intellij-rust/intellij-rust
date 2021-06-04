@@ -15,10 +15,12 @@ import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.exists
 import org.jdom.Element
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -139,7 +141,16 @@ open class CargoCommandConfiguration(
                 path?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
                 !path.toFile().isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
             }
-
+        }
+        // TODO: remove when `com.intellij.execution.process.ElevationService` supports error stream redirection
+        // https://github.com/intellij-rust/intellij-rust/issues/7320
+        if (withSudo && showTestToolWindow()) {
+            val message = if (SystemInfo.isWindows) {
+                RsBundle.message("notification.run.tests.as.root.windows")
+            } else {
+                RsBundle.message("notification.run.tests.as.root.unix")
+            }
+            throw RuntimeConfigurationWarning(message)
         }
 
         val config = clean()

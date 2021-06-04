@@ -33,6 +33,8 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
+import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathTextField
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -94,7 +96,11 @@ class CargoCommandConfigurationEditor(project: Project)
     private val withSudo = CheckBox(
         if (SystemInfo.isWindows) "Run with Administrator privileges" else "Run with root privileges",
         false
-    )
+    ).apply {
+        // TODO: remove when `com.intellij.execution.process.ElevationService` supports error stream redirection
+        // https://github.com/intellij-rust/intellij-rust/issues/7320
+        isEnabled = isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)
+    }
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         super.resetEditorFrom(configuration)
