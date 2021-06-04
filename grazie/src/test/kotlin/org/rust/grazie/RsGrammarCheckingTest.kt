@@ -42,16 +42,16 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
     fun `test check literals`() = doTest("""
         fn foo() {
-            let literal = "<TYPO>There is two apples</TYPO>";
-            let raw_literal = r"<TYPO>There is two apples</TYPO>";
-            let binary_literal = b"<TYPO>There is two apples</TYPO>";
+            let literal = "It is <TYPO>friend</TYPO> of human";
+            let raw_literal = r"It is <TYPO>friend</TYPO> of human";
+            let binary_literal = b"It is <TYPO>friend</TYPO> of human";
         }
     """, checkInStringLiterals = true)
 
     fun `test check comments`() = doTest("""
         fn foo() {
-            // <TYPO>There is two apples</TYPO>
-            /* <TYPO>There is two apples</TYPO> */
+            // It is <TYPO>friend</TYPO> of human
+            /* It is <TYPO>friend</TYPO> of human */
             let literal = 123;
         }
     """, checkInComments = true)
@@ -79,11 +79,11 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     """, checkInComments = true)
 
     fun `test check doc comments`() = doTest("""
-        /// <TYPO>There is two apples</TYPO>
+        /// It is <TYPO>friend</TYPO> of human
         mod foo {
-            //! <TYPO>There is two apples</TYPO>
+            //! It is <TYPO>friend</TYPO> of human
 
-            /** <TYPO>There is two apples</TYPO> */
+            /** It is <TYPO>friend</TYPO> of human */
             fn bar() {}
         }
     """, checkInDocumentation = true)
@@ -91,7 +91,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     fun `test check injected Rust code in doc comments`() = doTest("""
         ///
         /// ```
-        /// let literal = "<TYPO>There is two apples</TYPO>";
+        /// let literal = "It is <TYPO>friend</TYPO> of human";
         /// for i in 1..10 {}
         /// ```
         pub fn foo() {}
