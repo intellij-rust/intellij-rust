@@ -22,7 +22,7 @@ class RsUsageViewTreeTest : RsUsageViewTreeTestBase() {
         <root> (2)
          Function
           foo
-         Found usages (2)
+         Usages in Project Files (2)
           function call (2)
            main.rs (2)
             6foo();
@@ -49,7 +49,7 @@ class RsUsageViewTreeTest : RsUsageViewTreeTestBase() {
         <root> (5)
          Struct
           S
-         Found usages (5)
+         Usages in Project Files (5)
           impl (2)
            main.rs (2)
             7impl S {}

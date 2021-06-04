@@ -32,7 +32,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsIfExpr)?.block ?: return null
-        block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block)
+        block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block) ?: return null
         val rbrace = checkNotNull(block.rbrace) {
             "Incomplete block in if surrounder"
         }

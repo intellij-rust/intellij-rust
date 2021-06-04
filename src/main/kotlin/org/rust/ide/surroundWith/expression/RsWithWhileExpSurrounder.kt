@@ -32,7 +32,7 @@ class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsWhileExpr)?.block ?: return null
-        block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block)
+        block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block) ?: return null
         val rbrace = checkNotNull(block.rbrace) {
             "Incomplete block in while surrounder"
         }
