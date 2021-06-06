@@ -1074,6 +1074,9 @@
         <registryKey key="org.rust.cargo.evaluate.build.scripts.wrapper" defaultValue="true" restartRequired="false"
                      description="Use RUSTC_WRAPPER when fetching build script info (if experimental feature
                      `org.rust.cargo.evaluate.build.scripts` is enabled)"/>
+        <registryKey key="org.rust.cargo.test.nocapture" defaultValue="false" restartRequired="false"
+                     description="Add `--nocapture` flag to the test command line and show test results in
+                     Run Tool Window instead of raw console"/>
         <registryKey key="org.rust.macros.proc.timeout" defaultValue="5000" restartRequired="false"
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
 
