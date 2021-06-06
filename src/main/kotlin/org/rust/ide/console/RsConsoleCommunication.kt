@@ -9,7 +9,7 @@ class RsConsoleCommunication(private val consoleView: RsConsoleView) {
 
     var isExecuting: Boolean = false
         private set
-    private var receivedInitialPrompt: Boolean = false
+    private var receivedInitialPrompt: Boolean = true
     private var lastCommandContext: RsConsoleOneCommandContext? = null
 
     fun onExecutionBegin() {

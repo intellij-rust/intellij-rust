@@ -200,9 +200,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  # REPL doesn't work with 0.10.0 version
-                  # See https://github.com/intellij-rust/intellij-rust/issues/7295
-                  args: evcxr_repl --version 0.9.0
+                  args: evcxr_repl
 
             - name: Check environment
               run: |
