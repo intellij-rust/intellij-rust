@@ -193,3 +193,14 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
         val builtinPostProcess: Testmark = Testmark("builtinPostProcess")
     }
 }
+
+class RustfmtExternalFormatProcessor : RustfmtExternalFormatProcessorBase() {
+    @Suppress("UnstableApiUsage")
+    override fun format(
+        source: PsiFile,
+        range: TextRange,
+        canChangeWhiteSpacesOnly: Boolean,
+        keepLineBreaks: Boolean, // Always `false`?
+        enableBulkUpdate: Boolean
+    ): TextRange = formatWithRustfmtOrBuiltinFormatter(source, range, canChangeWhiteSpacesOnly)
+}

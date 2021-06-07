@@ -1,12 +1,2 @@
 <idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <experimentalFeature id="org.rust.wsl" percentOfUsers="0">
-            <description>Enables WSL toolchains</description>
-        </experimentalFeature>
-    </extensions>
-    <extensions defaultExtensionNs="org.rust">
-        <toolchainProvider implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainProvider"/>
-        <toolchainFlavor id="rust.wslToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainFlavor"/>
-    </extensions>
 </idea-plugin>
