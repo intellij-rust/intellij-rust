@@ -37,10 +37,10 @@ sealed class RsStatementsSurrounderBase<out T : RsExpr> : Surrounder {
             project: Project,
             editor: Editor,
             elements: Array<out PsiElement>
-        ): TextRange {
+        ): TextRange? {
             val template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
                 surroundWithTemplate(project, elements)
-            )
+            ) ?: return null
 
             val range = conditionRange(template)
             editor.document.deleteString(range.startOffset, range.endOffset)

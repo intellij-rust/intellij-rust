@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
-import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
@@ -24,6 +23,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.Query
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.navigation.goto.RsGoToImplRenderer
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
@@ -55,7 +55,7 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
             val info = ImplsGutterIconBuilder(RsIcons.IMPLEMENTED)
                 .setTargets(targets)
                 .setTooltipText("Has implementations")
-                .setCellRenderer(GoToImplRenderer())
+                .setCellRenderer(RsGoToImplRenderer())
                 .createLineMarkerInfo(el)
 
             result.add(info)
@@ -120,25 +120,6 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
                     renderer
                 )
             }
-        }
-    }
-
-    private class GoToImplRenderer : DefaultPsiElementCellRenderer() {
-        override fun getElementText(element: PsiElement?): String {
-            return super.getElementText(getTarget(element))
-        }
-
-        override fun getContainerText(element: PsiElement?, name: String?): String? {
-            return super.getContainerText(getTarget(element), name)
-        }
-
-        private fun getTarget(element: PsiElement?): PsiElement? = when (element) {
-            is RsAbstractable -> when (val owner = element.owner) {
-                is RsAbstractableOwner.Impl -> owner.impl
-                is RsAbstractableOwner.Trait -> owner.trait
-                else -> element
-            }
-            else -> element
         }
     }
 

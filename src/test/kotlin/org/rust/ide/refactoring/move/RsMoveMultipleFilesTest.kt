@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move
 
 import org.intellij.lang.annotations.Language
+import org.rust.IgnoreInPlatform
 import org.rust.fileTreeFromText
 
 class RsMoveMultipleFilesTest : RsMoveFileTestBase() {
@@ -39,6 +40,7 @@ class RsMoveMultipleFilesTest : RsMoveFileTestBase() {
         fn func2() {}
     """)
 
+    @IgnoreInPlatform(212)
     fun `test move directory and file`() = doTest(
         arrayOf("mod1/foo1", "mod1/foo2.rs"),
         "mod2",

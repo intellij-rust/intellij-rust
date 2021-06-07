@@ -16,7 +16,7 @@ fun <T : PsiElement, E : PsiElement> Editor.buildAndRunTemplate(
     elementsToReplace: List<SmartPsiElementPointer<E>>
 ) {
     checkWriteAccessAllowed()
-    val restoredOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(owner)
+    val restoredOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(owner) ?: return
     val templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(restoredOwner)
     for (elementPointer in elementsToReplace) {
         val element = elementPointer.element ?: continue

@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2021.1
+@file:Suppress("DEPRECATION")
+
 package org.rust.grazie
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
