@@ -1,6 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <experimentalFeature id="org.rust.wsl" percentOfUsers="0">
+        <experimentalFeature id="org.rust.wsl" percentOfUsers="100">
             <description>Enables WSL toolchains</description>
         </experimentalFeature>
     </extensions>
