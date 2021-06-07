@@ -69,7 +69,7 @@ class RsDebugProcessConfigurationHelper(
         val fullCommand = """$sourceMapCommand "$rustcHash" "$rustcSources" """
         // BACKCOMPAT: 2020.3
         @Suppress("UnstableApiUsage", "DEPRECATION")
-        executeConsoleCommand(threadId, frameIndex, fullCommand)
+        executeInterpreterCommand(threadId, frameIndex, fullCommand)
     }
 
     private fun DebuggerDriver.loadPrettyPrinters() {
@@ -79,32 +79,30 @@ class RsDebugProcessConfigurationHelper(
         }
     }
 
-    // BACKCOMPAT: 2020.3
-    @Suppress("UnstableApiUsage", "DEPRECATION")
     private fun LLDBDriver.loadPrettyPrinters() {
         when (settings.lldbRenderers) {
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val path = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
-                executeConsoleCommand(threadId, frameIndex, """command script import "$path" """)
-                executeConsoleCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
-                executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
+                executeInterpreterCommand(threadId, frameIndex, """command script import "$path" """)
+                executeInterpreterCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
+                executeInterpreterCommand(threadId, frameIndex, """type category enable Rust""")
             }
 
             LLDBRenderers.BUNDLED -> {
                 val path = PP_PATH.systemDependentAndEscaped()
-                executeConsoleCommand(threadId, frameIndex, """command script import "$path/$LLDB_LOOKUP.py" """)
+                executeInterpreterCommand(threadId, frameIndex, """command script import "$path/$LLDB_LOOKUP.py" """)
 
                 // In case of cross-language projects, lldb pretty-printers should be enabled
                 // only for specific std types (but should not be enabled for arbitrary struct/enums),
                 // because `type synthetic add ... -x ".*"` overrides C++ STL pretty-printers
                 val enabledTypes = if (isCrossLanguage) RUST_STD_TYPES else listOf(".*")
                 for (type in enabledTypes) {
-                    executeConsoleCommand(threadId, frameIndex, """type synthetic add -l $LLDB_LOOKUP.synthetic_lookup -x "$type" --category Rust""")
-                    executeConsoleCommand(threadId, frameIndex, """type summary add -F $LLDB_LOOKUP.summary_lookup  -e -x -h "$type" --category Rust""")
+                    executeInterpreterCommand(threadId, frameIndex, """type synthetic add -l $LLDB_LOOKUP.synthetic_lookup -x "$type" --category Rust""")
+                    executeInterpreterCommand(threadId, frameIndex, """type summary add -F $LLDB_LOOKUP.summary_lookup  -e -x -h "$type" --category Rust""")
                 }
 
-                executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
+                executeInterpreterCommand(threadId, frameIndex, """type category enable Rust""")
             }
 
             LLDBRenderers.NONE -> {
@@ -122,9 +120,7 @@ class RsDebugProcessConfigurationHelper(
                     """sys.path.insert(0, "$path"); """ +
                     """import gdb_rust_pretty_printing; """ +
                     """gdb_rust_pretty_printing.register_printers(gdb); """
-                // BACKCOMPAT: 2020.3
-                @Suppress("UnstableApiUsage", "DEPRECATION")
-                executeConsoleCommand(threadId, frameIndex, command)
+                executeInterpreterCommand(threadId, frameIndex, command)
             }
 
             GDBRenderers.BUNDLED -> {
@@ -133,9 +129,7 @@ class RsDebugProcessConfigurationHelper(
                     """sys.path.insert(0, "$path"); """ +
                     """import $GDB_LOOKUP; """ +
                     """$GDB_LOOKUP.register_printers(gdb); """
-                // BACKCOMPAT: 2020.3
-                @Suppress("UnstableApiUsage", "DEPRECATION")
-                executeConsoleCommand(threadId, frameIndex, command)
+                executeInterpreterCommand(threadId, frameIndex, command)
             }
 
             GDBRenderers.NONE -> {

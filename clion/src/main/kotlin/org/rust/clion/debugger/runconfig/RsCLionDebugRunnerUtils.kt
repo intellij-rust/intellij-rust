@@ -14,7 +14,7 @@ import com.jetbrains.cidr.toolchains.OSType
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.BuildResult.ToolchainError.*
-import org.rust.cargo.toolchain.RsRemoteToolchain
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.runconfig.RsDebugRunnerUtils.ERROR_MESSAGE_TITLE
 
 object RsCLionDebugRunnerUtils {
@@ -22,13 +22,11 @@ object RsCLionDebugRunnerUtils {
     fun checkToolchainSupported(project: Project, host: String): ToolchainError? {
         val toolSet = CPPToolchains.getInstance().defaultToolchain?.toolSet ?: return null
         if (CPPToolchains.getInstance().osType == OSType.WIN) {
-            // BACKCOMPAT: 2020.3
-            if (project.toolchain is RsRemoteToolchain && !toolSet.isWSL) {
+            if (project.toolchain is RsWslToolchain && !toolSet.isWSL) {
                 return WSLWithNonWSL
             }
 
-            // BACKCOMPAT: 2020.3
-            if (project.toolchain !is RsRemoteToolchain && toolSet.isWSL) {
+            if (project.toolchain !is RsWslToolchain && toolSet.isWSL) {
                 return NonWSLWithWSL
             }
 

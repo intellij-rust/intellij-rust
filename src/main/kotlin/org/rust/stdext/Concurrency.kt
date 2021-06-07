@@ -114,9 +114,5 @@ fun <T> Lock.withLockAndCheckingCancelled(action: () -> T): T =
     ProgressIndicatorUtils.computeWithLockAndCheckingCanceled<T, Exception>(this, 10, TimeUnit.MILLISECONDS, action)
 
 fun Condition.awaitWithCheckCancelled() {
-    // BACKCOMPAT: 2020.3. Use com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(java.util.concurrent.locks.Condition)
-    while (!await(10, TimeUnit.MILLISECONDS)) {
-        ProgressManager.checkCanceled()
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(this)
 }
-

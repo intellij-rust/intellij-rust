@@ -11,14 +11,14 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.util.io.isFile
 import com.intellij.util.io.systemIndependentPath
-import org.rust.cargo.toolchain.RsRemoteToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.stdext.toPath
 import java.io.File
 import java.nio.file.Path
 
 class RsWslToolchain(
     private val wslPath: WslPath
-) : RsRemoteToolchain(wslPath.distribution.getWindowsPath(wslPath.linuxPath)?.toPath() ?: wslPath.linuxPath.toPath()) {
+) : RsToolchainBase(wslPath.distribution.getWindowsPath(wslPath.linuxPath)?.toPath() ?: wslPath.linuxPath.toPath()) {
     private val distribution: WSLDistribution get() = wslPath.distribution
     private val linuxPath: Path = wslPath.linuxPath.toPath()
 

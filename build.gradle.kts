@@ -327,14 +327,6 @@ project(":") {
         }
     }
 
-    intellij {
-        // BACKCOMPAT: 2020.3
-        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion == 203) {
-            setPlugins("c-plugin")
-        }
-    }
-
     val testOutput = configurations.create("testOutput")
 
     dependencies {
@@ -453,13 +445,7 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        val plugins = mutableListOf<Any>(project(":intellij-toml"))
-        // BACKCOMPAT: 2020.3
-        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion == 203) {
-            plugins += "c-plugin"
-        }
-        setPlugins(*plugins.toTypedArray())
+        setPlugins(project(":intellij-toml"))
     }
     dependencies {
         implementation(project(":"))
@@ -542,13 +528,7 @@ if (platformVersion < 212) {
 
 project(":ml-completion") {
     intellij {
-        val plugins = mutableListOf<Any>(mlCompletionPlugin)
-        // BACKCOMPAT: 2020.3
-        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion == 203) {
-            plugins += "c-plugin"
-        }
-        setPlugins(*plugins.toTypedArray())
+        setPlugins(mlCompletionPlugin)
     }
     dependencies {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.2")
@@ -561,13 +541,6 @@ project(":ml-completion") {
 
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
-    intellij {
-        // BACKCOMPAT: 2020.3
-        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion == 203) {
-            setPlugins("c-plugin")
-        }
-    }
 
     dependencies {
         implementation(project(":common"))

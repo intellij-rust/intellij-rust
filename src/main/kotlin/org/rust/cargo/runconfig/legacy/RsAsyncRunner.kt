@@ -32,10 +32,10 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RsRemoteToolchain
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.openapiext.saveAllDocuments
@@ -165,7 +165,7 @@ abstract class RsAsyncRunner(
                             val processForJson = RsCapturingProcessHandler(
                                 cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
                             )
-                            processForJson.setHasPty(toolchain is RsRemoteToolchain)
+                            processForJson.setHasPty(toolchain is RsWslToolchain)
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {
                                 promise.setResult(null)
