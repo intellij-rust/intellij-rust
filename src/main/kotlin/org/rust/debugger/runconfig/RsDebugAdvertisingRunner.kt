@@ -11,13 +11,11 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils.*
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -67,17 +65,13 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     private fun isSupportedPlatform(): Boolean {
         return when {
-            isIdeaUltimate() || isRubyMine() -> true
-            ApplicationInfo.getInstance().build >= BUILD_211 && (isGoIde() || isPyCharmPro()) -> true
+            isIdeaUltimate() || isRubyMine() || isGoIde() || isPyCharmPro() -> true
             else -> false
         }
     }
 
     companion object {
         const val RUNNER_ID: String = "RsDebugAdvertisingRunner"
-
-        // BACKCOMPAT: 2020.3
-        private val BUILD_211: BuildNumber = BuildNumber.fromString("211")!!
     }
 
     private enum class Action {

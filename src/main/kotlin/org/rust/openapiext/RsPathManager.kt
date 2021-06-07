@@ -7,6 +7,7 @@ package org.rust.openapiext
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -25,8 +26,7 @@ object RsPathManager {
         }
         @Suppress("UnstableApiUsage", "DEPRECATION")
         val arch = when {
-            // BACKCOMPAT: 2020.3. Replace with `CpuArch.isIntel64()`
-            SystemInfo.isIntel64 -> "x86-64"
+            CpuArch.isIntel64() -> "x86-64"
             else -> return null
         }
 

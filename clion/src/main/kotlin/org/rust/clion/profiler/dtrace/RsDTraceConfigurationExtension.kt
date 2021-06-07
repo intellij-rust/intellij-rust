@@ -14,11 +14,9 @@ import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.UnixProcessManager
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.profiler.*
 import com.intellij.profiler.clion.CPPProfilerSettings
@@ -30,7 +28,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
 import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
 import java.io.File
-
 
 class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
@@ -85,13 +82,6 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
         private const val DYLD_INSERT_LIBRARIES = "DYLD_INSERT_LIBRARIES"
 
-        // BACKCOMPAT: 2020.3
-        private val BUILD_211: BuildNumber = BuildNumber.fromString("211")!!
-
-        private fun profilerStarterPath(): File = if (ApplicationInfo.getInstance().build >= BUILD_211) {
-            File(PathManager.getBinPath(), "profiler/mac/libosx-starter.dylib")
-        } else {
-            File(PathManager.getLibPath(), "profiler/macosx/libosx-starter.dylib")
-        }
+        private fun profilerStarterPath(): File = File(PathManager.getBinPath(), "profiler/mac/libosx-starter.dylib")
     }
 }

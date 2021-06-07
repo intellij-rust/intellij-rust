@@ -16,6 +16,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.SmartList
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.*
@@ -132,6 +133,14 @@ inline fun <reified T : PsiElement> PsiElement.descendantsOfType(): Collection<T
 
 inline fun <reified T : PsiElement> PsiElement.descendantsOfTypeOrSelf(): Collection<T> =
     PsiTreeUtil.findChildrenOfAnyType(this, false, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.descendantOfType(predicate: (T) -> Boolean): T? {
+    return descendantsOfType<T>().firstOrNull(predicate)
+}
+
+inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(predicate: (T) -> Boolean): Boolean {
+    return descendantOfType(predicate) != null
+}
 
 inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeStrict(): Collection<T> =
     getStubDescendantsOfType(this, true, T::class.java)

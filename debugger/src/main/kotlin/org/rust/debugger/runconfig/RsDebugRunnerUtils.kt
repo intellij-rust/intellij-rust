@@ -20,7 +20,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult
 import org.rust.cargo.runconfig.CargoRunStateBase
-import org.rust.cargo.toolchain.RsRemoteToolchain
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
 
@@ -48,8 +48,7 @@ object RsDebugRunnerUtils {
 
     fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? {
         if (SystemInfo.isWindows) {
-            // BACKCOMPAT: 2020.3
-            if (project.toolchain is RsRemoteToolchain) {
+            if (project.toolchain is RsWslToolchain) {
                 return BuildResult.ToolchainError.UnsupportedWSL
             }
 

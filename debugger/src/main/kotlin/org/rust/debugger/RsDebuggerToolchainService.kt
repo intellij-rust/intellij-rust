@@ -121,7 +121,7 @@ class RsDebuggerToolchainService {
                 SystemInfo.isMac -> LLDBBinUrlProvider.lldb.macX64 to LLDBBinUrlProvider.lldbFrontend.macX64
                 SystemInfo.isLinux -> LLDBBinUrlProvider.lldb.linuxX64 to LLDBBinUrlProvider.lldbFrontend.linuxX64
                 SystemInfo.isWindows -> {
-                    if (isIntel64()) {
+                    if (CpuArch.isIntel64()) {
                         LLDBBinUrlProvider.lldb.winX64 to LLDBBinUrlProvider.lldbFrontend.winX64
                     } else {
                         LLDBBinUrlProvider.lldb.winX86 to LLDBBinUrlProvider.lldbFrontend.winX86
@@ -215,15 +215,12 @@ class RsDebuggerToolchainService {
             val osSpecificPart = when {
                 SystemInfo.isMac -> "mac"
                 SystemInfo.isLinux -> "linux"
-                SystemInfo.isWindows -> if (isIntel64()) "win/x64" else "win/x86"
+                SystemInfo.isWindows -> if (CpuArch.isIntel64()) "win/x64" else "win/x86"
                 else -> return null
             }
 
             return pluginPath.resolve("bin/lldb/$osSpecificPart").takeIf { it.exists() }
         }
-
-        // BACKCOMPAT: 2020.3. Use `CpuArch.isIntel64` instead
-        private fun isIntel64(): Boolean = CpuArch.CURRENT == CpuArch.X86_64
 
         fun getInstance(): RsDebuggerToolchainService = service()
     }
