@@ -5,12 +5,15 @@
 
 package org.rust.ide.navigation.goto
 
+import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.PsiElement
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
-class RsGotoImplementationsTest : RsTestBase() {
-    fun `test trait`() = doTest("""
+abstract class RsGotoImplementationsTestBase : RsTestBase() {
+    fun `test trait`() = doSingleTargetTest("""
         trait T/*caret*/{
             fn test(&self);
         }
@@ -28,7 +31,7 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-    fun `test member`() = doTest("""
+    fun `test member`() = doSingleTargetTest("""
         trait T{
             fn test/*caret*/(&self);
         }
@@ -44,7 +47,7 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-    fun `test not implemented`() = doTest("""
+    fun `test not implemented`() = doSingleTargetTest("""
         trait T{
             fn test/*caret*/(&self) {}
         }
@@ -58,7 +61,15 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
+    private fun doSingleTargetTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_GOTO_IMPLEMENTATION)
+
+    protected fun doMultipleTargetsTest(@Language("Rust") before: String, vararg expected: String) {
+        InlineFile(before).withCaret()
+        val data = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
+        val actual = data.targets.map { data.render(it) }
+        assertEquals(expected.toList(), actual)
+    }
+
+    protected abstract fun GotoTargetHandler.GotoData.render(element: PsiElement): String
 }
