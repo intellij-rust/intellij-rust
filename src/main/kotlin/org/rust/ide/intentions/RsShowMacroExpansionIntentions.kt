@@ -6,20 +6,22 @@
 package org.rust.ide.intentions
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.actions.macroExpansion.FAILED_TO_EXPAND_MESSAGE
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
+import org.rust.ide.actions.macroExpansion.RsShowMacroExpansionActionBase
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
 import org.rust.lang.core.psi.ext.ancestorMacroCall
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.lang.core.psi.ext.kind
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 
 abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
     RsElementBaseIntentionAction<RsPossibleMacroCall>() {
@@ -39,12 +41,9 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsPossibleMacroCall) {
-        val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)
-
-        if (expansionDetails != null) {
-            showExpansion(project, editor, expansionDetails)
-        } else {
-            showError(editor)
+        when (val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)) {
+            is Ok -> showExpansion(project, editor, expansionDetails.ok)
+            is Err -> showError(editor, expansionDetails.err)
         }
     }
 
@@ -60,8 +59,8 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
         showMacroExpansionPopup(project, editor, expansionDetails)
     }
 
-    private fun showError(editor: Editor) {
-        HintManager.getInstance().showErrorHint(editor, FAILED_TO_EXPAND_MESSAGE)
+    private fun showError(editor: Editor, error: GetMacroExpansionError) {
+        RsShowMacroExpansionActionBase.showMacroExpansionError(editor, error)
     }
 }
 

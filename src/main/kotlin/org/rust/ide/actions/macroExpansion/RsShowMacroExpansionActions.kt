@@ -12,12 +12,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.ancestorMacroCall
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
 import org.rust.openapiext.project
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 
 abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boolean) : AnAction() {
 
@@ -35,12 +38,9 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
         val editor = e.editor ?: return
         val macroToExpand = getMacroUnderCaret(e) ?: return
 
-        val expansionDetails = expandMacroForViewWithProgress(project, macroToExpand, expandRecursively)
-
-        if (expansionDetails != null) {
-            showExpansion(project, editor, expansionDetails)
-        } else {
-            showError(editor)
+        when (val expansionDetails = expandMacroForViewWithProgress(project, macroToExpand, expandRecursively)) {
+            is Ok -> showExpansion(project, editor, expansionDetails.ok)
+            is Err -> showError(editor, expansionDetails.err)
         }
     }
 
@@ -54,8 +54,17 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
     }
 
     @VisibleForTesting
-    protected open fun showError(editor: Editor) {
-        HintManager.getInstance().showErrorHint(editor, FAILED_TO_EXPAND_MESSAGE)
+    protected open fun showError(editor: Editor, error: GetMacroExpansionError) {
+        showMacroExpansionError(editor, error)
+    }
+
+    companion object {
+        fun showMacroExpansionError(editor: Editor, error: GetMacroExpansionError) {
+            HintManager.getInstance().showErrorHint(
+                editor,
+                "Failed to expand the macro: ${error.toUserViewableMessage()}"
+            )
+        }
     }
 }
 
