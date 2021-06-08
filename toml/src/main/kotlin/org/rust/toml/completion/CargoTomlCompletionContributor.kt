@@ -7,6 +7,7 @@ package org.rust.toml.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType.BASIC
+import org.rust.toml.CargoTomlPsiPattern.inDependencyInlineTableVersion
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inDependencyPackageFeatureArray
 import org.rust.toml.CargoTomlPsiPattern.inFeatureDependencyArray
@@ -21,12 +22,16 @@ class CargoTomlCompletionContributor : CompletionContributor() {
         if (tomlPluginIsAbiCompatible()) {
             extend(BASIC, inKey, CargoTomlKeysCompletionProvider())
             extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018")))
-            extend(BASIC, inSpecificDependencyHeaderKey, CratesIoCargoTomlSpecificDependencyHeaderCompletionProvider())
-            extend(BASIC, inSpecificDependencyKeyValue, CratesIoCargoTomlSpecificDependencyVersionCompletionProvider())
             extend(BASIC, inFeatureDependencyArray, CargoTomlFeatureDependencyCompletionProvider())
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
 
+            // Available using both Crates.io API & Crates Local Index
             extend(BASIC, inDependencyKeyValue, CargoTomlDependencyCompletionProvider())
+            extend(BASIC, inSpecificDependencyHeaderKey, CargoTomlSpecificDependencyHeaderCompletionProvider())
+            extend(BASIC, inSpecificDependencyKeyValue, CargoTomlSpecificDependencyVersionCompletionProvider())
+
+            // Available only using Crates Local Index
+            extend(BASIC, inDependencyInlineTableVersion, LocalCargoTomlInlineTableVersionCompletionProvider())
         }
     }
 }
