@@ -7,6 +7,7 @@ package org.rust.lang.core.macros.proc
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.tt.MappedSubtree
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree

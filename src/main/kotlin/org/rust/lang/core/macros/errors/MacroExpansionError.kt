@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.errors
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
@@ -11,14 +11,6 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.macros.decl.FragmentKind
 import java.io.PrintWriter
 import java.io.StringWriter
-
-sealed class MacroExpansionAndParsingError<E> {
-    data class ExpansionError<E>(val error: E) : MacroExpansionAndParsingError<E>()
-    class ParsingError<E>(
-        val expansionText: CharSequence,
-        val context: MacroExpansionContext
-    ) : MacroExpansionAndParsingError<E>()
-}
 
 sealed class MacroExpansionError
 

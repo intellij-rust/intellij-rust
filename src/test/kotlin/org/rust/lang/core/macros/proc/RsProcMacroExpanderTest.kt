@@ -9,7 +9,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.exists
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.lang.core.macros.ProcMacroExpansionError
+import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree
 import org.rust.lang.core.macros.tt.toDebugString

@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.macros.decl.DeclMacroExpander
+import org.rust.lang.core.macros.errors.MacroExpansionError
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.stdext.RsResult
 

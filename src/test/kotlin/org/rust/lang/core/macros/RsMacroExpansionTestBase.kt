@@ -14,6 +14,8 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.decl.DeclMacroExpander
+import org.rust.lang.core.macros.errors.DeclMacroExpansionError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory

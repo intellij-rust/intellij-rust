@@ -7,8 +7,9 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileWithId
-import org.rust.lang.core.macros.MacroExpansionAndParsingError.ExpansionError
-import org.rust.lang.core.macros.MacroExpansionAndParsingError.ParsingError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError.ExpansionError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError.ParsingError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.RsResult

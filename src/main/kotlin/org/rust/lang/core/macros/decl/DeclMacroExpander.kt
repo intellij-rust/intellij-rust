@@ -19,7 +19,9 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.SmartList
 import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.MacroMatchingError.*
+import org.rust.lang.core.macros.errors.DeclMacroExpansionError
+import org.rust.lang.core.macros.errors.MacroMatchingError
+import org.rust.lang.core.macros.errors.MacroMatchingError.*
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import org.rust.lang.core.psi.*
@@ -28,10 +30,10 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.fragmentSpecifier
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.RsResult
-import org.rust.stdext.RsResult.*
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.removeLast
-import java.util.*
 import java.util.Collections.singletonMap
 
 /**

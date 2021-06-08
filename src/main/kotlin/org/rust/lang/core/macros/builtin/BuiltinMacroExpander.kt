@@ -6,7 +6,11 @@
 package org.rust.lang.core.macros.builtin
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.MacroExpander
+import org.rust.lang.core.macros.RangeMap
+import org.rust.lang.core.macros.RsBuiltinMacroData
+import org.rust.lang.core.macros.RsMacroCallData
+import org.rust.lang.core.macros.errors.DeclMacroExpansionError
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 
