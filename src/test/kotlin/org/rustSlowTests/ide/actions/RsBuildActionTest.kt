@@ -17,6 +17,7 @@ import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.fileTree
@@ -274,16 +275,41 @@ class RsBuildActionTest : CargoBuildTest() {
         )
     }
 
+    fun `test build does not use root privileges`() {
+        val testProject = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("main.rs", """
+                fn main() {/*caret*/}
+            """)
+            }
+        }.create()
+
+        setUpSelectedConfigurationFromContext(testProject.fileWithCaret, withSudo = true)
+        performBuildAction()
+        mockBuildProgressListener!!.waitFinished()
+
+        val actualCommandLine = lastBuildCommandLine!!
+        assertFalse(actualCommandLine.withSudo)
+    }
+
     private fun performBuildAction() {
         val action = ActionManager.getInstance().getAction("Rust.Build") as RsBuildAction
         action.performForContext(TestDataProvider(project))
     }
 
-    private fun setUpSelectedConfigurationFromContext(fileWithCaret: String) {
+    private fun setUpSelectedConfigurationFromContext(fileWithCaret: String, withSudo: Boolean = false) {
         val runManager = RunManager.getInstance(project) as RunManagerImpl
         myFixture.configureFromTempProjectFile(fileWithCaret)
         val producer = CompositeCargoRunConfigurationProducer()
-        val settings = createRunnerAndConfigurationSettingsFromContext(producer, null)
+        val settings = createRunnerAndConfigurationSettingsFromContext(producer, null).apply {
+            (configuration as? CargoCommandConfiguration)?.withSudo = withSudo
+        }
         runManager.addConfiguration(settings)
         runManager.selectedConfiguration = settings
     }
