@@ -35,7 +35,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.stdext.toPath
+import org.rust.stdext.toPathOrNull
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -129,8 +129,13 @@ open class CargoCommandConfiguration(
 
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
-        if (isRedirectInput && redirectInputPath?.toPath()?.exists() != true) {
-            throw RuntimeConfigurationWarning("Input file doesn't exist")
+        if (isRedirectInput) {
+            val path = redirectInputPath?.toPathOrNull()
+            when {
+                path?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
+                !path.toFile().isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
+            }
+
         }
 
         val config = clean()
