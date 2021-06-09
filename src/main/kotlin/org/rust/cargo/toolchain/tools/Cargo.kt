@@ -515,7 +515,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallEvcxr(project: Project): Boolean {
             val crateName = "evcxr_repl"
-            val minVersion = SemVer("v0.5.1", 0, 5, 1)
+            val minVersion = SemVer("v0.10.0", 0, 10, 0)
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,

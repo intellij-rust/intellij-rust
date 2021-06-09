@@ -31,12 +31,18 @@ class RsEvcxrTest : RsWithToolchainTestBase() {
 
         try {
             scanner.nextLine()  // "Welcome to evcxr. For help, type :help"
-            expectPrompt(scanner, true)
+            expectPrompt(scanner, true, withMarker = false)
 
             // success command
             writer.println("1 + 2")
             writer.flush()
             assertEquals(scanner.nextLine(), "3")
+            expectPrompt(scanner, true)
+
+            // success command
+            writer.println("1 + 3")
+            writer.flush()
+            assertEquals(scanner.nextLine(), "4")
             expectPrompt(scanner, true)
 
             // fail command
@@ -56,18 +62,19 @@ class RsEvcxrTest : RsWithToolchainTestBase() {
         return commandLine.createProcess()
     }
 
-    private fun expectPrompt(scanner: Scanner, success: Boolean) {
+    private fun expectPrompt(scanner: Scanner, success: Boolean, withMarker: Boolean = true) {
+        if (withMarker) {
+            val markerExpected = if (success) {
+                RsConsoleCommunication.SUCCESS_EXECUTION_MARKER
+            } else {
+                RsConsoleCommunication.FAILED_EXECUTION_MARKER
+            }
+            val markerReceived = scanner.nextChar().toString()
+            assertEquals(markerExpected, markerReceived)
+        }
+
         val prompt = ">> "
         val promptColored = "\u001B[33m$prompt\u001B[0m"
-
-        val markerExpected = if (success) {
-            RsConsoleCommunication.SUCCESS_EXECUTION_MARKER
-        } else {
-            RsConsoleCommunication.FAILED_EXECUTION_MARKER
-        }
-        val markerReceived = scanner.nextChar().toString()
-        assertEquals(markerExpected, markerReceived)
-
         expectInput(scanner, promptColored)
     }
 
