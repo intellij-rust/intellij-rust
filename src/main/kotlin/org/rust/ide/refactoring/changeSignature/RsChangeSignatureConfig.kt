@@ -99,7 +99,8 @@ class RsChangeFunctionSignatureConfig private constructor(
     var returnTypeDisplay: RsTypeReference?,
     var visibility: RsVis? = null,
     var isAsync: Boolean = false,
-    var isUnsafe: Boolean = false
+    var isUnsafe: Boolean = false,
+    val additionalTypesToImport: MutableList<Ty> = mutableListOf()
 ) : RsFunctionSignatureConfig(function) {
     override fun typeParameters(): List<RsTypeParameter> = function.typeParameters
 

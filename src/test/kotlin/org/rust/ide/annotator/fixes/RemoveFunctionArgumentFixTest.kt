@@ -8,12 +8,12 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class RemoveFunctionArgumentFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
-    fun `test no parameters`() = checkFixByText("Remove argument", """
+class RemoveRedundantFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
+    fun `test no parameters`() = checkFixByText("Remove redundant arguments", """
         fn foo() {}
 
         fn main() {
-            foo(<error>1/*caret*/</error>);
+            foo<error>(<error>1/*caret*/</error>)</error>;
         }
     """, """
         fn foo() {}
@@ -23,11 +23,11 @@ class RemoveFunctionArgumentFixTest : RsAnnotatorTestBase(RsErrorAnnotator::clas
         }
     """)
 
-    fun `test single parameter`() = checkFixByText("Remove argument", """
+    fun `test single parameter`() = checkFixByText("Remove redundant arguments", """
         fn foo(a: u32) {}
 
         fn main() {
-            foo(1, <error>2/*caret*/</error>);
+            foo<error>(1, <error>2/*caret*/</error>)</error>;
         }
     """, """
         fn foo(a: u32) {}
@@ -37,42 +37,42 @@ class RemoveFunctionArgumentFixTest : RsAnnotatorTestBase(RsErrorAnnotator::clas
         }
     """)
 
-    fun `test multiple redundant arguments`() = checkFixByText("Remove argument", """
+    fun `test multiple redundant arguments 1`() = checkFixByText("Remove redundant arguments", """
         fn foo() {}
 
         fn main() {
-            foo(<error>1/*caret*/</error>, <error>2</error>);
+            foo<error>(<error>1/*caret*/</error>, <error>2</error>)</error>;
         }
     """, """
         fn foo() {}
 
         fn main() {
-            foo(2);
+            foo();
         }
     """)
 
-    fun `test keep whitespace and comments`() = checkFixByText("Remove argument", """
-        fn foo() {}
+    fun `test multiple redundant arguments 2`() = checkFixByText("Remove redundant arguments", """
+        fn foo(a: u32) {}
 
         fn main() {
-            foo(<error>1/*caret*/</error> /* there is a comment here */ );
+            foo<error>(0, <error>1/*caret*/</error>, <error>2</error>)</error>;
         }
     """, """
-        fn foo() {}
+        fn foo(a: u32) {}
 
         fn main() {
-            foo(/* there is a comment here */ );
+            foo(0);
         }
     """)
 
-    fun `test method call`() = checkFixByText("Remove argument", """
+    fun `test method call`() = checkFixByText("Remove redundant arguments", """
         struct S;
         impl S {
             fn foo(&self) {}
         }
 
         fn foo(s: S) {
-            s.foo(<error>1/*caret*/</error>);
+            s.foo<error>(<error>1/*caret*/</error>)</error>;
         }
     """, """
         struct S;
@@ -85,10 +85,10 @@ class RemoveFunctionArgumentFixTest : RsAnnotatorTestBase(RsErrorAnnotator::clas
         }
     """)
 
-    fun `test lambda`() = checkFixByText("Remove argument", """
+    fun `test lambda`() = checkFixByText("Remove redundant arguments", """
         fn main() {
             let foo = |x| x + 1;
-            foo(0, <error>1/*caret*/</error>);
+            foo<error>(0, <error>1/*caret*/</error>)</error>;
         }
     """, """
         fn main() {

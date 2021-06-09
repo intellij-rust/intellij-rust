@@ -6,16 +6,20 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.containers.addIfNotNull
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
@@ -39,10 +43,8 @@ import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.*
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
-import org.rust.lang.utils.RsErrorCode
-import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.evaluate
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
@@ -920,9 +922,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
-        val (expectedCount, functionType) = when (val parent = args.parent) {
-            is RsCallExpr -> parent.expectedParamsCount()
-            is RsMethodCall -> parent.expectedParamsCount()
+        val (expectedCount, functionType, function) = when (val parent = args.parent) {
+            is RsCallExpr -> parent.getFunctionCallContext()
+            is RsMethodCall -> parent.getFunctionCallContext()
             else -> null
         } ?: return
 
@@ -935,11 +937,27 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             ).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
-                RsDiagnostic.IncorrectFunctionArgumentCountError(
-                    it, expectedCount, realCount, functionType,
-                    listOf(RemoveFunctionArgumentFix(it))
-                ).addToHolder(holder)
+                holder.newErrorAnnotation(it, null)?.create()
             }
+
+            val fixes = mutableListOf<LocalQuickFix>(RemoveRedundantFunctionArgumentsFix(args, expectedCount))
+            if (function != null) {
+                fixes.addIfNotNull(ChangeFunctionSignatureFix.createIfCompatible(
+                    args, function,
+                    ChangeFunctionSignatureFix.ArgumentScanDirection.Forward
+                ))
+                fixes.addIfNotNull(ChangeFunctionSignatureFix.createIfCompatible(
+                    args, function,
+                    ChangeFunctionSignatureFix.ArgumentScanDirection.Backward
+                ))
+            }
+
+            RsDiagnostic.IncorrectFunctionArgumentCountError(
+                args, expectedCount, realCount, functionType,
+                fixes = fixes,
+                textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
+            )
+            .addToHolder(holder)
         }
     }
 
@@ -1412,10 +1430,16 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
     return map
 }
 
-fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
+data class FunctionCallContext(
+    val expectedParameterCount: Int,
+    val functionType: FunctionType,
+    val function: RsFunction? = null
+)
+
+fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     return when (val el = path.reference?.resolve()) {
-        is RsFieldsOwner -> Pair(el.fields.size, FunctionType.FUNCTION)
+        is RsFieldsOwner -> FunctionCallContext(el.fields.size, FunctionType.FUNCTION)
         is RsFunction -> {
             val owner = el.owner
             if (owner.isTraitImpl) return null
@@ -1426,7 +1450,7 @@ fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
             } else {
                 FunctionType.FUNCTION
             }
-            Pair(count + s, functionType)
+            FunctionCallContext(count + s, functionType, el)
         }
         is RsPatBinding -> {
             val type = el.type.stripReferences()
@@ -1434,7 +1458,9 @@ fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
             // when https://github.com/intellij-rust/intellij-rust/issues/6391 will be implemented
             if (type is TyFunction) {
                 val letDecl = el.parent?.parent as? RsLetDecl
-                if (letDecl?.expr is RsLambdaExpr) type.paramTypes.size to FunctionType.CLOSURE else null
+                if (letDecl?.expr is RsLambdaExpr) {
+                    FunctionCallContext(type.paramTypes.size, FunctionType.CLOSURE)
+                } else null
             } else {
                 null
             }
@@ -1443,10 +1469,10 @@ fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
     }
 }
 
-fun RsMethodCall.expectedParamsCount(): Pair<Int, FunctionType>? {
+fun RsMethodCall.getFunctionCallContext(): FunctionCallContext? {
     val fn = reference.resolve() as? RsFunction ?: return null
     return fn.valueParameterList?.valueParameterList?.size?.let {
-        Pair(it, if (fn.isVariadic) FunctionType.VARIADIC_FUNCTION else FunctionType.FUNCTION)
+        FunctionCallContext(it, if (fn.isVariadic) FunctionType.VARIADIC_FUNCTION else FunctionType.FUNCTION, fn)
     }.takeIf { fn.owner.isInherentImpl }
 }
 

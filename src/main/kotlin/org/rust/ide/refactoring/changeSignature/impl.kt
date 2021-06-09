@@ -78,6 +78,10 @@ fun processFunction(
     changeParameters(factory, function, config)
     changeAsync(factory, function, config)
     changeUnsafe(factory, function, config)
+
+    for (type in config.additionalTypesToImport) {
+        RsImportHelper.importTypeReferencesFromTy(function, type, useAliases = true)
+    }
 }
 
 private fun rename(factory: RsPsiFactory, function: RsFunction, config: RsChangeFunctionSignatureConfig) {

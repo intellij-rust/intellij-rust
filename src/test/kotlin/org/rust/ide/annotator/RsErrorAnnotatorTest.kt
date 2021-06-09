@@ -230,7 +230,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let closure_2 = |x, y| (x, y);
 
             closure_0();
-            closure_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">42</error>);
+            closure_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">(<error>42</error>)</error>;
             closure_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">)</error>;
             closure_1(42);
             closure_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">)</error>;
@@ -270,11 +270,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             par_0_cfg();
             par_1_cfg(1);
 
-            par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
             par_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
-            par_1(true, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
+            par_1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(true, <error>false</error>)</error>;
             par_3(5, 1.0<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">)</error>;
-            par_0_cfg(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            par_0_cfg<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
             par_1_cfg(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
         }
     """)
@@ -290,8 +290,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             Foo::par_0();
             Foo::par_2(12, 7.1);
 
-            Foo::par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
-            Foo::par_2(5, 1.0, <error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">"three"</error>);
+            Foo::par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
+            Foo::par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, <error>"three"</error>)</error>;
         }
     """)
 
@@ -307,8 +307,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             foo.par_0();
             foo.par_2(12, 7.1);
 
-            foo.par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
-            foo.par_2(5, 1.0, <error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">"three"</error>);
+            foo.par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
+            foo.par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, <error>"three"</error>)</error>;
             foo.par_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">)</error>;
         }
     """)
@@ -320,8 +320,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let _ = Foo0();
             let _ = Foo1(1);
 
-            let _ = Foo0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
-            let _ = Foo1(10, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
+            let _ = Foo0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
+            let _ = Foo1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, <error>false</error>)</error>;
         }
     """)
 
@@ -334,8 +334,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let _ = Foo::VAR0();
             let _ = Foo::VAR1(1);
 
-            let _ = Foo::VAR0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
-            let _ = Foo::VAR1(10, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
+            let _ = Foo::VAR0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
+            let _ = Foo::VAR1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, <error>false</error>)</error>;
         }
     """)
 
@@ -349,7 +349,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         fn main() {
             let foo = Foo;
-            foo.bar(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">10</error>);
+            foo.bar<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>10</error>)</error>;
             foo.bar();
         }
     """)
@@ -1074,7 +1074,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             fn main() {
                 unsafe { foo(1, 2, 3); }
-                bar(<error>92</error>);
+                bar<error>(<error>92</error>)</error>;
                 let _ = S {};
             }  //^
 
