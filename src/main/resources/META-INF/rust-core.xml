@@ -602,6 +602,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnreachableCodeInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Unknown crate types"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
