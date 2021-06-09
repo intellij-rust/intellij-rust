@@ -302,7 +302,7 @@ class RsTypeInferenceWalker(
             is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
                 if (stubKind.isByte) {
-                    val size = stubKind.value?.length?.toLong()
+                    val size = stubKind.value?.length?.toBigInteger()
                     val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize).toConst() } ?: CtUnknown
                     TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE, ReStatic)
                 } else {
@@ -1294,7 +1294,7 @@ class RsTypeInferenceWalker(
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
             val size = if (elementTypes != null) {
-                val size = elementTypes.size.toLong()
+                val size = elementTypes.size.toBigInteger()
                 ConstExpr.Value.Integer(size, TyInteger.USize).toConst()
             } else {
                 CtUnknown

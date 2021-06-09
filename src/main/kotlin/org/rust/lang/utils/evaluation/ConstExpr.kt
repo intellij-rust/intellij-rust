@@ -16,6 +16,7 @@ import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.*
+import java.math.BigInteger
 
 fun ConstExpr<*>.toConst(): Const =
     when (this) {
@@ -66,7 +67,7 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
             override fun toString(): String = value.toString()
         }
 
-        data class Integer(val value: Long, override val expectedTy: TyInteger) : Value<TyInteger>() {
+        data class Integer(val value: BigInteger, override val expectedTy: TyInteger) : Value<TyInteger>() {
             override fun toString(): String = value.toString()
         }
 

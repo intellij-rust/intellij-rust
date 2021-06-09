@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import java.math.BigInteger
 
 fun RsExpr.toConstExpr(
     expectedTy: Ty = type,
@@ -83,9 +84,9 @@ private abstract class ConstExprBuilder<T : Ty, V> {
 private class IntegerConstExprBuilder(
     override val expectedTy: TyInteger,
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyInteger, Long>() {
-    override val RsLitExpr.value: Long? get() = integerValue
-    override fun Long.wrap(): ConstExpr.Value.Integer = ConstExpr.Value.Integer(this, expectedTy)
+) : ConstExprBuilder<TyInteger, BigInteger>() {
+    override val RsLitExpr.value: BigInteger? get() = integerValue
+    override fun BigInteger.wrap(): ConstExpr.Value.Integer = ConstExpr.Value.Integer(this, expectedTy)
 
     override fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<TyInteger>? {
         return when (expr) {

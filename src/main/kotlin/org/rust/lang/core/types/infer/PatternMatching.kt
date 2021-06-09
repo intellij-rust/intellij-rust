@@ -18,6 +18,7 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ConstExpr
 import org.rust.lang.utils.evaluation.toConst
+import java.math.BigInteger
 
 fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {
@@ -150,8 +151,8 @@ private fun inferSlicePatsTypes(
             return CtUnknown
         }
 
-        val restSize = arraySize - patList.size.toLong() + 1
-        if (restSize < 0) {
+        val restSize = arraySize - patList.size.toBigInteger() + BigInteger.ONE
+        if (restSize.signum() < 0) {
             PatternMatchingTestMarks.negativeRestSize.hit()
             return CtUnknown
         }

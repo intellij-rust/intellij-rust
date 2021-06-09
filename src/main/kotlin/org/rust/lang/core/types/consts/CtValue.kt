@@ -6,13 +6,14 @@
 package org.rust.lang.core.types.consts
 
 import org.rust.lang.utils.evaluation.ConstExpr
+import java.math.BigInteger
 
 fun Const.asBool(): Boolean? {
     if (this !is CtValue) return null
     return (expr as? ConstExpr.Value.Bool)?.value
 }
 
-fun Const.asLong(): Long? {
+fun Const.asInteger(): BigInteger? {
     if (this !is CtValue) return null
     return (expr as? ConstExpr.Value.Integer)?.value
 }

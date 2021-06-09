@@ -51,6 +51,7 @@ import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 import org.rust.stdext.buildList
 import org.rust.stdext.buildMap
+import java.math.BigInteger
 
 private val REF_STR_TY = TyReference(TyStr, Mutability.IMMUTABLE)
 private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
@@ -581,7 +582,7 @@ sealed class RsDiagnostic(
 
     class DuplicateEnumDiscriminant(
         variant: RsEnumVariant,
-        private val id: Long
+        private val id: BigInteger
     ) : RsDiagnostic(variant.variantDiscriminant?.expr ?: variant) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
