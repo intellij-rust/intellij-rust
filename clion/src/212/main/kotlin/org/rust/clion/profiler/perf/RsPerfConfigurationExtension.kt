@@ -37,7 +37,7 @@ class RsPerfConfigurationExtension : RsPerfConfigurationExtensionBase() {
         val settings = CPPProfilerSettings.instance.state
         val perfPath = settings.executablePath.orEmpty()
         PerfUtils.validatePerfSettings(TOOL_ENVIRONMENT, project)?.let { throw it }
-        PerfUtils.validateKernelVariables(project)?.let { throw it }
+        PerfUtils.validateKernelVariables(TOOL_ENVIRONMENT, project)?.let { throw it }
         val outputFilePath = PerfUtils.createOutputFilePath(TOOL_ENVIRONMENT, settings.outputDirectory.nullize())
         cmdLine.addPerfStarter(perfPath, settings.samplingFrequency, settings.defaultCmdArgs, outputFilePath.toString())
         context.putUserData(PERF_OUTPUT_FILE_KEY, outputFilePath)
