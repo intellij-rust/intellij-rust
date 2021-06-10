@@ -109,6 +109,7 @@ val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
 val MappedTextRange.srcRange: TextRange get() = TextRange(srcOffset, srcOffset + length)
 
 fun MappedTextRange.srcShiftLeft(delta: Int) = copy(srcOffset = srcOffset - delta)
+fun MappedTextRange.dstShiftRight(delta: Int) = copy(dstOffset = dstOffset + delta)
 
 private fun MappedTextRange.dstIntersection(range: TextRange): MappedTextRange? {
     val newDstStart = max(dstOffset, range.startOffset)

@@ -13,7 +13,12 @@ import org.rust.lang.core.psi.*
 import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.mapQuery
 
-interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsItemElement, RsGenericDeclaration, RsTypeDeclarationElement, RsNameIdentifierOwner
+interface RsStructOrEnumItemElement : RsQualifiedNamedElement,
+                                      RsItemElement,
+                                      RsAttrProcMacroOwner,
+                                      RsGenericDeclaration,
+                                      RsTypeDeclarationElement,
+                                      RsNameIdentifierOwner
 
 val RsStructOrEnumItemElement.derivedTraits: Collection<RsTraitItem>
     get() = deriveMetaItems

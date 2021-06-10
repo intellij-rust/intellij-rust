@@ -518,6 +518,7 @@ upper Function ::= async? const? unsafe? ExternAbi?
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
@@ -620,6 +621,7 @@ upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription? [ '=
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
                  "org.rust.lang.core.macros.RsExpandedElement" ]
@@ -631,7 +633,8 @@ upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription? [ '=
 upper UseItem ::= use UseSpeck ';' {
   pin = "use"
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsUseItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -677,7 +680,8 @@ upper ExternCrateItem ::= extern crate (identifier | self) Alias? ';' {
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsItemElement" ]
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsExternCrateItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsExternCrateItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -688,6 +692,7 @@ upper ModItem ::= unsafe? mod identifier '{' InnerAttr* Items '}' {
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsMod"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsModItemImplMixin"
@@ -710,6 +715,7 @@ upper ModDeclItem ::= unsafe? mod identifier ';' {
 upper ForeignModItem ::= unsafe? ExternAbi ForeignModBody {
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsForeignModStub"
@@ -829,7 +835,6 @@ upper TraitItem ::= unsafe? auto? trait identifier TypeParameterList? TypeParamB
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
@@ -871,6 +876,7 @@ upper TraitAlias ::= trait identifier TypeParameterList? '=' TraitAliasBounds? W
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  /* "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" */ ]
@@ -1002,6 +1008,7 @@ upper TypeAlias ::= TYPE_KW identifier
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
@@ -1371,8 +1378,7 @@ YieldExpr ::= OuterAttr* yield AnyExpr? {
 upper Macro ::= "macro_rules" '!' identifier ShallowMacroBody <<macroSemicolon>> {
   pin = 2
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMacroDefinitionBase" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1421,7 +1427,8 @@ upper Macro2 ::= MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2MatchLikeB
   pin = 1
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
-                 "org.rust.lang.core.psi.ext.RsItemElement" ]
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsMacro2ImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacro2Stub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1437,6 +1444,7 @@ fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement"
                  "org.rust.lang.core.psi.ext.RsPossibleMacroCall"
+                 "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"

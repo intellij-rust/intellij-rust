@@ -116,6 +116,7 @@ fun ResolveMacroWithoutPsiError.toExpansionPipelineError(): ExpansionPipelineErr
     is ResolveMacroWithoutPsiError.UnmatchedProcMacroKind ->
         ExpansionPipelineError.UnmatchedProcMacroKind(callKind, defKind)
     ResolveMacroWithoutPsiError.Macro2IsNotSupported -> ExpansionPipelineError.Macro2IsNotSupported
+    ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute -> ExpansionPipelineError.Skipped
 }
 
 @Throws(IOException::class)

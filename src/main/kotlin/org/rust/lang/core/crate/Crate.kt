@@ -6,6 +6,7 @@
 package org.rust.lang.core.crate
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -20,7 +21,7 @@ import org.rust.lang.core.psi.RsFile
  * An immutable object describes a *crate* from the *rustc* point of view.
  * In Cargo-based project this is usually a wrapper around [CargoWorkspace.Target]
  */
-interface Crate {
+interface Crate : UserDataHolderEx {
     /**
      * This id can be saved to a disk and then used to find the crate via [CrateGraphService.findCrateById].
      * Can be `null` for crates that are not represented in the physical filesystem and can't be retrieved

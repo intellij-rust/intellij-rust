@@ -15,12 +15,18 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.psi.stubs.PsiFileStub
+import com.intellij.psi.stubs.StubTree
 import com.intellij.util.LocalTimeCounter
+import com.intellij.util.text.SemVer
 import junit.framework.TestCase
 import org.rust.RsTestBase
+import org.rust.RustProjectDescriptorBase
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.withFlattenCfgAttrsAttributes
 import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 
 /**
@@ -33,6 +39,7 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
 
         var numBlocks = 0
         var numParsedBlocks = 0
+        var stubbedProcMacros = 0
 
         for (file in files) {
             fun check(value: Boolean, lazyMessage: () -> Any) {
@@ -102,9 +109,36 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
             // Check stubs are the same after full reparse
             val stub2 = stubBuilder.buildStubTree(psi)
             TestCase.assertEquals(DebugUtil.stubTreeToString(stub1), DebugUtil.stubTreeToString(stub2))
+
+            // Checks for proc macros:
+
+            for (item in psi.descendantsOfType<RsAttrProcMacroOwner>()) {
+                check(item.procMacroAttribute !is ProcMacroAttribute.Attr) {
+                    "`${item.text}`"
+                }
+            }
+
+            val stubTree = StubTree(stub1 as PsiFileStub<*>)
+            for (stub in stubTree.plainList) {
+                if (stub is RsAttrProcMacroOwnerStubBase<*> && stub.procMacroInfo != null) {
+                    println(stub.rawMetaItems.withFlattenCfgAttrsAttributes(false).map { it.path!!.referenceName }.toList())
+                    println(stub.procMacroInfo!!.stubbedText)
+                    stubbedProcMacros++
+                }
+            }
+        }
+
+        val rustcVersion = (projectDescriptor as? RustProjectDescriptorBase)?.rustcInfo?.version?.semver
+        // We detect some unexpected proc macros in stdlib sources for Rust before 1.43.
+        // Ignore them for now
+        val ignoreProcMacroNumberCheck = rustcVersion != null && rustcVersion < RUST_1_43
+        if (stubbedProcMacros > 200 && !ignoreProcMacroNumberCheck) {
+            error("Found too large number of attr proc macros in stdlib: $stubbedProcMacros. " +
+                "This likely means that some new built-in attrs should be added to `RS_BUILTIN_ATTRIBUTES` list")
         }
 
         println("Blocks: $numBlocks, parsed: $numParsedBlocks (${(numParsedBlocks * 1000 / numBlocks)/10.0}%)")
+        println("Stubbed proc macros: $stubbedProcMacros")
     }
 
     private fun parseFile(psi: RsFile) { // profiler hint
@@ -143,4 +177,9 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
     }
 
     private val RsBlock.isParsed get() = (node as LazyParseableElement).isParsed
+
+    companion object {
+        // BACKCOMPAT: Rust 1.42
+        private val RUST_1_43 = SemVer.parseFromText("1.43.0")!!
+    }
 }

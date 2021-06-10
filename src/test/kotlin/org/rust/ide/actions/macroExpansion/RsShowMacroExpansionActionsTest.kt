@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
@@ -111,6 +111,37 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
         }
     """, """
         compile_error!("");
+    """)
+
+    @UseNewResolve
+    @MinRustcVersion("1.46.0")
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attribute proc macro`() = testSingleStepExpansion("""
+        use test_proc_macros::attr_as_is;
+
+        #[/*caret*/attr_as_is]
+        #[attr_as_is]
+        fn foo() {}
+    """, """
+        #[attr_as_is]
+        fn foo() {}
+    """)
+
+    @UseNewResolve
+    @MinRustcVersion("1.46.0")
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test recursive attribute proc macro`() = testRecursiveExpansion("""
+        use test_proc_macros::attr_as_is;
+
+        #[/*caret*/attr_as_is]
+        #[attr_as_is]
+        fn foo() {}
+    """, """
+        fn foo() {}
     """)
 
     private fun testNoExpansionHappens(@Language("Rust") code: String) {

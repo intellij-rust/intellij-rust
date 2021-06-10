@@ -25,6 +25,7 @@ interface RsMacroDefinitionBase : RsNameIdentifierOwner,
                                   RsQualifiedNamedElement,
                                   RsOuterAttributeOwner,
                                   RsExpandedElement,
+                                  RsAttrProcMacroOwner,
                                   RsModificationTrackerOwner {
     val macroBodyStubbed: RsMacroBody?
     val bodyHash: HashCode?

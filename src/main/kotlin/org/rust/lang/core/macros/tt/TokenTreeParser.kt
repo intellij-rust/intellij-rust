@@ -15,12 +15,14 @@ import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 
-fun PsiBuilder.parseSubtree(): MappedSubtree {
-    return TokenTreeParser(this).parse()
+fun PsiBuilder.parseSubtree(textOffset: Int = 0, idOffset: Int = 0): MappedSubtree {
+    return TokenTreeParser(this, textOffset, idOffset).parse()
 }
 
 private class TokenTreeParser(
-    private val lexer: PsiBuilder
+    private val lexer: PsiBuilder,
+    private val textOffset: Int,
+    private val idOffset: Int,
 ) {
     private val tokenMap = mutableListOf<TokenMetadata>()
 
@@ -120,20 +122,20 @@ private class TokenTreeParser(
     }
 
     private fun allocId(startOffset: Int, rightTrivia: CharSequence): Int {
-        val id = tokenMap.size
-        tokenMap += TokenMetadata.Token(startOffset, rightTrivia)
+        val id = idOffset + tokenMap.size
+        tokenMap += TokenMetadata.Token(textOffset + startOffset, rightTrivia)
         return id
     }
 
     private fun allocDelimId(openOffset: Int, rightTrivia: CharSequence): Int {
-        val id = tokenMap.size
-        tokenMap += TokenMetadata.Delimiter(TokenMetadata.Token(openOffset, rightTrivia), null)
+        val id = idOffset + tokenMap.size
+        tokenMap += TokenMetadata.Delimiter(TokenMetadata.Token(textOffset + openOffset, rightTrivia), null)
         return id
     }
 
-    private fun closeDelim(tokeId: Int, closeOffset: Int, rightTrivia: CharSequence) {
-        tokenMap[tokeId] = (tokenMap[tokeId] as TokenMetadata.Delimiter)
-            .copy(close = TokenMetadata.Token(closeOffset, rightTrivia))
+    private fun closeDelim(tokenId: Int, closeOffset: Int, rightTrivia: CharSequence) {
+        tokenMap[tokenId - idOffset] = (tokenMap[tokenId - idOffset] as TokenMetadata.Delimiter)
+            .copy(close = TokenMetadata.Token(textOffset + closeOffset, rightTrivia))
     }
 
     private fun nextWhitespaceOrCommentText(): CharSequence {

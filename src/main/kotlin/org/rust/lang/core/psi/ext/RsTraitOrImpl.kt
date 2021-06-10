@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.types.BoundElement
 
-interface RsTraitOrImpl : RsItemElement, RsGenericDeclaration {
+interface RsTraitOrImpl : RsItemElement, RsGenericDeclaration, RsAttrProcMacroOwner {
     val members: RsMembers?
 
     val implementedTrait: BoundElement<RsTraitItem>?

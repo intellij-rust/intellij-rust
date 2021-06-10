@@ -84,6 +84,7 @@ private fun DefMapHolder.processChangedFiles(crate: Crate, defMap: CrateDefMap):
 }
 
 data class CrateMetaData(
+    val name: String,
     val edition: CargoWorkspace.Edition,
     private val features: Map<String, FeatureState>,
     private val cfgOptions: CfgOptions?,
@@ -94,6 +95,7 @@ data class CrateMetaData(
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
 ) {
     constructor(crate: Crate) : this(
+        name = crate.normName,
         edition = crate.edition,
         features = crate.features,
         cfgOptions = crate.cfgOptions,

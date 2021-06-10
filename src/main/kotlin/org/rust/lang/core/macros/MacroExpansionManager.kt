@@ -72,7 +72,17 @@ interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
     fun getExpansionFor(call: RsPossibleMacroCall): MacroExpansionCachedResult
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall?
-    /** Optimized equivalent for `getExpandedFrom(element)?.context` */
+
+    /**
+     * An optimized equivalent for:
+     * ```
+     * when (val expandedFrom = getExpandedFrom(macroCall)?.kind) {
+     *     is MacroCall -> expandedFrom.call.context
+     *     is MetaItem -> expandedFrom.meta.owner?.context
+     *     null -> null
+     * }
+     * ```
+     */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
     fun reexpand()
@@ -946,8 +956,17 @@ private class MacroExpansionServiceImplInner(
         return null
     }
 
-    /** Optimized equivalent for `getExpandedFrom(element)?.context` */
+    /** @see MacroExpansionManager.getContextOfMacroCallExpandedFrom */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement? {
+        val (macroCall, parent) = getContextOfMacroCallExpandedFromInner(stubParent) ?: return null
+        return when (macroCall) {
+            is RsMacroCall -> parent
+            is RsMetaItem -> macroCall.owner?.context
+            else -> null
+        }
+    }
+
+    private fun getContextOfMacroCallExpandedFromInner(stubParent: RsFile): kotlin.Pair<RsPossibleMacroCall, PsiElement?>? {
         checkReadAccessAllowed()
         var parentVirtualFile = stubParent.virtualFile ?: return null
         if (parentVirtualFile !is VirtualFileWithId) return null
@@ -962,10 +981,10 @@ private class MacroExpansionServiceImplInner(
                     parentVirtualFile = macroCallContainingFile
                     // continue
                 } else {
-                    return parent
+                    return macroCall to parent
                 }
             } else {
-                return macroCall.context
+                return macroCall to macroCall.context
             }
         }
     }

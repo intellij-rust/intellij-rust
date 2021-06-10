@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.crate.impl
 
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -21,7 +22,7 @@ class DoctestCrate(
     private val parentCrate: Crate,
     override val rootMod: RsFile,
     override val dependencies: Collection<Crate.Dependency>
-) : Crate {
+) : UserDataHolderBase(), Crate {
     override val flatDependencies: LinkedHashSet<Crate> = dependencies.flattenTopSortedDeps()
 
     override val reverseDependencies: List<Crate> get() = emptyList()

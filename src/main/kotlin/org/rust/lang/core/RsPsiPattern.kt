@@ -111,11 +111,7 @@ object RsPsiPattern {
      */
     val nonStdOuterAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         psiElement<RsMetaItem>()
-            .with("nonBuiltinAttributeCondition") { e -> e.name !in RS_BUILTIN_ATTRIBUTES }
-            .with(RootMetaItemCondition)
-            .with("RsOuterAttr") { _, context ->
-                context?.get(META_ITEM_ATTR) is RsOuterAttr
-            }
+            .with("nonBuiltinAttributeCondition") { e -> e.canBeMacroCall }
 
     val lintAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         rootMetaItem
