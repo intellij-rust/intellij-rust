@@ -607,6 +607,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Integer overflow"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.lints.RsIntegerOverflowInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
