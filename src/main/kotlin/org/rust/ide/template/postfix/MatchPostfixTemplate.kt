@@ -13,6 +13,9 @@ import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.openapiext.buildAndRunTemplate
+import org.rust.openapiext.createSmartPointer
 
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
     PostfixTemplateWithExpressionSelector(
@@ -45,8 +48,15 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-        val arm = matchExpr.matchBody?.matchArmList?.firstOrNull() ?: return
-        val blockExpr = arm.expr as? RsBlockExpr ?: return
-        editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
+        val matchBody = matchExpr.matchBody ?: return
+        val wildPatterns = matchBody.descendantsOfType<RsPatWild>()
+
+        if (wildPatterns.isEmpty()) {
+            val arm = matchBody.matchArmList.firstOrNull() ?: return
+            val blockExpr = arm.expr as? RsBlockExpr ?: return
+            editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
+        } else {
+            editor.buildAndRunTemplate(matchBody, wildPatterns.map { it.createSmartPointer() })
+        }
     }
 }
