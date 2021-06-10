@@ -22,7 +22,7 @@ import java.math.BigInteger
 fun ConstExpr<*>.toConst(): Const =
     when (this) {
         is ConstExpr.Constant -> const
-        is ConstExpr.Value -> CtValue(this)
+        is ConstExpr.Value<*, *> -> CtValue(this)
         is ConstExpr.Error -> CtUnknown
         else -> CtUnevaluated(this)
     }
@@ -41,6 +41,26 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
             Unary(operator, expr.foldWith(folder), expectedTy, element)
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean = expr.visitWith(visitor)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Unary<*>
+
+            if (operator != other.operator) return false
+            if (expr != other.expr) return false
+            if (expectedTy != other.expectedTy) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = operator.hashCode()
+            result = 31 * result + expr.hashCode()
+            result = 31 * result + expectedTy.hashCode()
+            return result
+        }
     }
 
     data class Binary<T : Ty>(
@@ -54,6 +74,27 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
             Binary(left.foldWith(folder), operator, right.foldWith(folder), expectedTy, element)
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean = left.visitWith(visitor) || right.visitWith(visitor)
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Binary<*>
+
+            if (left != other.left) return false
+            if (operator != other.operator) return false
+            if (right != other.right) return false
+            if (expectedTy != other.expectedTy) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = left.hashCode()
+            result = 31 * result + operator.hashCode()
+            result = 31 * result + right.hashCode()
+            result = 31 * result + expectedTy.hashCode()
+            return result
+        }
     }
 
     data class Constant<T : Ty>(
@@ -65,43 +106,83 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
             Constant(const.foldWith(folder), expectedTy, element)
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean = const.visitWith(visitor)
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Constant<*>
+
+            if (const != other.const) return false
+            if (expectedTy != other.expectedTy) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = const.hashCode()
+            result = 31 * result + expectedTy.hashCode()
+            return result
+        }
+
+
     }
 
-    sealed class Value<T : Ty> : ConstExpr<T>() {
-        override fun superFoldWith(folder: TypeFolder): Value<T> = this
+    sealed class Value<T : Ty, V> : ConstExpr<T>() {
+        override fun superFoldWith(folder: TypeFolder): Value<T, V> = this
         override fun superVisitWith(visitor: TypeVisitor): Boolean = false
 
-        data class Bool(val value: Boolean, override val element: RsExpr?) : Value<TyBool>() {
+        abstract val value: V
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Value<*, *>
+
+            if (value != other.value) return false
+            if (expectedTy != other.expectedTy) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = value.hashCode()
+            result = 31 * result + expectedTy.hashCode()
+            return result
+        }
+
+
+        data class Bool(override val value: Boolean, override val element: RsExpr?) : Value<TyBool, Boolean>() {
             override val expectedTy: TyBool = TyBool
             override fun toString(): String = value.toString()
         }
 
         data class Integer(
-            val value: BigInteger,
+            override val value: BigInteger,
             override val expectedTy: TyInteger,
             override val element: RsExpr?
-        ) : Value<TyInteger>() {
+        ) : Value<TyInteger, BigInteger>() {
             override fun toString(): String = value.toString()
         }
 
         data class Float(
-            val value: Double,
+            override val value: Double,
             override val expectedTy: TyFloat,
             override val element: RsExpr?
-        ) : Value<TyFloat>() {
+        ) : Value<TyFloat, Double>() {
             override fun toString(): String = value.toString()
         }
 
-        data class Char(val value: String, override val element: RsExpr?) : Value<TyChar>() {
+        data class Char(override val value: String, override val element: RsExpr?) : Value<TyChar, String>() {
             override val expectedTy: TyChar = TyChar
             override fun toString(): String = value
         }
 
         data class Str(
-            val value: String,
+            override val value: String,
             override val expectedTy: TyReference,
             override val element: RsExpr?
-        ) : Value<TyReference>() {
+        ) : Value<TyReference, String>() {
             override fun toString(): String = value
         }
     }
@@ -110,5 +191,21 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
         override val expectedTy: T? = null
         override fun superFoldWith(folder: TypeFolder): ConstExpr<T> = this
         override fun superVisitWith(visitor: TypeVisitor): Boolean = false
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Error<*>
+
+            if (expectedTy != other.expectedTy) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return expectedTy?.hashCode() ?: 0
+        }
+
+
     }
 }

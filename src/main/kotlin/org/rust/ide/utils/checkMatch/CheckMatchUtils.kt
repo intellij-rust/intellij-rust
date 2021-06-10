@@ -92,7 +92,7 @@ val Matrix.firstColumn: List<Pattern> get() = mapNotNull { row -> row.firstOrNul
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
 
-private val RsExpr.value: Value<*>?
+private val RsExpr.value: Value<*, *>?
     get() = (evaluate().value as? CtValue)?.expr
 
 // lower_pattern_unadjusted

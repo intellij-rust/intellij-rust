@@ -20,15 +20,15 @@ sealed class Constructor {
 
     /** The constructor of all patterns that don't vary by constructor, e.g. struct patterns and fixed-length arrays */
     object Single : Constructor() {
-        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean = true
+        override fun coveredByRange(from: Value<*, *>, to: Value<*, *>, included: Boolean): Boolean = true
     }
 
     /** Enum variants */
     data class Variant(val variant: RsEnumVariant) : Constructor()
 
     /** Literal values */
-    data class ConstantValue(val value: Value<*>) : Constructor() {
-        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean =
+    data class ConstantValue(val value: Value<*, *>) : Constructor() {
+        override fun coveredByRange(from: Value<*, *>, to: Value<*, *>, included: Boolean): Boolean =
             if (included) {
                 value >= from && value <= to
             } else {
@@ -37,9 +37,9 @@ sealed class Constructor {
     }
 
     /** Ranges of literal values (`2..=5` and `2..5`) */
-    data class ConstantRange(val start: Value<*>, val end: Value<*>, val includeEnd: Boolean = false) :
+    data class ConstantRange(val start: Value<*, *>, val end: Value<*, *>, val includeEnd: Boolean = false) :
         Constructor() {
-        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean =
+        override fun coveredByRange(from: Value<*, *>, to: Value<*, *>, included: Boolean): Boolean =
             if (includeEnd) {
                 ((end < to) || (included && to == end)) && (start >= from)
             } else {
@@ -70,7 +70,7 @@ sealed class Constructor {
         else -> 0
     }
 
-    open fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean = false
+    open fun coveredByRange(from: Value<*, *>, to: Value<*, *>, included: Boolean): Boolean = false
 
     fun subTypes(type: Ty): List<Ty> = when (type) {
         is TyTuple -> type.types
@@ -117,7 +117,7 @@ sealed class Constructor {
     }
 }
 
-private operator fun Value<*>.compareTo(other: Value<*>): Int {
+private operator fun Value<*, *>.compareTo(other: Value<*, *>): Int {
     return when {
         this is Value.Bool && other is Value.Bool -> value.compareTo(other.value)
         this is Value.Integer && other is Value.Integer -> value.compareTo(other.value)

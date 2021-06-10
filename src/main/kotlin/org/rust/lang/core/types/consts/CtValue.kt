@@ -18,6 +18,6 @@ fun Const.asInteger(): BigInteger? {
     return (expr as? ConstExpr.Value.Integer)?.value
 }
 
-data class CtValue(val expr: ConstExpr.Value<*>) : Const() {
+data class CtValue(val expr: ConstExpr.Value<*, *>) : Const() {
     override fun toString(): String = expr.toString()
 }
