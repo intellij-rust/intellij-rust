@@ -5,6 +5,7 @@
 
 package org.rust.lang.utils.evaluation
 
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.BinaryOperator
 import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.types.TypeFlags
@@ -28,13 +29,17 @@ fun ConstExpr<*>.toConst(): Const =
 
 sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExpr<T>> {
     abstract val expectedTy: T?
+    open val element: RsExpr? = null
 
     data class Unary<T : Ty>(
         val operator: UnaryOperator,
         val expr: ConstExpr<T>,
-        override val expectedTy: T
+        override val expectedTy: T,
+        override val element: RsExpr?
     ) : ConstExpr<T>(expr.flags) {
-        override fun superFoldWith(folder: TypeFolder): Unary<T> = Unary(operator, expr.foldWith(folder), expectedTy)
+        override fun superFoldWith(folder: TypeFolder): Unary<T> =
+            Unary(operator, expr.foldWith(folder), expectedTy, element)
+
         override fun superVisitWith(visitor: TypeVisitor): Boolean = expr.visitWith(visitor)
     }
 
@@ -42,19 +47,23 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
         val left: ConstExpr<T>,
         val operator: BinaryOperator,
         val right: ConstExpr<T>,
-        override val expectedTy: T
+        override val expectedTy: T,
+        override val element: RsExpr?
     ) : ConstExpr<T>(left.flags or right.flags) {
         override fun superFoldWith(folder: TypeFolder): Binary<T> =
-            Binary(left.foldWith(folder), operator, right.foldWith(folder), expectedTy)
+            Binary(left.foldWith(folder), operator, right.foldWith(folder), expectedTy, element)
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean = left.visitWith(visitor) || right.visitWith(visitor)
     }
 
     data class Constant<T : Ty>(
         val const: Const,
-        override val expectedTy: T
+        override val expectedTy: T,
+        override val element: RsExpr?
     ) : ConstExpr<T>(const.flags) {
-        override fun superFoldWith(folder: TypeFolder): Constant<T> = Constant(const.foldWith(folder), expectedTy)
+        override fun superFoldWith(folder: TypeFolder): Constant<T> =
+            Constant(const.foldWith(folder), expectedTy, element)
+
         override fun superVisitWith(visitor: TypeVisitor): Boolean = const.visitWith(visitor)
     }
 
@@ -62,25 +71,37 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
         override fun superFoldWith(folder: TypeFolder): Value<T> = this
         override fun superVisitWith(visitor: TypeVisitor): Boolean = false
 
-        data class Bool(val value: Boolean) : Value<TyBool>() {
+        data class Bool(val value: Boolean, override val element: RsExpr?) : Value<TyBool>() {
             override val expectedTy: TyBool = TyBool
             override fun toString(): String = value.toString()
         }
 
-        data class Integer(val value: BigInteger, override val expectedTy: TyInteger) : Value<TyInteger>() {
+        data class Integer(
+            val value: BigInteger,
+            override val expectedTy: TyInteger,
+            override val element: RsExpr?
+        ) : Value<TyInteger>() {
             override fun toString(): String = value.toString()
         }
 
-        data class Float(val value: Double, override val expectedTy: TyFloat) : Value<TyFloat>() {
+        data class Float(
+            val value: Double,
+            override val expectedTy: TyFloat,
+            override val element: RsExpr?
+        ) : Value<TyFloat>() {
             override fun toString(): String = value.toString()
         }
 
-        data class Char(val value: String) : Value<TyChar>() {
+        data class Char(val value: String, override val element: RsExpr?) : Value<TyChar>() {
             override val expectedTy: TyChar = TyChar
             override fun toString(): String = value
         }
 
-        data class Str(val value: String, override val expectedTy: TyReference) : Value<TyReference>() {
+        data class Str(
+            val value: String,
+            override val expectedTy: TyReference,
+            override val element: RsExpr?
+        ) : Value<TyReference>() {
             override fun toString(): String = value
         }
     }

@@ -117,6 +117,6 @@ class BooleanExprSimplifier(val project: Project) {
 
         private fun canBeEvaluated(expr: RsExpr): Boolean = eval(expr) != null
 
-        private fun eval(expr: RsExpr): Boolean? = expr.evaluate(TyBool, resolver = null).asBool()
+        private fun eval(expr: RsExpr): Boolean? = expr.evaluate(TyBool, resolver = null).value.asBool()
     }
 }

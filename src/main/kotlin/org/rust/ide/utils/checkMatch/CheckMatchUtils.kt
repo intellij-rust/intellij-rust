@@ -93,7 +93,7 @@ fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
 
 private val RsExpr.value: Value<*>?
-    get() = (evaluate() as? CtValue)?.expr
+    get() = (evaluate().value as? CtValue)?.expr
 
 // lower_pattern_unadjusted
 private val RsPat.kind: PatternKind

@@ -303,7 +303,7 @@ class RsTypeInferenceWalker(
                 // TODO infer the actual lifetime
                 if (stubKind.isByte) {
                     val size = stubKind.value?.length?.toBigInteger()
-                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize).toConst() } ?: CtUnknown
+                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize, null).toConst() } ?: CtUnknown
                     TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE, ReStatic)
                 } else {
                     TyReference(TyStr, Mutability.IMMUTABLE, ReStatic)
@@ -652,7 +652,7 @@ class RsTypeInferenceWalker(
         val resolver = PathExprResolver.fromContext(ctx)
         val constArguments = methodCall.constArguments.withIndex().map { (i, expr) ->
             val expectedTy = constParameters.getOrNull(i)?.parameter?.typeReference?.type ?: TyUnknown
-            expr.evaluate(expectedTy, resolver)
+            expr.evaluate(expectedTy, resolver).value
         }
         val constSubst = constParameters.zip(constArguments).toMap()
 
@@ -1289,13 +1289,13 @@ class RsTypeInferenceWalker(
                 ?: return TySlice(TyUnknown)
             val sizeExpr = expr.sizeExpr
             sizeExpr?.inferType(TyInteger.USize)
-            val size = sizeExpr?.evaluate(TyInteger.USize, PathExprResolver.fromContext(ctx)) ?: CtUnknown
+            val size = sizeExpr?.evaluate(TyInteger.USize, PathExprResolver.fromContext(ctx))?.value ?: CtUnknown
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
             val size = if (elementTypes != null) {
                 val size = elementTypes.size.toBigInteger()
-                ConstExpr.Value.Integer(size, TyInteger.USize).toConst()
+                ConstExpr.Value.Integer(size, TyInteger.USize, null).toConst()
             } else {
                 CtUnknown
             }

@@ -414,7 +414,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val indexToVariantMap = hashMapOf<BigInteger, VariantInfo>()
         for (variant in o.enumVariantList) {
             val expr = variant.variantDiscriminant?.expr
-            val int = if (expr != null) expr.evaluate(reprType).asInteger() ?: return else null
+            val int = if (expr != null) expr.evaluate(reprType).value.asInteger() ?: return else null
             val idx = int ?: discrCounter
             discrCounter = idx.inc()
 

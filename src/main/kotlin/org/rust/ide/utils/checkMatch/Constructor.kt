@@ -100,7 +100,7 @@ sealed class Constructor {
     companion object {
         private fun allConstructorsLazy(ty: Ty): Sequence<Constructor> =
             when {
-                ty is TyBool -> sequenceOf(true, false).map { ConstantValue(Value.Bool(it)) }
+                ty is TyBool -> sequenceOf(true, false).map { ConstantValue(Value.Bool(it, null)) }
 
                 ty is TyAdt && ty.item is RsEnumItem -> ty.item.variants.asSequence().map { Variant(it) }
 

@@ -14,4 +14,4 @@ import java.math.BigInteger
 
 val RsArrayType.isSlice: Boolean get() = (greenStub as? RsArrayTypeStub)?.isSlice ?: (expr == null)
 
-val RsArrayType.arraySize: BigInteger? get() = expr?.evaluate(TyInteger.USize)?.asInteger()
+val RsArrayType.arraySize: BigInteger? get() = expr?.evaluate(TyInteger.USize)?.value?.asInteger()
