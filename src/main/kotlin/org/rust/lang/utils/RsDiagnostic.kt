@@ -1316,9 +1316,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class ReprAttrUnsupportedItem(element: PsiElement,
-                                  private val errorText: String
-    ) : RsDiagnostic(element) {
+    class ReprAttrUnsupportedItem(element: PsiElement, private val errorText: String) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0517,
@@ -1327,9 +1325,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class UnrecognizedReprAttribute(element: PsiElement,
-                                    private val reprName: String
-    ) : RsDiagnostic(element) {
+    class UnrecognizedReprAttribute(element: PsiElement, private val reprName: String) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0552,
@@ -1391,10 +1387,18 @@ sealed class RsDiagnostic(
             fixes = fixes
         )
     }
+
+    class ConstantEvaluationFailed(expr: RsExpr, private val message: String) : RsDiagnostic(expr) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0080,
+            message
+        )
+    }
 }
 
 enum class RsErrorCode {
-    E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
+    E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0057, E0060, E0061, E0069, E0080, E0081, E0084,
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,

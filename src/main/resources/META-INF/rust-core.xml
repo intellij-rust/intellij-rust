@@ -612,6 +612,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsIntegerOverflowInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Division by zero"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.lints.RsDivisionByZeroInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
