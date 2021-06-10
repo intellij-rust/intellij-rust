@@ -17,7 +17,9 @@ import com.intellij.util.LocalTimeCounter
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.stdext.repeatBenchmark
 
 class RsParsingPerformanceTest : RsTestBase() {
@@ -39,7 +41,7 @@ class RsParsingPerformanceTest : RsTestBase() {
             for (file in files) {
                 val psi = file.toInMemoryPsiFile()
 
-                timings.measureSum("lazy") {
+                timings.measureSum("root") {
                     TreeUtil.ensureParsed(psi.node)
                 }
 
@@ -48,7 +50,23 @@ class RsParsingPerformanceTest : RsTestBase() {
                     .filter { it.elementType is ILazyParseableElementTypeBase }
                     .toList()
 
-                timings.measureSum("full") {
+                timings.measureSum("lazy docs") {
+                    for (node in lazyNodes) {
+                        if (node is RsDocComment) {
+                            TreeUtil.ensureParsed(node.node)
+                        }
+                    }
+                }
+
+                timings.measureSum("lazy code blocks") {
+                    for (node in lazyNodes) {
+                        if (node is RsBlock) {
+                            TreeUtil.ensureParsed(node.node)
+                        }
+                    }
+                }
+
+                timings.measureSum("lazy other") {
                     for (node in lazyNodes) {
                         TreeUtil.ensureParsed(node.node)
                     }

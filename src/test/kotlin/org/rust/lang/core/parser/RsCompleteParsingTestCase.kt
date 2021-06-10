@@ -40,6 +40,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test oror`() = doTest(true)
     fun `test andand`() = doTest(true)
     fun `test comment binding`() = doTest(true)
+    fun `test doc comments`() = doTest(true)
     fun `test associated types`() = doTest(true)
     fun `test last block is expression`() = doTest(true)
     fun `test loops`() = doTest(true)

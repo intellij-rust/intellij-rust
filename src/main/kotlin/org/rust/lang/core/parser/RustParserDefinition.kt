@@ -24,6 +24,8 @@ import org.rust.lang.RsDebugInjectionListener
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.lang.doc.psi.RsDocCommentElementType
+import org.rust.lang.doc.psi.ext.isDocCommentLeafToken
 
 class RustParserDefinition : ParserDefinition {
 
@@ -56,7 +58,17 @@ class RustParserDefinition : ParserDefinition {
     }
 
     override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
-        if (left.elementType in RS_EOL_COMMENTS) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+        val leftElementType = left.elementType
+        if (leftElementType == EOL_COMMENT) {
+            return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+        }
+        if (leftElementType.isDocCommentLeafToken) {
+            return if (right.elementType.isDocCommentLeafToken) {
+                ParserDefinition.SpaceRequirements.MAY
+            } else {
+                ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+            }
+        }
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
 
@@ -79,10 +91,10 @@ class RustParserDefinition : ParserDefinition {
     companion object {
         @JvmField val BLOCK_COMMENT = RsTokenType("<BLOCK_COMMENT>")
         @JvmField val EOL_COMMENT = RsTokenType("<EOL_COMMENT>")
-        @JvmField val INNER_BLOCK_DOC_COMMENT = RsTokenType("<INNER_BLOCK_DOC_COMMENT>")
-        @JvmField val OUTER_BLOCK_DOC_COMMENT = RsTokenType("<OUTER_BLOCK_DOC_COMMENT>")
-        @JvmField val INNER_EOL_DOC_COMMENT = RsTokenType("<INNER_EOL_DOC_COMMENT>")
-        @JvmField val OUTER_EOL_DOC_COMMENT = RsTokenType("<OUTER_EOL_DOC_COMMENT>")
+        @JvmField val INNER_BLOCK_DOC_COMMENT = RsDocCommentElementType("<INNER_BLOCK_DOC_COMMENT>")
+        @JvmField val OUTER_BLOCK_DOC_COMMENT = RsDocCommentElementType("<OUTER_BLOCK_DOC_COMMENT>")
+        @JvmField val INNER_EOL_DOC_COMMENT = RsDocCommentElementType("<INNER_EOL_DOC_COMMENT>")
+        @JvmField val OUTER_EOL_DOC_COMMENT = RsDocCommentElementType("<OUTER_EOL_DOC_COMMENT>")
 
         /**
          * Should be increased after any change of lexer rules

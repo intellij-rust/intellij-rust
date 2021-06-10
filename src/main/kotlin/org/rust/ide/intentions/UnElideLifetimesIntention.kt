@@ -16,13 +16,14 @@ import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
+import org.rust.lang.doc.psi.ext.isInDocComment
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): LifetimeContext? {
-        if (element is RsDocCommentImpl) return null
+        if (element.isInDocComment) return null
         val fn = element.ancestorOrSelf<RsFunction>(stopAt = RsBlock::class.java) ?: return null
 
         val ctx = getLifetimeContext(fn) ?: return null

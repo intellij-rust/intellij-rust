@@ -782,6 +782,22 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test block comment indent`() = doTextTest("""
+        /**
+        * foo
+         * bar
+          * baz
+         */
+        fn main() {}
+    """, """
+        /**
+         * foo
+         * bar
+         * baz
+         */
+        fn main() {}
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.rust
 }

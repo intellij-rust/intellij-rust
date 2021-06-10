@@ -28,6 +28,7 @@ import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.resolve2.resolveToProcMacroWithoutPsi
 import org.rust.lang.core.stubs.RsAttrProcMacroOwnerStub
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
@@ -130,7 +131,7 @@ private fun doPrepareCustomDeriveMacroCallBody(owner: RsStructOrEnumItemElement)
     val attrs = mutableListOf<RsMetaItem>()
     for (child in item.childrenWithLeaves) {
         when (child) {
-            is RsDocCommentImpl -> docs += child
+            is RsDocComment -> docs += child
             is RsOuterAttr -> evaluator.expandCfgAttrs(sequenceOf(child.metaItem)).forEach {
                 when (it.name) {
                     "cfg", "derive" -> Unit
@@ -148,7 +149,7 @@ private fun doPrepareCustomDeriveMacroCallBody(owner: RsStructOrEnumItemElement)
 
     val sb = StringBuilder(text.length)
     for (doc in docs) {
-        if (doc is RsDocCommentImpl) {
+        if (doc is RsDocComment) {
             sb.append(doc.text)
             sb.append("\n")
         } else {

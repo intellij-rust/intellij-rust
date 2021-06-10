@@ -10,13 +10,14 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
+import org.rust.stdext.nextOrNull
 
 enum class RsDocKind {
     Attr {
         override val prefix: String = ""
         override val infix: String = ""
 
-        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+        override fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> =
             removeAttrDecoration(lines)
     },
 
@@ -24,7 +25,7 @@ enum class RsDocKind {
         override val prefix: String = "/*!"
         override val infix: String = "*"
 
-        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+        override fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> =
             removeBlockDecoration(lines)
     },
 
@@ -32,7 +33,7 @@ enum class RsDocKind {
         override val prefix: String = "/**"
         override val infix: String = "*"
 
-        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+        override fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> =
             removeBlockDecoration(lines)
     },
 
@@ -40,7 +41,7 @@ enum class RsDocKind {
         override val infix: String = "//!"
         override val prefix: String = infix
 
-        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+        override fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> =
             removeEolDecoration(lines)
     },
 
@@ -48,7 +49,7 @@ enum class RsDocKind {
         override val infix: String = "///"
         override val prefix: String = infix
 
-        override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
+        override fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> =
             removeEolDecoration(lines)
     };
 
@@ -64,56 +65,68 @@ enum class RsDocKind {
      * This method expects non-empty line sequences of valid doc comment tokens.
      * It does **not** perform any validation!
      */
-    abstract fun removeDecoration(lines: Sequence<String>): Sequence<String>
+    protected abstract fun removeDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine>
 
-    protected fun removeEolDecoration(decoratedLines: Sequence<String>, infix: String = this.infix): Sequence<String> {
-        val lines = decoratedLines.map { it.substringAfter(infix) }
-        val firstLineIndented = lines.first()
+    fun removeDecorationToLines(text: CharSequence): Sequence<RsDocLine> =
+        removeDecoration(RsDocLine.splitLines(text))
+
+    fun removeDecoration(text: CharSequence): Sequence<CharSequence> =
+        removeDecorationToLines(text).map { it.content }
+
+    protected fun removeEolDecoration(decoratedLines: Sequence<RsDocLine>, infix: String = this.infix): Sequence<RsDocLine> {
+        val lines = decoratedLines.map { it.trimStart().removePrefix(infix) }.iterator()
+        val firstLineIndented = lines.nextOrNull() ?: return emptySequence()
         val firstLine = firstLineIndented.trimStart()
-        val indent = firstLineIndented.length - firstLine.length
+        val indent = firstLine.contentStartOffset - firstLineIndented.contentStartOffset
 
-        return sequenceOf(firstLine) + lines.drop(1).map { line ->
-            line.dropWhileAtMost(indent) { it == ' ' }
+        return sequenceOf(firstLine) + lines.asSequence().map { line ->
+            line.indentBy(indent)
         }
     }
 
-    protected fun removeBlockDecoration(lines: Sequence<String>): Sequence<String> {
+    protected fun removeBlockDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> {
         val ll = lines.toMutableList()
-        return if (lines.drop(1).all { it.trimStart(' ', '\t').startsWith("*") }) {
+        return if (ll.asSequence().drop(1).all { it.trimStart().startsWith("*") }) {
             // Doing some patches we can "convert" block comment into eol one
-            ll[0] = ll[0].replaceFirst(prefix, " $infix ")
+            ll[0] = ll[0].removePrefix(prefix)
             ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
-            removeEolDecoration(ll.asSequence(), infix)
+            sequenceOf(ll[0]) + removeEolDecoration(ll.subList(1, ll.size).asSequence(), infix)
         } else {
             ll[0] = ll[0].removePrefix(prefix)
+            val minIndent = ll.asSequence().drop(1).map { it.leadingWhitespace() }.minOrNull()
+            if (minIndent != null) {
+                for (i in 1 until ll.size) {
+                    ll[i] = ll[i].indentBy(minIndent)
+                }
+            }
             ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
             ll.asSequence()
         }
     }
 
     // https://github.com/rust-lang/rust/blob/edeee915b1c52f97411e57ef6b1a8bd46548a37a/compiler/rustc_ast/src/util/comments.rs#L28
-    protected fun removeAttrDecoration(linesSequence: Sequence<String>): Sequence<String> {
+    protected fun removeAttrDecoration(linesSequence: Sequence<RsDocLine>): Sequence<RsDocLine> {
         /** Removes whitespace-only lines from the start/end of lines */
-        fun doVerticalTrim(lines: List<String>): List<String> {
+        fun doVerticalTrim(lines: List<RsDocLine>): List<RsDocLine> {
             var start = 0
             var end = lines.size
 
             // First line of all-stars should be omitted
-            if (lines[0].all { it == '*' }) {
+            if (lines[0].content.all { it == '*' }) {
                 start++
             }
 
-            while (start < end && lines[start].isBlank()) {
+            while (start < end && lines[start].content.isBlank()) {
                 start++
             }
 
             // Like the first, a last line of all stars should be omitted
             // The first character is skipped by Rustc for some reason
-            if (end > start && (lines[end - 1].isEmpty() || lines[end - 1].substring(1).all { it == '*' })) {
+            if (end > start && (lines[end - 1].content.isEmpty() || lines[end - 1].content.substring(1).all { it == '*' })) {
                 end--
             }
 
-            while (end > start && lines[end - 1].isBlank()) {
+            while (end > start && lines[end - 1].content.isBlank()) {
                 end--
             }
 
@@ -121,12 +134,12 @@ enum class RsDocKind {
         }
 
         /** Calculates common indent before `*`, if possible */
-        fun calculateCommonIndentBeforeAsterisk(lines: List<String>): Int? {
+        fun calculateCommonIndentBeforeAsterisk(lines: List<RsDocLine>): Int? {
             var indent = Int.MAX_VALUE
             var first = true
 
             for (line in lines) {
-                for ((j, c) in line.withIndex()) {
+                for ((j, c) in line.content.withIndex()) {
                     if (j > indent || !"* \t".contains(c)) {
                         return null
                     }
@@ -140,7 +153,7 @@ enum class RsDocKind {
                         break
                     }
                 }
-                if (indent >= line.length) {
+                if (indent >= line.contentLength) {
                     return null
                 }
             }
@@ -172,32 +185,6 @@ enum class RsDocKind {
             INNER_EOL_DOC_COMMENT -> InnerEol
             OUTER_EOL_DOC_COMMENT -> OuterEol
             else -> throw IllegalArgumentException("unsupported token type")
-        }
-
-        private fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {
-            var i = n
-            for (index in this.indices) {
-                if (i-- <= 0 || !predicate(this[index])) {
-                    return substring(index)
-                }
-            }
-            return ""
-        }
-
-        /**
-         * Get rid of trailing (pseudo-regexp): `[ ]+ [*]* * /`
-         */
-        private fun String.trimTrailingAsterisks(): String {
-            if (length < 2) return this
-
-            var i = lastIndex
-            if (get(i - 1) == '*' && get(i) == '/') {
-                i -= 2
-                while (i >= 0 && get(i) == '*') i--
-                while (i >= 0 && get(i) == ' ') i--
-            }
-
-            return substring(0, i + 1)
         }
     }
 }
