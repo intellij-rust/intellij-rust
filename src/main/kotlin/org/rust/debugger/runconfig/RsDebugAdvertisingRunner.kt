@@ -28,9 +28,9 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
         if (profile !is CargoCommandConfiguration) return false
         if (!isSupportedPlatform()) return false
-        val plugin = nativeDebuggingSupportPlugin()
+        val plugin = nativeDebuggingSupportPlugin() ?: return true
         val loadedPlugins = PluginManagerCore.getLoadedPlugins()
-        return plugin !in loadedPlugins || plugin?.isEnabled != true
+        return plugin !in loadedPlugins || !plugin.isEnabled
     }
 
     override fun execute(environment: ExecutionEnvironment) {
