@@ -143,10 +143,10 @@ class RsDoctestLanguageInjector : MultiHostInjector {
             }
             if (index == cratesEndIndex && !alreadyHasMain) {
                 if (prefix == null) prefix = StringBuilder()
-                prefix.append("fn $INJECTED_MAIN_NAME() {")
+                prefix.append("fn $INJECTED_MAIN_NAME() {\n")
             }
 
-            val suffix = if (isLastIteration && !alreadyHasMain) "}" else null
+            val suffix = if (isLastIteration && !alreadyHasMain) "\n}" else null
 
             inj.addPlace(prefix?.toString(), suffix, context, range)
         }
