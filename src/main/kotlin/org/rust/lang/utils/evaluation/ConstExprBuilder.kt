@@ -9,11 +9,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 fun RsExpr.toConstExpr(
-    expectedTy: Ty = type,
-    resolver: PathExprResolver? = PathExprResolver.default
+    expectedTy: Ty,
+    resolver: PathExprResolver?
 ): ConstExpr<out Ty>? {
     val builder = when (expectedTy) {
         is TyInteger -> IntegerConstExprBuilder(expectedTy, resolver)
@@ -29,16 +28,14 @@ fun RsExpr.toConstExpr(
 
 private val STR_REF_TYPE: TyReference = TyReference(TyStr, Mutability.IMMUTABLE)
 
-private abstract class ConstExprBuilder<T : Ty, V> {
+private abstract class ConstExprBuilder<T : Ty> {
     protected abstract val expectedTy: T
     protected abstract val resolver: PathExprResolver?
-    protected abstract val RsLitExpr.value: V?
-    protected abstract fun V.wrap(): ConstExpr<T>
 
-    protected fun makeLeafValue(expr: RsLitExpr): ConstExpr<T>? = expr.value?.wrap()
+    protected abstract fun wrap(expr: RsLitExpr): ConstExpr<T>?
 
-    protected fun makeLeafParameter(parameter: RsConstParameter): ConstExpr<T> =
-        ConstExpr.Constant(CtConstParameter(parameter), expectedTy)
+    protected fun makeLeafParameter(parameter: RsConstParameter, expr: RsExpr?): ConstExpr<T> =
+        ConstExpr.Constant(CtConstParameter(parameter), expectedTy, expr)
 
     fun build(expr: RsExpr?): ConstExpr<T>? = build(expr, 0)
 
@@ -50,7 +47,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
 
     protected open fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<T>? {
         return when (expr) {
-            is RsLitExpr -> makeLeafValue(expr)
+            is RsLitExpr -> wrap(expr)
             is RsParenExpr -> build(expr.expr, depth + 1)
             is RsBlockExpr -> build(expr.block.expr, depth + 1)
             is RsPathExpr -> {
@@ -67,7 +64,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
 
                 when (element) {
                     is RsConstant -> build(element.expr, depth + 1)
-                    is RsConstParameter -> makeLeafParameter(element)
+                    is RsConstParameter -> makeLeafParameter(element, expr)
                     else -> null
                 }
             }
@@ -83,22 +80,23 @@ private abstract class ConstExprBuilder<T : Ty, V> {
 private class IntegerConstExprBuilder(
     override val expectedTy: TyInteger,
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyInteger, Long>() {
-    override val RsLitExpr.value: Long? get() = integerValue
-    override fun Long.wrap(): ConstExpr.Value.Integer = ConstExpr.Value.Integer(this, expectedTy)
+) : ConstExprBuilder<TyInteger>() {
+
+    override fun wrap(expr: RsLitExpr): ConstExpr<TyInteger>? =
+        expr.integerValue?.let { ConstExpr.Value.Integer(it, expectedTy, expr) }
 
     override fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<TyInteger>? {
         return when (expr) {
             is RsUnaryExpr -> {
                 if (expr.operatorType != UnaryOperator.MINUS) return null
                 val value = build(expr.expr, depth + 1) ?: return null
-                ConstExpr.Unary(UnaryOperator.MINUS, value, expectedTy)
+                ConstExpr.Unary(UnaryOperator.MINUS, value, expectedTy, expr)
             }
             is RsBinaryExpr -> {
                 val op = expr.operatorType as? ArithmeticOp ?: return null
                 val lhs = build(expr.left, depth + 1) ?: return null
                 val rhs = build(expr.right, depth + 1) ?: return null
-                ConstExpr.Binary(lhs, op, rhs, expectedTy)
+                ConstExpr.Binary(lhs, op, rhs, expectedTy, expr)
             }
             else -> super.buildInner(expr, depth)
         }
@@ -107,10 +105,10 @@ private class IntegerConstExprBuilder(
 
 private class BoolConstExprBuilder(
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyBool, Boolean>() {
+) : ConstExprBuilder<TyBool>() {
     override val expectedTy: TyBool = TyBool
-    override val RsLitExpr.value: Boolean? get() = booleanValue
-    override fun Boolean.wrap(): ConstExpr.Value.Bool = ConstExpr.Value.Bool(this)
+
+    override fun wrap(expr: RsLitExpr): ConstExpr<TyBool>? = expr.booleanValue?.let { ConstExpr.Value.Bool(it, expr) }
 
     override fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<TyBool>? {
         return when (expr) {
@@ -118,24 +116,24 @@ private class BoolConstExprBuilder(
                 LogicOp.AND -> {
                     val lhs = build(expr.left, depth + 1) ?: return null
                     val rhs = build(expr.right, depth + 1) ?: ConstExpr.Error()
-                    ConstExpr.Binary(lhs, LogicOp.AND, rhs, expectedTy)
+                    ConstExpr.Binary(lhs, LogicOp.AND, rhs, expectedTy, expr)
                 }
                 LogicOp.OR -> {
                     val lhs = build(expr.left, depth + 1) ?: return null
                     val rhs = build(expr.right, depth + 1) ?: ConstExpr.Error()
-                    ConstExpr.Binary(lhs, LogicOp.OR, rhs, expectedTy)
+                    ConstExpr.Binary(lhs, LogicOp.OR, rhs, expectedTy, expr)
                 }
                 ArithmeticOp.BIT_XOR -> {
                     val lhs = build(expr.left, depth + 1) ?: return null
                     val rhs = build(expr.right, depth + 1) ?: return null
-                    ConstExpr.Binary(lhs, ArithmeticOp.BIT_XOR, rhs, expectedTy)
+                    ConstExpr.Binary(lhs, ArithmeticOp.BIT_XOR, rhs, expectedTy, expr)
                 }
                 else -> null
             }
             is RsUnaryExpr -> when (expr.operatorType) {
                 UnaryOperator.NOT -> {
                     val value = build(expr.expr, depth + 1) ?: return null
-                    ConstExpr.Unary(UnaryOperator.NOT, value, expectedTy)
+                    ConstExpr.Unary(UnaryOperator.NOT, value, expectedTy, expr)
                 }
                 else -> null
             }
@@ -147,23 +145,22 @@ private class BoolConstExprBuilder(
 private class FloatConstExprBuilder(
     override val expectedTy: TyFloat,
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyFloat, Double>() {
-    override val RsLitExpr.value: Double? get() = floatValue
-    override fun Double.wrap(): ConstExpr.Value.Float = ConstExpr.Value.Float(this, expectedTy)
+) : ConstExprBuilder<TyFloat>() {
+    override fun wrap(expr: RsLitExpr): ConstExpr<TyFloat>? =
+        expr.floatValue?.let { ConstExpr.Value.Float(it, expectedTy, expr) }
 }
 
 private class CharConstExprBuilder(
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyChar, String>() {
+) : ConstExprBuilder<TyChar>() {
     override val expectedTy: TyChar = TyChar
-    override val RsLitExpr.value: String? get() = charValue
-    override fun String.wrap(): ConstExpr.Value.Char = ConstExpr.Value.Char(this)
+    override fun wrap(expr: RsLitExpr): ConstExpr<TyChar>? = expr.charValue?.let { ConstExpr.Value.Char(it, expr) }
 }
 
 private class StrConstExprBuilder(
     override val resolver: PathExprResolver?
-) : ConstExprBuilder<TyReference, String>() {
+) : ConstExprBuilder<TyReference>() {
     override val expectedTy: TyReference = STR_REF_TYPE
-    override val RsLitExpr.value: String? get() = stringValue
-    override fun String.wrap(): ConstExpr.Value.Str = ConstExpr.Value.Str(this, expectedTy)
+    override fun wrap(expr: RsLitExpr): ConstExpr<TyReference>? =
+        expr.stringValue?.let { ConstExpr.Value.Str(it, expectedTy, expr) }
 }

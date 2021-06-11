@@ -199,7 +199,7 @@ private fun StringBuilder.appendPath(path: RsPath, subst: Substitution, renderLi
 }
 
 private fun StringBuilder.appendConstExpr(expr: RsExpr, subst: Substitution) {
-    when (val const = expr.evaluate().substitute(subst)) { // may trigger resolve
+    when (val const = expr.evaluate().value.substitute(subst)) { // may trigger resolve
         is CtValue -> append(const)
         is CtConstParameter -> append("{ $const }")
         else -> append("{}")

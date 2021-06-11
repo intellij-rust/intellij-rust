@@ -93,7 +93,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
             if (type.isSlice) {
                 TySlice(componentType)
             } else {
-                val const = type.expr?.evaluate(TyInteger.USize) ?: CtUnknown
+                val const = type.expr?.evaluate(TyInteger.USize)?.value ?: CtUnknown
                 TyArray(componentType, const)
             }
         }

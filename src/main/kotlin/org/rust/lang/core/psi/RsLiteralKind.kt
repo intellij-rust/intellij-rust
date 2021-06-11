@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.lexer.RsEscapesLexer
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.utils.unescapeRust
+import java.math.BigInteger
 
 interface RsComplexLiteral {
     val node: ASTNode
@@ -38,7 +39,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
 
         override val offsets: LiteralOffsets by lazy { offsetsForNumber(node) }
 
-        val value: Long? get() {
+        val value: BigInteger? get() {
             val textValue = offsets.value?.substring(node.text) ?: return null
             val (start, radix) = when (textValue.take(2)) {
                 "0x" -> 2 to 16
@@ -48,7 +49,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
             }
             val cleanTextValue = textValue.substring(start).filter { it != '_' }
             return try {
-                java.lang.Long.parseLong(cleanTextValue, radix)
+                BigInteger(cleanTextValue, radix)
             } catch (e: NumberFormatException) {
                 null
             }

@@ -25,9 +25,9 @@ sealed class PatternKind {
     /** &P, &mut P, etc */
     data class Deref(val subPattern: Pattern) : PatternKind()
 
-    data class Const(val value: Value<*>) : PatternKind()
+    data class Const(val value: Value<*, *>) : PatternKind()
 
-    data class Range(val lc: Value<*>, val rc: Value<*>, val isInclusive: Boolean) : PatternKind()
+    data class Range(val lc: Value<*, *>, val rc: Value<*, *>, val isInclusive: Boolean) : PatternKind()
 
 
     interface SliceField {

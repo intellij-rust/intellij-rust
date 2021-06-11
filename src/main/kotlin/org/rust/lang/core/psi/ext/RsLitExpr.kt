@@ -25,6 +25,7 @@ import org.rust.lang.core.stubs.RsPlaceholderStub
 import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
+import java.math.BigInteger
 
 val RsLitExpr.stubKind: RsStubLiteralKind?
     get() {
@@ -41,7 +42,7 @@ val RsLitExpr.stubKind: RsStubLiteralKind?
     }
 
 val RsLitExpr.booleanValue: Boolean? get() = (stubKind as? RsStubLiteralKind.Boolean)?.value
-val RsLitExpr.integerValue: Long? get() = (stubKind as? RsStubLiteralKind.Integer)?.value
+val RsLitExpr.integerValue: BigInteger? get() = (stubKind as? RsStubLiteralKind.Integer)?.value
 val RsLitExpr.floatValue: Double? get() = (stubKind as? RsStubLiteralKind.Float)?.value
 val RsLitExpr.charValue: String? get() = (stubKind as? RsStubLiteralKind.Char)?.value
 val RsLitExpr.stringValue: String? get() = (stubKind as? RsStubLiteralKind.String)?.value

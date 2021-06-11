@@ -260,7 +260,7 @@ fun <T : RsElement> instantiatePathGenerics(
     val constParameters = element.constParameters.map { CtConstParameter(it) }
     val constArguments = path.typeArgumentList?.exprList?.withIndex()?.map { (i, expr) ->
         val expectedTy = constParameters.getOrNull(i)?.parameter?.typeReference?.type ?: TyUnknown
-        expr.evaluate(expectedTy, resolver)
+        expr.evaluate(expectedTy, resolver).value
     }
     val constSubst = constParameters.withIndex().associate { (i, param) ->
         val value = constArguments?.getOrNull(i)
