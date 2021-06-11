@@ -5,6 +5,9 @@
 
 package org.rust.ide.typing
 
+import com.intellij.injected.editor.VirtualFileWindow
+import org.intellij.lang.annotations.Language
+
 class RsEnterInLineCommentHandlerTest : RsTypingTestBase() {
     override val dataPath = "org/rust/ide/typing/lineComment/fixtures"
 
@@ -199,4 +202,26 @@ class RsEnterInLineCommentHandlerTest : RsTypingTestBase() {
         <caret>//! Description goes here
         //! And some notes
     """)
+
+    /** This also a test for [org.rust.ide.actions.RsEnterHandler] */
+    fun `test in doctest injection`() = doDoctestTestByText("""
+        //! ```
+        //! let a =<caret>1;
+        //! ```
+    """, """
+        //! ```
+        //! let a =
+        //! <caret>1;
+        //! ```
+    """)
+
+    private fun doDoctestTestByText(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) {
+        doTestByText(before, after, fileName = "lib.rs")
+        check(myFixture.file.virtualFile is VirtualFileWindow) {
+            "No doctest injection found"
+        }
+    }
 }

@@ -264,9 +264,10 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     protected fun checkByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        fileName: String = "main.rs",
         action: () -> Unit
     ) {
-        InlineFile(before)
+        InlineFile(before, fileName)
         action()
         PsiTestUtil.checkPsiStructureWithCommit(myFixture.file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         myFixture.checkResult(replaceCaretMarker(after))
