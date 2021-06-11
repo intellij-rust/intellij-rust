@@ -9,23 +9,194 @@ class RsEnterInLineCommentHandlerTest : RsTypingTestBase() {
     override val dataPath = "org/rust/ide/typing/lineComment/fixtures"
 
     fun `test before line comment`() = doTest()
-    fun `test in line comment`() = doTest()
-    fun `test after line comment`() = doTest()
-    fun `test in block comment`() = doTest()
-    fun `test in outer doc comment`() = doTest()
-    fun `test after outer doc comment`() = doTest()
-    fun `test in inner doc comment`() = doTest()
-    fun `test after inner doc comment`() = doTest()
-    fun `test after module comment`() = doTest()
 
-    fun `test directly after token`() = doTest()
-    fun `test inside token`() = doTest()
+    fun `test in line comment`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            // multi<caret>ply by two
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            // multi
+            // <caret>ply by two
+            x * 2
+        }
+    """)
+
+    fun `test after line comment`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            // multiply by two<caret>
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            // multiply by two
+            <caret>
+            x * 2
+        }
+    """)
+
+    fun `test in block comment`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            /* multi<caret>ply by two */
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            /* multi
+            <caret>ply by two */
+            x * 2
+        }
+    """)
+
+    fun `test in outer doc comment`() = doTestByText("""
+        /// multi<caret>ply by two
+        fn double(x: i32) -> i32 {
+            x * 2
+        }
+    """, """
+        /// multi
+        /// <caret>ply by two
+        fn double(x: i32) -> i32 {
+            x * 2
+        }
+    """)
+
+    fun `test after outer doc comment`() = doTest()
+
+    fun `test in inner doc comment`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            //! multi<caret>ply by two
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            //! multi
+            //! <caret>ply by two
+            x * 2
+        }
+    """)
+
+    fun `test after inner doc comment`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            //! multiply by two<caret>
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            //! multiply by two
+            //! <caret>
+            x * 2
+        }
+    """)
+
+    fun `test after module comment`() = doTestByText("""
+        //! Awesome module
+        //! Does stuff!
+
+
+        <caret>
+        fn undocumented_fn() {}
+    """, """
+        //! Awesome module
+        //! Does stuff!
+
+
+
+
+        fn undocumented_fn() {}
+    """)
+
+    fun `test directly after token`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            //<caret>multiply by two
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            //
+            // <caret>multiply by two
+            x * 2
+        }
+    """)
+
+    fun `test inside token`() = doTestByText("""
+        fn double(x: i32) -> i32 {
+            //<caret>! multiply by two
+            x * 2
+        }
+    """, """
+        fn double(x: i32) -> i32 {
+            //
+            <caret>! multiply by two
+            x * 2
+        }
+    """)
 
     fun `test inside comment directly before next token`() = doTest()
-    fun `test inside comment inside token`() = doTest()
 
-    fun `test at file beginning`() = doTest()
-    fun `test inside string literal`() = doTest()
+    fun `test inside comment inside token`() = doTestByText("""
+        /// foo //<caret>/ bar
+    """, """
+        /// foo //
+        /// <caret>/ bar
+    """)
 
-    fun `test issue578`() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/578
+    fun `test at file beginning`() = doTestByText("""
+        <caret>
+        // Some comment
+    """, """
+
+        <caret>
+        // Some comment
+    """)
+
+    fun `test inside string literal`() = doTestByText("""
+        // Taken from issue #185
+
+        fn read_manifest_output() -> String {
+            "\
+        {\
+            \"name\":\"foo\",\
+            \"version\":\"0.5.0\",\
+            \"dependencies\":[],\
+            \"targets\":[{\
+                \"kind\":[\"bin\"],\
+                \"name\":\"foo\",\
+                \"src_path\":\"src[..]foo.rs\"\
+            }],\<caret>
+            \"manifest_path\":\"[..]Cargo.toml\"\
+        }".into()
+        }
+    """, """
+        // Taken from issue #185
+
+        fn read_manifest_output() -> String {
+            "\
+        {\
+            \"name\":\"foo\",\
+            \"version\":\"0.5.0\",\
+            \"dependencies\":[],\
+            \"targets\":[{\
+                \"kind\":[\"bin\"],\
+                \"name\":\"foo\",\
+                \"src_path\":\"src[..]foo.rs\"\
+            }],\
+        <caret>
+            \"manifest_path\":\"[..]Cargo.toml\"\
+        }".into()
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/578
+    fun `test issue578`() = doTestByText("""
+        //! This crate does something useful
+        <caret>//! Description goes here
+        //! And some notes
+    """, """
+        //! This crate does something useful
+
+        <caret>//! Description goes here
+        //! And some notes
+    """)
 }
