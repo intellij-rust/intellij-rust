@@ -215,6 +215,18 @@ class RsEnterInLineCommentHandlerTest : RsTypingTestBase() {
         //! ```
     """)
 
+    /** This also a test for [org.rust.ide.actions.RsEnterHandler] */
+    fun `test between braces in doctest injection`() = doDoctestTestByText("""
+        //! ```
+        //! fn foo() {<caret>}
+        //! ```
+    """, """
+        //! ```
+        //! fn foo() {
+        //! <caret>}
+        //! ```
+    """)
+
     private fun doDoctestTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String
