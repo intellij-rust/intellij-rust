@@ -24,10 +24,8 @@ import javax.swing.ListCellRenderer
 class RsProjectConfigurable(
     project: Project
 ) : RsConfigurableBase(project, "Rust"), Configurable.NoScroll {
-
-    private val rustProjectSettings = RustProjectSettingsPanel(
-        project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
-    )
+    private val projectDir = project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
+    private val rustProjectSettings = RustProjectSettingsPanel(projectDir)
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
@@ -66,7 +64,7 @@ class RsProjectConfigurable(
 
     override fun reset() {
         super.reset()
-        val toolchain = state.toolchain ?: RsToolchainBase.suggest()
+        val toolchain = state.toolchain ?: RsToolchainBase.suggest(projectDir)
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain = toolchain,

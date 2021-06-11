@@ -12,13 +12,17 @@ import com.intellij.execution.Executor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.text.SemVer
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.ide.notifications.showBalloon
 import java.time.LocalDate
 
 class CargoTestRunState(
@@ -29,7 +33,17 @@ class CargoTestRunState(
 
     private val cargoTestPatch: CargoPatch = { commandLine ->
         val rustcVer = cargoProject?.rustcInfo?.version
-        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer))
+        // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
+        // https://github.com/intellij-rust/intellij-rust/issues/7320
+        if (commandLine.withSudo) {
+            val message = if (SystemInfo.isWindows) {
+                RsBundle.message("notification.run.tests.as.root.windows")
+            } else {
+                RsBundle.message("notification.run.tests.as.root.unix")
+            }
+            environment.project.showBalloon(message, NotificationType.WARNING)
+        }
+        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), withSudo = false)
     }
 
     init {

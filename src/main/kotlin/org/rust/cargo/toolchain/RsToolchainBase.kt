@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
@@ -15,6 +16,7 @@ import com.intellij.util.text.SemVer
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.wsl.getHomePathCandidates
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
 import java.io.File
@@ -81,10 +83,11 @@ abstract class RsToolchainBase(val location: Path) {
         environmentVariables: EnvironmentVariablesData,
         parameters: List<String>,
         emulateTerminal: Boolean,
+        withSudo: Boolean,
         patchToRemote: Boolean = true,
         http: HttpConfigurable = HttpConfigurable.getInstance()
     ): GeneralCommandLine {
-        var commandLine = GeneralCommandLine(executable)
+        var commandLine = GeneralCommandLine(executable, withSudo)
             .withWorkDirectory(workingDirectory)
             .withInput(redirectInputFrom)
             .withEnvironment("TERM", "ansi")
@@ -126,11 +129,21 @@ abstract class RsToolchainBase(val location: Path) {
         const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
         const val RUSTC_WRAPPER: String = "RUSTC_WRAPPER"
 
-        fun suggest(): RsToolchainBase? =
-            RsToolchainFlavor.getApplicableFlavors()
+        @JvmOverloads
+        fun suggest(projectDir: Path? = null): RsToolchainBase? {
+            val distribution = projectDir?.let { WslPath.getDistributionByWindowsUncPath(it.toString()) }
+            val toolchain = distribution
+                ?.getHomePathCandidates()
+                ?.filter { RsToolchainFlavor.getFlavor(it) != null }
+                ?.mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
+                ?.firstOrNull()
+            if (toolchain != null) return toolchain
+
+            return RsToolchainFlavor.getApplicableFlavors()
                 .asSequence()
                 .flatMap { it.suggestHomePaths() }
-                .map { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
+                .mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
                 .firstOrNull()
+        }
     }
 }

@@ -86,6 +86,7 @@ abstract class RsExecutableRunner(
             runCargoCommand.environmentVariables,
             executableArguments,
             runCargoCommand.emulateTerminal,
+            runCargoCommand.withSudo,
             patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
         )
         return showRunContent(state, environment, runExecutable)

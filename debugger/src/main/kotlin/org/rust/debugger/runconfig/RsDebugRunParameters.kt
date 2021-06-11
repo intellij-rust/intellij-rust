@@ -18,7 +18,8 @@ import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 class RsDebugRunParameters(
     val project: Project,
     private val cmd: GeneralCommandLine,
-    val cargoProject: CargoProject?
+    val cargoProject: CargoProject?,
+    private val isElevated: Boolean
 ) : RunParameters() {
 
     override fun getInstaller(): Installer = TrivialInstaller(cmd)
@@ -26,8 +27,10 @@ class RsDebugRunParameters(
 
     override fun getDebuggerDriverConfiguration(): DebuggerDriverConfiguration {
         for (provider in RsDebuggerDriverConfigurationProvider.EP_NAME.extensionList) {
-            return provider.getDebuggerDriverConfiguration(project) ?: continue
+            return provider.getDebuggerDriverConfiguration(project, isElevated) ?: continue
         }
-        return LLDBDriverConfiguration()
+        return object : LLDBDriverConfiguration() {
+            override fun isElevated(): Boolean = isElevated
+        }
     }
 }

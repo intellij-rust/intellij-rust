@@ -71,7 +71,7 @@ abstract class RsAsyncRunner(
             if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
         } else {
             commandLine.copy(command = "build", additionalArguments = commandArguments)
-        }.copy(emulateTerminal = false)
+        }.copy(emulateTerminal = false, withSudo = false) // building does not require root privileges
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
@@ -83,6 +83,7 @@ abstract class RsAsyncRunner(
                     environmentVariables,
                     executableArguments,
                     emulateTerminal,
+                    withSudo,
                     patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
                 )
             }

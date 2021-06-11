@@ -98,7 +98,7 @@ class RustProjectSettingsPanel(
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
-            toolchain = ProjectManager.getInstance().defaultProject.toolchain ?: RsToolchainBase.suggest(),
+            toolchain = ProjectManager.getInstance().defaultProject.toolchain ?: RsToolchainBase.suggest(cargoProjectDir),
             explicitPathToStdlib = null
         )
 

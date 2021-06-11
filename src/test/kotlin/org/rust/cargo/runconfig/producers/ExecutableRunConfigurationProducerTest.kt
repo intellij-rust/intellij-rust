@@ -56,6 +56,7 @@ class ExecutableRunConfigurationProducerTest : RunConfigurationProducerTestBase(
             requiredFeatures = false
             allFeatures = true
             emulateTerminal = true
+            withSudo = true
             isRedirectInput = true
             backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)

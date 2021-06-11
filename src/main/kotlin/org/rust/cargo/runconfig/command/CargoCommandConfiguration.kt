@@ -15,10 +15,12 @@ import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.exists
 import org.jdom.Element
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -56,6 +58,7 @@ open class CargoCommandConfiguration(
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
+    var withSudo: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
@@ -89,6 +92,7 @@ open class CargoCommandConfiguration(
         element.writeBool("requiredFeatures", requiredFeatures)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
+        element.writeBool("withSudo", withSudo)
         element.writeEnum("backtrace", backtrace)
         env.writeExternal(element)
         element.writeBool("isRedirectInput", isRedirectInput)
@@ -105,6 +109,7 @@ open class CargoCommandConfiguration(
         element.readBool("requiredFeatures")?.let { requiredFeatures = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
+        element.readBool("withSudo")?.let { withSudo = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         env = EnvironmentVariablesData.readExternal(element)
         element.readBool("isRedirectInput")?.let { isRedirectInput = it }
@@ -117,6 +122,7 @@ open class CargoCommandConfiguration(
         requiredFeatures = cmd.requiredFeatures
         allFeatures = cmd.allFeatures
         emulateTerminal = cmd.emulateTerminal
+        withSudo = cmd.withSudo
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
@@ -135,7 +141,16 @@ open class CargoCommandConfiguration(
                 path?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
                 !path.toFile().isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
             }
-
+        }
+        // TODO: remove when `com.intellij.execution.process.ElevationService` supports error stream redirection
+        // https://github.com/intellij-rust/intellij-rust/issues/7320
+        if (withSudo && showTestToolWindow()) {
+            val message = if (SystemInfo.isWindows) {
+                RsBundle.message("notification.run.tests.as.root.windows")
+            } else {
+                RsBundle.message("notification.run.tests.as.root.unix")
+            }
+            throw RuntimeConfigurationWarning(message)
         }
 
         val config = clean()
@@ -199,7 +214,8 @@ open class CargoCommandConfiguration(
                 env,
                 requiredFeatures,
                 allFeatures,
-                emulateTerminal
+                emulateTerminal,
+                withSudo
             )
         }
 
