@@ -120,6 +120,65 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
         |fn foo() {}
         |""")
 
+    fun `test indented code fence`() = doTest("""
+        |/// foo
+        |///  ```
+        |///<info>  <inject>let a = 0;
+        |</inject></info>///<info>
+        |</info>///<info>  <inject>let a = 0;
+        |</inject></info>///  ```
+        |fn foo() {}
+        |""")
+
+    fun `test indented code fence 2`() = doTest("""
+        |/// foo
+        |///  ```
+        |///<info>  <inject>let a = 0;
+        |</inject></info>///<info> <caret>
+        |</info>///<info>  <inject>let a = 0;
+        |</inject></info>///  ```
+        |fn foo() {}
+        |""")
+
+    fun `test indented code fence 3`() = doTest("""
+        |/// foo
+        |///    ```
+        |///<info>    <inject>let a = 0;
+        |</inject></info>///<info>  <caret>
+        |</info>///<info>    <inject>let a = 0;
+        |</inject></info>///  ```
+        |fn foo() {}
+        |""")
+
+    fun `test code fence with 4 backticks`() = doTest("""
+        |/// ````
+        |///<info> <inject>let a = 0;
+        |</inject></info>/// ````
+        |fn foo() {}
+        |""")
+
+    fun `test code fence with tildes`() = doTest("""
+        |/// ~~~
+        |///<info> <inject>let a = 0;
+        |</inject></info>/// ~~~
+        |fn foo() {}
+        |""")
+
+    fun `test incomplete code fence`() = doTest("""
+        |/// ```
+        |///<info>
+        |</info>///<info> <error>`</error></info>
+        |fn foo() {}
+        |""")
+
+    fun `test code before indent`() = doTest("""
+        |///  ```
+        |///<info>  <inject>let a = 0;
+        |</inject></info>///<info> <inject>let b = 0;
+        |</inject></info>///  ```
+        |fn foo() {}
+        |""")
+
     fun doTest(code: String) = checkByFileTree(
         "//- lib.rs\n/*caret*/${code.trimMargin()}",
         checkWarn = false,

@@ -91,6 +91,12 @@ class RsDocLinkDestinationImpl(type: IElementType) : RsDocElementImpl(type), RsD
 class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCodeFence {
     override fun isValidHost(): Boolean = true
 
+    override val start: RsDocCodeFenceStartEnd
+        get() = notNullChild(childOfType())
+
+    override val lang: RsDocCodeFenceLang?
+        get() = childOfType()
+
     /**
      * Handles changes in PSI injected to the comment (see [RsDoctestLanguageInjector]).
      * It is not used on typing. Instead, it's used on direct PSI changes (performed by

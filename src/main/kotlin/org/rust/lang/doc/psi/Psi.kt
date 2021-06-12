@@ -168,7 +168,10 @@ interface RsDocLinkDestination : RsDocElement
  * [InjectionBackgroundSuppressor] is used to disable builtin background highlighting for injection.
  * We create such background manually by [RsDoctestAnnotator] (see the class docs)
  */
-interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost, InjectionBackgroundSuppressor
+interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost, InjectionBackgroundSuppressor {
+    val start: RsDocCodeFenceStartEnd
+    val lang: RsDocCodeFenceLang?
+}
 
 // TODO should be `PsiLanguageInjectionHost` too
 interface RsDocCodeBlock : RsDocElement

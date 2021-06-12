@@ -13,7 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -23,14 +26,12 @@ import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.parser.probe
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.containingCrate
-import org.rust.lang.core.psi.ext.contextualFile
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocCodeFence
-import org.rust.lang.doc.psi.RsDocKind
+import org.rust.lang.doc.psi.RsDocElementTypes.DOC_DATA
+import org.rust.lang.doc.psi.RsDocGap
 import org.rust.openapiext.toPsiFile
-import org.rust.stdext.nextOrNull
+import org.rust.stdext.withPrevious
 import java.util.regex.Pattern
 
 // See https://github.com/rust-lang/rust/blob/5182cc1c/src/librustdoc/html/markdown.rs#L646
@@ -47,15 +48,6 @@ private val RUST_LANG_ALIASES = listOf(
 )
 
 class RsDoctestLanguageInjector : MultiHostInjector {
-    private data class CodeRange(val start: Int, val end: Int, val codeStart: Int) {
-        fun isCodeNotEmpty(): Boolean = codeStart + 1 < end
-
-        val indent: Int = codeStart - start
-
-        fun offsetIndent(indent: Int): CodeRange? =
-            if (start + indent < end) CodeRange(start + indent, end, codeStart) else null
-    }
-
     override fun elementsToInjectIn(): List<Class<out PsiElement>> =
         listOf(RsDocCodeFence::class.java)
 
@@ -67,29 +59,21 @@ class RsDoctestLanguageInjector : MultiHostInjector {
         val crate = context.containingCrate ?: return
         if (!crate.areDoctestsEnabled) return // only library targets can have doctests
         val crateName = crate.normName
-        val text = context.text
 
-        val originalRanges = findDoctestInjectableRanges(text, context.containingDoc.elementType).map {
-            CodeRange(
-                it.startOffset,
-                it.endOffset,
-                CharArrayUtil.shiftForward(text, it.startOffset, it.endOffset, " \t")
-            )
-        }
+        val info = context.doctestInfo() ?: return
+        val text = info.text
 
-        val commonIndent = originalRanges.filter { it.isCodeNotEmpty() }.map { it.indent }.minOrNull()
-        val indentedRanges = if (commonIndent != null) originalRanges.mapNotNull { it.offsetIndent(commonIndent) } else originalRanges
-
-        val ranges = indentedRanges.map { (start, end, codeStart) ->
+        val ranges = info.rangesForInjection.map {
+            val codeStart = CharArrayUtil.shiftForward(text, it.startOffset, it.endOffset, " \t")
             // `cargo doc` has special rules for code lines which start with `#`:
             //   * `# ` prefix is used to mark lines that should be skipped in rendered documentation.
             //   * `##` prefix is converted to `#`
             // See https://github.com/rust-lang/rust/blob/5182cc1c/src/librustdoc/html/markdown.rs#L114
             when {
-                text.startsWith("##", codeStart) -> TextRange(codeStart + 1, end)
-                text.startsWith("# ", codeStart) -> TextRange(codeStart + 2, end)
-                text.startsWith("#\n", codeStart) -> TextRange(codeStart + 1, end)
-                else -> TextRange(start, end)
+                text.startsWith("##", codeStart) -> TextRange(codeStart + 1, it.endOffset)
+                text.startsWith("# ", codeStart) -> TextRange(codeStart + 2, it.endOffset)
+                text.startsWith("#\n", codeStart) -> TextRange(codeStart + 1, it.endOffset)
+                else -> TextRange(it.startOffset, it.endOffset)
             }
         }
 
@@ -109,7 +93,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
         //
         // We use a lexer instead of parser here to reduce CPU usage. It is less strict,
         // i.e. sometimes we can think that main function exists when it's not. But such
-        // code is very ray, so I think this implementation in reasonable.
+        // code is very rare, so I think this implementation in reasonable.
         val (alreadyHasMain, alreadyHasExternCrate) = if (fullInjectionText.contains("main")) {
             val lexer = project.createRustPsiBuilder(fullInjectionText)
             val alreadyHasMain = lexer.probe {
@@ -159,50 +143,100 @@ class RsDoctestLanguageInjector : MultiHostInjector {
     }
 }
 
-fun findDoctestInjectableRanges(comment: RsDocCodeFence): List<TextRange> =
-    findDoctestInjectableRanges(comment.text, comment.containingDoc.elementType)
-
-private fun findDoctestInjectableRanges(text: String, elementType: IElementType): List<TextRange> {
-    val infix = RsDocKind.of(elementType).infix
-    val isBlockInfixUsed = text.count { it == '\n' } == "\\n[\\s]*\\*".toRegex().findAll(text).count()
-
-    // Contains code lines inside backticks including `///` at the start and `\n` at the end.
-    // It doesn't contain the last line with /// ```
-    val lines = run {
-        val codeBlockStart = CharArrayUtil.shiftForward(text, 0, "` \t") // skip ```
-        val codeBlockEnd = text.length
-        generateSequence(codeBlockStart) { text.indexOf("\n", it) + 1 }
-            .takeWhile { it != 0 && it <= codeBlockEnd }
-            .zipWithNext()
-            .iterator()
-    }
-
-    // ```rust, should_panic, edition2018
-    //     ^ this text
-    val lang = lines.nextOrNull()?.let { text.substring(it.first, it.second - 1) } ?: return emptyList()
-    if (lang.isNotEmpty()) {
-        val parts = lang.split(LANG_SPLIT_REGEX).filter { it.isNotBlank() }
-        if (parts.any { it !in RUST_LANG_ALIASES }) return emptyList()
-    }
-
-    if (!isBlockInfixUsed && RsDocKind.of(elementType).isBlock) {
-        return lines.asSequence()
-            .map { TextRange(it.first, it.second) }
-            .toList()
-
-    }
-    // skip doc comment infix (`///`, `//!` or ` * `)
-
-    return lines.asSequence().mapNotNull { (lineStart, lineEnd) ->
-        val index = text.indexOf(infix, lineStart)
-        if (index != -1 && index < lineEnd) {
-            val start = index + infix.length
-            TextRange(start, lineEnd)
-        } else {
-            null
+/**
+ * ~~~
+ * ///.foo
+ * ///.---```
+ * ///.---let a = 1;
+ * ///
+ * ///.---let b = a;
+ * ///.---```
+ * ~~~
+ *
+ * In this snippet, a dot (.) shows [docIndent] and a `---` shows [fenceIndent].
+ * [rangesForInjection] include only `let a = 1;\n` and `let b = a;\n`, and
+ * [rangesForBackgroundHighlighting] include `.---let a = 1;\n`, `\n` and `.---let b = a;`
+ */
+class DoctestInfo private constructor(
+    private val docIndent: Int,
+    private val fenceIndent: Int,
+    private val contents: List<Content>,
+    val text: String
+) {
+    val rangesForInjection: List<TextRange>
+        get() = contents.mapNotNull { c ->
+            val psi = (c as? Content.DocData)?.psi ?: return@mapNotNull null
+            val range = psi.textRangeInParent
+            val add = if (range.endOffset < text.length) 1 else 0
+            val startOffset = CharArrayUtil.shiftForward(text, range.startOffset, range.startOffset + fenceIndent, " \t")
+            if (startOffset < range.endOffset) TextRange(startOffset, range.endOffset + add) else null
         }
-    }.toList()
+
+    val rangesForBackgroundHighlighting: List<TextRange>
+        get() = contents.map { c ->
+            when (c) {
+                is Content.DocData -> {
+                    val range = c.psi.textRangeInParent
+                    val add = if (range.endOffset < text.length) 1 else 0
+                    TextRange(range.startOffset - docIndent, range.endOffset + add)
+                }
+                is Content.EmptyLine -> c.range
+            }
+        }
+
+    private sealed class Content {
+        class DocData(val psi: PsiElement) : Content()
+        class EmptyLine(val range: TextRange) : Content()
+    }
+
+    companion object {
+        fun fromCodeFence(codeFence: RsDocCodeFence): DoctestInfo? {
+            if (!codeFence.project.rustSettings.doctestInjectionEnabled) return null
+            if (codeFence.containingCrate?.areDoctestsEnabled != true) return null
+
+            val lang = codeFence.lang?.text ?: ""
+            val parts = lang.split(LANG_SPLIT_REGEX).filter { it.isNotBlank() }
+            if (parts.any { it !in RUST_LANG_ALIASES }) return null
+
+            val start = codeFence.start
+            val fenceIndent = start.text.indexOfFirst { it == '`' || it == '~' }
+            val prevLeaf = PsiTreeUtil.prevLeaf(codeFence)
+            val docIndent = if (prevLeaf is PsiWhiteSpace && PsiTreeUtil.prevLeaf(prevLeaf) is RsDocGap) {
+                prevLeaf.textLength
+            } else {
+                0
+            }
+
+            var isAfterNewLine = false
+            val contents = mutableListOf<Content>()
+
+            for (element in codeFence.childrenWithLeaves) {
+                when (element.elementType) {
+                    DOC_DATA -> {
+                        isAfterNewLine = false
+                        contents += Content.DocData(element)
+                    }
+                    WHITE_SPACE -> {
+                        for ((index, prevIndex) in element.text.indicesOf("\n").withPrevious()) {
+                            if (isAfterNewLine) {
+                                val startOffset = if (prevIndex != null) prevIndex + 1 else 0
+                                val endOffset = index + 1
+                                val range = TextRange(startOffset, endOffset).shiftRight(element.startOffsetInParent)
+                                contents += Content.EmptyLine(range)
+                            }
+                            isAfterNewLine = true
+                        }
+                    }
+                }
+            }
+
+            return DoctestInfo(docIndent, fenceIndent, contents, codeFence.text)
+        }
+    }
 }
+
+fun RsDocCodeFence.doctestInfo(): DoctestInfo? =
+    DoctestInfo.fromCodeFence(this)
 
 private fun String.indicesOf(s: String): Sequence<Int> =
     generateSequence(indexOf(s)) { indexOf(s, it + s.length) }.takeWhile { it != -1 }
