@@ -292,4 +292,47 @@ class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsInte
         pub use a::b4;
 
     """)
+
+    fun `test keep outer doc comment`() = doAvailableTest("""
+        /// My doc comment
+        use a/*caret*/::b::c;
+        use a::b::d;
+    """, """
+        /// My doc comment
+        use a::{
+            b::c,
+            b::d
+        };
+
+    """)
+
+    fun `test keep middle doc comment`() = doAvailableTest("""
+        /// My doc comment
+        use a/*caret*/::b::c;
+        /// My doc comment 2
+        use a::b::d;
+    """, """
+        /// My doc comment
+        /// My doc comment 2
+        use a::{
+            b::c,
+            b::d
+        };
+
+    """)
+
+    fun `test keep middle comment`() = doAvailableTest("""
+        // My comment
+        use a/*caret*/::b::c;
+        // My comment 2
+        use a::b::d;
+    """, """
+        // My comment
+        // My comment 2
+        use a::{
+            b::c,
+            b::d
+        };
+
+    """)
 }
