@@ -14,7 +14,8 @@ data class RsDocLine(
     private val endOffset: Int,
     val contentStartOffset: Int = startOffset,
     private val contentEndOffset: Int = endOffset,
-    val isLastLine: Boolean
+    val isLastLine: Boolean,
+    val isRemoved: Boolean = false,
 ) {
     init {
         require(contentEndOffset >= contentStartOffset) { "`$text`, $contentStartOffset, $contentEndOffset" }
@@ -30,12 +31,25 @@ data class RsDocLine(
 
     val contentLength: Int get() = contentEndOffset - contentStartOffset
 
-    fun removePrefix(delimiter: String): RsDocLine {
-        return if (CharArrayUtil.regionMatches(text, contentStartOffset, contentEndOffset, delimiter)) {
-            copy(contentStartOffset = contentStartOffset + delimiter.length, contentEndOffset = contentEndOffset)
+    fun removePrefix(prefix: String): RsDocLine {
+        return if (CharArrayUtil.regionMatches(text, contentStartOffset, contentEndOffset, prefix)) {
+            copy(contentStartOffset = contentStartOffset + prefix.length, contentEndOffset = contentEndOffset)
         } else {
             this
         }
+    }
+
+    fun removeSuffix(suffix: String): RsDocLine {
+        if (contentLength < suffix.length) return this
+        return if (CharArrayUtil.regionMatches(text, contentEndOffset - suffix.length, contentEndOffset, suffix)) {
+            copy(contentStartOffset = contentStartOffset, contentEndOffset = contentEndOffset - suffix.length)
+        } else {
+            this
+        }
+    }
+
+    fun markRemoved(): RsDocLine {
+        return copy(contentEndOffset = contentStartOffset, isRemoved = true)
     }
 
     fun trimStart(): RsDocLine {
@@ -43,48 +57,15 @@ data class RsDocLine(
         return copy(contentStartOffset = newOffset, contentEndOffset = contentEndOffset)
     }
 
+    fun countStartWhitespace(): Int {
+        return shiftForwardWhitespace() - contentStartOffset
+    }
+
     private fun shiftForwardWhitespace(): Int = CharArrayUtil.shiftForward(text, contentStartOffset, contentEndOffset, " \t")
-
-    fun leadingWhitespace(): Int = shiftForwardWhitespace() - contentStartOffset
-
-    fun startsWith(s: String): Boolean =
-        CharArrayUtil.regionMatches(text, contentStartOffset, contentEndOffset, s)
 
     fun substring(startIndex: Int): RsDocLine {
         require(startIndex <= contentLength)
         return copy(contentStartOffset = contentStartOffset + startIndex)
-    }
-
-    fun indentBy(indent: Int): RsDocLine {
-        return dropWhileAtMost(indent) { it == ' ' }
-    }
-
-    private inline fun dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): RsDocLine {
-        var i = n
-        for (index in contentStartOffset until contentEndOffset) {
-            if (i-- <= 0 || !predicate(text[index])) {
-                return copy(contentStartOffset = index)
-            }
-        }
-        return copy(contentStartOffset = contentEndOffset, contentEndOffset = contentEndOffset)
-    }
-
-    /**
-     * Get rid of trailing (pseudo-regexp): `[ ]+ [*]* * /`
-     */
-    fun trimTrailingAsterisks(): RsDocLine {
-        if (endOffset - startOffset < 2) return this
-
-        var i = contentEndOffset - 1
-        if (text.get(i - 1) == '*' && text.get(i) == '/') {
-            i -= 2
-            while (i >= contentStartOffset && text.get(i) == '*') i--
-            while (i >= contentStartOffset && text.get(i) == ' ') i--
-
-            return copy(contentStartOffset = contentStartOffset, contentEndOffset = i + 1)
-        }
-
-        return this
     }
 
     companion object {

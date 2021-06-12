@@ -5,7 +5,6 @@
 
 package org.rust.lang.doc
 
-import com.intellij.openapi.util.text.StringUtil
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,15 +16,14 @@ import org.rust.lang.doc.psi.RsDocKind.*
 class RsDocRemoveDecorationTest(
     private val kind: RsDocKind,
     private val comment: String,
-    private val content: String
+    private val expectedContent: String
 ) {
     @Test
     fun test() {
-        val commentNorm = StringUtil.convertLineSeparators(comment)
-        val contentNorm = StringUtil.convertLineSeparators(content)
-
-        assertEquals(contentNorm,
-            kind.removeDecoration(commentNorm).joinToString("\n").trim())
+        assertEquals(
+            expectedContent,
+            kind.removeDecoration(comment).joinToString("\n")
+        )
     }
 
     companion object {
@@ -48,6 +46,12 @@ class RsDocRemoveDecorationTest(
 
             arrayOf(OuterEol,
                 //language=Rust
+                """///   foo
+                   /// bar""",
+                "  foo\nbar"),
+
+            arrayOf(OuterEol,
+                //language=Rust
                 """/// foo
                    /// ```
                    /// code {
@@ -55,11 +59,11 @@ class RsDocRemoveDecorationTest(
                    /// }
                    /// ```""",
                 """foo
-```
-code {
-    bar
-}
-```"""),
+                  |```
+                  |code {
+                  |    bar
+                  |}
+                  |```""".trimMargin()),
 
             arrayOf(OuterEol,
                 //language=Rust
@@ -70,15 +74,31 @@ code {
                    ///   }
                    ///   ```""",
                 """foo
-```
-code {
-    bar
-}
-```"""),
+                  |```
+                  |code {
+                  |    bar
+                  |}
+                  |```""".trimMargin()),
+
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/**
+                    *  foo
+                    *  bar
+                    */""",
+                "foo\nbar"),
 
             arrayOf(OuterBlock,
                 //language=Rust
                 """/** foo
+                  | *  bar
+                  | */""".trimMargin(),
+                "foo\n*  bar"),
+
+            arrayOf(InnerBlock,
+                //language=Rust
+                """/*!
+                    *  foo
                     *  bar
                     */""",
                 "foo\nbar"),
@@ -86,13 +106,14 @@ code {
             arrayOf(InnerBlock,
                 //language=Rust
                 """/*! foo
-                    *  bar
-                    */""",
-                "foo\nbar"),
+                  | *  bar
+                  | */""".trimMargin(),
+                "foo\n*  bar"),
 
             arrayOf(OuterBlock,
                 //language=Rust
-                """/** foo
+                """/**
+                    *  foo
                     *  ```
                     *  code {
                     *      bar
@@ -100,54 +121,105 @@ code {
                     *  ```
                     */""",
                 """foo
-```
-code {
-    bar
-}
-```"""),
+                  |```
+                  |code {
+                  |    bar
+                  |}
+                  |```""".trimMargin()),
+
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/** foo
+                  | *  ```
+                  | *  code {
+                  | *      bar
+                  | *  }
+                  | *  ```
+                  | */""".trimMargin(),
+                """foo
+                  |*  ```
+                  |*  code {
+                  |*      bar
+                  |*  }
+                  |*  ```""".trimMargin()),
+
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/**
+                  | *    foo
+                  | *    ```
+                  | *    code {
+                  | *        bar
+                  | *    }
+                  | *    ```
+                  | */""".trimMargin(),
+                """foo
+                  |```
+                  |code {
+                  |    bar
+                  |}
+                  |```""".trimMargin()),
 
             arrayOf(OuterBlock,
                 //language=Rust
                 """/**   foo
-                    *    ```
-                    *    code {
-                    *        bar
-                    *    }
-                    *    ```
-                    */""",
-                """foo
-```
-code {
-    bar
-}
-```"""),
+                  | *    ```
+                  | *    code {
+                  | *        bar
+                  | *    }
+                  | *    ```
+                  | */""".trimMargin(),
+                """  foo
+                  |*    ```
+                  |*    code {
+                  |*        bar
+                  |*    }
+                  |*    ```""".trimMargin()),
 
             arrayOf(OuterBlock,
                 //language=Rust
                 "/** foo */",
-                "foo"),
+                " foo "),
 
             arrayOf(OuterBlock,
                 //language=Rust
                 """/** foo
-                    *  bar */""",
-                "foo\nbar"),
+                  | *  bar */""".trimMargin(),
+                "foo\n*  bar "),
+
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/**
+                  | *  foo
+                  | *  bar */""".trimMargin(),
+                "foo\nbar "),
 
             arrayOf(OuterBlock,
                 //language=Rust
                 """/** foo
-                   |bar * bar
-                   |*/""".trimMargin(),
-                "foo\nbar * bar"),
+                  |bar * bar
+                  |*/""".trimMargin(),
+                " foo\nbar * bar"),
+
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/**
+                  |   ```
+                  |   missing asterisk
+                  |   ```
+                  | */""".trimMargin(),
+                """```
+                  |missing asterisk
+                  |```""".trimMargin()),
 
             arrayOf(Attr, "foo\nbar", "foo\nbar"),
-            arrayOf(Attr, " *foo1", "*foo1"),
+            arrayOf(Attr, " *foo1", " *foo1"),
             arrayOf(Attr, "\n * foo2\n", "foo2"),
             arrayOf(Attr, "\n * foo3\n * foo4\n ", "foo3\nfoo4"),
             arrayOf(Attr, "\n  * foo5\n  * foo6\n  ", "foo5\nfoo6"),
-            arrayOf(Attr, "\n   * foo7\n * foo8\n ", "* foo7\n* foo8"),
+            arrayOf(Attr, "\n   * foo7\n * foo8\n ", "  * foo7\n* foo8"),
             arrayOf(Attr, "\n  * foo9\n \n  *\n  *", "* foo9\n\n*\n*"),
-            arrayOf(Attr, "\n  * foo10\na\n  *\n  *", "* foo10\na\n*\n*"),
+            arrayOf(Attr, "\n  * foo10\na\n  *\n  *", "  * foo10\na\n  *\n  *"),
             arrayOf(Attr, "\n \n foo11\n", "foo11"),
             arrayOf(Attr, "\n foo12\n ", "foo12"),
         )

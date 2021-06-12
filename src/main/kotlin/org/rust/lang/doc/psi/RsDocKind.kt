@@ -10,7 +10,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.stdext.nextOrNull
+import kotlin.math.min
 
 enum class RsDocKind {
     Attr {
@@ -55,6 +55,7 @@ enum class RsDocKind {
 
     abstract val prefix: String
     abstract val infix: String
+    val suffix: String get() = if (isBlock) "*/" else ""
 
     val isBlock: Boolean
         get() = this == InnerBlock || this == OuterBlock
@@ -71,37 +72,35 @@ enum class RsDocKind {
         removeDecoration(RsDocLine.splitLines(text))
 
     fun removeDecoration(text: CharSequence): Sequence<CharSequence> =
-        removeDecorationToLines(text).map { it.content }
+        removeDecorationToLines(text).mapNotNull { if (it.isRemoved) null else it.content }
 
     protected fun removeEolDecoration(decoratedLines: Sequence<RsDocLine>, infix: String = this.infix): Sequence<RsDocLine> {
-        val lines = decoratedLines.map { it.trimStart().removePrefix(infix) }.iterator()
-        val firstLineIndented = lines.nextOrNull() ?: return emptySequence()
-        val firstLine = firstLineIndented.trimStart()
-        val indent = firstLine.contentStartOffset - firstLineIndented.contentStartOffset
+        return removeCommonIndent(decoratedLines.map { it.trimStart().removePrefix(infix) })
+    }
 
-        return sequenceOf(firstLine) + lines.asSequence().map { line ->
-            line.indentBy(indent)
+    // https://github.com/rust-lang/rust/blob/b84ffce1aa806d1d53c2588fa/src/librustdoc/passes/unindent_comments.rs#L68
+    protected fun removeCommonIndent(decoratedLines: Sequence<RsDocLine>): Sequence<RsDocLine> {
+        val lines = decoratedLines.toList()
+
+        val minIndent = lines.fold(Int.MAX_VALUE) { minIndent, line ->
+            if (line.isRemoved || line.content.isBlank()) {
+                minIndent
+            } else {
+                min(minIndent, line.countStartWhitespace())
+            }
+        }
+
+        return lines.asSequence().map { line ->
+            line.substring(min(minIndent, line.contentLength))
         }
     }
 
     protected fun removeBlockDecoration(lines: Sequence<RsDocLine>): Sequence<RsDocLine> {
-        val ll = lines.toMutableList()
-        return if (ll.asSequence().drop(1).all { it.trimStart().startsWith("*") }) {
-            // Doing some patches we can "convert" block comment into eol one
-            ll[0] = ll[0].removePrefix(prefix)
-            ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
-            sequenceOf(ll[0]) + removeEolDecoration(ll.subList(1, ll.size).asSequence(), infix)
-        } else {
-            ll[0] = ll[0].removePrefix(prefix)
-            val minIndent = ll.asSequence().drop(1).map { it.leadingWhitespace() }.minOrNull()
-            if (minIndent != null) {
-                for (i in 1 until ll.size) {
-                    ll[i] = ll[i].indentBy(minIndent)
-                }
-            }
-            ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
-            ll.asSequence()
-        }
+        val lines2 = lines.toMutableList()
+        if (lines2.isEmpty()) return emptySequence()
+        lines2[0] = lines2[0].removePrefix(prefix)
+        lines2[lines2.lastIndex] = lines2[lines2.lastIndex].removeSuffix(suffix)
+        return removeAttrDecoration(lines2.asSequence())
     }
 
     // https://github.com/rust-lang/rust/blob/edeee915b1c52f97411e57ef6b1a8bd46548a37a/compiler/rustc_ast/src/util/comments.rs#L28
@@ -130,7 +129,17 @@ enum class RsDocKind {
                 end--
             }
 
-            return lines.subList(start, end)
+            val lines2 = lines.toMutableList()
+
+            for (i in 0 until start) {
+                lines2[i] = lines2[i].markRemoved()
+            }
+
+            for (i in end until lines.size) {
+                lines2[i] = lines2[i].markRemoved()
+            }
+
+            return lines2
         }
 
         /** Calculates common indent before `*`, if possible */
@@ -139,6 +148,7 @@ enum class RsDocKind {
             var first = true
 
             for (line in lines) {
+                if (line.isRemoved) continue
                 for ((j, c) in line.content.withIndex()) {
                     if (j > indent || !"* \t".contains(c)) {
                         return null
@@ -164,11 +174,11 @@ enum class RsDocKind {
         if (lines.size <= 1) return lines.asSequence()
         val lines2 = doVerticalTrim(lines)
         val indent = calculateCommonIndentBeforeAsterisk(lines2)
-        return removeEolDecoration(if (indent != null) {
-            lines2.map { it.substring(indent + 1) }
+        return removeCommonIndent(if (indent != null) {
+            lines2.map { it.substring(min(indent + 1, it.contentLength)) }
         } else {
             lines2
-        }.asSequence(), infix = "")
+        }.asSequence())
     }
 
     companion object {
