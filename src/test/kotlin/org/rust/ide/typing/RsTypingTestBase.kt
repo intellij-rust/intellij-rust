@@ -13,8 +13,13 @@ abstract class RsTypingTestBase : RsTestBase() {
         myFixture.type(c)
     }
 
-    protected fun doTestByText(@Language("Rust") before: String, @Language("Rust") after: String, c: Char = '\n') =
-        checkByText(before.trimIndent(), after.trimIndent()) {
+    protected fun doTestByText(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        c: Char = '\n',
+        fileName: String = "main.rs",
+    ) =
+        checkByText(before.trimIndent(), after.trimIndent(), fileName) {
             myFixture.type(c)
         }
 }

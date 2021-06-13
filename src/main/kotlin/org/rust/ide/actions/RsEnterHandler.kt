@@ -12,36 +12,28 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EnterAction
-import com.intellij.psi.impl.source.tree.injected.InjectedCaret
 import org.rust.ide.injected.RsDoctestLanguageInjector
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.psi.RsFile
 
 /**
- * This class is used to handle typing enter inside doctest language injection (see [RsDoctestLanguageInjector]).
+ * This class is used to handle enter typing inside doctest language injection (see [RsDoctestLanguageInjector]).
+ *
  * Enter handlers are piped:
- * [EnterHandler] -> [RsEnterHandler] -> --------------------> [EnterAction.Handler]
- *  |                 |             \ -> [EnterHandler] -> /    ^ just insert new line [originalHandler]
- *  |                 this class          ^ (the case of injected psi) [injectionEnterHandler]
+ * [EnterHandler] -> [RsEnterHandler] -> [EnterAction.Handler]
+ *  |                 ^ this class        ^ just insert new line [originalHandler]
  *  front platform handler (handles indents and other complex stuff)
  */
 class RsEnterHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-    private val injectionEnterHandler = EnterHandler(object : EditorActionHandler() {
-        override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-            originalHandler.execute(editor, caret, dataContext)
-        }
-    })
-
     public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-        return originalHandler.isEnabled(editor, caret, dataContext)
+        // If we forbid enter handling inside language injections in Rustdoc code blocks, then
+        // enter is handled outside of the injection (i.e., inside the doc comment)
+        val isDoctestInjection = editor is EditorWindow &&
+            (editor.injectedFile as? RsFile)?.isDoctestInjection == true
+        return !isDoctestInjection && originalHandler.isEnabled(editor, caret, dataContext)
     }
 
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-        if (editor is EditorWindow && caret is InjectedCaret &&
-            (editor.injectedFile as? RsFile)?.isDoctestInjection == true) {
-            injectionEnterHandler.execute(editor.delegate, caret.delegate, dataContext)
-        } else {
-            originalHandler.execute(editor, caret, dataContext)
-        }
+        originalHandler.execute(editor, caret, dataContext)
     }
 }
