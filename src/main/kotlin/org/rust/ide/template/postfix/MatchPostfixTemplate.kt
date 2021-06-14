@@ -14,6 +14,13 @@ import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyStr
+import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
@@ -32,31 +39,79 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
         val project = expression.project
         val factory = RsPsiFactory(project)
 
-        val exprText = if (expression is RsStructLiteral) "(${expression.text})" else expression.text
-        val emptyMatch = factory.createExpression("match $exprText {}")
-        val matchExpr = expression.replace(emptyMatch) as RsMatchExpr
+        val type = expression.type
+
+        val processor = getMatchProcessor(type, expression)
+
+        val match = processor.createMatch(factory, expression)
+        val matchExpr = expression.replace(match) as RsMatchExpr
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
+        processor.normalizeMatch(matchExpr)
+
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+
+        val matchBody = matchExpr.matchBody ?: return
+        val toBeReplaced = processor.getElementsToReplace(matchBody)
+
+        if (toBeReplaced.isEmpty()) {
+            val arm = matchBody.matchArmList.firstOrNull() ?: return
+            val blockExpr = arm.expr as? RsBlockExpr ?: return
+            editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
+        } else {
+            editor.buildAndRunTemplate(matchBody, toBeReplaced.map { it.createSmartPointer() })
+        }
+    }
+}
+
+private fun getMatchProcessor(ty: Ty, context: RsElement): MatchProcessor {
+    return when {
+        ty is TyAdt && ty.item == context.knownItems.String -> StringMatchProcessor
+        ty is TyReference && ty.referenced is TyStr -> StringLikeMatchProcessor()
+        else -> GenericMatchProcessor
+    }
+}
+
+private abstract class MatchProcessor {
+    abstract fun createMatch(factory: RsPsiFactory, expression: RsExpr): RsMatchExpr
+    open fun normalizeMatch(matchExpr: RsMatchExpr) {}
+
+    open fun getElementsToReplace(matchBody: RsMatchBody): List<RsElement> = emptyList()
+}
+
+private object GenericMatchProcessor : MatchProcessor() {
+    override fun createMatch(factory: RsPsiFactory, expression: RsExpr): RsMatchExpr {
+        val exprText = if (expression is RsStructLiteral) "(${expression.text})" else expression.text
+        return factory.createExpression("match $exprText {}") as RsMatchExpr
+    }
+
+    override fun normalizeMatch(matchExpr: RsMatchExpr) {
         val patterns = matchExpr.checkExhaustive().orEmpty()
         val fix = if (patterns.isEmpty()) {
             AddWildcardArmFix(matchExpr)
         } else {
             AddRemainingArmsFix(matchExpr, patterns)
         }
-        fix.invoke(project, matchExpr.containingFile, matchExpr, matchExpr)
-
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
-        val matchBody = matchExpr.matchBody ?: return
-        val wildPatterns = matchBody.descendantsOfType<RsPatWild>()
-
-        if (wildPatterns.isEmpty()) {
-            val arm = matchBody.matchArmList.firstOrNull() ?: return
-            val blockExpr = arm.expr as? RsBlockExpr ?: return
-            editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
-        } else {
-            editor.buildAndRunTemplate(matchBody, wildPatterns.map { it.createSmartPointer() })
-        }
+        fix.invoke(matchExpr.project, matchExpr.containingFile, matchExpr, matchExpr)
     }
+
+    override fun getElementsToReplace(matchBody: RsMatchBody): List<RsElement> =
+        matchBody.descendantsOfType<RsPatWild>().toList()
+}
+
+private open class StringLikeMatchProcessor : MatchProcessor() {
+    open fun expressionToText(expression: RsExpr): String = expression.text
+
+    override fun createMatch(factory: RsPsiFactory, expression: RsExpr): RsMatchExpr {
+        val exprText = expressionToText(expression)
+        return factory.createExpression("match $exprText {\n\"\" => {}\n_ => {} }") as RsMatchExpr
+    }
+
+    override fun getElementsToReplace(matchBody: RsMatchBody): List<RsElement> =
+        listOfNotNull(matchBody.matchArmList.getOrNull(0)?.pat as? RsPatConst)
+}
+
+private object StringMatchProcessor : StringLikeMatchProcessor() {
+    override fun expressionToText(expression: RsExpr): String = "${expression.text}.as_str()"
 }
