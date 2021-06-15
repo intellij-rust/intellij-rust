@@ -152,12 +152,12 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
         /// <DOC_LINK>[link](/url "title \"&quot;")</DOC_LINK>
         /// <DOC_LINK>[link](/url 'title "and" title')</DOC_LINK>
         /// <DOC_LINK>[link \[bar](/uri)</DOC_LINK>
-        /// <DOC_LINK>[link *foo **bar** `#`*](/uri)</DOC_LINK>
+        /// <DOC_LINK>[link <DOC_EMPHASIS>*foo <DOC_STRONG>**bar**</DOC_STRONG> `#`*</DOC_EMPHASIS>](/uri)</DOC_LINK>
         /// *<DOC_LINK>[foo*](/uri)</DOC_LINK>
         /// <DOC_LINK>[foo *bar](baz*)</DOC_LINK>
         /// <DOC_LINK>[foo][bar]</DOC_LINK>
         /// <DOC_LINK>[link \[bar][ref]</DOC_LINK>
-        /// <DOC_LINK>[link *foo **bar** `#`*][ref]</DOC_LINK>
+        /// <DOC_LINK>[link <DOC_EMPHASIS>*foo <DOC_STRONG>**bar**</DOC_STRONG> `#`*</DOC_EMPHASIS>][ref]</DOC_LINK>
         /// *<DOC_LINK>[foo*][ref]</DOC_LINK>
         /// <DOC_LINK>[foo][]</DOC_LINK>
         /// <DOC_LINK>[foo]</DOC_LINK>
@@ -210,7 +210,12 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
     """)
 
     fun `test heading with formatting`() = checkHighlightingStrict("""
-        /// <DOC_HEADING># header <DOC_CODE>`code`</DOC_CODE> *emphasis*</DOC_HEADING>
+        /// <DOC_HEADING># header <DOC_CODE>`code`</DOC_CODE> <DOC_EMPHASIS>*emphasis*</DOC_EMPHASIS></DOC_HEADING>
+    """)
+
+    fun `test emphasis and strong emphasis`() = checkHighlightingStrict("""
+        /// <DOC_EMPHASIS>*emphasis*</DOC_EMPHASIS>, and <DOC_EMPHASIS>_also emphasis_</DOC_EMPHASIS>
+        /// <DOC_STRONG>**strong emphasis**</DOC_STRONG>, and <DOC_STRONG>__also strong emphasis__</DOC_STRONG>
     """)
 
     private fun checkHighlightingStrict(@Language("Rust") text: String) =
