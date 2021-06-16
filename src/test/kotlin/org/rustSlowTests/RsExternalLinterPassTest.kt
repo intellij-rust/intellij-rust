@@ -7,6 +7,7 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
+import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -14,11 +15,7 @@ import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.fileTree
 import org.rust.ide.annotator.RsExternalLinterUtils
-import org.rust.singleProject
-import org.rust.singleWorkspace
-import org.rust.workspaceOrFail
 
 class RsExternalLinterPassTest : RsWithToolchainTestBase() {
 
@@ -166,6 +163,39 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     }
 
+    fun `test add reference to index for compiler errors from index`() = checkTooltip("""
+        fn main() {
+            let _: () = 0;
+        }
+    """, """
+        mismatched types <a href="<a href='https://doc.rust-lang.org/error-index.html#E0308'>https://doc.rust-lang.org/error-index.html#E0308</a>">E0308</a><br>expected `()`, found integer
+    """)
+
+    @MinRustcVersion("1.44.1")
+    fun `test don't add reference to index for compiler errors not from index`() = checkTooltip("""
+        fn main() {
+            let x = ();
+        }
+    """, """
+        unused variable: `x`
+        Note: `#[warn(unused_variables)]` on by default
+        Help: if this is intentional, prefix it with an underscore
+    """)
+
+    @MinRustcVersion("1.45.0")
+    fun `test handle hyperlinks in errors`() = checkTooltip("""
+        #![deny(clippy::unwrap_used)]
+        fn main() {
+            let x = Some(());
+            x.unwrap()
+        }
+    """, """
+        used `unwrap()` on `an Option` value
+        Note: the lint level is defined here
+        Help: if you don't want to handle the `None` case gracefully, consider using `expect()` to provide a better panic message
+        Help: for further information visit <a href='https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used'>https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used</a>
+    """, externalLinter = ExternalLinter.CLIPPY)
+
     private fun doTest(
         @Language("Rust") mainRs: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
@@ -193,5 +223,30 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         project.cargoProjects.modifyFeatures(cargoProject, setOf(PackageFeature(pkg, "disabled_feature")), FeatureState.Disabled)
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         myFixture.checkHighlighting()
+    }
+
+    // BACKCOMPAT: 2021.1. Use `tooltip` attribute instead
+    private fun checkTooltip(
+        @Language("Rust") mainRs: String,
+        tooltip: String,
+        externalLinter: ExternalLinter = ExternalLinter.DEFAULT
+    ) {
+        project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("main.rs", mainRs)
+            }
+        }.create()
+        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
+        val highlight = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING)
+            .single { it.description == RsExternalLinterUtils.TEST_MESSAGE }
+        assertEquals(tooltip.trimIndent().replace("\n", "<br>"), highlight.toolTip)
     }
 }
