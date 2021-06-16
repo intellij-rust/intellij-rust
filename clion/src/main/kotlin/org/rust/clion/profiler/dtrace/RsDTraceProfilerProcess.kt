@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
 import com.intellij.profiler.DummyCallTreeBuilder
 import com.intellij.profiler.api.*
-import com.intellij.profiler.clion.CPPProfilerSettings
 import com.intellij.profiler.dtrace.DTraceProfilerProcessBase
 import com.intellij.profiler.dtrace.FullDumpParser
 import com.intellij.profiler.dtrace.SimpleProfilerSettingsState
@@ -69,7 +68,7 @@ class RsDTraceProfilerProcess private constructor(
             timeoutInMilliseconds: Int,
             project: Project
         ): Promise<RsDTraceProfilerProcess> {
-            val settings = CPPProfilerSettings.instance.state
+            val settings = getDTraceSettings()
 
             // WARNING: Do not use such solution for other needs!
             // We want to always use -xmangled option because DTrace cannot demangle Rust symbols correctly

@@ -9,13 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.profiler.MisConfiguredException
 import com.intellij.profiler.clion.CPPProfilerSettings
 import com.intellij.profiler.clion.profilerConfigurable
+import com.intellij.profiler.dtrace.SimpleProfilerSettingsState
 import com.intellij.profiler.validateFrequency
 import com.intellij.profiler.validateLocalPath
 
 @Throws(MisConfiguredException::class)
 internal fun validateDTraceSettings(project: Project) {
-    val state = CPPProfilerSettings.instance.state
+    val state = getDTraceSettings()
     throw validateLocalPath(state.executablePath.orEmpty(), "DTrace executable", project, profilerConfigurable::class.java)
         ?: validateFrequency(state.samplingFrequency, project, profilerConfigurable::class.java)
         ?: return
 }
+
+fun getDTraceSettings(): SimpleProfilerSettingsState = CPPProfilerSettings.instance.state

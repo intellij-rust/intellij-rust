@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.macros.tt
 
+import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.macros.proc.ProcMacroJsonParser
@@ -305,10 +305,22 @@ class TokenTreeJsonTest : RsTestBase() {
         val jackson = ProcMacroJsonParser.jackson
         val actualJson = jackson
             .writer()
-            .with(DefaultPrettyPrinter(IntelliJPrettyPrinter()))
+            .with(DefaultPrettyPrinter(TestPrettyPrinter()))
             .writeValueAsString(subtree)
 
         assertEquals(expectedJson2, actualJson)
         assertEquals(jackson.readValue(actualJson, TokenTree::class.java), subtree)
+    }
+}
+
+private class TestPrettyPrinter : DefaultPrettyPrinter() {
+    init {
+        _objectFieldValueSeparatorWithSpaces = ": "
+        _objectIndenter = UNIX_LINE_FEED_INSTANCE
+        _arrayIndenter = UNIX_LINE_FEED_INSTANCE
+    }
+
+    companion object {
+        private val UNIX_LINE_FEED_INSTANCE = DefaultIndenter("  ", "\n")
     }
 }
