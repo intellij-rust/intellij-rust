@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.ide.annotator.BatchMode
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor
@@ -512,6 +513,19 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     fun `test panic with single literal`() = checkErrors("""
         fn main() {
             panic!("{}");
+        }
+    """)
+
+    @ExpandMacros
+    fun `test custom macro`() = checkErrors("""
+        $implDisplayI32
+
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        fn main() {
+            as_is! {
+                println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", 1);
+                println!("", <error descr="Argument never used">1</error>);
+            }
         }
     """)
 }
