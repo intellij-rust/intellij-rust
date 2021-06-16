@@ -33,6 +33,7 @@ import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.doc.psi.RsDocLinkDestination
 
 const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
@@ -277,7 +278,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
             is RsFunction -> {
                 if (curUseItem != null) {
                     appendSemicolon(context, curUseItem)
-                } else {
+                } else if (context.getElementOfType<RsDocLinkDestination>() == null) {
                     val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
                     if (!context.alreadyHasCallParens) {
                         document.insertString(context.selectionEndOffset, "()")

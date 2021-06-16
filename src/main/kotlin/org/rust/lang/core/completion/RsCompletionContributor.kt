@@ -6,12 +6,16 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionInitializationContext
+import com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.completion.lint.RsClippyLintCompletionProvider
 import org.rust.lang.core.completion.lint.RsRustcLintCompletionProvider
 import org.rust.lang.core.psi.RsElementTypes.COLON
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.doc.psi.RsDocLinkDestination
 
 class RsCompletionContributor : CompletionContributor() {
 
@@ -39,4 +43,11 @@ class RsCompletionContributor : CompletionContributor() {
 
     override fun invokeAutoPopup(position: PsiElement, typeChar: Char): Boolean =
         typeChar == ':' && position.elementType == COLON
+
+    override fun beforeCompletion(context: CompletionInitializationContext) {
+        super.beforeCompletion(context)
+        if (context.file.findElementAt(context.startOffset)?.ancestorStrict<RsDocLinkDestination>() != null) {
+            context.dummyIdentifier = DUMMY_IDENTIFIER_TRIMMED
+        }
+    }
 }

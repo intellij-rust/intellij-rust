@@ -7,18 +7,11 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.LayeredLexer
 import org.rust.lang.core.lexer.RsEscapesLexer.Companion.ESCAPABLE_LITERALS_TOKEN_SET
-import org.rust.lang.core.psi.RS_DOC_COMMENTS
-import org.rust.lang.doc.lexer.RsDocHighlightingLexer
-import org.rust.lang.doc.psi.RsDocKind
 
 class RsHighlightingLexer : LayeredLexer(RsLexer()) {
     init {
         ESCAPABLE_LITERALS_TOKEN_SET.types.forEach {
             registerLayer(RsEscapesLexer.of(it), it)
-        }
-
-        RS_DOC_COMMENTS.types.forEach {
-            registerLayer(RsDocHighlightingLexer(RsDocKind.of(it)), it)
         }
     }
 }

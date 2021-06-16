@@ -14,6 +14,7 @@ import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.doc.psi.RsDocLinkDestination
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import javax.swing.JComponent
@@ -32,6 +33,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
                 // Don't show unresolved reference error in attributes for now
                 if (path.ancestorStrict<RsMetaItem>() != null) return
+
+                if (path.ancestorStrict<RsDocLinkDestination>() != null) return
 
                 val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
                 val qualifier = path.qualifier

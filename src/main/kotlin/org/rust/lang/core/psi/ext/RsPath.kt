@@ -147,7 +147,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             //          //^ containingMod == `foo`
             // ```
             val visParent = (rootPath().parent as? RsVisRestriction)?.parent?.parent
-            return if (visParent is RsMod) visParent.containingMod else super.containingMod
+            return if (visParent is RsMod) visParent.containingMod else super<RsStubbedElementImpl>.containingMod
         }
 
     override val hasColonColon: Boolean get() = greenStub?.hasColonColon ?: (coloncolon != null)

@@ -92,6 +92,14 @@
 /// [not an url]: foobar
 /// [multiline]:
 /// foobar
+/// [hash only]: #hash
+/// [rust path]: foo::bar::baz
+/// [rust path with disambiguator 1]: fn@foo::bar::baz
+/// [rust path with disambiguator 2]: foo::bar::baz!()
+/// [rust path with disambiguator 3]: foo::bar::baz()
+/// [rust path with disambiguator 4]: foo::bar::baz!
+/// [rust path with hash]: foo::bar::baz#quux
+/// [rust path with tail disambiguator and hash]: foo::bar::baz!()#quux
 fn foo() {}
 
 mod foo {

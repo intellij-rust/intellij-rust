@@ -6,6 +6,7 @@
 package org.rust.lang.doc.psi
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -75,6 +76,16 @@ private class RsDocMarkdownAstBuilder(
     }
 
     private fun visitChildren(node: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode) {
+        if (node is RsDocLinkDestination) {
+            val textRangeMapped = textMap.mapTextRangeFromMarkdownToRust(markdownNode.textRange)
+            val mappedText = textMap.mapFully(textRangeMapped)
+            if (mappedText != null) {
+                node.rawAddChildrenWithoutNotifications(RsDocLinkDestinationParser.parse(mappedText, charTable))
+                prevNodeEnd = textRangeMapped.endOffset
+                return
+            }
+        }
+
         for (markdownChild in markdownNode.children) {
             visitNode(node, markdownChild)
         }
@@ -122,6 +133,11 @@ private class RsDocTextMap(
 ) {
     fun mapOffsetFromMarkdownToRust(offset: Int): Int = offsetMap[offset]
 
+    fun mapTextRangeFromMarkdownToRust(range: TextRange): TextRange = TextRange(
+        mapOffsetFromMarkdownToRust(range.startOffset),
+        mapOffsetFromMarkdownToRust(range.endOffset)
+    )
+
     inline fun processPiecesInRange(startOffset: Int, endOffset: Int, processor: (Piece) -> Unit) {
         var offset = 0
         for (p in pieces) {
@@ -131,6 +147,14 @@ private class RsDocTextMap(
             }
             offset += p.str.length
         }
+    }
+
+    fun mapFully(range: TextRange): CharSequence? {
+        processPiecesInRange(range.startOffset, range.endOffset) {
+            return if(it.kind == PieceKind.TEXT && it.str.length == range.length) it.str else null
+        }
+
+        return null
     }
 
     companion object {
@@ -200,3 +224,6 @@ private fun Piece.cut(startOffset: Int, endOffset: Int): Piece {
     val newStr = str.subSequence(max(0, startOffset), min(endOffset, str.length))
     return Piece(newStr, kind)
 }
+
+private val org.intellij.markdown.ast.ASTNode.textRange: TextRange
+    get() = TextRange(startOffset, endOffset)

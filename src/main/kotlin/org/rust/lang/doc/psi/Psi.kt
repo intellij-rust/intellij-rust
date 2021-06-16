@@ -160,6 +160,10 @@ interface RsDocLinkTitle : RsDocElement
  */
 interface RsDocLinkDestination : RsDocElement
 
+//interface RsDocLinkDestination : RsDocElement
+//interface RsDocLinkDefinitionPathDisambiguator : RsDocElement
+//interface RsDocLinkDefinitionPathExtra : RsDocElement
+
 /**
  * A [markdown code fence](https://spec.commonmark.org/0.29/#fenced-code-blocks).
  *

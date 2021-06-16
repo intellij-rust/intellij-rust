@@ -15,21 +15,16 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
 import org.rust.ide.injected.RsDoctestLanguageInjector
-import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getPrevNonWhitespaceSibling
 import org.rust.lang.doc.psi.*
 
 abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type), RsDocElement {
     protected open fun <T: Any> notNullChild(child: T?): T =
         child ?: error("$text parent=${parent.text}")
-
-    override val containingMod: RsMod
-        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
-            ?: error("Element outside of module: $text")
-
-    final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
 
     override val containingDoc: RsDocComment
         get() = ancestorStrict()

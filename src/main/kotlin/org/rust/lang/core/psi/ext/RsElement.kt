@@ -31,9 +31,14 @@ interface RsElement : PsiElement {
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
+    @JvmDefault
     val containingMod: RsMod
+        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
+            ?: error("Element outside of module: $text")
 
+    @JvmDefault
     val crateRoot: RsMod?
+        get() = (contextualFile as? RsElement)?.crateRoot
 }
 
 val RsElement.cargoProject: CargoProject?
@@ -94,13 +99,6 @@ fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
 }
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
-    override val containingMod: RsMod
-        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
-            ?: error("Element outside of module: $text")
-
-    final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
-
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
     }
@@ -111,13 +109,6 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val containingMod: RsMod
-        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
-            ?: error("Element outside of module: $text")
-
-    final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
