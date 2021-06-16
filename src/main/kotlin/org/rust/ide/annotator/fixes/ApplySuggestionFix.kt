@@ -10,12 +10,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.cargo.toolchain.Applicability
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
 class ApplySuggestionFix(
     private val message: String,
     private val replacement: String,
+    val applicability: Applicability,
     startElement: PsiElement,
     endElement: PsiElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(startElement, endElement) {
@@ -41,8 +43,7 @@ class ApplySuggestionFix(
 
         if (message != other.message) return false
         if (replacement != other.replacement) return false
-        if (myStartElement != other.myStartElement) return false
-        if (myEndElement != other.myEndElement) return false
+        if (applicability != other.applicability) return false
 
         return true
     }
@@ -50,8 +51,7 @@ class ApplySuggestionFix(
     override fun hashCode(): Int {
         var result = message.hashCode()
         result = 31 * result + replacement.hashCode()
-        result = 31 * result + (myStartElement?.hashCode() ?: 0)
-        result = 31 * result + (myEndElement?.hashCode() ?: 0)
+        result = 31 * result + applicability.hashCode()
         return result
     }
 }

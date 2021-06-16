@@ -114,7 +114,7 @@ class RsExternalLinterPass(
         try {
             @Suppress("UnstableApiUsage")
             annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                holder.createAnnotationsForFile(file, annotationResult)
+                holder.createAnnotationsForFile(file, annotationResult, isOnTheFly = true)
             }
         } catch (t: Throwable) {
             if (t is ProcessCanceledException) throw t

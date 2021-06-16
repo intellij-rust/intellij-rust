@@ -204,7 +204,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
                 val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
                 @Suppress("UnstableApiUsage")
                 annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                    holder.createAnnotationsForFile(file, annotationResult)
+                    holder.createAnnotationsForFile(file, annotationResult, isOnTheFly = false)
                 }
                 addAll(convertToProblemDescriptors(annotationHolder, file))
             }
