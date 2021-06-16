@@ -245,8 +245,8 @@ project(":plugin") {
         if (baseIDE == "idea") {
             plugins += listOf(
                 copyrightPlugin,
-                javaPlugin//,
-//                nativeDebugPlugin
+                javaPlugin,
+                nativeDebugPlugin
             )
         }
         setPlugins(*plugins.toTypedArray())
@@ -428,12 +428,12 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-//        if (baseIDE == "idea") {
-//            setPlugins(nativeDebugPlugin)
-//        } else {
+        if (baseIDE == "idea") {
+            setPlugins(nativeDebugPlugin)
+        } else {
             version = clionVersion
             setPlugins(*clionPlugins.toTypedArray())
-//        }
+        }
     }
     dependencies {
         implementation(project(":"))
