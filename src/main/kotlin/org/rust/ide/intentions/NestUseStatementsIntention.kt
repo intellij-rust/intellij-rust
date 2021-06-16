@@ -7,6 +7,7 @@ package org.rust.ide.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -60,6 +61,10 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
         val inserted = ctx.root.addAfter(ctx.createElement(path, project), ctx.firstOldElement)
 
         for (prevElement in ctx.oldElements) {
+            val existingComment = prevElement.childrenWithLeaves.firstOrNull() as? PsiComment
+            if (existingComment != null) {
+                ctx.root.addBefore(existingComment, inserted)
+            }
             prevElement.delete()
         }
 
