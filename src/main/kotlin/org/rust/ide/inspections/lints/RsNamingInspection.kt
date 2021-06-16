@@ -91,18 +91,15 @@ open class RsCamelCaseNamingInspection(
     }
 
     private val Char.canStartWord: Boolean get() = isUpperCase() || isDigit()
-
-    companion object {
-
-        private val Char.hasCase: Boolean get() = isLowerCase() || isUpperCase()
-
-        private fun String.isCamelCase(): Boolean =
-            isNotEmpty()
-                && !first().isLowerCase()
-                && !contains("__")
-                && !zipWithNext().any { (fst, snd) -> (fst.hasCase && snd == '_') || (snd.hasCase && fst == '_') }
-    }
 }
+
+val Char.hasCase: Boolean get() = isLowerCase() || isUpperCase()
+
+fun String.isCamelCase(): Boolean =
+    isNotEmpty()
+        && !first().isLowerCase()
+        && !contains("__")
+        && !zipWithNext().any { (fst, snd) -> (fst.hasCase && snd == '_') || (snd.hasCase && fst == '_') }
 
 /**
  * Checks if the name is snake_case.

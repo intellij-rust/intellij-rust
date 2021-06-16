@@ -1,0 +1,3 @@
+fn bar() {
+    let x = <spot>Foo</spot>(0, true);
+}
