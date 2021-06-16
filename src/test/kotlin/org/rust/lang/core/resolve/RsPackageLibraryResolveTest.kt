@@ -899,6 +899,17 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                            //^ dep-lib/lib.rs
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import the same name as a crate name 2`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        mod dep_lib_target;
+        pub fn dep_lib_target() {}
+    //- dep-lib/dep_lib_target.rs
+    //- lib.rs
+        use dep_lib_target::dep_lib_target;
+          //^ dep-lib/lib.rs
+    """)
+
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3912
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test star import of item with the same name as extern crate`() = stubOnlyResolve("""
