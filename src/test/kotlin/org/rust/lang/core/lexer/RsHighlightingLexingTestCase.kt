@@ -14,12 +14,4 @@ class RsHighlightingLexingTestCase : RsLexingTestCaseBase() {
 
     fun `test eol`() = doTest()
     fun `test raw literals`() = doTest()
-
-    fun `test line doc`() = doTest()
-    fun `test block doc`() = doTest()
-    fun `test doc heading`() = doTest()
-    fun `test doc link`() = doTest()
-    fun `test doc code span`() = doTest()
-    fun `test doc code fence`() = doTest()
-    fun `test header after code fence`() = doTest()
 }

@@ -348,11 +348,11 @@ project(":") {
         purgeOldFiles = true
     }
 
-    val generateRustDocHighlightingLexer = task<GenerateLexer>("generateRustDocHighlightingLexer") {
-        source = "src/main/grammars/RustDocHighlightingLexer.flex"
-        targetDir = "src/gen/org/rust/lang/doc/lexer"
-        targetClass = "_RustDocHighlightingLexer"
-        purgeOldFiles = true
+    // Previously, we had `GenerateLexer` task that generate a lexer for rustdoc highlighting.
+    // Now we don't have this task, but previously generated lexer may have remained on the file system.
+    // We have to remove it in order to prevent a compilation failure
+    val deleteOldRustDocHighlightingLexer = task<Delete>("deleteOldRustDocHighlightingLexer") {
+        delete("src/gen/org/rust/lang/doc")
     }
 
     val generateRustParser = task<GenerateParser>("generateRustParser") {
@@ -366,7 +366,7 @@ project(":") {
     tasks {
         withType<KotlinCompile> {
             dependsOn(
-                generateRustLexer, generateRustDocHighlightingLexer,
+                generateRustLexer, deleteOldRustDocHighlightingLexer,
                 generateRustParser
             )
         }
