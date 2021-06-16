@@ -13,7 +13,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.util.Key
 import com.intellij.profiler.ProfilerToolWindowManager
-import com.intellij.profiler.clion.CPPProfilerSettings
 import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.clion.perf.PerfUtils
 import com.intellij.profiler.statistics.ProfilerUsageTriggerCollector
@@ -34,7 +33,7 @@ class RsPerfConfigurationExtension : RsPerfConfigurationExtensionBase() {
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         val project = configuration.project
-        val settings = CPPProfilerSettings.instance.state
+        val settings = getPerfSettings()
         val perfPath = settings.executablePath.orEmpty()
         PerfUtils.validatePerfSettings(TOOL_ENVIRONMENT, project)?.let { throw it }
         PerfUtils.validateKernelVariables(TOOL_ENVIRONMENT, project)?.let { throw it }
