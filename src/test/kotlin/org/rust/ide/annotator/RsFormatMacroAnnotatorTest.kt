@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.ide.annotator.BatchMode
+import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor
@@ -34,6 +35,16 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
             println!("Hello <FORMAT_SPECIFIER>{:<error descr="Invalid reference to positional argument 1 (there is 1 argument)">1${'$'}</error>}</FORMAT_SPECIFIER>", 1);
             println!("<FORMAT_SPECIFIER>{<error descr="There is no argument named `foo`">foo</error>}</FORMAT_SPECIFIER>");
             println!("Hello <FORMAT_SPECIFIER>{:<error descr="There is no argument named `foo`">foo${'$'}</error>}</FORMAT_SPECIFIER>", 1);
+        }
+    """)
+
+    @MockRustcVersion("1.50.0-nightly")
+    fun `test implicit named arguments`() = checkErrors("""
+        #![feature(format_args_capture)]
+
+        fn main() {
+            let foo = 1;
+            println!("Hello <FORMAT_SPECIFIER>{<IDENTIFIER>foo</IDENTIFIER>}</FORMAT_SPECIFIER>");
         }
     """)
 
