@@ -67,7 +67,8 @@ class RsMacroExpansionHighlightingPass(
         RsEdition2018KeywordsAnnotator(),
         RsHighlightingAnnotator(),
         RsHighlightingMutableAnnotator(),
-        RsCfgDisabledCodeAnnotator()
+        RsCfgDisabledCodeAnnotator(),
+        RsFormatMacroAnnotator(),
     )
 
     @Suppress("UnstableApiUsage")
