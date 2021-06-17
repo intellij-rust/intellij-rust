@@ -334,6 +334,9 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 argument.expr?.let(::walkExpr)
                 argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
             }
+            is RsAsmMacroArgument -> {
+                // TODO: Handle this case when type inference is implemented for `asm!` macro calls
+            }
 
             is RsMacroArgument -> {
                 val expansion = macroCall.expansion

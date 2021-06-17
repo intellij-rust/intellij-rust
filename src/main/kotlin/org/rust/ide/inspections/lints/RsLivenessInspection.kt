@@ -30,12 +30,19 @@ class RsLivenessInspection : RsLintInspection() {
                 if (func.isDoctestInjection) return
 
                 // Don't analyze functions with unresolved macro calls
-                if (func.descendantsWithMacrosOfType<RsMacroCall>().any { it.expansion == null }) return
+                val hasUnresolvedMacroCall = func.descendantsWithMacrosOfType<RsMacroCall>().any { macroCall ->
+                    val macro = macroCall.resolveToMacro()
+                    macro == null || (!macro.hasRustcBuiltinMacro && macroCall.expansion == null)
+                }
+                if (hasUnresolvedMacroCall) return
 
                 // Don't analyze functions with unresolved struct literals, e.g.:
                 // let x = 1;
                 // S { x }
                 if (func.descendantsWithMacrosOfType<RsStructLiteral>().any { it.path.reference?.resolve() == null }) return
+
+                // TODO: Remove this check when type inference is implemented for `asm!` macro calls
+                if (func.descendantsWithMacrosOfType<RsAsmMacroArgument>().isNotEmpty()) return
 
                 val liveness = func.liveness ?: return
 
