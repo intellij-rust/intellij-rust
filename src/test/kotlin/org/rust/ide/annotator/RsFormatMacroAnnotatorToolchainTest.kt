@@ -5,8 +5,10 @@
 
 package org.rust.ide.annotator
 
+import org.rust.ExpandMacros
 import org.rust.ide.colors.RsColor
 
+@ExpandMacros
 class RsFormatMacroAnnotatorToolchainTest : RsWithToolchainAnnotatorTestBase<Unit>(RsFormatMacroAnnotator::class) {
 
     override fun setUp() {
@@ -20,6 +22,7 @@ class RsFormatMacroAnnotatorToolchainTest : RsWithToolchainAnnotatorTestBase<Uni
             name = "hello"
             version = "0.1.0"
             authors = []
+            edition = "2018"
 
             [dependencies]
             log = "0.4"
@@ -52,6 +55,7 @@ class RsFormatMacroAnnotatorToolchainTest : RsWithToolchainAnnotatorTestBase<Uni
             name = "hello"
             version = "0.1.0"
             authors = []
+            edition = "2018"
 
             [dependencies]
             log = "0.4"

@@ -279,11 +279,6 @@ class CFGBuilder(
                 argument.formatMacroArgList.map { it.expr }.fold(pred) { acc, subExpr -> process(subExpr, acc) }
             }
 
-            is RsLogMacroArgument -> {
-                listOfNotNull(argument.expr)
-                    .plus(argument.formatMacroArgList.map { it.expr })
-                    .fold(pred) { acc, subExpr -> process(subExpr, acc) }
-            }
             is RsAssertMacroArgument -> {
                 listOfNotNull(argument.expr)
                     .plus(argument.formatMacroArgList.map { it.expr })
