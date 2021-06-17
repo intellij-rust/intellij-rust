@@ -161,10 +161,12 @@ private class RsDocTextMap(
                 val hasLineBreak = !line.isLastLine && !line.hasSuffix
 
                 if (hasLineBreak) {
-                    map[mappedText.length] = textPosition
-                    map[mappedText.length + 1] = textPosition + 1
+                    if (!line.isRemoved) {
+                        map[mappedText.length] = textPosition
+                        map[mappedText.length + 1] = textPosition + 1
+                        mappedText.append("\n")
+                    }
                     textPosition += 1
-                    mappedText.append("\n")
                     pieces += Piece("\n", PieceKind.GAP)
                 }
 

@@ -8,6 +8,7 @@ package org.rust.lang.doc.psi.impl
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.AstBufferUtil
 import com.intellij.psi.impl.source.tree.CompositePsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -107,15 +108,22 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
 
         val newText = StringBuilder()
 
-        // `newText` must be parsed in an empty file, so append a prefix if it differs from `infix` (e.g. `/**`)
-        if (prevSibling?.text != docKind.prefix) {
+        if (prevSibling != null && prevSibling.text != docKind.prefix) {
+            // `newText` must be parsed in an empty file, so append a prefix if it differs from `infix` (e.g. `/**`)
             newText.append(docKind.prefix)
-            newText.append("\n")
+
+            // Then add a proper whitespace between the prefix (`/**`) and the first (`*`)
+            val prevPrevSibling = prevSibling.prevSibling
+            if (prevPrevSibling is PsiWhiteSpace) {
+                newText.append(prevPrevSibling.text)
+            } else {
+                newText.append("\n")
+            }
         }
 
         newText.append(docKind.infix)
 
-        // Add a whitespace between `infix` and backticks (e.g. "///" and "```").
+        // Add a whitespace between `infix` and a code fence start (e.g. between "///" and "```").
         // The whitespace affects markdown escaping, hence markdown parsing
         if (prevSibling != null && prevSibling.nextSibling != this) {
             newText.append(prevSibling.nextSibling.text)

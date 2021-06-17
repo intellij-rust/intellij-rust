@@ -81,9 +81,6 @@ fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
     return sb to RangeMap.from(ranges)
 }
 
-private val RsDocKind.suffix: String
-    get() = if (isBlock) "*/" else ""
-
 private fun PsiBuilder.hasDocComments(): Boolean {
     var i = 0
     while (true) {

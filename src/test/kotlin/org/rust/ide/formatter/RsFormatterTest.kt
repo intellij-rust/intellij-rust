@@ -782,14 +782,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun `test block comment indent`() = doTextTest("""
-        /**
-        * foo
-         * bar
-          * baz
-         */
-        fn main() {}
-    """, """
+    fun `test block comment indent`() = checkNotChanged("""
         /**
          * foo
          * bar

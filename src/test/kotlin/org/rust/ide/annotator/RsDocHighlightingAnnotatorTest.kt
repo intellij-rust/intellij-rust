@@ -101,9 +101,9 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
          */
 
         /**
-         <DOC_CODE>   ```</DOC_CODE>
-         <DOC_CODE>   missing asterisk</DOC_CODE>
-         <DOC_CODE>   ```</DOC_CODE>
+            <DOC_CODE>```</DOC_CODE>
+            <DOC_CODE>missing asterisk</DOC_CODE>
+            <DOC_CODE>```</DOC_CODE>
          */
     """)
 
@@ -134,7 +134,7 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
         /// <DOC_HEADING>##</DOC_HEADING>
         /// <DOC_HEADING>#</DOC_HEADING>
 
-        /**<DOC_HEADING> # foo</DOC_HEADING> */
+        /**<DOC_HEADING> # foo </DOC_HEADING>*/
     """)
 
     fun `test doc link`() = checkHighlightingStrict("""
