@@ -17,6 +17,8 @@ import com.intellij.util.text.CharArrayUtil
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.RsLanguage
+import org.rust.lang.doc.psi.RsDocElementTypes.DOC_DATA
+import org.rust.lang.doc.psi.RsDocElementTypes.DOC_GAP
 import org.rust.lang.doc.psi.impl.RsDocCommentImpl
 import org.rust.lang.doc.psi.impl.RsDocGapImpl
 import kotlin.math.max
@@ -82,26 +84,13 @@ private class RsDocMarkdownAstBuilder(
 
     private fun CompositeElement.insertLeaves(startOffset: Int, endOffset: Int) {
         textMap.processPiecesInRange(startOffset, endOffset) { piece ->
-            when (piece.kind) {
-                PieceKind.TEXT -> {
-                    rawAddChildrenWithoutNotifications(LeafPsiElement(RsDocElementTypes.DOC_DATA, charTable.intern(piece.str)))
-                }
-                PieceKind.GAP -> {
-                    val gapStart = CharArrayUtil.shiftForward(piece.str, 0, "\n\t ")
-                    if (gapStart != 0) {
-                        rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(charTable.intern(piece.str.substring(0, gapStart))))
-                    }
-                    if (gapStart != piece.str.length) {
-                        val gapEnd = CharArrayUtil.shiftBackward(piece.str, gapStart, piece.str.lastIndex, "\n\t ") + 1
-                        val gapText = charTable.intern(piece.str, gapStart, gapEnd)
-                        check(gapText.isNotEmpty())
-                        rawAddChildrenWithoutNotifications(RsDocGapImpl(RsDocElementTypes.DOC_GAP, gapText))
-                        if (gapEnd != piece.str.length) {
-                            rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(charTable.intern(piece.str.substring(gapEnd))))
-                        }
-                    }
-                }
+            val internedText = charTable.intern(piece.str)
+            val element = when (piece.kind) {
+                PieceKind.TEXT -> LeafPsiElement(DOC_DATA, internedText)
+                PieceKind.GAP -> RsDocGapImpl(DOC_GAP, internedText)
+                PieceKind.WHITESPACE -> PsiWhiteSpaceImpl(internedText)
             }
+            rawAddChildrenWithoutNotifications(element)
         }
     }
 
@@ -143,7 +132,7 @@ private class RsDocTextMap(
                 if (line.hasPrefix) {
                     val prefix = line.prefix
                     textPosition += prefix.length
-                    pieces.mergeOrAddGap(prefix)
+                    pieces.mergeOrAddGapWithWS(prefix)
                 }
 
                 if (line.hasContent) {
@@ -167,13 +156,13 @@ private class RsDocTextMap(
                         mappedText.append("\n")
                     }
                     textPosition += 1
-                    pieces += Piece("\n", PieceKind.GAP)
+                    pieces.mergeOrAddWS("\n")
                 }
 
                 if (line.hasSuffix) {
                     val suffix = line.suffix
                     textPosition += suffix.length
-                    pieces.mergeOrAddGap(suffix)
+                    pieces.mergeOrAddGapWithWS(suffix)
                 }
             }
 
@@ -184,11 +173,27 @@ private class RsDocTextMap(
             return RsDocTextMap(text, mappedText, map, pieces)
         }
 
-        private fun MutableList<Piece>.mergeOrAddGap(gap: CharSequence) {
-            if (lastOrNull()?.kind == PieceKind.GAP) {
-                this[lastIndex] = Piece(this[lastIndex].str.toString() + gap, PieceKind.GAP)
+        private fun MutableList<Piece>.mergeOrAddGapWithWS(str: CharSequence) {
+            val gapStart = CharArrayUtil.shiftForward(str, 0, "\n\t ")
+            if (gapStart != 0) {
+                mergeOrAddWS(str.subSequence(0, gapStart))
+            }
+            if (gapStart != str.length) {
+                val gapEnd = CharArrayUtil.shiftBackward(str, gapStart, str.lastIndex, "\n\t ") + 1
+                val gapText = str.subSequence(gapStart, gapEnd)
+                check(gapText.isNotEmpty())
+                this += Piece(gapText, PieceKind.GAP)
+                if (gapEnd != str.length) {
+                    mergeOrAddWS(str.subSequence(gapEnd, str.length))
+                }
+            }
+        }
+
+        private fun MutableList<Piece>.mergeOrAddWS(gap: CharSequence) {
+            if (lastOrNull()?.kind == PieceKind.WHITESPACE) {
+                this[lastIndex] = Piece(this[lastIndex].str.toString() + gap, PieceKind.WHITESPACE)
             } else {
-                this += Piece(gap, PieceKind.GAP)
+                this += Piece(gap, PieceKind.WHITESPACE)
             }
         }
     }
@@ -196,7 +201,7 @@ private class RsDocTextMap(
 
 private data class Piece(val str: CharSequence, val kind: PieceKind)
 
-private enum class PieceKind { TEXT, GAP }
+private enum class PieceKind { TEXT, GAP, WHITESPACE }
 
 private fun Piece.cut(startOffset: Int, endOffset: Int): Piece {
     val newStr = str.subSequence(max(0, startOffset), min(endOffset, str.length))
