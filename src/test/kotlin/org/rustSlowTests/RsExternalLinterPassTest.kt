@@ -149,8 +149,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
             dir("src") {
                 file("main.rs", """
                     fn main() {
-                        let xs = ["foo", "bar"];
-                        for x in xs {}
+                        for x in "xs" {}
                     }
                 """)
             }

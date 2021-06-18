@@ -19,7 +19,6 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
@@ -496,34 +495,24 @@ private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormat
 
     val crate = macro.containingCrate ?: return null
     val formatMacroArgs = formatMacro.formatMacroArgument?.formatMacroArgList
-    val logMacroArgs = formatMacro.logMacroArgument?.formatMacroArgList
 
-    val (macroPos, macroArgs) = when {
-        crate.origin == PackageOrigin.STDLIB && formatMacroArgs != null -> {
-            val position = when (macroName) {
-                "println",
-                "print",
-                "eprintln",
-                "eprint",
-                "format",
-                "format_args",
-                "format_args_nl" -> 0
-                // panic macro handle any literal (even with `{}`) if it's single argument
-                "panic" -> if (formatMacroArgs.size < 2) null else 0
-                "write",
-                "writeln" -> 1
-                else -> null
-            } ?: return null
-            Pair(position, formatMacroArgs)
-        }
-        crate.normName == "log" && logMacroArgs != null -> {
-            val index = if (macroName == "log") 1 else 0
-            Pair(index, logMacroArgs)
-        }
-        else -> return null
-    }
+    if (crate.origin != PackageOrigin.STDLIB || formatMacroArgs === null) return null
 
-    return Pair(macroPos, macroArgs)
+    val position = when (macroName) {
+        "println",
+        "print",
+        "eprintln",
+        "eprint",
+        "format",
+        "format_args",
+        "format_args_nl" -> 0
+        // panic macro handle any literal (even with `{}`) if it's single argument
+        "panic" -> if (formatMacroArgs.size < 2) null else 0
+        "write",
+        "writeln" -> 1
+        else -> null
+    } ?: return null
+    return Pair(position, formatMacroArgs)
 }
 
 private fun RsFormatMacroArg.name(): String? = this.identifier?.text

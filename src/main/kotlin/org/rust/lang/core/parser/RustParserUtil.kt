@@ -414,7 +414,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
             "debug_assert_eq", "debug_assert_ne"
         )
         put(RustParser::VecMacroArgument, true, "vec")
-        put(RustParser::LogMacroArgument, true, "trace", "log", "warn", "debug", "error", "info")
         put(RustParser::IncludeMacroArgument, true, "include_str", "include_bytes")
         put(RustParser::IncludeMacroArgument, false, "include")
         put(RustParser::ConcatMacroArgument, true, "concat")

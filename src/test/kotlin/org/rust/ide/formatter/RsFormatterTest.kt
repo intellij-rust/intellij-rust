@@ -426,10 +426,6 @@ class RsFormatterTest : RsFormatterTestBase() {
             "20"
             );
 
-            error!(
-            "Hello, World"
-            );
-
             dbg!(
             "hello!"
             );
@@ -463,10 +459,6 @@ class RsFormatterTest : RsFormatterTestBase() {
             assert_eq!(
                 "10",
                 "20"
-            );
-
-            error!(
-                "Hello, World"
             );
 
             dbg!(

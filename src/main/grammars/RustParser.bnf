@@ -1432,7 +1432,7 @@ private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
     MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
-      VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument | AsmMacroArgument
+      VecMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument | AsmMacroArgument
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement"
@@ -1527,9 +1527,6 @@ AsmMacroRegTarget ::= UNDERSCORE | AnyExpr
 AsmMacroOptions ::= 'options' '(' <<comma_separated_list AsmMacroOption>> ')'
 //noinspection BnfUnusedRule
 AsmMacroOption ::= identifier
-//noinspection BnfUnusedRule
-LogMacroArgument ::=
-  <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
 //noinspection BnfUnusedRule
 IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
