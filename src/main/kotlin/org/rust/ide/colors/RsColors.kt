@@ -6,6 +6,7 @@
 package org.rust.ide.colors
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
@@ -52,7 +53,8 @@ enum class RsColor(humanName: String, default: TextAttributesKey? = null) {
     STRING("Literals//Strings//String", Default.STRING),
     VALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Valid", Default.VALID_STRING_ESCAPE),
     INVALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Invalid", Default.INVALID_STRING_ESCAPE),
-    FORMAT_SPECIFIER("Literals//Strings//Format specifier in string argument", Default.VALID_STRING_ESCAPE),
+    FORMAT_PARAMETER("Literals//Strings//Format parameter", Default.VALID_STRING_ESCAPE),
+    FORMAT_SPECIFIER("Literals//Strings//Format specifier inside format parameter", HighlighterColors.TEXT),
 
     BLOCK_COMMENT("Comments//Block comment", Default.BLOCK_COMMENT),
     EOL_COMMENT("Comments//Line comment", Default.LINE_COMMENT),

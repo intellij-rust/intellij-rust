@@ -255,7 +255,7 @@ private fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
 }
 
 private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHolder) {
-    val key = RsColor.FORMAT_SPECIFIER
+    val key = RsColor.FORMAT_PARAMETER
     val highlightSeverity = if (isUnitTestMode) key.testSeverity else HighlightSeverity.INFORMATION
 
     for (parameter in ctx.parameters) {
@@ -264,7 +264,7 @@ private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHold
 }
 
 private fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
-    fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.IDENTIFIER) {
+    fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.FORMAT_SPECIFIER) {
         if (range != null && !range.isEmpty()) {
             val highlightSeverity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
             holder.newSilentAnnotation(highlightSeverity)

@@ -79,7 +79,8 @@ fn <FUNCTION>main</FUNCTION>() {
 <KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>(<MUT_PARAMETER>count</MUT_PARAMETER>: &mut i64) -> ! {
     <MUT_PARAMETER>count</MUT_PARAMETER> += 1;
     'label: loop {
-        <MACRO>println!</MACRO>("Hello\x20W\u{f3}rld!\u{abcdef}");
+        let str_with_escapes = "Hello\x20W\u{f3}rld!\u{abcdef}";
+        <MACRO>println!</MACRO>("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER> <FORMAT_PARAMETER>{<FORMAT_SPECIFIER>foo</FORMAT_SPECIFIER>:<<FORMAT_SPECIFIER>4</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", str_with_escapes, foo = 42);
     }
 }
 

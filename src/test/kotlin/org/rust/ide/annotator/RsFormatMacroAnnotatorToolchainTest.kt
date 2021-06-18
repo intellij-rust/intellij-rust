@@ -38,12 +38,12 @@ class RsFormatMacroAnnotatorToolchainTest : RsWithToolchainAnnotatorTestBase<Uni
 
                 /*caret*/
                 fn main() {
-                    log::trace!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::debug!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::info!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::warn!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::error!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::log!(log::Level::Warn, "<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+                    log::trace!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::debug!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::info!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::warn!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::error!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::log!(log::Level::Warn, "<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
                 }
             """)
         }
@@ -71,8 +71,8 @@ class RsFormatMacroAnnotatorToolchainTest : RsWithToolchainAnnotatorTestBase<Uni
 
                 /*caret*/
                 fn main() {
-                    log::debug!(target: "events", "<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-                    log::log!(target: "events", log::Level::Warn, "<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+                    log::debug!(target: "events", "<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+                    log::log!(target: "events", log::Level::Warn, "<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
                 }
             """)
         }
