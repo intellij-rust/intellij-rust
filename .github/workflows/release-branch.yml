@@ -10,6 +10,8 @@ jobs:
         runs-on: ubuntu-18.04
         steps:
             - uses: actions/checkout@v2
+              with:
+                  token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
             - name: Set up Python
               uses: actions/setup-python@v1
@@ -28,7 +30,7 @@ jobs:
 
             - name: Make release branch
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
-              run: python scripts/make_release_branch.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+              run: python scripts/make_release_branch.py
 
             - name: Create new milestone
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
