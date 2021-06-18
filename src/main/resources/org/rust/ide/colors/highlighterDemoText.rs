@@ -71,9 +71,10 @@ fn <FUNCTION>main</FUNCTION>() {
              program, <MUT_BINDING>accumulator</MUT_BINDING>);
 }
 
-/// Some documentation `with code`
-/// # Heading
-/// [Rust](https://www.rust-lang.org/)
+<DOC_COMMENT>/// Some documentation <DOC_CODE>`with a code`</DOC_CODE>, <DOC_EMPHASIS>*an italic text*</DOC_EMPHASIS>
+/// and <DOC_STRONG>**a bold text**</DOC_STRONG>
+/// <DOC_HEADING># Heading</DOC_HEADING>
+/// <DOC_LINK>[Rust](https://www.rust-lang.org/)</DOC_LINK></DOC_COMMENT>
 <ATTRIBUTE>#[cfg(target_os=</ATTRIBUTE>"linux"<ATTRIBUTE>)]</ATTRIBUTE>
 <KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>(<MUT_PARAMETER>count</MUT_PARAMETER>: &mut i64) -> ! {
     <MUT_PARAMETER>count</MUT_PARAMETER> += 1;

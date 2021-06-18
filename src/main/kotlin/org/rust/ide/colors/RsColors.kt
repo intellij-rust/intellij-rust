@@ -60,6 +60,8 @@ enum class RsColor(humanName: String, default: TextAttributesKey? = null) {
     DOC_COMMENT("Rustdoc//Comment", Default.DOC_COMMENT),
     DOC_HEADING("Rustdoc//Heading", Default.DOC_COMMENT_TAG),
     DOC_LINK("Rustdoc//Link", Default.DOC_COMMENT_TAG_VALUE),
+    DOC_EMPHASIS("Rustdoc//Italic text"),
+    DOC_STRONG("Rustdoc//Bold text"),
     DOC_CODE("Rustdoc//Code", Default.DOC_COMMENT_MARKUP),
 
     BRACES("Braces and Operators//Braces", Default.BRACES),

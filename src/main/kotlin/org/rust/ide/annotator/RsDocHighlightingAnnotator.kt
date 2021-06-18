@@ -38,6 +38,8 @@ class RsDocHighlightingAnnotator : AnnotatorBase() {
                 is RsDocCodeBlock -> RsColor.DOC_CODE
                 else -> null
             }
+            element is RsDocEmphasis -> RsColor.DOC_EMPHASIS
+            element is RsDocStrong -> RsColor.DOC_STRONG
             element is RsDocAtxHeading -> RsColor.DOC_HEADING
             element is RsDocLink && element.descendantOfTypeStrict<RsDocGap>() == null -> RsColor.DOC_LINK
             else -> null
