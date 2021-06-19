@@ -6,12 +6,10 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.constParameters
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -33,8 +31,7 @@ data class TyAdt private constructor(
     val item: RsStructOrEnumItemElement,
     val typeArguments: List<Ty>,
     val regionArguments: List<Region>,
-    val constArguments: List<Const>,
-    val aliasedBy: BoundElement<RsTypeAlias>?
+    val constArguments: List<Const>
 ) : Ty(mergeFlags(typeArguments) or mergeFlags(regionArguments) or mergeFlags(constArguments)) {
 
     // This method is rarely called (in comparison with folding), so we can implement it in a such inefficient way.
@@ -57,8 +54,7 @@ data class TyAdt private constructor(
             item,
             typeArguments.map { it.foldWith(folder) },
             regionArguments.map { it.foldWith(folder) },
-            constArguments.map { it.foldWith(folder) },
-            aliasedBy?.foldWith(folder)
+            constArguments.map { it.foldWith(folder) }
         )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
@@ -66,17 +62,13 @@ data class TyAdt private constructor(
             regionArguments.any { it.visitWith(visitor) } ||
             constArguments.any { it.visitWith(visitor) }
 
-    fun withAlias(aliasedBy: BoundElement<RsTypeAlias>?): TyAdt =
-        copy(aliasedBy = aliasedBy)
-
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt =
             TyAdt(
                 CompletionUtil.getOriginalOrSelf(struct),
                 defaultTypeArguments(struct),
                 defaultRegionArguments(struct),
-                defaultConstArguments(struct),
-                null
+                defaultConstArguments(struct)
             )
     }
 }

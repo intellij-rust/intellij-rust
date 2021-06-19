@@ -416,6 +416,12 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                  //^ Foo
     """, WITH_ALIAS_NAMES)
 
+    fun `test render alias name for primitive`() = testType("""
+        type Foo = u32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
     fun `test render alias name with generics`() = testType("""
         struct S<A, B>(A, B);
         type Foo<T> = S<T, u8>;

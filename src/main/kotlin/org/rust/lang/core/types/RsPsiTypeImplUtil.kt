@@ -21,7 +21,7 @@ object RsPsiTypeImplUtil {
     fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
     fun declaredType(psi: RsTypeAlias): Ty {
         val typeReference = psi.typeReference
-        if (typeReference != null) return typeReference.typeWithRecursionGuard
+        if (typeReference != null) return TyAlias.valueOf(typeReference.typeWithRecursionGuard)
         return when (psi.owner) {
             is RsAbstractableOwner.Free -> TyUnknown
             is RsAbstractableOwner.Trait -> TyProjection.valueOf(psi)

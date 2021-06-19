@@ -150,13 +150,16 @@ object RsImportHelper {
         ty.substitute(subst).visitWith(object : TypeVisitor {
             override fun visitTy(ty: Ty): Boolean {
                 when (ty) {
-                    is TyAdt -> {
-                        val alias = ty.aliasedBy?.element.takeIf { useAliases } as? RsQualifiedNamedElement
-                        result += alias ?: ty.item
+                    is TyAlias -> {
+                        val alias = ty.typeAlias?.element.takeIf { useAliases } as? RsQualifiedNamedElement
                         if (alias != null) {
+                            result += alias
                             return true
+                        } else {
+                            visitTy(ty.aliases)
                         }
-
+                    }
+                    is TyAdt -> {
                         if (skipUnchangedDefaultTypeArguments) {
                             val filteredTypeArguments = ty.typeArguments
                                 .zip(ty.item.typeParameters)

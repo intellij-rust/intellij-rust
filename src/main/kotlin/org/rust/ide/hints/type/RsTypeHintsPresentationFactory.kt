@@ -31,6 +31,7 @@ class RsTypeHintsPresentationFactory(
     private fun hint(kind: Kind, level: Int): InlayPresentation = when (kind) {
         is TyTuple -> tupleTypeHint(kind, level)
         is TyAdt -> adtTypeHint(kind, level)
+        is TyAlias -> aliasTypeHint(kind, level)
         is TyFunction -> functionTypeHint(kind, level)
         is TyReference -> referenceTypeHint(kind, level)
         is TyPointer -> pointerTypeHint(kind, level)
@@ -87,25 +88,36 @@ class RsTypeHintsPresentationFactory(
         )
 
     private fun adtTypeHint(type: TyAdt, level: Int): InlayPresentation {
-        val aliasedBy = type.aliasedBy
-        val alias = aliasedBy?.element
-
-        val adtName = alias?.name ?: type.item.name
-        val typeDeclaration = alias ?: type.item
+        val adtName = type.item.name
+        val typeDeclaration = type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
+        val typeArguments = type.typeArguments.zip(type.item.typeParameters)
 
-        val typeArguments = alias?.typeParameters?.map { (aliasedBy.subst[it] ?: TyUnknown) to it }
-            ?: type.typeArguments.zip(type.item.typeParameters)
+        return withGenericsTypeHint(typeNamePresentation, typeArguments, level)
+    }
 
+    private fun aliasTypeHint(type: TyAlias, level: Int): InlayPresentation {
+        val boundElement = type.typeAlias ?: return hint(type.aliases, level)
+        val alias = boundElement.element
+
+        val adtName = alias.name
+        val typeNamePresentation = factory.psiSingleReference(text(adtName)) { alias }
+        val typeArguments = alias.typeParameters.map { (boundElement.subst[it] ?: TyUnknown) to it }
+
+        return withGenericsTypeHint(typeNamePresentation, typeArguments, level)
+    }
+
+    private fun withGenericsTypeHint(
+        typeNamePresentation: InlayPresentation,
+        typeArguments: List<Pair<Ty, RsTypeParameter>>,
+        level: Int
+    ): InlayPresentation {
         val userVisibleKindArguments = mutableListOf<Kind>()
         for ((argument, parameter) in typeArguments) {
             if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
                 // don't show default types
                 continue
             }
-            userVisibleKindArguments.add(argument)
-        }
-        for (argument in type.constArguments) {
             userVisibleKindArguments.add(argument)
         }
 

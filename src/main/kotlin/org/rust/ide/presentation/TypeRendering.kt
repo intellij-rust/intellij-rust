@@ -164,11 +164,14 @@ private data class TypeRenderer(
             is TyTraitObject -> ty.traits.joinToString("+", "dyn ") { formatTrait(it, render) }
             is TyAnon -> ty.traits.joinToString("+", "impl ") { formatTrait(it, render) }
             is TyAdt -> buildString {
-                if (useAliasNames && ty.aliasedBy != null) {
-                    append(formatBoundElement(ty.aliasedBy, render))
+                append(getName(ty.item) ?: return anonymous)
+                if (includeTypeArguments) append(formatAdtGenerics(ty, render))
+            }
+            is TyAlias -> buildString {
+                if (useAliasNames && ty.typeAlias != null) {
+                    append(formatBoundElement(ty.typeAlias, render))
                 } else {
-                    append(getName(ty.item) ?: return anonymous)
-                    if (includeTypeArguments) append(formatAdtGenerics(ty, render))
+                    append(render(ty.aliases, level))
                 }
             }
             is TyInfer -> when (ty) {

@@ -1173,6 +1173,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S
     """)
 
+    fun `test primitive with alias`() = testExpr("""
+        type T1 = u32;
+        type T2 = T1;
+        fn main() {
+            T2 { };
+        } //^ u32
+    """)
+
     fun `test cyclic type aliases`() = testExpr("""
         type Foo = Bar;
         type Bar = Foo;
@@ -1182,7 +1190,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ <unknown>
         }
     """)
-    // More struct alias tests in [RsGenericExpressionTypeInferenceTest]
+    // More alias tests in [RsGenericExpressionTypeInferenceTest]
 
     fun `test struct update syntax`() = testExpr("""
         struct S {

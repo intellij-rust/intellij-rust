@@ -552,6 +552,7 @@ class RsTypeInferenceWalker(
         val type = when (element) {
             is RsStructItem -> element.declaredType
             is RsEnumVariant -> element.parentEnum.declaredType
+            is RsTypeAlias -> element.declaredType
             else -> TyUnknown
         }.substitute(typeParameters)
 

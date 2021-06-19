@@ -77,6 +77,7 @@ data class TyFingerprint constructor(
             is TyTraitObject -> TyFingerprint("dyn T")
             is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
             is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT
+            is TyAlias -> create(type.aliases)
             else -> null
         }
     }
