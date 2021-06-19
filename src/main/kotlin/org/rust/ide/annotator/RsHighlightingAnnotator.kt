@@ -181,7 +181,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsModDeclItem -> RsColor.MODULE
     is RsMod -> if (element.isCrateRoot) RsColor.CRATE else RsColor.MODULE
     is RsPatBinding -> {
-        if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else RsColor.IDENTIFIER
+        if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else RsColor.VARIABLE
     }
     is RsStructItem -> when (element.kind) {
         RsStructKind.STRUCT -> RsColor.STRUCT
