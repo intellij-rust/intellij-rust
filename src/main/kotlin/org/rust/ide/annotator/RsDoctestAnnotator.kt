@@ -11,12 +11,8 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.injected.RsDoctestLanguageInjector
-import org.rust.ide.injected.findDoctestInjectableRanges
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.containingCrate
+import org.rust.ide.injected.doctestInfo
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.doc.psi.RsDocCodeFence
 
@@ -31,12 +27,10 @@ class RsDoctestAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (holder.isBatchMode) return
         if (element !is RsDocCodeFence) return
-        if (!element.project.rustSettings.doctestInjectionEnabled) return
-        // only library targets can have doctests
-        if (element.ancestorStrict<RsElement>()?.containingCrate?.areDoctestsEnabled != true) return
+        val doctest = element.doctestInfo() ?: return
 
         val startOffset = element.startOffset
-        findDoctestInjectableRanges(element).forEach {
+        doctest.rangesForBackgroundHighlighting.forEach {
             holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                 .range(it.shiftRight(startOffset))
                 .textAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT)

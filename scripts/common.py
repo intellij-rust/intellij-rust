@@ -52,9 +52,3 @@ def env(key: str) -> str:
     if value is None:
         raise Exception(f"{key} is not set")
     return value
-
-
-def construct_repository_url(token: str) -> str:
-    actor = env("GITHUB_ACTOR")
-    repo = env("GITHUB_REPOSITORY")
-    return f"https://{actor}:{token}@github.com/{repo}.git"

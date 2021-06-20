@@ -10,9 +10,8 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.colors.RsColor
-import org.rust.ide.injected.findDoctestInjectableRanges
+import org.rust.ide.injected.doctestInfo
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.lang.core.psi.ext.elementType
@@ -51,9 +50,5 @@ class RsDocHighlightingAnnotator : AnnotatorBase() {
     }
 
     private val RsDocCodeFence.isDoctestInjected: Boolean
-        get() {
-            if (!project.rustSettings.doctestInjectionEnabled) return false
-            if (containingDoc.owner?.containingCrate?.areDoctestsEnabled != true) return false
-            return findDoctestInjectableRanges(this).isNotEmpty()
-        }
+        get() = doctestInfo() != null
 }
