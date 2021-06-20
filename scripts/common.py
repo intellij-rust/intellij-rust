@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-from typing import Tuple
+from typing import Tuple, Optional
 
 GRADLE_PROPERTIES: str = "gradle.properties"
 PATCH_VERSION_RE: str = r"patchVersion=(\d+)"
@@ -30,12 +30,16 @@ def inc_patch_version():
         properties.write(new_text)
 
 
-def execute_command(*args, print_stdout=True, check=True) -> str:
+def execute_command(*args, print_stdout=True, check=True, cwd: Optional[str] = None) -> str:
     if print_stdout:
         print(list(args))
 
     try:
-        result = subprocess.run(list(args), check=check, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        result = subprocess.run(list(args),
+                                check=check,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                cwd=cwd)
     except subprocess.CalledProcessError as e:
         if print_stdout:
             print(e.output)

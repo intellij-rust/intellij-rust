@@ -41,11 +41,38 @@ def create_milestone(repo: str, token: str, title: str, description: str = "", d
     urlopen(request)
 
 
+def create_pull_request(repo: str, token: str, branch: str, title: str, draft: bool = True) -> Dict:
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    params = {"base": "master", "head": branch, "title": title, "draft": draft}
+    data = json.dumps(params).encode()
+    request = Request(f"https://api.github.com/repos/{repo}/pulls", data, headers, method="POST")
+    response = urlopen(request)
+    return json.load(response)
+
+
+def add_assignee(repo: str, token: str, id: int, assignee: str):
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    params = {"assignees": [assignee]}
+    data = json.dumps(params).encode()
+    request = Request(f"https://api.github.com/repos/{repo}/issues/{id}", data, headers, method="POST")
+    urlopen(request)
+
+
 def get_check_statuses(repo: str, token: str, ref: str, check_name: str) -> Dict[str, List[Dict]]:
     headers = {"Authorization": f"token {token}",
                "Accept": "application/vnd.github.v3+json"}
     request = Request(
         f"https://api.github.com/repos/{repo}/commits/{ref}/check-runs?check_name={check_name}&status=completed",
         headers=headers)
+    response = urlopen(request)
+    return json.load(response)
+
+
+def get_all_branches(repo: str, token: str) -> List[Dict]:
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    request = Request(f"https://api.github.com/repos/{repo}/branches", headers=headers)
     response = urlopen(request)
     return json.load(response)
