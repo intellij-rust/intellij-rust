@@ -53,6 +53,7 @@ private class RsHighlightAsyncAwaitHandler(
                 o.fieldLookup?.identifier
                     ?.takeIf { it.isAwait() && it.parentAsyncFunctionOrBlock() == parentAsyncFunctionOrBlock }
                     ?.let(::addOccurrence)
+                o.expr.accept(this)
             }
         })
     }

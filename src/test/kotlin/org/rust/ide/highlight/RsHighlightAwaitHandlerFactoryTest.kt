@@ -62,6 +62,40 @@ class RsHighlightAwaitHandlerFactoryTest : RsTestBase() {
         }
     """, 8, 9)
 
+    fun `test highlight chained await`() = doTest("""
+        pub as/*caret*/ync fn runner() {
+            GreatGrandparent()
+                .await
+                .parent()
+                .await
+                .child()
+                .await;
+        }
+
+        pub async fn GreatGrandparent() -> AsyncGrandparent {
+            AsyncGrandparent
+        }
+
+        struct AsyncGrandparent;
+        impl AsyncGrandparent {
+            pub async fn parent(self) -> AsyncParent {
+                AsyncParent
+            }
+        }
+
+        struct AsyncParent;
+        impl AsyncParent {
+            pub async fn child(self) -> AsyncChild {
+                AsyncChild
+            }
+        }
+
+        struct AsyncChild;
+        impl AsyncChild {
+            pub async fn foo(self) -> i32 { 0 }
+        }
+    """, 3, 5, 7)
+
     private fun doTest(@Language("Rust") check: String, vararg lines: Int) {
         InlineFile(check)
         HighlightUsagesHandler.invoke(myFixture.project, myFixture.editor, myFixture.file)
