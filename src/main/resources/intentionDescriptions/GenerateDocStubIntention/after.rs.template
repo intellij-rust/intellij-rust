@@ -1,0 +1,17 @@
+///
+///
+/// # Arguments
+///
+/// * `param1`:
+/// * `param2`:
+///
+/// returns: &str
+///
+/// # Examples
+///
+/// ```
+///
+/// ```
+fn foo(param1: &str, param2: u8) -> &str {
+    return "bar"
+}

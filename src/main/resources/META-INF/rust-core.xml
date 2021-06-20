@@ -766,6 +766,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.GenerateDocStubIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.NestUseStatementsIntention</className>
             <category>Rust</category>
         </intentionAction>
