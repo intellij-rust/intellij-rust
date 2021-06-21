@@ -32,9 +32,9 @@ class RsCodeHighlightingInQuickDocumentationTest : RsDocumentationProviderTest()
     """, """
         <div class='definition'><pre>test_package
         fn <b>add_one</b>(x: i32) -&gt; i32</pre></div>
-        <div class='content'><p>Adds one to the number given.</p><h2>Examples</h2><pre style="..."><span style="...">let </span><span style="...">five </span><span style="...">= </span><span style="...">5</span><span style="...">;</span>
+        <div class='content'><p>Adds one to the number given.</p><h2>Examples</h2><pre style="..."><span style="...">let </span><span style="...">five = </span><span style="...">5</span><span style="...">;</span>
 
-        <span style="...">assert_eq</span><span style="...">!(</span><span style="...">6</span><span style="...">, </span><span style="...">add_one</span><span style="...">(</span><span style="...">5</span><span style="...">));</span>
+        <span style="...">assert_eq!(</span><span style="...">6</span><span style="...">, add_one(</span><span style="...">5</span><span style="...">));</span>
         </pre>
         </div>
     """)
@@ -87,15 +87,15 @@ class RsCodeHighlightingInQuickDocumentationTest : RsDocumentationProviderTest()
         pub trait <b>AsRef</b>&lt;T: ?<a href="psi_element://Sized">Sized</a>&gt;</pre></div>
         <div class='content'><p>A cheap, reference-to-reference conversion.</p><p><code>AsRef</code> is very similar to, but different than, <code>Borrow</code>. See
         <a href="psi_element://../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
-        returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h2>Examples</h2><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre style="..."><span style="...">fn </span><span style="...">is_hello</span><span style="...">&lt;</span><span style="...">T</span><span style="...">: </span><span style="...">AsRef</span><span style="...">&lt;</span><span style="...">str</span><span style="...">&gt;&gt;(</span><span style="...">s</span><span style="...">: </span><span style="...">T</span><span style="...">) {</span>
-           <span style="...">assert_eq</span><span style="...">!(</span><span style="...">&quot;hello&quot;</span><span style="...">, </span><span style="...">s</span><span style="...">.</span><span style="...">as_ref</span><span style="...">());</span>
+        returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h2>Examples</h2><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre style="..."><span style="...">fn </span><span style="...">is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {</span>
+           <span style="...">assert_eq!(</span><span style="...">&quot;hello&quot;</span><span style="...">, s.as_ref());</span>
         <span style="...">}</span>
 
-        <span style="...">let </span><span style="...">s </span><span style="...">= </span><span style="...">&quot;hello&quot;</span><span style="...">;</span>
-        <span style="...">is_hello</span><span style="...">(</span><span style="...">s</span><span style="...">);</span>
+        <span style="...">let </span><span style="...">s = </span><span style="...">&quot;hello&quot;</span><span style="...">;</span>
+        <span style="...">is_hello(s);</span>
 
-        <span style="...">let </span><span style="...">s </span><span style="...">= </span><span style="...">&quot;hello&quot;</span><span style="...">.</span><span style="...">to_string</span><span style="...">();</span>
-        <span style="...">is_hello</span><span style="...">(</span><span style="...">s</span><span style="...">);</span>
+        <span style="...">let </span><span style="...">s = </span><span style="...">&quot;hello&quot;</span><span style="...">.to_string();</span>
+        <span style="...">is_hello(s);</span>
         </pre>
         <h2>Generic Impls</h2><ul><li><code>AsRef</code> auto-dereference if the inner type is a reference or a mutable
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul></div>
@@ -122,11 +122,11 @@ class RsCodeHighlightingInQuickDocumentationTest : RsDocumentationProviderTest()
     """, """
         <div class='definition'><pre>test_package
         struct <b>Foo</b></pre></div>
-        <div class='content'><p>Some doc.</p><h2>Example</h2><pre style="..."><span style="...">#[</span><span style="...">attr1</span><span style="...">]</span>
-        <span style="...">#[</span><span style="...">attr2</span><span style="...">]</span>
-        <span style="...">#[</span><span style="...">attr3</span><span style="...">]</span>
-        <span style="...">let </span><span style="...">foo </span><span style="...">= </span><span style="...">Foo</span><span style="...">;</span>
-           <span style="...">let </span><span style="...">foo4 </span><span style="...">= </span><span style="...">Foo</span><span style="...">;</span>
+        <div class='content'><p>Some doc.</p><h2>Example</h2><pre style="..."><span style="...">#[attr1]</span>
+        <span style="...">#[attr2]</span>
+        <span style="...">#[attr3]</span>
+        <span style="...">let </span><span style="...">foo = Foo;</span>
+           <span style="...">let </span><span style="...">foo4 = Foo;</span>
         </pre>
         </div>
     """)
