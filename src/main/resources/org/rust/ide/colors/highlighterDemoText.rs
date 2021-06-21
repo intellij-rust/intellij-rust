@@ -34,9 +34,9 @@ type <TYPE_ALIAS>RcObject</TYPE_ALIAS><<TYPE_PARAMETER>T</TYPE_PARAMETER>> = <ST
 
 impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> Write for <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize> {
-        let s = stuff::<FUNCTION_CALL>write_map</FUNCTION_CALL>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
-        <MACRO>info!</MACRO>("{} byte(s) written", s);
-        <ENUM_VARIANT>Ok</ENUM_VARIANT>(s)
+        let <VARIABLE>s</VARIABLE> = stuff::<FUNCTION_CALL>write_map</FUNCTION_CALL>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
+        <MACRO>info!</MACRO>("{} byte(s) written", <VARIABLE>s</VARIABLE>);
+        <ENUM_VARIANT>Ok</ENUM_VARIANT>(<VARIABLE>s</VARIABLE>)
     }
 }
 
@@ -53,22 +53,22 @@ fn <FUNCTION>main</FUNCTION>() {
     // `*` or `/` means multiply or divide by 2
     <MODULE>stuff</MODULE>::<STRUCT>AppVersion</STRUCT>::<ASSOC_FUNCTION_CALL>print</ASSOC_FUNCTION_CALL>();
 
-    let input = <ENUM>Option</ENUM>::<ENUM_VARIANT>None</ENUM_VARIANT>;
-    let program = input.<METHOD_CALL>unwrap_or_else</METHOD_CALL>(|| "+ + * - /");
-    let mut <MUT_BINDING>accumulator</MUT_BINDING> = 0;
+    let <VARIABLE>input</VARIABLE> = <ENUM>Option</ENUM>::<ENUM_VARIANT>None</ENUM_VARIANT>;
+    let <VARIABLE>program</VARIABLE> = <VARIABLE>input</VARIABLE>.<METHOD_CALL>unwrap_or_else</METHOD_CALL>(|| "+ + * - /");
+    let mut <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING> = 0;
 
-    for token in program.<METHOD_CALL>chars</METHOD_CALL>() {
-        match token {
-            '+' => <MUT_BINDING>accumulator</MUT_BINDING> += 1,
-            '-' => <MUT_BINDING>accumulator</MUT_BINDING> -= 1,
-            '*' => <MUT_BINDING>accumulator</MUT_BINDING> *= 2,
-            '/' => <MUT_BINDING>accumulator</MUT_BINDING> /= 2,
+    for <VARIABLE>token</VARIABLE> in <VARIABLE>program</VARIABLE>.<METHOD_CALL>chars</METHOD_CALL>() {
+        match <VARIABLE>token</VARIABLE> {
+            '+' => <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING> += 1,
+            '-' => <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING> -= 1,
+            '*' => <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING> *= 2,
+            '/' => <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING> /= 2,
             _ => { /* ignore everything else */ }
         }
     }
 
     <MACRO>info!</MACRO>("The program \"{}\" calculates the value {}",
-             program, <MUT_BINDING>accumulator</MUT_BINDING>);
+            <VARIABLE>program</VARIABLE>, <MUT_BINDING><VARIABLE>accumulator</VARIABLE></MUT_BINDING>);
 }
 
 <DOC_COMMENT>/// Some documentation <DOC_CODE>`with a code`</DOC_CODE>, <DOC_EMPHASIS>*an italic text*</DOC_EMPHASIS>
@@ -79,7 +79,7 @@ fn <FUNCTION>main</FUNCTION>() {
 <KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>(<MUT_PARAMETER>count</MUT_PARAMETER>: &mut i64) -> ! {
     <MUT_PARAMETER>count</MUT_PARAMETER> += 1;
     'label: loop {
-        let str_with_escapes = "Hello\x20W\u{f3}rld!\u{abcdef}";
+        let <VARIABLE>str_with_escapes</VARIABLE> = "Hello\x20W\u{f3}rld!\u{abcdef}";
         <MACRO>println!</MACRO>("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER> <FORMAT_PARAMETER>{<FORMAT_SPECIFIER>foo</FORMAT_SPECIFIER>:<<FORMAT_SPECIFIER>4</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", str_with_escapes, foo = 42);
     }
 }
