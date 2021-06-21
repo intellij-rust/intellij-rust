@@ -7,16 +7,15 @@ package org.rust.lang.core.macros.decl
 
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.SemVer
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition.*
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.NameResolutionTestmarks
-import org.rust.singleProject
 import org.rust.stdext.BothEditions
 
 class RsMacroExpansionTest : RsMacroExpansionTestBase() {
@@ -130,6 +129,37 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         fn foo() { let (a, b); }
     """)
+
+    fun `test pat_param`() = doTest("""
+        macro_rules! foo {
+            ($ i1:pat_param | $ i2:pat_param | $ i3:pat_param) => { fn foo() { let $ i1; let $ i2; let $ i3; } }
+        }
+        foo! { a | b | Some(1 | 2) }
+    """, """
+        fn foo() { let a; let b; let Some(1 | 2); }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test pat 2018 edition`() = doTest("""
+        macro_rules! foo {
+            ($ i1:pat | $ i2:pat) => { fn foo() { let $ i1; let $ i2; } }
+        }
+        foo! { a | b }
+    """, """
+        fn foo() { let a; let b; }
+    """)
+
+    @MockEdition(EDITION_2021)
+    fun `test pat 2021 edition`() = expect<IllegalStateException> {
+    doTest("""
+        macro_rules! foo {
+            ($ i:pat) => { fn foo() { let $ i; } }
+        }
+        foo! { a | b }
+    """, """
+        fn foo() { let a | b; }
+    """)
+    }
 
     fun `test stmt`() = doTest("""
         macro_rules! foo {
@@ -1126,6 +1156,25 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }         //^
     """, """
         (2 + 2)
+    """)
+
+    fun `test matches! macro`() = checkSingleMacro("""
+        macro_rules! matches {
+            ($ expression:expr, $( $ pattern:pat_param )|+ $( if $ guard: expr )? $(,)?) => {
+                match $ expression {
+                    $( $ pattern )|+ $( if $ guard )? => true,
+                    _ => false
+                }
+            }
+        }
+        fn main() {
+            let _ = matches!(Some(1), Some(2) | Some(3));
+        }           //^
+    """, """
+        match (Some(1)) {
+            Some(2) | Some(3) => true,
+            _ => false
+        }
     """)
 
     fun `test 1-char macro call body`() = doTest(

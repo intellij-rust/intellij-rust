@@ -21,6 +21,7 @@ enum class FragmentKind(private val kind: String) {
     Expr("expr"),
     Ty("ty"),
     Pat("pat"),
+    PatParam("pat_param"),
     Stmt("stmt"),
     Block("block"),
     Item("item"),
@@ -37,7 +38,8 @@ enum class FragmentKind(private val kind: String) {
             Path -> RustParser.TypePathGenericArgsNoTypeQual(builder, 0)
             Expr -> RustParser.Expr(builder, 0, -1)
             Ty -> RustParser.TypeReference(builder, 0)
-            Pat -> RustParser.Pat(builder, 0)
+            Pat -> RustParserUtil.parseSimplePat(builder) // TODO `RustParser.Pat(builder, 0)` on 2021 edition
+            PatParam -> RustParserUtil.parseSimplePat(builder)
             Stmt -> parseStatement(builder)
             Block -> RustParserUtil.parseCodeBlockLazy(builder, 0)
             Item -> RustParser.Item(builder, 0)

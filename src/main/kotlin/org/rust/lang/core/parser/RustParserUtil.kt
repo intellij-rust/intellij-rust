@@ -726,4 +726,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun parseCodeBlockLazy(builder: PsiBuilder, level: Int): Boolean {
         return PsiBuilderUtil.parseBlockLazy(builder, LBRACE, RBRACE, BLOCK) != null
     }
+
+    @JvmStatic
+    fun parseSimplePat(builder: PsiBuilder): Boolean {
+        return RustParser.SimplePat(builder, 0)
+    }
 }
