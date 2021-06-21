@@ -198,6 +198,10 @@ The current Rust plugin modules:
 * `:js` - interop with JavaScript language
 * `:ml-completion` - integration with [Machine Learning Code Completion](https://github.com/JetBrains/intellij-community/tree/master/plugins/completion-ml-ranking) plugin
 
+The current Toml plugin modules:
+* `:intellij-toml` - module to build/run/publish Toml plugin
+* `:intellij-toml:core` - core module
+
 If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
 
 ### Platform versions

@@ -12,12 +12,15 @@
         <list>
           <option value=":generateRustLexer" />
           <option value=":generateRustParser" />
-          <option value="intellij-toml:generateTomlLexer" />
-          <option value="intellij-toml:generateTomlParser" />
+          <option value="intellij-toml:core:generateTomlLexer" />
+          <option value="intellij-toml:core:generateTomlParser" />
         </list>
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <method />
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <method v="2" />
   </configuration>
 </component>
