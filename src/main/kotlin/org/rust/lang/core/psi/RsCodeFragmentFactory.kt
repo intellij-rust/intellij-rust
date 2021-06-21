@@ -16,7 +16,7 @@ import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.openapiext.toPsiFile
 
 
-class RsCodeFragmentFactory(val project: Project) {
+class RsCodeFragmentFactory(private val project: Project) {
     private val psiFactory = RsPsiFactory(project, markGenerated = false)
 
     fun createCrateRelativePath(pathText: String, target: CargoWorkspace.Target): RsPath? {

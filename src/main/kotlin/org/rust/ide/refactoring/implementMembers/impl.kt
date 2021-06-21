@@ -11,18 +11,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.presentation.shortPresentableText
-import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromElements
+import org.rust.ide.presentation.ImportingPsiRenderer
+import org.rust.ide.presentation.PsiRenderingOptions
+import org.rust.ide.presentation.renderFunctionSignature
+import org.rust.ide.presentation.renderTypeReference
+import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.regions.ReUnknown
-import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.openapiext.checkReadAccessAllowed
@@ -65,7 +67,8 @@ private fun insertNewTraitMembers(
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
-    val templateImpl = RsPsiFactory(impl.project).createTraitMembers(selected, trait, impl)
+    val gen = MembersGenerator(RsPsiFactory(impl.project), impl, trait)
+    val templateImpl = gen.createTraitMembers(selected)
 
     val traitMembers = trait.element.expandedMembers
     val newMembers = templateImpl.childrenOfType<RsAbstractable>()
@@ -81,6 +84,7 @@ private fun insertNewTraitMembers(
     val existingMembersOrder = existingMembersWithPosInTrait.map { it.second }
     val areExistingMembersInTheRightOrder = existingMembersOrder == existingMembersOrder.sorted()
     var needToSelect: RsElement? = null
+    val insertedMembers = mutableListOf<RsAbstractable>()
 
     for ((index, newMember) in newMembers.withIndex()) {
         val posInTrait = traitMembers.indexOfFirst {
@@ -127,12 +131,37 @@ private fun insertNewTraitMembers(
                 else -> error("unreachable")
             }
         }
+        insertedMembers += addedMember
     }
 
-    importTypeReferencesFromElements(existingMembers, selected, trait.subst, useAliases = true, skipUnchangedDefaultTypeArguments = true)
+    if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+        for (importCandidate in gen.itemsToImport) {
+            importCandidate.import(existingMembers)
+        }
+    }
+
+    simplifyConstExprs(insertedMembers)
 
     if (needToSelect != null && editor != null) {
         selectElement(needToSelect, editor)
+    }
+}
+
+/** Replaces `{ 1 }` to `1` */
+private fun simplifyConstExprs(insertedMembers: List<RsAbstractable>) {
+    for (member in insertedMembers) {
+        val constExprs = member.descendantsOfType<RsTypeArgumentList>()
+            .flatMap { it.exprList } +
+            member.descendantsOfType<RsArrayType>()
+                .mapNotNull { it.expr }
+        for (expr in constExprs) {
+            if (expr is RsBlockExpr) {
+                val wrappingExpr = expr.block.expr
+                if (wrappingExpr != null && (wrappingExpr !is RsPathExpr || expr.parent is RsArrayType)) {
+                    expr.replace(wrappingExpr)
+                }
+            }
+        }
     }
 }
 
@@ -154,82 +183,39 @@ private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiEle
     return RsPsiFactory(left.project).createWhitespace("\n".repeat(extraLineCount))
 }
 
-private fun RsPsiFactory.createTraitMembers(
-    members: Collection<RsAbstractable>,
-    trait: BoundElement<RsTraitItem>,
-    impl: RsImplItem
-): RsMembers {
-    val subst = trait.subst
-    val body = members.joinToString(separator = "\n", transform = {
-        when (it) {
-            is RsConstant -> {
-                val initialValue = RsDefaultValueBuilder(it.knownItems, it.containingMod, this, true)
-                    .buildFor(it.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
-                "    const ${it.nameLikeElement.text}: ${it.typeReference?.substAndGetText(subst) ?: "_"} = ${initialValue.text};"
+private class MembersGenerator(
+    private val factory: RsPsiFactory,
+    impl: RsImplItem,
+    private val trait: BoundElement<RsTraitItem>,
+) {
+    private val renderer = ImportingPsiRenderer(
+        PsiRenderingOptions(shortPaths = false),
+        pathPsiSubst(impl.traitRef!!.path, trait.element),
+        impl.members!!
+    )
+    val itemsToImport: Set<ImportCandidate> get() = renderer.itemsToImport
+
+    fun createTraitMembers(members: Collection<RsAbstractable>): RsMembers {
+        val subst = trait.subst
+        val body = members.joinToString(separator = "\n", transform = {
+            when (it) {
+                is RsConstant -> {
+                    val initialValue = RsDefaultValueBuilder(it.knownItems, it.containingMod, factory, true)
+                        .buildFor(it.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
+                    "    const ${it.nameLikeElement.text}: ${it.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
+                }
+                is RsTypeAlias ->
+                    "    type ${it.escapedName} = ();"
+                is RsFunction ->
+                    "    ${it.renderFunctionSignature()}{\n        todo!()\n    }"
+                else ->
+                    error("Unknown trait member")
             }
-            is RsTypeAlias ->
-                "    type ${it.escapedName} = ();"
-            is RsFunction ->
-                "    ${it.getSignatureText(subst, trait, impl) ?: ""}{\n        todo!()\n    }"
-            else ->
-                error("Unknown trait member")
-        }
-    })
+        })
 
-    return createMembers(body)
-}
-
-private fun RsFunction.getSignatureText(
-    subst: Substitution,
-    trait: BoundElement<RsTraitItem>,
-    impl: RsImplItem
-): String? {
-    val async = if (isAsync) "async " else ""
-    val unsafe = if (isUnsafe) "unsafe " else ""
-    // We can't simply take a substring of original method declaration
-    // because of anonymous parameters.
-    val name = escapedName ?: return null
-    val generics = typeParameterList?.text ?: ""
-
-    val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
-    val typeParameters = trait.element.typeParameters.mapIndexed { index, typeParameter ->
-        typeParameter.identifier.text to (index to typeParameter)
-    }.toMap()
-    val typeArguments = impl.traitRef?.path?.typeArguments.orEmpty()
-    val valueArguments = valueParameters.map {
-        val fnPointerType= when (val typeReference = it.typeReference) {
-            is RsFnPointerType -> typeReference
-            is RsBaseType -> {
-                val (index, typeParameter) = typeParameters[typeReference.type.shortPresentableText] ?: (-1 to null)
-                (typeArguments.getOrNull(index) ?: typeParameter?.typeReference) as? RsFnPointerType
-            }
-            else -> null
-        }
-        val extern = fnPointerType?.externAbi?.extern?.text?.let { text -> "$text " } ?: ""
-        // fix possible anon parameter
-        "${it.pat?.text ?: "_"}: $extern${it.typeReference?.substAndGetText(subst) ?: "()"}"
+        return factory.createMembers(body)
     }
-    val allArguments = selfArgument + valueArguments
 
-    val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
-    val where = whereClause?.text ?: ""
-    return "${async}${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+    private fun RsFunction.renderFunctionSignature(): String = renderer.renderFunctionSignature(this)
+    private fun RsTypeReference.renderTypeReference(): String = renderer.renderTypeReference(this)
 }
-
-private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
-    if (isExplicitType) {
-        buildString {
-            append(self.text)
-            append(colon!!.text)
-            val type = typeReference?.substAndGetText(subst)
-            append(type)
-        }
-    } else {
-        buildString {
-            append(and?.text ?: "")
-            val region = lifetime.resolve().substitute(subst)
-            if (region != ReUnknown) append("$region ")
-            if (mutability == Mutability.MUTABLE) append("mut ")
-            append(self.text)
-        }
-    }

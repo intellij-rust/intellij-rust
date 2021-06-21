@@ -8,6 +8,7 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.LocalTimeCounter
+import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.lang.RsFileType
@@ -541,7 +542,10 @@ class RsPsiFactory(
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).renderInsertionSafe(
+    getStubOnlyText(subst)
+
+fun Ty.substAndGetText(subst: Substitution): String =
+    substitute(subst).renderInsertionSafe(
         includeLifetimeArguments = true,
         useAliasNames = true,
         skipUnchangedDefaultTypeArguments = true

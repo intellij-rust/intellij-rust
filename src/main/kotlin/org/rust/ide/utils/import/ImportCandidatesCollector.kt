@@ -27,6 +27,13 @@ import org.rust.lang.core.types.type
 
 object ImportCandidatesCollector {
 
+    fun getImportCandidates(importContext: ImportContext, target: RsQualifiedNamedElement): Sequence<ImportCandidate> {
+        val name = target.name ?: return emptySequence()
+        return getImportCandidates(importContext, name, name) {
+            it.item == target
+        }
+    }
+
     /**
      * Returns a sequence of import candidates, after importing any of which it becomes possible to resolve the
      * path created from the `importingPathText`.
