@@ -9,9 +9,12 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.openapiext.createSmartPointer
@@ -42,14 +45,13 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
             return
         }
 
-        val typeParameterList = fnSignature
-            .typeParameterList
-            ?.apply {
-                addBefore(psiFactory.createComma(), gt)
-            }
-            ?: fnSignature
-                .addAfter(psiFactory.createTypeParameterList(""), fnSignature.identifier)
+        var typeParameterList = fnSignature.typeParameterList
+        if (typeParameterList == null) {
+            typeParameterList = fnSignature.addAfter(psiFactory.createTypeParameterList(""), fnSignature.identifier)
                 as RsTypeParameterList
+        }
+
+        val anchor = typeParameterList.constParameterList.firstOrNull() ?: typeParameterList.gt
 
         val typeParameterName = "T"
         var typeParameter = psiFactory
@@ -59,9 +61,21 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
 
         typeParameter = typeParameterList.addBefore(
             typeParameter,
-            typeParameterList.gt)
-            as RsTypeParameter
+            anchor
+        ) as RsTypeParameter
+
+        val prev = typeParameter.getPrevNonWhitespaceSibling()
+        val next = typeParameter.getNextNonWhitespaceSibling()
+        if (prev != typeParameterList.lt && prev.elementType != RsElementTypes.COMMA) {
+            typeParameterList.addBefore(psiFactory.createComma(), typeParameter)
+        }
+        if (next != typeParameterList.gt && next.elementType != RsElementTypes.COMMA) {
+            typeParameterList.addAfter(psiFactory.createComma(), typeParameter)
+        }
+
         val newArgType = argType.replace(psiFactory.createType(typeParameterName)).createSmartPointer()
+
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
         val tpl = editor.newTemplateBuilder(fnSignature) ?: return
         tpl.introduceVariable(typeParameter.identifier, typeParameterName).apply {
@@ -79,5 +93,4 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
     companion object {
         val outerImplTestMark = Testmark("called on outer impl Trait")
     }
-
 }
