@@ -153,12 +153,12 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
 
     fun `test primitive`() = checkByText("""
         fn <FUNCTION>main</FUNCTION>() -> <PRIMITIVE_TYPE>bool</PRIMITIVE_TYPE> {
-            let a: <PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE> = 42;
-            let b: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = <NUMBER>10.0</NUMBER>;
-            let c: &<PRIMITIVE_TYPE>str</PRIMITIVE_TYPE> = "example";
+            let <VARIABLE>a</VARIABLE>: <PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE> = 42;
+            let <VARIABLE>b</VARIABLE>: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = <NUMBER>10.0</NUMBER>;
+            let <VARIABLE>c</VARIABLE>: &<PRIMITIVE_TYPE>str</PRIMITIVE_TYPE> = "example";
             <PRIMITIVE_TYPE>char</PRIMITIVE_TYPE>::is_lowercase('a');
-            let mut i32 = 1;
-            i32 = 2;
+            let mut <VARIABLE>i32</VARIABLE> = 1;
+            <VARIABLE>i32</VARIABLE> = 2;
             true
         }
     """)
