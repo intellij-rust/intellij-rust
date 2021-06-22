@@ -298,7 +298,7 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod
-        if (isHidden) return@createProcessor false
+        if (isHidden && !(element is RsFunction && element.isProcMacroDef)) return@createProcessor false
 
         processor(it)
     }

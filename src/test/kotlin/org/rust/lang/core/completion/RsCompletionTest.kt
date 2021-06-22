@@ -1086,4 +1086,17 @@ class RsCompletionTest : RsCompletionTestBase() {
             foo::func()
         }
     """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test completion derive proc macro (when function is doc hidden)`() = doSingleCompletionByFileTree("""
+    //- lib.rs
+        #[doc(hidden)]
+        #[proc_macro_derive(ProcMacroName)]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- main.rs
+        use test_package::/*caret*/;
+    """, """
+        use test_package::ProcMacroName;
+    """)
 }
