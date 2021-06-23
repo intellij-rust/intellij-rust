@@ -12,10 +12,7 @@ import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyUnit
@@ -42,10 +39,10 @@ class GenerateSetterHandler : GenerateAccessorHandler() {
         val psiFactory = RsPsiFactory(project)
         val impl = getOrCreateImplBlock(implBlock, psiFactory, structName, struct)
 
-        return chosenFields.map {
+        return chosenFields.mapNotNull {
             val fieldName = it.argumentIdentifier
-            val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
-            val typeStr = fieldType.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)
+            val typeRef = it.field.typeReference ?: return@mapNotNull null
+            val typeStr = typeRef.substAndGetText(substitution)
 
             val fnSignature = "pub fn ${methodName(it)}(&mut self, $fieldName: $typeStr)"
             val fnBody = "self.$fieldName = $fieldName;"

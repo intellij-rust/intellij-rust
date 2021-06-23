@@ -203,7 +203,7 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    fun `test type alias`() = doTest("""
+    fun `test type alias 1`() = doTest("""
         struct T;
         type Alias = T;
         struct S {
@@ -214,6 +214,26 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
     """, listOf(MemberSelection("a: Alias")), """
         struct T;
         type Alias = T;
+        struct S {
+            a: Alias
+        }
+
+        impl S {
+            pub fn set_a(&mut self, a: Alias) {
+                self.a = a;
+            }
+        }
+    """)
+
+    fun `test type alias 2`() = doTest("""
+        type Alias = (u32, u32);
+        struct S {
+            a: Alias
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: Alias")), """
+        type Alias = (u32, u32);
         struct S {
             a: Alias
         }
