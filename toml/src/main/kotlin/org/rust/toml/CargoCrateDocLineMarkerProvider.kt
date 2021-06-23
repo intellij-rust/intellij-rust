@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import com.intellij.util.io.URLUtil
 import org.rust.cargo.CargoConstants
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
@@ -57,7 +58,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
             anchor,
             anchor.textRange,
             RsIcons.DOCS_MARK,
-            { _, _ -> BrowserUtil.browse("https://docs.rs/$name/$urlVersion") },
+            { _, _ -> BrowserUtil.browse("https://docs.rs/$name/${URLUtil.encodeURIComponent(urlVersion)}") },
             GutterIconRenderer.Alignment.LEFT
         ) { "Open documentation for `$name@$urlVersion`" }
     }
