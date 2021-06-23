@@ -341,4 +341,12 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         }
         checkOnLeaf()
     }
+
+    fun `test use raw identifier for module named with keyword`() {
+        testProject {
+            lib("foo", "src/lib.rs", """mod r#struct;""")
+            file("src/struct.rs", "#[test] fn test_foo() { /*caret*/assert!(true); }").open()
+        }
+        checkOnTopLevel<RsFunction>()
+    }
 }
