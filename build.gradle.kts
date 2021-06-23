@@ -9,7 +9,7 @@ import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
-import org.jetbrains.intellij.tasks.PublishTask
+import org.jetbrains.intellij.tasks.PublishPluginTask
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -56,7 +56,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.4.32"
-    id("org.jetbrains.intellij") version "0.7.2"
+    id("org.jetbrains.intellij") version "1.1.2"
     id("org.jetbrains.grammarkit") version "2021.1.3"
     id("net.saliman.properties") version "1.5.1"
     id("org.gradle.test-retry") version "1.2.0"
@@ -98,12 +98,12 @@ allprojects {
     }
 
     intellij {
-        version = baseVersion
-        downloadSources = !isCI
-        updateSinceUntilBuild = true
-        instrumentCode = false
-        ideaDependencyCachePath = dependencyCachePath
-        sandboxDirectory = "$buildDir/$baseIDE-sandbox-$platformVersion"
+        version.set(baseVersion)
+        downloadSources.set(!isCI)
+        updateSinceUntilBuild.set(true)
+        instrumentCode.set(false)
+        ideaDependencyCachePath.set(dependencyCachePath)
+        sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
     tasks {
@@ -116,8 +116,8 @@ allprojects {
             }
         }
         withType<PatchPluginXmlTask> {
-            sinceBuild(prop("sinceBuild"))
-            untilBuild(prop("untilBuild"))
+            sinceBuild.set(prop("sinceBuild"))
+            untilBuild.set(prop("untilBuild"))
         }
 
         buildSearchableOptions {
@@ -237,8 +237,8 @@ val patchVersion = prop("patchVersion").toInt()
 project(":plugin") {
     version = "$majorVersion.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
-        pluginName = "intellij-rust"
-        val plugins = mutableListOf(
+        pluginName.set("intellij-rust")
+        val pluginList = mutableListOf(
             project(":intellij-toml"),
             intelliLangPlugin,
             graziePlugin,
@@ -246,16 +246,16 @@ project(":plugin") {
             mlCompletionPlugin
         )
         if (platformVersion < 212) {
-            plugins += javaScriptPlugin
+            pluginList += javaScriptPlugin
         }
         if (baseIDE == "idea") {
-            plugins += listOf(
+            pluginList += listOf(
                 copyrightPlugin,
                 javaPlugin,
                 nativeDebugPlugin
             )
         }
-        setPlugins(*plugins.toTypedArray())
+        plugins.set(pluginList)
     }
 
     dependencies {
@@ -287,12 +287,12 @@ project(":plugin") {
 
             // Copy native binaries
             from("${rootDir}/bin") {
-                into("intellij-rust/bin")
+                into("${pluginName.get()}/bin")
                 include("**")
             }
             // Copy pretty printers
             from("$rootDir/prettyPrinters") {
-                into("${intellij.pluginName}/prettyPrinters")
+                into("${pluginName.get()}/prettyPrinters")
                 include("*.py")
             }
         }
@@ -312,12 +312,12 @@ project(":plugin") {
         }
 
         withType<PatchPluginXmlTask> {
-            pluginDescription(file("description.html").readText())
+            pluginDescription.set(provider { file("description.html").readText() })
         }
 
-        withType<PublishTask> {
-            token(prop("publishToken"))
-            channels(channel)
+        withType<PublishPluginTask> {
+            token.set(prop("publishToken"))
+            channels.set(listOf(channel))
         }
     }
 }
@@ -400,12 +400,12 @@ project(":") {
 
 project(":idea") {
     intellij {
-        version = ideaVersion
-        setPlugins(
+        version.set(ideaVersion)
+        plugins.set(listOf(
             javaPlugin,
             // this plugin registers `com.intellij.ide.projectView.impl.ProjectViewPane` for IDEA that we use in tests
             javaIdePlugin
-        )
+        ))
     }
     dependencies {
         implementation(project(":"))
@@ -417,8 +417,8 @@ project(":idea") {
 
 project(":clion") {
     intellij {
-        version = clionVersion
-        setPlugins(*clionPlugins.toTypedArray())
+        version.set(clionVersion)
+        plugins.set(clionPlugins)
     }
     dependencies {
         implementation(project(":"))
@@ -432,10 +432,10 @@ project(":clion") {
 project(":debugger") {
     intellij {
         if (baseIDE == "idea") {
-            setPlugins(nativeDebugPlugin)
+            plugins.set(listOf(nativeDebugPlugin))
         } else {
-            version = clionVersion
-            setPlugins(*clionPlugins.toTypedArray())
+            version.set(clionVersion)
+            plugins.set(clionPlugins)
         }
     }
     dependencies {
@@ -448,7 +448,7 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        setPlugins(project(":intellij-toml"))
+        plugins.set(listOf(project(":intellij-toml")))
     }
     dependencies {
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
@@ -467,7 +467,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        setPlugins(intelliLangPlugin)
+        plugins.set(listOf(intelliLangPlugin))
     }
     dependencies {
         implementation(project(":"))
@@ -479,8 +479,8 @@ project(":intelliLang") {
 
 project(":copyright") {
     intellij {
-        version = ideaVersion
-        setPlugins(copyrightPlugin)
+        version.set(ideaVersion)
+        plugins.set(listOf(copyrightPlugin))
     }
     dependencies {
         implementation(project(":"))
@@ -510,7 +510,7 @@ project(":coverage") {
 
 project(":grazie") {
     intellij {
-        setPlugins(graziePlugin)
+        plugins.set(listOf(graziePlugin))
     }
     dependencies {
         implementation(project(":"))
@@ -523,7 +523,7 @@ project(":grazie") {
 if (platformVersion < 212) {
     project(":js") {
         intellij {
-            setPlugins(javaScriptPlugin)
+            plugins.set(listOf(javaScriptPlugin))
         }
         dependencies {
             implementation(project(":"))
@@ -536,7 +536,7 @@ if (platformVersion < 212) {
 
 project(":ml-completion") {
     intellij {
-        setPlugins(mlCompletionPlugin)
+        plugins.set(listOf(mlCompletionPlugin))
     }
     dependencies {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.2")
@@ -555,9 +555,9 @@ project(":intellij-toml") {
     }
 
     tasks {
-        withType<PublishTask> {
-            token(prop("publishToken"))
-            channels(channel)
+        withType<PublishPluginTask> {
+            token.set(prop("publishToken"))
+            channels.set(listOf(channel))
         }
     }
 }
