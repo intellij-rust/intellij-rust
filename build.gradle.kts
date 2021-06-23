@@ -36,12 +36,7 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-// BACKCOMPAT: 2021.1
-val graziePlugin = if (platformVersion >= 212 || baseIDE == "idea") {
-    "tanvd.grazi"
-} else {
-    "tanvd.grazi:${prop("graziePluginVersion")}"
-}
+val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
