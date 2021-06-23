@@ -6,7 +6,7 @@
 package org.rust.ide.refactoring.implementMembers
 
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
@@ -44,7 +44,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 
     val chosen = showTraitMemberChooser(implInfo, impl.project)
     if (chosen.isEmpty()) return
-    runWriteAction {
+    runWriteCommandAction(impl.project) {
         // Non-null was checked by `findMembersToImplement`.
         insertNewTraitMembers(chosen, impl, trait, editor)
     }

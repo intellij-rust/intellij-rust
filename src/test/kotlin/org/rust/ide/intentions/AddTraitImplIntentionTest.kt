@@ -160,7 +160,7 @@ class AddTraitImplIntentionTest : RsIntentionTestBase(AddTraitImplIntention::cla
             const FOO: u32 = 0;
 
             fn foo(&self) {
-                unimplemented!()
+                todo!()
             }
         }
     """, "Trait", "foo", "FOO")
@@ -182,7 +182,7 @@ class AddTraitImplIntentionTest : RsIntentionTestBase(AddTraitImplIntention::cla
 
         impl Trait for S {
             fn foo(&self) {
-                unimplemented!()
+                todo!()
             }
         }
     """, "Trait", "foo")

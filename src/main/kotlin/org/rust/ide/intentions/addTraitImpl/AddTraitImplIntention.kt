@@ -19,14 +19,14 @@ import org.rust.ide.refactoring.implementMembers.generateTraitMembers
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.ty.Ty
 import org.rust.openapiext.runWriteCommandAction
 
 class AddTraitImplIntention : RsElementBaseIntentionAction<AddTraitImplIntention.Context>() {
@@ -48,14 +48,20 @@ class AddTraitImplIntention : RsElementBaseIntentionAction<AddTraitImplIntention
         if (isUnitTestMode) {
             addTraitImplementations(editor, ctx, traitFragment.path)
         } else {
-            RsCodeFragmentPopup.show(editor, project, traitFragment, {
+            RsCodeFragmentPopup.show(editor, project, traitFragment, "Choose trait to implement", {
                 addTraitImplementations(editor, ctx, traitFragment.path)
             }) {
-                val trait = traitFragment.path?.reference?.resolve() as? RsTraitItem
-                if (trait != null) {
-                    null
+                val implLookup = ctx.type.implLookup
+                val result = resolveTrait(ctx.type.asTy(), traitFragment.path, implLookup)
+                if (result == null) {
+                    "Could not resolve `${traitFragment.text}` to a trait"
                 } else {
-                    "Could not resolve `${traitFragment.text} to a trait`"
+                    val (trait, isImplemented) = result
+                    if (isImplemented) {
+                        "Trait `${trait.name}` is already implemented for `${ctx.name}`"
+                    } else {
+                        null
+                    }
                 }
             }
         }
@@ -77,11 +83,12 @@ class AddTraitImplIntention : RsElementBaseIntentionAction<AddTraitImplIntention
         val impls = project.runWriteCommandAction {
             val impls = mutableListOf<RsImplItem>()
             for ((traitCandidate, traitRef) in traits) {
-                val ref = traitRef?.resolveToBoundTrait() ?: BoundElement(traitCandidate)
-                val canSelect = implLookup.canSelect(TraitRef(type, ref))
-                if (!canSelect) {
+                if (!isTraitImplemented(type, traitCandidate, traitRef, implLookup)) {
                     val impl = implementTrait(factory, traitCandidate, ctx) ?: continue
-                    impls.add(impl)
+
+                    if (traitCandidate.expandedMembers.any { it.isAbstract }) {
+                        impls.add(impl)
+                    }
                     val traitPath = impl.traitRef?.path ?: continue
                     AutoImportFix.findApplicableContext(project, traitPath)?.candidates?.firstOrNull()?.import(impl)
                 }
@@ -91,6 +98,28 @@ class AddTraitImplIntention : RsElementBaseIntentionAction<AddTraitImplIntention
         impls.forEach {
             generateTraitMembers(it, editor)
         }
+    }
+
+    private fun isTraitImplemented(
+        item: Ty,
+        trait: RsTraitItem,
+        traitRef: RsTraitRef?,
+        implLookup: ImplLookup
+    ): Boolean {
+        val ref = traitRef?.resolveToBoundTrait() ?: BoundElement(trait)
+        return implLookup.canSelect(TraitRef(item, ref))
+    }
+
+    private fun resolveTrait(
+        item: Ty,
+        path: RsPath?,
+        implLookup: ImplLookup
+    ): Pair<RsTraitItem, Boolean>? {
+        val ref = path?.reference?.advancedResolve() ?: return null
+        if (ref.element !is RsTraitItem) return null
+
+        val trait = BoundElement(ref.element, ref.subst, ref.assoc)
+        return ref.element to implLookup.canSelect(TraitRef(item, trait))
     }
 
     private fun implementTrait(

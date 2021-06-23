@@ -62,7 +62,7 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         if (isUnitTestMode) {
             addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)
         } else {
-            RsCodeFragmentPopup.show(editor, project, codeFragment, {
+            RsCodeFragmentPopup.show(editor, project, codeFragment, "Add format argument", {
                 addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)
             })
         }

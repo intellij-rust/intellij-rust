@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
@@ -41,11 +42,12 @@ object RsCodeFragmentPopup {
         editor: Editor,
         project: Project,
         codeFragment: RsCodeFragment,
+        title: String,
         onComplete: () -> Unit,
-        validate: (() -> String?)? = null
+        validate: (() -> String?)? = null,
     ) {
         val editorTextField = createEditorTextField(project, codeFragment) ?: return
-        showBalloon(editor, project, editorTextField, onComplete, validate)
+        showBalloon(editor, project, editorTextField, onComplete, validate, title)
     }
 
     private fun createEditorTextField(project: Project, codeFragment: RsCodeFragment): EditorTextField? {
@@ -87,7 +89,8 @@ object RsCodeFragmentPopup {
         parent: Disposable,
         editorTextField: EditorTextField,
         onComplete: () -> Unit,
-        validate: (() -> String?)?
+        validate: (() -> String?)?,
+        title: String
     ) {
         val balloon = JBPopupFactory.getInstance().createBalloonBuilder(editorTextField)
             .setShadow(true)
@@ -96,7 +99,9 @@ object RsCodeFragmentPopup {
             .setHideOnKeyOutside(false)
             .setFillColor(UIUtil.getPanelBackground())
             .setBorderInsets(JBUI.insets(3))
+            .setTitle(title)
             .createBalloon()
+
         Disposer.register(parent, balloon)
 
         val keyListener = object : KeyAdapter() {
@@ -108,7 +113,7 @@ object RsCodeFragmentPopup {
                             balloon.hide()
                             onComplete()
                         } else {
-                            // TODO: show error
+                            HintManager.getInstance().showErrorHint(editor, error)
                         }
                     }
                     KeyEvent.VK_ESCAPE -> balloon.hide()
