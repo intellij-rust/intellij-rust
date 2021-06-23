@@ -620,4 +620,79 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
              };
         }
     """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/7376
+    fun `test move down in block inside argument list`() = moveDown("""
+        fn foo(a: u32) {}
+
+        fn main() {
+            foo({
+                println!("1");/*caret*/
+                println!("2");
+                1
+            });
+        }
+    """, """
+        fn foo(a: u32) {}
+
+        fn main() {
+            foo({
+                println!("2");
+                println!("1");/*caret*/
+                1
+            });
+        }
+    """)
+
+    fun `test move up first statement of block expr inside argument list`() = moveUp("""
+        fn foo(a: u32) {}
+
+        fn main() {
+            foo({
+                println!("1");/*caret*/
+                println!("2");
+                1
+            });
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+
+    fun `test move up first statement of lambda inside argument list`() = moveUp("""
+        fn foo<F: Fn() -> ()>(f: F) -> u32 { 0 }
+
+        struct S {
+            a: u32,
+            b: u32
+        }
+
+        fn main() {
+            let s = S {
+                a: 0,
+                b: foo(|| {
+                    println!("1");/*caret*/
+                    println!("2");
+                    1
+                })
+            };
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+
+    fun `test move up first statement of lambda ref inside argument list`() = moveUp("""
+        fn foo<F: Fn() -> ()>(f: &mut F) -> u32 { 0 }
+
+        struct S {
+            a: u32,
+            b: u32
+        }
+
+        fn main() {
+            let s = S {
+                a: 0,
+                b: foo(&mut || {
+                    println!("1");/*caret*/
+                    println!("2");
+                    1
+                })
+            };
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
 }
