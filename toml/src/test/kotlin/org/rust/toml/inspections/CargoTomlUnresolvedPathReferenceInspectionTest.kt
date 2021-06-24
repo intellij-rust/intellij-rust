@@ -100,4 +100,80 @@ class CargoTomlUnresolvedPathReferenceInspectionTest : RsInspectionsTestBase(Tom
         [dependencies]
         foo = { path = "foo.rs" }/*caret*/
     """)
+
+    fun `test wildcard inside path`() = checkByFileTree("""
+        //- foo/Cargo.toml
+        [package]
+        name = "foo"
+
+        //- Cargo.toml
+        [dependencies]
+        foo = { path = "foo/<warning descr="Cannot resolve directory '*'">*</warning>/<warning descr="Cannot resolve file 'main.rs'">main.rs</warning>" }/*caret*/
+    """)
+
+    fun `test wildcard inside workspace members path`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        members = [
+            "foo/*/bar.rs"/*caret*/,
+        ]
+    """)
+
+    fun `test multiple wildcards`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        members = [
+            "foo/*/*/bar.rs"/*caret*/,
+        ]
+    """)
+
+    fun `test wildcard inside workspace default members path`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        default-members = [
+            "foo/*/bar.rs"/*caret*/,
+        ]
+    """)
+
+    fun `test question mark wildcard`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        members = [
+            "foo/?/bar.rs"/*caret*/,
+        ]
+    """)
+
+    fun `test brackets wildcard`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        members = [
+            "foo/[a-z]/bar.rs"/*caret*/,
+        ]
+    """)
+
+    fun `test wildcard inside workspace exclude path`() = checkByFileTree("""
+        //- foo/bar.rs
+        fn foo() {}
+
+        //- Cargo.toml
+        [workspace]
+        exclude = [
+            "foo/<warning descr="Cannot resolve directory '*'">*</warning>/<warning descr="Cannot resolve file 'bar.rs'">bar.rs</warning>"/*caret*/,
+        ]
+    """)
 }
