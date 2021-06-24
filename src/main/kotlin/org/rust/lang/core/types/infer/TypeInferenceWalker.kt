@@ -476,6 +476,8 @@ class RsTypeInferenceWalker(
 
         unifySubst(subst, typeParameters)
 
+        ctx.writePathSubst(pathExpr, typeParameters)
+
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
@@ -666,6 +668,7 @@ class RsTypeInferenceWalker(
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
         inferArgumentTypes(methodType.paramTypes.drop(1), argExprs)
+        ctx.writeResolvedMethodSubst(methodCall, newSubst, methodType)
 
         return methodType.retType
     }

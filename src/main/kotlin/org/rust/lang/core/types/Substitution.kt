@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.Region
@@ -76,6 +77,11 @@ open class Substitution(
 
     fun mapConstValues(transform: (Map.Entry<CtConstParameter, Const>) -> Const): Substitution =
         Substitution(typeSubst, regionSubst, constSubst.mapValues(transform))
+
+    fun visitValues(visitor: TypeVisitor): Boolean =
+            types.any { it.visitWith(visitor) } ||
+            regions.any { it.visitWith(visitor) } ||
+            consts.any { it.visitWith(visitor) }
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
