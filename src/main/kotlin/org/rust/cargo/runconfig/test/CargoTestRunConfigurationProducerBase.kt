@@ -19,6 +19,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoRunConfigurationProducer
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.ide.refactoring.RsNamesValidator
+import org.rust.lang.core.psi.RS_RAW_PREFIX
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
@@ -129,8 +131,10 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
             ?: return null
         val target = sourceElement.containingCargoTarget ?: return null
         val configPath = sourceElement.crateRelativePath.configPath() ?: return null
-        return SingleItemTestConfig(commandName, configPath, target, sourceElement, originalElement,
-            isIgnoredTest(sourceElement))
+        return SingleItemTestConfig(
+            commandName, configPath, target, sourceElement, originalElement,
+            isIgnoredTest(sourceElement)
+        )
     }
 
     private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
@@ -161,7 +165,16 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
 
         // We need to chop off heading colon `::`, since `crateRelativePath` always returns fully-qualified path
         @JvmStatic
-        protected fun String?.configPath(): String? = this?.removePrefix("::")
+        protected fun String?.configPath(): String? =
+            this?.removePrefix("::")?.split("::")?.joinToString("::", transform = ::escapePathFragment)
+
+        private fun escapePathFragment(fragment: String): String {
+            return if (RsNamesValidator.isKeyword(fragment)) {
+                "$RS_RAW_PREFIX$fragment"
+            } else {
+                fragment
+            }
+        }
 
         fun getSourceElement(element: RsQualifiedNamedElement): RsQualifiedNamedElement? =
             if (element is RsModDeclItem) element.reference.resolve() as? RsQualifiedNamedElement else element

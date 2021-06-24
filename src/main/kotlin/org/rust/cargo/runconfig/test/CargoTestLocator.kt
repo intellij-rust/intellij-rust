@@ -27,6 +27,8 @@ object CargoTestLocator : SMTestLocator {
     private const val NAME_SEPARATOR: String = "::"
     private const val TEST_PROTOCOL: String = "cargo:test"
 
+    private val LINE_NUM_REGEX = Regex("""(.*?)(#\d+)?$""")
+
     override fun getLocation(
         protocol: String,
         path: String,
@@ -83,8 +85,10 @@ object CargoTestLocator : SMTestLocator {
     private fun toQualifiedName(path: String): Pair<String, Int?> {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
         if (NAME_SEPARATOR !in path) return targetName to null
-        val qualifiedName = path.substringAfter(NAME_SEPARATOR).substringBefore("#")
-        val lineNum = if ("#" in path) path.substringAfterLast("#").toInt() else null
+        val match = LINE_NUM_REGEX.matchEntire(path) ?: return targetName to null
+        val qualifiedName = match.groups[1]?.value?.substringAfter(NAME_SEPARATOR)
+        val lineNum = match.groups[2]?.value?.substring(1)?.toInt()
+
         return "$targetName$NAME_SEPARATOR$qualifiedName" to lineNum
     }
 }

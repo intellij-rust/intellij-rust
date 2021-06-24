@@ -15,9 +15,7 @@ import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
 
-    override fun isKeyword(name: String, project: Project?): Boolean {
-        return getLexerType(name) in RS_KEYWORDS
-    }
+    override fun isKeyword(name: String, project: Project?): Boolean = isKeyword(name)
 
     override fun isIdentifier(name: String, project: Project?): Boolean = isIdentifier(name)
 
@@ -28,6 +26,8 @@ class RsNamesValidator : NamesValidator {
             IDENTIFIER, QUOTE_IDENTIFIER -> true
             else -> false
         }
+
+        fun isKeyword(name: String): Boolean = getLexerType(name) in RS_KEYWORDS
     }
 }
 
