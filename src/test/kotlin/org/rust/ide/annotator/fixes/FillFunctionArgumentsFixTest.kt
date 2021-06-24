@@ -172,4 +172,24 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             foo::<bool>(false);
         }
     """)
+
+    fun `test generic parameter method call`() = checkFixByText("Fill missing arguments", """
+        struct S<T>(T);
+
+        impl<R> S<R> {
+            fn foo(&self, a: R) {}
+        }
+        fn foo(s: S<u32>) {
+            s.foo(<error>/*caret*/)</error>;
+        }
+    """, """
+        struct S<T>(T);
+
+        impl<R> S<R> {
+            fn foo(&self, a: R) {}
+        }
+        fn foo(s: S<u32>) {
+            s.foo(0);
+        }
+    """)
 }
