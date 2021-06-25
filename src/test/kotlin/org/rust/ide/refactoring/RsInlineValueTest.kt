@@ -229,6 +229,175 @@ class RsInlineValueTest : RsTestBase() {
         }
     """)
 
+    fun `test parenthesize binary expression inlined into binary expression`() = doTest("""
+        fn foo() {
+            let /*caret*/a = 2 - 3;
+            5 - a;
+        }
+    """, """
+        fn foo() {
+            5 - (2 - 3);
+        }
+    """)
+
+    fun `test parenthesize binary expression inlined into method call`() = doTest("""
+        trait Foo {
+            fn foo(&self) {}
+        }
+
+        impl Foo for i32 {}
+
+        fn foo() {
+            let /*caret*/a = 2 - 3;
+            a.foo();
+        }
+    """, """
+        trait Foo {
+            fn foo(&self) {}
+        }
+
+        impl Foo for i32 {}
+
+        fn foo() {
+            (2 - 3).foo();
+        }
+    """)
+
+    fun `test struct literal inlined into match`() = doTest("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let a/*caret*/ = S { a: 0 };
+            let b = match a {
+                S { .. } => {}
+            };
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let b = match (S { a: 0 }) {
+                S { .. } => {}
+            };
+        }
+    """)
+
+    fun `test struct literal inlined into for`() = doTest("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let a/*caret*/ = S { a: 0 };
+            for _ in a {}
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            for _ in (S { a: 0 }) {}
+        }
+    """)
+
+    fun `test struct literal inlined into while let`() = doTest("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let a/*caret*/ = S { a: 0 };
+            while let S { .. } = a {}
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            while let S { .. } = (S { a: 0 }) {}
+        }
+    """)
+
+    fun `test struct literal inlined into if let`() = doTest("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let a/*caret*/ = S { a: 0 };
+            if let S { .. } = a {}
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            if let S { .. } = (S { a: 0 }) {}
+        }
+    """)
+
+    fun `test range expr field access`() = doTest("""
+        fn foo() {
+            let a/*caret*/ = 0..1;
+            let b = a.end;
+        }
+    """, """
+        fn foo() {
+            let b = (0..1).end;
+        }
+    """)
+
+    fun `test binary expression try expr`() = doTest("""
+        fn foo() {
+            let a/*caret*/ = 1 + 2;
+            let b = a?;
+        }
+    """, """
+        fn foo() {
+            let b = (1 + 2)?;
+        }
+    """)
+
+    fun `test binary expression unary operator`() = doTest("""
+        fn foo() {
+            let a/*caret*/ = 1 + 2;
+            let b = &a;
+        }
+    """, """
+        fn foo() {
+            let b = &(1 + 2);
+        }
+    """)
+
+    fun `test binary expression cast operator`() = doTest("""
+        fn foo() {
+            let a/*caret*/ = 1 + 2;
+            let b = a as usize;
+        }
+    """, """
+        fn foo() {
+            let b = (1 + 2) as usize;
+        }
+    """)
+
+    fun `test lambda call operator`() = doTest("""
+        fn foo() {
+            let a/*caret*/ = || 1;
+            let b = a();
+        }
+    """, """
+        fn foo() {
+            let b = (|| 1)();
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String,
                        mode: InlineValueMode = InlineValueMode.InlineAllAndRemoveOriginal) {
         withMockInlineValueMode(mode) {

@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.inlineValue
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -13,10 +14,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsPathExpr
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructLiteralField
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineValueProcessor(
@@ -50,10 +49,10 @@ class RsInlineValueProcessor(
                     }
                 }
                 is RsPath -> when (val parent = element.parent) {
-                    is RsPathExpr -> parent.replace(context.expr)
+                    is RsPathExpr -> replaceExpr(factory, parent, context.expr)
                     else -> Unit // Can't replace RsPath to RsExpr
                 }
-                else -> element.replace(context.expr)
+                else -> replaceExpr(factory, element, context.expr)
             }
         }
         if (mode is InlineValueMode.InlineAllAndRemoveOriginal) {
@@ -67,3 +66,22 @@ class RsInlineValueProcessor(
         return RsInlineUsageViewDescriptor(context.element, "${context.type.capitalize()} to inline")
     }
 }
+
+private fun replaceExpr(factory: RsPsiFactory, element: RsElement, expr: RsExpr) {
+    val parent = element.parent
+    val needsParentheses = when {
+        expr is RsBinaryExpr && (parent is RsBinaryExpr || parent.requiresSingleExpr) -> true
+        (expr is RsRangeExpr || expr is RsLambdaExpr) && parent.requiresSingleExpr -> true
+        expr is RsStructLiteral && (parent is RsMatchExpr || parent is RsForExpr || parent is RsCondition) -> true
+        else -> false
+    }
+    val newExpr = if (needsParentheses) {
+        factory.createExpression("(${expr.text})")
+    } else {
+        expr
+    }
+    element.replace(newExpr)
+}
+
+private val PsiElement.requiresSingleExpr: Boolean
+    get() = this is RsDotExpr || this is RsTryExpr || this is RsUnaryExpr || this is RsCastExpr || this is RsCallExpr
