@@ -10,19 +10,16 @@
     ]]>
     </change-notes>
 
-    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
          on how to target different products -->
-
-    <depends>com.intellij.modules.lang</depends>
-    <depends>org.toml.lang</depends>
 
     <xi:include href="/META-INF/rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+    <depends config-file="toml-only.xml">org.toml.lang</depends>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
     <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.appcode</depends>
     <depends optional="true" config-file="native-debug-only.xml">com.intellij.nativeDebug</depends>
-    <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
     <depends optional="true" config-file="copyright-only.xml">com.intellij.copyright</depends>
     <depends optional="true" config-file="duplicates-only.xml">com.intellij.modules.duplicatesDetector</depends>
     <depends optional="true" config-file="coverage-only.xml">com.intellij.modules.coverage</depends>

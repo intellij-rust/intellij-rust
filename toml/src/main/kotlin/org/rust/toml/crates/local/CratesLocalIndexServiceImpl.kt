@@ -12,9 +12,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -54,7 +52,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * persistent state [CratesLocalIndexState]. Note, state's properties should be mutable in order to be serialized and
  * saved.
  */
-@State(name = "CratesLocalIndexState", storages = [Storage("rust.crateslocalindex.xml")])
+@State(name = "CratesLocalIndexState", storages = [
+    Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
+])
 class CratesLocalIndexServiceImpl
     : CratesLocalIndexService, PersistentStateComponent<CratesLocalIndexState>, Disposable {
     private val userCargoIndexDir: Path
