@@ -150,7 +150,11 @@ allprojects {
                 environment("RUSTC_BOOTSTRAP", "1")
 
                 val hostPlatform = DefaultNativePlatform.host()
-                val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/${hostPlatform.architecture.name}"
+                val archName = when (val archName = hostPlatform.architecture.name) {
+                    "arm-v8", "aarch64" -> "arm64"
+                    else -> archName
+                }
+                val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/$archName"
                 args("build", "--release", "-Z", "unstable-options", "--out-dir", outDir)
 
                 // It may be useful to disable compilation of native code.
