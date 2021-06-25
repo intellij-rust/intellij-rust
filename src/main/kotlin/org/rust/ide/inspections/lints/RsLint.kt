@@ -31,9 +31,9 @@ enum class RsLint(
     UnreachableCode("unreachable_code"),
     BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms")),
     NonShorthandFieldPatterns("non_shorthand_field_patterns"),
+    UnusedQualifications("unused_qualifications", listOf("unused")),
     // errors
     UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
-
     // CLippy lints
     NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"));
 
