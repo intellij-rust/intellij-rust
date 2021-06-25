@@ -70,7 +70,7 @@ class RsInferenceResult(
     val patFieldTypes: Map<RsPatField, Ty>,
     private val expectedExprTypes: Map<RsExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<ResolvedPath>>,
-    private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
+    private val resolvedMethods: Map<RsMethodCall, InferredMethodCallInfo>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     private val adjustments: Map<RsExpr, List<Adjustment>>,
     val diagnostics: List<RsDiagnostic>
@@ -96,7 +96,13 @@ class RsInferenceResult(
         resolvedPaths[expr] ?: emptyList()
 
     fun getResolvedMethod(call: RsMethodCall): List<MethodResolveVariant> =
-        resolvedMethods[call] ?: emptyList()
+        resolvedMethods[call]?.resolveVariants ?: emptyList()
+
+    fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
+        resolvedMethods[call]?.type
+
+    fun getResolvedMethodSubst(call: RsMethodCall): Substitution? =
+        resolvedMethods[call]?.subst
 
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
@@ -123,7 +129,7 @@ class RsInferenceContext(
     private val patFieldTypes: MutableMap<RsPatField, Ty> = hashMapOf()
     private val expectedExprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
     private val resolvedPaths: MutableMap<RsPathExpr, List<ResolvedPath>> = hashMapOf()
-    private val resolvedMethods: MutableMap<RsMethodCall, List<MethodResolveVariant>> = hashMapOf()
+    private val resolvedMethods: MutableMap<RsMethodCall, InferredMethodCallInfo> = hashMapOf()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
@@ -228,6 +234,10 @@ class RsInferenceContext(
 
         performPathsRefinement(lookup)
 
+        resolvedPaths.values.asSequence().flatten()
+            .forEach { it.subst = it.subst.foldValues(fullTypeWithOriginsResolver) }
+        resolvedMethods.replaceAll { _, ty -> fullyResolveWithOrigins(ty) }
+
         return RsInferenceResult(
             exprTypes,
             patTypes,
@@ -270,14 +280,18 @@ class RsInferenceContext(
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
             val fn = impl.expandedMembers.functions.find { it.name == fnName } ?: continue
             val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(impl))
-            resolvedPaths[path] = listOf(ResolvedPath.AssocItem(fn, source))
+            val result = ResolvedPath.AssocItem(fn, source)
+            result.subst = variant.subst // TODO remap subst
+            resolvedPaths[path] = listOf(result)
         }
         for ((call, traitRef) in methodRefinements) {
-            val variant = resolvedMethods[call]?.firstOrNull() ?: continue
+            val info = resolvedMethods[call] ?: continue
+            val variant = info.resolveVariants.firstOrNull() ?: continue
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
             val fn = impl.expandedMembers.functions.find { it.name == variant.name } ?: continue
             val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(impl))
-            resolvedMethods[call] = listOf(variant.copy(element = fn, source = source))
+            // TODO remap subst
+            resolvedMethods[call] = info.copy(resolveVariants = listOf(variant.copy(element = fn, source = source)))
         }
     }
 
@@ -329,8 +343,19 @@ class RsInferenceContext(
         resolvedPaths[path] = resolved
     }
 
+    fun writePathSubst(path: RsPathExpr, subst: Substitution) {
+        resolvedPaths[path]?.singleOrNull()?.subst = subst
+    }
+
     fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<MethodResolveVariant>) {
-        resolvedMethods[call] = resolvedTo
+        resolvedMethods[call] = InferredMethodCallInfo(resolvedTo)
+    }
+
+    fun writeResolvedMethodSubst(call: RsMethodCall, subst: Substitution, ty: TyFunction) {
+        resolvedMethods[call]?.let {
+            it.subst = subst
+            it.type = ty
+        }
     }
 
     fun writeResolvedField(lookup: RsFieldLookup, resolvedTo: List<RsElement>) {
@@ -967,6 +992,7 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 
 sealed class ResolvedPath {
     abstract val element: RsElement
+    var subst: Substitution = emptySubstitution
 
     class Item(override val element: RsElement, val isVisible: Boolean) : ResolvedPath()
 
@@ -990,6 +1016,24 @@ sealed class ResolvedPath {
         fun from(entry: AssocItemScopeEntry): ResolvedPath =
             AssocItem(entry.element, entry.source)
     }
+}
+
+data class InferredMethodCallInfo(
+    val resolveVariants: List<MethodResolveVariant>,
+    var subst: Substitution = emptySubstitution,
+    var type: TyFunction? = null,
+) : TypeFoldable<InferredMethodCallInfo> {
+    override fun superFoldWith(folder: TypeFolder): InferredMethodCallInfo = InferredMethodCallInfo(
+        resolveVariants,
+        subst.foldValues(folder),
+        type?.foldWith(folder) as? TyFunction
+    )
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean {
+        val type = type
+        return subst.visitValues(visitor) || type != null && type.visitWith(visitor)
+    }
+
 }
 
 sealed class CoerceResult {

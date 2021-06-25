@@ -55,10 +55,7 @@ data class BoundElement<out E : RsElement>(
         )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        assoc.values.any { visitor.visitTy(it) } ||
-            subst.types.any { it.visitWith(visitor) } ||
-            subst.regions.any { it.visitWith(visitor) } ||
-            subst.consts.any { it.visitWith(visitor) }
+        assoc.values.any { visitor.visitTy(it) } || subst.visitValues(visitor)
 }
 
 val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>

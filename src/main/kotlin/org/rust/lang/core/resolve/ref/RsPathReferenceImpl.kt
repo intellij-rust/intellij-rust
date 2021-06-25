@@ -93,7 +93,7 @@ class RsPathReferenceImpl(
     private fun advancedMultiresolveUsingInferenceCache(): List<BoundElementWithVisibility<RsElement>>? {
         val path = element.parent as? RsPathExpr ?: return null
         return path.inference?.getResolvedPath(path)?.map { result ->
-            val element = BoundElement(result.element)
+            val element = BoundElement(result.element, result.subst)
             val isVisible = (result as? ResolvedPath.Item)?.isVisible ?: true
             BoundElementWithVisibility(element, isVisible)
         }
