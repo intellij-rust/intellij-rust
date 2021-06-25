@@ -15,7 +15,8 @@ include(
     "js",
     "ml-completion",
     "intellij-toml",
-    "intellij-toml:core"
+    "intellij-toml:core",
+    "intellij-toml:schema"
 )
 
 // Configure Gradle Build Cache. It is enabled in `gradle.properties` via `org.gradle.caching`.

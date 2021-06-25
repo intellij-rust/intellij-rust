@@ -1,0 +1,6 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <id>org.toml.lang.schema</id>
+
+    <xi:include href="/META-INF/toml-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <depends optional="true" config-file="schema-only.xml">com.intellij.modules.json</depends>
+</idea-plugin>

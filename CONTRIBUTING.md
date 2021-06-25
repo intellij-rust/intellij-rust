@@ -206,6 +206,7 @@ The current Rust plugin modules:
 The current Toml plugin modules:
 * `:intellij-toml` - module to build/run/publish Toml plugin
 * `:intellij-toml:core` - core module
+* `:intellij-toml:schema` - support for toml json schemas
 
 If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
 

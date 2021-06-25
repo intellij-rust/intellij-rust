@@ -543,6 +543,7 @@ project(":intellij-toml") {
 
     dependencies {
         implementation(project(":intellij-toml:core"))
+        implementation(project(":intellij-toml:schema"))
     }
 
     tasks {
@@ -578,6 +579,15 @@ project(":intellij-toml:core") {
         withType<KotlinCompile> {
             dependsOn(generateTomlLexer, generateTomlParser)
         }
+    }
+}
+
+project(":intellij-toml:schema") {
+    dependencies {
+        implementation(project(":common"))
+        implementation(project(":intellij-toml:core"))
+        testImplementation(project(":common", "testOutput"))
+        testImplementation(project(":intellij-toml:core", "testOutput"))
     }
 }
 

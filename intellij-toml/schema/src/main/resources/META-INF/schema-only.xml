@@ -1,0 +1,11 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor order="first" language="TOML" id="TomlJsonSchema"
+                                implementationClass="org.toml.ide.schema.TomlJsonSchemaCompletionContributor"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij.json">
+        <jsonLikePsiWalkerFactory implementation="org.toml.ide.schema.TomlJsonLikePsiWalkerFactory"/>
+        <jsonSchemaEnabler implementation="org.toml.ide.schema.TomlJsonSchemaEnabler"/>
+    </extensions>
+</idea-plugin>
