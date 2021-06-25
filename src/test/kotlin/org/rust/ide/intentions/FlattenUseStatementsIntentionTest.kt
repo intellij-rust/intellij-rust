@@ -112,6 +112,22 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
         use quux::eggs;
     """)
 
+    fun `test inner path caret after comma`() = doAvailableTest("""
+        use std::{
+            sync::{
+                mpsc,/*caret*/
+                Arc
+            },
+            fmt
+        };
+    """, """
+        use std::{
+            /*caret*/sync::mpsc,
+            sync::Arc,
+            fmt
+        };
+    """)
+
     fun `test inner path without last comma`() = doAvailableTest("""
         use std::{
             sync::{

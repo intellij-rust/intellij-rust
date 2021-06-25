@@ -45,7 +45,13 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useGroupOnCursor = element.ancestorStrict<RsUseGroup>() ?: return null
         val isNested = useGroupOnCursor.ancestorStrict<RsUseGroup>() != null
-        val useSpeckOnCursor = element.ancestorStrict<RsUseSpeck>() ?: return null
+        val useSpeckOnCursor = when (element) {
+            is RsUseSpeck -> element
+            else -> {
+                val sibling = (element.leftSiblings + element.rightSiblings).firstOrNull { it is RsUseSpeck }
+                sibling ?: element.ancestorStrict<RsUseSpeck>() ?: return null
+            }
+        } as RsUseSpeck
 
         val useSpeckList = mutableListOf<RsUseSpeck>()
         val basePath = useGroupOnCursor.parentUseSpeck.path?.text ?: return null
