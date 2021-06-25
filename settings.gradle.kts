@@ -14,7 +14,8 @@ include(
     "grazie",
     "ml-completion",
     "intellij-toml",
-    "intellij-toml:core"
+    "intellij-toml:core",
+    "intellij-toml:schema"
 )
 
 val platformVersion: String by extra

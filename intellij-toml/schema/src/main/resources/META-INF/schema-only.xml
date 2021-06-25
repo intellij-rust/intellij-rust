@@ -1,0 +1,19 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
+        <localInspection language="TOML" groupName="TOML"
+                         displayName="Toml schema inspection"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.toml.ide.schema.TomlJsonSchemaHighlightingInspection"/>
+
+        <completion.contributor order="first" language="TOML" id="TomlJsonSchema"
+                                implementationClass="org.toml.ide.schema.TomlJsonSchemaCompletionContributor"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij.json">
+        <jsonLikePsiWalkerFactory implementation="org.toml.ide.schema.TomlJsonLikePsiWalkerFactory"/>
+        <jsonSchemaEnabler implementation="org.toml.ide.schema.TomlJsonSchemaEnabler"/>
+    </extensions>
+</idea-plugin>
