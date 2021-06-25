@@ -222,4 +222,24 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test type alias`() = doTest("""
+        type Coordinates = (u32, u32);
+
+        struct System/*caret*/ {
+            point: Coordinates,
+        }
+    """, listOf(MemberSelection("point: Coordinates", true)), """
+        type Coordinates = (u32, u32);
+
+        struct System {
+            point: Coordinates,
+        }
+
+        impl System {
+            pub fn new(point: Coordinates) -> Self {
+                System { point }
+            }
+        }
+    """)
 }

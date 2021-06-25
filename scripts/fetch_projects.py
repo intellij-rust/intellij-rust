@@ -3,7 +3,7 @@ import json
 import subprocess
 from typing import List, Dict
 
-from common import git_command
+from git import git_command
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

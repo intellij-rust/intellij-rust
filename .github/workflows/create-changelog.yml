@@ -1,0 +1,35 @@
+name: create changelog
+
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 3 * * *' # try everyday
+
+jobs:
+    create-changelog:
+        runs-on: ubuntu-18.04
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Checkout intellij-rust.github.io repo
+              uses: actions/checkout@v2
+              with:
+                  token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+                  repository: ${{ github.repository_owner }}/intellij-rust.github.io
+                  path: intellij-rust.github.io
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.9
+
+            - name: Install python packages
+              run: pip install -r intellij-rust.github.io/requirements.txt
+
+            - name: Set up git user
+              run: |
+                  (cd intellij-rust.github.io; git config --local user.email "intellij.rust@gmail.com")
+                  (cd intellij-rust.github.io; git config --local user.name "intellij-rust-bot")
+
+            - name: Make pull request
+              run: python scripts/make_changelog_pull_request.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --repo_owner ${{ github.repository_owner }} --repo_name intellij-rust.github.io

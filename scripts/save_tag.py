@@ -1,6 +1,6 @@
 import argparse
 
-from common import git_command
+from git import git_command
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

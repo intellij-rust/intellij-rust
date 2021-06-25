@@ -70,7 +70,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 214
+        private const val STUB_VERSION = 215
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -251,7 +251,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "ARRAY_TYPE" -> RsArrayTypeStub.Type
     "REF_LIKE_TYPE" -> RsRefLikeTypeStub.Type
-    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("FN_POINTER_TYPE", ::RsFnPointerTypeImpl)
+    "FN_POINTER_TYPE" -> RsFnPointerTypeStub.Type
     "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
     "PAREN_TYPE" -> RsPlaceholderStub.Type("PAREN_TYPE", ::RsParenTypeImpl)
     "BASE_TYPE" -> RsBaseTypeStub.Type
@@ -1273,6 +1273,55 @@ class RsRefLikeTypeStub(
                 psi.isRef,
                 psi.isPointer
             )
+    }
+}
+
+
+class RsFnPointerTypeStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val abiName: String?,
+    private val flags: Int
+) : StubBase<RsFnPointerType>(parent, elementType) {
+
+    val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
+    val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
+
+    object Type : RsStubElementType<RsFnPointerTypeStub, RsFnPointerType>("FN_POINTER_TYPE") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsFnPointerTypeStub(
+                parentStub,
+                this,
+                dataStream.readUTFFastAsNullable(),
+                dataStream.readUnsignedByte()
+            )
+
+        override fun serialize(stub: RsFnPointerTypeStub, dataStream: StubOutputStream) = with(dataStream) {
+            dataStream.writeUTFFastAsNullable(stub.abiName)
+            dataStream.writeByte(stub.flags)
+        }
+
+        override fun createPsi(stub: RsFnPointerTypeStub) = RsFnPointerTypeImpl(stub, this)
+
+        override fun createStub(psi: RsFnPointerType, parentStub: StubElement<*>?): RsFnPointerTypeStub {
+            var flags = 0
+            flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
+            flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
+
+            return RsFnPointerTypeStub(
+                parentStub,
+                this,
+                psi.abiName,
+                flags
+            )
+        }
+    }
+
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val UNSAFE_MASK: Int = nextBitMask()
+        private val EXTERN_MASK: Int = nextBitMask()
     }
 }
 

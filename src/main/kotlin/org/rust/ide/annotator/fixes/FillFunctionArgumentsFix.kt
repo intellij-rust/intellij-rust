@@ -15,6 +15,10 @@ import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.infer.type
+import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
@@ -64,9 +68,7 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
 private fun getParameterTypes(element: PsiElement): List<Ty?>? {
     return when (element) {
         is RsCallExpr -> (element.expr.type as? TyFunction)?.paramTypes
-        is RsMethodCall -> (element.reference.resolve() as? RsFunction)?.valueParameterList?.valueParameterList?.map {
-            it.typeReference?.type
-        }
+        is RsMethodCall -> element.inference?.getResolvedMethodType(element)?.paramTypes?.drop(1)
         else -> null
     }
 }

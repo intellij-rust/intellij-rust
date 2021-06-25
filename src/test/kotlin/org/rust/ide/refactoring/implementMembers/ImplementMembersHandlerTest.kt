@@ -6,12 +6,9 @@
 package org.rust.ide.refactoring.implementMembers
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -121,31 +118,106 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    fun `test import unresolved type aliases`() = doTest("""
+    @MockEdition(EDITION_2018)
+    fun `test import unresolved types 2`() = doTest("""
         use a::T;
         mod a {
-            pub struct R;
-            pub type U = R;
+            mod private {
+                pub struct R;
+            }
+            pub use private::R;
             pub trait T {
-                fn f() -> (R, U);
+                fn f() -> (private::R, private::R);
             }
         }
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> (R, U)", byDefault = true, isSelected = true)
+        ImplementMemberSelection("f() -> (private::R, private::R)", byDefault = true, isSelected = true)
     ), """
-        use a::{T, R, U};
+        use a::T;
+        use crate::a::R;
+
         mod a {
-            pub struct R;
-            pub type U = R;
+            mod private {
+                pub struct R;
+            }
+            pub use private::R;
             pub trait T {
-                fn f() -> (R, U);
+                fn f() -> (private::R, private::R);
             }
         }
         struct S;
         impl T for S {
-            fn f() -> (R, U) {
+            fn f() -> (R, R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test import unresolved types inside type qualifier`() = doTest("""
+        use a::T;
+        mod a {
+            pub struct R;
+            pub trait WithAssoc { type Item; }
+            impl WithAssoc for R {
+                type Item = ();
+            }
+            pub trait T {
+                fn f(a: <R as WithAssoc>::Item);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f(a: <R as WithAssoc>::Item)", byDefault = true, isSelected = true)
+    ), """
+        use a::{T, R, WithAssoc};
+        mod a {
+            pub struct R;
+            pub trait WithAssoc { type Item; }
+            impl WithAssoc for R {
+                type Item = ();
+            }
+            pub trait T {
+                fn f(a: <R as WithAssoc>::Item);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f(a: <R as WithAssoc>::Item) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test import unresolved type aliases`() = doTest("""
+        use a::T;
+        mod a {
+            pub struct R;
+            pub type U = R;
+            pub type V = i32;
+            pub trait T {
+                fn f() -> (R, U, V);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, U, V)", byDefault = true, isSelected = true)
+    ), """
+        use a::{T, R, U, V};
+        mod a {
+            pub struct R;
+            pub type U = R;
+            pub type V = i32;
+            pub trait T {
+                fn f() -> (R, U, V);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, U, V) {
                 <selection>todo!()</selection>
             }
         }
@@ -185,25 +257,336 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    fun `test support type aliases`() = doTest("""
-        pub struct R;
-        pub type U = R;
-        pub trait T {
-            fn f() -> (R, U);
+    fun `test don't import a type if it is already in the scope with a different name`() = doTest("""
+        use a::T;
+        use a::R as U;
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
         }
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> (R, U)", byDefault = true, isSelected = true)
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        pub struct R;
-        pub type U = R;
-        pub trait T {
-            fn f() -> (R, U);
+        use a::T;
+        use a::R as U;
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
         }
         struct S;
         impl T for S {
-            fn f() -> (R, U) {
+            fn f() -> (U, U) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test import unresolved trait bounds`() = doTest("""
+        use a::T;
+        mod a {
+            pub trait Bound1 {}
+            pub trait Bound2 {}
+            pub trait T {
+                fn f<A: Bound1>() where A: Bound2;
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f<A: Bound1>() where A: Bound2", byDefault = true, isSelected = true)
+    ), """
+        use a::{T, Bound1, Bound2};
+        mod a {
+            pub trait Bound1 {}
+            pub trait Bound2 {}
+            pub trait T {
+                fn f<A: Bound1>() where A: Bound2;
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f<A: Bound1>() where A: Bound2 {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test import unresolved constant`() = doTest("""
+        use a::T;
+        mod a {
+            pub const C: usize = 1;
+            pub trait T {
+                fn f() -> [u8; C];
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> [u8; C]", byDefault = true, isSelected = true)
+    ), """
+        use a::{T, C};
+        mod a {
+            pub const C: usize = 1;
+            pub trait T {
+                fn f() -> [u8; C];
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> [u8; C] {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test don't import a constant if it is already in the scope with a different name`() = doTest("""
+        use a::T;
+        use a::C as D;
+        mod a {
+            pub const C: usize = 1;
+            pub trait T {
+                fn f() -> [u8; C];
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> [u8; C]", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        use a::C as D;
+        mod a {
+            pub const C: usize = 1;
+            pub trait T {
+                fn f() -> [u8; C];
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> [u8; D] {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test use absolute path in the case of name conflict`() = doTest("""
+        use a::T;
+        struct R;
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        struct R;
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (a::R, a::R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test use relative path in the case of name conflict if intermediate mod is imported`() = doTest("""
+        use a::T;
+        use a::b;
+        struct R;
+        mod a {
+            pub mod b {
+                pub struct R;
+            }
+            use b::R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        use a::b;
+        struct R;
+        mod a {
+            pub mod b {
+                pub struct R;
+            }
+            use b::R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (b::R, b::R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test use relative path in the case of name conflict if intermediate mod is imported (aliased)`() = doTest("""
+        use a::T;
+        use a::b as c;
+        struct R;
+        mod a {
+            pub mod b {
+                pub struct R;
+            }
+            use b::R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        use a::b as c;
+        struct R;
+        mod a {
+            pub mod b {
+                pub struct R;
+            }
+            use b::R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (c::R, c::R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test use absolute path in the case of name conflict (name conflict is created during importing)`() = doTest("""
+        use a::T;
+        use crate::a::foo::R;
+        mod a {
+            pub mod foo { pub struct R; }
+            pub mod bar { pub struct R; }
+            pub trait T {
+                fn f() -> (foo::R, bar::R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (foo::R, bar::R)", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        use crate::a::foo::R;
+        mod a {
+            pub mod foo { pub struct R; }
+            pub mod bar { pub struct R; }
+            pub trait T {
+                fn f() -> (foo::R, bar::R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, a::bar::R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    @MockEdition(EDITION_2018)
+    fun `test use fully qualified path if cannot import an item`() = doTest("""
+        use a::T;
+        mod a {
+            /*private*/ struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
+    ), """
+        use a::T;
+        mod a {
+            /*private*/ struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (crate::a::R, crate::a::R) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test support type aliases`() = doTest("""
+        pub struct R;
+        pub type U = R;
+        pub type V = i32;
+        pub trait T {
+            fn f() -> (R, U, V);
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, U, V)", byDefault = true, isSelected = true)
+    ), """
+        pub struct R;
+        pub type U = R;
+        pub type V = i32;
+        pub trait T {
+            fn f() -> (R, U, V);
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, U, V) {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
+    fun `test support macro type`() = doTest("""
+        pub trait T {
+            fn f() -> foo!();
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> foo!()", byDefault = true, isSelected = true)
+    ), """
+        pub trait T {
+            fn f() -> foo!();
+        }
+        struct S;
+        impl T for S {
+            fn f() -> foo!() {
                 <selection>todo!()</selection>
             }
         }
@@ -716,11 +1099,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
             const C1: S<1> = S;
 
-            fn f2(_: S<{}>) -> S<{}> {
+            fn f2(_: S<{ UNKNOWN }>) -> S<{ UNKNOWN }> {
                 todo!()
             }
 
-            const C2: S<{}> = S;
+            const C2: S<{ UNKNOWN }> = S;
 
             fn f3(_: [i32; 1]) -> [i32; 1] {
                 todo!()
@@ -728,11 +1111,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
             const C3: [i32; 1] = [];
 
-            fn f4(_: [i32; {}]) -> [i32; {}] {
+            fn f4(_: [i32; UNKNOWN]) -> [i32; UNKNOWN] {
                 todo!()
             }
 
-            const C4: [i32; {}] = [];
+            const C4: [i32; UNKNOWN] = [];
         }
     """)
 
@@ -1315,18 +1698,18 @@ class ImplementMembersHandlerTest : RsTestBase() {
     fun `test default type params 4`() = doTest("""
         struct S<T1 = i32, T2 = i32, T3 = i32>(T1, T2, T3);
         trait Foo {
-            fn foo() -> S<i32, u32, i32>;
+            fn foo() -> S<i32, u32>;
         }
         struct Bar;
         impl Foo for Bar {
             /*caret*/
         }
     """, listOf(
-        ImplementMemberSelection("foo() -> S<i32, u32, i32>", byDefault = true)
+        ImplementMemberSelection("foo() -> S<i32, u32>", byDefault = true)
     ), """
         struct S<T1 = i32, T2 = i32, T3 = i32>(T1, T2, T3);
         trait Foo {
-            fn foo() -> S<i32, u32, i32>;
+            fn foo() -> S<i32, u32>;
         }
         struct Bar;
         impl Foo for Bar {
@@ -1340,19 +1723,19 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S<T = i32>(T);
         type A<T = u32> = S<T>;
         trait Foo {
-            fn foo(_: A<i32>) -> A<u32>;
+            fn foo(_: A<i32>) -> A;
         }
         struct Bar;
         impl Foo for Bar {
             /*caret*/
         }
     """, listOf(
-        ImplementMemberSelection("foo(_: A<i32>) -> A<u32>", byDefault = true)
+        ImplementMemberSelection("foo(_: A<i32>) -> A", byDefault = true)
     ), """
         struct S<T = i32>(T);
         type A<T = u32> = S<T>;
         trait Foo {
-            fn foo(_: A<i32>) -> A<u32>;
+            fn foo(_: A<i32>) -> A;
         }
         struct Bar;
         impl Foo for Bar {
@@ -1372,8 +1755,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         checkByText(code.trimIndent(), expected.trimIndent()) {
             withMockTraitMemberChooser({ _, all, selectedByDefault ->
-                TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })
-                TestCase.assertEquals(selectedByDefault.map { it.formattedText() }, chooser.filter { it.byDefault }.map { it.member })
+                assertEquals(chooser.map { it.member }, all.map { it.formattedText() })
+                assertEquals(chooser.filter { it.byDefault }.map { it.member }, selectedByDefault.map { it.formattedText() })
                 extractSelected(all, chooser)
             }) {
                 myFixture.performEditorAction("ImplementMethods")

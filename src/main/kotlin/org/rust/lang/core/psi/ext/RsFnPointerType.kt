@@ -7,6 +7,25 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsFnPointerType
 import org.rust.lang.core.psi.RsValueParameter
+import org.rust.lang.core.stubs.RsFnPointerTypeStub
 
 val RsFnPointerType.valueParameters: List<RsValueParameter>
     get() = valueParameterList.valueParameterList
+
+val RsFnPointerType.isUnsafe: Boolean
+    get() {
+        val stub = greenStub as? RsFnPointerTypeStub
+        return stub?.isUnsafe ?: (unsafe != null)
+    }
+
+val RsFnPointerType.isExtern: Boolean
+    get() {
+        val stub = greenStub as? RsFnPointerTypeStub
+        return stub?.isExtern ?: (externAbi != null)
+    }
+
+val RsFnPointerType.abiName: String?
+    get() {
+        val stub = greenStub as? RsFnPointerTypeStub
+        return stub?.abiName ?: externAbi?.stringLiteral?.text
+    }
