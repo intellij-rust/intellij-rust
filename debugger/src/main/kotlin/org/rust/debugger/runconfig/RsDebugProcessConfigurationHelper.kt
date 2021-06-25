@@ -19,6 +19,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon
@@ -37,8 +38,12 @@ class RsDebugProcessConfigurationHelper(
 
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
 
+    private val prettyPrintersPath: String? = toolchain?.toRemotePath(PP_PATH)
+
     private val sysroot: String? by lazy {
-        cargoProject?.workingDirectory?.let { toolchain?.rustc()?.getSysroot(it) }
+        cargoProject?.workingDirectory
+            ?.let { toolchain?.rustc()?.getSysroot(it) }
+            ?.let { toolchain?.toRemotePath(it) }
     }
 
     fun configure() {
@@ -90,7 +95,7 @@ class RsDebugProcessConfigurationHelper(
             }
 
             LLDBRenderers.BUNDLED -> {
-                val path = PP_PATH.systemDependentAndEscaped()
+                val path = prettyPrintersPath?.systemDependentAndEscaped() ?: return
                 executeInterpreterCommand(threadId, frameIndex, """command script import "$path/$LLDB_LOOKUP.py" """)
 
                 // In case of cross-language projects, lldb pretty-printers should be enabled
@@ -124,7 +129,7 @@ class RsDebugProcessConfigurationHelper(
             }
 
             GDBRenderers.BUNDLED -> {
-                val path = PP_PATH.systemDependentAndEscaped()
+                val path = prettyPrintersPath?.systemDependentAndEscaped() ?: return
                 val command = """python """ +
                     """sys.path.insert(0, "$path"); """ +
                     """import $GDB_LOOKUP; """ +
@@ -144,8 +149,14 @@ class RsDebugProcessConfigurationHelper(
         return sysroot
     }
 
-    private fun String.systemDependentAndEscaped(): String =
-        StringUtil.escapeStringCharacters(FileUtil.toSystemDependentName(this))
+    private fun String.systemDependentAndEscaped(): String {
+        val path = if (toolchain is RsWslToolchain) {
+            FileUtil.toSystemIndependentName(this)
+        } else {
+            FileUtil.toSystemDependentName(this)
+        }
+        return StringUtil.escapeStringCharacters(path)
+    }
 
     companion object {
         private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
