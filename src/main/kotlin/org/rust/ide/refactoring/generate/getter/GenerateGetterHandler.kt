@@ -7,15 +7,11 @@ package org.rust.ide.refactoring.generate.getter
 
 
 import com.intellij.openapi.editor.Editor
-import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.Substitution
@@ -45,12 +41,13 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
         val psiFactory = RsPsiFactory(project)
         val impl = getOrCreateImplBlock(implBlock, psiFactory, structName, struct)
 
-        return chosenFields.map {
+        return chosenFields.mapNotNull {
             val fieldName = it.argumentIdentifier
-            val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
+            val typeRef = it.field.typeReference ?: return@mapNotNull null
+            val fieldType = typeRef.type.substitute(substitution)
 
-            val (borrow, type) = getBorrowAndType(fieldType, it.field)
-            val typeStr = type.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)
+            val (borrow, type) = getBorrowAndType(fieldType, typeRef, it.field)
+            val typeStr = type.substAndGetText(substitution)
 
             val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"
             val fnBody = "${borrow}self.$fieldName"
@@ -63,18 +60,25 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
     override fun methodName(member: StructMember): String = member.argumentIdentifier
 }
 
-private fun getBorrowAndType(type: Ty, context: RsElement): Pair<String, Ty> {
+private fun getBorrowAndType(
+    type: Ty,
+    typeReference: RsTypeReference,
+    context: RsElement
+): Pair<String, RsTypeReference> {
     return when {
-        type is TyPrimitive -> Pair("", type)
+        type is TyPrimitive -> Pair("", typeReference)
         type is TyAdt -> {
             val item = type.item
             when {
-                item == item.knownItems.String -> Pair("&", TyStr)
-                !type.isMovesByDefault(context.implLookup) -> Pair("", type)
-                else -> Pair("&", type)
+                item == item.knownItems.String -> {
+                    val factory = RsPsiFactory(context.project)
+                    Pair("&", factory.createType("str"))
+                }
+                !type.isMovesByDefault(context.implLookup) -> Pair("", typeReference)
+                else -> Pair("&", typeReference)
             }
         }
-        !type.isMovesByDefault(context.implLookup) -> Pair("", type)
-        else -> Pair("&", type)
+        !type.isMovesByDefault(context.implLookup) -> Pair("", typeReference)
+        else -> Pair("&", typeReference)
     }
 }
