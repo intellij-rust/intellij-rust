@@ -51,7 +51,7 @@ def create_pull_request(repo: str, token: str, branch: str, title: str, draft: b
     return json.load(response)
 
 
-def add_assignee(repo: str, token: str, id: int, assignee: str):
+def add_assignee(repo: str, token: str, id: int, assignee: str) -> None:
     headers = {"Authorization": f"token {token}",
                "Accept": "application/vnd.github.v3+json"}
     params = {"assignees": [assignee]}
