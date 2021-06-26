@@ -36,7 +36,7 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-// BACKCOMAPT: 2021.1
+// BACKCOMPAT: 2021.1
 val graziePlugin = if (platformVersion >= 212 || baseIDE == "idea") {
     "tanvd.grazi"
 } else {
@@ -123,8 +123,7 @@ allprojects {
         buildSearchableOptions {
             // buildSearchableOptions task doesn't make sense for non-root subprojects
             val isRootProject = project.name in listOf("plugin", "intellij-toml")
-            // TODO: enable buildSearchableOptions task for 212 platform
-            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean() && platformVersion < 212
+            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
         }
 
         test {
