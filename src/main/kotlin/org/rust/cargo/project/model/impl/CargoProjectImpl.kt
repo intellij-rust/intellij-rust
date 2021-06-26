@@ -7,6 +7,7 @@ package org.rust.cargo.project.model.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.RunManager
+import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -543,6 +544,8 @@ private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path
 }
 
 private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): CompletableFuture<List<CargoProjectImpl>> {
+    @Suppress("UnstableApiUsage")
+    if (!project.isTrusted()) return CompletableFuture.completedFuture(projects)
     // TODO: get rid of `result` here
     val result = if (projects.isEmpty()) {
         CompletableFuture.completedFuture(emptyList())
