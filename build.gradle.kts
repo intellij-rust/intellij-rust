@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
 import java.net.URL
+import java.nio.file.Files
 import kotlin.concurrent.thread
 
 // The same as `--stacktrace` param
@@ -359,12 +360,36 @@ project(":") {
         delete("src/gen/org/rust/lang/doc")
     }
 
-    val generateRustParser = task<GenerateParser>("generateRustParser") {
+    val generateRustParserGK = task<GenerateParser>("generateRustParserGK") {
         source = "src/main/grammars/RustParser.bnf"
-        targetRoot = "src/gen"
+        targetRoot = "build/gen"
         pathToParser = "/org/rust/lang/core/parser/RustParser.java"
         pathToPsiRoot = "/org/rust/lang/core/psi"
         purgeOldFiles = true
+    }
+
+    val generateRustParser = task<Copy>("generateRustParser") {
+        dependsOn(generateRustParserGK)
+        from(project.file(generateRustParserGK.targetRoot))
+        into(project.file("src/gen"))
+        doLast {
+            val parser = project.file("src/gen/${generateRustParserGK.pathToParser}").toPath()
+            Files.writeString(
+                parser,
+                Files.readString(parser)
+                    // `Expr_0` - all binary expressions
+                    .replace("= Expr(builder_", "= stmtModeExprOff(builder_")
+                    // `LambdaExpr` - use `AnyExpr`
+                    .replace("pinned_ && Expr(builder_, level_, 2);", "pinned_ && AnyExpr(builder_, level_);")
+                    // `UnaryExpr`
+                    .replace("pinned_ && Expr(builder_", "pinned_ && stmtModeExprOff(builder_")
+                    // `RetExpr_2`, `YieldExpr_2`
+                    .replace(
+                        "Expr(builder_, level_ + 1, -1);${System.lineSeparator()}    return true;",
+                        "stmtModeExprOff(builder_, level_ + 1, -1);${System.lineSeparator()}    return true;"
+                    )
+            )
+        }
     }
 
     tasks {

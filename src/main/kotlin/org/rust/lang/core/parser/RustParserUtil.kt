@@ -731,4 +731,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun parseSimplePat(builder: PsiBuilder): Boolean {
         return RustParser.SimplePat(builder, 0)
     }
+
+    @JvmStatic
+    fun stmtModeExprOff(b: PsiBuilder, level_: Int, priority_: Int): Boolean {
+        return b.withFlag(STMT_EXPR_MODE, false) {
+            RustParser.Expr(this, level_, priority_)
+        }
+    }
 }

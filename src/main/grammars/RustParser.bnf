@@ -1015,8 +1015,8 @@ upper TypeAlias ::= TYPE_KW identifier
 // https://github.com/JetBrains/Grammar-Kit/blob/master/HOWTO.md#24-compact-expression-parsing-with-priorities
 //
 // Rust expression grammar allows or forbids struct literals depending on context.
-// There are `no_struct_lit_expr` and `any_expr` productions for this two cases.
-// `expr` production is an implementation detail. It passes the context information to the child expressions.
+// There are `NoStructLitExpr` and `AnyExpr` productions for this two cases.
+// `Expr` production is an implementation detail. It passes the context information to the child expressions.
 Expr ::= RetExpr
        | YieldExpr
        | LambdaExpr
@@ -1069,10 +1069,10 @@ StmtModeExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.ON' Expr>> {
   elementType = Expr
   name = "expr"
 }
-StmtModeExprOff ::= <<stmtMode 'StmtMode.OFF' Expr>> {
-  elementType = Expr
-  name = "expr"
-}
+//StmtModeExprOff ::= <<stmtMode 'StmtMode.OFF' Expr>> {
+//  elementType = Expr
+//  name = "expr"
+//}
 
 BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
@@ -1112,14 +1112,14 @@ fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' 
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
+AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true } // HACK stmtModeExprOff
 AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%=' { name = "operator" }
 
-CompBinExpr      ::= Expr <<isIncompleteBlockExpr>> CompBinOp StmtModeExprOff
-RelCompBinExpr   ::= Expr <<isIncompleteBlockExpr>> RelCompBinOp StmtModeExprOff
-BitShiftBinExpr  ::= Expr <<isIncompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
-AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp StmtModeExprOff
-MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp StmtModeExprOff
+CompBinExpr      ::= Expr <<isIncompleteBlockExpr>> CompBinOp Expr // HACK stmtModeExprOff
+RelCompBinExpr   ::= Expr <<isIncompleteBlockExpr>> RelCompBinOp Expr // HACK stmtModeExprOff
+BitShiftBinExpr  ::= Expr <<isIncompleteBlockExpr>> BitShiftBinOp Expr // HACK stmtModeExprOff
+AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp Expr // HACK stmtModeExprOff
+MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp Expr // HACK stmtModeExprOff
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
 RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt '>' { name = "operator" }
@@ -1128,11 +1128,11 @@ AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-BoolOrBinExpr    ::= Expr <<isIncompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
-BoolAndBinExpr   ::= Expr <<isIncompleteBlockExpr>> BoolAndBinOp StmtModeExprOff
-BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp StmtModeExprOff
-BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp StmtModeExprOff
-BitXorBinExpr    ::= Expr <<isIncompleteBlockExpr>> BitXorBinOp StmtModeExprOff
+BoolOrBinExpr    ::= Expr <<isIncompleteBlockExpr>> BoolOrBinOp Expr // HACK stmtModeExprOff
+BoolAndBinExpr   ::= Expr <<isIncompleteBlockExpr>> BoolAndBinOp Expr // HACK stmtModeExprOff
+BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp Expr // HACK stmtModeExprOff
+BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp Expr // HACK stmtModeExprOff
+BitXorBinExpr    ::= Expr <<isIncompleteBlockExpr>> BitXorBinOp Expr // HACK stmtModeExprOff
 
 BoolOrBinOp      ::= oror { name = "operator" }
 BoolAndBinOp     ::= andand { name = "operator" }
@@ -1153,6 +1153,7 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut])
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+// HACK AnyExpr
 LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? AnyExpr {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1258,7 +1259,7 @@ IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
 }
 ElseBranch ::= else ( IfExpr | SimpleBlock )
 
-RetExpr ::= OuterAttr* return Expr? {
+RetExpr ::= OuterAttr* return Expr? { // HACK stmtModeExprOff
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1353,7 +1354,7 @@ private AnyLitToken_first ::= STRING_LITERAL | BYTE_STRING_LITERAL
                             | FLOAT_LITERAL | INTEGER_LITERAL
                             | BOOL_LITERAL
 
-YieldExpr ::= OuterAttr* yield Expr? {
+YieldExpr ::= OuterAttr* yield Expr? { // HACK stmtModeExprOff
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
