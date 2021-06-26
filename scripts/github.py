@@ -25,7 +25,7 @@ def set_milestone(token: str, repo: str, issue_number: int, milestone_number: in
     urlopen(request)
 
 
-def get_latest_milestones(repo: str, state: str = "open") -> List[Dict]:
+def get_latest_milestones(repo: str, state: str = "all") -> List[Dict]:
     response = urlopen(f"https://api.github.com/repos/{repo}/milestones?state={state}&sort=due_on&direction=desc")
     return json.load(response)
 

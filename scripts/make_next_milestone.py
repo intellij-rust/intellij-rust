@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
 
     repo = env("GITHUB_REPOSITORY")
-    milestones = get_latest_milestones(repo, state="all")
+    milestones = get_latest_milestones(repo)
     milestones.sort(key=lambda milestone: milestone["title"], reverse=True)
 
     patch_version = get_patch_version()
