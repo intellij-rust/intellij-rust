@@ -1,8 +1,7 @@
+import argparse
 import re
 from datetime import datetime, date, timedelta
 from typing import Dict
-
-import argparse
 
 from common import env, get_patch_version, execute_command
 from git import git_command
@@ -13,7 +12,7 @@ def changelog_branch_name(patch_version: int) -> str:
     return f"release-{patch_version}"
 
 
-def add_changelog_template(token: str, patch_version: int, cwd: str):
+def add_changelog_template(token: str, patch_version: int, cwd: str) -> None:
     branch_name = changelog_branch_name(patch_version)
     git_command("checkout", "-b", branch_name, cwd=cwd)
     execute_command("python", "changelog.py", "--token", token, cwd=cwd)
@@ -22,7 +21,7 @@ def add_changelog_template(token: str, patch_version: int, cwd: str):
     git_command("push", "origin", branch_name, cwd=cwd)
 
 
-def create_changelog_pull_request(changelog_repo: str, token: str, patch_version: int, milestone: Dict):
+def create_changelog_pull_request(changelog_repo: str, token: str, patch_version: int, milestone: Dict) -> None:
     description = milestone["description"]
     result = re.search("Release manager: @(\\w+)", description)
     if result is None:
@@ -33,7 +32,7 @@ def create_changelog_pull_request(changelog_repo: str, token: str, patch_version
     add_assignee(changelog_repo, token, pr["number"], release_manager)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", type=str, required=True)
     parser.add_argument("--repo_owner", type=str, required=True)
