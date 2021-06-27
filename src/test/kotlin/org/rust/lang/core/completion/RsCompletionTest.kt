@@ -1086,4 +1086,72 @@ class RsCompletionTest : RsCompletionTestBase() {
             foo::func()
         }
     """)
+
+    fun `test enum with variants completion when it is expected`() = checkContainsCompletion(
+        listOf("MyEnum", "MyEnum::A", "MyEnum::B", "MyEnum::C"),
+    """
+        enum MyEnum { A, B, C }
+        fn foo(e: MyEnum) {}
+        fn main() { foo(My/*caret*/); }
+    """)
+
+    fun `test enum with variants completion when it is expected 2`() = checkContainsCompletion(
+        listOf("MySecondEnum", "MySecondEnum::D", "MySecondEnum::E", "MySecondEnum::F"),
+    """
+        enum MyEnum { A, B, C }
+        enum MySecondEnum { D, E, F }
+        fn foo(e: MyEnum, e2: MySecondEnum) {}
+        fn main() { foo(MyEnum::A, My/*caret*/); }
+    """)
+
+    fun `test enum with variant completion when its type is not expected`() = checkNotContainsCompletion(
+        "MySecondEnum::D",
+    """
+        enum MyEnum { A, B, C }
+        enum MySecondEnum { D, E, F }
+        fn foo(e: MyEnum, e2: MySecondEnum) {}
+        fn main() { foo(My/*caret*/); }
+    """)
+
+    fun `test enum with variants completion when it is expected from another module`()
+        = checkContainsCompletionByFileTree(
+        listOf("MyOtherEnum", "MyOtherEnum::A", "MyOtherEnum::B", "MyOtherEnum::C"),
+    """
+        //- anothermod.rs
+        pub enum MyOtherEnum { A(i32), B, C }
+        pub fn foo(e: MyOtherEnum) {}
+
+        //- main.rs
+        mod anothermod;
+        use anothermod::foo;
+
+        fn main() { foo(MyOther/*caret*/) }
+    """)
+
+    fun `test enum with variants completion with escaping enum or variant name if it's rust keyword`() = doFirstCompletion(
+        """
+        enum r#struct { r#type }
+        fn foo(e: r#struct) {}
+        fn main() { foo(stru/*caret*/); }
+    ""","""
+        enum r#struct { r#type }
+        fn foo(e: r#struct) {}
+        fn main() { foo(r#struct::r#type/*caret*/); }
+    """)
+
+    fun `test enum with variants completion with autoimport`() = doFirstCompletion("""
+        mod anothermod {
+            pub enum MyOtherEnum { Variant(i32) }
+            pub fn foo(e: MyOtherEnum) {}
+        }
+        use anothermod::foo;
+        fn main() { foo(MyOther/*caret*/) }
+    """, """
+        mod anothermod {
+            pub enum MyOtherEnum { Variant(i32) }
+            pub fn foo(e: MyOtherEnum) {}
+        }
+        use anothermod::{foo, MyOtherEnum};
+        fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
+    """)
 }

@@ -8,7 +8,9 @@ package org.rust.lang.core.resolve
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
+import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
+import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
@@ -18,6 +20,8 @@ import org.rust.lang.core.types.BoundElementWithVisibility
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.stripReferences
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -181,6 +185,13 @@ fun collectCompletionVariants(
         val element = e.element ?: return@createProcessor false
         if (element is RsFunction && element.isTest) return@createProcessor false
         if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
+
+            if (element is RsEnumItem
+                && (context.expectedTy?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
+                    val variants = collectVariantsForEnumCompletion(element, context, e.subst)
+                    result.addAllElements(variants)
+            }
+
             result.addElement(createLookupElement(
                 scopeEntry = e,
                 context = context
