@@ -59,6 +59,7 @@ def main() -> None:
     today = date.today()
     if today >= release_date or milestone["state"] == "closed":
         print(f"Milestone v{release_patch_version} is over")
+        return
 
     delta = release_date - today
     five_days = timedelta(5)
