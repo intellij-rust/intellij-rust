@@ -1,2 +1,5 @@
 <idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <executionTargetLanguageRuntimeType implementation="org.rust.cargo.runconfig.target.RsLanguageRuntimeType"/>
+    </extensions>
 </idea-plugin>

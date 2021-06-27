@@ -19,6 +19,7 @@ import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
+import org.rust.cargo.runconfig.target.CargoRunStateTargetAware
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -29,7 +30,7 @@ class CargoTestRunState(
     environment: ExecutionEnvironment,
     runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
-) : CargoRunStateBase(environment, runConfiguration, config) {
+) : CargoRunStateTargetAware(environment, runConfiguration, config) {
 
     private val cargoTestPatch: CargoPatch = { commandLine ->
         val rustcVer = cargoProject?.rustcInfo?.version
@@ -41,7 +42,7 @@ class CargoTestRunState(
             } else {
                 RsBundle.message("notification.run.tests.as.root.unix")
             }
-            environment.project.showBalloon(message, NotificationType.WARNING)
+            project.showBalloon(message, NotificationType.WARNING)
         }
         commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), withSudo = false)
     }
