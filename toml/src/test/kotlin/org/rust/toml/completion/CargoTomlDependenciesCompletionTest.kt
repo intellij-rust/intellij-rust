@@ -6,7 +6,10 @@
 package org.rust.toml.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.WithoutExperimentalFeatures
+import org.rust.ide.experiments.RsExperiments
 
+@WithoutExperimentalFeatures(RsExperiments.CRATES_LOCAL_INDEX)
 class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
     fun `test empty key`() = doTest("""
         [dependencies]

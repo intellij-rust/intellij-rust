@@ -145,6 +145,10 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         for (feature in findAnnotationInstance<WithExperimentalFeatures>()?.features.orEmpty()) {
             setExperimentalFeatureEnabled(feature, true, testRootDisposable)
         }
+
+        for (feature in findAnnotationInstance<WithoutExperimentalFeatures>()?.features.orEmpty()) {
+            setExperimentalFeatureEnabled(feature, false, testRootDisposable)
+        }
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {
