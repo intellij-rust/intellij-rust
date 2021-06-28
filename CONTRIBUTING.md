@@ -108,6 +108,15 @@ Here are some example pull requests:
 
   - Adding a gutter icon: [#758](https://github.com/intellij-rust/intellij-rust/pull/758).
 
+And also a tutorial series "Contributing to Intellij-Rust" by @kobzol:
+
+  - [\#0: Intro & setup](https://kobzol.github.io/rust/intellij/2020/07/31/contributing-0-setup.html).
+  - [\#1: Fixing a bug in Nest Use intention](https://kobzol.github.io/rust/intellij/2020/07/31/contributing-1-nest-use-fix.html).
+  - [\#2: Intention to substitute an associated type](https://kobzol.github.io/rust/intellij/2020/08/25/contributing-2-subst-assoc-type-int.html).
+  - [\#3: Quick fix to attach file to a module](https://kobzol.github.io/rust/intellij/2020/09/04/contributing-3-quick-fix-attach-file-to-mod.html).
+  - [\#4: Introduce constant refactoring](https://kobzol.github.io/rust/intellij/2020/10/19/contributing-4-introduce-constant-refactoring.html).
+  - [\#5: Lint attribute completion](https://kobzol.github.io/rust/intellij/2020/10/26/contributing-5-lint-attribute-completion.html).
+
 
 ## CLA
 
