@@ -108,7 +108,7 @@ Here are some example pull requests:
 
   - Adding a gutter icon: [#758](https://github.com/intellij-rust/intellij-rust/pull/758).
 
-And also a tutorial series "Contributing to Intellij-Rust" by @kobzol:
+And also a tutorial series "Contributing to Intellij-Rust" by [@Kobzol](https://github.com/Kobzol):
 
   - [\#0: Intro & setup](https://kobzol.github.io/rust/intellij/2020/07/31/contributing-0-setup.html).
   - [\#1: Fixing a bug in Nest Use intention](https://kobzol.github.io/rust/intellij/2020/07/31/contributing-1-nest-use-fix.html).
