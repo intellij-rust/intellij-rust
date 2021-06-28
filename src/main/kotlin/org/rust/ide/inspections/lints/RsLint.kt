@@ -73,7 +73,9 @@ enum class RsLint(
             }
     },
 
-    UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY);
+    UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
+
+    PrivateTypeInPublicInterface("private_in_public", defaultLevel = WARN);
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {
