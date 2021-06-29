@@ -14,25 +14,29 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 
 /**
- * Moves `mod.rs` files on top
+ * Moves `mod.rs` files and crate roots on top
  */
 class RsTreeStructureProvider : TreeStructureProvider, DumbAware {
-    override fun modify(parent: AbstractTreeNode<*>, children: Collection<AbstractTreeNode<*>>, settings: ViewSettings?): Collection<AbstractTreeNode<*>> {
-        if (children.none { it is PsiFileNode && it.value?.name == RsConstants.MOD_RS_FILE }) {
-            return children
-        }
-
-        return children.map { child ->
-            if (child is PsiFileNode && child.value is RsFile) {
-                RsPsiFileNode(child, settings)
-            } else {
-                child
-            }
+    override fun modify(
+        parent: AbstractTreeNode<*>,
+        children: Collection<AbstractTreeNode<*>>,
+        settings: ViewSettings?
+    ): Collection<AbstractTreeNode<*>> = children.map { child ->
+        if (child is PsiFileNode && child.value is RsFile) {
+            RsPsiFileNode(child, settings)
+        } else {
+            child
         }
     }
 }
 
-private class RsPsiFileNode(original: PsiFileNode, viewSettings: ViewSettings?)
-    : PsiFileNode(original.project, original.value, viewSettings) {
-    override fun getSortKey(): Int = if (value.name == RsConstants.MOD_RS_FILE) -1 else 0
+private class RsPsiFileNode(
+    original: PsiFileNode,
+    viewSettings: ViewSettings?
+) : PsiFileNode(original.project, original.value, viewSettings) {
+    override fun getSortKey(): Int = when {
+        value.name == RsConstants.MOD_RS_FILE -> -2
+        (value as? RsFile)?.isCrateRoot == true -> -1
+        else -> 0
+    }
 }
