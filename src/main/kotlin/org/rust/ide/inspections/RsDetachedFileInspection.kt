@@ -29,7 +29,8 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
         if (!cargoProjects.initialized) return null
 
         // Handled by [NoCargoProjectNotificationProvider]
-        if (cargoProjects.findProjectForFile(file.virtualFile) == null) return null
+        val cargoProject = cargoProjects.findProjectForFile(file.virtualFile) ?: return null
+        if (cargoProject.workspace == null) return null
 
         if (rsFile.crateRoot == null) {
             val availableModules = AttachFileToModuleFix.findAvailableModulesForFile(project, rsFile)

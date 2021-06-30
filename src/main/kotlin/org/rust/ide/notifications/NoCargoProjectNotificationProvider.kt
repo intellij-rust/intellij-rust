@@ -5,6 +5,7 @@
 
 package org.rust.ide.notifications
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -41,6 +42,8 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
     ): RsEditorNotificationPanel? {
         if (isUnitTestMode && !isDispatchThread) return null
         if (!(file.isRustFile || file.isCargoToml) || isNotificationDisabled(file)) return null
+        @Suppress("UnstableApiUsage")
+        if (!project.isTrusted()) return null
 
         val cargoProjects = project.cargoProjects
         if (!cargoProjects.initialized) return null

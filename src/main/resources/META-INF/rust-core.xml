@@ -999,6 +999,7 @@
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
+        <editorNotificationProvider implementation="org.rust.ide.notifications.RsUntrustedNotificationProvider"/>
 
         <notificationGroup id="Rust Plugin" displayType="BALLOON"/>
         <notificationGroup id="Rust Build Log" displayType="NONE"/>
@@ -1174,6 +1175,8 @@
     <projectListeners>
         <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"
                   topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
+        <listener class="org.rust.ide.security.RsTrustChangeNotifier"
+                  topic="com.intellij.ide.impl.TrustChangeNotifier"/>
     </projectListeners>
 
     <actions>
