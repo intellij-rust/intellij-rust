@@ -102,4 +102,30 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             foo::Foo { a: 0 };
         }
     """)
+
+    fun `test invoke inside impl`() = doAvailableTest("""
+        struct Foo {
+            bar: i32,
+        }
+
+        impl Foo {
+            fn foo() {
+                /*caret*/Baz { a: true }
+            }
+        }
+    """, """
+        struct Foo {
+            bar: i32,
+        }
+
+        struct Baz {
+            a: bool
+        }
+
+        impl Foo {
+            fn foo() {
+                Baz { a: true }
+            }
+        }
+    """)
 }
