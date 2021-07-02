@@ -6,6 +6,7 @@
 package org.rust.toml.crates.local
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -22,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -37,12 +37,16 @@ import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.cleanDirectory
+import org.rust.stdext.supplyAsync
 import org.rust.toml.crates.local.CratesLocalIndexServiceImpl.Companion.CratesLocalIndexState
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
+
 
 /**
  * Crates local index, created from user cargo registry index on host machine.
@@ -225,29 +229,47 @@ class CratesLocalIndexServiceImpl
             treeWalk.isRecursive = true
             treeWalk.isPostOrderTraversal = false
 
+            val objectIds = mutableListOf<Pair<ObjectId, String>>()
             while (treeWalk.next()) {
                 if (treeWalk.isSubtree) continue
                 if (treeWalk.nameString == "config.json") continue
 
                 val objectId = treeWalk.getObjectId(0)
-                val loader = repository.open(objectId)
-                val versions = mutableListOf<CargoRegistryCrateVersion>()
-                val fileReader = BufferedReader(InputStreamReader(loader.openStream()))
+                objectIds.add(objectId to treeWalk.nameString)
+            }
+            val pool = Executors.newWorkStealingPool(2)
+            val future = supplyAsync(pool) {
+                objectIds
+                    .parallelStream()
+                    .map { (objectId, name) ->
+                        val loader = repository.open(objectId)
+                        val versions = mutableListOf<CargoRegistryCrateVersion>()
+                        val fileReader = BufferedReader(InputStreamReader(loader.openStream(), Charsets.UTF_8))
 
-                fileReader.forEachLine { line ->
-                    if (line.isBlank()) return@forEachLine
+                        fileReader.forEachLine { line ->
+                            if (line.isBlank()) return@forEachLine
 
-                    try {
-                        versions.add(crateFromJson(line))
-                    } catch (e: Exception) {
-                        LOG.warn("Failed to parse JSON from ${treeWalk.pathString}, line ${line}: ${e.message}")
+                            try {
+                                versions.add(crateFromJson(line, mapper))
+                            } catch (e: Exception) {
+                                LOG.warn("Failed to parse JSON from ${treeWalk.pathString}, line ${line}: ${e.message}")
+                            }
+                        }
+                        name to CargoRegistryCrate(versions)
                     }
-                }
+                    .collect(Collectors.toList())
+            }
+            val crateList = try {
+                future.join()
+            } finally {
+                pool.shutdownNow()
+            }
 
+            crateList.forEach { (name, crate) ->
                 try {
-                    crates?.put(treeWalk.nameString, CargoRegistryCrate(versions))
+                    crates?.put(name, crate)
                 } catch (e: IOException) {
-                    LOG.error("Failed to put crate `${treeWalk.nameString}` into local index", e)
+                    LOG.error("Failed to put crate `$name` into local index", e)
                 }
             }
         }
@@ -302,9 +324,6 @@ class CratesLocalIndexServiceImpl
         private val LOG: Logger = logger<CratesLocalIndexServiceImpl>()
     }
 }
-
-private fun VFileEvent.pathEndsWith(suffix: String): Boolean =
-    path.endsWith(suffix) || (this is VFilePropertyChangeEvent && oldPath.endsWith(suffix))
 
 private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
     override fun save(out: DataOutput, value: CargoRegistryCrate) {
