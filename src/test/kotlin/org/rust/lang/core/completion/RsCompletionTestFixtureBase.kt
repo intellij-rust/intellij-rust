@@ -122,6 +122,20 @@ abstract class RsCompletionTestFixtureBase<IN>(
         }
     }
 
+    fun checkContainsCompletionPrefixes(code: IN, prefixes: List<String>) {
+        prepare(code)
+        val lookups = myFixture.completeBasic()
+
+        checkNotNull(lookups) {
+            "Expected completions that start with $prefixes, but no completions found"
+        }
+        for (prefix in prefixes) {
+            if (lookups.all { it.lookupString.startsWith(prefix) }) {
+                error("Expected completions that start with $prefix, but got ${lookups.map { it.lookupString }}")
+            }
+        }
+    }
+
     protected fun checkByText(code: IN, after: String, action: () -> Unit) {
         prepare(code)
         action()

@@ -31,6 +31,7 @@ import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.checkWriteAccessNotAllowed
 import kotlin.math.max
+import org.rust.openapiext.selectElement
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     checkWriteAccessNotAllowed()
@@ -163,13 +164,6 @@ private fun simplifyConstExprs(insertedMembers: List<RsAbstractable>) {
             }
         }
     }
-}
-
-private fun selectElement(element: RsElement, editor: Editor) {
-    val start = element.textRange.startOffset
-    editor.caretModel.moveToOffset(start)
-    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-    editor.selectionModel.setSelection(start, element.textRange.endOffset)
 }
 
 private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiElement): PsiElement {

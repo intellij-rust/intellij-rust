@@ -221,7 +221,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         )
     }
 
-    private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+    fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern())
     }
 

@@ -31,6 +31,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsStructPatRestCompletionProvider)
         extend(CompletionType.BASIC, RsClippyLintCompletionProvider)
         extend(CompletionType.BASIC, RsRustcLintCompletionProvider)
+        extend(CompletionType.BASIC, RsImplTraitMemberCompletionProvider)
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
