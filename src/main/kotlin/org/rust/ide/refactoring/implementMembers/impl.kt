@@ -8,7 +8,6 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.presentation.ImportingPsiRenderer
@@ -177,7 +176,7 @@ private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiEle
     return RsPsiFactory(left.project).createWhitespace("\n".repeat(extraLineCount))
 }
 
-private class MembersGenerator(
+class MembersGenerator(
     private val factory: RsPsiFactory,
     impl: RsImplItem,
     private val trait: BoundElement<RsTraitItem>,
@@ -190,24 +189,28 @@ private class MembersGenerator(
     val itemsToImport: Set<ImportCandidate> get() = renderer.itemsToImport
 
     fun createTraitMembers(members: Collection<RsAbstractable>): RsMembers {
-        val subst = trait.subst
         val body = members.joinToString(separator = "\n", transform = {
-            when (it) {
-                is RsConstant -> {
-                    val initialValue = RsDefaultValueBuilder(it.knownItems, it.containingMod, factory, true)
-                        .buildFor(it.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
-                    "    const ${it.nameLikeElement.text}: ${it.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
-                }
-                is RsTypeAlias ->
-                    "    type ${it.escapedName} = ();"
-                is RsFunction ->
-                    "    ${it.renderFunctionSignature()}{\n        todo!()\n    }"
-                else ->
-                    error("Unknown trait member")
-            }
+            "    ${renderAbstractable(it)}"
         })
 
         return factory.createMembers(body)
+    }
+
+    fun renderAbstractable(element: RsAbstractable): String {
+        val subst = trait.subst
+        return when (element) {
+            is RsConstant -> {
+                val initialValue = RsDefaultValueBuilder(element.knownItems, element.containingMod, factory, true)
+                    .buildFor(element.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
+                "const ${element.nameLikeElement.text}: ${element.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
+            }
+            is RsTypeAlias ->
+                "type ${element.escapedName} = ();"
+            is RsFunction ->
+                "${element.renderFunctionSignature()} {\n        todo!()\n    }"
+            else ->
+                error("Unknown trait member")
+        }
     }
 
     private fun RsFunction.renderFunctionSignature(): String = renderer.renderFunctionSignature(this)

@@ -45,7 +45,7 @@ class RsImplTraitMemberCompletionProviderTest : RsCompletionTestBase() {
         }
 
         impl<X> Foo<X> for () {
-            const FOO: S<X> = <selection>/*caret*/S()</selection>;
+            const FOO: S<X> = <selection>/*caret*/S(())</selection>;
         }
     """)
 
