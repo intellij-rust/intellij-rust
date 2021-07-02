@@ -215,6 +215,9 @@ class CratesLocalIndexServiceImpl
         }
 
         val revTree = RevWalk(repository).parseCommit(ObjectId.fromString(currentHeadHash)).tree
+        val mapper = JsonMapper()
+            .registerKotlinModule()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 
         TreeWalk(repository).use { treeWalk ->
             treeWalk.addTree(revTree)
@@ -342,11 +345,8 @@ data class ParsedVersion(
     val features: HashMap<String, List<String>>
 )
 
-private fun crateFromJson(json: String): CargoRegistryCrateVersion {
-    val parsedVersion = JsonMapper()
-        .registerKotlinModule()
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .readValue<ParsedVersion>(json)
+private fun crateFromJson(json: String, mapper: ObjectMapper): CargoRegistryCrateVersion {
+    val parsedVersion = mapper.readValue<ParsedVersion>(json)
 
     return CargoRegistryCrateVersion(
         parsedVersion.vers,
