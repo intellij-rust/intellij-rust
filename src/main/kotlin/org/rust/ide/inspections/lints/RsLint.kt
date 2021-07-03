@@ -73,7 +73,15 @@ enum class RsLint(
             }
     },
 
-    UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY);
+    UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
+
+    UnusedQualifications("unused_qualifications", listOf("unused")) {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                else -> super.toHighlightingType(level)
+            }
+    };
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {

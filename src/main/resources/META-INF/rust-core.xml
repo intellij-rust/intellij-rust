@@ -608,6 +608,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Unnecessarily qualified path"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
