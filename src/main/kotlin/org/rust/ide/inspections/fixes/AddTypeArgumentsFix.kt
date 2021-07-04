@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
-class AddTypeArguments(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class AddTypeArgumentsFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getText(): String = "Add missing type arguments"
     override fun getFamilyName() = text
 

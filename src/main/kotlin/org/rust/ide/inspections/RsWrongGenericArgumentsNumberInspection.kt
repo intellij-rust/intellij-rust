@@ -6,7 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.rust.ide.inspections.fixes.AddTypeArguments
+import org.rust.ide.inspections.fixes.AddTypeArgumentsFix
 import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -99,7 +99,7 @@ private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expe
 private fun getFixes(element: RsElement, actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> =
     when {
         actualArgs > expectedTotalParams -> listOf(RemoveTypeArguments(expectedTotalParams, actualArgs))
-        actualArgs < expectedTotalParams -> listOf(AddTypeArguments(element))
+        actualArgs < expectedTotalParams -> listOf(AddTypeArgumentsFix(element))
         else -> emptyList()
     }
 

@@ -608,6 +608,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong associated type arguments"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
