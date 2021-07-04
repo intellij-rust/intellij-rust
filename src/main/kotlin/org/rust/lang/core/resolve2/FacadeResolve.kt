@@ -400,14 +400,14 @@ private val RsPath.pathSegmentsAdjustedForAttrMacro: List<String>?
         }
     }
 
-private sealed class RsModInfoBase {
+sealed class RsModInfoBase {
     /** [reason] is only for debug */
     class CantUseNewResolve(val reason: String) : RsModInfoBase()
     object InfoNotFound : RsModInfoBase()
     data class RsModInfo(val project: Project, val defMap: CrateDefMap, val modData: ModData) : RsModInfoBase()
 }
 
-private fun getModInfo(scope: RsMod): RsModInfoBase {
+fun getModInfo(scope: RsMod): RsModInfoBase {
     val project = scope.project
     if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
@@ -518,7 +518,7 @@ private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDef
     // Note that we can return null, e.g. if old macro engine is enabled and macro definition is itself expanded
 }
 
-private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {
+fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {
     if (isModOrEnum) return path.toRsModOrEnum(defMap, project)
 
     val containingModData = defMap.getModData(containingMod) ?: return emptyList()

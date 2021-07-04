@@ -608,6 +608,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Unused import"
+                         enabledByDefault="false" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedImportInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

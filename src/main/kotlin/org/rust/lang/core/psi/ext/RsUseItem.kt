@@ -22,3 +22,6 @@ abstract class RsUseItemImplMixin : RsStubbedElementImpl<RsUseItemStub>, RsUseIt
 
 val HAS_PRELUDE_IMPORT_PROP: StubbedAttributeProperty<RsUseItem, RsUseItemStub> =
     StubbedAttributeProperty({ it.hasAttribute("prelude_import") }, RsUseItemStub::mayHavePreludeImport)
+
+val RsUseItem.isReexport: Boolean
+    get() = visibility != RsVisibility.Private
