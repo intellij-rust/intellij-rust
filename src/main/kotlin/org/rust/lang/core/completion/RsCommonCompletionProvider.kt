@@ -108,13 +108,16 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     lookup,
                     element,
                     true,
-                    filterAssocTypes(
+                    filterVisRestrictionPaths(
                         element,
-                        filterCompletionVariantsByVisibility(
+                        filterAssocTypes(
                             element,
-                            filterPathCompletionVariantsByTraitBounds(
-                                addProcessedPathName(processor, processedPathNames),
-                                lookup
+                            filterCompletionVariantsByVisibility(
+                                element,
+                                filterPathCompletionVariantsByTraitBounds(
+                                    addProcessedPathName(processor, processedPathNames),
+                                    lookup
+                                )
                             )
                         )
                     )
@@ -253,6 +256,29 @@ data class RsCompletionContext(
     val isSimplePath: Boolean = false
 ) {
     val lookup: ImplLookup? = context?.implLookup
+}
+
+/**
+ * Ignore items that are not an ancestor module of the given path
+ * in path completion inside visibility restriction:
+ * `pub(in <here>)`
+ */
+private fun filterVisRestrictionPaths(
+    path: RsPath,
+    processor: RsResolveProcessor
+): RsResolveProcessor {
+    return if (path.parent is RsVisRestriction) {
+        val allowedModules = path.containingMod.superMods
+        createProcessor(processor.name) {
+            when (it.element) {
+                !is RsMod -> false
+                !in allowedModules -> false
+                else -> processor(it)
+            }
+        }
+    } else {
+        processor
+    }
 }
 
 private fun filterAssocTypes(

@@ -1154,4 +1154,39 @@ class RsCompletionTest : RsCompletionTestBase() {
         use anothermod::{foo, MyOtherEnum};
         fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test do not complete non-mod items in vis restriction path`() = checkNoCompletion("""
+        pub mod bar {
+            pub mod foo {
+                pub(in crate::It/*caret*/) struct S;
+            }
+        }
+        pub struct Item;
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test do not complete non-ancestor mods in vis restriction path`() = checkNoCompletion("""
+        pub mod bar {
+            pub mod foo {
+                pub(in crate::fo/*caret*/) struct S;
+            }
+        }
+        pub mod foo {}
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test complete ancestor module in vis restriction path`() = doFirstCompletion("""
+        pub mod bar {
+            pub mod foo {
+                pub(in crate::b/*caret*/) struct S;
+            }
+        }
+    """, """
+        pub mod bar {
+            pub mod foo {
+                pub(in crate::bar/*caret*/) struct S;
+            }
+        }
+    """)
 }
