@@ -67,7 +67,8 @@ fun getTargetItemForFunctionCall(path: RsPath): CallableInsertionTarget? {
 
 fun insertStruct(targetModule: RsMod, struct: RsStructItem, sourceFunction: RsElement): RsStructItem {
     if (targetModule == sourceFunction.containingMod) {
-        return sourceFunction.parent.addBefore(struct, sourceFunction) as RsStructItem
+        val anchor = sourceFunction.ancestors.firstOrNull { it.parent == targetModule } ?: sourceFunction
+        return anchor.parent.addBefore(struct, anchor) as RsStructItem
     }
     return addToModule(targetModule, struct)
 }

@@ -87,4 +87,28 @@ class CreateTupleStructIntentionTest : RsIntentionTestBase(CreateTupleStructInte
             foo::Foo(0);
         }
     """)
+
+    fun `test invoke inside impl`() = doAvailableTest("""
+        struct Foo {
+            bar: i32,
+        }
+
+        impl Foo {
+            fn foo() {
+                /*caret*/Baz(true);
+            }
+        }
+    """, """
+        struct Foo {
+            bar: i32,
+        }
+
+        struct Baz(bool);
+
+        impl Foo {
+            fn foo() {
+                Baz(true);
+            }
+        }
+    """)
 }
