@@ -17,7 +17,7 @@ import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
-import org.rust.ide.formatter.RustfmtExternalFormatProcessorBase
+import org.rust.ide.formatter.RustfmtTestmarks
 import org.rust.launchAction
 import org.rust.openapiext.saveAllDocuments
 
@@ -177,11 +177,15 @@ class RustfmtTest : RsWithToolchainTestBase() {
         dir("src") {
             rust("main.rs", """
                 fn main() {/*caret*/
-                    ((((foo()))));
+                ((((foo()))));
                 }
             """)
         }
-    })
+    }, """
+        fn main() {
+            ((((foo()))));
+        }
+    """)
 
     fun `test use config from workspace root (rustfmt dot toml)`() = doTest({
         toml("Cargo.toml", """
@@ -206,12 +210,16 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        ((((foo()))));
+                    ((((foo()))));
                     }
                 """)
             }
         }
-    })
+    }, """
+        fn main() {
+            ((((foo()))));
+        }
+    """)
 
     fun `test use config from workspace root (dot rustfmt dot toml)`() = doTest({
         toml("Cargo.toml", """
@@ -236,12 +244,16 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        ((((foo()))));
+                    ((((foo()))));
                     }
                 """)
             }
         }
-    })
+    }, """
+        fn main() {
+            ((((foo()))));
+        }
+    """)
 
     fun `test use config from workspace root overrides config from project root`() = doTest({
         toml("Cargo.toml", """
@@ -270,12 +282,16 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        ((((foo()))));
+                    ((((foo()))));
                     }
                 """)
             }
         }
-    })
+    }, """
+        fn main() {
+            ((((foo()))));
+        }
+    """)
 
     fun `test use config from project root if config from workspace root is not presented`() = doTest({
         toml("Cargo.toml", """
@@ -300,16 +316,20 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        ((((foo()))));
+                    ((((foo()))));
                     }
                 """)
             }
         }
-    })
+    }, """
+        fn main() {
+            ((((foo()))));
+        }
+    """)
 
     private fun reformatRange(file: PsiFile, textRange: TextRange = file.textRange, shouldHitTestmark: Boolean = true) {
         project.rustSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
-        val testmark = RustfmtExternalFormatProcessorBase.Testmarks.rustfmtUsed
+        val testmark = RustfmtTestmarks.rustfmtUsed
         val checkMark: (() -> Unit) -> Unit = if (shouldHitTestmark) testmark::checkHit else testmark::checkNotHit
         checkMark {
             WriteCommandAction.runWriteCommandAction(project, ReformatCodeProcessor.getCommandName(), null, {

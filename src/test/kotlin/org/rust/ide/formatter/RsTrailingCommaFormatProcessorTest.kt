@@ -168,7 +168,7 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
         // `Rustfmt` will not be used because of range restriction
         myTextRange = RsPsiFactory(project).createFile(before).descendantOfTypeStrict<RsStructItem>()!!.textRange
 
-        RustfmtExternalFormatProcessorBase.Testmarks.builtinPostProcess.checkHit {
+        RustfmtTestmarks.builtinPostProcess.checkHit {
             doTextTest(before, after)
         }
     }

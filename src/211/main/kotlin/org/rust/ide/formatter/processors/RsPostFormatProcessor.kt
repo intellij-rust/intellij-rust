@@ -22,8 +22,7 @@ import org.rust.lang.core.psi.RsFile
 class RsPostFormatProcessor : PostFormatProcessor {
     override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
         if (source !is RsFile) return source
-
-        return RsTrailingCommaFormatProcessor.processElement(source, settings)
+        return RsTrailingCommaFormatProcessor().processElement(source, settings)
     }
 
     @Suppress("UnstableApiUsage")
@@ -35,10 +34,10 @@ class RsPostFormatProcessor : PostFormatProcessor {
                 source,
                 rangeToReformat,
                 canChangeWhiteSpacesOnly = false
-            ) ?: rangeToReformat
+            )
         } else {
             // Builtin formatter has just been used, perform post-processing
-            RsTrailingCommaFormatProcessor.processText(source, rangeToReformat, settings)
+            RsTrailingCommaFormatProcessor().processText(source, rangeToReformat, settings)
         }
     }
 }

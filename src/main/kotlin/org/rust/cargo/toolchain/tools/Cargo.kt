@@ -409,7 +409,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         ignoreExitCode: Boolean = false,
         stdIn: ByteArray? = null,
         listener: ProcessListener? = null
-    ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
+    ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener = listener)
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
         createBaseCommandLine("install", "cargo-generate").execute(owner, listener = listener)
