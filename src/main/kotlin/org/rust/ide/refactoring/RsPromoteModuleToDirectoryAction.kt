@@ -17,6 +17,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
@@ -63,10 +64,27 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
             val directory = file.containingDirectory?.createSubdirectory(dirName)
                 ?: error("Can't expand file: no parent directory for $file at ${file.virtualFile.path}")
             MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
-            PsiFileImplUtil.setName(file, RsConstants.MOD_RS_FILE)
+            val name = if (file.isCrateRoot) RsConstants.MAIN_RS_FILE else RsConstants.MOD_RS_FILE
+            PsiFileImplUtil.setName(file, name)
         }
     }
 }
 
-private val PsiElement.isPromotable
-    get() = this is RsFile && this.name != RsConstants.MOD_RS_FILE
+private val PsiElement.isPromotable: Boolean
+    get() {
+        if (this !is RsFile) return false
+        return if (isCrateRoot) {
+            name != RsConstants.MAIN_RS_FILE && containingCrate?.kind?.isPromotable == true
+        } else {
+            name != RsConstants.MOD_RS_FILE
+        }
+    }
+
+private val TargetKind.isPromotable: Boolean
+    get() = when (this) {
+        is TargetKind.Bin -> true
+        is TargetKind.Test -> true
+        is TargetKind.ExampleBin -> true
+        is TargetKind.Bench -> true
+        else -> false
+    }
