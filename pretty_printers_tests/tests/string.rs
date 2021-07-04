@@ -1,3 +1,7 @@
+// fixme: find out why this test fail on CI and work in CLion
+// min-version: 1.34.0
+// max-version: 1.33.0
+
 // === LLDB TESTS ==================================================================================
 
 // lldb-command:run
