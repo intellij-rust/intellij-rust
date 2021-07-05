@@ -23,6 +23,7 @@ import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.stdext.numberSuffix
 
 /**
  * Requires that the number of arguments is larger than the number of parameters.
@@ -42,7 +43,7 @@ class ChangeFunctionSignatureFix private constructor(
             val index = argumentInsertions[0].index + 1
             val argument = argumentInsertions[0].value as SignatureMember.Argument
 
-            val ordinal = "${index}${suffix(index)}"
+            val ordinal = "${index}${numberSuffix(index)}"
             "Add `${renderType(argument.expr.type)}` as `$ordinal` parameter to $callableType `$name`"
         } else {
             val signatureText = signature.joinToString(", ") {
@@ -111,6 +112,7 @@ class ChangeFunctionSignatureFix private constructor(
             direction: ArgumentScanDirection
         ): ChangeFunctionSignatureFix? {
             if (function.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
+            if (!RsChangeSignatureHandler.isChangeSignatureAvailable(function)) return null
 
             val signature = calculateSignature(function, arguments, direction)
             val parameterInsertions = signature.filterIsInstance<SignatureMember.Parameter>()
@@ -220,18 +222,6 @@ private class PeekableIterator<T>(private val iterator: Iterator<T>) {
 private sealed class SignatureMember {
     data class Parameter(val parameter: RsValueParameter) : SignatureMember()
     data class Argument(val expr: RsExpr) : SignatureMember()
-}
-
-private fun suffix(number: Int): String {
-    if ((number % 100) in 11..13) {
-        return "th"
-    }
-    return when (number % 10) {
-        1 -> "st"
-        2 -> "nd"
-        3 -> "rd"
-        else -> "th"
-    }
 }
 
 private fun renderType(ty: Ty): String =

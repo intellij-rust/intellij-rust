@@ -64,3 +64,15 @@ fun randomLowercaseAlphabetic(length: Int): String =
 
 fun ByteArray.getLeading64bits(): Long =
     ByteBuffer.wrap(this).also { it.order(ByteOrder.BIG_ENDIAN) }.getLong(0)
+
+fun numberSuffix(number: Int): String {
+    if ((number % 100) in 11..13) {
+        return "th"
+    }
+    return when (number % 10) {
+        1 -> "st"
+        2 -> "nd"
+        3 -> "rd"
+        else -> "th"
+    }
+}

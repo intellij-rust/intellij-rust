@@ -85,6 +85,11 @@ sealed class RsDiagnostic(
                     if (element is RsElement) {
                         if (element is RsExpr) {
                             addAll(createExprQuickFixes(element))
+
+                            val changeTypeFix = ChangeFunctionParameterTypeFix.createIfCompatible(element)
+                            if (changeTypeFix != null) {
+                                add(changeTypeFix)
+                            }
                         }
 
                         val retFix = ChangeReturnTypeFix.createIfCompatible(element, actualTy)

@@ -17,6 +17,14 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
+    fun `test unavailable with disabled parameter`() = checkFixIsUnavailable("Add `i32`", """
+        fn foo(i: i32, #[cfg(foo)] b: u32) {}
+
+        fn main() {
+            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(1/*caret*/, <error>2</error>)</error>;
+        }
+    """)
+
     fun `test no parameters add one parameter`() = checkFixByText("Add `i32` as `1st` parameter to function `foo`", """
         fn foo() {}
 
