@@ -98,10 +98,13 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         processedPathNames: MutableSet<String>,
         processor: RsResolveProcessor
     ) {
-        when (element.parent) {
-            is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
+        val parent = element.parent
+        when {
+            parent is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
             // Handled by [RsDeriveCompletionProvider]
-            is RsMetaItem -> return
+            parent is RsMetaItem -> return
+            // Handled by [RsVisRestrictionCompletionProvider]
+            parent is RsVisRestriction && parent.`in` == null -> return
             else -> {
                 val lookup = ImplLookup.relativeTo(element)
                 processPathResolveVariants(
