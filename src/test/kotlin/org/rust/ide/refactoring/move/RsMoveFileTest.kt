@@ -7,7 +7,6 @@ package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.util.IncorrectOperationException
-import org.rust.IgnoreInPlatform
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.withTestDialog
@@ -404,7 +403,6 @@ class RsMoveFileTest : RsMoveFileTestBase() {
         pub fn func2() {}
     """)
 
-    @IgnoreInPlatform(212)
     fun `test move directory containing one file`() = doTest(
         "foo",
         "mod2",
@@ -424,7 +422,6 @@ class RsMoveFileTest : RsMoveFileTestBase() {
         fn func() {}
     """)
 
-    @IgnoreInPlatform(212)
     fun `test move directory containing two files`() = doTest(
         "foo",
         "mod2",
