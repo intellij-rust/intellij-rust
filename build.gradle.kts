@@ -181,8 +181,11 @@ allprojects {
         }
     }
 
+    val testOutput = configurations.create("testOutput")
+
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
+        testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
     afterEvaluate {
@@ -330,8 +333,6 @@ project(":") {
         }
     }
 
-    val testOutput = configurations.create("testOutput")
-
     dependencies {
         implementation(project(":common"))
         implementation("org.jetbrains:markdown:0.2.0") {
@@ -341,7 +342,6 @@ project(":") {
         }
         testImplementation(project(":common", "testOutput"))
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
-        testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
@@ -590,13 +590,7 @@ project(":intellij-toml:core") {
     }
 }
 
-project(":common") {
-    val testOutput = configurations.create("testOutput")
-
-    dependencies {
-        testOutput(sourceSets.getByName("test").output.classesDirs)
-    }
-}
+project(":common")
 
 task("runPrettyPrintersTests") {
     doLast {
