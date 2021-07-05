@@ -17,6 +17,7 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.BitUtil
+import com.intellij.util.containers.Stack
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
@@ -87,13 +88,20 @@ object RustParserUtil : GeneratedParserUtilBase() {
         get() = getUserData(FLAGS) ?: DEFAULT_FLAGS
         set(value) = putUserData(FLAGS, value)
 
-    private inline fun PsiBuilder.withFlag(flag: Int, mode: Boolean, block: PsiBuilder.() -> Boolean): Boolean {
-        val oldFlags = flags
-        val newFlags = BitUtil.set(oldFlags, flag, mode)
-        flags = newFlags
-        val result = block()
-        flags = oldFlags
-        return result
+    private val FLAG_STACK: Key<Stack<Int>> = Key("RustParserUtil.FLAG_STACK")
+    private var PsiBuilder.flagStack: Stack<Int>
+        get() = getUserData(FLAG_STACK) ?: Stack<Int>(0)
+        set(value) = putUserData(FLAG_STACK, value)
+
+    private fun PsiBuilder.pushFlag(flag: Int, mode: Boolean) {
+        val stack = flagStack
+        stack.push(flags)
+        flagStack = stack
+        flags = BitUtil.set(flags, flag, mode)
+    }
+
+    private fun PsiBuilder.popFlag() {
+        flags = flagStack.pop()
     }
 
     private fun Int.setFlag(flag: Int, mode: Boolean): Int =
@@ -182,8 +190,16 @@ object RustParserUtil : GeneratedParserUtilBase() {
         b.tokenType != LBRACE || checkStructAllowed(b, level)
 
     @JvmStatic
-    fun stmtMode(b: PsiBuilder, level: Int, mode: StmtMode, parser: Parser): Boolean =
-        b.withFlag(STMT_EXPR_MODE, mode == StmtMode.ON) { parser.parse(this, level) }
+    fun setStmtMode(b: PsiBuilder, level: Int, mode: StmtMode): Boolean {
+        b.pushFlag(STMT_EXPR_MODE, mode == StmtMode.ON)
+        return true
+    }
+
+    @JvmStatic
+    fun resetFlags(b: PsiBuilder, level: Int): Boolean {
+        b.popFlag()
+        return true
+    }
 
     @JvmStatic
     fun exprMode(

@@ -1069,10 +1069,6 @@ StmtModeExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.ON' Expr>> {
   elementType = Expr
   name = "expr"
 }
-StmtModeExprOff ::= <<stmtMode 'StmtMode.OFF' Expr>> {
-  elementType = Expr
-  name = "expr"
-}
 
 BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
@@ -1112,14 +1108,14 @@ fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' 
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
+AssignBinExpr ::= Expr AssignBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>    { rightAssociative = true }
 AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%=' { name = "operator" }
 
-CompBinExpr      ::= Expr <<isIncompleteBlockExpr>> CompBinOp StmtModeExprOff
-RelCompBinExpr   ::= Expr <<isIncompleteBlockExpr>> RelCompBinOp StmtModeExprOff
-BitShiftBinExpr  ::= Expr <<isIncompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
-AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp StmtModeExprOff
-MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp StmtModeExprOff
+CompBinExpr      ::= Expr <<isIncompleteBlockExpr>> CompBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+RelCompBinExpr   ::= Expr <<isIncompleteBlockExpr>> RelCompBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+BitShiftBinExpr  ::= Expr <<isIncompleteBlockExpr>> BitShiftBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
 RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt '>' { name = "operator" }
@@ -1128,11 +1124,11 @@ AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-BoolOrBinExpr    ::= Expr <<isIncompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
-BoolAndBinExpr   ::= Expr <<isIncompleteBlockExpr>> BoolAndBinOp StmtModeExprOff
-BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp StmtModeExprOff
-BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp StmtModeExprOff
-BitXorBinExpr    ::= Expr <<isIncompleteBlockExpr>> BitXorBinOp StmtModeExprOff
+BoolOrBinExpr    ::= Expr <<isIncompleteBlockExpr>> BoolOrBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+BoolAndBinExpr   ::= Expr <<isIncompleteBlockExpr>> BoolAndBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
+BitXorBinExpr    ::= Expr <<isIncompleteBlockExpr>> BitXorBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
 
 BoolOrBinOp      ::= oror { name = "operator" }
 BoolAndBinOp     ::= andand { name = "operator" }
@@ -1148,12 +1144,12 @@ TryExpr ::= Expr '?' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut]) Expr {
+UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut]) <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? AnyExpr {
+LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1258,7 +1254,7 @@ IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
 }
 ElseBranch ::= else ( IfExpr | SimpleBlock )
 
-RetExpr ::= OuterAttr* return Expr? {
+RetExpr ::= OuterAttr* return AnyExpr? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1294,8 +1290,8 @@ fake RangeExpr ::= Expr? ('..' | '...' | '..=') Expr? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FullRangeExpr ::= Expr ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> Expr)?) { elementType = RangeExpr }
-OpenRangeExpr ::=      ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> Expr)?) { elementType = RangeExpr }
+FullRangeExpr ::= Expr ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>)?) { elementType = RangeExpr }
+OpenRangeExpr ::=      ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>)?) { elementType = RangeExpr }
 
 IndexExpr ::= Expr IndexArg {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1303,7 +1299,7 @@ IndexExpr ::= Expr IndexArg {
 // Do not inline this rule, it breaks expression parsing
 private IndexArg ::= '[' Expr ']'
 
-CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList {
+CallExpr ::= Expr <<isIncompleteBlockExpr>> ValueArgumentList {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 ValueArgumentList ::= '(' ValueArgument_with_recover* ')' { pin = 1 }
@@ -1353,7 +1349,7 @@ private AnyLitToken_first ::= STRING_LITERAL | BYTE_STRING_LITERAL
                             | FLOAT_LITERAL | INTEGER_LITERAL
                             | BOOL_LITERAL
 
-YieldExpr ::= OuterAttr* yield Expr? {
+YieldExpr ::= OuterAttr* yield AnyExpr? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
