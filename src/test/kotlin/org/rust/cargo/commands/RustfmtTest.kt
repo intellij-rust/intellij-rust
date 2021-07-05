@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
@@ -358,6 +359,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         myFixture.configureFromTempProjectFile(fileWithCaret)
         val expected = expectedTextSupplier()
         action()
+        UIUtil.dispatchAllInvocationEvents()
         assertEquals(expected.trim(), editor.document.text.trim())
     }
 
