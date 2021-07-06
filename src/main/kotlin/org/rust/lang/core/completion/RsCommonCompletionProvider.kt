@@ -104,23 +104,26 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             is RsMetaItem -> return
             else -> {
                 val lookup = ImplLookup.relativeTo(element)
+                var filtered: RsResolveProcessor = filterPathCompletionVariantsByTraitBounds(
+                    addProcessedPathName(processor, processedPathNames),
+                    lookup
+                )
+                // Filters are applied in reverse order (the last filter is applied first)
+                val filters = listOf(
+                    ::filterCompletionVariantsByVisibility,
+                    ::filterAssocTypes,
+                    ::filterVisRestrictionPaths,
+                    ::filterTraitRefPaths
+                )
+                for (filter in filters) {
+                    filtered = filter(element, filtered)
+                }
+
                 processPathResolveVariants(
                     lookup,
                     element,
                     true,
-                    filterVisRestrictionPaths(
-                        element,
-                        filterAssocTypes(
-                            element,
-                            filterCompletionVariantsByVisibility(
-                                element,
-                                filterPathCompletionVariantsByTraitBounds(
-                                    addProcessedPathName(processor, processedPathNames),
-                                    lookup
-                                )
-                            )
-                        )
-                    )
+                    filtered
                 )
             }
         }
@@ -274,6 +277,29 @@ private fun filterVisRestrictionPaths(
                 !is RsMod -> false
                 !in allowedModules -> false
                 else -> processor(it)
+            }
+        }
+    } else {
+        processor
+    }
+}
+
+/**
+ * Ignore items that are not traits (or modules, which could lead to traits) inside trait refs:
+ * `impl /*here*/ for <type>`
+ * `fn foo<T: /*here*/>() {}
+ */
+private fun filterTraitRefPaths(
+    path: RsPath,
+    processor: RsResolveProcessor
+): RsResolveProcessor {
+    val parent = path.parent
+    return if (parent is RsTraitRef) {
+        createProcessor(processor.name) {
+            if (it.element is RsTraitItem || it.element is RsMod) {
+                processor(it)
+            } else {
+                false
             }
         }
     } else {
