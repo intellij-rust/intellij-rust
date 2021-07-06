@@ -1136,7 +1136,7 @@ BitOrBinOp       ::= '|' { name = "operator" }
 BitAndBinOp      ::= '&' { name = "operator" }
 BitXorBinOp      ::= '^' { name = "operator" }
 
-CastExpr ::= Expr (as | ':')  ScalarTypeReference {
+CastExpr ::= Expr <<isIncompleteBlockExpr>> (as | ':')  ScalarTypeReference {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1290,10 +1290,12 @@ fake RangeExpr ::= Expr? ('..' | '...' | '..=') Expr? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FullRangeExpr ::= Expr ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>)?) { elementType = RangeExpr }
-OpenRangeExpr ::=      ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>)?) { elementType = RangeExpr }
+FullRangeExpr ::= Expr <<isIncompleteBlockExpr>> ('..' | '...' | '..=')
+    <<setStmtMode 'StmtMode.OFF'>> (<<checkBraceAllowed>> Expr)? <<resetFlags>> { elementType = RangeExpr }
+OpenRangeExpr ::= ('..' | '...' | '..=') <<setStmtMode 'StmtMode.OFF'>> (<<checkBraceAllowed>> Expr)? <<resetFlags>>
+    { elementType = RangeExpr }
 
-IndexExpr ::= Expr IndexArg {
+IndexExpr ::= Expr <<isIncompleteBlockExpr>> IndexArg {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 // Do not inline this rule, it breaks expression parsing

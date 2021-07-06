@@ -46,7 +46,21 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test last block is expression`() = doTest(true)
     fun `test loops`() = doTest(true)
     fun `test blocks`() = doTest(true)
+
+    // See stuff around `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
+    fun `test block assignment`() = doTest(true)
     fun `test block bin expr`() = doTest(true)
+    fun `test block call expr`() = doTest(true)
+    fun `test block dot expr`() = doTest(true)
+    fun `test block full range expr deprecated`() = doTest(true)
+    fun `test block full range expr`() = doTest(true)
+    fun `test block index expr`() = doTest(true)
+    fun `test block lambda expr`() = doTest(true)
+    fun `test block open range expr`() = doTest(true)
+    fun `test block return expr`() = doTest(true)
+    fun `test block try expr`() = doTest(true)
+    fun `test block unary expr`() = doTest(true)
+
     fun `test match call ambiguity`() = doTest(true)
     fun `test visibility`() = doTest(true)
     fun `test polybounds`() = doTest(true)
@@ -65,9 +79,14 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     override fun checkResult(targetDataName: String, file: PsiFile) {
         super.checkResult(targetDataName, file)
-        check(!hasError(file)){
+        check(!hasError(file)) {
             "Error in well formed file ${file.name}"
         }
     }
 
+}
+
+class RsCompleteParsingErrorTestCase : RsParsingTestCaseBase("complete") {
+    // See stuff around `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
+    fun `test block cast expr`() = doTest(true)
 }
