@@ -2375,4 +2375,121 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn foo(t: Bar/*caret*/) {}
     """)
+
+    fun `test import 'pub(crate)' from the same crate`() = checkAutoImportFixByText("""
+        mod foo {
+            pub(crate) struct Foo;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub(crate) struct Foo;
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import 'pub(crate)' item from dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub(crate) struct Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import an item from 'pub(crate)' mod in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        pub(crate) mod foo {
+            pub struct Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import an item reexported from 'pub(crate)' mod in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        mod foo {
+            pub struct Bar;
+        }
+        pub(crate) mod baz {
+            pub use crate::foo::Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import 'pub(crate)' item reexported from dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        mod foo {
+            pub(crate) struct Bar;
+        }
+        pub mod baz {
+            pub use crate::foo::Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import an item reexported by 'pub(crate) use' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        mod foo {
+            pub struct Bar;
+        }
+        pub mod baz {
+            pub(crate) use crate::foo::Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+
+    // TODO the fix should not be available if an intermediate use is not public
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import an item reexported by intermediate 'pub(crate) use' in dependency crate`() = expect<IllegalStateException> {
+    checkAutoImportFixIsUnavailableByFileTree("""
+        //- dep-lib/lib.rs
+        mod foo {
+            pub struct Bar;
+        }
+        mod baz {
+            pub(crate) use crate::foo::Bar;
+        }
+        pub mod quux {
+            pub use crate::baz::Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """)
+    }
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import an item reexported by 'pub(crate) extern crate' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub(crate) extern crate trans_lib;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """)
 }
