@@ -231,10 +231,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             closure_0();
             closure_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">(<error>42</error>)</error>;
-            closure_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">)</error>;
+            closure_1<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">(<error>)</error></error>;
             closure_1(42);
-            closure_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">)</error>;
-            closure_2(42<error descr="This function takes 2 parameters but 1 parameter was supplied [E0057]">)</error>;
+            closure_2<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">(<error>)</error></error>;
+            closure_2<error descr="This function takes 2 parameters but 1 parameter was supplied [E0057]">(42<error>)</error></error>;
             closure_2(42, 43);
         }
     """)
@@ -246,11 +246,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
 
         unsafe fn test() {
-            variadic_1(<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">)</error>;
+            variadic_1<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">(<error>)</error></error>;
             variadic_1(42);
             variadic_1(42, 43);
-            variadic_2(<error descr="This function takes at least 2 parameters but 0 parameters were supplied [E0060]">)</error>;
-            variadic_2(42<error descr="This function takes at least 2 parameters but 1 parameter was supplied [E0060]">)</error>;
+            variadic_2<error descr="This function takes at least 2 parameters but 0 parameters were supplied [E0060]">(<error>)</error></error>;
+            variadic_2<error descr="This function takes at least 2 parameters but 1 parameter was supplied [E0060]">(42<error>)</error></error>;
             variadic_2(42, 43);
         }
     """)
@@ -271,11 +271,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             par_1_cfg(1);
 
             par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            par_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
+            par_1<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">(<error>)</error></error>;
             par_1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(true, <error>false</error>)</error>;
-            par_3(5, 1.0<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">)</error>;
+            par_3<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">(5, 1.0<error>)</error></error>;
             par_0_cfg<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            par_1_cfg(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
+            par_1_cfg<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">(<error>)</error></error>;
         }
     """)
 
@@ -309,7 +309,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             foo.par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
             foo.par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, <error>"three"</error>)</error>;
-            foo.par_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">)</error>;
+            foo.par_2<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">(<error>)</error></error>;
         }
     """)
 
