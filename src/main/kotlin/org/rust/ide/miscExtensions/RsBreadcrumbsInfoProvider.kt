@@ -9,10 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.skipParens
+import org.rust.lang.core.psi.ext.*
 
 class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
@@ -41,7 +38,8 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
     private object RsNamedHandler : RsElementHandler<RsNamedElement> {
         override fun accepts(e: PsiElement): Boolean =
             e is RsModItem || e is RsStructOrEnumItemElement || e is RsTraitItem
-                || e is RsConstant || e is RsTypeAlias
+            || e is RsConstant || e is RsTypeAlias || e is RsNamedFieldDecl
+            || e is RsEnumVariant || e is RsModDeclItem || e is RsExternCrateItem
 
         override fun elementInfo(e: RsNamedElement): String = e.name.let { "$it" }
     }
@@ -78,10 +76,10 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
         }
     }
 
-    private object RsMacroHandler : RsElementHandler<RsMacro> {
-        override fun accepts(e: PsiElement): Boolean = e is RsMacro
+    private object RsMacroHandler : RsElementHandler<RsMacroDefinitionBase> {
+        override fun accepts(e: PsiElement): Boolean = e is RsMacro || e is RsMacro2
 
-        override fun elementInfo(e: RsMacro): String = e.name.let { "$it!" }
+        override fun elementInfo(e: RsMacroDefinitionBase): String = (e as RsNamedElement).name.let { "$it!" }
     }
 
     private object RsFunctionHandler : RsElementHandler<RsFunction> {
@@ -217,6 +215,8 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
     override fun getElementInfo(e: PsiElement): String = handler(e)!!.elementInfo(e as RsElement)
 
     override fun getElementTooltip(e: PsiElement): String? = null
+
+    fun getBreadcrumb(e: PsiElement): String? = handler(e)?.elementInfo(e as RsElement)
 
     companion object {
         @Suppress("unused")

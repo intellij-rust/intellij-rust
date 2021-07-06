@@ -22,8 +22,9 @@ class RsNavBarModelExtension : StructureAwareNavBarModelExtension() {
         }
 
         val provider = RsBreadcrumbsInfoProvider()
-        if (provider.acceptElement(element)) {
-            return provider.getElementInfo(element)
+        val breadcrumb = provider.getBreadcrumb(element)
+        if (breadcrumb != null) {
+            return breadcrumb
         }
         return null
     }
