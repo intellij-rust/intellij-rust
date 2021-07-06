@@ -256,7 +256,7 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
         script_str.push_str(&format!("{}\n", ENABLE_RUST));
 
         // Set breakpoints on every line that contains the string "#break"
-        let source_file_name = self.src_path.file_name().unwrap().to_string_lossy();
+        let source_file_name = self.src_path.to_string_lossy();
         for line in &breakpoint_lines {
             script_str.push_str(&format!(
                 "breakpoint set --file '{}' --line {}\n",
