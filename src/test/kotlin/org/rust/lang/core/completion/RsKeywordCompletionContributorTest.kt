@@ -264,9 +264,9 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         extern crate /*caret*/
     """)
 
-    fun `test crate not applied at file beginning`() = checkNoCompletion("crat/*caret*/")
+    fun `test crate not applied at file beginning`() = checkNotContainsCompletion("extern crate", "crat/*caret*/")
 
-    fun `test crate not applied without prefix`() = checkNoCompletion("""
+    fun `test crate not applied without prefix`() = checkNotContainsCompletion("extern crate", """
         crat/*caret*/
     """)
 
@@ -833,28 +833,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         impl Foo {
             pub /*lookup*/ /*caret*/
-        }
-    """)
-
-    fun `test pub keyword in inherent impl`() = checkCompletion("pub", """
-        impl Foo {
-            pu/*caret*/
-        }
-    """, """
-        impl Foo {
-            pub /*caret*/
-        }
-    """)
-
-    fun `test no pub keyword in trait`() = checkNoCompletion("""
-        trait Foo {
-            pu/*caret*/
-        }
-    """)
-
-    fun `test no pub keyword in trait impl`() = checkNoCompletion("""
-        impl Foo for Bar {
-            pu/*caret*/
         }
     """)
 

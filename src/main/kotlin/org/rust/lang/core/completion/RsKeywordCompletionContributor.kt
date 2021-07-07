@@ -17,6 +17,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.*
+import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
+import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
+import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -30,7 +33,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, pubDeclarationPattern(),
             RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
@@ -51,8 +54,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
         extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("fn"))
-        extend(CompletionType.BASIC, inherentImplDeclarationPattern(),
-            RsKeywordCompletionProvider("pub"))
         extend(CompletionType.BASIC, pubInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
 
@@ -103,9 +104,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             }
     }
 
-    private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        baseDeclarationPattern().and(statementBeginningPattern())
-
     private fun pubDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("pub"))
 
@@ -126,10 +124,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             newCodeStatementPattern() or
             pathExpressionPattern()
         )
-
-    private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement()
-            .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement()
@@ -227,22 +221,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun unsafeTraitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))
-    }
-
-    private fun baseInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        val membersInInherentImpl = psiElement<RsMembers>().withParent(
-            psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
-        )
-        return psiElement().withParent(
-            or(
-                membersInInherentImpl,
-                psiElement().withParent(membersInInherentImpl)
-            )
-        )
-    }
-
-    private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        return baseInherentImplDeclarationPattern().and(statementBeginningPattern())
     }
 
     private fun pubInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
