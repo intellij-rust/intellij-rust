@@ -27,10 +27,10 @@ class AddImplIntentionTest : RsIntentionTestBase(AddImplIntention::class) {
     """)
 
     fun `test generic struct`() = doAvailableTest("""
-        struct S<'a, 'b: 'a, U: Clone, V>/*caret*/ where V: Copy { }
+        struct S<'a, 'b: 'a, U: Clone, V, const N: usize>/*caret*/ where V: Copy { }
     """, """
-        struct S<'a, 'b: 'a, U: Clone, V> where V: Copy { }
+        struct S<'a, 'b: 'a, U: Clone, V, const N: usize> where V: Copy { }
 
-        impl<'a, 'b: 'a, U: Clone, V> S<'a, 'b, U, V> where V: Copy {/*caret*/}
+        impl<'a, 'b: 'a, U: Clone, V, const N: usize> S<'a, 'b, U, V, N> where V: Copy {/*caret*/}
     """)
 }

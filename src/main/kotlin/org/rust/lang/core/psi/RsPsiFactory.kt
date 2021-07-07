@@ -261,7 +261,8 @@ class RsPsiFactory(
             ""
         } else {
             val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
-                typeParameterList.typeParameterList.map { it.name }
+                typeParameterList.typeParameterList.map { it.name } +
+                typeParameterList.constParameterList.map { it.name }
             parameterNames.joinToString(", ", "<", ">")
         }
 
@@ -423,12 +424,14 @@ class RsPsiFactory(
             ?: error("Failed to create pat element")
 
     fun createPatField(name: String): RsPatField =
-        createFromText("""
+        createFromText(
+            """
             struct Foo { bar: i32 }
             fn baz(foo: Foo) {
                 let Foo { $name } = foo;
             }
-        """) ?: error("Failed to create pat field")
+        """
+        ) ?: error("Failed to create pat field")
 
     fun createPatStruct(name: String, pats: List<RsPatField>, patRest: RsPatRest?): RsPatStruct {
         val pad = if (pats.isEmpty()) "" else " "
