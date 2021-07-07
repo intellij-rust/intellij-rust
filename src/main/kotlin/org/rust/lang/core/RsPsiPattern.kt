@@ -197,6 +197,58 @@ object RsPsiPattern {
                 eq?.elementType == EQ && feature?.textMatches("feature") == true
             }
 
+    private object VisibilityOwnerField : PatternCondition<RsFieldDecl>("visibilityOwnerField") {
+        override fun accepts(field: RsFieldDecl, context: ProcessingContext?): Boolean {
+            return field.owner !is RsEnumVariant && field.vis == null
+        }
+    }
+
+    /**
+     * struct S {
+     *   /*here*/a: u32
+     * }
+     */
+    private val namedFieldVisibility: PsiElementPattern.Capture<PsiElement> =
+        psiElement(IDENTIFIER)
+            .withParent(psiElement<RsNamedFieldDecl>().with(VisibilityOwnerField))
+
+    /**
+     * struct S(/*here*/a: u32);
+     */
+    private val tupleFieldVisibility: PsiElementPattern.Capture<PsiElement> =
+        psiElement(IDENTIFIER)
+            .withParent(
+                psiElement<RsPath>().withSuperParent(2, psiElement<RsTupleFieldDecl>().with(VisibilityOwnerField))
+            )
+
+    val fieldVisibility: PsiElementPattern.Capture<PsiElement> = namedFieldVisibility or tupleFieldVisibility
+
+    private fun identifierStatementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
+        psiElement(IDENTIFIER).and(onStatementBeginning(*startWords))
+
+    fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().and(identifierStatementBeginningPattern())
+
+    fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        psiElement()
+            .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
+
+    fun baseInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        val membersInInherentImpl = psiElement<RsMembers>().withParent(
+            psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
+        )
+        return psiElement().withParent(
+            or(
+                membersInInherentImpl,
+                psiElement().withParent(membersInInherentImpl)
+            )
+        )
+    }
+
+    fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(identifierStatementBeginningPattern())
+    }
+
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent(2, rootMetaItem(ownerPattern = psiElement<I>()))
     }
