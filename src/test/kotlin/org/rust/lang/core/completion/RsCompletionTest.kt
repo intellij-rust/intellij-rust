@@ -1189,4 +1189,53 @@ class RsCompletionTest : RsCompletionTestBase() {
             }
         }
     """)
+
+    fun `test do not complete non-traits in trait impl trait ref`() = checkNotContainsCompletion("Foo", """
+        struct S;
+        struct Foo;
+
+        impl /*caret*/ for S {}
+    """)
+
+    fun `test complete traits in trait impl trait ref`() = checkContainsCompletion("Trait", """
+        struct S;
+
+        trait Trait {}
+
+        impl /*caret*/ for S {}
+    """)
+
+    fun `test complete modules in trait impl trait ref`() = checkContainsCompletion("foo", """
+        struct S;
+
+        mod foo {}
+
+        impl /*caret*/ for S {}
+    """)
+
+    fun `test complete non-traits in trait impl type ref`() = checkContainsCompletion("Foo", """
+        struct Foo;
+
+        trait Trait {}
+
+        impl Trait for /*caret*/ {}
+    """)
+
+    fun `test complete non-traits in impl type ref`() = checkContainsCompletion("Foo", """
+        struct Foo;
+
+        impl /*caret*/ {}
+    """)
+
+    fun `test complete traits in generic bound`() = checkContainsCompletion("Trait", """
+        trait Trait {}
+
+        fn foo<T: /*caret*/>() {}
+    """)
+
+    fun `test complete non-traits in generic bound`() = checkNotContainsCompletion("Foo", """
+        struct Foo;
+
+        fn foo<T: /*caret*/>() {}
+    """)
 }
