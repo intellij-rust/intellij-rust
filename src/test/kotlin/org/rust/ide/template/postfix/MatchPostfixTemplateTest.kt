@@ -32,8 +32,8 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
         fn process_message() {
             let msg = Message::ChangeColor(255, 255, 255);
             match msg {
-                Message::Quit => {}
-                Message::ChangeColor(_/*caret*/, _, _) => {}
+                Message::Quit => {/*caret*/}
+                Message::ChangeColor(_, _, _) => {}
                 Message::Move { .. } => {}
                 Message::Write(_) => {}
             }
@@ -50,7 +50,7 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
         const THE_ANSWER: i32 = 42;
 
         fn check(x: i32) {
-            match x { _/*caret*/ => {} }
+            match x { _ => {/*caret*/} }
         }
     """)
 
@@ -81,7 +81,7 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
     """, """
         fn main() {
             match a {
-                _ => match b { _/*caret*/ => {} }
+                _ => match b { _ => {/*caret*/} }
             }
         }
     """)
@@ -92,7 +92,7 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
         }
     """, """
         fn main() {
-            let x = match 1 + 2 { _/*caret*/ => {} };
+            let x = match 1 + 2 { _ => {/*caret*/} };
         }
     """)
 
@@ -104,7 +104,7 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
     """, """
         fn foo(s: String) {
             match s.as_str() {
-                ""/*caret*/ => {}
+                "" => {/*caret*/}
                 _ => {}
             }
         }
@@ -117,7 +117,7 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
     """, """
         fn foo(s: &str) {
             match s {
-                ""/*caret*/ => {}
+                "" => {/*caret*/}
                 _ => {}
             }
         }
