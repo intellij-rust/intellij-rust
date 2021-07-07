@@ -18,7 +18,9 @@ use test_runner::TestRunner;
 const SETTINGS: &str = "Settings_linux.toml";
 #[cfg(target_os = "macos")]
 const SETTINGS: &str = "Settings_macos.toml";
-#[cfg(all(not(target_os = "linux"), not(target_os = "macos")))]
+#[cfg(target_os = "windows")]
+const SETTINGS: &str = "Settings_windows.toml";
+#[cfg(all(not(target_os = "linux"), not(target_os = "macos"), not(target_os = "windows")))]
 panic!("Unsupported platform");
 
 #[derive(Deserialize)]

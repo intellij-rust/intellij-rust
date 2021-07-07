@@ -3,9 +3,11 @@
 // lldb-command:run
 
 // lldb-command:print v
-// lldbg-check:[...]v = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
+// lldbr-check:[...]v = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
+// lldbg-check:[...]$0 = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
 // lldb-command:print empty_v
-// lldbg-check:[...]empty_v = size=0
+// lldbr-check:[...]empty_v = size=0
+// lldbg-check:[...]$1 = size=0
 
 // === GDB TESTS ===================================================================================
 

@@ -281,7 +281,6 @@ jobs:
                   arguments: ":plugin:verifyPlugin"
 
             - name: Check bundled Rust formatters
-              if: matrix.os != 'windows-latest'
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: "runPrettyPrintersTests --no-daemon"
