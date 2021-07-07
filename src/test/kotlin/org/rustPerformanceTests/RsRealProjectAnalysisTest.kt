@@ -148,7 +148,7 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
         val filePath: String,
         val line: Int,
         val column: Int,
-        val highlightedText: String,
+        val highlightedText: String?,
         val error: String,
         val inspectionToolId: String?
     ) {
