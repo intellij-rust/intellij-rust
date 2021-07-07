@@ -11,6 +11,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.hasCargoProject
+import org.rust.ide.notifications.confirmLoadingUntrustedProject
 import org.rust.openapiext.saveAllDocuments
 
 class RefreshCargoProjectsAction : CargoProjectActionBase() {
@@ -22,6 +23,9 @@ class RefreshCargoProjectsAction : CargoProjectActionBase() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+
+        if (!project.confirmLoadingUntrustedProject()) return
+
         saveAllDocuments()
         if (project.toolchain == null || !project.hasCargoProject) {
             guessAndSetupRustProject(project, explicitRequest = true)

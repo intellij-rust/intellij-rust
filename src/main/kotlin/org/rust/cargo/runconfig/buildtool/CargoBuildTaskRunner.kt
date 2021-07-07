@@ -14,6 +14,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -27,6 +28,7 @@ import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
 import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.concurrency.*
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.CargoCommandRunner
@@ -39,6 +41,7 @@ import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.ide.notifications.confirmLoadingUntrustedProject
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 
@@ -53,6 +56,11 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
     ): Promise<Result> {
         if (project.isDisposed) {
             return rejectedPromise("Project is already disposed")
+        }
+
+        val confirmed = invokeAndWaitIfNeeded { project.confirmLoadingUntrustedProject() }
+        if (!confirmed) {
+            return rejectedPromise(RsBundle.message("untrusted.project.notification.execution.error"))
         }
 
         if (!project.isBuildToolWindowEnabled) {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.notifications
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -61,6 +62,8 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
     ): RsEditorNotificationPanel? {
         if (isUnitTestMode) return null
         if (!(file.isRustFile || file.isCargoToml) || isNotificationDisabled(file)) return null
+        @Suppress("UnstableApiUsage")
+        if (!project.isTrusted()) return null
         if (guessAndSetupRustProject(project)) return null
 
         val toolchain = project.toolchain
