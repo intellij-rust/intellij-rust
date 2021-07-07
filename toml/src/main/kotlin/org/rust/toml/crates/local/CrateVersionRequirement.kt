@@ -7,9 +7,10 @@ package org.rust.toml.crates.local
 
 import com.vdurmont.semver4j.Requirement
 import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.SemverException
 
 class CrateVersionRequirement private constructor(private val requirements: List<Requirement>) {
+    val isPinned: Boolean = requirements.any { it.toString().startsWith("=") }
+
     fun matches(version: Semver): Boolean = requirements.all {
         it.isSatisfiedBy(version)
     }
