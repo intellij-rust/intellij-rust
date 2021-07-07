@@ -21,13 +21,23 @@ class CreateLifetimeParameterFromUsageFixTest : RsAnnotatorTestBase(RsErrorAnnot
     """)
 
     fun `test fix when non empty parameters`() = checkFixByText("Create lifetime parameter", """
-        struct Foo<'b, 'c, T> {
+        struct Foo<'b, 'c, T, const N: usize> {
             x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a/*caret*/</error> x
         }
     """, """
-        struct Foo<'b, 'c, 'a, T> {
+        struct Foo<'b, 'c, 'a, T, const N: usize> {
             x: &'a x
         }
+    """)
+
+    fun `test fix when fn with non empty parameters`() = checkFixByText("Create lifetime parameter", """
+        fn foo<'b, 'c, T, const N: usize>(
+            x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a/*caret*/</error> x
+        ) {}
+    """, """
+        fn foo<'b, 'c, 'a, T, const N: usize>(
+            x: &'a x
+        ) {}
     """)
 
     fun `test fix when no parameters`() = checkFixByText("Create lifetime parameter", """
