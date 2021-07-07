@@ -100,8 +100,12 @@ class RsStructureViewElement(
                     is RsModItem,
                     is RsStructOrEnumItemElement,
                     is RsTraitOrImpl,
-                    is RsTypeAlias,
-                    is RsConstant -> add(item)
+                    is RsTypeAlias -> add(item)
+                    is RsConstant -> {
+                        if (item.name != null) {
+                            add(item)
+                        }
+                    }
 
                     is RsForeignModItem -> {
                         for (child in item.children) {

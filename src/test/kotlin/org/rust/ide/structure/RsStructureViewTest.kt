@@ -454,6 +454,17 @@ class RsStructureViewTest : RsTestBase() {
          var1: E visibility=none
     """)
 
+    fun `test anonymous constants`() = doTest("""
+        const _: bool = true;
+        fn main() {
+            const _: i32 = 1;
+        }
+    """, """
+        -main.rs visibility=none
+         main() visibility=private
+    """
+    )
+
     private fun doTest(@Language("Rust") code: String, expected: String, fileName: String = "main.rs") {
         val normExpected = expected.trimIndent()
         myFixture.configureByText(fileName, code)
