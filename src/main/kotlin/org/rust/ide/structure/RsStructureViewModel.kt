@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.TreeAnchorizer
+import com.intellij.ide.util.treeView.smartTree.Filter
 import com.intellij.ide.util.treeView.smartTree.Sorter
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
@@ -24,16 +25,24 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFileBase)
-    : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
-      StructureViewModel.ElementInfoProvider {
+class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
+    StructureViewModelBase(file, editor, RsStructureViewElement(file)),
+    StructureViewModel.ElementInfoProvider {
 
     init {
         withSuitableClasses(
             RsNamedElement::class.java,
             RsImplItem::class.java
         )
-        withSorters(Sorter.ALPHA_SORTER)
+        withSorters(
+            Sorter.ALPHA_SORTER,
+        )
+    }
+
+    override fun getFilters(): Array<Filter> {
+        return arrayOf(
+
+        )
     }
 
     override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
