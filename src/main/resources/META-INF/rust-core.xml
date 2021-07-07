@@ -248,8 +248,6 @@
                                 implementationClass="org.rust.lang.core.completion.RsCompletionContributor"/>
         <completion.contributor language="Rust"
                                 implementationClass="org.rust.lang.core.completion.RsKeywordCompletionContributor"/>
-        <completion.contributor language="Rust"
-                                implementationClass="org.rust.lang.core.completion.RsVisibilityCompletionContributor"/>
 
         <!-- Description Provider -->
 

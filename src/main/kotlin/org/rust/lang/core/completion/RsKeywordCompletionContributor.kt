@@ -13,8 +13,11 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.*
 import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
@@ -34,7 +37,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     init {
         extend(CompletionType.BASIC, declarationPattern(),
             RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
-        extend(CompletionType.BASIC, pubDeclarationPattern(),
+        extend(CompletionType.BASIC, afterVisDeclarationPattern(),
             RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RsKeywordCompletionProvider("crate", "fn"))
@@ -54,7 +57,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
         extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("fn"))
-        extend(CompletionType.BASIC, pubInherentImplDeclarationPattern(),
+        extend(CompletionType.BASIC, afterVisInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
@@ -104,8 +107,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             }
     }
 
-    private fun pubDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        baseDeclarationPattern().and(statementBeginningPattern("pub"))
+    private fun afterVisDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().and(afterVis())
 
     private fun externDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("extern"))
@@ -223,8 +226,36 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))
     }
 
-    private fun pubInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        return baseInherentImplDeclarationPattern().and(statementBeginningPattern("pub"))
+    private fun afterVisInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(afterVis())
+    }
+
+    // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
+    private fun afterVis(): PsiElementPattern.Capture<PsiElement> = psiElement().with("afterVis") { item, _ ->
+        val allowedTokens = TokenSet.orSet(
+            tokenSetOf(
+                PUB,
+                LPAREN,
+                SUPER,
+                CRATE,
+                SELF,
+                COLONCOLON,
+                IN,
+                PATH,
+                IDENTIFIER,
+                RPAREN,
+                TokenType.WHITE_SPACE,
+                TokenType.ERROR_ELEMENT
+            ),
+            RS_COMMENTS
+        )
+        val siblings = generateSequence(item) { it.prevSibling }.takeWhile {
+            it is RsPath || it.elementType in allowedTokens
+        }.filter {
+            it !is PsiWhiteSpace && it !is PsiComment
+        }
+
+        siblings.lastOrNull()?.elementType == PUB
     }
 
     companion object {

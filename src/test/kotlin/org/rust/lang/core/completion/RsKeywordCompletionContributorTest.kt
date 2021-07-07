@@ -278,6 +278,14 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         pub f/*caret*/
     """)
 
+    fun `test fn after pub(crate)`() = checkContainsCompletion("fn", """
+        pub(crate) f/*caret*/
+    """)
+
+    fun `test fn after vis with restriction`() = checkContainsCompletion("fn", """
+        pub(in foo::bar) f/*caret*/
+    """)
+
     fun `test extern fn`() = checkCompletion("fn", """
         extern f/*caret*/
     """, """

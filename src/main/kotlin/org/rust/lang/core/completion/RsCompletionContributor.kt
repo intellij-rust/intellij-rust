@@ -8,8 +8,12 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.RsPsiPattern.declarationPattern
+import org.rust.lang.core.RsPsiPattern.inherentImplDeclarationPattern
 import org.rust.lang.core.completion.lint.RsClippyLintCompletionProvider
 import org.rust.lang.core.completion.lint.RsRustcLintCompletionProvider
+import org.rust.lang.core.or
 import org.rust.lang.core.psi.RsElementTypes.COLON
 import org.rust.lang.core.psi.ext.elementType
 
@@ -34,6 +38,8 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsImplTraitMemberCompletionProvider)
         extend(CompletionType.BASIC, RsVisRestrictionCompletionProvider)
         extend(CompletionType.BASIC, RsLambdaExprCompletionProvider)
+        extend(CompletionType.BASIC, RsPsiPattern.fieldVisibility, RsVisibilityCompletionProvider())
+        extend(CompletionType.BASIC, declarationPattern() or inherentImplDeclarationPattern(), RsVisibilityCompletionProvider())
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
