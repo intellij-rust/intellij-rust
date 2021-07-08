@@ -35,6 +35,7 @@ class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixA
             parameters.addAll(originalParams.lifetimeParameterList)
             parameters.add(startElement)
             parameters.addAll(originalParams.typeParameterList)
+            parameters.addAll(originalParams.constParameterList)
             val parameterList = factory.createTypeParameterList(parameters.joinToString(", ") { it.text })
             originalParams.replace(parameterList)
         } else {
