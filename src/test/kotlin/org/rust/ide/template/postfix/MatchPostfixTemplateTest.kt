@@ -5,6 +5,9 @@
 
 package org.rust.ide.template.postfix
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test simple`() = doTest("""
         enum Message {
@@ -90,6 +93,33 @@ class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPo
     """, """
         fn main() {
             let x = match 1 + 2 { _/*caret*/ => {} };
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test string`() = doTest("""
+        fn foo(s: String) {
+            s.match/*caret*/
+        }
+    """, """
+        fn foo(s: String) {
+            match s.as_str() {
+                ""/*caret*/ => {}
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test str ref`() = doTest("""
+        fn foo(s: &str) {
+            s.match/*caret*/
+        }
+    """, """
+        fn foo(s: &str) {
+            match s {
+                ""/*caret*/ => {}
+                _ => {}
+            }
         }
     """)
 }
