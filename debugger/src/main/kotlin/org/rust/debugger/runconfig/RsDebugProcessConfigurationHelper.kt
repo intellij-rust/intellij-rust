@@ -51,7 +51,9 @@ class RsDebugProcessConfigurationHelper(
             try {
                 driver.loadRustcSources()
                 driver.loadPrettyPrinters()
-                driver.setBreakOnPanic()
+                if (settings.breakOnPanic) {
+                    driver.setBreakOnPanic()
+                }
             } catch (e: DebuggerCommandException) {
                 process.printlnToConsole(e.message)
                 LOG.warn(e)

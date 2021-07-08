@@ -5,11 +5,9 @@
 
 package org.rust.debugger.settings
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
-import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.LayoutBuilder
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import org.rust.openapiext.pathToDirectoryTextField
@@ -17,7 +15,7 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
+class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
 
     private val downloadLink: JComponent = Link("Download") {
         val result = RsDebuggerToolchainService.getInstance().downloadDebugger()
@@ -39,7 +37,7 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
 
     override fun isModified(settings: RsDebuggerSettings): Boolean {
         return settings.lldbPath != lldbPathField.text &&
-               settings.downloadAutomatically != downloadAutomaticallyCheckBox.isSelected
+            settings.downloadAutomatically != downloadAutomaticallyCheckBox.isSelected
     }
 
     override fun reset(settings: RsDebuggerSettings) {
@@ -52,17 +50,15 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
         settings.downloadAutomatically = downloadAutomaticallyCheckBox.isSelected
     }
 
-    override fun getComponent(): JComponent {
+    override fun buildUi(builder: LayoutBuilder) {
         lldbPathField.text = RsDebuggerSettings.getInstance().lldbPath.orEmpty()
         update()
-        return panel {
+        with(builder) {
             row("LLDB path:") { lldbPathField() }
             row("") { downloadLink() }
             row { downloadAutomaticallyCheckBox() }
         }
     }
-
-    override fun dispose() {}
 
     private fun update() {
         @Suppress("MoveVariableDeclarationIntoWhen")
