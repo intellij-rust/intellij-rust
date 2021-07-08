@@ -55,6 +55,7 @@ class RsDebugProcessConfigurationHelper(
                 if (settings.breakOnPanic) {
                     driver.setBreakOnPanic()
                 }
+                driver.setSteppingFilters()
             } catch (e: DebuggerCommandException) {
                 process.printlnToConsole(e.message)
                 LOG.warn(e)
@@ -72,6 +73,24 @@ class RsDebugProcessConfigurationHelper(
         }
         for (command in commands) {
             executeInterpreterCommand(threadId, frameIndex, command)
+        }
+    }
+
+    private fun DebuggerDriver.setSteppingFilters() {
+        val settings = settings.stepSettings
+
+        val regexes = mutableListOf<String>()
+        if (settings.filterStdlib) {
+            regexes.add("^(std|core|alloc)::.*")
+        }
+
+        val command = when (this) {
+            is LLDBDriver -> "settings set target.process.thread.step-avoid-regexp"
+            is GDBDriver -> "skip -rfu"
+            else -> return
+        }
+        for (regex in regexes) {
+            executeInterpreterCommand(threadId, frameIndex, "$command $regex")
         }
     }
 
