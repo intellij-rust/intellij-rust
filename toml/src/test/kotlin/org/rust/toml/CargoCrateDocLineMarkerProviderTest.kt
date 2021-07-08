@@ -10,11 +10,11 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.ide.MockBrowserLauncher
 import org.rust.ide.lineMarkers.invokeNavigationHandler
 
-@ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+@ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase() {
     fun `test standard version`() = doTest("""
         [dependencies]
