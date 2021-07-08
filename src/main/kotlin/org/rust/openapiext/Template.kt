@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 
 fun <T : PsiElement, E : PsiElement> Editor.buildAndRunTemplate(
     owner: T,
@@ -22,5 +23,5 @@ fun <T : PsiElement, E : PsiElement> Editor.buildAndRunTemplate(
         val element = elementPointer.element ?: continue
         templateBuilder.replaceElement(element, element.text)
     }
-    templateBuilder.run(this, true)
+    templateBuilder.run(InjectedLanguageEditorUtil.getTopLevelEditor(this), true)
 }
