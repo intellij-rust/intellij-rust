@@ -38,8 +38,8 @@ class RsTemplateBuilder(
     private var disableDaemonHighlighting: Boolean = false
     private val listeners: MutableList<TemplateEditingListener> = mutableListOf()
 
-    fun replaceElement(element: PsiElement, replacementText: String): RsTemplateBuilder {
-        delegate.replaceElement(element, replacementText)
+    fun replaceElement(element: PsiElement, replacementText: String? = null): RsTemplateBuilder {
+        delegate.replaceElement(element, replacementText ?: element.text)
         return this
     }
 
