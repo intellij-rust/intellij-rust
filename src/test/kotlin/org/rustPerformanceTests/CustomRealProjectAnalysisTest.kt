@@ -6,11 +6,11 @@
 package org.rustPerformanceTests
 
 import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.rust.util.readValue
+import org.rust.util.registerKotlinModule
 import java.io.File
 import java.util.*
 

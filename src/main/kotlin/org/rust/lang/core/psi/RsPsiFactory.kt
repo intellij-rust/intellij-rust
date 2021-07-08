@@ -261,7 +261,8 @@ class RsPsiFactory(
             ""
         } else {
             val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
-                typeParameterList.typeParameterList.map { it.name }
+                typeParameterList.typeParameterList.map { it.name } +
+                typeParameterList.constParameterList.map { it.name }
             parameterNames.joinToString(", ", "<", ">")
         }
 

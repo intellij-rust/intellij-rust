@@ -1,7 +1,8 @@
 import sys
 
+from lldb import LLDB_INVALID_ADDRESS
 from lldb import SBValue, SBData, SBError
-from lldb import eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar
+from lldb import eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar, eBasicTypeChar
 
 #################################################################################################################
 # This file contains two kinds of pretty-printers: summary and synthetic.
@@ -149,6 +150,25 @@ def StdStrSummaryProvider(valobj, _dict):
     start = data_ptr.GetValueAsUnsigned()
     error = SBError()
     process = data_ptr.GetProcess()
+    data = process.ReadMemory(start, length, error)
+    data = data.decode(encoding='UTF-8') if PY3 else data
+    return '"%s"' % data
+
+
+def StdFFIStrSummaryProvider(valobj, _dict, is_null_terminated=False):
+    # type: (SBValue, dict, bool) -> str
+    process = valobj.GetProcess()
+    error = SBError()
+    slice_ptr = valobj.GetLoadAddress()
+    if slice_ptr == LLDB_INVALID_ADDRESS:
+        return ""
+    char_ptr_type = valobj.GetTarget().GetBasicType(eBasicTypeChar).GetPointerType()
+    start = valobj.CreateValueFromAddress('start', slice_ptr, char_ptr_type).GetValueAsUnsigned()
+    length = process.ReadPointerFromMemory(slice_ptr + process.GetAddressByteSize(), error)
+    if is_null_terminated:
+        length = length - 1
+    if length == 0:
+        return '""'
     data = process.ReadMemory(start, length, error)
     data = data.decode(encoding='UTF-8') if PY3 else data
     return '"%s"' % data

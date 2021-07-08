@@ -232,6 +232,8 @@ class SBValue:
 
     def SetData(self, data: SBData, error: SBError) -> bool: ...
 
+    def GetLoadAddress(self) -> int: ...
+
     def GetAddress(self) -> SBAddress: ...
 
     def Persist(self) -> SBValue: ...
@@ -301,6 +303,8 @@ class SBProcess:
     def GetByteOrder(self) -> ByteOrder: ...
 
     def GetAddressByteSize(self) -> int: ...
+
+    def ReadPointerFromMemory(self, address: int, error: SBError) -> int: ...
 
     ...
 
@@ -373,7 +377,10 @@ eFormatPointer: int
 
 eTypeClassStruct: int
 eTypeClassUnion: int
+eTypeClassPointer: int
 eTypeClassTypedef: int
 eTypeClassVector: int
 eTypeClassOther: int
 eTypeClassAny: int
+
+LLDB_INVALID_ADDRESS: int
