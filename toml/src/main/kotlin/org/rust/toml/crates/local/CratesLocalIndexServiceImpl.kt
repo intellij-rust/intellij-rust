@@ -159,8 +159,27 @@ class CratesLocalIndexServiceImpl
     }
 
     override fun updateIfNeeded() {
+        resetStateIfIndexEmpty()
+
         if (state.indexedCommitHash != registryHeadCommitHash && isUpdating.compareAndSet(false, true)) {
             CratesLocalIndexUpdateTask(registryHeadCommitHash).queue()
+        }
+    }
+
+    private fun resetStateIfIndexEmpty() {
+        var isEmpty = true
+
+        try {
+            crates?.processKeysWithExistingMapping {
+                isEmpty = false
+                false
+            }
+        } catch (e: IOException) {
+            LOG.warn(e)
+        }
+
+        if (isEmpty) {
+            state = CratesLocalIndexState(INVALID_COMMIT_HASH)
         }
     }
 
