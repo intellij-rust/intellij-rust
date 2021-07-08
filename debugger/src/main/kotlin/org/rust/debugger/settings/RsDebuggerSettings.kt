@@ -24,6 +24,8 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     var lldbPath: String? = null
     var downloadAutomatically: Boolean = false
 
+    var stepSettings: RsStepFilterSettings = RsStepFilterSettings(filterStdlib = true)
+
     override fun getState(): RsDebuggerSettings = this
 
     override fun loadState(state: RsDebuggerSettings) {
@@ -34,6 +36,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         val configurable = when (category) {
             DebuggerSettingsCategory.DATA_VIEWS -> createDataViewConfigurable()
             DebuggerSettingsCategory.GENERAL -> if (needToShowToolchainSettings) createToolchainConfigurable() else null
+            DebuggerSettingsCategory.STEPPING -> createSteppingConfigurable()
             else -> null
         }
         return listOfNotNull(configurable)
@@ -53,7 +56,16 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
             TOOLCHAIN_ID,
             "Rust",
             RsDebuggerToolchainConfigurableUi::class.java,
-            Companion::getInstance
+            ::getInstance
+        )
+    }
+
+    private fun createSteppingConfigurable(): Configurable {
+        return SimpleConfigurable.create(
+            STEPPING_ID,
+            "Rust",
+            RsDebuggerSteppingSettingsConfigurableUi::class.java,
+            ::getInstance
         )
     }
 
@@ -61,7 +73,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         if (configurable !is SearchableConfigurable) return false
         return when (configurable.id) {
             TOOLCHAIN_ID -> needToShowToolchainSettings
-            DATA_VIEW_ID -> true
+            DATA_VIEW_ID, STEPPING_ID -> true
             else -> false
         }
     }
@@ -81,5 +93,6 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
         const val TOOLCHAIN_ID: String = "Debugger.Rust.Toolchain"
         const val DATA_VIEW_ID: String = "Debugger.Rust.DataView"
+        const val STEPPING_ID: String = "Debugger.Rust.Stepping"
     }
 }

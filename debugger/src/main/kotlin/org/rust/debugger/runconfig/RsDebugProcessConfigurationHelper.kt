@@ -51,12 +51,31 @@ class RsDebugProcessConfigurationHelper(
             try {
                 driver.loadRustcSources()
                 driver.loadPrettyPrinters()
+                driver.setSteppingFilters()
             } catch (e: DebuggerCommandException) {
                 process.printlnToConsole(e.message)
                 LOG.warn(e)
             } catch (e: InvalidPathException) {
                 LOG.warn(e)
             }
+        }
+    }
+
+    private fun DebuggerDriver.setSteppingFilters() {
+        val settings = settings.stepSettings
+
+        val regexes = mutableListOf<String>()
+        if (settings.filterStdlib) {
+            regexes.add("^(std|core|alloc)::.*")
+        }
+
+        val command = when (this) {
+            is LLDBDriver -> "settings set target.process.thread.step-avoid-regexp"
+            is GDBDriver -> "skip -rfu"
+            else -> return
+        }
+        for (regex in regexes) {
+            executeInterpreterCommand(threadId, frameIndex, "$command $regex")
         }
     }
 
