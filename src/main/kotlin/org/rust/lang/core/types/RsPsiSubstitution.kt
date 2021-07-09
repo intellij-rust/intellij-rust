@@ -6,6 +6,8 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.isConst
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.resolve
@@ -22,7 +24,7 @@ import org.rust.lang.utils.evaluation.evaluate
 open class RsPsiSubstitution(
     val typeSubst: Map<RsTypeParameter, TypeValue> = emptyMap(),
     val regionSubst: Map<RsLifetimeParameter, Value<RsLifetime>> = emptyMap(),
-    val constSubst: Map<RsConstParameter, Value<RsExpr>> = emptyMap(),
+    val constSubst: Map<RsConstParameter, Value<RsElement>> = emptyMap(),
     val assoc: Map<RsTypeAlias, RsTypeReference> = emptyMap(),
 ) {
     sealed class TypeValue {
@@ -76,7 +78,22 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             RsPsiSubstitution.Value.RequiredAbsent -> CtUnknown
             is RsPsiSubstitution.Value.Present -> {
                 val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
-                psiValue.value.evaluate(expectedTy, resolver)
+                when (val value = psiValue.value) {
+                    is RsExpr -> value.evaluate(expectedTy, resolver)
+                    is RsBaseType -> when (val resolved = value.path?.reference?.resolve()) {
+                        is RsConstParameter -> CtConstParameter(resolved)
+                        is RsConstant -> when {
+                            resolved.isConst -> {
+                                // TODO check types
+                                val type = resolved.typeReference?.type ?: TyUnknown
+                                resolved.expr?.evaluate(type, resolver) ?: CtUnknown
+                            }
+                            else -> CtUnknown
+                        }
+                        else -> CtUnknown
+                    }
+                    else -> CtUnknown
+                }
             }
         }
 

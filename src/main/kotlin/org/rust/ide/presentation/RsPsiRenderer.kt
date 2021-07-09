@@ -610,7 +610,10 @@ open class PsiSubstitutingPsiRenderer(
             }
             is RsConstParameter -> when (val s = subst.constSubst[resolved]) {
                 is RsPsiSubstitution.Value.Present -> {
-                    appendConstExpr(sb, s.value)
+                    when (s.value) {
+                        is RsExpr -> appendConstExpr(sb, s.value)
+                        is RsTypeReference -> appendTypeReference(sb, s.value)
+                    }
                     true
                 }
                 else -> false
