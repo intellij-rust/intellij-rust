@@ -9,74 +9,82 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.asTrivial
-import org.rust.lang.core.psi.ext.endOffset
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.*
 
 /**
  * Removes the curly braces on singleton imports, changing from this
  *
  * ```
- * import std::{mem};
+ * use std::{mem};
  * ```
  *
  * to this:
  *
  * ```
- * import std::mem;
+ * use std::mem;
  * ```
  */
-// TODO: this really should reuse code from RsSingleImportRemoveBracesFormatProcessor.
 class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
 
     data class Context(
-        val useSpeck: RsUseSpeck,
         val path: RsPath,
         val useGroup: RsUseGroup,
         val name: String
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val useItem = element.ancestorStrict<RsUseItem>() ?: return null
-        val useSpeck = useItem.useSpeck ?: return null
-        val path = useSpeck.path ?: return null
-        val useGroup = useSpeck.useGroup ?: return null
-        val name = useGroup.asTrivial?.text ?: return null
-        return Context(useSpeck, path, useGroup, name)
+        for (ancestor in element.ancestors) {
+            val speck = ancestor as? RsUseSpeck ?: continue
+            return createContextIfCompatible(speck) ?: continue
+        }
+
+        return null
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (useSpeck, path, useGroup, name) = ctx
-
         // Save the cursor position, adjusting for curly brace removal
         val caret = editor.caretModel.offset
         val newOffset = when {
-            caret < useGroup.startOffset -> caret
-            caret < useGroup.endOffset -> caret - 1
+            caret < ctx.useGroup.startOffset -> caret
+            caret < ctx.useGroup.endOffset -> caret - 1
             else -> caret - 2
         }
 
-        // Conjure up a new use item to make a new path containing the
-        // identifier we want; then grab the relevant parts
-        val newUseSpeck = RsPsiFactory(project).createUseSpeck("dummy::$name")
-        val newPath = newUseSpeck.path ?: return
-        val newSubPath = newPath.path ?: return
-
-        // Attach the identifier to the old path, then splice that path into
-        // the use item. Delete the old glob list and attach the alias, if any.
-        newSubPath.replace(path.copy())
-        path.replace(newPath)
-        useSpeck.coloncolon?.delete()
-        val alias = newUseSpeck.alias
-        if (alias != null) {
-            useGroup.replace(alias.copy())
-        } else {
-            useGroup.delete()
-        }
+        removeCurlyBracesFromUseSpeck(ctx)
 
         editor.caretModel.moveToOffset(newOffset)
+    }
+
+    companion object {
+        fun createContextIfCompatible(useSpeck: RsUseSpeck): Context? {
+            val useGroup = useSpeck.useGroup ?: return null
+            val path = useSpeck.path ?: return null
+            val name = useGroup.asTrivial?.text ?: return null
+            return Context(path, useGroup, name)
+        }
+
+        fun removeCurlyBracesFromUseSpeck(ctx: Context) {
+            val (path, useGroup, name) = ctx
+
+            // Conjure up a new use item to make a new path containing the
+            // identifier we want; then grab the relevant parts
+            val newUseSpeck = RsPsiFactory(useGroup.project).createUseSpeck("dummy::$name")
+            val newPath = newUseSpeck.path ?: return
+            val newSubPath = newPath.basePath()
+
+            // Attach the identifier to the old path, then splice that path into
+            // the use item. Delete the old glob list and attach the alias, if any.
+            newSubPath.replace(path.copy())
+            path.replace(newPath)
+            useGroup.parentUseSpeck.coloncolon?.delete()
+            val alias = newUseSpeck.alias
+            if (alias != null) {
+                useGroup.replace(alias.copy())
+            } else {
+                useGroup.delete()
+            }
+        }
     }
 }

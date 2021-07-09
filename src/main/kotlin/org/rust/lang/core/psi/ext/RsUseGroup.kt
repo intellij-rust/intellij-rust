@@ -16,7 +16,8 @@ val RsUseGroup.parentUseSpeck: RsUseSpeck get() = parent as RsUseSpeck
 val RsUseGroup.asTrivial: RsUseSpeck?
     get() {
         val speck = useSpeckList.singleOrNull() ?: return null
-        if (speck.alias == null && !speck.isIdentifier) return null
+        // Do not collapse {self}
+        if (speck.alias == null && !speck.isIdentifier && speck.path?.path == null) return null
         // Do not change use-groups with comments
         if (SyntaxTraverser.psiTraverser(this).traverse().any { it is PsiComment }) return null
         return speck
