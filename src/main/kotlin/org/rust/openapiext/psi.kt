@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 
 
@@ -85,7 +86,7 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
 
     override fun visitElement(element: PsiElement) {
         if (processor.execute(element)) {
-            if (element is RsMacroCall && element.macroArgument != null) {
+            if (element is RsMacroCall && shouldExpandMacro(element)) {
                 processMacro(element)
             } else {
                 super.visitElement(element)
@@ -94,6 +95,14 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
             stopWalking()
             result = false
         }
+    }
+
+    private fun shouldExpandMacro(element: RsMacroCall): Boolean {
+        // When adding other macros, we should also adjust
+        // type inference in `org.rust.lang.core.types.infer.RsTypeInferenceWalker.inferFormatMacro`
+        val isWriteMacro = element.formatMacroArgument != null
+            && element.macroName.let { it == "write" || it == "writeln" }
+        return element.macroArgument != null || isWriteMacro
     }
 
     private fun processMacro(element: RsMacroCall) {
