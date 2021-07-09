@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.ext.isEnabledByCfg
 import org.rust.lang.core.psi.ext.qualifier
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
+import org.rust.openapiext.TreeStatus
 import org.rust.openapiext.processElementsWithMacros
 
 data class PathUsageMap(
@@ -35,12 +36,24 @@ private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
     val traitUsages = hashSetOf<RsTraitItem>()
 
     for (child in owner.children) {
-        processElementsWithMacros(child) { element ->
-            handleElement(element, directUsages, traitUsages)
-        }
+        handleSubtree(child, directUsages, traitUsages)
     }
 
     return PathUsageMap(directUsages, traitUsages)
+}
+
+private fun handleSubtree(
+    root: PsiElement,
+    directUsages: MutableMap<String, MutableSet<RsElement>>,
+    traitUsages: MutableSet<RsTraitItem>
+) {
+    processElementsWithMacros(root) { element ->
+        if (handleElement(element, directUsages, traitUsages)) {
+            TreeStatus.VISIT_CHILDREN
+        } else {
+            TreeStatus.SKIP_CHILDREN
+        }
+    }
 }
 
 private fun handleElement(
@@ -82,9 +95,7 @@ private fun handleElement(
             true
         }
         is RsMacroCall -> {
-            processElementsWithMacros(element.path) {
-                handleElement(it, directUsages, traitUsages)
-            }
+            handleSubtree(element.path, directUsages, traitUsages)
             true
         }
         is RsMethodCall -> {

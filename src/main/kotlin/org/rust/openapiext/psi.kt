@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
+import org.rust.stdext.exhaustive
 
 
 /**
@@ -53,11 +54,27 @@ fun <T : PsiElement> findDescendantsWithMacrosOfAnyType(
     return processor.collection as Collection<T>
 }
 
+fun interface PsiTreeProcessor {
+    fun execute(element: PsiElement): TreeStatus
+}
+enum class TreeStatus {
+    VISIT_CHILDREN, SKIP_CHILDREN, ABORT
+}
+
+fun processElementsWithMacros(element: PsiElement, processor: PsiElementProcessor<PsiElement>): Boolean =
+    processElementsWithMacros(element) {
+        if (processor.execute(it)) TreeStatus.VISIT_CHILDREN else TreeStatus.ABORT
+    }
+
 /** Behaves like [PsiTreeUtil.processElements], but also collects elements expanded from macros */
-fun processElementsWithMacros(element: PsiElement, processor: PsiElementProcessor<PsiElement>): Boolean {
+fun processElementsWithMacros(element: PsiElement, processor: PsiTreeProcessor): Boolean {
     if (element is PsiCompiledElement || !element.isPhysical) {
         // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
-        if (!processor.execute(element)) return false
+        when (processor.execute(element)) {
+            TreeStatus.VISIT_CHILDREN -> Unit
+            TreeStatus.SKIP_CHILDREN -> return true
+            TreeStatus.ABORT -> return false
+        }.exhaustive
         for (child in element.children) {
             if (child is RsMacroCall && child.macroArgument != null) {
                 child.expansion?.elements?.forEach {
@@ -77,7 +94,7 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiElementProcesso
 }
 
 private class RsWithMacrosRecursiveElementWalkingVisitor(
-    private val processor: PsiElementProcessor<PsiElement>,
+    private val processor: PsiTreeProcessor,
     private val nestedMacroDepth: Int = 0
 ) : PsiRecursiveElementWalkingVisitor() {
 
@@ -85,16 +102,20 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
         private set
 
     override fun visitElement(element: PsiElement) {
-        if (processor.execute(element)) {
-            if (element is RsMacroCall && shouldExpandMacro(element)) {
-                processMacro(element)
-            } else {
-                super.visitElement(element)
+        when (processor.execute(element)) {
+            TreeStatus.VISIT_CHILDREN -> {
+                if (element is RsMacroCall && shouldExpandMacro(element)) {
+                    processMacro(element)
+                } else {
+                    super.visitElement(element)
+                }
             }
-        } else {
-            stopWalking()
-            result = false
-        }
+            TreeStatus.SKIP_CHILDREN -> return
+            TreeStatus.ABORT -> {
+                stopWalking()
+                result = false
+            }
+        }.exhaustive
     }
 
     private fun shouldExpandMacro(element: RsMacroCall): Boolean {
