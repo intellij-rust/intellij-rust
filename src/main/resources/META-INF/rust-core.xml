@@ -109,6 +109,10 @@
         <lang.psiStructureViewFactory language="Rust"
                                       implementationClass="org.rust.ide.structure.RsPsiStructureViewFactory"/>
 
+        <callHierarchyProvider
+            language="Rust"
+            implementationClass="org.rust.ide.hierarchy.RsCallHierarchyProvider" />
+
         <treeStructureProvider implementation="org.rust.ide.projectView.RsTreeStructureProvider"/>
 
         <!-- Usages Provider -->

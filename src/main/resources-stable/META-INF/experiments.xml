@@ -21,5 +21,8 @@
         <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.ide.call.hierarchy" percentOfUsers="0">
+            <description>Enables caller and callee hierarchy view</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>

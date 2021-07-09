@@ -29,6 +29,8 @@ object RsExperiments {
     const val WSL_TOOLCHAIN = "org.rust.wsl"
 
     const val EMULATE_TERMINAL = "org.rust.cargo.emulate.terminal"
+
+    const val CALL_HIERARCHY = "org.rust.ide.call.hierarchy"
 }
 
 /**
