@@ -22,7 +22,6 @@ class RsUnusedImportInspection : RsLintInspection() {
             if (!holder.project.isNewResolveEnabled) return
             val item = o.ancestorStrict<RsUseItem>() ?: return
             if (item.isReexport) return
-            if (o.path?.resolveStatus != PathResolveStatus.RESOLVED) return
 
             // Do not check uses if there is a child mod inside the current mod
             val parentMod = o.containingMod
@@ -58,7 +57,7 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
  * A usage can be either a path that uses the import of the use speck or a method call/associated item available through
  * a trait that is imported by this use speck.
  */
-private fun RsUseSpeck.isUsed(): Boolean {
+fun RsUseSpeck.isUsed(): Boolean {
     val owner = this.parentOfType<RsUseItem>()?.parent as? RsItemsOwner ?: return true
     val usage = owner.pathUsage
     return isUseSpeckUsed(this, usage)
@@ -68,6 +67,8 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     // Use speck with an empty group is always unused
     val useGroup = useSpeck.useGroup
     if (useGroup != null && useGroup.useSpeckList.isEmpty()) return false
+
+    if (useSpeck.path?.resolveStatus != PathResolveStatus.RESOLVED) return true
 
     val items = if (useSpeck.isStarImport) {
         val module = useSpeck.path?.reference?.resolve() as? RsMod ?: return true

@@ -10,9 +10,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.inspections.lints.isUsed
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 
 class RsImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile): Boolean = file is RsFile
@@ -52,16 +55,44 @@ class RsImportOptimizer : ImportOptimizer {
 
         /** Returns false if [useSpeck] is empty and should be removed */
         fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
-            val useGroup = useSpeck.useGroup ?: return true
-            useGroup.useSpeckList.forEach { optimizeUseSpeck(psiFactory, it) }
-            if (removeUseSpeckIfEmpty(useSpeck)) return false
-            if (removeCurlyBracesIfPossible(psiFactory, useSpeck)) return true
+            val checkUnused = run {
+                val item = useSpeck.ancestorStrict<RsUseItem>() ?: return true
+                if (!useSpeck.project.isNewResolveEnabled) return@run false
+                if (item.isReexport) return@run false
 
-            val sortedList = useGroup.useSpeckList
-                .sortedWith(compareBy<RsUseSpeck> { it.path?.self == null }.thenBy { it.pathText })
-                .map { it.copy() }
-            useGroup.useSpeckList.zip(sortedList).forEach { it.first.replace(it.second) }
-            return true
+                val parentMod = item.containingMod
+                val hasChildMods = parentMod.expandedItemsExceptImplsAndUses.any {
+                    it is RsModItem || it is RsModDeclItem
+                }
+                if (item.parentOfType<RsFunction>() == null && hasChildMods) return@run false
+
+                return@run true
+            }
+            return optimizeUseSpeck(psiFactory, useSpeck, checkUnused)
+        }
+
+        private fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck, checkUnused: Boolean): Boolean {
+            val useGroup = useSpeck.useGroup
+            if (useGroup == null) {
+                if (!checkUnused) return true
+
+                return if (!useSpeck.isUsed()) {
+                    useSpeck.deleteWithSurroundingComma()
+                    false
+                } else {
+                    true
+                }
+            } else {
+                useGroup.useSpeckList.forEach { optimizeUseSpeck(psiFactory, it, checkUnused) }
+                if (removeUseSpeckIfEmpty(useSpeck)) return false
+                if (removeCurlyBracesIfPossible(psiFactory, useSpeck)) return true
+
+                val sortedList = useGroup.useSpeckList
+                    .sortedWith(compareBy<RsUseSpeck> { it.path?.self == null }.thenBy { it.pathText })
+                    .map { it.copy() }
+                useGroup.useSpeckList.zip(sortedList).forEach { it.first.replace(it.second) }
+                return true
+            }
         }
 
         /** Returns true if successfully removed, e.g. `use aaa::{bbb};` -> `use aaa::bbb;` */

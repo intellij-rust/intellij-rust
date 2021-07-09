@@ -439,6 +439,9 @@ class RsImportOptimizerTest: RsTestBase() {
         use std::string;
         use std::{mem, io};
         use dep_lib_target;
+
+        fn foo(_: string::String, _: mem::ManuallyDrop<u32>, _: io::ErrorKind) {}
+
         fn main() {}
     """, """
         extern crate dep_lib_target;
@@ -450,6 +453,8 @@ class RsImportOptimizerTest: RsTestBase() {
 
         use aaa::bbb::ccc;
         use bbb::{eee, fff};
+
+        fn foo(_: string::String, _: mem::ManuallyDrop<u32>, _: io::ErrorKind) {}
 
         fn main() {}
     """)
@@ -526,6 +531,105 @@ class RsImportOptimizerTest: RsTestBase() {
         }
 
         mod ccc {}
+    """)
+
+    fun `test remove unused use item`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::S;
+        }
+    """, """
+        struct S;
+
+        mod foo {}
+    """)
+
+    fun `test remove unused use speck at the beginning`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{S, T};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::T;
+        }
+    """)
+
+    fun `test remove unused use speck in the middle`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{R, S, T};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::{R, T};
+        }
+    """)
+
+    fun `test remove multiple unused use specks`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{R, S1, S2, T};
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{R, T};
+        }
+    """)
+
+    fun `test remove unused use speck at the end`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{T, S};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::T;
+        }
+    """)
+
+    fun `test remove empty group after unused specks are removed`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{S1, S2};
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {}
+    """)
+
+    fun `test remove multiple unused use items`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::S1;
+            use crate::S2;
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {}
     """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
