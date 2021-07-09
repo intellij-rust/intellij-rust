@@ -36,7 +36,11 @@ class RsStatementUpDownMover : RsLineMover() {
         psi.ancestors.find(::isMovableElement)
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
-        if (isMovingOutOfFunctionBody(sibling, down) || isMovingOutOfMatchArmBlock(sibling, down)) {
+        if (
+            isMovingOutOfFunctionBody(sibling, down) ||
+            isMovingOutOfMatchArmBlock(sibling, down) ||
+            isMovingOutOfBlockExprInsideArgList(sibling, down)
+        ) {
             UpDownMoverTestMarks.moveOutOfBody.hit()
             return null
         }

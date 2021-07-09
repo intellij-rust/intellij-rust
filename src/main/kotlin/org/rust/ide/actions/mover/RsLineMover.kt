@@ -13,10 +13,8 @@ import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMatchArm
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.elementType
 
 abstract class RsLineMover : LineMover() {
@@ -93,6 +91,12 @@ abstract class RsLineMover : LineMover() {
 
         fun isMovingOutOfMatchArmBlock(sibling: PsiElement, down: Boolean): Boolean =
             isMovingOutOfBraceBlock(sibling, down) && sibling.parent?.parent?.parent is RsMatchArm
+
+        fun isMovingOutOfBlockExprInsideArgList(sibling: PsiElement, down: Boolean): Boolean {
+            if (!isMovingOutOfBraceBlock(sibling, down)) return false
+            val blockExpr = sibling.ancestorStrict<RsBlockExpr>() ?: return false
+            return blockExpr.ancestorStrict<RsValueArgumentList>() != null
+        }
     }
 }
 

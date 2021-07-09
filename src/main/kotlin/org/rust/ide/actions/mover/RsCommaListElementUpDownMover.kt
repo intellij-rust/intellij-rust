@@ -13,6 +13,7 @@ import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.processors.addTrailingCommaForElement
 import org.rust.ide.formatter.processors.isLastElement
+import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.ancestorPairs
@@ -34,6 +35,8 @@ class RsCommaListElementUpDownMover : RsLineMover() {
 
     private fun findListElement(psi: PsiElement): PsiElement? {
         for ((child, parent) in psi.ancestorPairs) {
+            // Stop at block expressions inside comma-separated lists
+            if (parent is RsBlockExpr) return null
             val list = CommaList.forElement(parent.elementType)
             if (list != null && list.isElement(child)) return child
         }
