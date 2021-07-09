@@ -507,8 +507,7 @@ private class WorkspaceImpl(
         manifestPath,
         workspaceRootUrl,
         packages.map { pkg ->
-            // Currently, stdlib doesn't use 2018 edition
-            val packageEdition = if (pkg.origin == STDLIB) pkg.edition else edition
+            val packageEdition = if (pkg.origin == STDLIB || pkg.origin == STDLIB_DEPENDENCY) pkg.edition else edition
             pkg.asPackageData(packageEdition)
         },
         cfgOptions,
