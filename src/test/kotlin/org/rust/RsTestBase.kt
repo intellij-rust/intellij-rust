@@ -8,8 +8,13 @@ package org.rust
 import com.intellij.TestCase
 import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -48,11 +53,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     private var tempDirRootUrl: String? = null
     private var tempDirRoot: VirtualFile? = null
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val annotation = findAnnotationInstance<ProjectDescriptor>() ?: return DefaultDescriptor
-        return annotation.descriptor.objectInstance
-            ?: error("Only Kotlin objects defined with `object` keyword are allowed")
-    }
+    override fun getProjectDescriptor(): LightProjectDescriptor = RustLightProjectDescriptor
 
     override fun isWriteActionRequired(): Boolean = false
 
@@ -63,8 +64,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     override fun setUp() {
         super.setUp()
 
-        (projectDescriptor as? RustProjectDescriptorBase)?.setUp(myFixture)
-
+        invokeAndWaitIfNeeded { setupRustProject() }
         setupMockRustcVersion()
         setupMockEdition()
         setupMockCfgOptions()
@@ -92,6 +92,43 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             }
             error("Root directory has been renamed from `$oldTempDirRootUrl` to `$newTempDirRootUrl`; This should not happens")
         }
+    }
+
+    private val rustProjectDescriptor: RustProjectDescriptorBase
+        get() {
+            val annotation = findAnnotationInstance<ProjectDescriptor>()
+            return annotation?.descriptor?.objectInstance ?: DefaultDescriptor
+        }
+
+    private fun setupRustProject() {
+        if (projectDescriptor != RustLightProjectDescriptor) {
+            RustProjectDescriptorHolder.previousDescriptorKey = null
+            return
+        }
+
+        val descriptor = rustProjectDescriptor
+        val projectDir = ModuleRootManager.getInstance(myFixture.module).contentEntries.single().file!!
+
+        val key = RustProjectDescriptorKey(project, projectDir, descriptor)
+
+        if (RustProjectDescriptorHolder.previousDescriptorKey != key) {
+            if (descriptor.skipTestReason == null) { // `skipTestReason` is handled in `runTestRunnable`
+                val ws = descriptor.createTestCargoWorkspace(project, projectDir.url)
+                if (ws != null) {
+                    project.testCargoProjects.createTestProject(projectDir, ws, descriptor.rustcInfo)
+                } else {
+                    project.testCargoProjects.removeAllProjects()
+                }
+            }
+
+            runWriteAction {
+                ProjectRootManagerEx.getInstanceEx(project)
+                    .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+            }
+
+            RustProjectDescriptorHolder.previousDescriptorKey = key
+        }
+        descriptor.setUp(myFixture)
     }
 
     private fun setupMockRustcVersion() {
@@ -198,17 +235,17 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     protected open val skipTestReason: String?
         get() {
-            val projectDescriptor = projectDescriptor as? RustProjectDescriptorBase
+            val projectDescriptor = rustProjectDescriptor
 
             fun getMinRustVersionReason(): String? {
                 val minRustVersion = findAnnotationInstance<MinRustcVersion>() ?: return null
                 val requiredVersion = minRustVersion.semver
-                val rustcVersion = projectDescriptor?.rustcInfo?.version ?: return null
+                val rustcVersion = projectDescriptor.rustcInfo?.version ?: return null
                 if (rustcVersion.semver >= requiredVersion) return null
                 return "$requiredVersion Rust version required, ${rustcVersion.semver} found"
             }
 
-            return projectDescriptor?.skipTestReason
+            return projectDescriptor.skipTestReason
                 ?: getMinRustVersionReason()
         }
 
@@ -418,6 +455,24 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             optionProperty.set(oldValue)
         }
     }
+
+    /**
+     * Holds a static instance of [RustProjectDescriptorBase] between tests in order speedup tests.
+     *
+     * (This is similar to [com.intellij.testFramework.LightPlatformTestCase.ourProject], see
+     * [com.intellij.testFramework.LightPlatformTestCase.doSetup])
+     */
+    private object RustProjectDescriptorHolder {
+        var previousDescriptorKey: RustProjectDescriptorKey? = null
+    }
+
+    private data class RustProjectDescriptorKey(
+        val project: Project,
+        val projectDir: VirtualFile,
+        val descriptor: RustProjectDescriptorBase,
+    )
+
+    private object RustLightProjectDescriptor : LightProjectDescriptor()
 
     companion object {
         // XXX: hides `Assert.fail`
