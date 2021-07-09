@@ -5,6 +5,7 @@
 
 package org.rust.ide.template.postfix
 
+import com.intellij.codeInsight.template.TemplateResultListener
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
@@ -13,8 +14,8 @@ import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
@@ -53,15 +54,29 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
         val matchBody = matchExpr.matchBody ?: return
+        val arm = matchBody.matchArmList.firstOrNull() ?: return
+        val blockExpr = arm.expr as? RsBlockExpr ?: return
         val toBeReplaced = processor.getElementsToReplace(matchBody)
 
         if (toBeReplaced.isEmpty()) {
-            val arm = matchBody.matchArmList.firstOrNull() ?: return
-            val blockExpr = arm.expr as? RsBlockExpr ?: return
-            editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
+            moveCaretToMatchArmBlock(editor, blockExpr)
         } else {
-            editor.buildAndRunTemplate(matchBody, toBeReplaced.map { it.createSmartPointer() })
+            val blockExprPointer = blockExpr.createSmartPointer()
+            editor.buildAndRunTemplate(
+                matchBody,
+                toBeReplaced.map { it.createSmartPointer() },
+                TemplateResultListener {
+                    if (it == TemplateResultListener.TemplateResult.Finished) {
+                        val restoredBlockExpr = blockExprPointer.element ?: return@TemplateResultListener
+                        moveCaretToMatchArmBlock(editor, restoredBlockExpr)
+                    }
+                }
+            )
         }
+    }
+
+    private fun moveCaretToMatchArmBlock(editor: Editor, blockExpr: RsBlockExpr) {
+        editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
     }
 }
 
