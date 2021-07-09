@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
@@ -30,6 +31,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
@@ -127,10 +129,10 @@ open class WithRustup(
 ) : RustProjectDescriptorBase() {
     private val toolchain: RsToolchainBase? by lazy { RsToolchainBase.suggest() }
 
-    private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
-    val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
+    private val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
+    val stdlib: VirtualFile? by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 
-    private val cfgOptions by lazy {
+    private val cfgOptions: CfgOptions? by lazy {
         toolchain?.rustc()?.getCfgOptions(null)
     }
 
@@ -141,26 +143,57 @@ open class WithRustup(
             return delegate.skipTestReason
         }
 
-    override val rustcInfo: RustcInfo?
-        get() = toolchain?.getRustcInfo()
+    override val rustcInfo: RustcInfo? by lazy {
+        toolchain?.getRustcInfo()
+    }
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    private var hardcodedStdlibIsInitialized: Boolean = false
+    private var hardcodedStdlib: StandardLibrary? = null
+
+    private fun getOrFetchHardcodedStdlib(project: Project): StandardLibrary? = if (hardcodedStdlibIsInitialized) {
+        hardcodedStdlib
+    } else {
+        hardcodedStdlibIsInitialized = true
         val disposable = Disposer.newDisposable("testCargoProject")
-        // TODO: use RustupTestFixture somehow
-        module.project.rustSettings.modifyTemporary(disposable) {
-            it.toolchain = toolchain
-        }
         try {
-            // RsExperiments.FETCH_ACTUAL_STDLIB_METADATA significantly slows down tests
-            setExperimentalFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA, fetchActualStdlibMetadata, disposable)
-
-            val rustcInfo = rustcInfo
-            val stdlib = StandardLibrary.fromFile(module.project, stdlib!!, rustcInfo)!!
-            val cfgOptions = cfgOptions!!
-            return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, cfgOptions, rustcInfo)
+            VfsRootAccess.allowRootAccess(disposable, stdlib!!.path)
+            hardcodedStdlib = StandardLibrary.fromFile(project, stdlib!!, rustcInfo)
+            hardcodedStdlib
         } finally {
             Disposer.dispose(disposable)
         }
+    }
+
+    private var actualStdlibIsInitialized: Boolean = false
+    private var actualStdlib: StandardLibrary? = null
+
+    private fun getOrFetchActualStdlib(project: Project): StandardLibrary? = if (actualStdlibIsInitialized) {
+        actualStdlib
+    } else {
+        actualStdlibIsInitialized = true
+        val disposable = Disposer.newDisposable("testCargoProject")
+        try {
+            project.rustSettings.modifyTemporary(disposable) {
+                it.toolchain = toolchain
+            }
+            // RsExperiments.FETCH_ACTUAL_STDLIB_METADATA significantly slows down tests
+            setExperimentalFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA, true, disposable)
+
+            actualStdlib = StandardLibrary.fromFile(project, stdlib!!, rustcInfo)
+            actualStdlib
+        } finally {
+            Disposer.dispose(disposable)
+        }
+    }
+
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val stdlib = if (fetchActualStdlibMetadata) {
+            getOrFetchActualStdlib(module.project)
+        } else {
+            getOrFetchHardcodedStdlib(module.project)
+        }!!
+        val cfgOptions = cfgOptions!!
+        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, cfgOptions, rustcInfo)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
@@ -194,8 +227,9 @@ open class WithProcMacros(
             return delegate.skipTestReason
         }
 
-    override val rustcInfo: RustcInfo?
-        get() = delegate.rustcInfo ?: toolchain?.getRustcInfo()
+    override val rustcInfo: RustcInfo? by lazy {
+        delegate.rustcInfo ?: toolchain?.getRustcInfo()
+    }
 
     private fun getOrFetchMacroPackage(project: Project): Package? = if (procMacroPackageIsInitialized) {
         procMacroPackage
