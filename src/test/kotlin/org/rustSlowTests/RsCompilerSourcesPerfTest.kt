@@ -14,15 +14,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
 import kotlin.system.measureTimeMillis
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsCompilerSourcesPerfTest : RsTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
-
     // Use this function to check that some code does not blow up
     // on some strange real-world PSI.
 //    fun `test anything`() = forAllPsiElements { element ->
@@ -115,7 +114,7 @@ class RsCompilerSourcesPerfTest : RsTestBase() {
         })
     }
 
-    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
+    private fun rustSrcDir(): VirtualFile = WithStdlibRustProjectDescriptor.stdlib!!
 
     private fun VirtualFile.loadText(): CharSequence = LoadTextUtil.loadText(this)
 }

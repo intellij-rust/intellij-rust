@@ -5,13 +5,12 @@
 
 package org.rust
 
-import com.intellij.testFramework.LightProjectDescriptor
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
 /**
- * Allows to set [LightProjectDescriptor] for a specific test.
- * The [descriptor] class must be a kotlin object (`object Foo : LightProjectDescriptor`).
+ * Allows to set [RustProjectDescriptorBase] for a specific test.
+ * The [descriptor] class must be a kotlin object (`object Foo : RustProjectDescriptorBase`).
  *
  * Example values:
  * - [WithStdlibRustProjectDescriptor]
@@ -24,4 +23,4 @@ import kotlin.reflect.KClass
 @Inherited
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class ProjectDescriptor(val descriptor: KClass<out LightProjectDescriptor>)
+annotation class ProjectDescriptor(val descriptor: KClass<out RustProjectDescriptorBase>)
