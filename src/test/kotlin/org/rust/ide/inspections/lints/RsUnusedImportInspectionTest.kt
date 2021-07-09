@@ -616,4 +616,49 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             }
         }
     """)*/
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test wrtieln macro`() = checkByText("""
+        use std::io::Write;
+        fn main() {
+            let mut w = Vec::new();
+            writeln!(&mut w, "test").unwrap();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test println macro`() = checkByText("""
+        use std::collections::HashSet;
+        fn main() {
+            println!("{:?}", HashSet::new());
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test format macro`() = checkByText("""
+        use std::collections::HashSet;
+        fn main() {
+            format!("{:?}", HashSet::new());
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test format macro with trait method call`() = checkByText("""
+        struct S;
+        trait Trait {
+            fn method(&self) {}
+        }
+        impl Trait for S {}
+
+        mod inner {
+            use crate::Trait;
+            fn foo(s: crate::S) {
+                format!("{:?}", s.method());
+            }
+        }
+    """)
 }
