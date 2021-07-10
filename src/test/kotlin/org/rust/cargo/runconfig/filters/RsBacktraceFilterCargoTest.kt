@@ -5,8 +5,6 @@
 
 package org.rust.cargo.runconfig.filters
 
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.filters.HighlightFilterTestBase.Companion.checkHighlights
@@ -16,7 +14,6 @@ import org.rust.singleWorkspace
 /**
  * Cargo tests for [RsBacktraceFilter]
  */
-@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterCargoTest : RsWithToolchainTestBase() {
     private val filter: RsBacktraceFilter
         get() = RsBacktraceFilter(project, cargoProjectDirectory, project.cargoProjects.singleWorkspace())
