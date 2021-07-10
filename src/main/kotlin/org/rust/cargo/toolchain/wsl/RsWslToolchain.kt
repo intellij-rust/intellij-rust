@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain.wsl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslPath
 import com.intellij.util.io.isFile
 import com.intellij.util.io.systemIndependentPath
@@ -18,7 +19,7 @@ import java.nio.file.Path
 
 class RsWslToolchain(
     private val wslPath: WslPath
-) : RsToolchainBase(wslPath.distribution.getWindowsPath(wslPath.linuxPath)?.toPath() ?: wslPath.linuxPath.toPath()) {
+) : RsToolchainBase(wslPath.distribution.getWindowsPathWithFix(wslPath.linuxPath).toPath()) {
     private val distribution: WSLDistribution get() = wslPath.distribution
     private val linuxPath: Path = wslPath.linuxPath.toPath()
 
@@ -51,7 +52,7 @@ class RsWslToolchain(
     }
 
     override fun toLocalPath(remotePath: String): String =
-        distribution.getWindowsPath(remotePath) ?: remotePath
+        distribution.getWindowsPathWithFix(remotePath)
 
     override fun toRemotePath(localPath: String): String =
         distribution.getWslPath(localPath) ?: localPath
@@ -64,15 +65,23 @@ class RsWslToolchain(
     override fun pathToExecutable(toolName: String): Path = linuxPath.pathToExecutableOnWsl(toolName)
 
     override fun hasExecutable(exec: String): Boolean =
-        distribution.getWindowsPath(pathToExecutable(exec))?.isFile() == true
+        distribution.getWindowsPath(pathToExecutable(exec)).isFile()
 
     override fun hasCargoExecutable(exec: String): Boolean =
-        distribution.getWindowsPath(pathToCargoExecutable(exec))?.isFile() == true
+        distribution.getWindowsPath(pathToCargoExecutable(exec)).isFile()
 
     companion object {
-        // BACKCOMPAT: 2021.1
-        @Suppress("UNNECESSARY_SAFE_CALL", "RedundantNullableReturnType")
-        private fun WSLDistribution.getWindowsPath(wslPath: Path): Path? =
-            getWindowsPath(wslPath.toString())?.toPath()
+
+        private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String {
+            val mntRoot = mntRoot
+            return if (wslPath.startsWith(mntRoot)) {
+                WSLUtil.getWindowsPath(wslPath, mntRoot)
+            } else {
+                getWindowsPath(wslPath)
+            } ?: wslPath
+        }
+
+        private fun WSLDistribution.getWindowsPath(wslPath: Path): Path =
+            getWindowsPathWithFix(wslPath.toString()).toPath()
     }
 }
