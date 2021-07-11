@@ -34,7 +34,7 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
 
 private fun inspect(holder: RsProblemsHolder, fn: RsFunction) {
     val retType = fn.retType?.typeReference ?: return
-    if (retType.type == TyUnit) return
+    if (retType.type is TyUnit) return
     ExitPoint.process(fn) { exitPoint ->
         if (exitPoint is ExitPoint.TailStatement) {
             holder.registerProblem(

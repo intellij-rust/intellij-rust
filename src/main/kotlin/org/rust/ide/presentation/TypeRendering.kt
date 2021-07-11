@@ -194,7 +194,7 @@ private data class TypeRenderer(
     private fun formatFnLike(fnType: String, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
         buildString {
             paramTypes.joinTo(this, ", ", "$fnType(", ")", transform = render)
-            if (retType != TyUnit) {
+            if (retType !is TyUnit) {
                 append(" -> ")
                 append(render(retType))
             }
@@ -211,7 +211,7 @@ private data class TypeRenderer(
             val retType = trait.assoc.entries
                 .find { it.key.name == "Output" }
                 ?.value
-                ?: TyUnit
+                ?: TyUnit.INSTANCE
             append(formatFnLike(name, paramTypes, retType, render))
         } else {
             append(name)

@@ -20,16 +20,16 @@ import org.rust.lang.core.types.ty.*
 @ExpandMacros(MacroExpansionScope.ALL, "std")
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsPrimitiveTypeImplsTest : RsTestBase() {
-    fun `test Sized types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Sized")
-    fun `test Clone types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Clone")
-    fun `test Copy types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Copy")
-    fun `test Default types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Default")
-    fun `test Debug types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit + TyStr, "std::fmt::Debug")
-    fun `test PartialEq types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit + TyStr, "PartialEq")
-    fun `test Eq types`() = doTest(TyInteger.VALUES + TyBool + TyChar + TyUnit + TyStr, "Eq")
-    fun `test PartialOrd types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit + TyStr, "PartialOrd")
-    fun `test Ord types`() = doTest(TyInteger.VALUES + TyBool + TyChar + TyUnit + TyStr, "Ord")
-    fun `test Hash types`() = doTest(TyInteger.VALUES + TyBool + TyChar + TyStr, "std::hash::Hash")
+    fun `test Sized types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE, "Sized")
+    fun `test Clone types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE, "Clone")
+    fun `test Copy types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE, "Copy")
+    fun `test Default types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE, "Default")
+    fun `test Debug types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE + TyStr.INSTANCE, "std::fmt::Debug")
+    fun `test PartialEq types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE + TyStr.INSTANCE, "PartialEq")
+    fun `test Eq types`() = doTest(TyInteger.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE + TyStr.INSTANCE, "Eq")
+    fun `test PartialOrd types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE + TyStr.INSTANCE, "PartialOrd")
+    fun `test Ord types`() = doTest(TyInteger.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE + TyStr.INSTANCE, "Ord")
+    fun `test Hash types`() = doTest(TyInteger.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyStr.INSTANCE, "std::hash::Hash")
 
     private fun doTest(primitiveTypes: List<TyPrimitive>, trait: String) {
         InlineFile("""
