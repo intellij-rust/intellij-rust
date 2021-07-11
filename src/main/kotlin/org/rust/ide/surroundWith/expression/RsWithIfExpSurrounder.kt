@@ -28,7 +28,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
         expression.condition!!.expr
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.type == TyBool
+        expression.type is TyBool
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange? {
         var block = (expression as? RsIfExpr)?.block ?: return null

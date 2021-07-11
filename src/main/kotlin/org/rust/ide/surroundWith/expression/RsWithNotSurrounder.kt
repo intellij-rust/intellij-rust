@@ -29,7 +29,7 @@ class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
         (expression.expr as RsParenExpr).expr!!
 
     override fun isApplicable(expression: RsExpr): Boolean =
-        expression.type == TyBool
+        expression.type is TyBool
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {
         val offset = expression.endOffset

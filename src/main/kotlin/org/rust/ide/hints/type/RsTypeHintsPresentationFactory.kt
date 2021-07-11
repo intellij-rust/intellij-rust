@@ -63,7 +63,7 @@ class RsTypeHintsPresentationFactory(
             )
         }
 
-        if (returnType != TyUnit) {
+        if (returnType !is TyUnit) {
             val ret = factory.collapsible(
                 prefix = text(" → "),
                 collapsed = text(PLACEHOLDER),

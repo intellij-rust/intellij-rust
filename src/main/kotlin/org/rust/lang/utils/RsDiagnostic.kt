@@ -52,8 +52,8 @@ import org.rust.lang.utils.Severity.*
 import org.rust.stdext.buildList
 import org.rust.stdext.buildMap
 
-private val REF_STR_TY = TyReference(TyStr, Mutability.IMMUTABLE)
-private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
+private val REF_STR_TY = TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+private val MUT_REF_STR_TY = TyReference(TyStr.INSTANCE, Mutability.MUTABLE)
 
 sealed class RsDiagnostic(
     val element: PsiElement,
@@ -195,7 +195,7 @@ sealed class RsDiagnostic(
         }
 
         private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
-            if (lookup.coercionSequence(actualTy).lastOrNull() != TyStr) return null
+            if (lookup.coercionSequence(actualTy).lastOrNull() !is TyStr) return null
             val fromStr = items.FromStr ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
                 fromStr.findAssociatedType("Err") ?: return null)

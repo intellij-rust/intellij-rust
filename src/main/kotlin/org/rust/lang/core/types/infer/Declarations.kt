@@ -31,7 +31,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
         is RsTupleType -> TyTuple(type.typeReferenceList.map { inferTypeReferenceType(it) })
 
         is RsBaseType -> when (val kind = type.kind) {
-            RsBaseTypeKind.Unit -> TyUnit
+            RsBaseTypeKind.Unit -> TyUnit.INSTANCE
             RsBaseTypeKind.Never -> TyNever
             RsBaseTypeKind.Underscore -> TyInfer.TyVar(type)
             is RsBaseTypeKind.Path -> {
@@ -93,14 +93,14 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
             if (type.isSlice) {
                 TySlice(componentType)
             } else {
-                val const = type.expr?.evaluate(TyInteger.USize) ?: CtUnknown
+                val const = type.expr?.evaluate(TyInteger.USize.INSTANCE) ?: CtUnknown
                 TyArray(componentType, const)
             }
         }
 
         is RsFnPointerType -> {
             val paramTypes = type.valueParameters.map { it.typeReference?.type ?: TyUnknown }
-            TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit)
+            TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit.INSTANCE)
         }
 
         is RsTraitType -> {

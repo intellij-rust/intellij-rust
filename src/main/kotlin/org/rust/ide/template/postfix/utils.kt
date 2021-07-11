@@ -58,4 +58,4 @@ class RsTypeParentsSelector : PostfixTemplateExpressionSelectorBase(Condition { 
         .toList()
 }
 
-fun RsExpr.isBool() = type == TyBool
+fun RsExpr.isBool() = type is TyBool

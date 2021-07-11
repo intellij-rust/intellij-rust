@@ -29,7 +29,7 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
                 parent is RsRetExpr || parent is RsExprStmt || parent is RsBlock && it == parent.expr
             } as? RsExpr
 
-        if (expr?.type == TyUnit) return null
+        if (expr?.type is TyUnit) return null
 
         return expr
     }

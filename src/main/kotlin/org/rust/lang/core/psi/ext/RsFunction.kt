@@ -102,7 +102,7 @@ val RsFunction.title: String
 
 val RsFunction.returnType: Ty
     get() {
-        val retType = retType ?: return TyUnit
+        val retType = retType ?: return TyUnit.INSTANCE
         return retType.typeReference?.type ?: TyUnknown
     }
 

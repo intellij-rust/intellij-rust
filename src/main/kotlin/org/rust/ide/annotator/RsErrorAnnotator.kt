@@ -11,7 +11,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
 import com.intellij.openapiext.isUnitTestMode
@@ -1033,7 +1032,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             is RsFunction -> {
                 // Check if signature matches `fn(isize, *const *const u8) -> isize`
                 val params = owner.valueParameters
-                if (owner.returnType != TyInteger.ISize) {
+                if (owner.returnType !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.ReturnMismatch(owner.retType?.typeReference ?: owner.identifier)
                         .addToHolder(holder)
                 }
@@ -1044,12 +1043,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     // with errors
                     return
                 }
-                if (params[0].typeReference?.type != TyInteger.ISize) {
+                if (params[0].typeReference?.type !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
                         .addToHolder(holder)
                 }
                 if (params[1].typeReference?.type != TyPointer(
-                        TyPointer(TyInteger.U8, Mutability.IMMUTABLE),
+                        TyPointer(TyInteger.U8.INSTANCE, Mutability.IMMUTABLE),
                         Mutability.IMMUTABLE
                     )
                 ) {
@@ -1531,7 +1530,7 @@ private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunct
 
     val (stmts, expr) = block.expandedStmtsAndTailExpr
     if (stmts.isEmpty() && expr == null) {
-        RsDiagnostic.TypeError(rbrace, returnType, TyUnit).addToHolder(holder)
+        RsDiagnostic.TypeError(rbrace, returnType, TyUnit.INSTANCE).addToHolder(holder)
     }
 }
 
