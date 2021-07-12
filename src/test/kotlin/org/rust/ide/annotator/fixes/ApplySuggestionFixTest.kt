@@ -90,7 +90,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
     fun `test multi-primary fix suggestion`() = checkFixIsUnavailable("""
         #[deny(clippy::let_and_return)]
         fn _foo() -> i32 {
-            let x = 42;
+            <error>let x = 42;</error>
             <error>x</error>
         }
     """, externalLinter = ExternalLinter.CLIPPY)
@@ -102,13 +102,44 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         type _SendVec<T: Send> = Vec<T>;
     """, "Suppress `type_alias_bounds` for type _SendVec")
 
+    fun `test multi-span fix`() = checkFixByText("""
+        pub mod bar {
+            pub mod foo {
+                pub fn fst() {}
+                pub fn snd() {}
+            }
+            pub mod foo2 {
+                pub fn fst2() {}
+                pub fn snd2() {}
+            }
+        }
+
+        use bar::{
+            foo::{<weak_warning>fst</weak_warning>, <weak_warning>snd</weak_warning>},
+            foo2::{<weak_warning>fst2</weak_warning>, <weak_warning>snd2</weak_warning>},
+        };
+    """, """
+        pub mod bar {
+            pub mod foo {
+                pub fn fst() {}
+                pub fn snd() {}
+            }
+            pub mod foo2 {
+                pub fn fst2() {}
+                pub fn snd2() {}
+            }
+        }
+
+
+    """, "External Linter: remove the whole `use` item")
+
     private fun checkFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         fixName: String? = null,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        val action = getQuickFixes(before, fixName, externalLinter).singleOrNull() ?: return // BACKCOMPAT: Rust ???
+        val action = getQuickFixes(before, fixName, externalLinter).distinct().singleOrNull() ?: return // BACKCOMPAT: Rust ???
         myFixture.launchAction(action)
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }

@@ -197,26 +197,28 @@ fun AnnotationHolder.createAnnotationsForFile(
         // We can't control what messages cargo generates, so we can't test them well.
         // Let's use special message for tests to distinguish annotation from external linter
         val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
-        val annotationBuilder = newAnnotation(message.severity, annotationMessage)
-            .tooltip(message.htmlTooltip)
-            .range(message.textRange)
-            .problemGroup(object : SuppressableProblemGroup {
-                override fun getProblemName(): String = RUST_EXTERNAL_LINTER_ID
-                override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {
-                    if (element == null || message.lint == null) return emptyArray()
-                    return convertBatchToSuppressIntentionActions(createSuppressFixes(element, message.lint))
+        for (range in message.textRanges) {
+            val annotationBuilder = newAnnotation(message.severity, annotationMessage)
+                .tooltip(message.htmlTooltip)
+                .range(range)
+                .problemGroup(object : SuppressableProblemGroup {
+                    override fun getProblemName(): String = RUST_EXTERNAL_LINTER_ID
+                    override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction> {
+                        if (element == null || message.lint == null) return emptyArray()
+                        return convertBatchToSuppressIntentionActions(createSuppressFixes(element, message.lint))
+                    }
+                })
+                .needsUpdateOnTyping(true)
+
+            message.quickFixes
+                .singleOrNull { it.applicability <= minApplicability }
+                ?.let { f ->
+                    val key = HighlightDisplayKey.findOrRegister(RUST_EXTERNAL_LINTER_ID, "Rust external linter")
+                    annotationBuilder.newFix(f).key(key).registerFix()
                 }
-            })
-            .needsUpdateOnTyping(true)
 
-        message.quickFixes
-            .singleOrNull { it.applicability <= minApplicability }
-            ?.let { f ->
-                val key = HighlightDisplayKey.findOrRegister(RUST_EXTERNAL_LINTER_ID, "Rust external linter")
-                annotationBuilder.newFix(f).key(key).registerFix()
-            }
-
-        annotationBuilder.create()
+            annotationBuilder.create()
+        }
     }
 }
 
@@ -236,7 +238,7 @@ class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Lon
 
 private data class RsExternalLinterFilteredMessage(
     val severity: HighlightSeverity,
-    val textRange: TextRange,
+    val textRanges: List<TextRange>,
     val message: String,
     val htmlTooltip: String,
     val lint: RsLint.ExternalLinterLint?,
@@ -266,7 +268,8 @@ private data class RsExternalLinterFilteredMessage(
             val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
             if (!file.virtualFile.path.endsWith(spanFilePath)) return null
 
-            val textRange = span.toTextRange(document) ?: return null
+            val textRanges = message.spans.mapNotNull { it.toTextRange(document) }
+            if (textRanges.isEmpty()) return null
 
             val tooltip = buildString {
                 append(formatMessage(StringEscapeUtils.escapeHtml(message.message)).escapeUrls())
@@ -291,7 +294,7 @@ private data class RsExternalLinterFilteredMessage(
 
             return RsExternalLinterFilteredMessage(
                 severity,
-                textRange,
+                textRanges,
                 message.message.capitalized(),
                 tooltip,
                 message.code?.code?.let { RsLint.ExternalLinterLint(it) },
