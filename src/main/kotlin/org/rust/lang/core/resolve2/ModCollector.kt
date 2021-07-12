@@ -17,6 +17,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.RangeMap
+import org.rust.lang.core.macros.includedFrom
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -53,10 +54,11 @@ fun collectFileAndCalculateHash(
     file: RsFile,
     modData: ModData,
     modMacroIndex: MacroIndex,
-    context: ModCollectorContext
+    context: ModCollectorContext,
+    includeMacroParent: VirtualFile? = null,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null)
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null, includeMacroParent)
     collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
     val fileHash = hashCalculator.getFileHash()
     context.defMap.addVisitedFile(file, modData, fileHash)
@@ -87,6 +89,7 @@ private class ModCollector(
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
     private val dollarCrateHelper: DollarCrateHelper?,
+    private val includeMacroParent: VirtualFile? = null,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -224,7 +227,7 @@ private class ModCollector(
             isEnabledByCfgInner = isEnabledByCfgInner,
             fileId = fileId,
             fileRelativePath = fileRelativePath,
-            ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
+            ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute, includeMacroParent)?.fileId,
             hasMacroUse = childMod.hasMacroUse,
             crateDescription = defMap.crateDescription
         )
@@ -384,7 +387,7 @@ private class ModCollector(
     /** See also [processModDeclResolveVariants] */
     private fun resolveModDecl(name: String, pathAttribute: String?): RsFile? {
         val (parentDirectory, fileNames) = if (pathAttribute == null) {
-            val parentDirectory = modData.getOwnedDirectory() ?: return null
+            val parentDirectory =  includeMacroParent ?: modData.getOwnedDirectory() ?: return null
             val fileNames = arrayOf("$name.rs", "$name/mod.rs")
             parentDirectory to fileNames
         } else {
@@ -392,8 +395,7 @@ private class ModCollector(
             val parentDirectory = if (modData.isRsFile) {
                 // For path attributes on modules not inside inline module blocks,
                 // the file path is relative to the directory the source file is located.
-                val containingFile = modData.asVirtualFile() ?: return null
-                containingFile.parent
+                includeMacroParent ?: modData.asVirtualFile()?.parent ?: return null
             } else {
                 // Paths for path attributes inside inline module blocks are relative to
                 // the directory of file including the inline module components as directories.
@@ -468,17 +470,18 @@ private sealed class ChildMod(val name: String, val hasMacroUse: Boolean) {
  * Have to pass [pathAttribute], because [RsFile.pathAttribute] triggers resolve.
  * See also: [RsMod.getOwnedDirectory]
  */
-private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String?): VirtualFile? {
+private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String?, includeMacroParent: VirtualFile?): VirtualFile? {
     if (this is ChildMod.File && name == RsConstants.MOD_RS_FILE) return file.virtualFile.parent
 
     val (parentDirectory, path) = if (pathAttribute != null) {
         when {
             this is ChildMod.File -> return file.virtualFile.parent
+            includeMacroParent != null -> includeMacroParent to pathAttribute
             parentMod.isRsFile -> parentMod.asVirtualFile()?.parent to pathAttribute
             else -> parentMod.getOwnedDirectory() to pathAttribute
         }
     } else {
-        parentMod.getOwnedDirectory() to name
+        (includeMacroParent ?: parentMod.getOwnedDirectory()) to name
     }
     if (parentDirectory == null) return null
 

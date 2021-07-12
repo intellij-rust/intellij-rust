@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDirectory
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.isExpandedFromIncludeMacro
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
@@ -50,19 +51,23 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
      */
     @JvmDefault
     fun getOwnedDirectory(createIfNotExists: Boolean = false): PsiDirectory? {
-        if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
+        if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return containingFile.originalFile.parent
 
         val explicitPath = pathAttribute
-        val superMod = `super`
-        val superModDir = { superMod?.getOwnedDirectory(createIfNotExists) }
+        val parentDir = {
+            if (this is RsFile && declaration?.isExpandedFromIncludeMacro == true || this.isExpandedFromIncludeMacro)
+                containingFile.originalFile.parent
+            else
+                `super`?.getOwnedDirectory(createIfNotExists)
+        }
         val (parentDirectory, path) = if (explicitPath != null) {
-            when {
-                this is RsFile -> return contextualFile.originalFile.parent
-                superMod is RsFile -> contextualFile.originalFile.parent to explicitPath
-                else -> superModDir() to explicitPath
+            if (this is RsFile) {
+                return containingFile.originalFile.parent
+            } else {
+                parentDir() to explicitPath
             }
         } else {
-            superModDir() to name
+            parentDir() to name
         }
         if (parentDirectory == null || path == null) return null
 

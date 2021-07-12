@@ -78,6 +78,340 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         struct Foo;
     """)
 
+    fun `test resolve struct from module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::Baz) {}
+                         //^ foo/baz.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub struct Baz;
+    """)
+
+    fun `test resolve struct from module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::Baz) {}
+                         //^ foo/baz/mod.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz/mod.rs
+        pub struct Baz;
+    """)
+
+    fun `test resolve function from nested module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yin::yang();
+                      //^ foo/baz/yin.rs
+        }
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin;
+    //- foo/baz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from nested module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yin::yang();
+                      //^ foo/baz/yin/mod.rs
+        }
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin;
+    //- foo/baz/yin/mod.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve module declared in included file`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+               //^ foo/baz.rs
+    //- foo/baz.rs
+        pub mod yin;
+    //- foo/baz/yin/mod.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve module whose parent module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin;
+               //^ foo/baz/yin/mod.rs
+    //- foo/baz/yin/mod.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve module whose parent module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz/mod.rs
+        pub mod yin;
+               //^ foo/baz/yin/mod.rs
+    //- foo/baz/yin/mod.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve module whose parent module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin;
+               //^ foo/baz/yin.rs
+    //- foo/baz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve struct from inline module whose parent module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::yin::Yang) {}
+                               //^ foo/baz.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin {
+            pub struct Yang;
+        }
+    """)
+
+    fun `test resolve struct from inline module whose parent module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::yin::Yang) {}
+                         //^ foo/baz.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod yin {
+            pub struct Yang;
+        }
+    """)
+
+    fun `test resolve struct from inline module whose parent module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::yin::Yang) {}
+                              //^ foo/baz/mod.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz/mod.rs
+        pub mod yin {
+            pub struct Yang;
+        }
+    """)
+
+    fun `test resolve struct from inline module whose parent module declared in included file 4`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar(b: baz::yin::Yang) {}
+                         //^ foo/baz/mod.rs
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz/mod.rs
+        pub mod yin {
+            pub struct Yang;
+        }
+    """)
+
+    fun `test resolve function from file attribute module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yang();
+                 //^ foo/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "yin.rs"]
+        pub mod baz;
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yang();
+        }
+    //- foo/bar.rs
+        #[path = "yin.rs"]
+        pub mod baz;
+               //^ foo/yin.rs
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from inner file attribute module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            foobaz::baz::yang();
+                        //^ foo/foobaz/yin.rs
+        }
+    //- foo/bar.rs
+        mod foobaz {
+            #[path = "yin.rs"]
+            pub mod baz;
+        }
+    //- foo/foobaz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from inner file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            foobaz::bak::baz::yang();
+                             //^ foo/foobaz/bak/yin.rs
+        }
+    //- foo/bar.rs
+        mod foobaz {
+            pub mod bak {
+                #[path = "yin.rs"]
+                pub mod baz;
+            }
+        }
+    //- foo/foobaz/bak/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve function from inner file attribute module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+                         //^ foo/biz/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+                  //^ foo/biz/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+        }
+    //- foo/bar.rs
+        #[path = "biz"]
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+                    //^ foo/biz/yin.rs
+        }
+    //- foo/biz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inner file attribute module declared in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::foobaz::yang();
+        }
+    //- foo/bar.rs
+        mod baz {
+            #[path = "yin.rs"]
+            pub mod foobaz;
+                    //^ foo/baz/yin.rs
+        }
+    //- foo/baz/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve file attribute module declared in included file 1`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+        fn foobar() {
+            baz::yang();
+           //^ foo/yin.rs
+        }
+    //- foo/bar.rs
+        #[path = "yin.rs"]
+        pub mod baz;
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve file attribute module declared in included file 2`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        #[path = "yin.rs"]
+        pub mod baz;
+               //^ foo/yin.rs
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve file attribute module whose parent module declared in included file`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        #[path = "yin.rs"]
+        pub mod yang;
+               //^ foo/yin.rs
+    //- foo/yin.rs
+        pub fn yang() {}
+    """)
+
+    fun `test resolve inline file attribute module whose grandparent module declared in included file`() = checkResolve("""
+    //- lib.rs
+        include!("foo/bar.rs");
+    //- foo/bar.rs
+        pub mod baz;
+    //- foo/baz.rs
+        pub mod foobar {
+            #[path = "yin.rs"]
+            pub mod yang;
+                   //^ foo/baz/foobar/yin.rs
+        }
+    //- foo/baz/foobar/yin.rs
+        pub fn yang() {}
+    """)
+
     fun `test include in inline module 1`() = checkResolve("""
     //- lib.rs
         mod foo {
