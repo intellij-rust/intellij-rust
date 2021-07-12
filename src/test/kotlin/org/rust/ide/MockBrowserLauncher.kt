@@ -15,9 +15,8 @@ import java.io.File
 import java.nio.file.Path
 
 class MockBrowserLauncher : BrowserLauncher() {
-
-    var lastFile: File? = null
-    var lastPath: Path? = null
+    private var lastFile: File? = null
+    private var lastPath: Path? = null
     var lastUrl: String? = null
 
     override fun browse(file: File) {

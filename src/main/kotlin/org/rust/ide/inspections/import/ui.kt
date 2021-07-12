@@ -78,6 +78,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
                 val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
                 val psiRenderer = RsElementCellRenderer()
                 return ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+                    @Suppress("MissingAccessibleContext")
                     val panel = JPanel(BorderLayout())
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
                     panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)

@@ -148,7 +148,7 @@ class CargoToolWindow(
                 val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
                 val bean = ToolWindowEP.EP_NAME.extensionList.find { it.id == ID }
                 if (bean != null) {
-                    @Suppress("DEPRECATION")
+                    @Suppress("DEPRECATION", "UnstableApiUsage")
                     manager.initToolWindow(bean)
                 }
             } catch (e: Exception) {
