@@ -13,6 +13,7 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import org.rust.lang.core.psi.ext.startOffset
 
 fun Editor.buildAndRunTemplate(
@@ -27,13 +28,14 @@ fun Editor.buildAndRunTemplate(
         val element = elementPointer.element ?: continue
         templateBuilder.replaceElement(element, element.text)
     }
+val editor=InjectedLanguageEditorUtil.getTopLevelEditor(this)
     if (listener == null) {
-        templateBuilder.run(this, true)
+        templateBuilder.run(editor, true)
     } else {
         val templateBuilderImpl = templateBuilder as TemplateBuilderImpl
         // From TemplateBuilderImpl.run()
         val template = templateBuilderImpl.buildInlineTemplate()
         caretModel.moveToOffset(restoredOwner.startOffset)
-        TemplateManager.getInstance(owner.project).startTemplate(this, template, listener)
+        TemplateManager.getInstance(owner.project).startTemplate(editor, template, listener)
     }
 }
