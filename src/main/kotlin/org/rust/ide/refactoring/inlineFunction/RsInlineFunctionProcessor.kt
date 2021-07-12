@@ -133,14 +133,14 @@ class RsInlineFunctionProcessor(
         private val LOG: Logger = logger<RsInlineFunctionProcessor>()
 
         fun doesFunctionHaveMultipleReturns(fn: RsFunction): Boolean {
-            var entryCount = 0
+            val entryPoints =  mutableListOf<ExitPoint>()
             val sink: (ExitPoint) -> Unit = {
                 if (it !is ExitPoint.TryExpr) {
-                    ++entryCount
+                    entryPoints.add(it)
                 }
             }
             ExitPoint.process(fn, sink)
-            return entryCount > 1
+            return entryPoints.count() > 1 && entryPoints.dropLast(1).any { it is ExitPoint.Return }
         }
 
         fun isFunctionRecursive(fn: RsFunction): Boolean {

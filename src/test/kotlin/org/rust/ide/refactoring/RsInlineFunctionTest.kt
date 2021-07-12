@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
@@ -1141,10 +1142,49 @@ class RsInlineFunctionTest : RsTestBase() {
         }
     """)
 
+    fun `test inline function with never return type`() = doTest("""
+            fn main() {
+                let a = foo();
+                println!(a);
+            }
+            fn /*caret*/foo() -> i32 {
+                if (false) {
+                    panic!();
+                }
+                return 1;
+            }
+            """, """
+            fn main() {
+                if (false) {
+                    panic!();
+                }
+                let a = 1;
+                println!(a);
+            }
+
+            """)
+
+    fun `test inline function with return not at end of body`() = expectError<RefactoringErrorHintException> ("""
+            fn main() {
+                let a = foo();
+                println!(a);
+            }
+            fn /*caret*/foo() -> i32 {
+                if (true) {
+                    return 1;
+                }
+                panic!();
+            }""")
+
     private fun doTest(@Language("Rust") before: String,
                        @Language("Rust") after: String) {
         checkByText(before.trimIndent(), after.trimIndent()) {
             myFixture.performEditorAction("Inline")
         }
+    }
+
+    private inline fun <reified T : Throwable> expectError(code: String) {
+        InlineFile(code)
+        expect<T> { myFixture.performEditorAction("Inline") }
     }
 }
