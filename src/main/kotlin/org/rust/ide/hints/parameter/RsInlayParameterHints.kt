@@ -9,12 +9,10 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsLambdaExpr
-import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.types.emptySubstitution
 import org.rust.stdext.buildList
 
 @Suppress("UnstableApiUsage")
@@ -38,7 +36,9 @@ object RsInlayParameterHints {
             if (callInfo.selfParameter != null && elem is RsCallExpr) {
                 add(callInfo.selfParameter)
             }
-            addAll(callInfo.parameters.map { it.pattern })
+            addAll(callInfo.parameters.map {
+                it.pattern ?: (it.typeRef?.substAndGetText(emptySubstitution) ?: "_")
+            })
         }.zip(valueArgumentList.exprList)
 
         if (smart) {

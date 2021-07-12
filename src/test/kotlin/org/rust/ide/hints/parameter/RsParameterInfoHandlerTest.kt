@@ -5,6 +5,11 @@
 
 package org.rust.ide.hints.parameter
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.hints.parameter.RsArgumentsDescription
+import org.rust.ide.hints.parameter.RsParameterInfoHandler
+import org.rust.ide.hints.parameter.RsParameterInfoHandlerTestBase
 import org.rust.lang.core.psi.RsValueArgumentList
 
 /**
@@ -27,15 +32,15 @@ class RsParameterInfoHandlerTest
         fn main() { foo(<caret>); }
     """, "arg: u32", 0)
 
-    fun `test struct one arg`() = checkByText("""
+    fun `test tuple struct one arg`() = checkByText("""
         struct Foo(u32);
         fn main() { Foo(<caret>); }
-    """, "_: u32", 0)
+    """, "u32", 0)
 
     fun `test enum one arg`() = checkByText("""
         enum E  { Foo(u32) }
         fn main() { E::Foo(<caret>); }
-    """, "_: u32", 0)
+    """, "u32", 0)
 
     fun `test fn one arg end`() = checkByText("""
         fn foo(arg: u32) {}
@@ -82,10 +87,11 @@ class RsParameterInfoHandlerTest
         fn main() { foo(0, 32,<caret>); }
     """, "a1: u32, a2: u32", 2)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test fn closure`() = checkByText("""
-        fn foo(fun: Fn(u32) -> u32) {}
+        fn foo(fun: &dyn Fn(u32) -> u32) {}
         fn main() { foo(|x| x + <caret>); }
-    """, "fun: Fn(u32) -> u32", 0)
+    """, "fun: &dyn Fn(u32) -> u32", 0)
 
     fun `test fn nested inner`() = checkByText("""
         fn add(v1: u32, v2: u32) -> u32 { v1 + v2 }
@@ -119,12 +125,12 @@ class RsParameterInfoHandlerTest
 
     fun `test method`() = checkByText("""
         struct Foo;
-        impl Foo { fn bar(&self, id: u32, name: &'static name, year: u16) {} }
+        impl Foo { fn bar(&self, id: u32, name: &'static str, year: u16) {} }
         fn main() {
             let foo = Foo{};
             foo.bar(10, "Bo<caret>b", 1987);
         }
-    """, "id: u32, name: &'static name, year: u16", 1)
+    """, "id: u32, name: &'static str, year: u16", 1)
 
     fun `test trait method`() = checkByText("""
         trait Named {
@@ -163,4 +169,49 @@ class RsParameterInfoHandlerTest
     fun `test not applied within declaration`() = checkByText("""
         fn foo(v<caret>: u32) {}
     """, "", -1)
+
+    fun `test generic function parameter`() = checkByText("""
+        fn foo<T1>(x: T1) {}
+
+        fn main() {
+            foo::<i32>(/*caret*/);
+        }
+    """, "x: i32", 0)
+
+    fun `test generic method parameter`() = checkByText("""
+        struct S<T1>();
+
+        impl <T2> S<T2> {
+            fn foo(&self, x: T2) -> T2 { x }
+        }
+
+        fn main() {
+            let s = S::<i32>();
+            s.foo(/*caret*/);
+        }
+    """, "x: i32", 0)
+
+    fun `test generic parameter unknown type`() = checkByText("""
+        fn foo<T1>(x: T1) {}
+
+        fn main() {
+            foo::<S>(/*caret*/);
+        }
+    """, "x: T1", 0)
+
+    fun `test generic parameter with lifetime`() = checkByText("""
+        fn foo<'a, T1>(x: &'a T1) {}
+
+        fn main() {
+            let a = 5;
+            foo(&a/*caret*/);
+        }
+    """, "x: &'a i32", 0)
+
+    fun `test closure`() = checkByText("""
+        fn main() {
+            let foo = |a: usize, b| { a + b };
+            foo(0/*caret*/, 1);
+        }
+    """, "a: usize, b: _", 0)
 }

@@ -85,7 +85,14 @@ class RsArgumentsDescription(
                 if (callInfo.selfParameter != null && call is RsCallExpr) {
                     add(callInfo.selfParameter)
                 }
-                addAll(callInfo.parameters.map { "${it.pattern}: ${it.type}" })
+                addAll(callInfo.parameters.map {
+                    buildString {
+                        if (it.pattern != null) {
+                            append("${it.pattern}: ")
+                        }
+                        append(it.renderType())
+                    }
+                })
             }
             return RsArgumentsDescription(params.toTypedArray())
         }
