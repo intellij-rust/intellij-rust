@@ -187,15 +187,17 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
         // We can't control what messages cargo generates, so we can't test them well.
         // Let's use special message for tests to distinguish annotation from external linter
         val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
-        val annotationBuilder = newAnnotation(message.severity, annotationMessage)
-            .tooltip(message.htmlTooltip)
-            .range(message.textRange)
-            .problemGroup { annotationMessage }
-            .needsUpdateOnTyping(true)
+        for (range in message.textRanges) {
+            val annotationBuilder = newAnnotation(message.severity, annotationMessage)
+                .tooltip(message.htmlTooltip)
+                .range(range)
+                .problemGroup { annotationMessage }
+                .needsUpdateOnTyping(true)
 
-        message.quickFixes.forEach { f -> annotationBuilder.withFix(f) }
+            message.quickFixes.forEach { f -> annotationBuilder.withFix(f) }
 
-        annotationBuilder.create()
+            annotationBuilder.create()
+        }
     }
 }
 
@@ -213,7 +215,7 @@ class RsExternalLinterResult(commandOutput: List<String>) {
 
 private data class RsExternalLinterFilteredMessage(
     val severity: HighlightSeverity,
-    val textRange: TextRange,
+    val textRanges: List<TextRange>,
     val message: String,
     val htmlTooltip: String,
     val quickFixes: List<ApplySuggestionFix>
@@ -242,7 +244,8 @@ private data class RsExternalLinterFilteredMessage(
             val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
             if (!file.virtualFile.path.endsWith(spanFilePath)) return null
 
-            val textRange = span.toTextRange(document) ?: return null
+            val textRanges = message.spans.mapNotNull { it.toTextRange(document) }
+            if (textRanges.isEmpty()) return null
 
             val tooltip = with(ArrayList<String>()) {
                 val code = message.code.formatAsLink()
@@ -263,7 +266,7 @@ private data class RsExternalLinterFilteredMessage(
 
             return RsExternalLinterFilteredMessage(
                 severity,
-                textRange,
+                textRanges,
                 message.message.capitalize(),
                 tooltip,
                 message.collectQuickFixes(file, document)
