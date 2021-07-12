@@ -122,27 +122,13 @@ jobs:
             # `fromJSON` is used here to convert string output to boolean
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
-                os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.53.0, nightly-2021-03-24 ]
-                base-ide: [ idea, clion ]
+                os: [ windows-latest ]
+                wsl-distribution: [ Ubuntu-18.04 ]
+                rust-version: [ 1.53.0 ]
+                base-ide: [ idea ]
                 platform-version: [ 211, 212 ]
                 resolve-engine: [ resolve-new ]
-                # it's enough to verify plugin structure only once per platform version
-                verify-plugin: [ false ]
-                include:
-                    - os: ubuntu-18.04
-                      # Don't forget to update condition in `Set up additional env variables` step
-                      rust-version: 1.41.0
-                      base-ide: idea
-                      platform-version: 211
-                      resolve-engine: resolve-old
-                      verify-plugin: true
-                    - os: ubuntu-18.04
-                      rust-version: 1.53.0
-                      base-ide: idea
-                      platform-version: 212
-                      resolve-engine: resolve-old
-                      verify-plugin: true
+                verify-plugin: [ true ]
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
@@ -159,22 +145,25 @@ jobs:
               with:
                   java-version: 11
 
-            - name: Set up Rust
-              uses: actions-rs/toolchain@v1
+            - name: Set up WSL
+              if: matrix.wsl-distribution != null
+              uses: Vampire/setup-wsl@v1
               with:
-                  profile: minimal
-                  toolchain: ${{ matrix.rust-version }}
-                  components: rust-src, rustfmt, clippy
-                  default: true
+                  distribution: ${{ matrix.wsl-distribution }}
+                  wsl-shell-user: test
 
-            # Requires for tests with overridden toolchain
-            - name: Set up nightly Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: nightly
-                  components: rust-src
-                  default: false
+            - name: Set up WSL 2
+              if: matrix.wsl-distribution != null
+              run: C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
+
+            - name: Set up WSL Rust
+              if: matrix.wsl-distribution != null
+              run: |
+                  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${{ matrix.rust-version }} --profile minimal -c rust-src rustfmt clippy
+                  source $HOME/.cargo/env
+                  rustup install --profile minimal nightly
+                  rustup +nightly component add rust-src
+              shell: wsl-bash {0}
 
             - name: Cache evcxr
               uses: actions/cache@v2
@@ -216,6 +205,11 @@ jobs:
 
             - name: Set up test env variables
               run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
+
+            - name: Set up WSL env variables
+              if: matrix.wsl-distribution != null
+              shell: pwsh
+              run: echo "CI_WSL_DISTRO=${{ matrix.wsl-distribution }}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
             - name: Create symlink for Rust stdlib Unix
               if: matrix.os != 'windows-latest'

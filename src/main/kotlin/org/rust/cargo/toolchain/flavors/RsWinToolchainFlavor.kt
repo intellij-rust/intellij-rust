@@ -28,5 +28,5 @@ class RsWinToolchainFlavor : RsToolchainFlavor() {
             .filter { it.isDirectory() }
     }
 
-    override fun isApplicable(): Boolean = SystemInfo.isWindows
+    override fun isApplicable(): Boolean = super.isApplicable() && SystemInfo.isWindows
 }

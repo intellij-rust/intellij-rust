@@ -47,6 +47,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
@@ -192,7 +193,9 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
         val nativeHelper = RsPathManager.nativeHelper()
-        val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
+        val envs = if (nativeHelper != null &&
+            toolchain !is RsWslToolchain &&
+            Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
         } else {
             EnvironmentVariablesData.DEFAULT

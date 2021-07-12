@@ -1093,7 +1093,8 @@
                      when automatic project structure reload doesn't occur"/>
         <registryKey key="org.rust.cargo.evaluate.build.scripts.wrapper" defaultValue="true" restartRequired="false"
                      description="Use RUSTC_WRAPPER when fetching build script info (if experimental feature
-                     `org.rust.cargo.evaluate.build.scripts` is enabled)"/>
+                     `org.rust.cargo.evaluate.build.scripts` is enabled).
+                     Note: this feature is ignored when a WSL toolchain is used"/>
         <registryKey key="org.rust.macros.proc.timeout" defaultValue="5000" restartRequired="false"
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
 
@@ -1114,7 +1115,7 @@
         <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
 
         <!--  Experimental features -->
-        <experimentalFeature id="org.rust.wsl" percentOfUsers="0">
+        <experimentalFeature id="org.rust.wsl" percentOfUsers="100">
             <description>Enables WSL toolchains</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.features.settings.gutter" percentOfUsers="0">
@@ -1127,26 +1128,26 @@
 
         <!-- Toolchains -->
 
-        <toolchainProvider implementation="org.rust.cargo.toolchain.RsLocalToolchainProvider"/>
+<!--        <toolchainProvider implementation="org.rust.cargo.toolchain.RsLocalToolchainProvider"/>-->
         <toolchainProvider implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainProvider"/>
 
         <!-- Toolchain flavors -->
 
-        <toolchainFlavor id="rust.rustupToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"
-                         order="first"/>
+<!--        <toolchainFlavor id="rust.rustupToolchainFlavor"-->
+<!--                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"-->
+<!--                         order="first"/>-->
 
-        <toolchainFlavor id="rust.sysPathToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RsSysPathToolchainFlavor"/>
+<!--        <toolchainFlavor id="rust.sysPathToolchainFlavor"-->
+<!--                         implementation="org.rust.cargo.toolchain.flavors.RsSysPathToolchainFlavor"/>-->
 
-        <toolchainFlavor id="rust.unixToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RsUnixToolchainFlavor"/>
+<!--        <toolchainFlavor id="rust.unixToolchainFlavor"-->
+<!--                         implementation="org.rust.cargo.toolchain.flavors.RsUnixToolchainFlavor"/>-->
 
-        <toolchainFlavor id="rust.macToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RsMacToolchainFlavor"/>
+<!--        <toolchainFlavor id="rust.macToolchainFlavor"-->
+<!--                         implementation="org.rust.cargo.toolchain.flavors.RsMacToolchainFlavor"/>-->
 
-        <toolchainFlavor id="rust.winToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RsWinToolchainFlavor"/>
+<!--        <toolchainFlavor id="rust.winToolchainFlavor"-->
+<!--                         implementation="org.rust.cargo.toolchain.flavors.RsWinToolchainFlavor"/>-->
 
         <toolchainFlavor id="rust.wslToolchainFlavor"
                          implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainFlavor"/>
