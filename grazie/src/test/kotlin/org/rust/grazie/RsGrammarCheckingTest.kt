@@ -31,7 +31,8 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
             updateSettings { state ->
                 state.copy(
                     enabledGrammarStrategies = state.enabledGrammarStrategies + strategy.getID(),
-                    enabledLanguages = enabledLanguages
+                    enabledLanguages = enabledLanguages,
+                    checkingContext = state.checkingContext.withRsLanguageEnabled()
                 )
             }
         }
