@@ -530,14 +530,14 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
 
         mod bar {
+            use crate::mac;
             fn baz() {
-                use crate::mac;
                 mac!();
             }
         }
     """)
 
-    /*fun `test unused macro`() = checkByText("""
+    fun `test unused macro`() = checkByText("""
         mod foo {
             #[macro_export]
             macro_rules! mac { () => {} }
@@ -548,7 +548,25 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
                 <warning descr="Unused import: `crate::mac`">use crate::mac;</warning>
             }
         }
-    """)*/
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test used qualified macro`() = checkByText("""
+        mod foo {
+            #[macro_export]
+            macro_rules! gen_ {
+                () => {};
+            }
+            pub use gen_ as gen;
+        }
+
+        mod bar {
+            use crate::foo;
+            fn main() {
+                foo::gen!();
+            }
+        }
+    """)
 
     fun `test unresolved use`() = checkByText("""
         mod bar {

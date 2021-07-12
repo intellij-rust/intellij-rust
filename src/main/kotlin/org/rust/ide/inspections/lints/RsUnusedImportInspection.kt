@@ -79,11 +79,6 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
         items.filterIsInstance<RsNamedElement>().map { NamedItem(name, it) }
     }
 
-    // TODO: remove after macros are supported in RsPathUsageAnalysis.kt
-    if (items.any { (_, item) -> item is RsMacro }) {
-        return true
-    }
-
     return items.any { (name, item) ->
         item in usage.pathUsages[name].orEmpty()
             || item in usage.traitUsages

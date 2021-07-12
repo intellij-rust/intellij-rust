@@ -9,7 +9,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsItemsOwner
+import org.rust.lang.core.psi.ext.isEnabledByCfg
+import org.rust.lang.core.psi.ext.qualifier
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.processElementsWithMacros
@@ -75,6 +78,12 @@ private fun handleElement(
                         addItem(name, it)
                     }
                 }
+            }
+            true
+        }
+        is RsMacroCall -> {
+            processElementsWithMacros(element.path) {
+                handleElement(it, directUsages, traitUsages)
             }
             true
         }
