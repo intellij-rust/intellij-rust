@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.Testmark
 import com.intellij.util.ui.UIUtil
@@ -45,6 +46,21 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
         launchAction()
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+    }
+
+    protected fun doAvailableTestWithLiveTemplate(
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String,
+        fileName: String = "main.rs"
+    ) {
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+        InlineFile(before.trimIndent(), fileName).withCaret()
+        launchAction()
+        assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+        myFixture.type(toType)
+        assertNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 

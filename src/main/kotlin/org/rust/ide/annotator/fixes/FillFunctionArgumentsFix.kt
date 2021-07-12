@@ -13,6 +13,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.annotator.getFunctionCallContext
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.RPAREN
@@ -21,15 +22,10 @@ import org.rust.lang.core.psi.ext.childrenWithLeaves
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getVisibleBindings
 import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyFunction
-import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {

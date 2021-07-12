@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -22,7 +23,6 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyStr
 import org.rust.lang.core.types.type
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :

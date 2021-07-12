@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 /**

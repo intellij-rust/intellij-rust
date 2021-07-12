@@ -52,4 +52,12 @@ class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypePar
         trait Trait{}
         fn test() -> impl/*caret*/ Trait {}
     """)
+
+    fun `test simple with rename`() = doAvailableTestWithLiveTemplate("""
+        trait Trait{}
+        fn test(arg: impl/*caret*/ Trait) {}
+    """, "Z\t", """
+        trait Trait{}
+        fn test<Z: Trait>(arg: Z) {}
+    """)
 }
