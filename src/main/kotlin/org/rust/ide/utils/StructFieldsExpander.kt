@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.rust.ide.annotator.calculateMissingFields
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 fun addMissingFieldsToStructLiteral(

@@ -13,12 +13,12 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {

@@ -11,11 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LT
 import org.rust.lang.core.psi.ext.*
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class AddTypeArguments(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
