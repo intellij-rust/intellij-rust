@@ -465,7 +465,7 @@ class RsInferenceContext(
     fun combineTypesNoVars(ty1: Ty, ty2: Ty): CoerceResult =
         when {
             ty1 === ty2 -> CoerceResult.Ok
-            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> CoerceResult.Ok
+            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1.javaClass == ty2.javaClass -> CoerceResult.Ok
             ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> CoerceResult.Ok
             ty1 is TyProjection && ty2 is TyProjection && ty1.target == ty2.target && combineBoundElements(ty1.trait, ty2.trait) -> {
                 combineTypes(ty1.type, ty2.type)

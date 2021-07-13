@@ -34,7 +34,7 @@ data class TyAdt private constructor(
     val typeArguments: List<Ty>,
     val regionArguments: List<Region>,
     val constArguments: List<Const>,
-    val aliasedBy: BoundElement<RsTypeAlias>?
+    override val aliasedBy: BoundElement<RsTypeAlias>?
 ) : Ty(mergeFlags(typeArguments) or mergeFlags(regionArguments) or mergeFlags(constArguments)) {
 
     // This method is rarely called (in comparison with folding), so we can implement it in a such inefficient way.
@@ -66,7 +66,7 @@ data class TyAdt private constructor(
             regionArguments.any { it.visitWith(visitor) } ||
             constArguments.any { it.visitWith(visitor) }
 
-    fun withAlias(aliasedBy: BoundElement<RsTypeAlias>?): TyAdt =
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): TyAdt =
         copy(aliasedBy = aliasedBy)
 
     companion object {

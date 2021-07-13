@@ -38,7 +38,7 @@ class RsShortTypeRenderingTest : RsTestBase() {
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
             foo;
-            //^ S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>
+            //^ S<fn(i32) -> i32, S<fn(…) -> …, S<…, …>>>
         }
     """)
 
