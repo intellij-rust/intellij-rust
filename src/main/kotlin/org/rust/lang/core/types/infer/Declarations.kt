@@ -25,7 +25,7 @@ import org.rust.lang.utils.evaluation.tryEvaluate
 
 
 // Keep in sync with TyFingerprint-create
-fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
+private fun inferTypeReferenceTypeInner(type: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
     return when (type) {
         is RsParenType -> type.typeReference?.let { inferTypeReferenceType(it, defaultTraitObjectRegion) } ?: TyUnknown
         is RsTupleType -> TyTuple(type.typeReferenceList.map { inferTypeReferenceType(it) })
@@ -59,13 +59,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
                         TyTraitObject(listOfNotNull(boundElement.downcast()), defaultTraitObjectRegion ?: ReUnknown)
                     }
                     target is RsTypeDeclarationElement -> {
-                        val ty = target.declaredType
-                            .substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
-                        if (ty is TyAdt && ty.item != target && target is RsTypeAlias) {
-                            ty.withAlias(boundElement.downcast()!!)
-                        } else {
-                            ty
-                        }
+                        target.declaredType.substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
                     }
                     else -> return TyUnknown
                 }
@@ -120,6 +114,23 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
 
         else -> TyUnknown
     }
+}
+
+fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
+    val ty = inferTypeReferenceTypeInner(type, defaultTraitObjectRegion)
+
+    if (type is RsBaseType) {
+        val kind = type.kind
+        if (kind is RsBaseTypeKind.Path) {
+            val path = kind.path
+
+            val boundElement = path.reference?.advancedResolve()
+            if (boundElement?.element is RsTypeAlias) {
+                return ty.withAlias(boundElement.downcast()!!)
+            }
+        }
+    }
+    return ty
 }
 
 fun RsLifetime?.resolve(): Region {
