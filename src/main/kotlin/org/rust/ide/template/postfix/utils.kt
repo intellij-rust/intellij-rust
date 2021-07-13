@@ -11,9 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Condition
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
@@ -46,6 +44,17 @@ class RsExprParentsSelector(pred: (RsExpr) -> Boolean = { true })
         .ancestors
         .takeWhile { it !is RsBlock }
         .filter { it is RsExpr }
+        .toList()
+}
+
+class RsTypeParentsSelector : PostfixTemplateExpressionSelectorBase(Condition { it is RsTypeReference }) {
+    override fun getNonFilteredExpressions(
+        context: PsiElement,
+        document: Document,
+        offset: Int
+    ): List<PsiElement> = context
+        .ancestors
+        .filter { it is RsTypeReference }
         .toList()
 }
 

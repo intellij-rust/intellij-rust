@@ -6,18 +6,25 @@
 package org.rust.ide.template.postfix
 
 import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateResultListener
+import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.impl.TextExpression
+import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsBinaryExpr
-import org.rust.lang.core.psi.RsExpr
+import org.rust.ide.utils.template.newTemplateBuilder
+import org.rust.lang.core.parser.RustParserUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
+import org.rust.openapiext.createSmartPointer
 
 abstract class AssertPostfixTemplateBase(
     name: String,
@@ -99,6 +106,34 @@ class DbgrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostf
 class SomePostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("some", "Some(expr)", provider)
 class OkPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ok", "Ok(expr)", provider)
 class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("err", "Err(expr)", provider)
+
+class WrapTypePathPostfixTemplate(provider: RsPostfixTemplateProvider) : StringBasedPostfixTemplate("wrap", "\$wrapper$<path>", RsTypeParentsSelector(), provider) {
+    override fun getTemplateString(element: PsiElement): String = example.replace("path", element.text)
+
+    override fun expandForChooseExpression(element: PsiElement, editor: Editor) {
+        val typeRef = element as? RsTypeReference ?: return
+
+        val factory = RsPsiFactory(typeRef.project)
+        val path = factory.tryCreatePath("Wrapper<${typeRef.text}>", RustParserUtil.PathParsingMode.TYPE) ?: return
+        val newTypeRef = factory.tryCreateType(path.text) ?: return
+        val inserted = typeRef.replace(newTypeRef) as? RsBaseType ?: return
+        val ptr = inserted.createSmartPointer()
+
+        val template = editor.newTemplateBuilder(inserted) ?: return
+        val name = inserted.path?.referenceNameElement ?: return
+        template.replaceElement(name, MacroCallNode(CompleteMacro()))
+        template.withResultListener {
+            if (it != TemplateResultListener.TemplateResult.Canceled) {
+                // Move caret after the inserted wrapper type
+                val end = ptr.element?.path?.typeArgumentList?.gt
+                if (end != null) {
+                    editor.caretModel.moveToOffset(end.startOffset + 1)
+                }
+            }
+        }
+        template.runInline()
+    }
+}
 
 private val RsExpr.isIntoIterator: Boolean
     get() = implLookup.isIntoIterator(type)
