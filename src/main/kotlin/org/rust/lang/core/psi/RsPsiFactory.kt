@@ -254,7 +254,24 @@ class RsPsiFactory(
         return createFromText("impl T for S {$text}") ?: error("Failed to create members from text: `$text`")
     }
 
-    fun createInherentImplItem(name: String, typeParameterList: RsTypeParameterList?, whereClause: RsWhereClause?): RsImplItem {
+    fun createInherentImplItem(
+        name: String,
+        typeParameterList: RsTypeParameterList? = null,
+        whereClause: RsWhereClause? = null
+    ): RsImplItem = createImplTemplate(name, typeParameterList, whereClause)
+
+    fun createTraitImplItem(
+        type: String,
+        trait: String,
+        typeParameterList: RsTypeParameterList? = null,
+        whereClause: RsWhereClause? = null
+    ): RsImplItem = createImplTemplate("$trait for $type", typeParameterList, whereClause)
+
+    private fun createImplTemplate(
+        text: String,
+        typeParameterList: RsTypeParameterList?,
+        whereClause: RsWhereClause?
+    ): RsImplItem {
         val whereText = whereClause?.text ?: ""
         val typeParameterListText = typeParameterList?.text ?: ""
         val typeArgumentListText = if (typeParameterList == null) {
@@ -266,8 +283,8 @@ class RsPsiFactory(
             parameterNames.joinToString(", ", "<", ">")
         }
 
-        return createFromText("impl $typeParameterListText $name $typeArgumentListText $whereText {  }")
-            ?: error("Failed to create an inherent impl with name: `$name`")
+        return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
+            ?: error("Failed to create an trait impl with text: `$text`")
     }
 
     fun createWhereClause(
