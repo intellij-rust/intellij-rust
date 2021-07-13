@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
@@ -174,7 +175,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             val positionInMacroArgument = parameters.position.findElementExpandedFrom()
             val originalPosition = if (positionInMacroArgument != null) positionInMacroArgument.safeGetOriginalElement() else parameters.originalPosition
             // We use the position in the original file in order not to process empty paths
-            if (originalPosition == null || originalPosition.elementType != RsElementTypes.IDENTIFIER) return
+            if (originalPosition == null || originalPosition.elementType != RsElementTypes.IDENTIFIER) {
+                result.restartCompletionOnPrefixChange(StandardPatterns.string().withLength(1))
+                return
+            }
             val actualPosition = if (positionInMacroArgument != null) parameters.position else originalPosition
             // Checks that macro call and expanded element are located in the same modules
             if (positionInMacroArgument != null && !isInSameRustMod(positionInMacroArgument, actualPosition)) {
