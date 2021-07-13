@@ -52,7 +52,13 @@ class RsCommaListElementUpDownMover : RsLineMover() {
     }
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
-        if (isMovingOutOfParenBlock(sibling, down) || isMovingOutOfBraceBlock(sibling, down)) return null
+        if (isMovingOutOfParenBlock(sibling, down) ||
+            isMovingOutOfBraceBlock(sibling, down) ||
+            isMovingOutOfBracketBlock(sibling, down)
+        ) {
+            UpDownMoverTestMarks.moveOutOfBlock.hit()
+            return null
+        }
         return sibling
     }
 
