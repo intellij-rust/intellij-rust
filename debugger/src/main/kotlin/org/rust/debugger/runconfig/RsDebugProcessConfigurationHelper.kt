@@ -51,12 +51,26 @@ class RsDebugProcessConfigurationHelper(
             try {
                 driver.loadRustcSources()
                 driver.loadPrettyPrinters()
+                if (settings.breakOnPanic) {
+                    driver.setBreakOnPanic()
+                }
             } catch (e: DebuggerCommandException) {
                 process.printlnToConsole(e.message)
                 LOG.warn(e)
             } catch (e: InvalidPathException) {
                 LOG.warn(e)
             }
+        }
+    }
+
+    private fun DebuggerDriver.setBreakOnPanic() {
+        val commands = when (this) {
+            is LLDBDriver -> listOf("breakpoint set -n rust_panic")
+            is GDBDriver -> listOf("set breakpoint pending on", "break rust_panic")
+            else -> return
+        }
+        for (command in commands) {
+            executeInterpreterCommand(threadId, frameIndex, command)
         }
     }
 

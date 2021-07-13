@@ -8,13 +8,11 @@ package org.rust.debugger.settings
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.SimpleConfigurable
-import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
-import org.rust.debugger.RsDebuggerToolchainService
 
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
@@ -23,6 +21,8 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     var lldbPath: String? = null
     var downloadAutomatically: Boolean = false
+
+    var breakOnPanic: Boolean = true
 
     override fun getState(): RsDebuggerSettings = this
 
@@ -33,7 +33,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     override fun createConfigurables(category: DebuggerSettingsCategory): Collection<Configurable> {
         val configurable = when (category) {
             DebuggerSettingsCategory.DATA_VIEWS -> createDataViewConfigurable()
-            DebuggerSettingsCategory.GENERAL -> if (needToShowToolchainSettings) createToolchainConfigurable() else null
+            DebuggerSettingsCategory.GENERAL -> createGeneralSettingsConfigurable()
             else -> null
         }
         return listOfNotNull(configurable)
@@ -48,11 +48,11 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         )
     }
 
-    private fun createToolchainConfigurable(): Configurable? {
+    private fun createGeneralSettingsConfigurable(): Configurable {
         return SimpleConfigurable.create(
-            TOOLCHAIN_ID,
+            GENERAL_SETTINGS_ID,
             "Rust",
-            RsDebuggerToolchainConfigurableUi::class.java,
+            RsDebuggerGeneralSettingsConfigurableUi::class.java,
             Companion::getInstance
         )
     }
@@ -60,26 +60,16 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     override fun isTargetedToProduct(configurable: Configurable): Boolean {
         if (configurable !is SearchableConfigurable) return false
         return when (configurable.id) {
-            TOOLCHAIN_ID -> needToShowToolchainSettings
-            DATA_VIEW_ID -> true
+            GENERAL_SETTINGS_ID, DATA_VIEW_ID -> true
             else -> false
         }
     }
-
-    private val needToShowToolchainSettings: Boolean
-        get() {
-            // CLion has own Toolchain settings
-            if (PlatformUtils.isCLion()) return false
-            val status = RsDebuggerToolchainService.getInstance().getBundledLLDBStatus()
-            // If there is bundled LLDB, no need to show this toolchain settings
-            return status !is RsDebuggerToolchainService.LLDBStatus.Binaries
-        }
 
     companion object {
         @JvmStatic
         fun getInstance(): RsDebuggerSettings = getInstance(RsDebuggerSettings::class.java)
 
-        const val TOOLCHAIN_ID: String = "Debugger.Rust.Toolchain"
+        const val GENERAL_SETTINGS_ID: String = "Debugger.Rust.General"
         const val DATA_VIEW_ID: String = "Debugger.Rust.DataView"
     }
 }

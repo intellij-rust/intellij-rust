@@ -1,0 +1,29 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.debugger.settings
+
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.LayoutBuilder
+
+class RsBreakOnPanicConfigurableUi : RsDebuggerUiComponent() {
+    private val breakCheckbox = JBCheckBox("Break on panic", RsDebuggerSettings.getInstance().breakOnPanic)
+
+    override fun reset(settings: RsDebuggerSettings) {
+        breakCheckbox.isSelected = settings.breakOnPanic
+    }
+
+    override fun isModified(settings: RsDebuggerSettings): Boolean = settings.breakOnPanic != breakCheckbox.isSelected
+
+    override fun apply(settings: RsDebuggerSettings) {
+        settings.breakOnPanic = breakCheckbox.isSelected
+    }
+
+    override fun buildUi(builder: LayoutBuilder) {
+        with(builder) {
+            row { breakCheckbox() }
+        }
+    }
+}
