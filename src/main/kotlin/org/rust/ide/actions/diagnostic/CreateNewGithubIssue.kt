@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
@@ -18,9 +19,14 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.ide.experiments.EnabledInStable
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
 
 class CreateNewGithubIssue : DumbAwareAction() {
 
@@ -42,8 +48,18 @@ class CreateNewGithubIssue : DumbAwareAction() {
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample ?: ""
         val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
         val resolveEngine = if (project.rustSettings.newResolveEnabled) "new" else "old"
+        val additionalExperimentalFeatures = additionalExperimentalFeatures.joinToString(", ")
 
-        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, macroEngine, resolveEngine, codeSnippet)
+        val body = ISSUE_TEMPLATE.format(
+            pluginVersion,
+            toolchainVersion,
+            ideNameAndVersion,
+            os,
+            macroEngine,
+            resolveEngine,
+            additionalExperimentalFeatures,
+            codeSnippet
+        )
         val link = "https://github.com/intellij-rust/intellij-rust/issues/new?body=${URLUtil.encodeURIComponent(body)}"
         BrowserUtil.browse(link)
     }
@@ -64,6 +80,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
             * **Operating system:** %s
             * **Macro expansion engine:** %s
             * **Name resolution engine:** %s
+            * **Additional experimental features:** %s
 
             ## Problem description
 
@@ -93,6 +110,15 @@ class CreateNewGithubIssue : DumbAwareAction() {
                     append(ideVersion)
                     append(")")
                 }
+            }
+
+        /** Collects additional (disabled in stable releases) experimental features enabled by user */
+        private val additionalExperimentalFeatures: List<String>
+            get() = with(Experiments.getInstance()) {
+                RsExperiments::class.memberProperties
+                    .filterNot { it.hasAnnotation<EnabledInStable>() }
+                    .mapNotNull { it.javaField?.get(RsExperiments) as? String }
+                    .filter { isFeatureEnabled(it) }
             }
 
         private val RustcVersion.displayText: String
