@@ -6,8 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
 
 class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test expr 1`() = doTest("""
@@ -84,7 +82,6 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         }
     """, setOf("iii", "i32"))
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no completion from index`() = doTest("""
         macro_rules! my_macro {
             ($ e:expr, foo) => (1);
@@ -94,6 +91,10 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         fn main() {
             my_macro!(Hash/*caret*/);
         }
+
+        pub mod collections {
+            pub struct HashMap;
+        }
     """, setOf(), setOf("HashMap"))
 
     fun `test different fragment offsets`() = doTest("""
@@ -101,7 +102,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
             (foo * $ e:ty, b) => (1);
             ($ e:expr, a) => (1);
         }
-        
+
         fn main() {
             let iii = 1;
             my_macro!(foo * i/*caret*/);
@@ -111,11 +112,11 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     private fun doTest(@Language("Rust") code: String, contains: Set<String>, notContains: Set<String> = emptySet()) {
         RsPartialMacroArgumentCompletionProvider.Testmarks.touched.checkHit {
             RsFullMacroArgumentCompletionProvider.Testmarks.touched.checkNotHit {
-                for (variant in contains) {
-                    checkContainsCompletion(variant, code)
+                if (contains.isNotEmpty()) {
+                    checkContainsCompletion(contains.toList(), code)
                 }
-                for (variant in notContains) {
-                    checkNotContainsCompletion(variant, code)
+                if (notContains.isNotEmpty()) {
+                    checkNotContainsCompletion(notContains, code)
                 }
             }
         }

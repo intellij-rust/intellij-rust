@@ -48,7 +48,7 @@ class RsCompletionTestFixture(
         render: LookupElement.() -> String = { lookupString }
     ) {
         fileTreeFromText(code).createAndOpenFileWithCaretMarker(myFixture)
-        doContainsCompletion(variants, render)
+        doContainsCompletion(variants.toSet(), render)
     }
 
     private fun checkAstNotLoaded(fileFilter: VirtualFileFilter) {

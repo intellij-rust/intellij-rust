@@ -104,7 +104,13 @@ abstract class RsCompletionTestBase : RsTestBase() {
         variant: String,
         @Language("Rust") code: String,
         render: LookupElement.() -> String = { lookupString }
-    ) = completionFixture.checkNotContainsCompletion(code, variant, render)
+    ) = completionFixture.checkNotContainsCompletion(code, setOf(variant), render)
+
+    protected fun checkNotContainsCompletion(
+        variants: Set<String>,
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkNotContainsCompletion(code, variants, render)
 
     protected open fun checkNoCompletion(@Language("Rust") code: String) = completionFixture.checkNoCompletion(code)
 
