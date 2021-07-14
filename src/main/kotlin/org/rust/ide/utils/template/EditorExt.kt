@@ -24,7 +24,7 @@ fun Editor.buildAndRunTemplate(
     val tbl = newTemplateBuilder(owner) ?: return
     for (elementPointer in elementsToReplace) {
         val element = elementPointer.element ?: continue
-        tbl.replaceElement(element, element.text)
+        tbl.replaceElement(element)
     }
     if (listener != null) {
         tbl.withListener(listener)

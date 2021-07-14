@@ -6,6 +6,7 @@
 package org.rust
 
 import com.intellij.TestCase
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
@@ -275,6 +276,23 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         action()
         PsiTestUtil.checkPsiStructureWithCommit(myFixture.file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         myFixture.checkResult(replaceCaretMarker(after))
+    }
+
+    protected fun checkByTextWithLiveTemplate(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        toType: String,
+        fileName: String = "main.rs",
+        action: () -> Unit
+    ) {
+        val actionWithTemplate = {
+            action()
+            assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+            myFixture.type(toType)
+            assertNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+        }
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+        checkByText(before, after, fileName, actionWithTemplate)
     }
 
     protected fun checkCaretMove(
