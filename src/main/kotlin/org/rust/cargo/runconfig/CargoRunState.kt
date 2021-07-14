@@ -9,15 +9,16 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.psi.search.GlobalSearchScopes
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoConsoleBuilder
+import org.rust.cargo.runconfig.target.CargoRunStateTargetAware
 
 class CargoRunState(
     environment: ExecutionEnvironment,
     runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
-) : CargoRunStateBase(environment, runConfiguration, config) {
+) : CargoRunStateTargetAware(environment, runConfiguration, config) {
     init {
-        val scope = GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
-        consoleBuilder = CargoConsoleBuilder(environment.project, scope)
+        val scope = GlobalSearchScopes.executionScope(project, environment.runProfile)
+        consoleBuilder = CargoConsoleBuilder(project, scope)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }
 }
