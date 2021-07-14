@@ -8,6 +8,8 @@ package org.rust.toml.crates.local
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -37,8 +39,6 @@ import org.rust.openapiext.RsPathManager
 import org.rust.stdext.cleanDirectory
 import org.rust.stdext.supplyAsync
 import org.rust.toml.crates.local.CratesLocalIndexServiceImpl.Companion.CratesLocalIndexState
-import org.rust.util.readValue
-import org.rust.util.registerKotlinModule
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
