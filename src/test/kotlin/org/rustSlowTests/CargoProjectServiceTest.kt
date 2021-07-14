@@ -9,7 +9,6 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.openapiext.pathAsPath
-import java.util.concurrent.TimeUnit
 
 
 class CargoProjectServiceTest : RsWithToolchainTestBase() {
@@ -75,10 +74,11 @@ class CargoProjectServiceTest : RsWithToolchainTestBase() {
 
         val rootPath = testProject.root.pathAsPath
         val projects = project.cargoProjects.apply {
-            attachCargoProject(rootPath.resolve("a/Cargo.toml"))
-            attachCargoProject(rootPath.resolve("b/Cargo.toml"))
-            attachCargoProject(rootPath.resolve("d/Cargo.toml"))
-            refreshAllProjects().get(1, TimeUnit.MINUTES)
+            attachCargoProjects(
+                rootPath.resolve("a/Cargo.toml"),
+                rootPath.resolve("b/Cargo.toml"),
+                rootPath.resolve("d/Cargo.toml"),
+            )
         }
 
         fun checkFile(relpath: String, projectName: String?) {
