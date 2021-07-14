@@ -57,6 +57,7 @@ fun GeneralCommandLine.execute(
     owner: Disposable,
     ignoreExitCode: Boolean = true,
     stdIn: ByteArray? = null,
+    runner: CapturingProcessHandler.() -> ProcessOutput = { runProcessWithGlobalProgress(null) },
     listener: ProcessListener? = null
 ): ProcessOutput {
 
@@ -100,7 +101,7 @@ fun GeneralCommandLine.execute(
     }
 
     val output = try {
-        handler.runProcessWithGlobalProgress(null)
+        handler.runner()
     } finally {
         Disposer.dispose(cargoKiller)
     }
@@ -121,7 +122,7 @@ private fun CapturingProcessHandler.runProcessWithGlobalProgress(timeoutInMillis
     return runProcess(ProgressManager.getGlobalProgressIndicator(), timeoutInMilliseconds)
 }
 
-private fun CapturingProcessHandler.runProcess(
+fun CapturingProcessHandler.runProcess(
     indicator: ProgressIndicator?,
     timeoutInMilliseconds: Int? = null
 ): ProcessOutput {

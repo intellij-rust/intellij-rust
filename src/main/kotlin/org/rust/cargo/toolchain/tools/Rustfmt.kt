@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
@@ -29,17 +30,15 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {
-            reformatDocumentText(cargoProject, document)
+            createCommandLine(cargoProject, document)
+                ?.execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
+                ?.stdout
         } catch (e: ExecutionException) {
             if (isUnitTestMode) throw e else null
         }
     }
 
-    /**
-     * @throws ExecutionException if `Rustfmt` exit-code is other than `0`
-     */
-    @Throws(ExecutionException::class)
-    fun reformatDocumentText(cargoProject: CargoProject, document: Document): String? {
+    fun createCommandLine(cargoProject: CargoProject, document: Document): GeneralCommandLine? {
         val file = document.virtualFile ?: return null
         if (file.isNotRustFile || !file.isValid) return null
 
@@ -63,8 +62,6 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         }
 
         return createBaseCommandLine(arguments, cargoProject.workingDirectory)
-            .execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
-            .stdout
     }
 
     @Throws(ExecutionException::class)
