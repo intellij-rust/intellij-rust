@@ -450,7 +450,7 @@ class RsStructureViewModelTest : RsStructureViewTestBase() {
     """)
 
     private fun doTest(@Language("Rust") code: String, expected: String, fileName: String = "main.rs") {
-        doTestWithActions(code, expected, fileName) {}
+        doTestSingleAction(code, expected, fileName) {}
     }
 
     private fun doTestForREPL(code: String, expected: String) = doTest(code, expected, RsConsoleView.VIRTUAL_FILE_NAME)

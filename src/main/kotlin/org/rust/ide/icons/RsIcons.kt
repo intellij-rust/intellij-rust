@@ -82,6 +82,10 @@ object RsIcons {
     val FIELD = load("/icons/nodes/field.svg")
     val ENUM_VARIANT = load("/icons/nodes/enumVariant.svg")
 
+    // Structure view
+
+    val MACRO_EXPANSION = AllIcons.Nodes.ErrorIntroduction
+
     // Gutter
 
     val IMPLEMENTED = AllIcons.Gutter.ImplementedMethod

@@ -14,26 +14,34 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 abstract class RsStructureViewTestBase : RsTestBase() {
-    protected fun doTestWithActions(
+    protected fun doTestSingleAction(
         @Language("Rust") code: String,
         expected: String,
         fileName: String = "main.rs",
         actions: StructureViewComponent.() -> Unit,
-    ) {
+    ) = doTestStructureView(code, fileName) {
         val normExpected = expected.trimMargin()
+        actions()
+        assertTreeEqual(tree, normExpected)
+    }
+
+    protected fun doTestStructureView(
+        @Language("Rust") code: String,
+        fileName: String = "main.rs",
+        actions: StructureViewComponent.() -> Unit,
+    ) {
         myFixture.configureByText(fileName, code)
         myFixture.testStructureView {
             it.actions()
-            PlatformTestUtil.expandAll(it.tree)
-            assertTreeEqual(it.tree, normExpected)
         }
     }
 
-    private fun assertTreeEqual(tree: JTree, expected: String) {
+    protected fun assertTreeEqual(tree: JTree, expected: String) {
         val printInfo = Queryable.PrintInfo(
             arrayOf(RsStructureViewElement.NAME_KEY),
             arrayOf(RsStructureViewElement.VISIBILITY_KEY)
         )
+        PlatformTestUtil.expandAll(tree)
         val treeStringPresentation = PlatformTestUtil.print(tree, TreePath(tree.model.root), printInfo, false)
         assertEquals(expected.trim(), treeStringPresentation.trim())
     }

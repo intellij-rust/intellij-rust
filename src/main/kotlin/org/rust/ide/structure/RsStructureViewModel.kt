@@ -39,11 +39,9 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
         )
     }
 
-    override fun getFilters(): Array<Filter> {
-        return arrayOf(
-
-        )
-    }
+    override fun getFilters(): Array<Filter> = arrayOf(
+        RsMacroExpandedFilter()
+    )
 
     override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
 
