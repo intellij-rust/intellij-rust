@@ -11,7 +11,8 @@ import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.intellij.lang.annotations.Language
-import org.rust.*
+import org.rust.hasCaretMarker
+import org.rust.replaceCaretMarker
 
 abstract class RsCompletionTestFixtureBase<IN>(
     protected val myFixture: CodeInsightTestFixture
@@ -91,21 +92,22 @@ abstract class RsCompletionTestFixtureBase<IN>(
 
     fun checkContainsCompletion(
         code: IN,
-        variants: List<String>,
+        variants: Iterable<String>,
         render: LookupElement.() -> String = { lookupString }
     ) {
         prepare(code)
-        doContainsCompletion(variants, render)
+        doContainsCompletion(variants.toSet(), render)
     }
 
-    fun doContainsCompletion(variants: List<String>, render: LookupElement.() -> String) {
+    fun doContainsCompletion(variants: Set<String>, render: LookupElement.() -> String) {
         val lookups = myFixture.completeBasic()
 
         checkNotNull(lookups) {
             "Expected completions that contain $variants, but no completions found"
         }
+        val renderedLookups = lookups.map { it.render() }
         for (variant in variants) {
-            if (lookups.all { it.render() != variant }) {
+            if (variant !in renderedLookups) {
                 error("Expected completions that contain $variant, but got ${lookups.map { it.render() }}")
             }
         }
@@ -113,16 +115,16 @@ abstract class RsCompletionTestFixtureBase<IN>(
 
     fun checkNotContainsCompletion(
         code: IN,
-        variant: String,
+        variants: Set<String>,
         render: LookupElement.() -> String = { lookupString }
     ) {
         prepare(code)
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
-            "Expected completions that contain $variant, but no completions found"
+            "Expected completions that contain $variants, but no completions found"
         }
-        if (lookups.any { it.render() == variant }) {
-            error("Expected completions that don't contain $variant, but got ${lookups.map { it.render() }}")
+        if (lookups.any { it.render() in variants }) {
+            error("Expected completions that don't contain $variants, but got ${lookups.map { it.render() }}")
         }
     }
 
