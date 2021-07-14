@@ -26,10 +26,42 @@ class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypePar
 
     fun `test with existing type parameter list`() = doAvailableTest("""
         trait Trait<T>{}
-        fn test<X: Trait>(arg: impl/*caret*/ Trait<X>) {}
+        fn test<X: Trait<u32>>(arg: impl/*caret*/ Trait<X>) {}
     """, """
         trait Trait<T>{}
-        fn test<X: Trait, T: Trait<X>>(arg: T) {}
+        fn test<X: Trait<u32>, T: Trait<X>>(arg: T) {}
+    """)
+
+    fun `test with existing empty type parameter list`() = doAvailableTest("""
+        trait Trait<T>{}
+        fn test<>(arg: impl/*caret*/ Trait<X>) {}
+    """, """
+        trait Trait<T>{}
+        fn test<T: Trait<X>>(arg: T) {}
+    """)
+
+    fun `test with existing type parameter list with trailing comma`() = doAvailableTest("""
+        trait Trait<T>{}
+        fn test<X: Trait<u32>,>(arg: impl/*caret*/ Trait<X>) {}
+    """, """
+        trait Trait<T>{}
+        fn test<X: Trait<u32>, T: Trait<X>>(arg: T) {}
+    """)
+
+    fun `test with existing const parameter`() = doAvailableTest("""
+        trait Trait<T>{}
+        fn test<const N: usize>(arg: impl/*caret*/ Trait<X>) {}
+    """, """
+        trait Trait<T>{}
+        fn test<T: Trait<X>, const N: usize>(arg: T) {}
+    """)
+
+    fun `test with existing type and const parameter`() = doAvailableTest("""
+        trait Trait<T>{}
+        fn test<X: Trait<u32>, const N: usize>(arg: impl/*caret*/ Trait<X>) {}
+    """, """
+        trait Trait<T>{}
+        fn test<X: Trait<u32>, T: Trait<X>, const N: usize>(arg: T) {}
     """)
 
     fun `test nested outer`() = doAvailableTest("""
