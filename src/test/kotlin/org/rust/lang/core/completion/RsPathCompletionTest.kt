@@ -5,12 +5,13 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.util.Urls
-import org.rust.*
+import org.rust.ProjectDescriptor
+import org.rust.RustProjectDescriptorBase
+import org.rust.WithRustup
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import java.nio.file.Paths
 
@@ -277,7 +278,7 @@ class RsPathCompletionTest : RsCompletionTestBase() {
 }
 
 private object WithWorkspaceProjectDescriptor : RustProjectDescriptorBase() {
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
         val crateA = testCargoPackage("$contentRoot/crate-a", name="crate-a")
         val crateB = testCargoPackage("$contentRoot/crate-b", name="crate-b")
 

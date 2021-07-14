@@ -37,6 +37,11 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     @TestOnly
+    fun removeAllProjects() {
+        modifyProjectsSync { CompletableFuture.completedFuture(emptyList()) }
+    }
+
+    @TestOnly
     fun setRustcInfo(rustcInfo: RustcInfo, parentDisposable: Disposable) {
         val oldValues = mutableMapOf<Path, RustcInfo?>()
 

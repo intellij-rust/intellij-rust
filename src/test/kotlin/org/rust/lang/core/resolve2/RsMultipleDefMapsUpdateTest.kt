@@ -117,7 +117,7 @@ class RsMultipleDefMapsUpdateTest : RsTestBase() {
 }
 
 /**
- * See [WithDependencyRustProjectDescriptor.testCargoProject]
+ * See [WithDependencyRustProjectDescriptor.createTestCargoWorkspace]
  *
  * BIN -> LIB -> DEP_LIB -> TRANS_LIB -> TRANS_LIB2
  *                  |

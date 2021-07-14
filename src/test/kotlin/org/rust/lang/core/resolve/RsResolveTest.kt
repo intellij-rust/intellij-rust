@@ -1507,4 +1507,8 @@ class RsResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test fail`() {
+        error("fail")
+    }
 }

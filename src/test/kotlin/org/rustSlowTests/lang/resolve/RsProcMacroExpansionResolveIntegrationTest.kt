@@ -78,8 +78,10 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
             }
         }.run {
             val prj = create(project, cargoProjectDirectory)
-            project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("my_proc_macro/Cargo.toml"))
-            project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("mylib/Cargo.toml"))
+            project.testCargoProjects.attachCargoProjects(
+                cargoProjectDirectory.pathAsPath.resolve("my_proc_macro/Cargo.toml"),
+                cargoProjectDirectory.pathAsPath.resolve("mylib/Cargo.toml")
+            )
             prj.checkReferenceIsResolved<RsMethodCall>("mylib/src/lib.rs")
         }
     }

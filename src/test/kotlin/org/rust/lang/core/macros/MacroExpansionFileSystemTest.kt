@@ -9,10 +9,13 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.rust.EmptyDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
 import org.rust.checkMacroExpansionFileSystemAfterTest
 
-class MacroExpansionFileSystemTest : BasePlatformTestCase() {
+@ProjectDescriptor(EmptyDescriptor::class)
+class MacroExpansionFileSystemTest : RsTestBase() {
     fun `test simple`() {
         batch {
             createFile("/foo", "bar.txt", "bar content")

@@ -875,8 +875,10 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.run {
         val prj = create(project, cargoProjectDirectory)
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("project_1/Cargo.toml"))
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("project_2/Cargo.toml"))
+        project.testCargoProjects.attachCargoProjects(
+            cargoProjectDirectory.pathAsPath.resolve("project_1/Cargo.toml"),
+            cargoProjectDirectory.pathAsPath.resolve("project_2/Cargo.toml"),
+        )
         prj.checkReferenceIsResolved<RsPath>("project_1/src/main.rs")
         prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
     }

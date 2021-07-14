@@ -41,8 +41,10 @@ class CargoProjectDeduplicationTest : RsWithToolchainTestBase() {
     }.run {
         create(project, cargoProjectDirectory)
         val rootProjectManifest = cargoProjectDirectory.findFileByRelativePath("root-project/Cargo.toml")!!
-        project.testCargoProjects.attachCargoProject(rootProjectManifest.pathAsPath)
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("root-project/subproject/Cargo.toml"))
+        project.testCargoProjects.attachCargoProjects(
+            rootProjectManifest.pathAsPath,
+            cargoProjectDirectory.pathAsPath.resolve("root-project/subproject/Cargo.toml")
+        )
         assertEquals(2, project.testCargoProjects.allProjects.size)
         runWriteAction {
             VfsUtil.saveText(rootProjectManifest, VfsUtil.loadText(rootProjectManifest).replace("#", ""))
@@ -82,15 +84,16 @@ class CargoProjectDeduplicationTest : RsWithToolchainTestBase() {
         }
     }.run {
         create(project, cargoProjectDirectory)
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_1/Cargo.toml"))
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_2/Cargo.toml"))
+        project.testCargoProjects.attachCargoProjects(
+            cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_1/Cargo.toml"),
+            cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_2/Cargo.toml")
+        )
         assertEquals(2, project.testCargoProjects.allProjects.size)
         val rootProjectManifest = cargoProjectDirectory.findFileByRelativePath("root-project/__Cargo.toml")!!
         runWriteAction {
             rootProjectManifest.rename(null, "Cargo.toml")
         }
         project.testCargoProjects.attachCargoProject(rootProjectManifest.pathAsPath)
-        project.testCargoProjects.refreshAllProjectsSync()
         assertEquals(rootProjectManifest.pathAsPath, project.testCargoProjects.singleProject().manifest)
     }
 
@@ -136,14 +139,12 @@ class CargoProjectDeduplicationTest : RsWithToolchainTestBase() {
         val rootProjectManifest = cargoProjectDirectory.findFileByRelativePath("root-project/Cargo.toml")!!
         val includedProjectManifest = cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_1/Cargo.toml")
         val excludedProjectManifest = cargoProjectDirectory.pathAsPath.resolve("root-project/subproject_2/Cargo.toml")
-        project.testCargoProjects.attachCargoProject(includedProjectManifest)
-        project.testCargoProjects.attachCargoProject(excludedProjectManifest)
+        project.testCargoProjects.attachCargoProjects(includedProjectManifest, excludedProjectManifest)
         assertEquals(2, project.testCargoProjects.allProjects.size)
         runWriteAction {
             VfsUtil.saveText(rootProjectManifest, VfsUtil.loadText(rootProjectManifest).replace("#", ""))
         }
         project.testCargoProjects.attachCargoProject(rootProjectManifest.pathAsPath)
-        project.testCargoProjects.refreshAllProjectsSync()
         assertEquals(
             listOf(
                 rootProjectManifest.pathAsPath,
@@ -181,8 +182,10 @@ class CargoProjectDeduplicationTest : RsWithToolchainTestBase() {
     }.run {
         create(project, cargoProjectDirectory)
         val rootProjectManifest = cargoProjectDirectory.findFileByRelativePath("root-project/Cargo.toml")!!
-        project.testCargoProjects.attachCargoProject(rootProjectManifest.pathAsPath)
-        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("root-project/subproject/Cargo.toml"))
+        project.testCargoProjects.attachCargoProjects(
+            rootProjectManifest.pathAsPath,
+            cargoProjectDirectory.pathAsPath.resolve("root-project/subproject/Cargo.toml")
+        )
         assertEquals(2, project.testCargoProjects.allProjects.size)
         runWriteAction {
             VfsUtil.saveText(rootProjectManifest, VfsUtil.loadText(rootProjectManifest).replace("#", ""))
