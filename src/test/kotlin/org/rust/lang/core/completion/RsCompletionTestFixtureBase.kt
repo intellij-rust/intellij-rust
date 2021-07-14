@@ -61,12 +61,16 @@ abstract class RsCompletionTestFixtureBase<IN>(
             checkByText(before, after.trimIndent()) {
                 val items = myFixture.completeBasic()
                     ?: return@checkByText // single completion was inserted
-                val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
+                val lookupItem = items.find { it.lookupString == lookupString } ?: error("Lookup string $lookupString not found")
                 myFixture.lookup.currentItem = lookupItem
                 myFixture.type(completionChar)
             }
         }
-        testmark?.checkHit(action)
+        if (testmark != null) {
+            testmark.checkHit(action)
+        } else {
+            action()
+        }
     }
 
     fun checkNoCompletion(code: IN) {

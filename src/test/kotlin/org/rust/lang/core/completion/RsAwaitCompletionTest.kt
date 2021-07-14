@@ -11,14 +11,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 class RsAwaitCompletionTest : RsCompletionTestBase() {
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (anon)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
+    fun `test postfix await 2015 (anon)`() = checkNotContainsCompletion("await", """
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
         fn foo() -> impl Future<Output=i32> { unimplemented!() }
@@ -28,16 +21,7 @@ class RsAwaitCompletionTest : RsCompletionTestBase() {
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (adt)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
+    fun `test postfix await 2015 (adt)`() = checkNotContainsCompletion("await", """
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
         struct S;
