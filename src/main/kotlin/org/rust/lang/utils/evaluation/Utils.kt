@@ -14,6 +14,6 @@ class PathExprResolver(resolver: (RsPathExpr) -> RsElement?): (RsPathExpr) -> Rs
         val default: PathExprResolver = PathExprResolver { it.path.reference?.resolve() }
 
         fun fromContext(ctx: RsInferenceContext): PathExprResolver =
-            PathExprResolver { ctx.getResolvedPath(it).singleOrNull()?.element }
+            PathExprResolver { ctx.getResolvedPath(it).singleOrNull()?.element ?: default.invoke(it) }
     }
 }
