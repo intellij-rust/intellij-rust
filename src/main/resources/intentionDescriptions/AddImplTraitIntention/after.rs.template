@@ -1,0 +1,10 @@
+trait Trait {
+    fun foo(&self) {}
+}
+struct MyStruct;
+
+impl Trait for MyStruct {
+    fun foo(&self) {
+        todo!()
+    }
+}

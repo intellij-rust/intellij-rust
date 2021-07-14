@@ -918,6 +918,10 @@
             <className>org.rust.ide.intentions.createFromUsage.CreateTupleStructIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.AddImplTraitIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
