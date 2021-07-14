@@ -679,4 +679,39 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             }
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled function`() = checkByText("""
+        mod inner {
+            pub fn func() {}
+        }
+        mod test {
+            use crate::inner;
+            #[cfg(not(intellij_rust))]
+            fn foo1() {}
+            fn foo2() {
+                inner::func();
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled method`() = checkByText("""
+        mod inner {
+            pub fn func() {}
+        }
+        mod test {
+            use crate::inner;
+            struct Struct {}
+            impl Struct {
+                #[cfg(not(intellij_rust))]
+                fn foo1() {}
+                fn foo2() {
+                    inner::func();
+                }
+            }
+        }
+    """)
 }
