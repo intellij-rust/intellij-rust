@@ -61,19 +61,18 @@ import java.util.stream.Collectors
 ])
 class CratesLocalIndexServiceImpl
     : CratesLocalIndexService, PersistentStateComponent<CratesLocalIndexState>, Disposable {
-    private val userCargoIndexDir: Path
-        get() = Paths.get(System.getProperty("user.home"), CARGO_REGISTRY_INDEX_LOCATION)
 
     // TODO: handle RepositoryNotFoundException
     private val repository: Repository = FileRepositoryBuilder()
-        .setGitDir(userCargoIndexDir.toFile())
+        .setGitDir(cargoRegistryIndexPath.toFile())
         .build()
 
     private val registryHeadCommitHash: String
         get() {
             // BACKCOMPAT: Rust 1.49
             // Since 1.50 there should always be CARGO_REGISTRY_INDEX_TAG
-            val objectId = repository.resolve(CARGO_REGISTRY_INDEX_TAG) ?: repository.resolve(CARGO_REGISTRY_INDEX_TAG_PRE_1_50)
+            val objectId = repository.resolve(CARGO_REGISTRY_INDEX_TAG)
+                ?: repository.resolve(CARGO_REGISTRY_INDEX_TAG_PRE_1_50)
 
             return objectId?.name ?: run {
                 LOG.error("Failed to resolve remote branch in the cargo registry index repository")
@@ -332,10 +331,20 @@ class CratesLocalIndexServiceImpl
         private val baseCratesLocalRegistryDir: Path
             get() = RsPathManager.pluginDirInSystem().resolve("crates-local-index")
 
-        // TODO: Determine how path to index is created
-        private const val CARGO_REGISTRY_INDEX_LOCATION: String = ".cargo/registry/index/github.com-1ecc6299db9ec823/.git/"
-        private const val CARGO_REGISTRY_INDEX_TAG_PRE_1_50 = "origin/master"
-        private const val CARGO_REGISTRY_INDEX_TAG = "origin/HEAD"
+        private val cargoHome: String
+            get() = System.getenv("CARGO_HOME")
+                ?: Paths.get(System.getProperty("user.home"), ".cargo/").toString()
+
+        // Currently for crates.io only
+        private val cargoRegistryIndexPath
+            get() = Paths.get(cargoHome, "registry/index/", CRATES_IO_HASH, ".git/")
+
+        // Crates.io index hash is permanent.
+        // See https://github.com/rust-lang/cargo/issues/8572
+        private const val CRATES_IO_HASH = "github.com-1ecc6299db9ec823"
+
+        private const val CARGO_REGISTRY_INDEX_TAG_PRE_1_50: String = "origin/master"
+        private const val CARGO_REGISTRY_INDEX_TAG: String = "origin/HEAD"
         private const val CORRUPTION_MARKER_NAME: String = "corruption.marker"
         private const val INVALID_COMMIT_HASH: String = "<invalid>"
         private const val CRATES_INDEX_VERSION: Int = 0
