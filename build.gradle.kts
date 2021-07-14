@@ -51,7 +51,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.5.20"
-    id("org.jetbrains.intellij") version "1.1.2"
+    id("org.jetbrains.intellij") version "1.1.3"
     id("org.jetbrains.grammarkit") version "2021.1.3"
     id("net.saliman.properties") version "1.5.1"
     id("org.gradle.test-retry") version "1.2.0"
@@ -264,9 +264,7 @@ project(":plugin") {
         implementation(project(":intelliLang"))
         implementation(project(":duplicates"))
         implementation(project(":grazie"))
-        if (platformVersion < 212) {
-            implementation(project(":js"))
-        }
+        implementation(project(":js"))
         implementation(project(":ml-completion"))
     }
 
@@ -515,17 +513,15 @@ project(":grazie") {
     }
 }
 
-if (platformVersion < 212) {
-    project(":js") {
-        intellij {
-            plugins.set(listOf(javaScriptPlugin))
-        }
-        dependencies {
-            implementation(project(":"))
-            implementation(project(":common"))
-            testImplementation(project(":", "testOutput"))
-            testImplementation(project(":common", "testOutput"))
-        }
+project(":js") {
+    intellij {
+        plugins.set(listOf(javaScriptPlugin))
+    }
+    dependencies {
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
