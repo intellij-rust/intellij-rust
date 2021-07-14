@@ -16,4 +16,5 @@ object RsExperiments {
     const val FETCH_ACTUAL_STDLIB_METADATA = "org.rust.cargo.fetch.actual.stdlib.metadata"
     const val CRATES_LOCAL_INDEX = "org.rust.crates.local.index"
     const val WSL_TOOLCHAIN = "org.rust.wsl"
+    const val CALL_HIERARCHY = "org.rust.ide.call.hierarchy"
 }

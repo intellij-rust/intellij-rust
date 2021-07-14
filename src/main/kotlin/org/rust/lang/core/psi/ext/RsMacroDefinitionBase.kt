@@ -8,4 +8,4 @@ package org.rust.lang.core.psi.ext
 /**
  * [org.rust.lang.core.psi.RsMacro] or [org.rust.lang.core.psi.RsMacro2]
  */
-interface RsMacroDefinitionBase : RsElement
+interface RsMacroDefinitionBase : RsElement, RsQualifiedNamedElement

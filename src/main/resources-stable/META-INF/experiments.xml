@@ -24,5 +24,8 @@
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="0">
             <description>Enables crates local index</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.ide.call.hierarchy" percentOfUsers="0">
+            <description>Enables caller and callee hierarchy view</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>
