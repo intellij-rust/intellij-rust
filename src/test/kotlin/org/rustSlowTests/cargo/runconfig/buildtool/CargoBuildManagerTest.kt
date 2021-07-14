@@ -52,7 +52,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -107,7 +107,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -167,7 +167,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -231,7 +231,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -343,7 +343,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -411,7 +411,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -470,7 +470,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -534,7 +534,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -622,7 +622,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "first 0.1.0",
@@ -718,7 +718,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "first 0.1.0",
@@ -819,7 +819,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "first 0.1.0",
@@ -879,7 +879,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
@@ -939,7 +939,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "project 0.1.0",
