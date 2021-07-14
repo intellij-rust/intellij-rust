@@ -42,64 +42,64 @@ const val DEFAULT_RECURSION_LIMIT = 64
 val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
     val list = listOf(
         // Unsigned -> Unsigned
-        U8 to U16,
-        U8 to U32,
-        U8 to U64,
-        U8 to U128,
-        U8 to USize,
-        U16 to U32,
-        U16 to U64,
-        U16 to U128,
-        U32 to U64,
-        U32 to U128,
-        U64 to U128,
+        U8.INSTANCE to U16.INSTANCE,
+        U8.INSTANCE to U32.INSTANCE,
+        U8.INSTANCE to U64.INSTANCE,
+        U8.INSTANCE to U128.INSTANCE,
+        U8.INSTANCE to USize.INSTANCE,
+        U16.INSTANCE to U32.INSTANCE,
+        U16.INSTANCE to U64.INSTANCE,
+        U16.INSTANCE to U128.INSTANCE,
+        U32.INSTANCE to U64.INSTANCE,
+        U32.INSTANCE to U128.INSTANCE,
+        U64.INSTANCE to U128.INSTANCE,
 
         // Signed -> Signed
-        I8 to I16,
-        I8 to I32,
-        I8 to I64,
-        I8 to I128,
-        I8 to ISize,
-        I16 to I32,
-        I16 to I64,
-        I16 to I128,
-        I32 to I64,
-        I32 to I128,
-        I64 to I128,
+        I8.INSTANCE to I16.INSTANCE,
+        I8.INSTANCE to I32.INSTANCE,
+        I8.INSTANCE to I64.INSTANCE,
+        I8.INSTANCE to I128.INSTANCE,
+        I8.INSTANCE to ISize.INSTANCE,
+        I16.INSTANCE to I32.INSTANCE,
+        I16.INSTANCE to I64.INSTANCE,
+        I16.INSTANCE to I128.INSTANCE,
+        I32.INSTANCE to I64.INSTANCE,
+        I32.INSTANCE to I128.INSTANCE,
+        I64.INSTANCE to I128.INSTANCE,
 
         // Unsigned -> Signed
-        U8 to I16,
-        U8 to I32,
-        U8 to I64,
-        U8 to I128,
-        U16 to I32,
-        U16 to I64,
-        U16 to I128,
-        U32 to I64,
-        U32 to I128,
-        U64 to I128,
+        U8.INSTANCE to I16.INSTANCE,
+        U8.INSTANCE to I32.INSTANCE,
+        U8.INSTANCE to I64.INSTANCE,
+        U8.INSTANCE to I128.INSTANCE,
+        U16.INSTANCE to I32.INSTANCE,
+        U16.INSTANCE to I64.INSTANCE,
+        U16.INSTANCE to I128.INSTANCE,
+        U32.INSTANCE to I64.INSTANCE,
+        U32.INSTANCE to I128.INSTANCE,
+        U64.INSTANCE to I128.INSTANCE,
 
         // https://github.com/rust-lang/rust/pull/49305
-        U16 to USize,
-        U8 to ISize,
-        I16 to ISize,
+        U16.INSTANCE to USize.INSTANCE,
+        U8.INSTANCE to ISize.INSTANCE,
+        I16.INSTANCE to ISize.INSTANCE,
 
         // Signed -> Float
-        I8 to F32,
-        I8 to F64,
-        I16 to F32,
-        I16 to F64,
-        I32 to F64,
+        I8.INSTANCE to F32.INSTANCE,
+        I8.INSTANCE to F64.INSTANCE,
+        I16.INSTANCE to F32.INSTANCE,
+        I16.INSTANCE to F64.INSTANCE,
+        I32.INSTANCE to F64.INSTANCE,
 
         // Unsigned -> Float
-        U8 to F32,
-        U8 to F64,
-        U16 to F32,
-        U16 to F64,
-        U32 to F64,
+        U8.INSTANCE to F32.INSTANCE,
+        U8.INSTANCE to F64.INSTANCE,
+        U16.INSTANCE to F32.INSTANCE,
+        U16.INSTANCE to F64.INSTANCE,
+        U32.INSTANCE to F64.INSTANCE,
 
         // Float -> Float
-        F32 to F64
+        F32.INSTANCE to F64.INSTANCE
     )
     val map = mutableMapOf<TyPrimitive, MutableList<TyPrimitive>>()
     for ((from, to) in list) {
@@ -436,12 +436,12 @@ class ImplLookup(
         HARDCODED_FROM_IMPLS_MAP[ty]?.forEach { from ->
             addImpl(items.From, from)
         }
-        if (ty != TyStr) {
+        if (ty !is TyStr) {
             // Default (libcore/default.rs)
             addImpl(items.Default)
 
             // PatrialEq (libcore/cmp.rs)
-            if (ty != TyNever && ty != TyUnit) {
+            if (ty != TyNever && ty !is TyUnit) {
                 addImpl(items.PartialEq, ty)
             }
 
@@ -451,7 +451,7 @@ class ImplLookup(
             }
 
             // PartialOrd (libcore/cmp.rs)
-            if (ty != TyUnit && ty != TyBool && ty != TyNever) {
+            if (ty !is TyUnit && ty !is TyBool && ty != TyNever) {
                 addImpl(items.PartialOrd, ty)
                 // Ord (libcore/cmp.rs)
                 if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
@@ -768,7 +768,7 @@ class ImplLookup(
             is SelectionCandidate.Closure -> {
                 // TODO hacks hacks hacks
                 val (trait, _, assoc) = ref.trait
-                ctx.combineTypes(assoc[fnOnceOutput] ?: TyUnit, (ref.selfTy as TyFunction).retType)
+                ctx.combineTypes(assoc[fnOnceOutput] ?: TyUnit.INSTANCE, (ref.selfTy as TyFunction).retType)
                 Selection(trait, emptyList())
             }
             is SelectionCandidate.TypeParameter -> {
@@ -992,7 +992,7 @@ class ImplLookup(
             val outputParam = fnOnceOutput ?: return null
             val param = element.typeParamSingle ?: return null
             val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-            val outputType = (assoc[outputParam] ?: TyUnit)
+            val outputType = (assoc[outputParam] ?: TyUnit.INSTANCE)
             return TyFunction(argumentTypes, outputType)
         }
 

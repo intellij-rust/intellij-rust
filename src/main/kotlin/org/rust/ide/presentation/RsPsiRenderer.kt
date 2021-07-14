@@ -270,7 +270,7 @@ open class RsPsiRenderer(
                     val arraySizeExpr = type.expr
                     sb.append("; ")
                     if (arraySizeExpr != null) {
-                        appendConstExpr(sb, arraySizeExpr, TyInteger.USize)
+                        appendConstExpr(sb, arraySizeExpr, TyInteger.USize.INSTANCE)
                     } else {
                         sb.append("{}")
                     }

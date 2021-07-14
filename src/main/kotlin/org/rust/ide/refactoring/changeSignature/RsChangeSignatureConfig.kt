@@ -115,7 +115,7 @@ class RsChangeFunctionSignatureConfig private constructor(
     private val originalName: String = function.name.orEmpty()
 
     val returnType: Ty
-        get() = returnTypeDisplay?.type ?: TyUnit
+        get() = returnTypeDisplay?.type ?: TyUnit.INSTANCE
 
     private val parametersText: String
         get() {

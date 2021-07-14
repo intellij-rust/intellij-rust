@@ -145,7 +145,7 @@ class RsExtractFunctionConfig private constructor(
         get() = parameters.mapNotNull { it.type }
 
     private val returnType: Ty
-        get() = returnValue?.type ?: TyUnit
+        get() = returnValue?.type ?: TyUnit.INSTANCE
 
     private fun typeParameterBounds(): Map<Ty, Set<Ty>> =
         function.typeParameters.associate { typeParameter ->

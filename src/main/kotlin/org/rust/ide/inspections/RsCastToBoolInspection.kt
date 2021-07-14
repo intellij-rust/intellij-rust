@@ -21,9 +21,9 @@ class RsCastToBoolInspection : RsLocalInspectionTool() {
             // It is allowed to cast a bool to a bool, so if the expression's type is of bool, ignore this cast.
             // Casts from non primitive types (and the unit type) emit another error, so we ignore those as well.
             val exprType = castExpr.expr.type
-            if (exprType === TyBool || exprType !is TyPrimitive || exprType === TyUnit) return
+            if (exprType is TyBool || exprType !is TyPrimitive || exprType is TyUnit) return
 
-            if (castExpr.typeReference.type === TyBool) {
+            if (castExpr.typeReference.type is TyBool) {
                 RsDiagnostic.CastAsBoolError(castExpr).addToHolder(holder)
             }
         }

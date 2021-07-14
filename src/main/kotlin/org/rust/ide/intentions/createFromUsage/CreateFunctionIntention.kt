@@ -39,7 +39,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                 if (needsTemplate) {
                     return ReturnType(expected, true)
                 }
-                return ReturnType(expected.takeIf { it !is TyUnknown } ?: TyUnit, false)
+                return ReturnType(expected.takeIf { it !is TyUnknown } ?: TyUnit.INSTANCE, false)
             }
         }
     }
@@ -181,7 +181,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             "p$index: ${expr.type.renderInsertionSafe(useAliasNames = true)}"
         }
 
-        val returnType = ctx.returnType.type.takeIf { it != TyUnknown } ?: TyUnit
+        val returnType = ctx.returnType.type.takeIf { it != TyUnknown } ?: TyUnit.INSTANCE
         val genericConstraints = GenericConstraints.create(callExpr)
             .filterByTypes(arguments.exprList.map { it.type }.plus(returnType))
 

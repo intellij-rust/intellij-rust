@@ -62,7 +62,7 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
         override fun superVisitWith(visitor: TypeVisitor): Boolean = false
 
         data class Bool(val value: Boolean) : Value<TyBool>() {
-            override val expectedTy: TyBool = TyBool
+            override val expectedTy: TyBool = TyBool.INSTANCE
             override fun toString(): String = value.toString()
         }
 
@@ -75,7 +75,7 @@ sealed class ConstExpr<T : Ty>(val flags: TypeFlags = 0) : TypeFoldable<ConstExp
         }
 
         data class Char(val value: String) : Value<TyChar>() {
-            override val expectedTy: TyChar = TyChar
+            override val expectedTy: TyChar = TyChar.INSTANCE
             override fun toString(): String = value
         }
 
