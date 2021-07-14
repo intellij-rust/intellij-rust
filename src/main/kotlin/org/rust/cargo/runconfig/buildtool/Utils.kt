@@ -16,6 +16,8 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ui.UIUtil
 import org.rust.cargo.toolchain.CargoCommandLine
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -85,7 +87,10 @@ class MockBuildProgressListener(buildsCount: Int = 1) : BuildProgressListener {
     }
 
     @Throws(InterruptedException::class)
-    fun waitFinished(timeout: Long = 1, unit: TimeUnit = TimeUnit.MINUTES) {
-        latch.await(timeout, unit)
+    fun waitFinished(timeoutMs: Long = 1000) {
+        for (i in 1..timeoutMs / ConcurrencyUtil.DEFAULT_TIMEOUT_MS) {
+            UIUtil.dispatchAllInvocationEvents()
+            if (latch.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) break
+        }
     }
 }
