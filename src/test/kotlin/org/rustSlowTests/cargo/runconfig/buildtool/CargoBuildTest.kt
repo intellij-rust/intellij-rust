@@ -26,8 +26,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
 
     protected lateinit var testBuildViewManager: TestBuildViewManager
 
-    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
-
     override fun setUp() {
         super.setUp()
         testBuildViewManager = TestBuildViewManager(project)
