@@ -10,7 +10,15 @@ import java.lang.annotation.Inherited
 /**
  * Allows setting cargo features for a specific test ([RsTestBase]).
  *
- * Use it like `@MockCargoFeatures("package_name/feature_name")`.
+ * Examples:
+ *
+ * ```
+ * @MockCargoFeatures("foo", "bar")
+ * @MockCargoFeatures("foo=[dep]", "dep")
+ * @MockCargoFeatures("package_name/feature_name")
+ * @MockCargoFeatures("package_name/foo=[package_name/dep]", "package_name/dep")
+ * ```
+ *
  * `package_name` can be omitted. In this case "test-package" assumed.
  *
  * @see RsTestBase.setupMockCfgOptions

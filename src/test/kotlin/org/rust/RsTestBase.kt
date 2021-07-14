@@ -30,7 +30,6 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.FeatureDep
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -127,15 +126,30 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             .flatMap { it.workspace?.packages.orEmpty().asSequence() }
             .associateBy { it.name }
 
-        val packageFeatures = featuresToParse.mapNotNull { feature ->
+        val packageFeatures = featuresToParse.mapNotNull { featureWithDeps ->
+            val i = featureWithDeps.indexOf('=')
+            val feature = if (i == -1) featureWithDeps else featureWithDeps.substring(0, i).trim()
             val (pkgName, featureName) = if ("/" in feature) {
                 feature.split('/', limit = 2)
             } else {
                 listOf("test-package", feature)
             }
             val pkg = packages[pkgName] ?: return@mapNotNull null
+            val packageFeature = PackageFeature(pkg, featureName)
 
-            PackageFeature(pkg, featureName) to emptyList<FeatureDep>()
+            val deps = if (i == -1) {
+                emptyList()
+            } else {
+                featureWithDeps.substring(i + 1, featureWithDeps.length)
+                    .trim()
+                    .removePrefix("[")
+                    .removeSuffix("]")
+                    .trim()
+                    .split(',')
+                    .map { it.trim() }
+            }
+
+            packageFeature to deps
         }.toMap()
 
         testCargoProjects.setCargoFeatures(packageFeatures, testRootDisposable)
