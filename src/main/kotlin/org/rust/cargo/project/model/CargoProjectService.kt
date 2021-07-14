@@ -51,6 +51,7 @@ interface CargoProjectsService {
      * @param manifest a path to `Cargo.toml` file of the project that should be attached
      */
     fun attachCargoProject(manifest: Path): Boolean
+    fun attachCargoProjects(vararg manifests: Path)
     fun detachCargoProject(cargoProject: CargoProject)
     fun refreshAllProjects(): CompletableFuture<out List<CargoProject>>
     fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>>

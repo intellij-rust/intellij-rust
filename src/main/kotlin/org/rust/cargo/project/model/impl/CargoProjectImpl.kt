@@ -191,6 +191,18 @@ open class CargoProjectsServiceImpl(
         return true
     }
 
+    override fun attachCargoProjects(vararg manifests: Path) {
+        val manifests2 = manifests.filter { !isExistingProject(allProjects, it) }
+        if (manifests2.isEmpty()) return
+        modifyProjects { projects ->
+            val newManifests3 = manifests2.filter { !isExistingProject(projects, it) }
+            if (newManifests3.isEmpty())
+                CompletableFuture.completedFuture(projects)
+            else
+                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this) })
+        }
+    }
+
     override fun detachCargoProject(cargoProject: CargoProject) {
         modifyProjects { projects ->
             CompletableFuture.completedFuture(projects.filter { it.manifest != cargoProject.manifest })
