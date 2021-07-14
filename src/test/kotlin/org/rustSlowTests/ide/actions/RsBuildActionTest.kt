@@ -88,7 +88,7 @@ class RsBuildActionTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "first 0.1.0",
@@ -165,7 +165,7 @@ class RsBuildActionTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "second 0.1.0",
@@ -244,7 +244,7 @@ class RsBuildActionTest : CargoBuildTest() {
         checkEvents(
             MyStartBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
+                buildTitle = "Run Cargo Command"
             ),
             MyStartEvent(
                 id = "first 0.1.0",

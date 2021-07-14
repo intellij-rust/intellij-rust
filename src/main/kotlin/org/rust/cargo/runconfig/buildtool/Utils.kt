@@ -87,7 +87,7 @@ class MockBuildProgressListener(buildsCount: Int = 1) : BuildProgressListener {
     }
 
     @Throws(InterruptedException::class)
-    fun waitFinished(timeoutMs: Long = 1000) {
+    fun waitFinished(timeoutMs: Long = 5000) {
         for (i in 1..timeoutMs / ConcurrencyUtil.DEFAULT_TIMEOUT_MS) {
             UIUtil.dispatchAllInvocationEvents()
             if (latch.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) break
