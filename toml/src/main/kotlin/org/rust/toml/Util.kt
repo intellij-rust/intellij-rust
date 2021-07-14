@@ -146,7 +146,7 @@ fun PsiElement.findCargoPackageForCargoToml(): CargoWorkspace.Package? {
     return containingFile.findCargoPackage()?.takeIf { it.getPackageTomlFile(containingFile.project) == containingFile }
 }
 
-private fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String): CargoWorkspace.Package? =
+fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String): CargoWorkspace.Package? =
     dependencies.find { it.cargoFeatureDependencyPackageName == pkgName }?.pkg
 
 fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
