@@ -21,11 +21,16 @@ import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.StubbedSpine
+import com.intellij.util.io.IOUtil
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.macros.decl.DeclMacroExpander
+import org.rust.lang.core.macros.errors.EMIGetExpansionError
+import org.rust.lang.core.macros.errors.ExpansionPipelineError
+import org.rust.lang.core.macros.errors.readExpansionPipelineError
+import org.rust.lang.core.macros.errors.writeExpansionPipelineError
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
@@ -35,9 +40,9 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
 import org.rust.stdext.*
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.IOException
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
+import java.io.*
 import java.lang.ref.WeakReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -127,10 +132,7 @@ class ExpandedMacroStorage(val project: Project) {
         oldInfo: ExpandedMacroInfo,
         callHash: HashCode?,
         defHash: HashCode?,
-        mixHash: HashCode?,
-        expansionFile: VirtualFile?,
-        ranges: RangeMap?,
-        expansionTextHash: Long
+        result: RsResult<Stage3Ok<VirtualFile>, ExpansionPipelineError>
     ): ExpandedMacroInfoImpl {
         checkWriteAccessAllowed()
         _modificationTracker.incModificationCount()
@@ -140,31 +142,28 @@ class ExpandedMacroStorage(val project: Project) {
         val sourceFile = oldInfo.sourceFile
         val newInfo = ExpandedMacroInfoImpl(
             sourceFile,
-            expansionFile,
+            result.ok()?.expansionFile,
             defHash,
             callHash,
-            expansionTextHash,
+            result.err(),
+            result.ok()?.expansionBytesHash ?: 0,
             oldInfo.macroCallStubIndex,
             oldInfo.macroCallStrongRef
         )
 
         sourceFile.replaceInfo(oldInfo, newInfo)
 
-        if (oldInfo.expansionFile != newInfo.expansionFile && oldInfo.fileId > 0) {
+        if (oldInfo.expansionResult != newInfo.expansionResult && oldInfo.fileId > 0) {
             expandedFileToInfo.remove(oldInfo.fileId)
         }
         if (newInfo.fileId > 0) {
             expandedFileToInfo.put(newInfo.fileId, newInfo)
         }
 
-        newInfo.expansionFile?.let { getOrCreateSourceFile(it) }
-
-        if (newInfo.expansionFile != null && ranges != null) {
-            newInfo.expansionFile.writeRangeMap(ranges)
-        }
-
-        if (newInfo.expansionFile != null && mixHash != null) {
-            newInfo.expansionFile.writeMixHash(mixHash)
+        if (result is Ok) {
+            getOrCreateSourceFile(result.ok.expansionFile)
+            result.ok.expansionFile.writeRangeMap(result.ok.ranges)
+            result.ok.expansionFile.writeMixHash(result.ok.mixHash)
         }
 
         return newInfo
@@ -237,7 +236,7 @@ class ExpandedMacroStorage(val project: Project) {
     }
 }
 
-private const val STORAGE_VERSION = 12
+private const val STORAGE_VERSION = 13
 private const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
 class SerializedExpandedMacroStorage private constructor(
@@ -669,7 +668,14 @@ class SourceFile(
             val infos = infos // No synchronization needed in the write action
             for (call in newMacroCalls) {
                 if (call.isTopLevelExpansion && infos.none { it.macroCallStrongRef == call }) {
-                    infos += ExpandedMacroInfoImpl(this, null, null, null, macroCallStrongRef = call)
+                    infos += ExpandedMacroInfoImpl(
+                        this,
+                        expansionFile = null,
+                        defHash = null,
+                        callHash = null,
+                        expansionError = ExpansionPipelineError.NotYetExpanded,
+                        macroCallStrongRef = call
+                    )
                 }
             }
         } else if (refKind != RefKind.FRESH) {
@@ -831,24 +837,27 @@ private tailrec fun SourceFile.findRootSourceFile(): SourceFile {
 
 interface ExpandedMacroInfo {
     val sourceFile: SourceFile
-    val expansionFile: VirtualFile?
+    val expansionResult: RsResult<VirtualFile, ExpansionPipelineError>
     val expansionFileHash: Long
     fun getMacroCall(): RsPossibleMacroCall?
     fun isUpToDate(call: RsPossibleMacroCall, def: RsMacroDataWithHash<*>?): Boolean
-    fun getExpansion(): MacroExpansion?
+    fun getExpansion(): RsResult<MacroExpansion, EMIGetExpansionError>
 }
 
 class ExpandedMacroInfoImpl(
     override val sourceFile: SourceFile,
-    override val expansionFile: VirtualFile?,
+    private val expansionFile: VirtualFile?,
     private val defHash: HashCode?,
     val callHash: HashCode?,
+    private val expansionError: ExpansionPipelineError?,
     override val expansionFileHash: Long = 0,
     var macroCallStubIndex: Int = -1,
     var macroCallStrongRef: RsPossibleMacroCall? = null
 ) : ExpandedMacroInfo {
-    private val expansionFileUrl: String? get() = expansionFile?.url
     val fileId: Int get() = expansionFile?.fileId ?: -1
+
+    override val expansionResult: RsResult<VirtualFile, ExpansionPipelineError>
+        get() = expansionFile.toResult().mapErr { expansionError!! }
 
     override fun getMacroCall(): RsPossibleMacroCall? =
         sourceFile.getCallForInfo(this)
@@ -856,16 +865,20 @@ class ExpandedMacroInfoImpl(
     override fun isUpToDate(call: RsPossibleMacroCall, def: RsMacroDataWithHash<*>?): Boolean =
         callHash == call.bodyHash && def?.bodyHash == defHash
 
-    override fun getExpansion(): MacroExpansion? {
+    override fun getExpansion(): RsResult<MacroExpansion, EMIGetExpansionError> {
         checkReadAccessAllowed()
-        val psi = getExpansionPsi() ?: return null // expanded erroneous
-        return getExpansionFromExpandedFile(MacroExpansionContext.ITEM, psi)
+        return getExpansionPsi().map { psi ->
+            getExpansionFromExpandedFile(MacroExpansionContext.ITEM, psi)!!
+        }
     }
 
-    private fun getExpansionPsi(): RsFile? {
-        val expansionFile = expansionFile?.takeIf { it.isValid } ?: return null
-        testAssert { expansionFile.fileType == RsFileType }
-        return expansionFile.toPsiFile(sourceFile.project) as? RsFile
+    private fun getExpansionPsi(): RsResult<RsFile, EMIGetExpansionError> {
+        return expansionResult.andThen {
+            if (!it.isValid) return@andThen Err(EMIGetExpansionError.InvalidExpansionFile)
+            testAssert { it.fileType == RsFileType }
+            val psi = it.toPsiFile(sourceFile.project) as? RsFile
+            return if (psi != null) Ok(psi) else Err(EMIGetExpansionError.InvalidExpansionFile)
+        }
     }
 
     fun makePipeline(call: RsPossibleMacroCall?): Pipeline.Stage1ResolveAndExpand {
@@ -881,7 +894,7 @@ class ExpandedMacroInfoImpl(
 
     fun writeTo(data: DataOutputStream) {
         data.apply {
-            writeUTFNullable(expansionFileUrl)
+            writeRsResult(expansionResult.map { it.url }, IOUtil::writeUTF, DataOutput::writeExpansionPipelineError)
             writeHashCodeNullable(defHash)
             writeHashCodeNullable(callHash)
             writeLong(expansionFileHash)
@@ -891,28 +904,27 @@ class ExpandedMacroInfoImpl(
 
     companion object {
         fun newStubLinked(sf: SourceFile, call: RsPossibleMacroCall): ExpandedMacroInfoImpl =
-            ExpandedMacroInfoImpl(sf, null, null, call.bodyHash, macroCallStubIndex = call.calcStubIndex())
+            ExpandedMacroInfoImpl(sf, null, null, call.bodyHash, ExpansionPipelineError.NotYetExpanded, macroCallStubIndex = call.calcStubIndex())
     }
 }
 
 private data class SerializedExpandedMacroInfo(
-    val expansionFileUrl: String?,
+    val expansionFileUrl: RsResult<String, ExpansionPipelineError>,
     val callHash: HashCode?,
     val defHash: HashCode?,
     val expansionFileHash: Long,
     val stubIndex: Int
 ) {
     fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfoImpl? {
-        val file = if (expansionFileUrl != null) {
-            VirtualFileManager.getInstance().findFileByUrl(expansionFileUrl) ?: return null
-        } else {
-            null
+        val file = expansionFileUrl.map {
+            VirtualFileManager.getInstance().findFileByUrl(it) ?: return null
         }
         return ExpandedMacroInfoImpl(
             sourceFile,
-            file,
+            file.ok(),
             callHash,
             defHash,
+            file.err(),
             expansionFileHash,
             stubIndex
         )
@@ -921,30 +933,13 @@ private data class SerializedExpandedMacroInfo(
     companion object {
         fun readFrom(data: DataInputStream): SerializedExpandedMacroInfo {
             return SerializedExpandedMacroInfo(
-                data.readUTFNullable(),
+                data.readRsResult(IOUtil::readUTF, DataInput::readExpansionPipelineError),
                 data.readHashCodeNullable(),
                 data.readHashCodeNullable(),
                 data.readLong(),
                 data.readInt()
             )
         }
-    }
-}
-
-private fun DataOutputStream.writeUTFNullable(str: String?) {
-    if (str == null) {
-        writeBoolean(false)
-    } else {
-        writeBoolean(true)
-        writeUTF(str)
-    }
-}
-
-private fun DataInputStream.readUTFNullable(): String? {
-    return if (readBoolean()) {
-        readUTF()
-    } else {
-        null
     }
 }
 

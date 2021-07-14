@@ -47,6 +47,10 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.macros.errors.ExpansionPipelineError
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
+import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
+import org.rust.lang.core.macros.errors.toExpansionPipelineError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
@@ -55,6 +59,7 @@ import org.rust.lang.core.resolve2.defMapService
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.openapiext.*
 import org.rust.stdext.*
+import org.rust.stdext.RsResult.Err
 import org.rust.taskQueue
 import java.io.IOException
 import java.nio.file.Files
@@ -66,9 +71,11 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
+typealias MacroExpansionCachedResult = CachedValueProvider.Result<RsResult<MacroExpansion, GetMacroExpansionError>>
+
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
-    fun getExpansionFor(call: RsPossibleMacroCall): CachedValueProvider.Result<MacroExpansion?>
+    fun getExpansionFor(call: RsPossibleMacroCall): MacroExpansionCachedResult
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall?
     /** Optimized equivalent for `getExpandedFrom(element)?.context` */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement?
@@ -207,21 +214,25 @@ class MacroExpansionManagerImpl(
     override val indexableDirectory: VirtualFile?
         get() = inner?.expansionsDirVi
 
-    override fun getExpansionFor(call: RsPossibleMacroCall): CachedValueProvider.Result<MacroExpansion?> {
+    override fun getExpansionFor(call: RsPossibleMacroCall): MacroExpansionCachedResult {
         val impl = inner
         return when {
             call is RsMacroCall && call.macroName == "include" -> expandIncludeMacroCall(call)
             impl != null -> impl.getExpansionFor(call)
             isUnitTestMode && call is RsMacroCall -> expandMacroOld(call)
-            else -> CachedValueProvider.Result.create(null, project.rustStructureModificationTracker)
+            else -> CachedValueProvider.Result.create(
+                Err(GetMacroExpansionError.MacroExpansionEngineIsNotReady),
+                project.rustStructureModificationTracker
+            )
         }
     }
 
-    private fun expandIncludeMacroCall(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
-        val expansion = run {
-            val includingFile = call.findIncludingFile() ?: return@run null
+    private fun expandIncludeMacroCall(call: RsMacroCall): MacroExpansionCachedResult {
+        val expansion: RsResult<MacroExpansion, GetMacroExpansionError> = run {
+            val includingFile = call.findIncludingFile()
+                ?: return@run Err(GetMacroExpansionError.IncludingFileNotFound)
             val items = includingFile.stubChildrenOfType<RsExpandedElement>()
-            MacroExpansion.Items(includingFile, items)
+            RsResult.Ok(MacroExpansion.Items(includingFile, items))
         }
         return CachedValueProvider.Result.create(expansion, call.rustStructureOrAnyPsiModificationTracker)
     }
@@ -609,8 +620,8 @@ private class MacroExpansionServiceImplInner(
                 val toRemove = mutableListOf<ExpandedMacroInfo>()
                 runReadAction {
                     storage.processExpandedMacroInfos { info ->
-                        val expansionFile = info.expansionFile
-                        if (expansionFile != null && !expansionFile.isValid) {
+                        val expansionResult = info.expansionResult
+                        if (expansionResult is RsResult.Ok && !expansionResult.ok.isValid) {
                             toRemove.add(info)
                         }
                     }
@@ -889,29 +900,34 @@ private class MacroExpansionServiceImplInner(
         return false
     }
 
-    fun getExpansionFor(call: RsPossibleMacroCall): CachedValueProvider.Result<MacroExpansion?> {
+    fun getExpansionFor(call: RsPossibleMacroCall): MacroExpansionCachedResult {
         val expansionState = expansionState
 
+        if (expansionMode == MacroExpansionMode.DISABLED) {
+            return everChanged(Err(GetMacroExpansionError.MacroExpansionIsDisabled))
+        }
+
         if (expansionMode == MacroExpansionMode.OLD) {
-            if (expansionState != null) return nullResult()
-            if (call !is RsMacroCall) return nullResult()
+            if (expansionState != null) return everChanged(Err(GetMacroExpansionError.MemExpDuringMacroExpansion))
+            if (call !is RsMacroCall) return everChanged(Err(GetMacroExpansionError.MemExpAttrMacro))
             return expandMacroOld(call)
         }
 
         val containingFile: VirtualFile? = call.containingFile.virtualFile
 
         if (!call.isTopLevelExpansion || containingFile?.fileSystem?.isSupportedFs != true) {
-            if (expansionState != null) return nullResult()
-            if (call !is RsMacroCall) return nullResult()
+            if (expansionState != null) return everChanged(Err(GetMacroExpansionError.MemExpDuringMacroExpansion))
+            if (call !is RsMacroCall) return everChanged(Err(GetMacroExpansionError.MemExpAttrMacro))
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
         // Forbid accessing expansions of next steps
         if (expansionState != null && !expansionState.expandedSearchScope.contains(containingFile)) {
-            return nullResult()
+            return everChanged(Err(GetMacroExpansionError.NextStepMacroAccess))
         }
 
-        val expansion = storage.getInfoForCall(call)?.getExpansion()
+        val expansion = storage.getInfoForCall(call).toResult().mapErr { GetMacroExpansionError.ExpandedInfoNotFound }
+            .andThen { it.getExpansion() }
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, storage.modificationTracker, call.modificationTracker)
         } else {
@@ -919,8 +935,8 @@ private class MacroExpansionServiceImplInner(
         }
     }
 
-    private fun nullResult(): CachedValueProvider.Result<MacroExpansion?> =
-        CachedValueProvider.Result.create(null, ModificationTracker.EVER_CHANGED)
+    private fun <T> everChanged(result: T): CachedValueProvider.Result<T> =
+        CachedValueProvider.Result.create(result, ModificationTracker.EVER_CHANGED)
 
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall? {
         checkReadAccessAllowed()
@@ -1035,10 +1051,10 @@ class MacroExpansionManagerWaker : CargoProjectsListener {
     }
 }
 
-private fun expandMacroOld(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
+private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
     // Most of std macros contain the only `impl`s which are not supported for now, so ignoring them
     if (call.containingCrate?.origin == PackageOrigin.STDLIB) {
-        return nullExpansionResult(call)
+        return memExpansionResult(call, Err(GetMacroExpansionError.OldEngineStd))
     }
     return expandMacroToMemoryFile(
         call,
@@ -1047,9 +1063,9 @@ private fun expandMacroOld(call: RsMacroCall): CachedValueProvider.Result<MacroE
     )
 }
 
-private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): CachedValueProvider.Result<MacroExpansion?> {
-    val context = call.context as? RsElement ?: return nullExpansionResult(call)
-    val def = call.resolveToMacroWithoutPsi() ?: return nullExpansionResult(call)
+private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
+    val def = call.resolveToMacroWithoutPsi()
+        .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionPipelineError())) }
     val defData = def.data
     val project = call.project
     val result = FunctionLikeMacroExpander.new(project).expandMacro(
@@ -1057,21 +1073,34 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
         call,
         RsPsiFactory(project, markGenerated = false),
         storeRangeMap
-    ).ok()
-    result?.elements?.forEach {
-        it.setContext(context)
-        it.setExpandedFrom(call)
+    ).map { expansion ->
+        expansion.elements.forEach {
+            it.setExpandedFrom(call)
+            val context = call.context as? RsElement
+            if (context != null) {
+                it.setContext(context)
+            }
+        }
+        expansion
+    }.mapErr {
+        when (it) {
+            MacroExpansionAndParsingError.MacroCallSyntaxError -> ExpansionPipelineError.MacroCallSyntax
+            is MacroExpansionAndParsingError.ParsingError -> GetMacroExpansionError.MemExpParsingError(
+                it.expansionText,
+                it.context
+            )
+            is MacroExpansionAndParsingError.ExpansionError -> ExpansionPipelineError.ExpansionError(it.error)
+        }
     }
 
-    return CachedValueProvider.Result.create(
-        result,
-        call.rustStructureOrAnyPsiModificationTracker,
-        call.modificationTracker
-    )
+    return memExpansionResult(call, result)
 }
 
-private fun nullExpansionResult(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> =
-    CachedValueProvider.Result.create(null, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
+private fun memExpansionResult(
+    call: RsMacroCall,
+    result: RsResult<MacroExpansion, GetMacroExpansionError>
+): MacroExpansionCachedResult =
+    CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
 
 private val RS_EXPANSION_MACRO_CALL = Key.create<RsMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 

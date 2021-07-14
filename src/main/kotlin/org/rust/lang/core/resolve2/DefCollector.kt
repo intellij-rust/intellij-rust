@@ -287,7 +287,7 @@ class DefCollector(
     private fun tryExpandMacroCall(call: MacroCallInfo): Boolean {
         val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
             ?: return false
-        val defData = RsMacroDataWithHash.fromDefInfo(def)
+        val defData = RsMacroDataWithHash.fromDefInfo(def).ok()
             ?: return false
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val (expandedFile, expansion) =

@@ -10,14 +10,17 @@ import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.macroBody
 
 class RsMacroCallData(
-    val macroBody: String?,
+    val macroBody: String,
     val packageEnv: Map<String, String>
 ) {
 
     companion object {
-        fun fromPsi(call: RsPossibleMacroCall): RsMacroCallData = RsMacroCallData(
-            call.macroBody,
-            call.containingCargoPackage?.env.orEmpty()
-        )
+        fun fromPsi(call: RsPossibleMacroCall): RsMacroCallData? {
+            val macroBody = call.macroBody ?: return null
+            return RsMacroCallData(
+                macroBody,
+                call.containingCargoPackage?.env.orEmpty()
+            )
+        }
     }
 }

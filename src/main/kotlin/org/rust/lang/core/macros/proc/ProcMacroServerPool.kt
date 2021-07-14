@@ -7,6 +7,7 @@ package org.rust.lang.core.macros.proc
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.io.JsonEOFException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
@@ -17,7 +18,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.rust.lang.core.macros.MACRO_LOG
 import org.rust.lang.core.macros.tt.TokenTree
@@ -46,10 +47,10 @@ class ProcMacroServerPool private constructor(
     }
 
     @Throws(ProcessCreationException::class, IOException::class, TimeoutException::class)
-    fun send(request: Request): Response {
+    fun send(request: Request, timeout: Long): Response {
         val io = pool.alloc() // Throws ProcessCreationException
         return try {
-            io.send(request) // Throws IOException, TimeoutException
+            io.send(request, timeout) // Throws IOException, TimeoutException
         } finally {
             pool.free(io)
         }
@@ -161,10 +162,7 @@ private class Pool(
  * [ProcMacroServerProcess] is responsible for communicating with proc macro expander [process] and
  * manages its lifecycle.
  */
-private class ProcMacroServerProcess private constructor(
-    private val process: Process,
-    private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
-) : Runnable, Disposable {
+private class ProcMacroServerProcess private constructor(private val process: Process) : Runnable, Disposable {
     private val stdout: BufferedReader = BufferedReader(InputStreamReader(process.inputStream, Charsets.UTF_8))
     private val stdin: Writer = OutputStreamWriter(process.outputStream, Charsets.UTF_8)
 
@@ -179,7 +177,7 @@ private class ProcMacroServerProcess private constructor(
     private var isDisposed: Boolean = false
 
     @Throws(IOException::class, TimeoutException::class)
-    fun send(request: Request): Response {
+    fun send(request: Request, timeout: Long): Response {
         if (!lock.tryLock()) error("`send` must not be called from multiple threads simultaneously")
         return try {
             if (!process.isAlive) throw IOException("The process has been killed")
@@ -189,7 +187,7 @@ private class ProcMacroServerProcess private constructor(
             }
 
             try {
-                // throws TimeoutException, ExecutionException, InterruptedException
+                // throws TimeoutException, ExecutionException(cause = IOException), InterruptedException
                 responseFuture.getWithCheckCanceled(timeout)
             } catch (e: ExecutionException) {
                 // Unwrap exceptions from `writeAndRead` method
@@ -199,7 +197,7 @@ private class ProcMacroServerProcess private constructor(
                 throw ProcessCanceledException(e)
             }
         } catch (t: Throwable) {
-            Disposer.dispose(this)
+            Disposer.dispose(this) // Kill the process (if not yet)
             throw t
         } finally {
             lastUsed = System.currentTimeMillis()
@@ -224,7 +222,16 @@ private class ProcMacroServerProcess private constructor(
                 val response = try {
                     writeAndRead(request)
                 } catch (e: Throwable) {
-                    responder.completeExceptionally(e)
+                    // `EOFException` is likely means that the process has been exited; let's try to wait for
+                    // an exit code. Using a longer timeout for tests in order to avoid flaky tests
+                    val isEOF = e is EOFException || e is JsonEOFException // Reading exceptions
+                        || e is IOException && e.message == "Stream Closed" // Writing exceptions
+                    val e2 = if (isEOF && process.waitFor(if (isUnitTestMode) 2000L else 100L, TimeUnit.MILLISECONDS)) {
+                        ProcessAbortedException(e, process.exitValue())
+                    } else {
+                        e
+                    }
+                    responder.completeExceptionally(e2)
                     return
                 }
                 responder.complete(response)

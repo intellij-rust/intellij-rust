@@ -19,7 +19,9 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.SmartList
 import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.MacroMatchingError.*
+import org.rust.lang.core.macros.errors.DeclMacroExpansionError
+import org.rust.lang.core.macros.errors.MacroMatchingError
+import org.rust.lang.core.macros.errors.MacroMatchingError.*
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import org.rust.lang.core.psi.*
@@ -27,11 +29,9 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.fragmentSpecifier
 import org.rust.openapiext.forEachChild
-import org.rust.stdext.RsResult
-import org.rust.stdext.RsResult.*
-import org.rust.stdext.mapNotNullToSet
-import org.rust.stdext.removeLast
-import java.util.*
+import org.rust.stdext.*
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import java.util.Collections.singletonMap
 
 /**
@@ -147,7 +147,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
         def: RsDeclMacroData,
         call: RsMacroCallData
     ): RsResult<MatchedPattern, DeclMacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(DeclMacroExpansionError.DefSyntax)
+        val macroCallBodyText = call.macroBody
         val (macroCallBody, ranges) = project
             .createAdaptedRustPsiBuilder(macroCallBodyText)
             .lowerDocCommentsToAdaptedPsiBuilder(project)
@@ -272,7 +272,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     private fun checkRanges(call: RsMacroCallData, expandedText: CharSequence, ranges: RangeMap) {
         if (!isUnitTestMode) return
-        val callBody = call.macroBody ?: return
+        val callBody = call.macroBody
 
         for (range in ranges.ranges) {
             val callBodyFragment = callBody.subSequence(range.srcOffset, range.srcEndOffset)
@@ -346,7 +346,7 @@ class MacroPattern private constructor(
         return matchPartial(macroCallBody).andThen { result ->
             if (!macroCallBody.eof()) {
                 MacroExpansionMarks.failMatchPatternByExtraInput.hit()
-                Err(ExtraInput(macroCallBody))
+                err(::ExtraInput, macroCallBody)
             } else {
                 Ok(result)
             }
@@ -363,15 +363,15 @@ class MacroPattern private constructor(
             when (node.elementType) {
                 MACRO_BINDING -> {
                     val psi = node.psi as RsMacroBinding
-                    val name = psi.metaVarIdentifier.text ?: return Err(PatternSyntax(macroCallBody))
-                    val fragmentSpecifier = psi.fragmentSpecifier ?: return Err(PatternSyntax(macroCallBody))
-                    val kind = FragmentKind.fromString(fragmentSpecifier) ?: return Err(PatternSyntax(macroCallBody))
+                    val name = psi.metaVarIdentifier.text ?: return err(::PatternSyntax, macroCallBody)
+                    val fragmentSpecifier = psi.fragmentSpecifier ?: return err(::PatternSyntax, macroCallBody)
+                    val kind = FragmentKind.fromString(fragmentSpecifier) ?: return err(::PatternSyntax, macroCallBody)
 
                     val lastOffset = macroCallBody.currentOffset
                     val parsed = kind.parse(macroCallBody)
                     if (!parsed || (lastOffset == macroCallBody.currentOffset && kind != FragmentKind.Vis)) {
                         MacroExpansionMarks.failMatchPatternByBindingType.hit()
-                        return Err(FragmentNotParsed(macroCallBody, kind))
+                        return err(::FragmentIsNotParsed, macroCallBody, name, kind)
                     }
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
                     val elementType = macroCallBody.latestDoneMarker?.tokenType
@@ -383,7 +383,7 @@ class MacroPattern private constructor(
                     nesteds.forEachIndexed { i, nested ->
                         for ((key, value) in nested.variables) {
                             val it = map.getOrPut(key) { MetaVarValue.Group() } as? MetaVarValue.Group
-                                ?: return Err(Nesting(macroCallBody, key))
+                                ?: return err(::Nesting, macroCallBody, key)
                             while (it.nested.size < i) {
                                 it.nested += MetaVarValue.Group()
                             }
@@ -400,7 +400,21 @@ class MacroPattern private constructor(
                 else -> {
                     if (!macroCallBody.isSameToken(node)) {
                         MacroExpansionMarks.failMatchPatternByToken.hit()
-                        return Err(UnmatchedToken(macroCallBody, node))
+                        val actualToken = macroCallBody.tokenType?.toString()
+                        val actualTokenText = macroCallBody.tokenText
+                        return if (actualToken != null && actualTokenText != null) {
+                            Err(
+                                UnmatchedToken(
+                                    macroCallBody.currentOffset,
+                                    node.elementType.toString(),
+                                    node.text,
+                                    actualToken,
+                                    actualTokenText
+                                )
+                            )
+                        } else {
+                            err(::EndOfInput, macroCallBody)
+                        }
                     }
                 }
             }
@@ -410,8 +424,8 @@ class MacroPattern private constructor(
 
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): GroupMatchingResult {
         val groups = mutableListOf<MacroSubstitution>()
-        val pattern = valueOf(group.macroPatternContents ?: return Err(PatternSyntax(macroCallBody)))
-        if (pattern.isEmpty()) return Err(PatternSyntax(macroCallBody))
+        val pattern = valueOf(group.macroPatternContents ?: return err(::PatternSyntax, macroCallBody))
+        if (pattern.isEmpty()) return err(::PatternSyntax, macroCallBody)
         val separator = group.macroBindingGroupSeparator?.node?.firstChildNode
         macroCallBody.eof() // skip whitespace
         var mark: PsiBuilder.Marker? = macroCallBody.mark()
@@ -428,7 +442,7 @@ class MacroPattern private constructor(
             if (result is Ok) {
                 if (macroCallBody.currentOffset == lastOffset) {
                     MacroExpansionMarks.groupMatchedEmptyTT.hit()
-                    return Err(EmptyGroup(macroCallBody))
+                    return err(::EmptyGroup, macroCallBody)
                 }
                 groups += result.ok
             } else {
@@ -463,10 +477,34 @@ class MacroPattern private constructor(
         val isExpectedAtLeastOne = group.plus != null
         if (isExpectedAtLeastOne && groups.isEmpty()) {
             MacroExpansionMarks.failMatchGroupTooFewElements.hit()
-            return Err(TooFewGroupElements(macroCallBody))
+            return err(::TooFewGroupElements, macroCallBody)
         }
 
         return Ok(groups)
+    }
+
+    private fun <E> err(
+        ctor: (offsetInCallBody: Int) -> E,
+        macroCallBody: PsiBuilder
+    ): Err<E> {
+        return Err(ctor(macroCallBody.currentOffset))
+    }
+
+    private fun <E, P1> err(
+        ctor: (offsetInCallBody: Int, P1) -> E,
+        macroCallBody: PsiBuilder,
+        p1: P1
+    ): Err<E> {
+        return Err(ctor(macroCallBody.currentOffset, p1))
+    }
+
+    private fun <E, P1, P2> err(
+        ctor: (offsetInCallBody: Int, P1, P2) -> E,
+        macroCallBody: PsiBuilder,
+        p1: P1,
+        p2: P2
+    ): Err<E> {
+        return Err(ctor(macroCallBody.currentOffset, p1, p2))
     }
 
     companion object {

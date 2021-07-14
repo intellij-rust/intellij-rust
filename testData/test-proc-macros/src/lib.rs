@@ -1,4 +1,5 @@
 extern crate proc_macro;
+
 use proc_macro::TokenStream;
 
 #[proc_macro]
@@ -46,6 +47,13 @@ pub fn function_like_process_exit(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn function_like_process_abort(input: TokenStream) -> TokenStream {
     std::process::abort()
+}
+
+// This also simulates the process killing during writing of an answer
+#[proc_macro]
+pub fn function_like_do_brace_println_and_process_exit(input: TokenStream) -> TokenStream {
+    println!("{{");
+    std::process::exit(101)
 }
 
 #[proc_macro_derive(DeriveImplForFoo)]
