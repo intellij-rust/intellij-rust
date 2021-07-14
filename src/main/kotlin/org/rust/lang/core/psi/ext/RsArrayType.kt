@@ -13,4 +13,4 @@ import org.rust.lang.utils.evaluation.evaluate
 
 val RsArrayType.isSlice: Boolean get() = (greenStub as? RsArrayTypeStub)?.isSlice ?: (expr == null)
 
-val RsArrayType.arraySize: Long? get() = expr?.evaluate(TyInteger.USize)?.asLong()
+val RsArrayType.arraySize: Long? get() = expr?.evaluate(TyInteger.USize.INSTANCE)?.asLong()

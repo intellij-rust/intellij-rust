@@ -434,7 +434,7 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
 }
 
 // i32 is allowed because of integers without a specific type
-private val ALLOWED_SPECIFIERS_TYPES = setOf(TyInteger.USize, TyInteger.I32)
+private val ALLOWED_SPECIFIERS_TYPES = setOf(TyInteger.USize.INSTANCE, TyInteger.I32.INSTANCE)
 
 private fun checkSpecifierType(argument: RsFormatMacroArg, parameter: FormatParameter.Specifier): ErrorAnnotation? {
     val expr = argument.expr

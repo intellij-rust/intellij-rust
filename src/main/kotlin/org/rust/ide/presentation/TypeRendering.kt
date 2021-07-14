@@ -106,6 +106,18 @@ private data class TypeRenderer(
         require(level >= 0)
 
         if (ty == TyUnknown) return unknown
+
+        if (level == 0) return "…"
+
+        val render = { subTy: Ty ->
+            render(subTy, level - 1)
+        }
+
+        val aliasedBy = ty.aliasedBy
+        if (useAliasNames && aliasedBy != null) {
+            return formatBoundElement(aliasedBy, render)
+        }
+
         if (ty is TyPrimitive) {
             return when (ty) {
                 is TyBool -> "bool"
@@ -117,12 +129,6 @@ private data class TypeRenderer(
                 is TyFloat -> ty.name
                 else -> error("unreachable")
             }
-        }
-
-        if (level == 0) return "…"
-
-        val render = { subTy: Ty ->
-            render(subTy, level - 1)
         }
 
         return when (ty) {
@@ -164,12 +170,8 @@ private data class TypeRenderer(
             is TyTraitObject -> ty.traits.joinToString("+", "dyn ") { formatTrait(it, render) }
             is TyAnon -> ty.traits.joinToString("+", "impl ") { formatTrait(it, render) }
             is TyAdt -> buildString {
-                if (useAliasNames && ty.aliasedBy != null) {
-                    append(formatBoundElement(ty.aliasedBy, render))
-                } else {
-                    append(getName(ty.item) ?: return anonymous)
-                    if (includeTypeArguments) append(formatAdtGenerics(ty, render))
-                }
+                append(getName(ty.item) ?: return anonymous)
+                if (includeTypeArguments) append(formatAdtGenerics(ty, render))
             }
             is TyInfer -> when (ty) {
                 is TyInfer.TyVar -> "_"
@@ -194,7 +196,7 @@ private data class TypeRenderer(
     private fun formatFnLike(fnType: String, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
         buildString {
             paramTypes.joinTo(this, ", ", "$fnType(", ")", transform = render)
-            if (retType != TyUnit) {
+            if (retType !is TyUnit) {
                 append(" -> ")
                 append(render(retType))
             }
@@ -211,7 +213,7 @@ private data class TypeRenderer(
             val retType = trait.assoc.entries
                 .find { it.key.name == "Output" }
                 ?.value
-                ?: TyUnit
+                ?: TyUnit.INSTANCE
             append(formatFnLike(name, paramTypes, retType, render))
         } else {
             append(name)

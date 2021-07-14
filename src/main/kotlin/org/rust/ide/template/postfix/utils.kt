@@ -49,4 +49,4 @@ class RsExprParentsSelector(pred: (RsExpr) -> Boolean = { true })
         .toList()
 }
 
-fun RsExpr.isBool() = type == TyBool
+fun RsExpr.isBool() = type is TyBool

@@ -7,10 +7,9 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.ext.hasColonColon
 
 /**
- * These are "atomic" ty (not type constructors, singletons).
+ * These are "atomic" ty.
  *
  * Definition intentionally differs from the reference: we don't treat
  * tuples or arrays as primitive.
@@ -28,25 +27,37 @@ abstract class TyPrimitive : Ty() {
             TyFloat.fromName(name)?.let { return it }
 
             return when (name) {
-                "bool" -> TyBool
-                "char" -> TyChar
-                "str" -> TyStr
+                "bool" -> TyBool.INSTANCE
+                "char" -> TyChar.INSTANCE
+                "str" -> TyStr.INSTANCE
                 else -> null
             }
         }
     }
 }
 
-object TyBool : TyPrimitive() {
+class TyBool : TyPrimitive() {
     override val name: String = "bool"
+
+    companion object {
+        val INSTANCE: TyBool = TyBool()
+    }
 }
 
-object TyChar : TyPrimitive() {
+class TyChar : TyPrimitive() {
     override val name: String = "char"
+
+    companion object {
+        val INSTANCE: TyChar = TyChar()
+    }
 }
 
-object TyUnit : TyPrimitive() {
+class TyUnit : TyPrimitive() {
     override val name: String = "unit"
+
+    companion object {
+        val INSTANCE: TyUnit = TyUnit()
+    }
 }
 
 /** The `!` type. E.g. `unimplemented!()` */
@@ -54,8 +65,12 @@ object TyNever : TyPrimitive() {
     override val name: String = "never"
 }
 
-object TyStr : TyPrimitive() {
+class TyStr : TyPrimitive() {
     override val name: String = "str"
+
+    companion object {
+        val INSTANCE: TyStr = TyStr()
+    }
 }
 
 abstract class TyNumeric : TyPrimitive()
@@ -74,8 +89,8 @@ sealed class TyInteger(override val name: String, val ordinal: Int) : TyNumeric(
     // `TyInteger` class, it will be filled with null value instead of `U8`
     // We fixing it by moving fields from `companion object` an independent object
     private object TyIntegerValuesHolder {
-        val DEFAULT = I32
-        val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
+        val DEFAULT = I32.INSTANCE
+        val VALUES = listOf(U8.INSTANCE, U16.INSTANCE, U32.INSTANCE, U64.INSTANCE, U128.INSTANCE, USize.INSTANCE, I8.INSTANCE, I16.INSTANCE, I32.INSTANCE, I64.INSTANCE, I128.INSTANCE, ISize.INSTANCE)
         val NAMES = VALUES.map { it.name }
     }
 
@@ -94,27 +109,75 @@ sealed class TyInteger(override val name: String, val ordinal: Int) : TyNumeric(
         }
     }
 
-    object U8: TyInteger("u8", 0)
-    object U16: TyInteger("u16", 1)
-    object U32: TyInteger("u32", 2)
-    object U64: TyInteger("u64", 3)
-    object U128: TyInteger("u128", 4)
-    object USize : TyInteger("usize", 5)
+    class U8: TyInteger("u8", 0) {
+        companion object {
+            val INSTANCE: U8 = U8()
+        }
+    }
+    class U16: TyInteger("u16", 1) {
+        companion object {
+            val INSTANCE: U16 = U16()
+        }
+    }
+    class U32: TyInteger("u32", 2) {
+        companion object {
+            val INSTANCE: U32 = U32()
+        }
+    }
+    class U64: TyInteger("u64", 3) {
+        companion object {
+            val INSTANCE: U64 = U64()
+        }
+    }
+    class U128: TyInteger("u128", 4) {
+        companion object {
+            val INSTANCE: U128 = U128()
+        }
+    }
+    class USize : TyInteger("usize", 5) {
+        companion object {
+            val INSTANCE: USize = USize()
+        }
+    }
 
-    object I8: TyInteger("i8", 6)
-    object I16: TyInteger("i16", 7)
-    object I32: TyInteger("i32", 8)
-    object I64: TyInteger("i64", 9)
-    object I128: TyInteger("i128", 10)
-    object ISize: TyInteger("isize", 11)
+    class I8: TyInteger("i8", 6) {
+        companion object {
+            val INSTANCE: I8 = I8()
+        }
+    }
+    class I16: TyInteger("i16", 7) {
+        companion object {
+            val INSTANCE: I16 = I16()
+        }
+    }
+    class I32: TyInteger("i32", 8) {
+        companion object {
+            val INSTANCE: I32 = I32()
+        }
+    }
+    class I64: TyInteger("i64", 9) {
+        companion object {
+            val INSTANCE: I64 = I64()
+        }
+    }
+    class I128: TyInteger("i128", 10) {
+        companion object {
+            val INSTANCE: I128 = I128()
+        }
+    }
+    class ISize: TyInteger("isize", 11) {
+        companion object {
+            val INSTANCE: ISize = ISize()
+        }
+    }
 }
 
 sealed class TyFloat(override val name: String, val ordinal: Int) : TyNumeric() {
 
     // See TyIntegerValuesHolder
     private object TyFloatValuesHolder {
-        val DEFAULT = F64
-        val VALUES = listOf(F32, F64)
+        val DEFAULT = F64.INSTANCE
+        val VALUES = listOf(F32.INSTANCE, F64.INSTANCE)
         val NAMES = VALUES.map { it.name }
     }
 
@@ -133,6 +196,14 @@ sealed class TyFloat(override val name: String, val ordinal: Int) : TyNumeric() 
         }
     }
 
-    object F32: TyFloat("f32", 0)
-    object F64: TyFloat("f64", 1)
+    class F32: TyFloat("f32", 0) {
+        companion object {
+            val INSTANCE: F32 = F32()
+        }
+    }
+    class F64: TyFloat("f64", 1) {
+        companion object {
+            val INSTANCE: F64 = F64()
+        }
+    }
 }
