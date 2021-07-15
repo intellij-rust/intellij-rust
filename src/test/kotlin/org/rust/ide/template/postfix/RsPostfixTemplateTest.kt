@@ -5,6 +5,7 @@
 
 package org.rust.ide.template.postfix
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
@@ -38,10 +39,32 @@ abstract class RsPostfixTemplateTest(private val postfixTemplate: PostfixTemplat
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         checkSyntaxErrors: Boolean = true
+    ) = doTestWithAction(before, after, checkSyntaxErrors)
+
+    protected fun doTestWithLiveTemplate(
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String,
+        checkSyntaxErrors: Boolean = true
+    ) {
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+        doTestWithAction(before, after, checkSyntaxErrors) {
+            assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+            myFixture.type(toType)
+            assertNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+        }
+    }
+
+    private fun doTestWithAction(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        checkSyntaxErrors: Boolean = true,
+        action: () -> Unit = {}
     ) {
         InlineFile(before.trimIndent()).withCaret()
         checkApplicability(before.trimIndent(), true)
         myFixture.type('\t')
+        action()
         if (checkSyntaxErrors) myFixture.checkHighlighting(false, false, false)
 
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
