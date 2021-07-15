@@ -34,7 +34,7 @@ fun InsertionContext.addSuffix(suffix: String) {
     EditorModificationUtil.moveCaretRelatively(editor, suffix.length)
 }
 
-private val ALWAYS_NEEDS_SPACE = setOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub",
+private val ALWAYS_NEEDS_SPACE = setOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut",
     "static", "struct", "trait", "type", "union", "unsafe", "use", "where")
 
 

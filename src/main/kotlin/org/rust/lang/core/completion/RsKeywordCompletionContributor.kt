@@ -13,10 +13,16 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.*
+import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
+import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
+import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -30,8 +36,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "union", "unsafe", "use"))
-        extend(CompletionType.BASIC, pubDeclarationPattern(),
+            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+        extend(CompletionType.BASIC, afterVisDeclarationPattern(),
             RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RsKeywordCompletionProvider("crate", "fn"))
@@ -51,9 +57,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
         extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("fn"))
-        extend(CompletionType.BASIC, inherentImplDeclarationPattern(),
-            RsKeywordCompletionProvider("pub"))
-        extend(CompletionType.BASIC, pubInherentImplDeclarationPattern(),
+        extend(CompletionType.BASIC, afterVisInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
@@ -103,11 +107,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             }
     }
 
-    private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        baseDeclarationPattern().and(statementBeginningPattern())
-
-    private fun pubDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        baseDeclarationPattern().and(statementBeginningPattern("pub"))
+    private fun afterVisDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().and(afterVis())
 
     private fun externDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern("extern"))
@@ -126,10 +127,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             newCodeStatementPattern() or
             pathExpressionPattern()
         )
-
-    private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement()
-            .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement()
@@ -229,24 +226,36 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))
     }
 
-    private fun baseInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        val membersInInherentImpl = psiElement<RsMembers>().withParent(
-            psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
-        )
-        return psiElement().withParent(
-            or(
-                membersInInherentImpl,
-                psiElement().withParent(membersInInherentImpl)
-            )
-        )
+    private fun afterVisInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(afterVis())
     }
 
-    private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        return baseInherentImplDeclarationPattern().and(statementBeginningPattern())
-    }
+    // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
+    private fun afterVis(): PsiElementPattern.Capture<PsiElement> = psiElement().with("afterVis") { item, _ ->
+        val allowedTokens = TokenSet.orSet(
+            tokenSetOf(
+                PUB,
+                LPAREN,
+                SUPER,
+                CRATE,
+                SELF,
+                COLONCOLON,
+                IN,
+                PATH,
+                IDENTIFIER,
+                RPAREN,
+                TokenType.WHITE_SPACE,
+                TokenType.ERROR_ELEMENT
+            ),
+            RS_COMMENTS
+        )
+        val siblings = generateSequence(item) { it.prevSibling }.takeWhile {
+            it is RsPath || it.elementType in allowedTokens
+        }.filter {
+            it !is PsiWhiteSpace && it !is PsiComment
+        }
 
-    private fun pubInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        return baseInherentImplDeclarationPattern().and(statementBeginningPattern("pub"))
+        siblings.lastOrNull()?.elementType == PUB
     }
 
     companion object {
