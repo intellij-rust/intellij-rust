@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsFile
 
 
-class RsDotTypedHandler : TypedHandlerDelegate() {
+class RsTypedHandler : TypedHandlerDelegate() {
     override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
         if (file !is RsFile) return Result.CONTINUE
         if (c != '.') return Result.CONTINUE
