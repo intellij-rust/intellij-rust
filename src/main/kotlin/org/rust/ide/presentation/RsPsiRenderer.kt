@@ -50,6 +50,9 @@ fun RsTraitRef.getStubOnlyText(subst: Substitution = emptySubstitution, renderLi
 fun RsPsiRenderer.renderTypeReference(ref: RsTypeReference): String =
     buildString { appendTypeReference(this, ref) }
 
+fun RsPsiRenderer.renderTraitRef(ref: RsTraitRef): String =
+    buildString { appendPath(this, ref.path) }
+
 fun RsPsiRenderer.renderValueParameterList(list: RsValueParameterList): String =
     buildString { appendValueParameterList(this, list) }
 
@@ -593,11 +596,11 @@ open class TypeSubstitutingPsiRenderer(
 
 open class PsiSubstitutingPsiRenderer(
     options: PsiRenderingOptions,
-    private val subst: RsPsiSubstitution
+    private val substitutions: List<RsPsiSubstitution>
 ) : RsPsiRenderer(options) {
     override fun appendPathWithoutArgs(sb: StringBuilder, path: RsPath) {
         val replaced = when (val resolved = path.reference?.resolve()) {
-            is RsTypeParameter -> when (val s = subst.typeSubst[resolved]) {
+            is RsTypeParameter -> when (val s = typeSubst(resolved)) {
                 is RsPsiSubstitution.TypeValue.Present.InAngles -> {
                     super.appendTypeReference(sb, s.value)
                     true
@@ -608,7 +611,7 @@ open class PsiSubstitutingPsiRenderer(
                 }
                 else -> false
             }
-            is RsConstParameter -> when (val s = subst.constSubst[resolved]) {
+            is RsConstParameter -> when (val s = constSubst(resolved)) {
                 is RsPsiSubstitution.Value.Present -> {
                     when (s.value) {
                         is RsExpr -> appendConstExpr(sb, s.value)
@@ -628,7 +631,7 @@ open class PsiSubstitutingPsiRenderer(
     override fun appendLifetime(sb: StringBuilder, lifetime: RsLifetime) {
         val resolvedLifetime = lifetime.reference.resolve()
         val substitutedLifetime = if (resolvedLifetime is RsLifetimeParameter) {
-            subst.regionSubst[resolvedLifetime]
+            regionSubst(resolvedLifetime)
         } else {
             null
         }
@@ -637,13 +640,23 @@ open class PsiSubstitutingPsiRenderer(
             else -> sb.append(lifetime.referenceName)
         }
     }
+
+    private fun regionSubst(lifetime: RsLifetimeParameter?): RsPsiSubstitution.Value<RsLifetime>? {
+        return substitutions.mapNotNull { it.regionSubst[lifetime] }.firstOrNull()
+    }
+    private fun constSubst(const: RsConstParameter?): RsPsiSubstitution.Value<RsElement>? {
+        return substitutions.mapNotNull { it.constSubst[const] }.firstOrNull()
+    }
+    private fun typeSubst(type: RsTypeParameter?): RsPsiSubstitution.TypeValue? {
+        return substitutions.mapNotNull { it.typeSubst[type] }.firstOrNull()
+    }
 }
 
 class ImportingPsiRenderer(
     options: PsiRenderingOptions,
-    subst: RsPsiSubstitution,
+    substitutions: List<RsPsiSubstitution>,
     private val context: RsElement
-) : PsiSubstitutingPsiRenderer(options, subst) {
+) : PsiSubstitutingPsiRenderer(options, substitutions) {
 
     private val importContext = ImportContext.from(context.project, context)
 
