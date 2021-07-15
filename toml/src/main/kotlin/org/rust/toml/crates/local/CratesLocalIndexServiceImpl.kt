@@ -109,13 +109,17 @@ class CratesLocalIndexServiceImpl
     private val isUpdating: AtomicBoolean = AtomicBoolean(false)
 
     init {
-        val cargoRegistryIndexRefsLocation = Paths.get(System.getProperty("user.home"), CARGO_REGISTRY_INDEX_LOCATION, "refs/").toString()
+        val cargoRegistryIndexRefsLocation = Paths.get(cargoRegistryIndexPath.toString(), "refs/").toString()
         LocalFileSystem.getInstance().addRootToWatch(cargoRegistryIndexRefsLocation, true)
 
         // VFS fills up lazily, therefore we need to explicitly add root directory and go through children
-        val root = LocalFileSystem.getInstance().refreshAndFindFileByPath(cargoRegistryIndexRefsLocation)!!
-        VfsUtilCore.processFilesRecursively(root) { true }
-        RefreshQueue.getInstance().refresh(true, true, null, root)
+        val root = LocalFileSystem.getInstance().refreshAndFindFileByPath(cargoRegistryIndexRefsLocation)
+        if (root != null) {
+            VfsUtilCore.processFilesRecursively(root) { true }
+            RefreshQueue.getInstance().refresh(true, true, null, root)
+        } else {
+            LOG.error("Failed to subscribe to cargo registry changes in $cargoRegistryIndexRefsLocation")
+        }
 
         // Watch cargo registry repo and update crates local index on changes
         ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -336,7 +340,7 @@ class CratesLocalIndexServiceImpl
                 ?: Paths.get(System.getProperty("user.home"), ".cargo/").toString()
 
         // Currently for crates.io only
-        private val cargoRegistryIndexPath
+        private val cargoRegistryIndexPath: Path
             get() = Paths.get(cargoHome, "registry/index/", CRATES_IO_HASH, ".git/")
 
         // Crates.io index hash is permanent.
