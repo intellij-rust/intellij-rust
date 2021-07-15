@@ -65,4 +65,4 @@ val RsEnumItem.reprType: TyInteger
         .flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
         .mapNotNull { it.name?.let { name -> TyInteger.fromName(name) } }
         .lastOrNull()
-        ?: TyInteger.ISize
+        ?: TyInteger.ISize.INSTANCE

@@ -23,9 +23,9 @@ object RsPrimitiveTypeCompletionProvider : RsCompletionProvider() {
     private val primitives: List<String> = buildList {
         addAll(TyInteger.NAMES)
         addAll(TyFloat.NAMES)
-        add(TyBool.name)
-        add(TyStr.name)
-        add(TyChar.name)
+        add(TyBool.INSTANCE.name)
+        add(TyStr.INSTANCE.name)
+        add(TyChar.INSTANCE.name)
     }
 
     override val elementPattern: ElementPattern<PsiElement>

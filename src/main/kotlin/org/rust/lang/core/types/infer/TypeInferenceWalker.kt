@@ -111,7 +111,7 @@ class RsTypeInferenceWalker(
             }
             isDiverging = result || isDiverging
         }
-        val type = (if (coerce) tailExpr?.inferTypeCoercableTo(expected!!) else tailExpr?.inferType(expected)) ?: TyUnit
+        val type = (if (coerce) tailExpr?.inferTypeCoercableTo(expected!!) else tailExpr?.inferType(expected)) ?: TyUnit.INSTANCE
         return if (isDiverging) TyNever else type
     }
 
@@ -166,7 +166,7 @@ class RsTypeInferenceWalker(
             is RsStructLiteral -> inferStructLiteralType(this, expected)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
             is RsParenExpr -> expr?.inferType(expected) ?: TyUnknown
-            is RsUnitExpr -> TyUnit
+            is RsUnitExpr -> TyUnit.INSTANCE
             is RsCastExpr -> inferCastExprType(this)
             is RsCallExpr -> inferCallExprType(this, expected)
             is RsDotExpr -> inferDotExprType(this, expected)
@@ -297,24 +297,24 @@ class RsTypeInferenceWalker(
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
         return when (val stubKind = expr.stubKind) {
-            is RsStubLiteralKind.Boolean -> TyBool
-            is RsStubLiteralKind.Char -> if (stubKind.isByte) TyInteger.U8 else TyChar
+            is RsStubLiteralKind.Boolean -> TyBool.INSTANCE
+            is RsStubLiteralKind.Char -> if (stubKind.isByte) TyInteger.U8.INSTANCE else TyChar.INSTANCE
             is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
                 if (stubKind.isByte) {
                     val size = stubKind.value?.length?.toLong()
-                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize).toConst() } ?: CtUnknown
-                    TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE, ReStatic)
+                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
+                    TyReference(TyArray(TyInteger.U8.INSTANCE, const), Mutability.IMMUTABLE, ReStatic)
                 } else {
-                    TyReference(TyStr, Mutability.IMMUTABLE, ReStatic)
+                    TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralKind.Integer -> {
                 val ty = stubKind.ty
                 ty ?: when (expected) {
                     is TyInteger -> expected
-                    TyChar -> TyInteger.U8
-                    is TyPointer, is TyFunction -> TyInteger.USize
+                    is TyChar -> TyInteger.U8.INSTANCE
+                    is TyPointer, is TyFunction -> TyInteger.USize.INSTANCE
                     else -> TyInfer.IntVar()
                 }
             }
@@ -846,7 +846,7 @@ class RsTypeInferenceWalker(
                     is RsBreakExpr -> {
                         collectReturningTypes(child, matchOnlyByLabel)
                         if (!matchOnlyByLabel && child.label == null || child.label?.referenceName == label) {
-                            returningTypes += child.expr?.let(ctx::getExprType) ?: TyUnit
+                            returningTypes += child.expr?.let(ctx::getExprType) ?: TyUnit.INSTANCE
                         }
                     }
                     is RsLabeledExpression -> {
@@ -870,13 +870,13 @@ class RsTypeInferenceWalker(
         val itemTy = resolveTypeVarsWithObligations(lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
         expr.pat?.extractBindings(itemTy)
         expr.block?.inferType()
-        return TyUnit
+        return TyUnit.INSTANCE
     }
 
     private fun inferWhileExprType(expr: RsWhileExpr): Ty {
         expr.condition?.inferTypes()
         expr.block?.inferType()
-        return TyUnit
+        return TyUnit.INSTANCE
     }
 
     private fun inferMatchExprType(expr: RsMatchExpr, expected: Ty?): Ty {
@@ -885,7 +885,7 @@ class RsTypeInferenceWalker(
         for (arm in arms) {
             arm.pat.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)
-            arm.matchArmGuard?.expr?.inferType(TyBool)
+            arm.matchArmGuard?.expr?.inferType(TyBool.INSTANCE)
         }
 
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })
@@ -926,7 +926,7 @@ class RsTypeInferenceWalker(
             blockTys.add(elseBranch.ifExpr?.inferType(expected))
             blockTys.add(elseBranch.block?.inferType(expected))
         }
-        return if (expr.elseBranch == null) TyUnit else getMoreCompleteType(blockTys.filterNotNull())
+        return if (expr.elseBranch == null) TyUnit.INSTANCE else getMoreCompleteType(blockTys.filterNotNull())
     }
 
     private fun RsCondition.inferTypes() {
@@ -940,7 +940,7 @@ class RsTypeInferenceWalker(
             val exprTy = resolveTypeVarsWithObligations(expr.inferType())
             pat.extractBindings(exprTy)
         } else {
-            expr.inferType(TyBool)
+            expr.inferType(TyBool.INSTANCE)
         }
     }
 
@@ -963,10 +963,10 @@ class RsTypeInferenceWalker(
                     val rhsAdjustment = Adjustment.BorrowReference(TyReference(rhsType, Mutability.IMMUTABLE))
                     expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
 
-                    rhsType to TyBool
+                    rhsType to TyBool.INSTANCE
                 } else {
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(lhsType) ?: TyUnknown)
-                    rhsType to TyBool
+                    rhsType to TyBool.INSTANCE
                 }
             }
             is ArithmeticOp -> {
@@ -983,11 +983,11 @@ class RsTypeInferenceWalker(
                 val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, Mutability.MUTABLE))
                 ctx.addAdjustment(expr.left, lhsAdjustment)
 
-                rhsType to TyUnit
+                rhsType to TyUnit.INSTANCE
             }
             AssignmentOp.EQ -> {
                 val rhsType = expr.right?.inferTypeCoercableTo(lhsType) ?: TyUnknown
-                rhsType to TyUnit
+                rhsType to TyUnit.INSTANCE
             }
         }
 
@@ -1020,16 +1020,16 @@ class RsTypeInferenceWalker(
 
         BinOpCategory.Bitwise -> lhsType.isIntegral && rhsType.isIntegral ||
             lhsType.isFloat && rhsType.isFloat ||
-            lhsType == TyBool && rhsType == TyBool
+            lhsType is TyBool && rhsType is TyBool
 
         BinOpCategory.Comparison -> lhsType.isScalar && rhsType.isScalar
     }
 
     private fun enforceBuiltinBinopTypes(lhsType: Ty, rhsType: Ty, op: BinaryOperator): Ty = when (op.category) {
         BinOpCategory.Shortcircuit -> {
-            ctx.combineTypes(lhsType, TyBool)
-            ctx.combineTypes(lhsType, TyBool)
-            TyBool
+            ctx.combineTypes(lhsType, TyBool.INSTANCE)
+            ctx.combineTypes(lhsType, TyBool.INSTANCE)
+            TyBool.INSTANCE
         }
 
         BinOpCategory.Shift -> lhsType
@@ -1041,7 +1041,7 @@ class RsTypeInferenceWalker(
 
         BinOpCategory.Comparison -> {
             ctx.combineTypes(lhsType, rhsType)
-            TyBool
+            TyBool.INSTANCE
         }
     }
 
@@ -1168,7 +1168,7 @@ class RsTypeInferenceWalker(
                 run {
                     val exprList = vecArg.exprList
                     val valueExpr = exprList.firstOrNull() ?: return@run TyUnknown
-                    exprList.getOrNull(1)?.let { inferTypeCoercableTo(it, TyInteger.USize) }
+                    exprList.getOrNull(1)?.let { inferTypeCoercableTo(it, TyInteger.USize.INSTANCE) }
                     expectedElemTy?.let { valueExpr.inferTypeCoercableTo(it) } ?: valueExpr.inferType()
                 }
             } else {
@@ -1187,25 +1187,25 @@ class RsTypeInferenceWalker(
 
         inferChildExprsRecursively(macroCall)
         return when {
-            macroCall.assertMacroArgument != null -> TyUnit
+            macroCall.assertMacroArgument != null -> TyUnit.INSTANCE
             macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
             macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
-            name == "env" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr, Mutability.IMMUTABLE))
-            name == "concat" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "line" || name == "column" -> TyInteger.U32
-            name == "file" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "stringify" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "module_path" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "cfg" -> TyBool
+            name == "env" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE))
+            name == "concat" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "line" || name == "column" -> TyInteger.U32.INSTANCE
+            name == "file" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "stringify" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "module_path" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "cfg" -> TyBool.INSTANCE
             else -> inferMacroAsExpr(macroCall)
         }
     }
 
     private fun inferIncludeMacro(macroCall: RsMacroCall): Ty {
         return when (macroCall.macroName) {
-            "include_str" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            "include_bytes" -> TyReference(TyArray(TyInteger.U8, CtUnknown), Mutability.IMMUTABLE)
+            "include_str" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            "include_bytes" -> TyReference(TyArray(TyInteger.U8.INSTANCE, CtUnknown), Mutability.IMMUTABLE)
             else -> TyUnknown
         }
     }
@@ -1216,7 +1216,7 @@ class RsTypeInferenceWalker(
     private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
         val name = macroCall.macroName
         return when {
-            "print" in name -> TyUnit
+            "print" in name -> TyUnit.INSTANCE
             name == "format" -> items.String.asTy()
             name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
@@ -1251,7 +1251,7 @@ class RsTypeInferenceWalker(
         val lambdaBodyContext = RsTypeInferenceWalker(ctx, retTy)
         expr.expr?.let { lambdaBodyContext.inferLambdaBody(it) }
         val isDefaultRetTy = isFreshRetTy && retTy is TyInfer.TyVar && !ctx.isTypeVarAffected(retTy)
-        val actualRetTy = if (isDefaultRetTy) TyUnit else retTy
+        val actualRetTy = if (isDefaultRetTy) TyUnit.INSTANCE else retTy
 
         val yieldTy = lambdaBodyContext.yieldTy
         return if (yieldTy == null) {
@@ -1292,14 +1292,14 @@ class RsTypeInferenceWalker(
                 ?: expr.initializer?.inferType()
                 ?: return TySlice(TyUnknown)
             val sizeExpr = expr.sizeExpr
-            sizeExpr?.inferType(TyInteger.USize)
-            val size = sizeExpr?.evaluate(TyInteger.USize, PathExprResolver.fromContext(ctx)) ?: CtUnknown
+            sizeExpr?.inferType(TyInteger.USize.INSTANCE)
+            val size = sizeExpr?.evaluate(TyInteger.USize.INSTANCE, PathExprResolver.fromContext(ctx)) ?: CtUnknown
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
             val size = if (elementTypes != null) {
                 val size = elementTypes.size.toLong()
-                ConstExpr.Value.Integer(size, TyInteger.USize).toConst()
+                ConstExpr.Value.Integer(size, TyInteger.USize.INSTANCE).toConst()
             } else {
                 CtUnknown
             }
@@ -1327,7 +1327,7 @@ class RsTypeInferenceWalker(
         } else {
             expr.expr?.inferTypeCoercableTo(oldYieldTy)
         }
-        return TyUnit
+        return TyUnit.INSTANCE
     }
 
     private fun inferRetExprType(expr: RsRetExpr): Ty {

@@ -156,7 +156,7 @@ private fun inferSlicePatsTypes(
             return CtUnknown
         }
 
-        return ConstExpr.Value.Integer(restSize, TyInteger.USize).toConst()
+        return ConstExpr.Value.Integer(restSize, TyInteger.USize.INSTANCE).toConst()
     }
 
     val (elementType, restType) = when (sliceType) {

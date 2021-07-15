@@ -27,7 +27,7 @@ fun RsExpr.toConstExpr(
     return builder?.build(this)
 }
 
-private val STR_REF_TYPE: TyReference = TyReference(TyStr, Mutability.IMMUTABLE)
+private val STR_REF_TYPE: TyReference = TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
 
 private abstract class ConstExprBuilder<T : Ty, V> {
     protected abstract val expectedTy: T
@@ -108,7 +108,7 @@ private class IntegerConstExprBuilder(
 private class BoolConstExprBuilder(
     override val resolver: PathExprResolver?
 ) : ConstExprBuilder<TyBool, Boolean>() {
-    override val expectedTy: TyBool = TyBool
+    override val expectedTy: TyBool = TyBool.INSTANCE
     override val RsLitExpr.value: Boolean? get() = booleanValue
     override fun Boolean.wrap(): ConstExpr.Value.Bool = ConstExpr.Value.Bool(this)
 
@@ -155,7 +155,7 @@ private class FloatConstExprBuilder(
 private class CharConstExprBuilder(
     override val resolver: PathExprResolver?
 ) : ConstExprBuilder<TyChar, String>() {
-    override val expectedTy: TyChar = TyChar
+    override val expectedTy: TyChar = TyChar.INSTANCE
     override val RsLitExpr.value: String? get() = charValue
     override fun String.wrap(): ConstExpr.Value.Char = ConstExpr.Value.Char(this)
 }
