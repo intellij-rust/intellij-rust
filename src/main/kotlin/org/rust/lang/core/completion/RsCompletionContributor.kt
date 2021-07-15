@@ -7,15 +7,12 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.RsPsiPattern.inherentImplDeclarationPattern
 import org.rust.lang.core.completion.lint.RsClippyLintCompletionProvider
 import org.rust.lang.core.completion.lint.RsRustcLintCompletionProvider
 import org.rust.lang.core.or
-import org.rust.lang.core.psi.RsElementTypes.COLON
-import org.rust.lang.core.psi.ext.elementType
 
 class RsCompletionContributor : CompletionContributor() {
 
@@ -45,7 +42,4 @@ class RsCompletionContributor : CompletionContributor() {
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
         extend(type, provider.elementPattern, provider)
     }
-
-    override fun invokeAutoPopup(position: PsiElement, typeChar: Char): Boolean =
-        typeChar == ':' && position.elementType == COLON
 }

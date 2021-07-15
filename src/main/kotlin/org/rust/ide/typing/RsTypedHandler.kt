@@ -5,15 +5,20 @@
 
 package org.rust.ide.typing
 
+import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import org.rust.lang.core.psi.RsDotExpr
+import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
 import org.rust.lang.core.psi.RsFile
 
 
@@ -38,5 +43,22 @@ class RsTypedHandler : TypedHandlerDelegate() {
         if (offset < curElementLength) return false
         CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
         return true
+    }
+
+    override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
+        if (file !is RsFile) return Result.CONTINUE
+
+        val offset = editor.caretModel.offset
+
+        // `:` is typed right after `:`
+        if (charTyped == ':' && StringUtil.endsWith(editor.document.immutableCharSequence, 0, offset, ":")) {
+            AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC) { f ->
+                val leaf = f.findElementAt(offset - 1)
+                leaf.elementType == COLONCOLON
+            }
+            return Result.STOP
+        }
+
+        return Result.CONTINUE
     }
 }
