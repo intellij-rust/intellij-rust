@@ -7,9 +7,17 @@ package org.rust.lang.core.completion
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.util.ThrowableRunnable
+import org.intellij.lang.annotations.Language
 
 class RsCompletionAutoPopupTest : RsCompletionTestBase() {
     private lateinit var tester: CompletionAutoPopupTester
+
+    fun `test path`() = checkPopupIsShownAfterTyping("""
+        enum Foo { Bar, Baz}
+        fn main() {
+            let _ = Foo/*caret*/
+        }
+    """, "::")
 
     override fun setUp() {
         super.setUp()
@@ -22,15 +30,13 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
 
     override fun runInDispatchThread(): Boolean = false
 
-    fun `test path auto popup`() {
-        myFixture.configureByText("main.rs", """
-            enum Foo { Bar, Baz}
-            fn main() {
-                let _ = Foo<caret>
-            }
-        """)
-        tester.typeWithPauses("::")
-
+    private fun checkPopupIsShownAfterTyping(@Language("Rust") code: String, toType: String) {
+        configureAndType(code, toType)
         assertNotNull(tester.lookup)
+    }
+
+    private fun configureAndType(code: String, toType: String) {
+        InlineFile(code).withCaret()
+        tester.typeWithPauses(toType)
     }
 }
