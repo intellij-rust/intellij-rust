@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.Editor
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
@@ -17,13 +18,15 @@ import org.rust.ide.presentation.PsiSubstitutingPsiRenderer
 import org.rust.ide.presentation.renderFunctionSignature
 import org.rust.ide.refactoring.implementMembers.MembersGenerator
 import org.rust.ide.utils.import.import
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractable
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.expandedMembers
 import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.types.RsPsiSubstitution
-import org.rust.openapiext.selectElement
+import org.rust.openapiext.createSmartPointer
 
 object RsImplTraitMemberCompletionProvider : RsCompletionProvider() {
     override val elementPattern: ElementPattern<PsiElement>
@@ -90,7 +93,7 @@ private fun completeConstant(
                 importCandidate.import(impl)
             }
             val expr = element.expr ?: return@withInsertHandler
-            selectElement(expr, context.editor)
+            runTemplate(expr, context.editor)
         }
 }
 
@@ -101,7 +104,7 @@ private fun completeType(target: RsTypeAlias, memberGenerator: MembersGenerator)
         .withInsertHandler { context, _ ->
             val element = context.getElementOfType<RsTypeAlias>() ?: return@withInsertHandler
             val typeReference = element.typeReference ?: return@withInsertHandler
-            selectElement(typeReference, context.editor)
+            runTemplate(typeReference, context.editor)
         }
 }
 
@@ -123,7 +126,11 @@ private fun completeFunction(
                 importCandidate.import(impl)
             }
             val body = element.block?.expr ?: return@withInsertHandler
-            selectElement(body, context.editor)
+            runTemplate(body, context.editor)
         }
         .withPresentableText("$shortSignature { ... }")
+}
+
+private fun runTemplate(element: RsElement, editor: Editor) {
+    editor.buildAndRunTemplate(element.parent, listOf(element.createSmartPointer()))
 }
