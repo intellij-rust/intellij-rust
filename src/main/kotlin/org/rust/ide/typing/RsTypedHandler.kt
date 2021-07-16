@@ -17,9 +17,11 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsPat
 
 
 class RsTypedHandler : TypedHandlerDelegate() {
@@ -57,6 +59,21 @@ class RsTypedHandler : TypedHandlerDelegate() {
                 leaf.elementType == COLONCOLON
             }
             return Result.STOP
+        }
+
+        // `|` is typed after `(` or `,` or `=` (ignoring whitespace) - perform lambda expr completion
+        if (charTyped == '|') {
+            val i = CharArrayUtil.shiftBackward(editor.document.immutableCharSequence, 0, offset - 1, " \n") + 1
+            val shouldShowPopup = StringUtil.endsWith(editor.document.immutableCharSequence, 0, i, "(")
+                || StringUtil.endsWith(editor.document.immutableCharSequence, 0, i, ",")
+                || StringUtil.endsWith(editor.document.immutableCharSequence, 0, i, "=")
+            if (shouldShowPopup) {
+                AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC) { f ->
+                    val leaf = f.findElementAt(offset)
+                    leaf?.parent !is RsPat
+                }
+                return Result.STOP
+            }
         }
 
         return Result.CONTINUE
