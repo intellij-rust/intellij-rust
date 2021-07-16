@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveImportFix
+import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.NamedItem
@@ -29,6 +30,9 @@ class RsUnusedImportInspection : RsLintInspection() {
                 it is RsModItem || it is RsModDeclItem
             }
             if (item.parentOfType<RsFunction>() == null && hasChildMods) return
+
+            // It's common to include more imports than needed in doctest sample code
+            if (item.containingCrate is DoctestCrate) return
 
             val owner = item.parent as? RsItemsOwner ?: return
             val usage = owner.pathUsage

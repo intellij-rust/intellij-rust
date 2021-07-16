@@ -740,4 +740,12 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             }
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test disabled in doctests`() = checkByText("""
+        /// ```
+        /// use test_project::func;
+        /// ```
+        pub fn func() {}
+    """)
 }
