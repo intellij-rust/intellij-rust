@@ -31,7 +31,6 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
         """)
         tester.typeWithPauses("::")
 
-        // TODO: find out why this test fails
-//        assertNotNull(tester.lookup)
+        assertNotNull(tester.lookup)
     }
 }
