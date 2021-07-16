@@ -34,6 +34,32 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
+    fun `test annotate whole unused group`() = checkByText("""
+        mod foo {
+            pub struct S;
+            pub struct T1;
+            pub struct T2;
+        }
+
+        mod bar {
+            use super::foo::{S, <warning descr="Unused import: `{T1, T2}`">{T1, T2}</warning>};
+
+            fn bar(_: S) {}
+        }
+    """)
+
+    fun `test annotate whole unused use item`() = checkByText("""
+        mod foo {
+            pub struct S;
+            pub struct T1;
+            pub struct T2;
+        }
+
+        mod bar {
+            <warning descr="Unused import: `super::foo::{S, {T1, T2}}`">use super::foo::{S, {T1, T2}};</warning>
+        }
+    """)
+
     fun `test unused import with nested path in group`() = checkByText("""
         mod foo {
             pub struct R;
@@ -247,7 +273,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
 
         mod bar {
-            use super::foo::bar::{<warning descr="Unused import: `self`">self</warning>};
+            <warning descr="Unused import: `super::foo::bar::{self}`">use super::foo::bar::{self};</warning>
         }
     """)
 
@@ -637,7 +663,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test wrtieln macro`() = checkByText("""
+    fun `test writeln macro`() = checkByText("""
         use std::io::Write;
         fn main() {
             let mut w = Vec::new();
