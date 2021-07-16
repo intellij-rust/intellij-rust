@@ -384,4 +384,138 @@ class RsImplTraitMemberCompletionProviderTest : RsCompletionTestBase() {
             const FOO: Alias = 0/*caret*/;
         }
     """)
+
+    fun `test complete after fn keyword`() = doFirstCompletion("""
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for () {
+            fn /*caret*/
+        }
+    """, """
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for () {
+            fn foo(&self) {
+                todo!()/*caret*/
+            }
+        }
+    """)
+
+    fun `test complete in function name`() = doFirstCompletion("""
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for () {
+            fn fo/*caret*/
+        }
+    """, """
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for () {
+            fn foo(&self) {
+                todo!()/*caret*/
+            }
+        }
+    """)
+
+    fun `test complete after const keyword`() = doFirstCompletion("""
+        trait Trait {
+            const FOO: u32;
+        }
+
+        impl Trait for () {
+            const /*caret*/
+        }
+    """, """
+        trait Trait {
+            const FOO: u32;
+        }
+
+        impl Trait for () {
+            const FOO: u32 = 0/*caret*/;
+        }
+    """)
+
+    fun `test complete in constant name`() = doFirstCompletion("""
+        trait Trait {
+            const FOO: u32;
+        }
+
+        impl Trait for () {
+            const FO/*caret*/
+        }
+    """, """
+        trait Trait {
+            const FOO: u32;
+        }
+
+        impl Trait for () {
+            const FOO: u32 = 0/*caret*/;
+        }
+    """)
+
+    fun `test complete after type keyword`() = doFirstCompletion("""
+        trait Trait {
+            type FOO;
+        }
+
+        impl Trait for () {
+            type /*caret*/
+        }
+    """, """
+        trait Trait {
+            type FOO;
+        }
+
+        impl Trait for () {
+            type FOO = ()/*caret*/;
+        }
+    """)
+
+    fun `test complete in type name`() = doFirstCompletion("""
+        trait Trait {
+            type FOO;
+        }
+
+        impl Trait for () {
+            type FO/*caret*/
+        }
+    """, """
+        trait Trait {
+            type FOO;
+        }
+
+        impl Trait for () {
+            type FOO = ()/*caret*/;
+        }
+    """)
+
+    fun `test filter items after keyword 1`() = checkNoCompletion("""
+        trait Trait {
+            fn foo(&self);
+            type BAR;
+        }
+
+        impl Trait for () {
+            fn BA/*caret*/
+        }
+    """)
+
+    fun `test filter items after keyword 2`() = checkNoCompletion("""
+        trait Trait {
+            fn foo(&self);
+            type BAR;
+        }
+
+        impl Trait for () {
+            fn ty/*caret*/
+        }
+    """)
 }

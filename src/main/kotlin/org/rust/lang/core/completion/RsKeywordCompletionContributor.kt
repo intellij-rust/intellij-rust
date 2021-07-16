@@ -22,6 +22,7 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.*
 import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
+import org.rust.lang.core.RsPsiPattern.baseTraitOrImplDeclaration
 import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -209,16 +210,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return psiElement(IDENTIFIER).withParent(parent)
     }
 
-    private fun baseTraitOrImplDeclaration(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withParent(
-            or(
-                psiElement<RsMembers>(),
-                psiElement().withParent(RsMembers::class.java)
-            )
-        )
-    }
-
-    fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+    private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern())
     }
 
@@ -232,7 +224,20 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
     private fun afterVis(): PsiElementPattern.Capture<PsiElement> = psiElement().with("afterVis") { item, _ ->
-        val allowedTokens = TokenSet.orSet(
+        val siblings = generateSequence(item) { it.prevSibling }.takeWhile {
+            it is RsPath || it.elementType in RS_VIS_ALLOWED_TOKENS
+        }.filter {
+            it !is PsiWhiteSpace && it !is PsiComment
+        }
+
+        siblings.lastOrNull()?.elementType == PUB
+    }
+
+    companion object {
+        @JvmField
+        val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
+
+        val RS_VIS_ALLOWED_TOKENS = TokenSet.orSet(
             tokenSetOf(
                 PUB,
                 LPAREN,
@@ -249,17 +254,5 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             ),
             RS_COMMENTS
         )
-        val siblings = generateSequence(item) { it.prevSibling }.takeWhile {
-            it is RsPath || it.elementType in allowedTokens
-        }.filter {
-            it !is PsiWhiteSpace && it !is PsiComment
-        }
-
-        siblings.lastOrNull()?.elementType == PUB
-    }
-
-    companion object {
-        @JvmField
-        val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
     }
 }
