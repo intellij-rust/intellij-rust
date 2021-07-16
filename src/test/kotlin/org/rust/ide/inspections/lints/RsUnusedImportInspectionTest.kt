@@ -215,6 +215,22 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
+    fun `test used trait method with type qualifier`() = checkByText("""
+        mod foo {
+            pub trait Foo {
+                fn func() {}
+            }
+            impl<T> Foo for T {}
+        }
+
+        mod bar {
+            use crate::foo::Foo;
+            fn main() {
+                <()>::func();
+            }
+        }
+    """)
+
     fun `test unused import with alias`() = checkByText("""
         mod foo {
             pub struct S;
