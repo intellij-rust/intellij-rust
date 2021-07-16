@@ -6,14 +6,12 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.ProcessingContext
+import org.rust.ide.annotator.fixes.NameSuggestionFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.RsPsiPattern
-import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.isRootMetaItem
 import org.rust.lang.core.psi.ext.stringValue
 
 class RsUnknownCrateTypesInspection : RsLintInspection() {
@@ -21,16 +19,16 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
-            override fun visitLitExpr(o: RsLitExpr) {
-                val parent = o.parent as? RsMetaItem ?: return
-                if (parent.path?.text != "crate_type") return
+            override fun visitLitExpr(element: RsLitExpr) {
+                if (!RsPsiPattern.insideCrateTypeAttrValue.accepts(element)) return
 
-                val context = ProcessingContext()
-                if (!parent.isRootMetaItem(context)) return
-                if (context.get(RsPsiPattern.META_ITEM_ATTR) !is RsInnerAttr) return
+                val elementValue = element.stringValue ?: return
+                if (elementValue !in KNOWN_CRATE_TYPES) {
+                    val fixes = NameSuggestionFix.createApplicable(
+                        element, elementValue, KNOWN_CRATE_TYPES, 1
+                    ) { RsPsiFactory(element.project).createExpression("\"$it\"") }.toTypedArray()
 
-                if (o.stringValue !in KNOWN_CRATE_TYPES) {
-                    holder.registerLintProblem(o, "Invalid `crate_type` value")
+                    holder.registerLintProblem(element, "Invalid `crate_type` value", *fixes)
                 }
             }
         }

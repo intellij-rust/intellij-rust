@@ -197,6 +197,11 @@ object RsPsiPattern {
                 eq?.elementType == EQ && feature?.textMatches("feature") == true
             }
 
+    val insideCrateTypeAttrValue: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>().withParent(
+            rootMetaItem("crate_type")
+                .with("innerAttribute") { _, context -> context?.get(META_ITEM_ATTR) is RsInnerAttr }
+        )
+
     private object VisibilityOwnerField : PatternCondition<RsFieldDecl>("visibilityOwnerField") {
         override fun accepts(field: RsFieldDecl, context: ProcessingContext?): Boolean {
             return field.owner !is RsEnumVariant && field.vis == null
