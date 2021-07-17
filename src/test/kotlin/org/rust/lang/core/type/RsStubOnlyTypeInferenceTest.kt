@@ -282,4 +282,18 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         }
 
     """)
+
+    fun `test const argument that looks like a type argument`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        #![feature(const_generics)]
+        pub struct S<const N1: usize>;
+        pub fn bar<const N2: usize>() -> S<N2> { S }
+    //- mod.rs
+        mod foo;
+        const C: usize = 42;
+        fn main() {
+            let a = foo::bar::<C>();
+            a;
+        } //^ S<42>
+    """)
 }

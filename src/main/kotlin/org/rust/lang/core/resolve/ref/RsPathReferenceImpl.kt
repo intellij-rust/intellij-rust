@@ -22,6 +22,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
+import org.rust.stdext.mapNotNullToSet
 
 class RsPathReferenceImpl(
     element: RsPath
@@ -163,10 +164,29 @@ fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWith
         processPathResolveVariants(lookup, path, false, it)
     }
 
-    return when (result.size) {
+    // type A = Foo<T>
+    //              ~ `T` can be either type or const argument.
+    //                    Prefer types if they are
+    val pathParent = path.parent
+    val result2 = if (pathParent is RsTypeReference && pathParent.parent is RsTypeArgumentList) {
+        when (result.size) {
+            0 -> emptyList()
+            1 -> result
+            else -> {
+                val withoutConstants = result.filter {
+                    it.inner.element !is RsConstant && it.inner.element !is RsConstParameter
+                }
+                withoutConstants.ifEmpty { result }
+            }
+        }
+    } else {
+        result
+    }
+
+    return when (result2.size) {
         0 -> emptyList()
-        1 -> listOf(result.single().map { instantiatePathGenerics(path, it) })
-        else -> result
+        1 -> listOf(result2.single().map { instantiatePathGenerics(path, it) })
+        else -> result2
     }
 }
 
@@ -193,11 +213,11 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
     val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
 
     val regionParameters = resolved.lifetimeParameters
-    val regionArguments = path.typeArgumentList?.lifetimeList
+    val regionArguments = (args as? RsPsiPathParameters.InAngles)?.lifetimeArgs
     val regionSubst = associateSubst(regionParameters, regionArguments, areOptionalArgs)
 
     val typeArguments = when (args) {
-        is RsPsiPathParameters.InAngles -> args.args.map { TypeValue.Present.InAngles(it) }
+        is RsPsiPathParameters.InAngles -> args.typeOrConstArgs.filterIsInstance<RsTypeReference>().map { TypeValue.Present.InAngles(it) }
         is RsPsiPathParameters.FnSugar -> listOf(TypeValue.Present.FnSugar(args.inputArgs))
         null -> null
     }
@@ -232,8 +252,11 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
         param to value
     }
 
+    val usedTypeArguments = typeSubst.values.mapNotNullToSet { (it as? TypeValue.Present.InAngles)?.value }
+
     val constParameters = resolved.constParameters
-    val constArguments = path.typeArgumentList?.exprList
+    val constArguments = (args as? RsPsiPathParameters.InAngles)?.typeOrConstArgs
+        ?.let { list -> list.filter { it !is RsTypeReference || it !in usedTypeArguments && it is RsBaseType} }
     val constSubst = associateSubst(constParameters, constArguments, areOptionalArgs)
 
     val assocTypes = run {
@@ -288,9 +311,11 @@ private fun <Param, Arg> associateSubst(
 }
 
 private sealed class RsPsiPathParameters {
-    /** Foo<Bar, Baz, Item=i32> */
+    /** `Foo<'a, Bar, Baz, 2+2, Item=i32>` */
     class InAngles(
-        val args: List<RsTypeReference>,
+        val lifetimeArgs: List<RsLifetime>,
+        /** [RsTypeReference] or [RsExpr] */
+        val typeOrConstArgs: List<RsElement>,
         val assoc: List<RsAssocTypeBinding>
     ) : RsPsiPathParameters()
 
@@ -306,9 +331,17 @@ private fun pathTypeParameters(path: RsPath): RsPsiPathParameters? {
     val fnSugar = path.valueParameterList
     return when {
         inAngles != null -> {
-            val params = inAngles.typeReferenceList
-            val assoc = inAngles.assocTypeBindingList
-            RsPsiPathParameters.InAngles(params, assoc)
+            val typeOrConstArgs = mutableListOf<RsElement>()
+            val lifetimeArgs = mutableListOf<RsLifetime>()
+            val assoc = mutableListOf<RsAssocTypeBinding>()
+            for (child in inAngles.stubChildrenOfType<RsElement>()) {
+                when (child) {
+                    is RsTypeReference, is RsExpr -> typeOrConstArgs.add(child as RsElement)
+                    is RsLifetime -> lifetimeArgs += child
+                    is RsAssocTypeBinding -> assoc += child
+                }
+            }
+            RsPsiPathParameters.InAngles(lifetimeArgs, typeOrConstArgs, assoc)
         }
         fnSugar != null -> {
             RsPsiPathParameters.FnSugar(

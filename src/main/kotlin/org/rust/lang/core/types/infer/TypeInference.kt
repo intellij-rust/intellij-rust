@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.resolve.ref.resolvePathRaw
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.*
@@ -188,9 +189,17 @@ class RsInferenceContext(
                     else -> null
                 }
                 val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration
-                val constParameters = declaration?.constParameters.orEmpty()
-                val constArguments = path?.constArguments.orEmpty()
-                RsTypeInferenceWalker(this, TyUnknown).inferConstArgumentTypes(constParameters, constArguments)
+                if (path != null && declaration != null) {
+                    val constParameters = mutableListOf<RsConstParameter>()
+                    val constArguments = mutableListOf<RsExpr>()
+                    for ((param, value) in pathPsiSubst(path, declaration).constSubst) {
+                        if (value is RsPsiSubstitution.Value.Present && value.value is RsExpr) {
+                            constParameters += param
+                            constArguments += value.value
+                        }
+                    }
+                    RsTypeInferenceWalker(this, TyUnknown).inferConstArgumentTypes(constParameters, constArguments)
+                }
             }
             else -> {
                 val (retTy, expr) = when (element) {

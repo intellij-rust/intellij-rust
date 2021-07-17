@@ -32,18 +32,17 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.MACROS
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.*
+import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
+import org.rust.lang.utils.RsErrorCode
+import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.evaluate
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
@@ -1271,7 +1270,7 @@ private fun checkDuplicates(
     if (element.isCfgUnknown) return
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
-    val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
+    val ns = element.namespacesForDuplicatesCheck.find { element in duplicates[it].orEmpty() }
         ?: return
     val name = element.name!!
 
@@ -1359,6 +1358,12 @@ private fun PsiElement.nameOrImportedName(): String? =
         else -> null
     }
 
+private val RsNamedElement.namespacesForDuplicatesCheck: Set<Namespace>
+    get() = when (this) {
+        is RsConstParameter -> TYPES_N_VALUES
+        else -> namespaces
+    }
+
 private fun AnnotationSession.duplicatesByNamespace(
     owner: PsiElement,
     recursively: Boolean
@@ -1367,7 +1372,7 @@ private fun AnnotationSession.duplicatesByNamespace(
 
     fun PsiElement.namespaced(): Sequence<Pair<Namespace, PsiElement>> =
         when (this) {
-            is RsNamedElement -> namespaces
+            is RsNamedElement -> namespacesForDuplicatesCheck
             is RsUseSpeck -> namespaces
             else -> emptySet()
         }.asSequence().map { Pair(it, this) }

@@ -354,4 +354,14 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             foo(<error>&s</error>);
         }
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/7420
+    fun `test correctly match const arguments with const parameters`() = checkErrors("""
+        struct Foo<const N: u8, const S: bool>(u32);
+
+        impl<const N: u8> From<u32> for Foo<N, true> {
+                                            // ^^^^ the error should not appear here
+            fn from(val: u32) -> Self { Foo(val) }
+        }
+    """)
 }
