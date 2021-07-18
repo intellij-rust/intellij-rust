@@ -78,7 +78,7 @@ private fun handleElement(
             true
         }
         is RsPath -> {
-            if (element.qualifier != null) {
+            if (element.qualifier != null || element.typeQual != null) {
                 val requiredTraits = getAssociatedItemRequiredTraits(element).orEmpty()
                 traitUsages.addAll(requiredTraits)
             } else {
