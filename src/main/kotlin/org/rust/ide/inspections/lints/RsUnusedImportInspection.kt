@@ -119,7 +119,10 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     }
 
     return items.any { (name, item) ->
-        item in usage.pathUsages[name].orEmpty()
+        val used = item in usage.pathUsages[name].orEmpty()
             || item in usage.traitUsages
+        val probablyUsed = name in usage.unresolvedPaths
+            || (item as? RsTraitItem)?.expandedMembers.orEmpty().any { it.name in usage.unresolvedMethods }
+        used || probablyUsed
     }
 }
