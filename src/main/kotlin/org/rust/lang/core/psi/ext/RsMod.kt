@@ -13,7 +13,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.openapiext.findFileByMaybeRelativePath
-import java.util.*
 
 interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
     /**
@@ -89,6 +88,11 @@ val RsMod.superMods: List<RsMod>
         return generateSequence(this) { it.`super` }
             .takeWhile { visited.add(it) }
             .toList()
+    }
+
+val RsMod.hasChildModules
+    get() = expandedItemsExceptImplsAndUses.any {
+        it is RsModItem || it is RsModDeclItem
     }
 
 val RsMod.childModules: List<RsMod>

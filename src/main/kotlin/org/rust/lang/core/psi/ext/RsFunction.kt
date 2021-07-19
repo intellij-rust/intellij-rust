@@ -10,10 +10,8 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.macros.RsExpandedElement
@@ -227,14 +225,6 @@ fun RsFunction.findReferenceUsages(scope: SearchScope? = null): Sequence<RsPath>
 fun RsFunction.findUsages(scope: SearchScope? = null): Sequence<RsElement> = searchReferences(scope)
     .asSequence()
     .mapNotNull { it.getMethodCallUsage() ?: it.getFunctionCallUsage() ?: it.getReferenceUsage() }
-
-private fun RsElement.searchReferences(scope: SearchScope? = null): Query<PsiReference> {
-    return if (scope == null) {
-        ReferencesSearch.search(this)
-    } else {
-        ReferencesSearch.search(this, scope)
-    }
-}
 
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 

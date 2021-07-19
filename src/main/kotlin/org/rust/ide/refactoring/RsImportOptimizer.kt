@@ -55,9 +55,7 @@ class RsImportOptimizer : ImportOptimizer {
 
         /** Returns false if [useSpeck] is empty and should be removed */
         fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
-            val item = useSpeck.ancestorStrict<RsUseItem>() ?: return true
-            val checkUnusedImports = RsUnusedImportInspection.isEnabled(useSpeck.project) &&
-                RsUnusedImportInspection.isApplicableForUseItem(item)
+            val checkUnusedImports = RsUnusedImportInspection.isEnabled(useSpeck.project)
             return optimizeUseSpeck(psiFactory, useSpeck, checkUnusedImports)
         }
 
