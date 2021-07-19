@@ -7,20 +7,13 @@
 
 package org.rust.cargo.runconfig.buildtool
 
-import com.intellij.build.BuildProgressListener
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.FinishBuildEvent
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.ui.UIUtil
 import org.rust.cargo.toolchain.CargoCommandLine
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 typealias CargoPatch = (CargoCommandLine) -> CargoCommandLine
 
@@ -66,31 +59,5 @@ class MockProgressIndicator : EmptyProgressIndicator() {
     override fun setText2(text: String?) {
         super.setText2(text)
         _textHistory += text
-    }
-}
-
-object EmptyBuildProgressListener : BuildProgressListener {
-    override fun onEvent(buildId: Any, event: BuildEvent) = Unit
-}
-
-@Suppress("UnstableApiUsage")
-class MockBuildProgressListener(buildsCount: Int = 1) : BuildProgressListener {
-    private val latch: CountDownLatch = CountDownLatch(buildsCount)
-    private val _eventHistory: MutableList<BuildEvent> = mutableListOf()
-    val eventHistory: List<BuildEvent> get() = _eventHistory
-
-    override fun onEvent(buildId: Any, event: BuildEvent) {
-        _eventHistory.add(event)
-        if (event is FinishBuildEvent) {
-            latch.countDown()
-        }
-    }
-
-    @Throws(InterruptedException::class)
-    fun waitFinished(timeoutMs: Long = 5000) {
-        for (i in 1..timeoutMs / ConcurrencyUtil.DEFAULT_TIMEOUT_MS) {
-            UIUtil.dispatchAllInvocationEvents()
-            if (latch.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) break
-        }
     }
 }

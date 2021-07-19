@@ -8,35 +8,45 @@
 package org.rustSlowTests.cargo.runconfig.buildtool
 
 import com.intellij.build.BuildDescriptor
+import com.intellij.build.BuildViewManager
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.*
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
+import com.intellij.testFramework.replaceService
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
-import org.rust.cargo.runconfig.buildtool.MockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.MockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.RsBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
 abstract class CargoBuildTest : RunConfigurationTestBase() {
 
+    protected lateinit var testBuildViewManager: TestBuildViewManager
+
     override fun shouldRunTest(): Boolean = System.getenv("CI") == null
 
     override fun setUp() {
         super.setUp()
+        testBuildViewManager = TestBuildViewManager(project)
+        project.replaceService(BuildViewManager::class.java, testBuildViewManager, testRootDisposable)
         testBuildId = Any()
-        mockBuildProgressListener = MockBuildProgressListener()
         mockProgressIndicator = MockProgressIndicator()
     }
 
     override fun tearDown() {
         super.tearDown()
         testBuildId = null
-        mockBuildProgressListener = null
         mockProgressIndicator = null
+    }
+
+    protected fun checkEvents(vararg expectedEvents: BuildEvent) {
+        val actualEvents = testBuildViewManager.eventHistory.filter { it !is OutputBuildEvent }
+        assertEquals(expectedEvents.size, actualEvents.size)
+        for ((expected, actual) in expectedEvents.zip(actualEvents)) {
+            assertEquals(expected, actual)
+        }
     }
 
     @Suppress("EqualsOrHashCode")
@@ -56,14 +66,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
             assertEquals(warnings, actual.warnings)
             assertEquals(succeeded, actual.succeeded)
             assertEquals(canceled, actual.canceled)
-        }
-
-        fun checkEvents(vararg expectedEvents: BuildEvent) {
-            val actualEvents = mockBuildProgressListener?.eventHistory.orEmpty().filter { it !is OutputBuildEvent }
-            assertEquals(expectedEvents.size, actualEvents.size)
-            for ((expected, actual) in expectedEvents.zip(actualEvents)) {
-                assertEquals(expected, actual)
-            }
         }
 
         @JvmStatic

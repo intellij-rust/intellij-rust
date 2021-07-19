@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testFramework.TestDataProvider
 import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer
@@ -74,7 +73,7 @@ class RsBuildActionTest : CargoBuildTest() {
 
         setUpSelectedConfigurationFromContext(testProject.fileWithCaret)
         performBuildAction()
-        mockBuildProgressListener!!.waitFinished()
+        testBuildViewManager.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
         val expectedCommandLine = CargoCommandLine(
@@ -151,7 +150,7 @@ class RsBuildActionTest : CargoBuildTest() {
 
         setUpSelectedConfigurationFromContext(testProject.fileWithCaret)
         performBuildAction()
-        mockBuildProgressListener!!.waitFinished()
+        testBuildViewManager.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
         val expectedCommandLine = CargoCommandLine(
@@ -230,7 +229,7 @@ class RsBuildActionTest : CargoBuildTest() {
         }.create()
 
         performBuildAction()
-        mockBuildProgressListener!!.waitFinished()
+        testBuildViewManager.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
         val expectedCommandLine = CargoCommandLine(
@@ -292,7 +291,7 @@ class RsBuildActionTest : CargoBuildTest() {
 
         setUpSelectedConfigurationFromContext(testProject.fileWithCaret, withSudo = true)
         performBuildAction()
-        mockBuildProgressListener!!.waitFinished()
+        testBuildViewManager.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
         assertFalse(actualCommandLine.withSudo)
