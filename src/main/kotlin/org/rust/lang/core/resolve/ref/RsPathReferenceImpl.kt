@@ -11,13 +11,14 @@ import com.intellij.util.containers.map2Array
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.RsPsiSubstitution.TypeValue
 import org.rust.lang.core.types.RsPsiSubstitution.Value
-import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
@@ -181,15 +182,59 @@ fun <T : RsElement> instantiatePathGenerics(
     return BoundElement(resolved.element, subst + newSubst, psiSubst.assoc.mapValues { it.value.type })
 }
 
-@Suppress("DuplicatedCode")
 fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
     val args = pathTypeParameters(path)
+
+    val parent = path.parent
+
+    // Generic arguments are optional in expression context, e.g.
+    // `let a = Foo::<u8>::bar::<u16>();` can be written as `let a = Foo::bar();`
+    // if it is possible to infer `u8` and `u16` during type inference
+    val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
+
+    val regionParameters = resolved.lifetimeParameters
+    val regionArguments = path.typeArgumentList?.lifetimeList
+    val regionSubst = associateSubst(regionParameters, regionArguments, areOptionalArgs)
 
     val typeArguments = when (args) {
         is RsPsiPathParameters.InAngles -> args.args.map { TypeValue.Present.InAngles(it) }
         is RsPsiPathParameters.FnSugar -> listOf(TypeValue.Present.FnSugar(args.inputArgs))
         null -> null
     }
+
+    val typeSubst = resolved.typeParameters.withIndex().associate { (i, param) ->
+        val value = if (areOptionalArgs && typeArguments == null) {
+            // Args are optional and turbofish is not presend. E.g. `Vec::new()`
+            // Let the type inference engine infer a type of the type parameter
+            TypeValue.OptionalAbsent
+        } else if (typeArguments != null && i < typeArguments.size) {
+            typeArguments[i]
+        } else {
+            // Args aren't optional, and some args/turbofish aren't present
+            // Use either default argument from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
+            val defaultTy = param.typeReference
+            if (defaultTy != null) {
+                val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
+                    val pred = parent.ancestorStrict<RsWherePred>()
+                    if (pred != null) {
+                        pred.typeReference?.type
+                    } else {
+                        parent.ancestorStrict<RsTypeParameter>()?.declaredType
+                    } ?: TyUnknown
+                } else {
+                    null
+                }
+                TypeValue.DefaultValue(defaultTy, selfTy)
+            } else {
+                TypeValue.RequiredAbsent
+            }
+        }
+        param to value
+    }
+
+    val constParameters = resolved.constParameters
+    val constArguments = path.typeArgumentList?.exprList
+    val constSubst = associateSubst(constParameters, constArguments, areOptionalArgs)
 
     val assocTypes = run {
         if (resolved is RsTraitItem) {
@@ -222,70 +267,24 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
         }
     }
 
-    val parent = path.parent
-
-    // Generic arguments are optional in expression context, e.g.
-    // `let a = Foo::<u8>::bar::<u16>();` can be written as `let a = Foo::bar();`
-    // if it is possible to infer `u8` and `u16` during type inference
-    val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
-
-    val typeSubst = resolved.typeParameters.withIndex().associate { (i, param) ->
-        val value = if (areOptionalArgs && typeArguments == null) {
-            // Args are optional and turbofish is not presend. E.g. `Vec::new()`
-            // Let the type inference engine infer a type of the type parameter
-            TypeValue.OptionalAbsent
-        } else if (typeArguments != null && i < typeArguments.size) {
-            typeArguments[i]
-        } else {
-            // Args aren't optional, and some args/turbofish aren't present
-            // Use either default argument from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
-            val defaultTy = param.typeReference
-            if (defaultTy != null) {
-                val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
-                    val pred = parent.ancestorStrict<RsWherePred>()
-                    if (pred != null) {
-                        pred.typeReference?.type
-                    } else {
-                        parent.ancestorStrict<RsTypeParameter>()?.declaredType
-                    } ?: TyUnknown
-                } else {
-                    null
-                }
-                TypeValue.DefaultValue(defaultTy, selfTy)
-            } else {
-                TypeValue.RequiredAbsent
-            }
-        }
-        param to value
-    }
-
-    val regionParameters = resolved.lifetimeParameters
-    val regionArguments = path.typeArgumentList?.lifetimeList
-    val regionSubst = regionParameters.withIndex().associate { (i, param) ->
-        val value = if (areOptionalArgs && regionArguments == null) {
-            Value.OptionalAbsent
-        } else if (regionArguments != null && i < regionArguments.size) {
-            Value.Present(regionArguments[i])
-        } else {
-            Value.RequiredAbsent
-        }
-        param to value
-    }
-
-    val constParameters = resolved.constParameters
-    val constArguments = path.typeArgumentList?.exprList
-    val constSubst = constParameters.withIndex().associate { (i, param) ->
-        val value = if (areOptionalArgs && constArguments == null) {
-            Value.OptionalAbsent
-        } else if (constArguments != null && i < constArguments.size) {
-            Value.Present(constArguments[i])
-        } else {
-            Value.RequiredAbsent
-        }
-        param to value
-    }
-
     return RsPsiSubstitution(typeSubst, regionSubst, constSubst, assocTypes)
+}
+
+private fun <Param, Arg> associateSubst(
+    parameters: List<Param>,
+    arguments: List<Arg>?,
+    areOptionalArgs: Boolean
+): Map<Param, Value<Arg>> {
+    return parameters.withIndex().associate { (i, param) ->
+        val value = if (areOptionalArgs && arguments == null) {
+            Value.OptionalAbsent
+        } else if (arguments != null && i < arguments.size) {
+            Value.Present(arguments[i])
+        } else {
+            Value.RequiredAbsent
+        }
+        param to value
+    }
 }
 
 private sealed class RsPsiPathParameters {
