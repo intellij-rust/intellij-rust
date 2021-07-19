@@ -32,7 +32,7 @@ class CargoBuildContext(
     val progressTitle: String,
     val isTestBuild: Boolean
 ) {
-    val buildId: Any = if (isUnitTestMode) CargoBuildManager.testBuildId ?: Any() else Any()
+    val buildId: Any = Any()
 
     val project: Project get() = cargoProject.project
     val workingDirectory: Path get() = cargoProject.workingDirectory

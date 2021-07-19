@@ -303,10 +303,6 @@ object CargoBuildManager {
 
     @TestOnly
     @Volatile
-    var testBuildId: Any? = null
-
-    @TestOnly
-    @Volatile
     var mockProgressIndicator: MockProgressIndicator? = null
 
     @TestOnly

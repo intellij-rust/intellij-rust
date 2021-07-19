@@ -15,11 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.replaceService
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.buildtool.MockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.RsBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
+import org.rustSlowTests.cargo.runconfig.buildtool.TestBuildViewManager.*
 
 abstract class CargoBuildTest : RunConfigurationTestBase() {
 
@@ -31,22 +31,22 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         super.setUp()
         testBuildViewManager = TestBuildViewManager(project)
         project.replaceService(BuildViewManager::class.java, testBuildViewManager, testRootDisposable)
-        testBuildId = Any()
         mockProgressIndicator = MockProgressIndicator()
     }
 
     override fun tearDown() {
         super.tearDown()
-        testBuildId = null
         mockProgressIndicator = null
     }
 
-    protected fun checkEvents(vararg expectedEvents: BuildEvent) {
-        val actualEvents = testBuildViewManager.eventHistory.filter { it !is OutputBuildEvent }
-        assertEquals(expectedEvents.size, actualEvents.size)
-        for ((expected, actual) in expectedEvents.zip(actualEvents)) {
-            assertEquals(expected, actual)
-        }
+    protected fun checkEvents(
+        build: EventTreeBuilder.() -> Unit
+    ) {
+        val events = mutableListOf<EventTreeNode>()
+        val builder = EventTreeBuilder(events)
+        builder.build()
+        val expectedEventTree = if (events.isNotEmpty()) ParentEventNode(events) else null
+        assertEquals(expectedEventTree, testBuildViewManager.rootNode)
     }
 
     @Suppress("EqualsOrHashCode")
@@ -108,7 +108,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
             override fun equals(other: Any?): Boolean = when {
                 this === other -> true
                 other !is BuildEvent -> false
-                parentId != other.parentId -> false
                 message != other.message -> false
                 else -> true
             }
@@ -124,7 +123,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
             override fun equals(other: Any?): Boolean = when {
                 !super.equals(other) -> false
                 other !is StartEvent -> false
-                id != other.id -> false
                 else -> true
             }
 
@@ -142,7 +140,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
             override fun equals(other: Any?): Boolean = when {
                 !super.equals(other) -> false
                 other !is FinishEvent -> false
-                id != other.id -> false
                 result.javaClass != other.result.javaClass -> false
                 else -> true
             }
@@ -151,9 +148,10 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         }
 
         protected class MyStartBuildEvent(
+            id: Any,
             message: String,
             val buildTitle: String
-        ) : MyStartEvent(testBuildId!!, null, message), StartBuildEvent {
+        ) : MyStartEvent(id, null, message), StartBuildEvent {
 
             override fun getBuildDescriptor(): BuildDescriptor =
                 DefaultBuildDescriptor(Any(), "", "", 0)
@@ -169,9 +167,10 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         }
 
         protected class MyFinishBuildEvent(
+            id: Any,
             message: String,
             result: EventResult
-        ) : MyFinishEvent(testBuildId!!, null, message, result), FinishBuildEvent {
+        ) : MyFinishEvent(id, null, message, result), FinishBuildEvent {
             override fun equals(other: Any?): Boolean = when {
                 !super.equals(other) -> false
                 other !is FinishBuildEvent -> false
@@ -182,10 +181,11 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         }
 
         protected open class MyMessageEvent(
+            id: Any,
             parentId: Any,
             message: String,
             private val kind: MessageEvent.Kind
-        ) : MyBuildEvent(Any(), parentId, message), MessageEvent {
+        ) : MyBuildEvent(id, parentId, message), MessageEvent {
             override fun getGroup(): String = RUSTC_MESSAGE_GROUP
             override fun getKind(): MessageEvent.Kind = kind
             override fun getNavigatable(project: Project): Navigatable? = null
@@ -200,6 +200,56 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
             }
 
             override fun toString(): String = "MyMessageEvent(${super.toString()}, kind=$kind)"
+        }
+    }
+
+    protected data class EventTreeBuilder(
+        private val events: MutableList<EventTreeNode> = mutableListOf(),
+        private val unorderedGroupId: Int = -1,
+        private val id: Any = Any(),
+        private val parentId: Any? = null
+    ) {
+
+        fun eventTree(build: EventTreeBuilder.() -> Unit) {
+            val builder = EventTreeBuilder(parentId = id)
+            builder.build()
+            events += ParentEventNode(builder.events, unorderedGroupId)
+        }
+
+        fun unordered(build: EventTreeBuilder.() -> Unit) {
+            val builder = copy(unorderedGroupId = unorderedGroupCounter)
+            unorderedGroupCounter++
+            builder.build()
+        }
+
+        fun startBuildEvent(message: String, buildTitle: String) {
+            event(MyStartBuildEvent(id = id, message = message, buildTitle = buildTitle))
+        }
+
+        fun finishBuildEvent(message: String, result: EventResult) {
+            event(MyFinishBuildEvent(id = id, message = message, result = result))
+        }
+
+        fun startEvent(message: String) {
+            event(MyStartEvent(id = id, parentId = parentId, message = message))
+        }
+
+        fun finishEvent(message: String, result: EventResult) {
+            event(MyFinishEvent(id = id, parentId = parentId, message = message, result = result))
+        }
+
+        fun messageEvent(message: String, kind: MessageEvent.Kind) {
+            eventTree {
+                event(MyMessageEvent(id = id, parentId = parentId!!, message = message, kind = kind))
+            }
+        }
+
+        fun event(e: BuildEvent) {
+            events += SingleEventNode(e, unorderedGroupId)
+        }
+
+        companion object {
+            private var unorderedGroupCounter = 0
         }
     }
 }

@@ -15,17 +15,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testFramework.TestDataProvider
 import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.fileTree
 import org.rust.ide.actions.RsBuildAction
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyFinishBuildEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyFinishEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartBuildEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartEvent
 
 @MinRustcVersion("1.48.0")
 class RsBuildActionTest : CargoBuildTest() {
@@ -84,27 +79,23 @@ class RsBuildActionTest : CargoBuildTest() {
         )
         assertEquals(expectedCommandLine, actualCommandLine)
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
                 buildTitle = "Run Cargo Command"
-            ),
-            MyStartEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+            )
+            eventTree {
+                startEvent(message = "Compiling first v0.1.0")
+                finishEvent(
+                    message = "Compiling first v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
     }
 
     fun `test build second action`() {
@@ -161,27 +152,23 @@ class RsBuildActionTest : CargoBuildTest() {
         )
         assertEquals(expectedCommandLine, actualCommandLine)
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
                 buildTitle = "Run Cargo Command"
-            ),
-            MyStartEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+            )
+            eventTree {
+                startEvent(message = "Compiling second v0.1.0")
+                finishEvent(
+                    message = "Compiling second v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
     }
 
     fun `test build all action`() {
@@ -240,38 +227,32 @@ class RsBuildActionTest : CargoBuildTest() {
         )
         assertEquals(expectedCommandLine, actualCommandLine)
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
                 buildTitle = "Run Cargo Command"
-            ),
-            MyStartEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0"
-            ),
-            MyStartEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+            )
+            unordered {
+                eventTree {
+                    startEvent(message = "Compiling first v0.1.0")
+                    finishEvent(
+                        message = "Compiling first v0.1.0",
+                        result = SuccessResultImpl()
+                    )
+                }
+                eventTree {
+                    startEvent(message = "Compiling second v0.1.0")
+                    finishEvent(
+                        message = "Compiling second v0.1.0",
+                        result = SuccessResultImpl()
+                    )
+                }
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
     }
 
     fun `test build does not use root privileges`() {
