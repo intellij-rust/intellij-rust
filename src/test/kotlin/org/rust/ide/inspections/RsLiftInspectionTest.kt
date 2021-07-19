@@ -241,4 +241,70 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
             let x = 1;
         }
     """, checkWeakWarn = true)
+
+    fun `test lift return in match arm without comma`() = checkFixByText("Lift return out of 'match'", """
+        fn foo() -> isize {
+            /*weak_warning descr="Return can be lifted out of 'match'"*/match/*weak_warning**/ Some(0) {
+                Some(x) => /*weak_warning descr="Return can be lifted out of 'match'"*//*caret*/match/*weak_warning**/ x {
+                    0 => return 1,
+                    _ => return 0,
+                }
+                None => return -1,
+            }
+        }
+    """, """
+        fn foo() -> isize {
+            match Some(0) {
+                Some(x) => return match x {
+                    0 => 1,
+                    _ => 0,
+                },
+                None => return -1,
+            }
+        }
+    """, checkWeakWarn = true)
+
+    fun `test lift return in match arm with comma`() = checkFixByText("Lift return out of 'match'", """
+        fn foo() -> isize {
+            /*weak_warning descr="Return can be lifted out of 'match'"*/match/*weak_warning**/ Some(0) {
+                Some(x) => /*weak_warning descr="Return can be lifted out of 'match'"*//*caret*/match/*weak_warning**/ x {
+                    0 => return 1,
+                    _ => return 0,
+                },
+                None => return -1,
+            }
+        }
+    """, """
+        fn foo() -> isize {
+            match Some(0) {
+                Some(x) => return match x {
+                    0 => 1,
+                    _ => 0,
+                },
+                None => return -1,
+            }
+        }
+    """, checkWeakWarn = true)
+
+    fun `test lift return in last match arm without comma`() = checkFixByText("Lift return out of 'match'", """
+        fn foo() -> isize {
+            /*weak_warning descr="Return can be lifted out of 'match'"*/match/*weak_warning**/ Some(0) {
+                None => return -1,
+                Some(x) => /*weak_warning descr="Return can be lifted out of 'match'"*//*caret*/match/*weak_warning**/ x {
+                    0 => return 1,
+                    _ => return 0,
+                }
+            }
+        }
+    """, """
+        fn foo() -> isize {
+            match Some(0) {
+                None => return -1,
+                Some(x) => return match x {
+                    0 => 1,
+                    _ => 0,
+                }
+            }
+        }
+    """, checkWeakWarn = true)
 }
