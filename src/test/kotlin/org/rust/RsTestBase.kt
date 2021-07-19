@@ -20,10 +20,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.SemVer
@@ -42,6 +39,7 @@ import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.full.createInstance
 
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
@@ -71,6 +69,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockCfgOptions()
         setupMockCargoFeatures()
         setupExperimentalFeatures()
+        setupInspections()
         setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
@@ -149,6 +148,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
         for (feature in findAnnotationInstance<WithoutExperimentalFeatures>()?.features.orEmpty()) {
             setExperimentalFeatureEnabled(feature, false, testRootDisposable)
+        }
+    }
+
+    private fun setupInspections() {
+        for (inspection in findAnnotationInstance<WithEnabledInspections>()?.inspections.orEmpty()) {
+            enableInspectionTool(project, inspection.createInstance(), testRootDisposable)
         }
     }
 

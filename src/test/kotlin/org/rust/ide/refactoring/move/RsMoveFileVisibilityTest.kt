@@ -360,6 +360,8 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
         mod foo;
         mod bar {
             use super::foo;
+
+            fn baz(_: foo::S) {}
         }
     //- mod2/mod.rs
     //- mod1/foo.rs
@@ -371,6 +373,8 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
     //- mod1/mod.rs
         mod bar {
             use crate::mod2::foo;
+
+            fn baz(_: foo::S) {}
         }
     //- mod2/mod.rs
         pub mod foo;
@@ -388,6 +392,8 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
         mod foo;
         mod bar {
             use super::foo;
+
+            fn baz(_: foo::S) {}
         }
     //- mod1/foo.rs
         fn func() {}
@@ -398,6 +404,8 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
     //- mod1/mod.rs
         mod bar {
             use crate::foo;
+
+            fn baz(_: foo::S) {}
         }
     //- foo.rs
         fn func() {}

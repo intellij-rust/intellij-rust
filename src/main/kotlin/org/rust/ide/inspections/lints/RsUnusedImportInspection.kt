@@ -5,6 +5,9 @@
 
 package org.rust.ide.inspections.lints
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.RsProblemsHolder
@@ -18,17 +21,11 @@ import org.rust.lang.core.resolve2.isNewResolveEnabled
 class RsUnusedImportInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedImports
 
+    override fun getShortName(): String = SHORT_NAME
+
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitUseItem(item: RsUseItem) {
-            if (!holder.project.isNewResolveEnabled) return
-            if (item.isReexport) return
-
-            // Do not check uses if there is a child mod inside the current mod
-            val parentMod = item.containingMod
-            val hasChildMods = parentMod.expandedItemsExceptImplsAndUses.any {
-                it is RsModItem || it is RsModDeclItem
-            }
-            if (item.parentOfType<RsFunction>() == null && hasChildMods) return
+            if (!isApplicableForUseItem(item)) return
 
             val owner = item.parent as? RsItemsOwner ?: return
             val usage = owner.pathUsage
@@ -87,6 +84,28 @@ class RsUnusedImportInspection : RsLintInspection() {
             RemoveImportFix(element)
         )
     }
+
+    companion object {
+        fun isApplicableForUseItem(item: RsUseItem): Boolean {
+            if (!item.project.isNewResolveEnabled) return false
+            if (item.isReexport) return false
+
+            // Do not check uses if there is a child mod inside the current mod
+            val parentMod = item.containingMod
+            val hasChildMods = parentMod.expandedItemsExceptImplsAndUses.any {
+                it is RsModItem || it is RsModDeclItem
+            }
+            if (item.parentOfType<RsFunction>() == null && hasChildMods) return false
+            return true
+        }
+
+        fun isEnabled(project: Project): Boolean {
+            val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+            return profile.isToolEnabled(HighlightDisplayKey.find(SHORT_NAME))
+        }
+
+        private const val SHORT_NAME: String = "RsUnusedImport"
+    }
 }
 
 private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
@@ -101,6 +120,12 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
  * A usage can be either a path that uses the import of the use speck or a method call/associated item available through
  * a trait that is imported by this use speck.
  */
+fun RsUseSpeck.isUsed(): Boolean {
+    val owner = this.parentOfType<RsUseItem>()?.parent as? RsItemsOwner ?: return true
+    val usage = owner.pathUsage
+    return isUseSpeckUsed(this, usage)
+}
+
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     if (useSpeck.path?.resolveStatus != PathResolveStatus.RESOLVED) return true
 
