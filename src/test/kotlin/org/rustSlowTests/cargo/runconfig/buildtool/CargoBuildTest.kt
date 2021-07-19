@@ -21,6 +21,7 @@ import org.rust.cargo.runconfig.buildtool.RsBuildEventsConverter.Companion.RUSTC
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 import org.rustSlowTests.cargo.runconfig.buildtool.TestBuildViewManager.*
 
+@Suppress("EqualsOrHashCode")
 abstract class CargoBuildTest : RunConfigurationTestBase() {
 
     protected lateinit var testBuildViewManager: TestBuildViewManager
@@ -49,7 +50,6 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         assertEquals(expectedEventTree, testBuildViewManager.rootNode)
     }
 
-    @Suppress("EqualsOrHashCode")
     companion object {
 
         @JvmStatic
@@ -92,115 +92,115 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
                 }
             assertEquals(expectedTexts.toList(), actualTexts)
         }
+    }
 
-        protected abstract class MyBuildEvent(
-            private val id: Any,
-            private val parentId: Any?,
-            private val message: String
-        ) : BuildEvent {
-            override fun getId(): Any = id
-            override fun getParentId(): Any? = parentId
-            override fun getMessage(): String = message
-            override fun getEventTime(): Long = 0
-            override fun getDescription(): String? = null
-            override fun getHint(): String? = null
+    private abstract class MyBuildEvent(
+        private val id: Any,
+        private val parentId: Any?,
+        private val message: String
+    ) : BuildEvent {
+        override fun getId(): Any = id
+        override fun getParentId(): Any? = parentId
+        override fun getMessage(): String = message
+        override fun getEventTime(): Long = 0
+        override fun getDescription(): String? = null
+        override fun getHint(): String? = null
 
-            override fun equals(other: Any?): Boolean = when {
-                this === other -> true
-                other !is BuildEvent -> false
-                message != other.message -> false
-                else -> true
-            }
-
-            override fun toString(): String = "MyBuildEvent(id=$id, parentId=$parentId, message='$message')"
+        override fun equals(other: Any?): Boolean = when {
+            this === other -> true
+            other !is BuildEvent -> false
+            message != other.message -> false
+            else -> true
         }
 
-        protected open class MyStartEvent(
-            id: Any,
-            parentId: Any?,
-            message: String
-        ) : MyBuildEvent(id, parentId, message), StartEvent {
-            override fun equals(other: Any?): Boolean = when {
-                !super.equals(other) -> false
-                other !is StartEvent -> false
-                else -> true
-            }
+        override fun toString(): String = "MyBuildEvent(id=$id, parentId=$parentId, message='$message')"
+    }
 
-            override fun toString(): String = "MyStartEvent(${super.toString()})"
+    private open class MyStartEvent(
+        id: Any,
+        parentId: Any?,
+        message: String
+    ) : MyBuildEvent(id, parentId, message), StartEvent {
+        override fun equals(other: Any?): Boolean = when {
+            !super.equals(other) -> false
+            other !is StartEvent -> false
+            else -> true
         }
 
-        protected open class MyFinishEvent(
-            id: Any,
-            parentId: Any?,
-            message: String,
-            private val result: EventResult
-        ) : MyBuildEvent(id, parentId, message), FinishEvent {
-            override fun getResult(): EventResult = result
+        override fun toString(): String = "MyStartEvent(${super.toString()})"
+    }
 
-            override fun equals(other: Any?): Boolean = when {
-                !super.equals(other) -> false
-                other !is FinishEvent -> false
-                result.javaClass != other.result.javaClass -> false
-                else -> true
-            }
+    private open class MyFinishEvent(
+        id: Any,
+        parentId: Any?,
+        message: String,
+        private val result: EventResult
+    ) : MyBuildEvent(id, parentId, message), FinishEvent {
+        override fun getResult(): EventResult = result
 
-            override fun toString(): String = "MyFinishEvent(${super.toString()}, result=$result)"
+        override fun equals(other: Any?): Boolean = when {
+            !super.equals(other) -> false
+            other !is FinishEvent -> false
+            result.javaClass != other.result.javaClass -> false
+            else -> true
         }
 
-        protected class MyStartBuildEvent(
-            id: Any,
-            message: String,
-            val buildTitle: String
-        ) : MyStartEvent(id, null, message), StartBuildEvent {
+        override fun toString(): String = "MyFinishEvent(${super.toString()}, result=$result)"
+    }
 
-            override fun getBuildDescriptor(): BuildDescriptor =
-                DefaultBuildDescriptor(Any(), "", "", 0)
+    private class MyStartBuildEvent(
+        id: Any,
+        message: String,
+        val buildTitle: String
+    ) : MyStartEvent(id, null, message), StartBuildEvent {
 
-            override fun equals(other: Any?): Boolean = when {
-                !super.equals(other) -> false
-                other !is StartBuildEvent -> false
-                buildTitle != other.buildDescriptor.title -> false
-                else -> true
-            }
+        override fun getBuildDescriptor(): BuildDescriptor =
+            DefaultBuildDescriptor(Any(), "", "", 0)
 
-            override fun toString(): String = "MyStartBuildEvent(${super.toString()}, buildTitle='$buildTitle')"
+        override fun equals(other: Any?): Boolean = when {
+            !super.equals(other) -> false
+            other !is StartBuildEvent -> false
+            buildTitle != other.buildDescriptor.title -> false
+            else -> true
         }
 
-        protected class MyFinishBuildEvent(
-            id: Any,
-            message: String,
-            result: EventResult
-        ) : MyFinishEvent(id, null, message, result), FinishBuildEvent {
-            override fun equals(other: Any?): Boolean = when {
-                !super.equals(other) -> false
-                other !is FinishBuildEvent -> false
-                else -> true
-            }
+        override fun toString(): String = "MyStartBuildEvent(${super.toString()}, buildTitle='$buildTitle')"
+    }
 
-            override fun toString(): String = "MyFinishBuildEvent(${super.toString()})"
+    private class MyFinishBuildEvent(
+        id: Any,
+        message: String,
+        result: EventResult
+    ) : MyFinishEvent(id, null, message, result), FinishBuildEvent {
+        override fun equals(other: Any?): Boolean = when {
+            !super.equals(other) -> false
+            other !is FinishBuildEvent -> false
+            else -> true
         }
 
-        protected open class MyMessageEvent(
-            id: Any,
-            parentId: Any,
-            message: String,
-            private val kind: MessageEvent.Kind
-        ) : MyBuildEvent(id, parentId, message), MessageEvent {
-            override fun getGroup(): String = RUSTC_MESSAGE_GROUP
-            override fun getKind(): MessageEvent.Kind = kind
-            override fun getNavigatable(project: Project): Navigatable? = null
-            override fun getResult(): MessageEventResult = MessageEventResult { kind }
+        override fun toString(): String = "MyFinishBuildEvent(${super.toString()})"
+    }
 
-            override fun equals(other: Any?): Boolean = when {
-                !super.equals(other) -> false
-                other !is MessageEvent -> false
-                kind != other.kind -> false
-                kind != other.result.kind -> false
-                else -> true
-            }
+    private open class MyMessageEvent(
+        id: Any,
+        parentId: Any,
+        message: String,
+        private val kind: MessageEvent.Kind
+    ) : MyBuildEvent(id, parentId, message), MessageEvent {
+        override fun getGroup(): String = RUSTC_MESSAGE_GROUP
+        override fun getKind(): MessageEvent.Kind = kind
+        override fun getNavigatable(project: Project): Navigatable? = null
+        override fun getResult(): MessageEventResult = MessageEventResult { kind }
 
-            override fun toString(): String = "MyMessageEvent(${super.toString()}, kind=$kind)"
+        override fun equals(other: Any?): Boolean = when {
+            !super.equals(other) -> false
+            other !is MessageEvent -> false
+            kind != other.kind -> false
+            kind != other.result.kind -> false
+            else -> true
         }
+
+        override fun toString(): String = "MyMessageEvent(${super.toString()}, kind=$kind)"
     }
 
     protected data class EventTreeBuilder(
