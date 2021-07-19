@@ -15,6 +15,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
+import org.rust.ide.refactoring.suggestedNames
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.OR
@@ -25,6 +26,7 @@ import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.ty.Ty
 import org.rust.openapiext.createSmartPointer
 
 object RsLambdaExprCompletionProvider : RsCompletionProvider() {
@@ -40,10 +42,10 @@ object RsLambdaExprCompletionProvider : RsCompletionProvider() {
     ) {
         val element = parameters.position.safeGetOriginalOrSelf()
         val expr = element.parentOfType<RsExpr>() ?: return
+        val exprExpectedType = expr.expectedType ?: return
+        val paramTypes = expr.implLookup.asTyFunction(exprExpectedType)?.value?.paramTypes ?: return
 
-        val paramCount = getParameterCount(expr) ?: return
-        val params = (0 until paramCount).joinToString(", ") { "p${it}" }
-
+        val params = suggestedParams(paramTypes, expr)
         val start = if (expr.leftSiblings.filter { it !is PsiErrorElement }.firstOrNull()?.elementType == OR) {
             ""
         } else {
@@ -92,7 +94,11 @@ private fun handleInsert(ctx: InsertionContext) {
     template.runInline()
 }
 
-private fun getParameterCount(expr: RsExpr): Int? {
-    val type = expr.expectedType ?: return null
-    return expr.implLookup.asTyFunction(type)?.value?.paramTypes?.size
+private fun suggestedParams(paramTypes: List<Ty>, contextExpr: RsExpr): String {
+    val alreadyGivenNames = mutableSetOf<String>()
+    return paramTypes.joinToString { ty ->
+        val name = ty.suggestedNames(contextExpr, alreadyGivenNames).default
+        alreadyGivenNames += name
+        name
+    }
 }

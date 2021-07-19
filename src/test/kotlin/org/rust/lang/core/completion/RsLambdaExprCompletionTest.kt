@@ -21,7 +21,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo(f: fn(u32) -> ()) {}
 
         fn main() {
-            foo(|p0| {/*caret*/});
+            foo(|i| {/*caret*/});
         }
     """)
 
@@ -49,7 +49,39 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo(f: fn(u32, bool) -> ()) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
+        }
+    """)
+
+    fun `test multiple arguments of same type`() = doTest("""
+        struct S;
+        fn foo(f: fn(u32, u32, S, bool, bool, S, S) -> ()) {}
+
+        fn main() {
+            foo(/*caret*/);
+        }
+    """, """
+        struct S;
+        fn foo(f: fn(u32, u32, S, bool, bool, S, S) -> ()) {}
+
+        fn main() {
+            foo(|i/*caret*/, i1, s, x, x1, s1, s2| {});
+        }
+    """)
+
+    fun `test custom struct`() = doTest("""
+        struct MyStruct;
+        fn foo(f: fn(u32, MyStruct) -> ()) {}
+
+        fn main() {
+            foo(/*caret*/);
+        }
+    """, """
+        struct MyStruct;
+        fn foo(f: fn(u32, MyStruct) -> ()) {}
+
+        fn main() {
+            foo(|i/*caret*/, my_struct| {});
         }
     """)
 
@@ -78,7 +110,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo(f: impl Fn(u32, bool) -> ()) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
         }
     """)
 
@@ -93,7 +125,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo(f: &dyn Fn(u32, bool) -> ()) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
         }
     """)
 
@@ -108,7 +140,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo<F: Fn(u32, bool) -> ()>(f: F) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
         }
     """)
 
@@ -123,7 +155,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo<F: FnMut(u32, bool) -> ()>(f: F) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
         }
     """)
 
@@ -138,7 +170,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
         fn foo<F: FnOnce(u32, bool) -> ()>(f: F) {}
 
         fn main() {
-            foo(|p0/*caret*/, p1| {});
+            foo(|i/*caret*/, x| {});
         }
     """)
 

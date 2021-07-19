@@ -19,6 +19,7 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyTraitObject
 import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 import org.rust.stdext.mapNotNullToSet
 
@@ -40,23 +41,7 @@ const val FRESHEN_LIMIT = 1000
  * If a name is already bound in the local scope do not suggest it.
  */
 fun RsExpr.suggestedNames(): SuggestedNames {
-    fun freshenName(name: String, usedNames: Set<String>): String {
-        var newName = name
-        var i = 1
-        while (i < FRESHEN_LIMIT && usedNames.contains(newName)) {
-            newName = "$name$i"
-            ++i
-        }
-        return newName
-    }
-
-    val names = LinkedHashSet<String>()
-    when (val type = type) {
-        is TyInteger -> names.addName("i")
-        is TyTypeParameter -> names.addName(type.name)
-        is TyAdt -> names.addName(type.item.name)
-        is TyTraitObject -> type.traits.forEach { names.addName(it.element.name) }
-    }
+    val names = type.suggestedNames()
 
     val parent = this.parent
     if (parent is RsValueArgumentList) {
@@ -77,13 +62,46 @@ fun RsExpr.suggestedNames(): SuggestedNames {
         names.addName(parent.identifier?.text)
     }
 
+    return finalizeNameSelection(this, names)
+}
+
+fun Ty.suggestedNames(context: PsiElement, additionalNamesInScope: Set<String> = emptySet()): SuggestedNames {
+    val names = suggestedNames()
+    return finalizeNameSelection(context, names, additionalNamesInScope)
+}
+
+private fun freshenName(name: String, usedNames: Set<String>): String {
+    var newName = name
+    var i = 1
+    while (i < FRESHEN_LIMIT && usedNames.contains(newName)) {
+        newName = "$name$i"
+        ++i
+    }
+    return newName
+}
+
+private fun finalizeNameSelection(
+    context: PsiElement,
+    names: LinkedHashSet<String>,
+    additionalNamesInScope: Set<String> = emptySet()
+): SuggestedNames {
     val topName = names.firstOrNull() ?: "x"
-    val usedNames = findNamesInLocalScope(this)
+    val usedNames = findNamesInLocalScope(context) + additionalNamesInScope
 
     val name = freshenName(topName, usedNames)
     names.removeAll(usedNames)
-
     return SuggestedNames(name, names)
+}
+
+private fun Ty.suggestedNames(): LinkedHashSet<String> {
+    val names = LinkedHashSet<String>()
+    when (this) {
+        is TyInteger -> names.addName("i")
+        is TyTypeParameter -> names.addName(name)
+        is TyAdt -> names.addName(item.name)
+        is TyTraitObject -> traits.forEach { names.addName(it.element.name) }
+    }
+    return names
 }
 
 private val uselessNames = listOf("new", "default")
