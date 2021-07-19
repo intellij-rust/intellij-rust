@@ -68,7 +68,11 @@ open class Graph<N, E>(
     fun forEachEdge(f: (Edge<N, E>) -> Unit) =
         edges.forEach { f(it) }
 
-    fun depthFirstTraversal(startNode: Node<N, E>, direction: Direction = Direction.OUTGOING): Sequence<Node<N, E>> {
+    fun depthFirstTraversal(
+        startNode: Node<N, E>,
+        direction: Direction = Direction.OUTGOING,
+        edgeFilter: (Edge<N, E>) -> Boolean = { true }
+    ): Sequence<Node<N, E>> {
         val visited = mutableSetOf(startNode)
         val stack = ArrayDeque<Node<N, E>>()
         stack.push(startNode)
@@ -78,10 +82,12 @@ open class Graph<N, E>(
         return generateSequence {
             val next = stack.poll()
             if (next != null) {
-                incidentEdges(next, direction).forEach { edge ->
-                    val incident = edge.incidentNode(direction)
-                    visit(incident)
-                }
+                incidentEdges(next, direction)
+                    .filter(edgeFilter)
+                    .forEach { edge ->
+                        val incident = edge.incidentNode(direction)
+                        visit(incident)
+                    }
             }
             next
         }

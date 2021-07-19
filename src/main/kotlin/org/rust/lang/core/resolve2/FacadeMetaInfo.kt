@@ -43,3 +43,9 @@ fun RsMod.getDirectoryContainedAllChildFiles(): VirtualFile? {
     val (_, _, modData) = getModInfo(this) as? RsModInfo ?: return null
     return PersistentFS.getInstance().findFileById(modData.directoryContainedAllChildFiles)
 }
+
+fun CrateDefMap.hasTransitiveGlobImport(source: RsMod, target: RsMod): Boolean {
+    val sourceModData = getModData(source) ?: return false
+    val targetModData = getModData(target) ?: return false
+    return globImportGraph.hasTransitiveGlobImport(sourceModData, targetModData)
+}
