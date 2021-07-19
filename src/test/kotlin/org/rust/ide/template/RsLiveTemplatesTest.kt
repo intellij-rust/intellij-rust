@@ -85,6 +85,12 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test pattern binding`() = noSnippet("""
+        fn main() {
+            let p/*caret*/
+        }
+    """)
+
     fun `test macro definition 1`() = noSnippet("""
         macro_rules! foo {
             (impl/*caret*/) => {};
