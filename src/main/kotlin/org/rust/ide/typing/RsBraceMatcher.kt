@@ -132,7 +132,7 @@ private class RsBaseBraceMatcher : PairedBraceMatcher {
     override fun getPairs() = PAIRS
 
     override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, next: IElementType?): Boolean =
-        next in InsertPairBraceBefore
+        next != IDENTIFIER
 
     override fun getCodeConstructStart(file: PsiFile?, openingBraceOffset: Int): Int = openingBraceOffset
 
@@ -142,18 +142,6 @@ private class RsBaseBraceMatcher : PairedBraceMatcher {
             BracePair(LPAREN, RPAREN, false),
             BracePair(LBRACK, RBRACK, false),
             BracePair(LT, GT, false)
-        )
-
-        private val InsertPairBraceBefore = TokenSet.orSet(
-            RS_COMMENTS,
-            TokenSet.create(
-                WHITE_SPACE,
-                SEMICOLON,
-                COMMA,
-                RPAREN,
-                RBRACK,
-                RBRACE, LBRACE
-            )
         )
     }
 }

@@ -48,6 +48,109 @@ class RsBraceMatcherTest : RsTestBase() {
         "fn main() { let _ = &[foo(<caret>)]; }"
     )
 
+    fun `test parenthesis in impl generic parameters`() = doTest(
+        "impl Foo<<caret>>",
+        '(',
+        "impl Foo<(<caret>)>",
+    )
+
+    fun `test brackets in impl generic parameters`() = doTest(
+        "impl Foo<<caret>>",
+        '[',
+        "impl Foo<[<caret>]>",
+    )
+
+    fun `test braces in impl generic parameters`() = doTest(
+        "impl Foo<<caret>>",
+        '{',
+        "impl Foo<{<caret>}>",
+    )
+
+    fun `test parenthesis in function generic parameters`() = doTest(
+        "fn f() { foo::<<caret>> }",
+        '(',
+        "fn f() { foo::<(<caret>)> }",
+    )
+
+    fun `test brackets in function generic parameters`() = doTest(
+        "fn f() { foo::<<caret>> }",
+        '[',
+        "fn f() { foo::<[<caret>]> }",
+    )
+
+    fun `test braces in function generic parameters`() = doTest(
+        "fn f() { foo::<<caret>> }",
+        '{',
+        "fn f() { foo::<{<caret>}> }",
+    )
+
+    fun `test parentheses in method calls`() = doTest(
+        "fn f() { foo<caret>.bar }",
+        '(',
+        "fn f() { foo(<caret>).bar }",
+    )
+
+    fun `test brackets in method calls`() = doTest(
+        "fn f() { foo<caret>.bar }",
+        '[',
+        "fn f() { foo[<caret>].bar }",
+    )
+
+    fun `test parentheses in closure arguments`() = doTest(
+        "fn f() { let f = |<caret>| true; }",
+        '(',
+        "fn f() { let f = |(<caret>)| true; }",
+    )
+
+    fun `test brackets in closure arguments`() = doTest(
+        "fn f() { let f = |<caret>| true; }",
+        '[',
+        "fn f() { let f = |[<caret>]| true; }",
+    )
+
+    fun `test parentheses in let bindings`() = doTest(
+        "fn f() { let <caret>= (true, 0u8); }",
+        '(',
+        "fn f() { let (<caret>)= (true, 0u8); }",
+    )
+
+    fun `test brackets in let bindings`() = doTest(
+        "fn f() { let <caret>= [true, true]; }",
+        '[',
+        "fn f() { let [<caret>]= [true, true]; }",
+    )
+
+    fun `test parentheses in let bindings with type`() = doTest(
+        "fn f() { let <caret>: T = ; }",
+        '(',
+        "fn f() { let (<caret>): T = ; }",
+    )
+
+    fun `test brackets in let bindings with type`() = doTest(
+        "fn f() { let <caret>: T = ; }",
+        '[',
+        "fn f() { let [<caret>]: T = ; }",
+    )
+
+    fun `test parentheses in match pattern`() = doTest(
+        "fn f(x: Foo) { match x { <caret>=> {} } }",
+        '(',
+        "fn f(x: Foo) { match x { (<caret>)=> {} } }",
+    )
+
+    fun `test brackets in match pattern`() = doTest(
+        "fn f(x: Foo) { match x { <caret>=> {} } }",
+        '[',
+        "fn f(x: Foo) { match x { [<caret>]=> {} } }",
+    )
+
+    fun `test braces in match pattern`() = doTest(
+        "fn f(x: Foo) { match x { Foo<caret>=> {} } }",
+        '{',
+        "fn f(x: Foo) { match x { Foo{<caret>}=> {} } }",
+    )
+
+
     fun `test match parenthesis`() = doMatch("fn foo<caret>(x: (i32, ()) ) {}", ")")
 
     fun `test match square brackets`() = doMatch("fn foo(x: <caret>[i32; 192]) {}", "]")
