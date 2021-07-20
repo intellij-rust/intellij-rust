@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.rust
@@ -22,13 +23,13 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
-object RsTrailingCommaFormatProcessor {
-    fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
+class RsTrailingCommaFormatProcessor : PostFormatProcessor {
+    override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
         doProcess(source, settings, null)
         return source
     }
 
-    fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
+    override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
         return doProcess(source, settings, rangeToReformat).resultTextRange
     }
 

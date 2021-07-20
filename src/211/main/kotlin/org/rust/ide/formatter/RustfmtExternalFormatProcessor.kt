@@ -9,13 +9,10 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.ExternalFormatProcessor
 import com.intellij.psi.formatter.FormatterUtil
@@ -29,6 +26,7 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.Rustfmt
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
+import org.rust.ide.formatter.RustfmtExternalFormatProcessorBase.Companion.formatWithRustfmtOrBuiltinFormatter
 import org.rust.ide.formatter.processors.RsPostFormatProcessor
 import org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor
 import org.rust.ide.notifications.showBalloon
@@ -38,6 +36,7 @@ import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.createSmartPointer
 import org.rust.openapiext.document
+import org.rust.openapiext.execute
 
 /**
  * Replaces builtin intellij formatter with `Rustfmt` in the case of whole file formatting if
@@ -66,20 +65,14 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
 
     override fun getId(): String = "rustfmt"
 
-    override fun activeForFile(source: PsiFile): Boolean {
-        return (ApplicationInfo.getInstance().build < BUILD_212 || !reformatInProcess.get()) && isActiveForFile(source)
-    }
+    override fun activeForFile(source: PsiFile): Boolean = isActiveForFile(source)
 
     // Never used by the platform?
     override fun indent(source: PsiFile, lineStartOffset: Int): String? = null
 
     companion object {
-        // BACKCOMPAT: 2021.1
-        private val BUILD_212: BuildNumber = BuildNumber.fromString("212")!!
-        // TODO: implement `FormattingService` instead
-        private val reformatInProcess: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
-        fun isActiveForFile(source: PsiFile): Boolean = !reformatInProcess.get() &&
+        fun isActiveForFile(source: PsiFile): Boolean =
             source is RsFile && source.project.rustSettings.useRustfmt
 
         private data class RustfmtContext(
@@ -113,29 +106,26 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
                 }
             }
 
-            try {
-                reformatInProcess.set(true)
-                // Delegate unsupported cases to the built-in formatter
-                return formatWithBuiltin(source, range, canChangeWhiteSpacesOnly)
-            } finally {
-                reformatInProcess.set(false)
-            }
+            // Delegate unsupported cases to the built-in formatter
+            return formatWithBuiltin(source, range, canChangeWhiteSpacesOnly)
         }
 
         private fun formatWithRustfmt(source: PsiFile, range: TextRange, context: RustfmtContext): TextRange {
-            Testmarks.rustfmtUsed.hit()
+            RustfmtTestmarks.rustfmtUsed.hit()
 
             val (rustfmt, cargoProject, document) = context
             val project = source.project
 
             var text: String? = null
-           ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("title", project, null) {
+            ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("title", project, null) {
                 if (checkNeedInstallRustfmt(project, cargoProject.workingDirectory)) {
                     return@runWriteActionWithCancellableProgressInDispatchThread
                 }
 
                 try {
-                    text = rustfmt.reformatDocumentText(cargoProject, document)
+                    text = rustfmt.createCommandLine(cargoProject, document)
+                        ?.execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
+                        ?.stdout
                 } catch (e: ExecutionException) {
                     e.message?.let { project.showBalloon(it, NotificationType.ERROR) }
                 }
@@ -161,11 +151,11 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
             formatter.processRange(source.node, range.startOffset, range.endOffset)
 
             if (!canChangeWhiteSpacesOnly) {
-                Testmarks.builtinPostProcess.hit()
+                RustfmtTestmarks.builtinPostProcess.hit()
                 val startOffset = if (range.startOffset == 0) 0 else start?.element?.startOffset
                 val endOffset = if (atEnd) source.endOffset else end?.element?.endOffset
                 if (startOffset != null && endOffset != null) {
-                    RsTrailingCommaFormatProcessor.processText(
+                    RsTrailingCommaFormatProcessor().processText(
                         source,
                         TextRange(startOffset, endOffset),
                         CodeStyle.getSettings(source)
@@ -186,11 +176,6 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
             FormatterUtil.getReformatBeforeCommitCommandName() -> FormattingReason.ReformatCodeBeforeCommit
             else -> FormattingReason.Implicit
         }
-    }
-
-    object Testmarks {
-        val rustfmtUsed: Testmark = Testmark("rustfmtUsed")
-        val builtinPostProcess: Testmark = Testmark("builtinPostProcess")
     }
 }
 

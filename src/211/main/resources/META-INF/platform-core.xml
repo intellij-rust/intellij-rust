@@ -1,2 +1,8 @@
 <idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <!--suppress PluginXmlValidity -->
+        <externalFormatProcessor implementation="org.rust.ide.formatter.RustfmtExternalFormatProcessor"/>
+        <postFormatProcessor implementation="org.rust.ide.formatter.processors.RsPostFormatProcessor"/>
+        <!-- Please ADD NO MORE `PostFormatProcessor`s! Follow `RsTrailingCommaFormatProcessor` design if needed -->
+    </extensions>
 </idea-plugin>

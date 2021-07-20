@@ -1,13 +1,17 @@
-    /*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
+/*
+* Use of this source code is governed by the MIT license that can be
+* found in the LICENSE file.
+*/
 
 package org.rust.ide.formatter
 
 import com.intellij.TestCase
+import com.intellij.findAnnotationInstance
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.psi.formatter.FormatterTestCase
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.rust.IgnoreInPlatform
 import kotlin.reflect.KMutableProperty0
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
@@ -20,6 +24,19 @@ abstract class RsFormatterTestBase : FormatterTestCase() {
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
         return TestCase.camelOrWordsToSnake(camelCase)
+    }
+
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        val ignoreAnnotation = findAnnotationInstance<IgnoreInPlatform>()
+        if (ignoreAnnotation != null) {
+            val majorPlatformVersion = ApplicationInfo.getInstance().build.baselineVersion
+            if (majorPlatformVersion in ignoreAnnotation.majorVersions) {
+                System.err.println("SKIP \"$name\": test is ignored for `$majorPlatformVersion` platform")
+                return
+            }
+        }
+
+        return super.runTestRunnable(testRunnable)
     }
 
     override fun doTextTest(@Language("Rust") text: String, @Language("Rust") textAfter: String) {
