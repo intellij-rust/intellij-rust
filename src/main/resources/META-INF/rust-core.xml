@@ -277,8 +277,8 @@
                       id="RsRawLiteralHashesInserter"/>
         <typedHandler implementation="org.rust.ide.typing.RsAngleBraceTypedHandler"
                       id="RsAngleBraceTypedHandler"/>
-        <typedHandler implementation="org.rust.ide.typing.RsDotTypedHandler"
-                      id="RsDotTypedHandler"/>
+        <typedHandler implementation="org.rust.ide.typing.RsTypedHandler"
+                      id="RsTypedHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RsRawLiteralHashesDeleter"/>
