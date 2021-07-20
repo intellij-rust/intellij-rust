@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.MACROS
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
@@ -28,7 +27,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(o, rsHolder)
             override fun visitPathExpr(o: RsPathExpr) = checkPathExpr(o, rsHolder)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnary(o, rsHolder)
-            override fun visitMacroCall(o: RsMacroCall) = checkMacroCall(o, rsHolder)
+            override fun visitMacroExpr(o: RsMacroExpr) = checkMacroExpr(o, rsHolder)
         }
 
         element.accept(visitor)
@@ -107,14 +106,18 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         }
     }
 
-    fun checkMacroCall(macroCall: RsMacroCall, holder: RsAnnotationHolder) {
+    fun checkMacroExpr(macroExpr: RsMacroExpr, holder: RsAnnotationHolder) {
+        val macroCall = macroExpr.macroCall
         val macroName = macroCall.macroName
 
         if (UNSAFE_MACRO_LIST.contains(macroName)) {
-            val macroDef = macroCall.findInScope(macroName, MACROS) as? RsMacro
+            val macroDef = macroCall.resolveToMacro()
 
-            if (macroDef?.hasMacroExport != true && !macroCall.isInUnsafeBlockOrFn()) {
-                RsDiagnostic.UnsafeError(macroCall, "use of `$macroName!` is unsafe and requires unsafe function or block").addToHolder(holder)
+            if (macroDef != null && macroDef.hasRustcBuiltinMacro && !macroCall.isInUnsafeBlockOrFn()) {
+                RsDiagnostic.UnsafeError(
+                    macroExpr,
+                    "use of `$macroName!()` is unsafe and requires unsafe function or block"
+                ).addToHolder(holder)
             }
         }
     }

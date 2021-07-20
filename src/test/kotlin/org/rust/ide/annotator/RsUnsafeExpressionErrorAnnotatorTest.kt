@@ -6,7 +6,8 @@
 package org.rust.ide.annotator
 
 import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor
 
 class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
@@ -135,19 +136,21 @@ class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpress
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test need unsafe asm macro call`() = checkErrors("""
        fn main() {
-            <error descr="use of `asm!` is unsafe and requires unsafe function or block [E0133]">asm!("nop");</error>
+            <error descr="use of `asm!()` is unsafe and requires unsafe function or block [E0133]">asm!("nop")</error>;
        }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test need unsafe asm macro expr`() = checkErrors("""
        fn main() {
-            <error descr="use of `asm!` is unsafe and requires unsafe function or block [E0133]">asm!("nop")</error>
+            <error descr="use of `asm!()` is unsafe and requires unsafe function or block [E0133]">asm!("nop")</error>
        }
     """)
 
-    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test a repeatedly defined asm macro`() = checkErrors("""
     //- dep-lib/lib.rs
         #[macro_export]
