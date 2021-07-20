@@ -764,4 +764,48 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         /// ```
         pub fn func() {}
     """)
+
+    // emulates situation when method is unresolved because of some bug
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test ignore trait import when there is unresolved related method 1`() = checkByText("""
+        mod foo {
+            pub trait T {
+                fn func(&self) {}
+            }
+        }
+        mod bar {
+            use crate::foo::T;
+            fn test() {
+                ().func();
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test ignore trait import when there is unresolved related method 2`() = checkByText("""
+        mod foo {
+            pub trait T {
+                fn func(&self) {}
+            }
+        }
+        mod bar {
+            use crate::foo::T as _;
+            fn test() {
+                ().func();
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test ignore import when there is unresolved related path`() = checkByText("""
+        mod foo {
+            pub mod inner {}
+        }
+        mod bar {
+            use crate::foo::inner;
+            fn test() {
+                let x = inner;
+            }
+        }
+    """)
 }

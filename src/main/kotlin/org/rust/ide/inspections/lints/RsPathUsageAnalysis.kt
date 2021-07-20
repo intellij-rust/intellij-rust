@@ -18,10 +18,37 @@ import org.rust.lang.core.types.inference
 import org.rust.openapiext.TreeStatus
 import org.rust.openapiext.processElementsWithMacros
 
-data class PathUsageMap(
-    val pathUsages: Map<String, Set<RsElement>>,
+interface PathUsageMap {
+    val pathUsages: Map<String, Set<RsElement>>
+    val unresolvedPaths: Set<String>
+
     val traitUsages: Set<RsTraitItem>
-)
+    val unresolvedMethods: Set<String>
+}
+
+class PathUsageMapMutable : PathUsageMap {
+    override val pathUsages: MutableMap<String, MutableSet<RsElement>> = hashMapOf()
+    override val unresolvedPaths: MutableSet<String> = hashSetOf()
+
+    override val traitUsages: MutableSet<RsTraitItem> = hashSetOf()
+    override val unresolvedMethods: MutableSet<String> = hashSetOf()
+
+    fun recordPath(name: String, items: List<RsElement>) {
+        if (items.isEmpty()) {
+            unresolvedPaths += name
+        } else {
+            pathUsages.getOrPut(name) { hashSetOf() } += items
+        }
+    }
+
+    fun recordMethod(methodName: String, traits: Set<RsTraitItem>) {
+        if (traits.isEmpty()) {
+            unresolvedMethods += methodName
+        } else {
+            traitUsages += traits
+        }
+    }
+}
 
 private val PATH_USAGE_KEY: Key<CachedValue<PathUsageMap>> = Key.create("PATH_USAGE_KEY")
 
@@ -32,23 +59,16 @@ val RsItemsOwner.pathUsage: PathUsageMap
     }
 
 private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
-    val directUsages = hashMapOf<String, MutableSet<RsElement>>()
-    val traitUsages = hashSetOf<RsTraitItem>()
-
+    val usage = PathUsageMapMutable()
     for (child in owner.children) {
-        handleSubtree(child, directUsages, traitUsages)
+        handleSubtree(child, usage)
     }
-
-    return PathUsageMap(directUsages, traitUsages)
+    return usage
 }
 
-private fun handleSubtree(
-    root: PsiElement,
-    directUsages: MutableMap<String, MutableSet<RsElement>>,
-    traitUsages: MutableSet<RsTraitItem>
-) {
+private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable) {
     processElementsWithMacros(root) { element ->
-        if (handleElement(element, directUsages, traitUsages)) {
+        if (handleElement(element, usage)) {
             TreeStatus.VISIT_CHILDREN
         } else {
             TreeStatus.SKIP_CHILDREN
@@ -56,15 +76,7 @@ private fun handleSubtree(
     }
 }
 
-private fun handleElement(
-    element: PsiElement,
-    directUsages: MutableMap<String, MutableSet<RsElement>>,
-    traitUsages: MutableSet<RsTraitItem>
-): Boolean {
-    fun addItem(name: String, item: RsElement) {
-        directUsages.getOrPut(name) { hashSetOf() }.add(item)
-    }
-
+private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Boolean {
     if (!element.isEnabledByCfg) return false
 
     return when (element) {
@@ -72,35 +84,34 @@ private fun handleElement(
         is RsPatIdent -> {
             val name = element.patBinding.referenceName
             val targets = element.patBinding.reference.multiResolve()
-            targets.forEach {
-                addItem(name, it)
+            // if `targets` is empty, there is no way to distinguish "unresolved reference" and "usual pat ident"
+            if (targets.isNotEmpty()) {
+                usage.recordPath(name, targets)
             }
             true
         }
         is RsPath -> {
+            val name = element.referenceName ?: return true
             if (element.qualifier != null || element.typeQual != null) {
                 val requiredTraits = getAssociatedItemRequiredTraits(element).orEmpty()
-                traitUsages.addAll(requiredTraits)
+                usage.recordMethod(name, requiredTraits)
             } else {
                 val useSpeck = element.parentOfType<RsUseSpeck>()
                 if (useSpeck == null || useSpeck.isTopLevel) {
-                    val name = element.referenceName ?: return true
                     if (name in IGNORED_USE_PATHS) return true
                     val targets = element.reference?.multiResolve().orEmpty()
-                    targets.forEach {
-                        addItem(name, it)
-                    }
+                    usage.recordPath(name, targets)
                 }
             }
             true
         }
         is RsMacroCall -> {
-            handleSubtree(element.path, directUsages, traitUsages)
+            handleSubtree(element.path, usage)
             true
         }
         is RsMethodCall -> {
             val requiredTraits = getMethodRequiredTraits(element).orEmpty()
-            traitUsages.addAll(requiredTraits)
+            usage.recordMethod(element.referenceName, requiredTraits)
             true
         }
         else -> true
