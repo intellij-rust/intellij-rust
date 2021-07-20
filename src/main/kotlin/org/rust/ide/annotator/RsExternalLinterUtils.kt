@@ -33,6 +33,8 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.runconfig.CargoRunStateBase.CargoProcessListener
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.ErrorCode
@@ -159,16 +161,17 @@ object RsExternalLinterUtils {
         }
 }
 
-fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
-    val disposable = Disposer.newDisposable("Dispose on PSI change")
-    connect(disposable).subscribe(
-        PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-        object : AnyPsiChangeListener {
-            override fun beforePsiChanged(isPhysical: Boolean) {
-                Disposer.dispose(disposable)
-            }
+fun MessageBus.createDisposableOnPsiChangeOrCargoExecution(): Disposable {
+    val disposable = Disposer.newDisposable("Dispose on PSI change or Cargo configuration execution")
+    val connection = connect(disposable)
+    connection.subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, object : AnyPsiChangeListener {
+        override fun beforePsiChanged(isPhysical: Boolean) {
+            Disposer.dispose(disposable)
         }
-    )
+    })
+    connection.subscribe(CargoRunStateBase.CARGO_PROCESS_TOPIC, CargoProcessListener {
+        Disposer.dispose(disposable)
+    })
     return disposable
 }
 

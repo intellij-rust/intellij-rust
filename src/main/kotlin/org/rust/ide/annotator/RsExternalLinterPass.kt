@@ -60,7 +60,7 @@ class RsExternalLinterPass(
         val args = CargoCheckArgs.forTarget(project, cargoTarget)
 
         val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: project
-        disposable = project.messageBus.createDisposableOnAnyPsiChange()
+        disposable = project.messageBus.createDisposableOnPsiChangeOrCargoExecution()
             .also { Disposer.register(moduleOrProject, it) }
 
         annotationInfo = RsExternalLinterUtils.checkLazily(

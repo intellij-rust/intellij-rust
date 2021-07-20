@@ -35,7 +35,7 @@ import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.ide.annotator.RsExternalLinterResult
 import org.rust.ide.annotator.RsExternalLinterUtils
 import org.rust.ide.annotator.createAnnotationsForFile
-import org.rust.ide.annotator.createDisposableOnAnyPsiChange
+import org.rust.ide.annotator.createDisposableOnPsiChangeOrCargoExecution
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.stdext.buildList
@@ -76,7 +76,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         val toolWrapper = currentProfile.getInspectionTool(SHORT_NAME, project) ?: return
 
         while (true) {
-            val disposable = project.messageBus.createDisposableOnAnyPsiChange()
+            val disposable = project.messageBus.createDisposableOnPsiChangeOrCargoExecution()
                 .also { Disposer.register(project, it) }
             val cargoProjects = run {
                 val allProjects = project.cargoProjects.allProjects

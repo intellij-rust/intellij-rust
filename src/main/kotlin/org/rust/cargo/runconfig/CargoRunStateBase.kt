@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.messages.Topic
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
@@ -68,11 +69,22 @@ abstract class CargoRunStateBase(
         val commandLine = cargo().toColoredCommandLine(environment.project, prepareCommandLine())
         LOG.debug("Executing Cargo command: `${commandLine.commandLineString}`")
         val handler = RsProcessHandler(commandLine, processColors)
+        environment.project.messageBus.syncPublisher(CARGO_PROCESS_TOPIC).cargoProcessStarted()
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }
 
+    fun interface CargoProcessListener {
+        fun cargoProcessStarted()
+    }
+
     companion object {
         private val LOG: Logger = logger<CargoRunStateBase>()
+
+        @JvmField
+        val CARGO_PROCESS_TOPIC: Topic<CargoProcessListener> = Topic(
+            "cargo process changed",
+            CargoProcessListener::class.java
+        )
     }
 }
