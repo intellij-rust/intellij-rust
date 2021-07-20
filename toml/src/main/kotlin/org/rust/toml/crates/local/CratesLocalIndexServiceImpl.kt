@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
@@ -336,7 +337,7 @@ class CratesLocalIndexServiceImpl
             get() = RsPathManager.pluginDirInSystem().resolve("crates-local-index")
 
         private val cargoHome: String
-            get() = System.getenv("CARGO_HOME")
+            get() = EnvironmentUtil.getValue("CARGO_HOME")
                 ?: Paths.get(System.getProperty("user.home"), ".cargo/").toString()
 
         // Currently for crates.io only
