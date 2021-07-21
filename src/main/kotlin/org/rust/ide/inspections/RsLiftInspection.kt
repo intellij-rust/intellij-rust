@@ -12,6 +12,8 @@ import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.arms
 
 class RsLiftInspection : RsLocalInspectionTool() {
 
@@ -57,11 +59,21 @@ class RsLiftInspection : RsLocalInspectionTool() {
             for (foldableReturn in foldableReturns) {
                 foldableReturn.elementToReplace.replace(factory.createExpression(foldableReturn.expr.text))
             }
-            if (expr.parent !is RsRetExpr) {
+            val parent = expr.parent
+            if (parent !is RsRetExpr) {
+                (parent as? RsMatchArm)?.addCommaIfNeeded(factory)
                 expr.replace(factory.createRetExpr(expr.text))
             } else {
                 Testmarks.insideRetExpr.hit()
             }
+        }
+
+        private fun RsMatchArm.addCommaIfNeeded(psiFactory: RsPsiFactory) {
+            if (comma != null) return
+            val arms = ancestorStrict<RsMatchExpr>()?.arms ?: return
+            val index = arms.indexOf(this)
+            if (index == -1 || index == arms.size - 1) return
+            add(psiFactory.createComma())
         }
     }
 
