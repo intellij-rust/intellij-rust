@@ -93,6 +93,7 @@ class RsUnusedImportInspection : RsLintInspection() {
         fun isApplicableForUseItem(item: RsUseItem): Boolean {
             if (!item.project.isNewResolveEnabled) return false
             if (item.isReexport) return false
+            if (!item.isEnabledByCfg) return false
 
             // Do not check uses if there is a child mod inside the current mod
             val parentMod = item.containingMod
