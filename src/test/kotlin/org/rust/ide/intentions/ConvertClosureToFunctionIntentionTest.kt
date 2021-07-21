@@ -8,7 +8,13 @@ package org.rust.ide.intentions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctionIntention::class) {
+class ConvertClosureToFunctionIntentionTest : RsIntentionTestBase(ConvertClosureToFunctionIntention::class) {
+
+    fun `test intention is only available on variable name and argument list`() = checkAvailableInSelectionOnly("""
+        fn main() {
+            <selection>let foo = |x: i32| -> i32</selection> { x + 1 };
+        }
+    """)
 
     fun `test conversion from closure to function`() = doAvailableTest("""
         fn main() {
@@ -27,12 +33,6 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
     """, """
         fn main() {
             fn func/*caret*/(x: i32) -> i32 { x + 1 }
-        }
-    """)
-
-    fun `test intention is only available on variable name and argument list`() = checkAvailableInSelectionOnly("""
-        fn main() {
-            <selection>let foo = |x: i32| -> i32 </selection>{ x + 1 };
         }
     """)
 
@@ -67,4 +67,23 @@ class ConvertClosureToFunctionTest : RsIntentionTestBase(ConvertClosureToFunctio
         }
     """)
 
+    fun `test raw identifier`() = doAvailableTest("""
+        fn main() {
+            let r#match = |x: i32/*caret*/| -> i32 { x + 1 };
+        }
+    """, """
+        fn main() {
+            fn r#match(x: i32) -> i32 { x + 1 }/*caret*/
+        }
+    """)
+
+    fun `test inferred types`() = doAvailableTest("""
+        fn main() {
+            let foo: fn(i32) -> i32 = |x/*caret*/| { x + 1 };
+        }
+    """, """
+        fn main() {
+            fn foo(x: i32) -> i32 { x + 1 }/*caret*/
+        }
+    """)
 }

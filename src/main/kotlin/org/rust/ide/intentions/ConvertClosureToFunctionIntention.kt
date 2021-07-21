@@ -7,13 +7,17 @@ package org.rust.ide.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import org.rust.ide.presentation.render
-import org.rust.ide.refactoring.isValidRustVariableIdentifier
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -22,114 +26,97 @@ import org.rust.openapiext.createSmartPointer
 class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertClosureToFunctionIntention.Context>() {
 
     override fun getText(): String = "Convert closure to function"
-    override fun getFamilyName(): String = "Convert between local function and closure"
-
-    data class Context(
-        val assignment: RsLetDecl,
-        val lambda: RsLambdaExpr,
-    )
-
-    private fun getLetDeclarationForElementInSignature(element: PsiElement): RsLetDecl? {
-        if (element.text == ";") {
-            return null
-        }
-
-        for (el in element.ancestors) {
-            return when (el) {
-                is RsLetDecl -> el
-                is RsValueArgumentList -> el.ancestorStrict()
-                is RsBlock -> return null
-                else -> continue
-            }
-        }
-
-        return null
-    }
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         // We try to find a let declaration
         val possibleTarget = element.ancestorStrict<RsLetDecl>() ?: return null
 
         // The assignment of the let declaration should be a lambda to be a valid target
-        if (possibleTarget.expr !is RsLambdaExpr) {
-            return null
-        }
+        val lambdaExpr = possibleTarget.expr as? RsLambdaExpr ?: return null
 
-        val signatureTarget = getLetDeclarationForElementInSignature(element) ?: return null
+        val availabilityRange = TextRange(
+            possibleTarget.let.startOffset,
+            lambdaExpr.retType?.endOffset ?: lambdaExpr.valueParameterList.endOffset
+        )
+        if (element.startOffset !in availabilityRange) return null
 
-        return Context(signatureTarget, signatureTarget.expr as RsLambdaExpr)
+        return Context(possibleTarget, lambdaExpr)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
 
-        var targetName = ctx.assignment.pat?.text
+        val letBidingName = (ctx.letDecl.pat as? RsPatIdent)?.patBinding?.nameIdentifier?.text
+        val useDefaultName = letBidingName == null
+        val targetFunctionName = letBidingName ?: "func"
 
-        var isTemplate = if (targetName == null || !isValidRustVariableIdentifier(targetName)) {
-            targetName = "func"
+        val (parametersText, parameterPlaceholders) = createParameterList(factory, ctx.lambda.valueParameters)
 
-            true
-        } else {
-            false
-        }
+        val lambdaRetTypePsi = ctx.lambda.retType
+        val lambdaRetTy = (ctx.lambda.type as? TyFunction)?.retType
 
-        val valueParameters = ctx.lambda.valueParameters
-        val (parametersText, parameterPlaceholders) = this.createParameterList(factory, valueParameters)
-        if (parameterPlaceholders.isNotEmpty()) {
-            isTemplate = true
-        }
-        val lambdaExpr = ctx.lambda.expr
-        val returnText = if (ctx.lambda.retType != null) {
-            ctx.lambda.retType!!.text
-        } else if (lambdaExpr != null && lambdaExpr.type != TyUnknown && lambdaExpr.type !is TyUnit){
-            "-> ${lambdaExpr.type.render()}"
+        val returnText = if (lambdaRetTypePsi != null) {
+            lambdaRetTypePsi.text
+        } else if (lambdaRetTy != null && lambdaRetTy != TyUnknown && lambdaRetTy !is TyUnit) {
+            "-> ${lambdaRetTy.renderInsertionSafe()}"
         } else {
             ""
         }
 
+        val lambdaExpr = ctx.lambda.expr
         val body = if (lambdaExpr is RsBlockExpr) {
             lambdaExpr.text
         } else {
             "{ ${lambdaExpr?.text} }"
         }
 
-        val function = factory.createFunction("fn $targetName($parametersText) $returnText $body")
-        val replaced = ctx.assignment.replace(function) as RsFunction
-
-        val identifier = replaced.identifier
+        val function = factory.createFunction("fn $targetFunctionName($parametersText) $returnText $body")
+        val replaced = ctx.letDecl.replace(function) as RsFunction
 
         // in case we auto-generated a function name, we encourage the user to change it by running a template on the replacement
-        if (isTemplate) {
+        if (useDefaultName || parameterPlaceholders.isNotEmpty()) {
             val placeholderElements = mutableListOf<SmartPsiElementPointer<PsiElement>>()
-            if (targetName == "func") {
-                placeholderElements.add(identifier.createSmartPointer())
+            if (useDefaultName) {
+                placeholderElements.add(replaced.identifier.createSmartPointer())
             }
-            placeholderElements.addAll(replaced.descendantsOfType<RsTypeReference>().filter {
-                it.type is TyUnit
-            }.map { it.createSmartPointer() })
-                editor.buildAndRunTemplate(replaced, placeholderElements)
-
+            replaced.valueParameterList?.valueParameterList.orEmpty().forEachIndexed { i, param ->
+                if (i in parameterPlaceholders) {
+                    param.typeReference?.let { placeholderElements += it.createSmartPointer() }
+                }
+            }
+            editor.buildAndRunTemplate(replaced, placeholderElements)
         } else {
             editor.caretModel.moveToOffset(replaced.endOffset)
         }
     }
 
-    private fun createParameterList(factory: RsPsiFactory, valueParameters: List<RsValueParameter>): Pair<String, List<RsTypeReference>> {
-        val placeholders = mutableListOf<RsTypeReference>()
-        val newParams = valueParameters.map { param ->
+    private fun createParameterList(
+        factory: RsPsiFactory,
+        valueParameters: List<RsValueParameter>
+    ): Pair<String, Set<Int>> {
+        val placeholders = mutableSetOf<Int>()
+        valueParameters.forEachIndexed { i, param ->
             if (param.typeReference == null) {
-                val colon = param.addAfter(factory.createColon(), param.pat)
-                val placeholder = param.addAfter(factory.createType("()"), colon) as RsTypeReference
-                placeholders.add(placeholder)
+                val type = param.pat?.type ?: TyUnknown
 
-                param
-            } else {
-                param
+                val colon = param.addAfter(factory.createColon(), param.pat)
+
+                if (type != TyUnknown) {
+                    param.addAfter(factory.createType(type.renderInsertionSafe()), colon) as RsTypeReference
+                } else {
+                    param.addAfter(factory.createType("()"), colon) as RsTypeReference
+                    placeholders.add(i)
+                }
             }
-        }.joinToString(", ") {
-            it.text
         }
+        val newParams = valueParameters.joinToString(", ") { it.text }
 
         return Pair(newParams, placeholders)
     }
+
+    data class Context(
+        val letDecl: RsLetDecl,
+        val lambda: RsLambdaExpr,
+    )
 }
