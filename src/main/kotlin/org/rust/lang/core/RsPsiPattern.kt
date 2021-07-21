@@ -269,7 +269,7 @@ object RsPsiPattern {
      * @see RsMetaItem.isRootMetaItem
      * @see RsAttr.owner
      */
-    private fun rootMetaItem(
+    fun rootMetaItem(
         key: String? = null,
         ownerPattern: ElementPattern<out RsDocAndAttributeOwner>? = null
     ): PsiElementPattern.Capture<RsMetaItem> {
