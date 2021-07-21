@@ -27,6 +27,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(o, rsHolder)
             override fun visitPathExpr(o: RsPathExpr) = checkPathExpr(o, rsHolder)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnary(o, rsHolder)
+            override fun visitMacroExpr(o: RsMacroExpr) = checkMacroExpr(o, rsHolder)
         }
 
         element.accept(visitor)
@@ -105,6 +106,22 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         }
     }
 
+    fun checkMacroExpr(macroExpr: RsMacroExpr, holder: RsAnnotationHolder) {
+        val macroCall = macroExpr.macroCall
+        val macroName = macroCall.macroName
+
+        if (UNSAFE_MACRO_LIST.contains(macroName)) {
+            val macroDef = macroCall.resolveToMacro()
+
+            if (macroDef != null && macroDef.hasRustcBuiltinMacro && !macroCall.isInUnsafeBlockOrFn()) {
+                RsDiagnostic.UnsafeError(
+                    macroExpr,
+                    "use of `$macroName!()` is unsafe and requires unsafe function or block"
+                ).addToHolder(holder)
+            }
+        }
+    }
+
     private fun PsiElement.isInUnsafeBlockOrFn(ancestorsToSkip: Int = 0): Boolean {
         val parent = this.ancestors
             .drop(ancestorsToSkip)
@@ -127,5 +144,9 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         newAnnotation(severity, message)
             .range(textRange)
             .textAttributes(color.textAttributesKey).create()
+    }
+
+    companion object {
+        private val UNSAFE_MACRO_LIST = setOf("asm")
     }
 }

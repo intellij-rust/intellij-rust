@@ -6,11 +6,10 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
+@WithEnabledInspections(RsUnusedImportInspection::class)
 class RsImportOptimizerTest: RsTestBase() {
 
     fun `test should do nothing`() = doTest("""
@@ -439,6 +438,9 @@ class RsImportOptimizerTest: RsTestBase() {
         use std::string;
         use std::{mem, io};
         use dep_lib_target;
+
+        fn foo(_: string::String, _: mem::ManuallyDrop<u32>, _: io::ErrorKind) {}
+
         fn main() {}
     """, """
         extern crate dep_lib_target;
@@ -450,6 +452,8 @@ class RsImportOptimizerTest: RsTestBase() {
 
         use aaa::bbb::ccc;
         use bbb::{eee, fff};
+
+        fn foo(_: string::String, _: mem::ManuallyDrop<u32>, _: io::ErrorKind) {}
 
         fn main() {}
     """)
@@ -526,6 +530,112 @@ class RsImportOptimizerTest: RsTestBase() {
         }
 
         mod ccc {}
+    """)
+
+    @UseNewResolve
+    fun `test remove unused use item`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::S;
+        }
+    """, """
+        struct S;
+
+        mod foo {}
+    """)
+
+    @UseNewResolve
+    fun `test remove unused use speck at the beginning`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{S, T};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::T;
+        }
+    """)
+
+    @UseNewResolve
+    fun `test remove unused use speck in the middle`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{R, S, T};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::{R, T};
+        }
+    """)
+
+    @UseNewResolve
+    fun `test remove multiple unused use specks`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{R, S1, S2, T};
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{R, T};
+        }
+    """)
+
+    @UseNewResolve
+    fun `test remove unused use speck at the end`() = doTest("""
+        struct S;
+
+        mod foo {
+            use crate::{T, S};
+        }
+    """, """
+        struct S;
+
+        mod foo {
+            use crate::T;
+        }
+    """)
+
+    @UseNewResolve
+    fun `test remove empty group after unused specks are removed`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::{S1, S2};
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {}
+    """)
+
+    @UseNewResolve
+    fun `test remove multiple unused use items`() = doTest("""
+        struct S1;
+        struct S2;
+
+        mod foo {
+            use crate::S1;
+            use crate::S2;
+        }
+    """, """
+        struct S1;
+        struct S2;
+
+        mod foo {}
     """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
