@@ -14,6 +14,7 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsPath
@@ -22,19 +23,20 @@ import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.types.ty.TyInteger
-import org.rust.lang.core.withSuperParent
 
 object RsReprCompletionProvider : RsCompletionProvider() {
     override val elementPattern: ElementPattern<out PsiElement>
         get() = PlatformPatterns.psiElement()
             .withLanguage(RsLanguage)
-            .withParent(psiElement<RsPath>()
-                .withParent(psiElement<RsMetaItem>()
-                    .withSuperParent(2,
-                        psiElement<PsiElement>()
-                            .withSuperParent<RsStructOrEnumItemElement>(2)
+            .withParent(
+                psiElement<RsPath>()
+                    .withParent(
+                        psiElement<RsMetaItem>()
+                            .withSuperParent(
+                                2,
+                                RsPsiPattern.rootMetaItem("repr", psiElement<RsStructOrEnumItemElement>())
+                            )
                     )
-                )
             )
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
