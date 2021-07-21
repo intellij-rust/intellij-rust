@@ -6,10 +6,12 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveImportFix
 import org.rust.lang.core.crate.impl.DoctestCrate
@@ -18,8 +20,12 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.NamedItem
 import org.rust.lang.core.resolve2.exportedItems
 import org.rust.lang.core.resolve2.isNewResolveEnabled
+import javax.swing.JComponent
 
 class RsUnusedImportInspection : RsLintInspection() {
+
+    var ignoreDoctest: Boolean = true
+
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedImports
 
     override fun getShortName(): String = SHORT_NAME
@@ -29,7 +35,7 @@ class RsUnusedImportInspection : RsLintInspection() {
             if (!isApplicableForUseItem(item)) return
 
             // It's common to include more imports than needed in doctest sample code
-            if (item.containingCrate is DoctestCrate) return
+            if (ignoreDoctest && item.containingCrate is DoctestCrate) return
 
             val owner = item.parent as? RsItemsOwner ?: return
             val usage = owner.pathUsage
@@ -82,11 +88,17 @@ class RsUnusedImportInspection : RsLintInspection() {
 
     private fun markAsUnused(useSpeck: RsUseSpeck, holder: RsProblemsHolder) {
         val element = getHighlightElement(useSpeck)
+        // https://github.com/intellij-rust/intellij-rust/issues/7565
+        val fixes = if (useSpeck.isDoctestInjection) emptyArray() else arrayOf(RemoveImportFix(element))
         holder.registerLintProblem(
             element,
             "Unused import: `${useSpeck.text}`",
-            RemoveImportFix(element)
+            *fixes
         )
+    }
+
+    override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
+        addCheckbox("Ignore unused imports in doctests", "ignoreDoctest")
     }
 
     companion object {
