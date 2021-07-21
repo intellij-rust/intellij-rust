@@ -605,7 +605,7 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
 
-        <localInspection language="Rust" groupName="Rust"
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unused import"
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnusedImportInspection"/>
