@@ -12,6 +12,9 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.nullize
+import org.rust.ide.presentation.PsiRenderingOptions
+import org.rust.ide.presentation.RsPsiRenderer
+import org.rust.ide.presentation.renderTypeReference
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -28,8 +31,11 @@ class RsGenericParameterInfoHandler : RsAsyncParameterInfoHandler<RsTypeArgument
         } else {
             return null
         }
-        val typesWithBounds = genericDeclaration.typeParameters.nullize() ?: return null
-        return listOfNotNull(firstLine(typesWithBounds), secondLine(typesWithBounds)).toTypedArray()
+        val paramsWithBounds = genericDeclaration
+            .genericParameters
+            .filterNot { it is RsLifetimeParameter }
+            .nullize() ?: return null
+        return listOfNotNull(firstLine(paramsWithBounds), secondLine(paramsWithBounds)).toTypedArray()
     }
 
     override fun showParameterInfo(element: RsTypeArgumentList, context: CreateParameterInfoContext) {
@@ -80,16 +86,26 @@ class HintLine(
 /**
  * Calculates the text representation and ranges for parameters
  */
-private fun firstLine(params: List<RsTypeParameter>): HintLine {
+private fun firstLine(params: List<RsGenericParameter>): HintLine {
+    val renderer = RsPsiRenderer(PsiRenderingOptions(renderLifetimes = false))
     val splited = params.map { param ->
-        param.name ?: return@map ""
-        val qSizedBound = if (!param.isSized) listOf("?Sized") else emptyList()
-        val declaredBounds = param.bounds
-            // `?Sized`, if needed, in separate val, `Sized` shouldn't be shown
-            .filter { it.bound.traitRef?.resolveToBoundTrait()?.element?.isSizedTrait == false }
-            .mapNotNull { it.bound.traitRef?.path?.text }
-        val allBounds = qSizedBound + declaredBounds
-        param.name + (allBounds.nullize()?.joinToString(prefix = ": ", separator = " + ") ?: "")
+        when (param) {
+            is RsTypeParameter -> {
+                param.name ?: return@map ""
+                val qSizedBound = if (!param.isSized) listOf("?Sized") else emptyList()
+                val declaredBounds = param.bounds
+                    // `?Sized`, if needed, in separate val, `Sized` shouldn't be shown
+                    .filter { it.bound.traitRef?.resolveToBoundTrait()?.element?.isSizedTrait == false }
+                    .mapNotNull { it.bound.traitRef?.path?.text }
+                val allBounds = qSizedBound + declaredBounds
+                param.name + (allBounds.nullize()?.joinToString(prefix = ": ", separator = " + ") ?: "")
+            }
+            is RsConstParameter -> {
+                val typeReference = param.typeReference?.let { ": ${renderer.renderTypeReference(it)}" } ?: ""
+                "const ${param.name ?: "_"}$typeReference"
+            }
+            else -> error("unreachable")
+        }
     }
     return HintLine(splited.joinToString(), splited.indices.map { splited.calculateRange(it) })
 }
@@ -98,7 +114,7 @@ private fun firstLine(params: List<RsTypeParameter>): HintLine {
  * Not null, when complicated parts of where exists,
  * i.e. `where i32: SomeTrait<T>` or `where Option<T>: SomeTrait`
  */
-private fun secondLine(params: List<RsTypeParameter>): HintLine? {
+private fun secondLine(params: List<RsGenericParameter>): HintLine? {
     val owner = params.getOrNull(0)?.parent?.parent as? RsGenericDeclaration
     val wherePreds = owner?.whereClause?.wherePredList.orEmpty()
         // retain specific preds

@@ -43,6 +43,11 @@ class RsGenericParameterInfoHandlerTest
         fn main() { foo::<i32,/*caret*/>(); }
     """, "T, P", "", 1)
 
+    fun `test fn const param`() = checkByText("""
+        fn foo<T, const P: usize>(x: T) {}
+        fn main() { foo::<i32,/*caret*/>(); }
+    """, "T, const P: usize", "", 1)
+
     fun `test fn param out of bounds`() = checkByText("""
         fn foo<T>(x: T) {}
         fn main() { foo::<i32, /*caret*/>(); }
