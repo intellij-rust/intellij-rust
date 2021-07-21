@@ -978,4 +978,22 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
         async fn baz(a: u32) {}
     """)
+
+    fun `test aliased argument type`() = doAvailableTest("""
+        type Alias = (u32, u32);
+
+        fn foo(a: Alias) {
+            bar/*caret*/(a);
+        }
+    """, """
+        type Alias = (u32, u32);
+
+        fn foo(a: Alias) {
+            bar(a);
+        }
+
+        fn bar(p0: Alias) {
+            todo!()
+        }
+    """)
 }

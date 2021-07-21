@@ -416,6 +416,81 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                  //^ Foo
     """, WITH_ALIAS_NAMES)
 
+    fun `test render alias name tuple`() = testType("""
+        struct S;
+        type Foo = (S, S);
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias name function`() = testType("""
+        type Foo = fn(u32) -> u32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias name trait object`() = testType("""
+        trait T {}
+
+        type Foo = dyn T;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias name reference`() = testType("""
+        type Foo = &'static u32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias name pointer`() = testType("""
+        type Foo = *const u32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias array`() = testType("""
+        type Foo = [u32; 3];
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias slice`() = testType("""
+        type Foo = [u32];
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias char`() = testType("""
+        type Foo = char;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias str`() = testType("""
+        type Foo = str;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias bool`() = testType("""
+        type Foo = bool;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias integer`() = testType("""
+        type Foo = u32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias float`() = testType("""
+        type Foo = f32;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
     fun `test render alias name with generics`() = testType("""
         struct S<A, B>(A, B);
         type Foo<T> = S<T, u8>;
@@ -448,4 +523,3 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         DEFAULT, WITH_LIFETIMES, WITH_ALIAS_NAMES
     }
 }
-

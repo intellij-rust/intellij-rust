@@ -7,6 +7,9 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.TypeFolder
 
 /**
  * These are "atomic" ty.
@@ -15,8 +18,16 @@ import org.rust.lang.core.psi.RsPath
  * tuples or arrays as primitive.
  */
 abstract class TyPrimitive : Ty() {
-
     abstract val name: String
+
+    override fun superFoldWith(folder: TypeFolder): Ty {
+        val alias = aliasedBy
+        return if (alias == null) {
+            this
+        } else {
+            withAlias(alias.foldWith(folder))
+        }
+    }
 
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
@@ -36,27 +47,33 @@ abstract class TyPrimitive : Ty() {
     }
 }
 
-class TyBool : TyPrimitive() {
+class TyBool(override val aliasedBy: BoundElement<RsTypeAlias>? = null) : TyPrimitive() {
     override val name: String
         get() = "bool"
+
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyBool(aliasedBy)
 
     companion object {
         val INSTANCE: TyBool = TyBool()
     }
 }
 
-class TyChar : TyPrimitive() {
+class TyChar(override val aliasedBy: BoundElement<RsTypeAlias>? = null) : TyPrimitive() {
     override val name: String
         get() = "char"
+
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyChar(aliasedBy)
 
     companion object {
         val INSTANCE: TyChar = TyChar()
     }
 }
 
-class TyUnit : TyPrimitive() {
+class TyUnit(override val aliasedBy: BoundElement<RsTypeAlias>? = null) : TyPrimitive() {
     override val name: String
         get() = "unit"
+
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyUnit(aliasedBy)
 
     companion object {
         val INSTANCE: TyUnit = TyUnit()
@@ -69,9 +86,11 @@ object TyNever : TyPrimitive() {
         get() = "never"
 }
 
-class TyStr : TyPrimitive() {
+class TyStr(override val aliasedBy: BoundElement<RsTypeAlias>? = null) : TyPrimitive() {
     override val name: String
         get() = "str"
+
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyStr(aliasedBy)
 
     companion object {
         val INSTANCE: TyStr = TyStr()
@@ -115,122 +134,146 @@ sealed class TyInteger : TyNumeric() {
         }
     }
 
-    class U8: TyInteger() {
+    class U8(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "u8"
         override val ordinal: Int
             get() = 0
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = U8(aliasedBy)
+
         companion object {
             val INSTANCE: U8 = U8()
         }
     }
-    class U16: TyInteger() {
+    class U16(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "u16"
         override val ordinal: Int
             get() = 1
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = U16(aliasedBy)
+
         companion object {
             val INSTANCE: U16 = U16()
         }
     }
-    class U32: TyInteger() {
+    class U32(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "u32"
         override val ordinal: Int
             get() = 2
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = U32(aliasedBy)
+
         companion object {
             val INSTANCE: U32 = U32()
         }
     }
-    class U64: TyInteger() {
+    class U64(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "u64"
         override val ordinal: Int
             get() = 3
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = U64(aliasedBy)
+
         companion object {
             val INSTANCE: U64 = U64()
         }
     }
-    class U128: TyInteger() {
+    class U128(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "u128"
         override val ordinal: Int
             get() = 4
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = U128(aliasedBy)
+
         companion object {
             val INSTANCE: U128 = U128()
         }
     }
-    class USize : TyInteger() {
+    class USize(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "usize"
         override val ordinal: Int
             get() = 5
+
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = USize(aliasedBy)
 
         companion object {
             val INSTANCE: USize = USize()
         }
     }
 
-    class I8: TyInteger() {
+    class I8(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "i8"
         override val ordinal: Int
             get() = 6
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = I8(aliasedBy)
+
         companion object {
             val INSTANCE: I8 = I8()
         }
     }
-    class I16: TyInteger() {
+    class I16(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "i16"
         override val ordinal: Int
             get() = 7
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = I16(aliasedBy)
+
         companion object {
             val INSTANCE: I16 = I16()
         }
     }
-    class I32: TyInteger() {
+    class I32(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "i32"
         override val ordinal: Int
             get() = 8
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = I32(aliasedBy)
+
         companion object {
             val INSTANCE: I32 = I32()
         }
     }
-    class I64: TyInteger() {
+    class I64(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "i64"
         override val ordinal: Int
             get() = 9
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = I64(aliasedBy)
+
         companion object {
             val INSTANCE: I64 = I64()
         }
     }
-    class I128: TyInteger() {
+    class I128(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "i128"
         override val ordinal: Int
             get() = 10
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = I128(aliasedBy)
+
         companion object {
             val INSTANCE: I128 = I128()
         }
     }
-    class ISize: TyInteger() {
+    class ISize(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyInteger() {
         override val name: String
             get() = "isize"
         override val ordinal: Int
             get() = 11
+
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = ISize(aliasedBy)
 
         companion object {
             val INSTANCE: ISize = ISize()
@@ -263,21 +306,25 @@ sealed class TyFloat : TyNumeric() {
         }
     }
 
-    class F32: TyFloat() {
+    class F32(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyFloat() {
         override val name: String
             get() = "f32"
         override val ordinal: Int
             get() = 0
 
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = F32(aliasedBy)
+
         companion object {
             val INSTANCE: F32 = F32()
         }
     }
-    class F64: TyFloat() {
+    class F64(override val aliasedBy: BoundElement<RsTypeAlias>? = null): TyFloat() {
         override val name: String
             get() = "f64"
         override val ordinal: Int
             get() = 1
+
+        override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = F64(aliasedBy)
 
         companion object {
             val INSTANCE: F64 = F64()

@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
@@ -34,6 +35,10 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
     override fun visitWith(visitor: TypeVisitor): Boolean = visitor.visitTy(this)
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean = false
+
+    open val aliasedBy: BoundElement<RsTypeAlias>? = null
+
+    open fun withAlias(aliasedBy: BoundElement<RsTypeAlias>) = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
