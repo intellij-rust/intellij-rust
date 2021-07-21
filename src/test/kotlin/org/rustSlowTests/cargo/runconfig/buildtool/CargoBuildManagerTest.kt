@@ -12,13 +12,7 @@ import com.intellij.build.events.impl.FailureResultImpl
 import com.intellij.build.events.impl.SuccessResultImpl
 import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.fileTree
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyFinishBuildEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyFinishEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyMessageEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartBuildEvent
-import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartEvent
 
 @MinRustcVersion("1.48.0")
 class CargoBuildManagerTest : CargoBuildTest() {
@@ -49,27 +43,23 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -104,32 +94,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Function is never used: `foo`",
-                kind = MessageEvent.Kind.WARNING
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Function is never used: `foo`",
+                    kind = MessageEvent.Kind.WARNING
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -164,32 +149,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -228,42 +208,35 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Cannot add `&str` to `{integer}`",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Cannot add `&str` to `{integer}`",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Cannot add `&str` to `{integer}`",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Cannot add `&str` to `{integer}`",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                messageEvent(
+                    message = "Cannot add `&str` to `{integer}`",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                messageEvent(
+                    message = "Cannot add `&str` to `{integer}`",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -299,7 +272,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = true
         )
 
-        checkEvents()
+        checkEvents {}
 
         checkProgressIndicator(
             "Building...",
@@ -340,37 +313,31 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -408,27 +375,23 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -467,32 +430,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -531,32 +489,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling project v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling project v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling project v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -619,38 +572,32 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0"
-            ),
-            MyStartEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            unordered {
+                eventTree {
+                    startEvent(message = "Compiling first v0.1.0")
+                    finishEvent(
+                        message = "Compiling first v0.1.0",
+                        result = SuccessResultImpl()
+                    )
+                }
+                eventTree {
+                    startEvent(message = "Compiling second v0.1.0")
+                    finishEvent(
+                        message = "Compiling second v0.1.0",
+                        result = SuccessResultImpl()
+                    )
+                }
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -715,43 +662,34 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0"
-            ),
-            MyStartEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0"
-            ),
-            MyFinishEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyMessageEvent(
-                parentId = "second 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "second 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling second v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling first v0.1.0")
+                finishEvent(
+                    message = "Compiling first v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            eventTree {
+                startEvent(message = "Compiling second v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling second v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -816,32 +754,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "first 0.1.0",
-                message = "Mismatched types",
-                kind = MessageEvent.Kind.ERROR
-            ),
-            MyFinishEvent(
-                id = "first 0.1.0",
-                parentId = testBuildId,
-                message = "Compiling first v0.1.0",
-                result = FailureResultImpl(null as Throwable?)
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Compiling first v0.1.0")
+                messageEvent(
+                    message = "Mismatched types",
+                    kind = MessageEvent.Kind.ERROR
+                )
+                finishEvent(
+                    message = "Compiling first v0.1.0",
+                    result = FailureResultImpl(null as Throwable?)
+                )
+            }
+            finishBuildEvent(
                 message = "Build failed",
                 result = FailureResultImpl(null as Throwable?)
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -876,32 +809,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Checking project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "Function is never used: `foo`",
-                kind = MessageEvent.Kind.WARNING
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Checking project v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Checking project v0.1.0")
+                messageEvent(
+                    message = "Function is never used: `foo`",
+                    kind = MessageEvent.Kind.WARNING
+                )
+                finishEvent(
+                    message = "Checking project v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",
@@ -936,32 +864,27 @@ class CargoBuildManagerTest : CargoBuildTest() {
             canceled = false
         )
 
-        checkEvents(
-            MyStartBuildEvent(
+        checkEvents {
+            startBuildEvent(
                 message = "Build running...",
-                buildTitle = "Run Cargo command"
-            ),
-            MyStartEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Checking project v0.1.0"
-            ),
-            MyMessageEvent(
-                parentId = "project 0.1.0",
-                message = "This lifetime isn't used in the function definition",
-                kind = MessageEvent.Kind.WARNING
-            ),
-            MyFinishEvent(
-                id = "project 0.1.0",
-                parentId = testBuildId,
-                message = "Checking project v0.1.0",
-                result = SuccessResultImpl()
-            ),
-            MyFinishBuildEvent(
+                buildTitle = "Run Cargo Command"
+            )
+            eventTree {
+                startEvent(message = "Checking project v0.1.0")
+                messageEvent(
+                    message = "This lifetime isn't used in the function definition",
+                    kind = MessageEvent.Kind.WARNING
+                )
+                finishEvent(
+                    message = "Checking project v0.1.0",
+                    result = SuccessResultImpl()
+                )
+            }
+            finishBuildEvent(
                 message = "Build successful",
                 result = SuccessResultImpl()
             )
-        )
+        }
 
         checkProgressIndicator(
             "Building...",

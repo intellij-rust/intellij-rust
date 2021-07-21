@@ -96,12 +96,7 @@ object CargoBuildManager {
             progressTitle = "Building...",
             isTestBuild = state.commandLine.command == "test"
         )) {
-            val buildProgressListener = if (isUnitTestMode) {
-                mockBuildProgressListener ?: EmptyBuildProgressListener
-            } else {
-                ServiceManager.getService(project, BuildViewManager::class.java)
-            }
-
+            val buildProgressListener = ServiceManager.getService(project, BuildViewManager::class.java)
             if (!isHeadlessEnvironment) {
                 @Suppress("UsePropertyAccessSyntax")
                 val buildToolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow()
@@ -305,14 +300,6 @@ object CargoBuildManager {
 
         commandLine.copy(additionalArguments = additionalArguments, environmentVariables = environmentVariables)
     }
-
-    @TestOnly
-    @Volatile
-    var testBuildId: Any? = null
-
-    @TestOnly
-    @Volatile
-    var mockBuildProgressListener: MockBuildProgressListener? = null
 
     @TestOnly
     @Volatile
