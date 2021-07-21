@@ -233,6 +233,15 @@ object RsPsiPattern {
         psiElement()
             .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
 
+    fun baseTraitOrImplDeclaration(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().withParent(
+            or(
+                psiElement<RsMembers>(),
+                psiElement().withParent(RsMembers::class.java)
+            )
+        )
+    }
+
     fun baseInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         val membersInInherentImpl = psiElement<RsMembers>().withParent(
             psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
