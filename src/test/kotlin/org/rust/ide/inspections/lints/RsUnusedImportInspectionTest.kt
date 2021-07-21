@@ -178,6 +178,19 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled import and usage`() = checkByText("""
+        mod foo {
+            pub struct S {}
+        }
+
+        mod bar {
+            #[cfg(not(intellij_rust))]
+            use crate::foo::S;
+        }
+    """)
+
     fun `test used trait method`() = checkByText("""
         mod foo {
             pub trait Trait {
