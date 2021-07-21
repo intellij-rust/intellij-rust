@@ -1,0 +1,9 @@
+mod foo {
+    pub struct S;
+}
+
+use foo::S as T;
+
+fn main() {
+    let _: T;
+}

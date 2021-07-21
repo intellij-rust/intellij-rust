@@ -1,0 +1,9 @@
+mod foo {
+    pub struct S;
+}
+
+use foo::<spot>S</spot>;
+
+fn main() {
+    let _: S;
+}

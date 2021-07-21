@@ -58,17 +58,33 @@ val RsItemsOwner.pathUsage: PathUsageMap
         CachedValueProvider.Result.create(usages, PsiModificationTracker.MODIFICATION_COUNT)
     }
 
-private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
-    val usage = PathUsageMapMutable()
-    for (child in owner.children) {
-        handleSubtree(child, usage)
-    }
-    return usage
+sealed class PathUsageBase {
+    data class PathUsage(val name: String, val targets: List<RsElement>, val source: PsiElement?) : PathUsageBase()
+    data class TraitUsage(val methodName: String, val traits: Set<RsTraitItem>) : PathUsageBase()
 }
 
-private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable) {
+fun traversePathUsages(owner: RsItemsOwner, processor: (PathUsageBase) -> Unit) {
+    for (child in owner.children) {
+        handleSubtree(child, processor)
+    }
+}
+
+private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
+    val usageMap = PathUsageMapMutable()
+
+    traversePathUsages(owner) { usage ->
+        when (usage) {
+            is PathUsageBase.PathUsage -> usageMap.recordPath(usage.name, usage.targets)
+            is PathUsageBase.TraitUsage -> usageMap.recordMethod(usage.methodName, usage.traits)
+        }
+    }
+
+    return usageMap
+}
+
+private fun handleSubtree(root: PsiElement, processor: (PathUsageBase) -> Unit) {
     processElementsWithMacros(root) { element ->
-        if (handleElement(element, usage)) {
+        if (handleElement(element, processor)) {
             TreeStatus.VISIT_CHILDREN
         } else {
             TreeStatus.SKIP_CHILDREN
@@ -76,7 +92,7 @@ private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable) {
     }
 }
 
-private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Boolean {
+private fun handleElement(element: PsiElement, processor: (PathUsageBase) -> Unit): Boolean {
     if (!element.isEnabledByCfg) return false
 
     return when (element) {
@@ -86,7 +102,7 @@ private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Bool
             val targets = element.patBinding.reference.multiResolve()
             // if `targets` is empty, there is no way to distinguish "unresolved reference" and "usual pat ident"
             if (targets.isNotEmpty()) {
-                usage.recordPath(name, targets)
+                processor(PathUsageBase.PathUsage(name, targets, element.patBinding.referenceNameElement))
             }
             true
         }
@@ -94,24 +110,24 @@ private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Bool
             val name = element.referenceName ?: return true
             if (element.qualifier != null || element.typeQual != null) {
                 val requiredTraits = getAssociatedItemRequiredTraits(element).orEmpty()
-                usage.recordMethod(name, requiredTraits)
+                processor(PathUsageBase.TraitUsage(name, requiredTraits))
             } else {
                 val useSpeck = element.parentOfType<RsUseSpeck>()
                 if (useSpeck == null || useSpeck.isTopLevel) {
                     if (name in IGNORED_USE_PATHS) return true
                     val targets = element.reference?.multiResolve().orEmpty()
-                    usage.recordPath(name, targets)
+                    processor(PathUsageBase.PathUsage(name, targets, element.referenceNameElement))
                 }
             }
             true
         }
         is RsMacroCall -> {
-            handleSubtree(element.path, usage)
+            handleSubtree(element.path, processor)
             true
         }
         is RsMethodCall -> {
             val requiredTraits = getMethodRequiredTraits(element).orEmpty()
-            usage.recordMethod(element.referenceName, requiredTraits)
+            processor(PathUsageBase.TraitUsage(element.referenceName, requiredTraits))
             true
         }
         else -> true
