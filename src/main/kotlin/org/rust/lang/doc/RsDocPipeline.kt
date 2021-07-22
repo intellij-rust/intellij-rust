@@ -21,9 +21,7 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
-import org.intellij.markdown.html.GeneratingProvider
-import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.html.SimpleTagProvider
+import org.intellij.markdown.html.*
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -127,7 +125,7 @@ private class RustDocMarkdownFlavourDescriptor(
     private val context: PsiElement,
     private val uri: URI? = null,
     private val renderMode: RsDocRenderMode,
-    private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor(absolutizeAnchorLinks = true)
+    private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor(useSafeLinks = false, absolutizeAnchorLinks = true)
 ) : MarkdownFlavourDescriptor by gfm {
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
@@ -138,6 +136,15 @@ private class RustDocMarkdownFlavourDescriptor(
         generatingProviders[MarkdownElementTypes.ATX_1] = SimpleTagProvider("h2")
         generatingProviders[MarkdownElementTypes.ATX_2] = SimpleTagProvider("h3")
         generatingProviders[MarkdownElementTypes.CODE_FENCE] = RsCodeFenceProvider(context, renderMode)
+
+        val absolutizeAnchorLinks = true
+        generatingProviders[MarkdownElementTypes.SHORT_REFERENCE_LINK] =
+            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, absolutizeAnchorLinks)
+        generatingProviders[MarkdownElementTypes.FULL_REFERENCE_LINK] =
+            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, absolutizeAnchorLinks)
+        generatingProviders[MarkdownElementTypes.INLINE_LINK] =
+            RsInlineLinkGeneratingProvider(uri ?: baseURI, absolutizeAnchorLinks)
+
         return generatingProviders
     }
 }
@@ -241,4 +248,22 @@ private class RsCodeFenceProvider(
 enum class RsDocRenderMode {
     QUICK_DOC_POPUP,
     INLINE_DOC_COMMENT
+}
+
+private fun markLinkAsLanguageItemIfItIsValidRustPath(link: CharSequence): CharSequence {
+    return if (link.none { it in "/.#" }) "${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$link" else link
+}
+
+open class RsReferenceLinksGeneratingProvider(linkMap: LinkMap, baseURI: URI?, resolveAnchors: Boolean)
+    : ReferenceLinksGeneratingProvider(linkMap, baseURI, resolveAnchors) {
+    override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
+        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsValidRustPath(info.destination)))
+    }
+}
+
+open class RsInlineLinkGeneratingProvider(baseURI: URI?, resolveAnchors: Boolean)
+    : InlineLinkGeneratingProvider(baseURI, resolveAnchors) {
+    override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
+        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsValidRustPath(info.destination)))
+    }
 }

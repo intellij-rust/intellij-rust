@@ -105,6 +105,42 @@ class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul>
     """)
 
+    fun `test rust identifier as inline link`() = doTest("""
+        /// [link](Result)
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://Result">link</a></p>"""
+    )
+
+    fun `test rust path as inline link`() = doTest("""
+        /// [link](caret::io::Result)
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://caret::io::Result">link</a></p>"""
+    )
+
+    fun `test rust identifier as reference link`() = doTest("""
+        /// [my link][ref]
+        ///
+        /// [ref]: MyType
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://MyType">my link</a></p>"""
+    )
+
+    fun `test rust path as reference link 2`() = doTest("""
+        /// [my link][ref]
+        ///
+        /// [ref]: Long::Path::For::MyType
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://Long::Path::For::MyType">my link</a></p>"""
+    )
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
         doTest(code, expected) { originalItem, _ ->
             (originalItem as? RsDocAndAttributeOwner)
