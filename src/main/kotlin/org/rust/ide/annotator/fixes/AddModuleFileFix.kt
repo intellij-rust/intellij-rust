@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction
+import org.rust.lang.RsConstants.MOD_RS_FILE
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 
@@ -67,7 +68,7 @@ class AddModuleFileFix(
         val dir = modDecl.containingMod.getOwnedDirectory(createIfNotExists = true) ?: return
         when (location) {
             Location.File -> dir.createFile("${modDecl.name}.rs")
-            Location.Directory -> dir.getOrCreateSubdirectory("${modDecl.name}").createFile("mod.rs")
+            Location.Directory -> dir.getOrCreateSubdirectory("${modDecl.name}").createFile(MOD_RS_FILE)
         }.navigate(true)
     }
 

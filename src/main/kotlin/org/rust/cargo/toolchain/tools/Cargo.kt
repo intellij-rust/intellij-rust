@@ -50,6 +50,8 @@ import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
+import org.rust.lang.RsConstants.LIB_RS_FILE
+import org.rust.lang.RsConstants.MAIN_RS_FILE
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.stdext.buildList
@@ -275,7 +277,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         fullyRefreshDirectory(directory)
 
         val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
-        val fileName = if (createBinary) "main.rs" else "lib.rs"
+        val fileName = if (createBinary) MAIN_RS_FILE else LIB_RS_FILE
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
         return GeneratedFilesHolder(manifest, sourceFiles)
     }

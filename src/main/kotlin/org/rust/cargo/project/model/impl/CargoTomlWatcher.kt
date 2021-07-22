@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.RsConstants.MAIN_RS_FILE
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 
@@ -90,7 +91,7 @@ class CargoTomlWatcher(
                 else -> {
                     val parent = PathUtil.getParentPath(event.path)
                     val grandParent = PathUtil.getParentPath(parent)
-                    IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (event.pathEndsWith("main.rs") && grandParent.endsWith(it)) }
+                    IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (event.pathEndsWith(MAIN_RS_FILE) && grandParent.endsWith(it)) }
                 }
             }
         }
