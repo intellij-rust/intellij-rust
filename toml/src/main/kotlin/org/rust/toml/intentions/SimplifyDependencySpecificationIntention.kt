@@ -17,7 +17,7 @@ import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
 import org.toml.lang.psi.TomlValue
 
-class SimplifyDependencySpecificationIntention : TomlElementBaseIntentionAction<SimplifyDependencySpecificationIntention.Context>() {
+class SimplifyDependencySpecificationIntention : RsTomlElementBaseIntentionAction<SimplifyDependencySpecificationIntention.Context>() {
     override fun getText() = "Simplify dependency specification"
     override fun getFamilyName(): String = text
 

@@ -19,7 +19,7 @@ import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlPsiFactory
 import org.toml.lang.psi.TomlTable
 
-class ExtractDependencySpecificationIntention : TomlElementBaseIntentionAction<TomlKeyValue>() {
+class ExtractDependencySpecificationIntention : RsTomlElementBaseIntentionAction<TomlKeyValue>() {
     override fun getText() = "Extract dependency specification"
     override fun getFamilyName(): String = text
 
