@@ -21,7 +21,7 @@ class CargoTomlCompletionContributor : CompletionContributor() {
     init {
         if (tomlPluginIsAbiCompatible()) {
             extend(BASIC, inKey, CargoTomlKeysCompletionProvider())
-            extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018")))
+            extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018", "2021")))
             extend(BASIC, inFeatureDependencyArray, CargoTomlFeatureDependencyCompletionProvider())
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
 
