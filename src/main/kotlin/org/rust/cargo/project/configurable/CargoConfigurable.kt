@@ -28,6 +28,12 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo")
         return panel {
             row {
                 checkBox(
+                    "Automatically show first error in editor after a build failure",
+                    state::autoShowErrorsInEditor
+                )
+            }
+            row {
+                checkBox(
                     "Update project automatically if Cargo.toml changes",
                     state::autoUpdateEnabled
                 )
