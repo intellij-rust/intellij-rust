@@ -7,51 +7,42 @@ package org.rust.ide.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentOfType
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsLetDecl
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.MethodResolveVariant
 
 class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFunctionToClosureIntention.Context>() {
 
     override fun getText(): String = "Convert function to closure"
-
-    data class Context(
-        val targetFunction: RsFunction,
-    )
-
-    private fun getFunctionForElementInSignature(element: PsiElement): RsFunction? {
-        for (el in element.ancestors) {
-            return when (el) {
-                is RsFunction -> el
-                is RsBlock -> return null
-                else -> continue
-            }
-        }
-
-        return null
-    }
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        // We try to find a function declaration
-        val possibleTarget = getFunctionForElementInSignature(element) ?: return null
+        val possibleTarget = element.ancestorStrict<RsFunction>() ?: return null
+
+        val availabilityRange = TextRange(
+            possibleTarget.fn.startOffset,
+            possibleTarget.retType?.endOffset ?: possibleTarget.valueParameterList?.endOffset ?: return null
+        )
+        if (element.startOffset !in availabilityRange) return null
 
         // if we found one, we need to check if it's a child of another function, which would mean it's an local function
-        possibleTarget.ancestorStrict<RsFunction>() ?: return null
+        if (possibleTarget.ancestorStrict<RsFunction>() == null) return null
+        if (possibleTarget.typeParameterList != null) return null
 
         return Context(possibleTarget)
     }
 
-    override fun getFamilyName(): String = "Convert between local function and closure"
-
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
 
-        val parametersText = ctx.targetFunction.valueParameters.joinToString(", ", transform = RsValueParameter::getText)
+        val parametersText = ctx.targetFunction.rawValueParameters.joinToString(", ", transform = RsValueParameter::getText)
         val returnText = ctx.targetFunction.retType?.text ?: ""
 
-        val bodyText = ctx.targetFunction.body?.text ?: return
+        val bodyText = ctx.targetFunction.block?.text ?: return
 
         val lambda = factory.createLambda("|$parametersText| $returnText $bodyText")
         val declaration = factory.createLetDeclaration(ctx.targetFunction.identifier.text, lambda)
@@ -62,4 +53,7 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
         }
     }
 
+    data class Context(
+        val targetFunction: RsFunction,
+    )
 }
