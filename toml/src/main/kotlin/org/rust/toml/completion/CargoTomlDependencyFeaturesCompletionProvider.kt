@@ -8,11 +8,14 @@ package org.rust.toml.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.stdext.mapNotNullToSet
 import org.rust.toml.containingDependencyKey
 import org.rust.toml.findDependencyTomlFile
 import org.rust.toml.resolve.allFeatures
+import org.rust.toml.stringValue
 import org.toml.lang.psi.TomlArray
 
 /**
@@ -35,9 +38,14 @@ class CargoTomlDependencyFeaturesCompletionProvider : CompletionProvider<Complet
         val pkgName = containingArray.containingDependencyKey?.text ?: return
 
         val depToml = findDependencyTomlFile(containingArray, pkgName) ?: return
+        val originalArray = CompletionUtil.getOriginalElement(containingArray) ?: return
         // TODO avoid AST loading?
-        for (feature in depToml.allFeatures()) {
-            result.addElement(lookupElementForFeature(feature))
-        }
+        val presentFeatures = originalArray.elements.mapNotNullToSet { it.stringValue }
+        result.addAllElements(
+            depToml.allFeatures()
+                .filter { it.name !in presentFeatures }
+                .map { lookupElementForFeature(it) }
+                .toList()
+        )
     }
 }

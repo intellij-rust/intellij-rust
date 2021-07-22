@@ -94,4 +94,25 @@ class CargoTomlDependencyFeaturesCompletionProviderTest : CargoTomlCompletionTes
             features = ["foo<caret>"]
         """)
     }
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test for duplicates in inline dependency feature`() {
+        val fileTree = fileTree {
+            toml("Cargo.toml", """
+                [dependencies]
+                dep-lib = { version = "0.1.0", features = ["foo", "<caret>"] }
+            """)
+            dir("dep-lib") {
+                toml("Cargo.toml", """
+                    [features]
+                    foo = []
+                    bar = []
+                """)
+            }
+        }
+        doSingleCompletionByFileTree(fileTree, """
+            [dependencies]
+            dep-lib = { version = "0.1.0", features = ["foo", "bar<caret>"] }
+        """)
+    }
 }
