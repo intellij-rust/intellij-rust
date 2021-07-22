@@ -518,4 +518,66 @@ class RsImplTraitMemberCompletionProviderTest : RsCompletionTestBase() {
             fn ty/*caret*/
         }
     """)
+
+    fun `test nested function`() = doSingleCompletion("""
+        fn foo() {
+            trait Trait {
+                fn foo(&self);
+            }
+
+            impl Trait for () {
+                fn fo/*caret*/
+            }
+        }
+    """, """
+        fn foo() {
+            trait Trait {
+                fn foo(&self);
+            }
+
+            impl Trait for () {
+                fn foo(&self) {
+                    todo!()/*caret*/
+                }
+            }
+        }
+    """)
+
+    fun `test nested constant`() = doSingleCompletion("""
+        fn foo() {
+            struct S {
+                attribute1: u32,
+                attribute2: u32,
+                attribute3: u32,
+            }
+
+            trait Trait {
+                const FOO: S;
+            }
+
+            impl Trait for () {
+                const FO/*caret*/
+            }
+        }
+    """, """
+        fn foo() {
+            struct S {
+                attribute1: u32,
+                attribute2: u32,
+                attribute3: u32,
+            }
+
+            trait Trait {
+                const FOO: S;
+            }
+
+            impl Trait for () {
+                const FOO: S = S {
+                    attribute1: 0,
+                    attribute2: 0,
+                    attribute3: 0,
+                }/*caret*/;
+            }
+        }
+    """)
 }

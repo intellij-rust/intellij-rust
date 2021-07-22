@@ -14,6 +14,7 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.ERROR_ELEMENT
 import com.intellij.psi.TokenType.WHITE_SPACE
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
@@ -126,7 +127,10 @@ private fun completeConstant(
             for (importCandidate in memberGenerator.itemsToImport) {
                 importCandidate.import(impl)
             }
-            val expr = element.expr ?: return@withInsertHandler
+
+            val reformatted = reformat(element) ?: return@withInsertHandler
+
+            val expr = reformatted.expr ?: return@withInsertHandler
             runTemplate(expr, context.editor)
         }
 }
@@ -165,10 +169,22 @@ private fun completeFunction(
             for (importCandidate in memberGenerator.itemsToImport) {
                 importCandidate.import(impl)
             }
-            val body = element.block?.expr ?: return@withInsertHandler
+            val reformatted = reformat(element) ?: return@withInsertHandler
+
+            val body = reformatted.block?.expr ?: return@withInsertHandler
             runTemplate(body, context.editor)
         }
         .withPresentableText("$shortSignature { ... }")
+}
+
+private fun <T: RsElement>reformat(element: T): T? {
+    val ptr = element.createSmartPointer()
+    CodeStyleManager.getInstance(element.project).reformatText(
+        element.containingFile,
+        element.startOffset,
+        element.endOffset
+    )
+    return ptr.element
 }
 
 private fun runTemplate(element: RsElement, editor: Editor) {
