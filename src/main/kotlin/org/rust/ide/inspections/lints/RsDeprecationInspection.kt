@@ -48,7 +48,12 @@ class RsDeprecationInspection : RsLintInspection() {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
             val (message, highlightType) = attr.extractDeprecatedMessage(identifier.text)
-            holder.registerProblem(identifier, message, highlightType)
+            holder.registerLintProblem(identifier, message, { level ->
+                when (level) {
+                    RsLint.Deprecated.defaultLevel -> highlightType
+                    else -> null
+                }
+            })
         }
     }
 

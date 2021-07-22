@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.*
 enum class RsLint(
     val id: String,
     private val groupIds: List<String> = emptyList(),
-    private val defaultLevel: RsLintLevel = WARN
+    val defaultLevel: RsLintLevel = WARN
 ) {
     NonSnakeCase("non_snake_case", listOf("bad_style", "nonstandard_style")),
     NonCamelCaseTypes("non_camel_case_types", listOf("bad_style", "nonstandard_style")),
