@@ -50,7 +50,8 @@ class ChangeReturnTypeFix(
         val rendered = actualTy.render(
             context = element,
             useQualifiedName = useQualifiedName,
-            useAliasNames = true
+            useAliasNames = true,
+            skipUnchangedDefaultTypeArguments = true
         )
         "Change return type$item$name to '$rendered'"
     }
@@ -79,7 +80,8 @@ class ChangeReturnTypeFix(
             context = startElement as? RsElement,
             useQualifiedName = useQualifiedName,
             includeLifetimeArguments = true,
-            useAliasNames = true
+            useAliasNames = true,
+            skipUnchangedDefaultTypeArguments = true
         )
         val retType = RsPsiFactory(project).createRetType(text)
 
@@ -89,7 +91,7 @@ class ChangeReturnTypeFix(
             owner.addAfter(retType, owner.valueParameters)
         }
 
-        importTypeReferencesFromTy(owner, actualTy, useAliases = true)
+        importTypeReferencesFromTy(owner, actualTy, useAliases = true, skipUnchangedDefaultTypeArguments = true)
     }
 
     companion object {

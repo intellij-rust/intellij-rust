@@ -166,6 +166,32 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
+    fun `test do not import default type parameter of unresolved type`() = checkFixByText("Change return type of function 'foo' to 'S'", """
+        use a::bar;
+
+        mod a {
+            pub struct R;
+            pub struct S<T=R>(T);
+            pub fn bar() -> S { S(R) }
+        }
+
+        fn foo() {
+            <error>bar()<caret></error>
+        }
+    """, """
+        use a::{bar, S};
+
+        mod a {
+            pub struct R;
+            pub struct S<T=R>(T);
+            pub fn bar() -> S { S(R) }
+        }
+
+        fn foo() -> S {
+            bar()
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test do not offer fix in closure without an explicit return type passed to a function`() = checkFixIsUnavailable("Change return type of closure", """
         fn foo<F>(f: F) -> i32

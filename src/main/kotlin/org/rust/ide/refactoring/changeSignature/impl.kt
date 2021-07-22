@@ -80,7 +80,7 @@ fun processFunction(
     changeUnsafe(factory, function, config)
 
     for (type in config.additionalTypesToImport) {
-        RsImportHelper.importTypeReferencesFromTy(function, type, useAliases = true)
+        RsImportHelper.importTypeReferencesFromTy(function, type, useAliases = true, skipUnchangedDefaultTypeArguments = true)
     }
 }
 
@@ -122,8 +122,10 @@ private fun changeReturnType(factory: RsPsiFactory, function: RsFunction, config
         if (config.returnType !is TyUnit) {
             val ret = factory.createRetType(config.returnTypeReference.text)
             function.addAfter(ret, function.valueParameterList) as RsRetType
-            RsImportHelper.importTypeReferencesFromTy(function, config.returnType,
-                useAliases = true, skipUnchangedDefaultTypeArguments = true)
+            RsImportHelper.importTypeReferencesFromTy(
+                function, config.returnType,
+                useAliases = true, skipUnchangedDefaultTypeArguments = true
+            )
         }
     }
 }
@@ -141,8 +143,10 @@ private fun changeArguments(
     }
     for (parameter in config.parameters) {
         val defaultValue = parameter.defaultValue.item ?: continue
-        RsImportHelper.importTypeReferencesFromElements(arguments, setOf(defaultValue),
-            useAliases = true, skipUnchangedDefaultTypeArguments = true)
+        RsImportHelper.importTypeReferencesFromElements(
+            arguments, setOf(defaultValue),
+            useAliases = true, skipUnchangedDefaultTypeArguments = true
+        )
     }
     val argumentsCopy = arguments.copy() as RsValueArgumentList
     val argumentsList = argumentsCopy.exprList
@@ -283,8 +287,10 @@ private fun PsiElement.collectSurroundingWhiteSpaceAndComments(): List<PsiElemen
 
 private fun importParameterTypes(descriptors: List<Parameter>, context: RsElement) {
     for (descriptor in descriptors) {
-        RsImportHelper.importTypeReferencesFromElements(context, setOf(descriptor.typeReference),
-            useAliases = true, skipUnchangedDefaultTypeArguments = true)
+        RsImportHelper.importTypeReferencesFromElements(
+            context, setOf(descriptor.typeReference),
+            useAliases = true, skipUnchangedDefaultTypeArguments = true
+        )
     }
 }
 

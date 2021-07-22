@@ -185,6 +185,34 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
+    fun `test do not import default type parameter or argument type`() = checkFixByText("Add `S` as `1st` parameter to function `bar`", """
+        mod foo {
+            pub fn bar() {}
+        }
+
+        pub struct R;
+        pub struct S<T=R>(T);
+
+        fn main() {
+            let s = S(R);
+            foo::bar<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>s/*caret*/</error>)</error>;
+        }
+    """, """
+        mod foo {
+            use S;
+
+            pub fn bar(s: S) {}
+        }
+
+        pub struct R;
+        pub struct S<T=R>(T);
+
+        fn main() {
+            let s = S(R);
+            foo::bar(s);
+        }
+    """)
+
     fun `test do not offer on tuple struct constructors`() = checkFixIsUnavailable("Add", """
         struct S(u32);
 
