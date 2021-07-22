@@ -8,10 +8,12 @@ package org.rust.ide.inspections.lints
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 /**
- * Tests for Deprecated Attribute inspection.
- */
+ *  Through out this files the `since` version is either `1.0.0` or `0.0.1`. The reason for this is that
+ *  `checkByText` creates a mock cargo project which has it's version set to `0.0.1` so we leverage that.
+ *  When we want to test a future deprecation message -- use `1.0.0`, when want to test a currently deprecated
+ *  deprecation message -- use `0.0.1`.
+*/
 class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspection::class) {
-
     fun `test deprecated function without params`() = checkByText("""
         #[deprecated()]
         pub fn foo() {
@@ -23,12 +25,12 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
     """)
 
     fun `test deprecated function with since param only`() = checkByText("""
-        #[deprecated(since="1.0.0")]
+        #[deprecated(since="0.0.1")]
         pub fn foo() {
         }
 
         fn main() {
-            <warning descr="`foo` is deprecated since 1.0.0">foo</warning>();
+            <warning descr="`foo` is deprecated since 0.0.1">foo</warning>();
         }
     """)
 
@@ -43,22 +45,42 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
     """)
 
     fun `test deprecated function with since and note params`() = checkByText("""
+        #[deprecated(since="0.0.1", note="here could be your reason")]
+        pub fn foo() {
+        }
+
+        fn main() {
+            <warning descr="`foo` is deprecated since 0.0.1: here could be your reason">foo</warning>();
+        }
+    """)
+
+    fun `test will be deprecated function with since and note params`() = checkByText("""
         #[deprecated(since="1.0.0", note="here could be your reason")]
         pub fn foo() {
         }
 
         fn main() {
-            <warning descr="`foo` is deprecated since 1.0.0: here could be your reason">foo</warning>();
+            <weak_warning descr="`foo` will be deprecated from 1.0.0: here could be your reason">foo</weak_warning>();
         }
     """)
 
     fun `test rustc_deprecated attribute`() = checkByText("""
+        #[rustc_deprecated(since="0.0.1", reason="here could be your reason")]
+        pub fn foo() {
+        }
+
+        fn main() {
+            <warning descr="`foo` is deprecated since 0.0.1: here could be your reason">foo</warning>();
+        }
+    """)
+
+    fun `test future rustc_deprecated attribute`() = checkByText("""
         #[rustc_deprecated(since="1.0.0", reason="here could be your reason")]
         pub fn foo() {
         }
 
         fn main() {
-            <warning descr="`foo` is deprecated since 1.0.0: here could be your reason">foo</warning>();
+            <weak_warning descr="`foo` will be deprecated from 1.0.0: here could be your reason">foo</weak_warning>();
         }
     """)
 
@@ -243,7 +265,19 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         mod foo;
 
         fn main() {/*caret*/
-            foo::<warning descr="`bar` is deprecated since 1.0.0: here could be your reason">bar</warning>();
+            foo::<warning descr="`bar` is deprecated since 0.0.1: here could be your reason">bar</warning>();
+        }
+    //- foo.rs
+        #[deprecated(since="0.0.1", note="here could be your reason")]
+        pub fn bar() {}
+    """)
+
+    fun `test AST is not loaded when to-be-deprecated item in another file`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+
+        fn main() {/*caret*/
+            foo::<weak_warning descr="`bar` will be deprecated from 1.0.0: here could be your reason">bar</weak_warning>();
         }
     //- foo.rs
         #[deprecated(since="1.0.0", note="here could be your reason")]
