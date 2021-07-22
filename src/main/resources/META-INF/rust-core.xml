@@ -884,6 +884,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.ConvertFunctionToClosureIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.AddRemainingArmsIntention</className>
             <category>Rust</category>
         </intentionAction>
