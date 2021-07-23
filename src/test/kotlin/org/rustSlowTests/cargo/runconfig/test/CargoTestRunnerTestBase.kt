@@ -9,8 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.testframework.TestProxyRoot
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
-import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.UIUtil
+import com.intellij.testFramework.PlatformTestUtil
 import org.rust.stdext.removeLast
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
@@ -18,15 +17,10 @@ abstract class CargoTestRunnerTestBase : RunConfigurationTestBase() {
 
     protected fun executeAndGetTestRoot(configuration: RunConfiguration): SMTestProxy.SMRootTestProxy {
         val result = execute(configuration)
-        val executionConsole = result.executionConsole as SMTRunnerConsoleView
-        val testsRootNode = executionConsole.resultsViewer.testsRootNode
-        with(result.processHandler) {
-            startNotify()
-            waitFor()
-        }
-        UIUtil.dispatchAllInvocationEvents()
-        Disposer.register(project, executionConsole)
-        return testsRootNode
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        val executionConsole = result.descriptor?.executionConsole as? SMTRunnerConsoleView
+            ?: error("Failed to get test execution console")
+        return executionConsole.resultsViewer.testsRootNode
     }
 
     protected fun SMTestProxy.SMRootTestProxy.findTestByName(testFullName: String): SMTestProxy {

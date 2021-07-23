@@ -10,15 +10,15 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.execution.process.*
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.DataManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.runconfig.CargoCommandRunner
@@ -31,6 +31,16 @@ import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
 abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
+
+    override fun setUp() {
+        super.setUp()
+        val executionManager = ExecutionManagerImpl.getInstance(project)
+        executionManager.forceCompilationInTests = true
+        Disposer.register(testRootDisposable) {
+            executionManager.forceCompilationInTests = false
+        }
+    }
+
     protected fun createConfiguration(command: String = "run"): CargoCommandConfiguration {
         val configurationType = CargoCommandConfigurationType.getInstance()
         val factory = configurationType.factory
@@ -69,25 +79,20 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
             ?: error("Can't create run configuration settings")
     }
 
-    protected fun execute(configuration: RunConfiguration): ExecutionResult {
-        val executor = DefaultRunExecutor.getRunExecutorInstance()
-        val state = ExecutionEnvironmentBuilder
-            .create(executor, configuration)
-            .build()
-            .state!!
-        return state.execute(executor, CargoCommandRunner())!!
+    protected fun execute(configuration: RunConfiguration): TestExecutionResult {
+        val connection = project.messageBus.connect(testRootDisposable)
+        val executionListener = TestExecutionListener(testRootDisposable, configuration)
+        connection.subscribe(ExecutionManager.EXECUTION_TOPIC, executionListener)
+
+        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration)
+            .activeTarget()
+            .buildAndExecute()
+        return executionListener.waitFinished() ?: error("Process not finished")
     }
 
     protected fun executeAndGetOutput(configuration: RunConfiguration): ProcessOutput {
         val result = execute(configuration)
-        val listener = AnsiAwareCapturingProcessAdapter()
-        with(result.processHandler) {
-            addProcessListener(listener)
-            startNotify()
-            waitFor()
-        }
-        Disposer.dispose(result.executionConsole)
-        return listener.output
+        return result.output ?: error("Process failed to start")
     }
 
     protected fun buildProject(command: String = "build"): CargoBuildResult {
@@ -104,33 +109,4 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
         val environment = ExecutionEnvironment(executor, runner, settings, project)
         return CargoBuildConfiguration(configuration, environment)
     }
-}
-
-/**
- * Capturing adapter that removes ANSI escape codes from the output
- */
-class AnsiAwareCapturingProcessAdapter : ProcessAdapter(), AnsiEscapeDecoder.ColoredTextAcceptor {
-    val output = ProcessOutput()
-
-    private val decoder = object : AnsiEscapeDecoder() {
-        override fun getCurrentOutputAttributes(outputType: Key<*>) = outputType
-    }
-
-    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) =
-        decoder.escapeText(event.text, outputType, this)
-
-    private fun addToOutput(text: String, outputType: Key<*>) {
-        if (outputType === ProcessOutputTypes.STDERR) {
-            output.appendStderr(text)
-        } else {
-            output.appendStdout(text)
-        }
-    }
-
-    override fun processTerminated(event: ProcessEvent) {
-        output.exitCode = event.exitCode
-    }
-
-    override fun coloredTextAvailable(text: String, attributes: Key<*>) =
-        addToOutput(text, attributes)
 }
