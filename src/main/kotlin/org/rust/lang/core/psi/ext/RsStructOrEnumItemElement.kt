@@ -25,7 +25,7 @@ val RsStructOrEnumItemElement.derivedTraitsToMetaItems: Map<RsTraitItem, RsMetaI
         .mapNotNull { meta -> (meta.resolveToDerivedTrait())?.let { it to meta } }
         .toMap()
 
-private val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>
+val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>
     get() = queryAttributes.deriveMetaItems
 
 val QueryAttributes<RsMetaItem>.deriveMetaItems: Sequence<RsMetaItem>

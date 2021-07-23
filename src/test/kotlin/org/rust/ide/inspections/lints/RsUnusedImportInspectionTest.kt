@@ -7,7 +7,9 @@ package org.rust.ide.inspections.lints
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.lang.core.macros.MacroExpansionScope
 
 @UseNewResolve
 class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
@@ -432,14 +434,29 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             use super::foo::S;
 
             macro_rules! handle {
-                (${"$"}p:path) => {
-                    let _: ${"$"}p;
+                ($ p:path) => {
+                    let _: $ p;
                 }
             }
 
             fn bar() {
                 handle!(S);
             }
+        }
+    """)
+
+    @MinRustcVersion("1.46.0")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test usage inside derive proc macro expansion`() = checkByText("""
+        struct Bar;
+        mod foo {
+            use test_proc_macros::DeriveImplForFoo;
+            use crate::Bar;
+            #[derive(DeriveImplForFoo)]
+            struct Foo;
         }
     """)
 
