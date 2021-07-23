@@ -6,12 +6,14 @@
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.macros.isExpandedFromIncludeMacro
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.getDirectoryContainedAllChildFiles
 
 /**
  * Mixin methods to implement PSI interfaces without copy pasting and
@@ -101,11 +103,12 @@ object RsPsiImplUtil {
             is RsVisibility.Restricted -> visibility.inMod
         }
 
-        if (!restrictedMod.hasChildFiles()) return localOrMacroSearchScope(restrictedMod)
+        val restrictedModScope = localOrMacroSearchScope(restrictedMod)
+        if (!restrictedMod.hasChildFiles()) return restrictedModScope
 
-        // TODO restrict scope to [restrictedMod]. We can't use `DirectoryScope` b/c file from any
-        //   directory can be included via `#[path]` attribute or `include!()` macro.
-        return null
+        val containedDirectory = restrictedMod.getDirectoryContainedAllChildFiles() ?: return null
+        val containedDirectoryScope = GlobalSearchScopes.directoryScope(element.project, containedDirectory, true)
+        return containedDirectoryScope.union(restrictedModScope)
     }
 
     /**

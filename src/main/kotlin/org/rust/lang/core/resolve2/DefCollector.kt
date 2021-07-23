@@ -23,10 +23,7 @@ import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
-import org.rust.openapiext.findFileByMaybeRelativePath
-import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.testAssert
-import org.rust.openapiext.toPsiFile
+import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 
 private const val CONSIDER_INDETERMINATE_IMPORTS_AS_RESOLVED: Boolean = false
@@ -309,16 +306,17 @@ class DefCollector(
         val containingFile = PersistentFS.getInstance().findFileById(modData.fileId) ?: return
         val includePath = call.body
         val parentDirectory = containingFile.parent
-        val includingFile = parentDirectory
-            .findFileByMaybeRelativePath(includePath)
-            ?.toPsiFile(project)
-            ?.rustFile
-        if (includingFile != null) {
+        val includingFile = parentDirectory.findFileByMaybeRelativePath(includePath)
+        val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
+        if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectFileAndCalculateHash(includingFile, call.containingMod, call.macroIndex, context)
+            collectFileAndCalculateHash(includingRsFile, call.containingMod, call.macroIndex, context)
         } else {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
+        }
+        if (includingFile != null) {
+            modData.recordChildFileInUnusualLocation(includingFile.fileId)
         }
     }
 

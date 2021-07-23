@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve2
 
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.containers.map2Array
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -31,3 +33,13 @@ private fun PerNs.allVisItems(): Array<Pair<VisItem, Namespace>> =
     types.map2Array { it to Namespace.Types } +
         values.map2Array { it to Namespace.Values } +
         macros.map2Array { it to Namespace.Macros }
+
+/**
+ * In most cases returns [RsMod.getOwnedDirectory],
+ * or some its parent directory if there is complex `include!` or mod declaration with ```#[path]``` attribute.
+ * Note that this directory may not contain [this]
+ */
+fun RsMod.getDirectoryContainedAllChildFiles(): VirtualFile? {
+    val (_, _, modData) = getModInfo(this) as? RsModInfo ?: return null
+    return PersistentFS.getInstance().findFileById(modData.directoryContainedAllChildFiles)
+}
