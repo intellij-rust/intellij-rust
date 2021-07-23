@@ -336,7 +336,7 @@ private fun pathTypeParameters(path: RsPath): RsPsiPathParameters? {
             val assoc = mutableListOf<RsAssocTypeBinding>()
             for (child in inAngles.stubChildrenOfType<RsElement>()) {
                 when (child) {
-                    is RsTypeReference, is RsExpr -> typeOrConstArgs.add(child as RsElement)
+                    is RsTypeReference, is RsExpr -> typeOrConstArgs.add(child)
                     is RsLifetime -> lifetimeArgs += child
                     is RsAssocTypeBinding -> assoc += child
                 }

@@ -194,7 +194,7 @@ class MembersGenerator(
 ) {
     private val renderer = ImportingPsiRenderer(
         PsiRenderingOptions(shortPaths = false),
-        pathPsiSubst(impl.traitRef!!.path, trait.element),
+        listOf(pathPsiSubst(impl.traitRef!!.path, trait.element)),
         impl.members!!
     )
     val itemsToImport: Set<ImportCandidate> get() = renderer.itemsToImport

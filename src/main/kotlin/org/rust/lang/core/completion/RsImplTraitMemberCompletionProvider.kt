@@ -157,7 +157,7 @@ private fun completeFunction(
     memberGenerator: MembersGenerator,
     keyword: PsiElement?
 ): LookupElementBuilder {
-    val shortRenderer = PsiSubstitutingPsiRenderer(PsiRenderingOptions(renderGenericsAndWhere = false), substitution)
+    val shortRenderer = PsiSubstitutingPsiRenderer(PsiRenderingOptions(renderGenericsAndWhere = false), listOf(substitution))
     val shortSignature = removePrefix(shortRenderer.renderFunctionSignature(target), keyword)
     val text = removePrefix(memberGenerator.renderAbstractable(target), keyword)
 

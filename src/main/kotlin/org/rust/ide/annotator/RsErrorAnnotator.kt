@@ -11,8 +11,10 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -763,6 +765,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val selfSubst = mapOf(TyTypeParameter.self() to type).toTypeSubst()
         val substitution = (impl.implementedTrait?.subst ?: emptySubstitution).substituteInValues(selfSubst) + selfSubst
+        var missing = false
+
         for (bound in supertraits) {
             val requiredTrait = bound.traitRef ?: continue
             val boundTrait = requiredTrait.resolveToBoundTrait() ?: continue
@@ -772,8 +776,24 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val canSelect = lookup.canSelect(TraitRef(type, locallyBoundTrait))
             if (!canSelect) {
                 val missingTrait = requiredTrait.getStubOnlyText(substitution)
+                missing = true
                 RsDiagnostic.SuperTraitIsNotImplemented(traitRef, type, missingTrait).addToHolder(holder)
             }
+        }
+
+        if (missing) {
+            // Mark the whole impl with a silent error and a quick fix
+
+            val range = TextRange(
+                impl.impl.startOffset,
+                typeRef.endOffset
+            )
+            holder.holder
+                .newSilentAnnotation(HighlightSeverity.ERROR)
+                .textAttributes(TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES"))
+                .range(range)
+                .withFix(AddMissingSupertraitImplFix(impl))
+                .create()
         }
     }
 

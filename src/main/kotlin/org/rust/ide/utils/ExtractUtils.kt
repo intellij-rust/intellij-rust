@@ -29,7 +29,7 @@ import org.rust.lang.core.types.type
  * Holds type parameters, lifetimes, const parameters and where clauses.
  * It serves as a combination of several `RsGenericDeclaration`s.
  *
- * Can be filtered by a set of types/type references to only returns parameters/constraints that are needed by these
+ * Can be filtered by a set of types/type references to only return parameters/constraints that are needed by these
  * given types/type references.
  */
 data class GenericConstraints(

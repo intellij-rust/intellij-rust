@@ -254,6 +254,8 @@ class RsPsiFactory(
         return createFromText("impl T for S {$text}") ?: error("Failed to create members from text: `$text`")
     }
 
+    fun tryCreateImplItem(text: String): RsImplItem? = createFromText(text)
+
     fun createInherentImplItem(
         name: String,
         typeParameterList: RsTypeParameterList? = null,
