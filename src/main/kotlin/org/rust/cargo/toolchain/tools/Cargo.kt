@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isDispatchThread
 import com.intellij.util.execution.ParametersListUtil
@@ -442,6 +443,9 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     companion object {
         private val LOG: Logger = logger<Cargo>()
 
+        @JvmStatic
+        val TEST_NOCAPTURE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.cargo.test.nocapture")
+
         const val NAME: String = "cargo"
         const val WRAPPER_NAME: String = "xargo"
 
@@ -461,8 +465,13 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            if (command == "test" && allFeatures && !pre.contains("--all-features")) {
-                pre.add("--all-features")
+            if (command == "test") {
+                if (allFeatures && !pre.contains("--all-features")) {
+                    pre.add("--all-features")
+                }
+                if (TEST_NOCAPTURE_ENABLED_KEY.asBoolean() && !post.contains("--nocapture")) {
+                    post.add(0, "--nocapture")
+                }
             }
 
             if (requiredFeatures && command in FEATURES_ACCEPTING_COMMANDS) {

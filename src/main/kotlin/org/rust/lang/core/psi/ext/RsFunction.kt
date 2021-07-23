@@ -26,7 +26,6 @@ import org.rust.lang.core.types.type
 import javax.swing.Icon
 
 val RsFunction.block: RsBlock? get() = PsiTreeUtil.getChildOfType(this, RsBlock::class.java)
-val RsFunction.stubOnlyBlock: RsBlock? get() = PsiTreeUtil.getStubChildOfType(this, RsBlock::class.java)
 
 val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTrait
 val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait

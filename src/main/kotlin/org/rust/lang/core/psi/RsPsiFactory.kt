@@ -402,10 +402,10 @@ class RsPsiFactory(
 
     fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
 
-    fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
-
     fun createLambda(text: String): RsLambdaExpr =
         tryCreateLambda(text) ?: error("Failed to create lambda element: $text")
+
+    private fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
 
     fun createRetType(ty: String): RsRetType =
         createFromText("fn foo() -> $ty {}")

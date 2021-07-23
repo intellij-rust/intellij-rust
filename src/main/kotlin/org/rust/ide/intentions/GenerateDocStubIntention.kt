@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
 import org.rust.lang.core.types.ty.Ty
-import java.lang.Math.max
+import kotlin.math.max
 
 class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
     override fun getText() = "Generate documentation stub"

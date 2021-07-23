@@ -135,7 +135,7 @@ open class RsPsiRenderer(
             val typeParamBounds = pred.typeParamBounds
             if (typeParamBounds != null) {
                 sb.append(": ")
-                typeParamBounds.polyboundList.joinToWithBuffer(sb, " + ") { _ ->
+                typeParamBounds.polyboundList.joinToWithBuffer(sb, " + ") {
                     appendPolybound(sb, this)
                 }
             }
@@ -158,7 +158,7 @@ open class RsPsiRenderer(
                     val bounds = typeParamBounds
                     if (bounds != null) {
                         sb.append(": ")
-                        bounds.polyboundList.joinToWithBuffer(sb, " + ") { _ ->
+                        bounds.polyboundList.joinToWithBuffer(sb, " + ") {
                             appendPolybound(sb, this)
                         }
                     }
@@ -297,7 +297,7 @@ open class RsPsiRenderer(
 
             is RsTraitType -> {
                 sb.append(if (type.isImpl) "impl " else "dyn ")
-                type.polyboundList.joinToWithBuffer(sb, " + ") { _ ->
+                type.polyboundList.joinToWithBuffer(sb, " + ") {
                     appendPolybound(sb, this)
                 }
             }

@@ -34,6 +34,7 @@ import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
@@ -171,6 +172,7 @@ open class CargoCommandConfiguration(
 
     private fun showTestToolWindow(): Boolean = command.startsWith("test") &&
         isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
+        !Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() &&
         !command.contains("--nocapture")
 
 

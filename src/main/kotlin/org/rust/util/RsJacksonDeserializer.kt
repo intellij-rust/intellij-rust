@@ -55,7 +55,7 @@ abstract class RsJacksonDeserializer<T>(vc: Class<T>) : StdDeserializer<T>(vc) {
         return parser.nextFieldName() ?: wrongToken(JsonToken.FIELD_NAME)
     }
 
-    protected fun DeserializationContext.wrongToken(expectedToken: JsonToken): Nothing {
+    private fun DeserializationContext.wrongToken(expectedToken: JsonToken): Nothing {
         reportWrongTokenException(handledType(), expectedToken, null)
         error("unreachable: `reportWrongTokenException` always throws an exception")
     }
