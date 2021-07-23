@@ -15,7 +15,7 @@ class RsVisibilityCompletionTest : RsCompletionTestBase() {
         }
     """, """
         struct S {
-            pub/*caret*/ a: u32
+            pub /*caret*/a: u32
         }
     """)
 
@@ -52,7 +52,7 @@ class RsVisibilityCompletionTest : RsCompletionTestBase() {
     fun `test tuple field decl`() = checkCompletion("pub", """
         struct S(/*caret*/u32);
     """, """
-        struct S(pub/*caret*/ u32);
+        struct S(pub /*caret*/u32);
     """)
 
     fun `test inside struct tuple fields`() = checkContainsCompletion("pub", """

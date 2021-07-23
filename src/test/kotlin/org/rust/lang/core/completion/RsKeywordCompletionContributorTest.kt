@@ -691,13 +691,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test no if|match after path segment`() = checkCompletion(CONDITION_KEYWORDS, """
-        struct Foo;
-
-        fn foo() {
-            Foo::/*caret*/
-        }
-    """, """
+    fun `test no if|match after path segment`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
         struct Foo;
 
         fn foo() {
@@ -705,9 +699,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test no if|match out of function`() = checkCompletion(CONDITION_KEYWORDS, """
-        const FOO: &str = /*caret*/
-    """, """
+    fun `test no if|match out of function`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
         const FOO: &str = /*caret*/
     """)
 
