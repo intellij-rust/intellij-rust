@@ -38,6 +38,7 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RsTypeAlias -> TYPES
 
     is RsPatBinding,
+    is RsConstParameter,
     is RsConstant -> VALUES
     is RsFunction -> if (this.isProcMacroDef) MACROS else VALUES
 
