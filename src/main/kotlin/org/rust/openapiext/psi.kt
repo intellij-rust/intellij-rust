@@ -13,8 +13,7 @@ import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.stdext.exhaustive
 
@@ -109,6 +108,7 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
                 } else {
                     super.visitElement(element)
                 }
+                tryProcessDeriveProcMacro(element)
             }
             TreeStatus.SKIP_CHILDREN -> return
             TreeStatus.ABORT -> {
@@ -126,7 +126,7 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
         return element.macroArgument != null || isWriteMacro
     }
 
-    private fun processMacro(element: RsMacroCall) {
+    private fun processMacro(element: RsPossibleMacroCall) {
         if (nestedMacroDepth > DEFAULT_RECURSION_LIMIT) {
             return
         }
@@ -134,6 +134,15 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
         for (expandedElement in expansion.elements) {
             val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor, nestedMacroDepth + 1)
             expandedElement.accept(visitor)
+        }
+    }
+
+    private fun tryProcessDeriveProcMacro(element: PsiElement) {
+        if (element !is RsStructOrEnumItemElement) return
+        for (deriveMetaItem in element.deriveMetaItems) {
+            if (deriveMetaItem.canBeMacroCall) {
+                processMacro(deriveMetaItem)
+            }
         }
     }
 }

@@ -16,6 +16,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.colors.RsColor
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.presentation.render
+import org.rust.lang.core.FORMAT_ARGS_CAPTURE
+import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
@@ -365,12 +367,16 @@ private fun buildParameters(ctx: ParseContext): List<FormatParameter> {
     }
 }
 
-private fun checkParameter(parameter: FormatParameter, ctx: FormatContext): List<ErrorAnnotation> {
+private fun checkParameter(
+    parameter: FormatParameter,
+    ctx: FormatContext,
+    implicitNamedArgsAvailable: Boolean
+): List<ErrorAnnotation> {
     val errors = mutableListOf<ErrorAnnotation>()
 
     when (val lookup = parameter.lookup) {
         is ParameterLookup.Named -> {
-            if (lookup.name !in ctx.namedArguments) {
+            if (lookup.name !in ctx.namedArguments && !implicitNamedArgsAvailable) {
                 errors.add(ErrorAnnotation(parameter.range, "There is no argument named `${lookup.name}`"))
             }
         }
@@ -396,9 +402,11 @@ private fun checkParameter(parameter: FormatParameter, ctx: FormatContext): List
 }
 
 private fun checkParameters(ctx: FormatContext): List<ErrorAnnotation> {
+    val implicitNamedArgsAvailable = FORMAT_ARGS_CAPTURE.availability(ctx.macro) == FeatureAvailability.AVAILABLE
+
     val errors = mutableListOf<ErrorAnnotation>()
     for (parameter in ctx.parameters) {
-        for (error in checkParameter(parameter, ctx)) {
+        for (error in checkParameter(parameter, ctx, implicitNamedArgsAvailable)) {
             errors.add(error)
         }
     }

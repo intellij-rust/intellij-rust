@@ -19,9 +19,8 @@ import org.rust.lang.core.psi.RsBlockFields
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.document
 
 class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
@@ -98,10 +97,13 @@ fun CommaList.addTrailingCommaForElement(list: PsiElement): Boolean {
     return true
 }
 
-fun CommaList.isLastElement(list: PsiElement, element: PsiElement): Boolean {
+fun CommaList.isOnSameLineAsLastElement(list: PsiElement, element: PsiElement): Boolean {
     check(list.elementType == this.list && isElement(element))
     val rbrace = list.lastChild
     if (rbrace.elementType != closingBrace) return false
-    val lastElement = rbrace.getPrevNonCommentSibling() ?: return false
-    return lastElement == element
+    val lastElement = rbrace.getPrevNonCommentSibling()?.takeIf(isElement) ?: return false
+    return element == lastElement || element.containingFile.document?.let {
+        it.getLineNumber(element.endOffset) == it.getLineNumber(lastElement.endOffset)
+    } == true
+
 }
