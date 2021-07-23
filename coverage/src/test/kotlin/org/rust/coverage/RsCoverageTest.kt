@@ -6,11 +6,8 @@
 package org.rust.coverage
 
 import com.intellij.coverage.CoverageDataManager
-import com.intellij.coverage.CoverageExecutor
 import com.intellij.coverage.CoverageRunnerData
-import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
@@ -21,8 +18,6 @@ import org.rust.FileTreeBuilder
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.toPsiFile
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 class RsCoverageTest : RunConfigurationTestBase() {
     private val coverageData: ProjectData?
@@ -248,14 +243,8 @@ class RsCoverageTest : RunConfigurationTestBase() {
     }
 
     private fun executeWithCoverage(configuration: RunConfiguration): RunContentDescriptor {
-        val future = CompletableFuture<RunContentDescriptor>()
-        val executor = ExecutorRegistry.getInstance().getExecutorById(CoverageExecutor.EXECUTOR_ID)!!
-        val environment = ExecutionEnvironmentBuilder
-            .create(executor, configuration)
-            .runnerSettings(CoverageRunnerData())
-            .build { future.complete(it) }
-        environment.runner.execute(environment)
-        return future.get(10, TimeUnit.SECONDS)!!
+        val result = execute(configuration) { runnerSettings(CoverageRunnerData()) }
+        return result.descriptor ?: error("Failed to get `RunContentDescriptor` object")
     }
 
     private fun hitsFrom(text: String): Set<Hits> =

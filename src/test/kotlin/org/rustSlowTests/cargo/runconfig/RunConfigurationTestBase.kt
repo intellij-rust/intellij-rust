@@ -79,13 +79,17 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
             ?: error("Can't create run configuration settings")
     }
 
-    protected fun execute(configuration: RunConfiguration): TestExecutionResult {
+    protected fun execute(
+        configuration: RunConfiguration,
+        customizeExecutionEnv: ExecutionEnvironmentBuilder.() -> ExecutionEnvironmentBuilder = { this }
+    ): TestExecutionResult {
         val connection = project.messageBus.connect(testRootDisposable)
         val executionListener = TestExecutionListener(testRootDisposable, configuration)
         connection.subscribe(ExecutionManager.EXECUTION_TOPIC, executionListener)
 
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration)
             .activeTarget()
+            .customizeExecutionEnv()
             .buildAndExecute()
         return executionListener.waitFinished() ?: error("Process not finished")
     }
