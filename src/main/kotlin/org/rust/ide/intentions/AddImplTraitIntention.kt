@@ -89,8 +89,8 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             val baseTypes = members.descendantsOfType<RsPath>()
                 .filter { it.parent is RsBaseType && !it.hasColonColon && it.path == null && it.typeQual == null }
                 .groupBy { it.referenceName }
-            val typeToUsage = insertedTypeArguments.associateWith {
-                it.path?.referenceName?.let { baseTypes[it] } ?: emptyList()
+            val typeToUsage = insertedTypeArguments.associateWith { ty ->
+                ty.path?.referenceName?.let { baseTypes[it] } ?: emptyList()
             }
             val tmp = editor.newTemplateBuilder(impl) ?: return
             for ((type, usages) in typeToUsage) {

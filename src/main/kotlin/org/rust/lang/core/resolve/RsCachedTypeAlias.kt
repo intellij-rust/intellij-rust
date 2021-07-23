@@ -9,7 +9,6 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.RsTypeAliasImplMixin
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.types.consts.CtConstParameter

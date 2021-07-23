@@ -10,8 +10,6 @@ import org.rust.cargo.project.workspace.PackageId
 class BuildMessages(
     private val messages: Map<PackageId, List<CompilerMessage>>
 ) {
-    val containsOutDirInfo: Boolean
-        get() = messages.values.flatten().any { (it as? BuildScriptMessage)?.out_dir != null }
 
     fun get(packageId: PackageId): List<CompilerMessage> = messages[packageId].orEmpty()
 

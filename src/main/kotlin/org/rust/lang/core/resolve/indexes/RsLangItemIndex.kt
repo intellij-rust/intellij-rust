@@ -15,7 +15,6 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.checkCommitIsNotInProgress

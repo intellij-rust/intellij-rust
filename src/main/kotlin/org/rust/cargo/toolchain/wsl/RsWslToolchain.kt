@@ -70,6 +70,8 @@ class RsWslToolchain(
         distribution.getWindowsPath(pathToCargoExecutable(exec))?.isFile() == true
 
     companion object {
+        // BACKCOMPAT: 2021.1
+        @Suppress("UNNECESSARY_SAFE_CALL", "RedundantNullableReturnType")
         private fun WSLDistribution.getWindowsPath(wslPath: Path): Path? =
             getWindowsPath(wslPath.toString())?.toPath()
     }
