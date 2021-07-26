@@ -5,15 +5,18 @@
 
 package org.rustPerformanceTests
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
+import org.rust.ide.inspections.lints.RsUnusedImportInspection
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
@@ -51,15 +54,7 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
         )
         AnnotatorBase.enableAnnotator(RsErrorAnnotator::class.java, testRootDisposable)
-        val inspections = InspectionToolRegistrar.getInstance().createTools()
-            .map { it.tool }
-            .filterIsInstance<RsLocalInspectionTool>()
-
-        for (inspection in inspections) {
-            setUpInspection(inspection)
-        }
-
-        myFixture.enableInspections(*inspections.toTypedArray())
+        setUpInspections()
 
         println("Opening the project `${info.name}`")
         val base = openRealProject(info) ?: return
@@ -99,6 +94,24 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             }
         }
         consumer.finish()
+    }
+
+    private fun setUpInspections() {
+        val inspections = InspectionToolRegistrar.getInstance().createTools()
+            .map { it.tool }
+            .filterIsInstance<RsLocalInspectionTool>()
+
+        for (inspection in inspections) {
+            setUpInspection(inspection)
+        }
+
+        myFixture.enableInspections(*inspections.toTypedArray())
+
+        // Make some inspections with "WARNING" level to be also included in report
+        val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+        for (inspection in forciblyEnabledInspections) {
+            profile.getTools(inspection, project).level = HighlightDisplayLevel.ERROR
+        }
     }
 
     protected open fun setUpInspection(inspection: RsLocalInspectionTool) {
@@ -157,4 +170,7 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             return "$filePath:$line:$column '$highlightedText' ($error)$suffix"
         }
     }
+
+    /** Inspections with "WARNING" level should be added to this list to be checked */
+    private val forciblyEnabledInspections: List<String> = listOf(RsUnusedImportInspection.SHORT_NAME)
 }

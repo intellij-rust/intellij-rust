@@ -121,7 +121,7 @@ class RsUnusedImportInspection : RsLintInspection() {
             return profile.isToolEnabled(HighlightDisplayKey.find(SHORT_NAME))
         }
 
-        private const val SHORT_NAME: String = "RsUnusedImport"
+        const val SHORT_NAME: String = "RsUnusedImport"
     }
 }
 
