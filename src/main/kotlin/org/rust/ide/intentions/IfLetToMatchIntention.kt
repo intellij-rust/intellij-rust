@@ -103,7 +103,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         val pat = condition.pat ?: return null
 
         //3) Extract the target
-        val target = condition.expr
+        val target = condition.expr ?: return null
 
         //4) Extract the if body
         val ifBody = iflet.block ?: return null

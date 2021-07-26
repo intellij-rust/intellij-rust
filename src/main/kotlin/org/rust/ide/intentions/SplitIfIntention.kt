@@ -23,30 +23,34 @@ class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>(
 
     data class Context(
         val binaryOp: RsBinaryOp,
-        val condition: RsCondition
+        val operatorType: LogicOp,
+        val conditionExpr: RsExpr,
+        val ifExpr: RsIfExpr
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val binExpr = element.ancestorStrict<RsBinaryExpr>() ?: return null
         if (binExpr.operatorType !is LogicOp) return null
-        if (element.parent != binExpr.binaryOp) return null
+        val binaryOp = binExpr.binaryOp
+        val operatorType = binaryOp.operatorType as? LogicOp ?: return null
+        if (element.parent != binaryOp) return null
         val condition = binExpr.findCondition() ?: return null
-        return Context(binExpr.binaryOp, condition)
+        if (condition.let != null) return null
+        val conditionExpr = condition.skipParenExprDown() ?: return null
+        val ifStatement = condition.ancestorOrSelf<RsIfExpr>() ?: return null
+        return Context(binaryOp, operatorType, conditionExpr, ifStatement)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (binaryOp, condition) = ctx
-        val ifStatement = condition.ancestorOrSelf<RsIfExpr>() ?: return
+        val (binaryOp, operatorType, conditionExpr, ifStatement) = ctx
         val thenBranch = ifStatement.block?.text ?: "{ }"
         val elseBranch = ifStatement.elseBranch?.text ?: ""
 
-        val conditionExpr = condition.skipParenExprDown()
         val leftCondition = leftPart(conditionExpr, binaryOp)
         val rightCondition = rightPart(conditionExpr, binaryOp)
-        val generatedCode = when (binaryOp.operatorType) {
+        val generatedCode = when (operatorType) {
             LogicOp.AND -> createAndAnd(leftCondition, rightCondition, thenBranch, elseBranch)
             LogicOp.OR -> createOrOr(leftCondition, rightCondition, thenBranch, elseBranch)
-            else -> return
         }
 
         val newIfStatement = RsPsiFactory(project).createExpression(generatedCode) as RsIfExpr

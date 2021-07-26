@@ -32,9 +32,9 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
                     .dropWhile { (it is PsiWhiteSpace || it is PsiComment) && '\n' !in it.text }
                     .firstOrNull()
                     .extractIf() ?: return
-                val condition = nextIf.condition ?: return
+                val conditionExpr = nextIf.condition?.expr ?: return
                 val rangeStart = expr.startOffsetInParent + firstIf.textLength
-                val rangeLen = condition.expr.startOffset - firstIf.startOffset - firstIf.textLength
+                val rangeLen = conditionExpr.startOffset - firstIf.startOffset - firstIf.textLength
                 holder.registerProblem(
                     expr.parent,
                     TextRange(rangeStart, rangeStart + rangeLen),

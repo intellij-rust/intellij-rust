@@ -15,7 +15,7 @@ import org.rust.lang.utils.negate
 class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context>() {
     data class Context(
         val ifExpr: RsIfExpr,
-        val condition: RsCondition,
+        val conditionExpr: RsExpr,
         val thenBlock: RsBlock,
         val elseBlock: RsBlock
     )
@@ -25,14 +25,15 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
         val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return null
         if (element != ifExpr.`if`) return null
         val condition = getSuitableCondition(ifExpr) ?: return null
+        val conditionExpr = condition.expr ?: return null
         val thenBlock = ifExpr.block ?: return null
         val elseBlock = ifExpr.elseBranch?.block ?: return null
 
-        return Context(ifExpr, condition, thenBlock, elseBlock)
+        return Context(ifExpr, conditionExpr, thenBlock, elseBlock)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val negatedCondition = ctx.condition.expr.negate() as? RsExpr ?: return
+        val negatedCondition = ctx.conditionExpr.negate() as? RsExpr ?: return
 
         val newIfExpr = RsPsiFactory(project).createIfElseExpression(negatedCondition, ctx.elseBlock, ctx.thenBlock)
         val replacedIfExpr = ctx.ifExpr.replace(newIfExpr) as RsIfExpr

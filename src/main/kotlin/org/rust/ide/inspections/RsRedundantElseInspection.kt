@@ -59,7 +59,13 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
             }
         private val RsCondition.isRedundant: Boolean
             get() {
-                return patList?.all { pat -> pat.isIrrefutable } ?: (this.expr.evaluate().asBool() ?: false)
+                val patList = patList
+                return if (patList != null) {
+                    patList.all { pat -> pat.isIrrefutable }
+                } else {
+                    val expr = expr ?: return false
+                    expr.evaluate().asBool() == true
+                }
             }
     }
 }

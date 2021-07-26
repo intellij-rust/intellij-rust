@@ -25,7 +25,7 @@ class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
         RsPsiFactory(project).createExpression("while a {stmt;}") as RsWhileExpr
 
     override fun getWrappedExpression(expression: RsWhileExpr): RsExpr =
-        expression.condition!!.expr
+        expression.condition!!.expr!!
 
     override fun isApplicable(expression: RsExpr): Boolean =
         expression.type is TyBool

@@ -95,5 +95,5 @@ fun RsExpr.skipParenExprUp(): RsExpr {
  *
  * @return a child expression without parentheses.
  */
-fun RsCondition.skipParenExprDown(): RsExpr =
-    unwrapParenExprs(expr)
+fun RsCondition.skipParenExprDown(): RsExpr? =
+    expr?.let { unwrapParenExprs(it) }

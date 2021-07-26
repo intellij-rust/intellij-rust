@@ -1191,7 +1191,8 @@ WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
                  "org.rust.lang.core.psi.ext.RsLooplikeExpr" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Condition ::= [ let TopPat '=' ] NoStructLitExpr
+Condition ::= IfLetCondition | NoStructLitExpr
+private IfLetCondition ::= let TopPat '=' NoStructLitExpr { pin = 1 }
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
