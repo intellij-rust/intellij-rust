@@ -35,7 +35,11 @@ class LcovCoverageReport {
         }
 
         fun addHits(hitCount: Int) {
-            hits += hitCount
+            when {
+                hits == -1 -> return
+                hitCount == -1 -> hits = hitCount
+                else -> hits += hitCount
+            }
         }
     }
 
@@ -61,8 +65,8 @@ class LcovCoverageReport {
                             .split(",")
                             .dropLastWhile { it.isEmpty() }
                         check(values.size == 2)
-                        val lineNum = Integer.parseInt(values[0])
-                        val hitCount = Integer.parseInt(values[1])
+                        val lineNum = values[0].toIntOrNull() ?: return@forEachLine
+                        val hitCount = values[1].toIntOrNull() ?: -1
                         val lineHits = LineHits(lineNum, hitCount)
                         lineDataList?.add(lineHits)
                     }
