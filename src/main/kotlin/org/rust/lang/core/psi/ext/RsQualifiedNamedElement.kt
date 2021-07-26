@@ -514,7 +514,7 @@ data class RsQualifiedName private constructor(
 sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
 
     abstract val itemName: String?
-    abstract val isPublic: Boolean
+    abstract fun isVisibleFrom(mod: RsMod): Boolean
     abstract val superMods: List<ModWithName>?
     abstract val containingCrate: Crate?
 
@@ -542,7 +542,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
 
     class ExplicitItem(item: RsQualifiedNamedElement) : QualifiedNamedItem(item) {
         override val itemName: String? get() = item.name
-        override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
+        override fun isVisibleFrom(mod: RsMod): Boolean = (item as? RsVisible)?.isVisibleFrom(mod) == true
         override val superMods: List<ModWithName>?
             get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods?.map { ModWithName(it) }
         override val containingCrate: Crate? get() = item.containingCrate
@@ -554,7 +554,16 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
 
-        override val isPublic: Boolean get() = true
+        override fun isVisibleFrom(mod: RsMod): Boolean {
+            if ((item as? RsVisible)?.isVisibleFrom(mod) != true) return false
+
+            return when (reexportItem) {
+                is RsUseSpeck -> reexportItem.ancestorStrict<RsUseItem>()?.isVisibleFrom(mod) == true
+                is RsExternCrateItem -> reexportItem.isVisibleFrom(mod)
+                else -> error("unreachable")
+            }
+        }
+
         override val superMods: List<ModWithName> get() = reexportItem.containingMod.superMods.map { ModWithName(it) }
         override val containingCrate: Crate? get() = reexportItem.containingCrate
 
@@ -571,11 +580,15 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
 
     class CompositeItem(
         override val itemName: String?,
-        override val isPublic: Boolean,
+        private val originalItem: QualifiedNamedItem,
         private val reexportedModItem: QualifiedNamedItem,
         private val explicitSuperMods: List<ModWithName>,
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
+
+        override fun isVisibleFrom(mod: RsMod): Boolean {
+            return originalItem.isVisibleFrom(mod) && reexportedModItem.isVisibleFrom(mod)
+        }
 
         override val superMods: List<ModWithName>
             get() {
@@ -689,7 +702,7 @@ private fun QualifiedNamedItem.collectImportItems(
                 }
                 val items = QualifiedNamedItem.ReexportedItem.from(useSpeck, mod).collectImportItems(project, visited)
                 importItems += items.map {
-                    QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
+                    QualifiedNamedItem.CompositeItem(itemName, this, it, explicitSuperMods, item)
                 }
                 visited -= useSpeck
             }
@@ -707,7 +720,7 @@ private fun QualifiedNamedItem.withExternCrateReexports(project: Project): List<
         val items = QualifiedNamedItem.ReexportedItem.from(externCrateItem, root).collectImportItems(project)
         importItems += items.map {
             val explicitSuperMods = superMods.dropLast(1) + QualifiedNamedItem.ModWithName(root, externCrateItem.nameWithAlias)
-            QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
+            QualifiedNamedItem.CompositeItem(itemName, this, it, explicitSuperMods, item)
         }
     }
     return importItems

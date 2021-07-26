@@ -174,9 +174,10 @@ object ImportCandidatesCollector {
         // we need to do it because we can use direct child items of any super mod with any visibility
         val lca = ourSuperMods.find { it.modItem in superMods }
         val crateRelativePath = crateRelativePath ?: return null
+        val targetMod = superMods.first()
 
         val (shouldBePublicMods, importInfo) = if (lca == null && ourCrateAsDependency != null) {
-            if (!isPublic) return null
+            if (!isVisibleFrom(targetMod)) return null
             val externCrateMod = ourSuperMods.last().modItem
 
             val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
@@ -197,7 +198,6 @@ object ImportCandidatesCollector {
                 needInsertExternCrateItem, depth, crateRelativePath)
             ourSuperMods to importInfo
         } else {
-            val targetMod = superMods.first()
             val relativePath = if (targetMod.isAtLeastEdition2018) {
                 "crate::$crateRelativePath"
             } else {
@@ -205,10 +205,10 @@ object ImportCandidatesCollector {
             }
             // if current item is direct child of some ancestor of `mod` then it can be not public
             if (parentMod == lca) return ImportInfo.LocalImportInfo(relativePath)
-            if (!isPublic) return null
+            if (!isVisibleFrom(targetMod)) return null
             ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(relativePath)
         }
-        return if (shouldBePublicMods.all { it.modItem.isPublic }) return importInfo else null
+        return if (shouldBePublicMods.all { it.modItem.isVisibleFrom(targetMod) }) return importInfo else null
     }
 
     private fun canBeResolvedToSuitableItem(
