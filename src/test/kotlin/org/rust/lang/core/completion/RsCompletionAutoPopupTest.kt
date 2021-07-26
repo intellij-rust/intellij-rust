@@ -66,6 +66,76 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
         }
     """, "|")
 
+    fun `test popup is not shown when typing lowercase let binding`() = checkPopupIsNotShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            let /*caret*/
+        }
+    """, "a")
+
+    fun `test popup is not shown when typing nested lowercase let binding`() = checkPopupIsNotShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            let (a, /*caret*/)
+        }
+    """, "a")
+
+    fun `test popup is shown when typing uppercase let binding`() = checkPopupIsShownAfterTyping("""
+        struct A1 { f: i32 }
+        const A2: i32 = 1;
+        fn main() {
+            let /*caret*/
+        }
+    """, "A")
+
+    fun `test popup is shown when typing if let binding`() = checkPopupIsShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            if let /*caret*/
+        }
+    """, "a")
+
+    fun `test popup is shown when typing while let binding`() = checkPopupIsShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            while let /*caret*/
+        }
+    """, "a")
+
+    fun `test popup is shown when typing binding in match arm`() = checkPopupIsShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            match 1 {
+                /*caret*/
+            }
+        }
+    """, "a")
+
+    fun `test popup is shown when typing let mut 1`() = checkPopupIsShownAfterTyping("""
+        fn main() {
+            let /*caret*/
+        }
+    """, "m")
+
+    fun `test popup is shown when typing let mut 2`() = checkPopupIsShownAfterTyping("""
+        fn main() {
+            let m/*caret*/
+        }
+    """, "u")
+
+    fun `test popup is not shown when typing lowercase let mut binding`() = checkPopupIsNotShownAfterTyping("""
+        struct a1 { f: i32 }
+        const a2: i32 = 1;
+        fn main() {
+            let mut /*caret*/
+        }
+    """, "a")
+
     override fun setUp() {
         super.setUp()
         tester = CompletionAutoPopupTester(myFixture)
