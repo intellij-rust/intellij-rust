@@ -74,6 +74,7 @@ private fun buildDefMapContainingExplicitItems(
         fileId = crateRoot.virtualFile.fileId,
         fileRelativePath = "",
         ownedDirectoryId = crateRootOwnedDirectory.fileId,
+        hasPathAttribute = false,
         hasMacroUse = false,
         crateDescription = crateDescription
     )

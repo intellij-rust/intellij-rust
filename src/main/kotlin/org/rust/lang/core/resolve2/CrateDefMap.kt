@@ -8,8 +8,10 @@ package org.rust.lang.core.resolve2
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
@@ -243,6 +245,7 @@ class ModData(
     val fileRelativePath: String,
     /** `fileId` of owning directory */
     val ownedDirectoryId: FileId?,
+    val hasPathAttribute: Boolean,
     val hasMacroUse: Boolean,
     val isEnum: Boolean = false,
     /** Only for debug */
@@ -290,6 +293,19 @@ class ModData(
     var isShadowedByOtherFile: Boolean = true
 
     lateinit var asVisItem: VisItem
+
+    var directoryContainedAllChildFiles: FileId = ownedDirectoryId ?: parent!!.directoryContainedAllChildFiles
+
+    /**
+     * Means that mod declaration has path attribute or any parent inline mod
+     * (that is mod which is inside the file containing mod decl) has path attribute
+     */
+    val hasPathAttributeRelativeToParentFile: Boolean
+        get() = when {
+            parent == null -> false
+            parent.isRsFile -> hasPathAttribute
+            else -> parent.hasPathAttributeRelativeToParentFile || hasPathAttribute
+        }
 
     fun getVisibleItem(name: String): PerNs = visibleItems.getOrDefault(name, PerNs.Empty)
 
@@ -343,6 +359,18 @@ class ModData(
         visitor(this)
         for (childMod in childModules.values) {
             childMod.visitDescendants(visitor)
+        }
+    }
+
+    fun recordChildFileInUnusualLocation(childFileId: FileId) {
+        val persistentFS = PersistentFS.getInstance()
+        val childFile = persistentFS.findFileById(childFileId) ?: return
+        val childDirectory = childFile.parent ?: return
+        val containedDirectory = persistentFS.findFileById(directoryContainedAllChildFiles) ?: return
+        if (!VfsUtil.isAncestor(containedDirectory, childDirectory, false)) {
+            VfsUtil.getCommonAncestor(containedDirectory, childDirectory)?.let {
+                directoryContainedAllChildFiles = it.fileId
+            }
         }
     }
 

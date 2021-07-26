@@ -199,6 +199,9 @@ private class ModCollector(
             modData.addLegacyMacros(childModLegacyMacros)
             legacyMacros += childModLegacyMacros
         }
+        if (childModData.isRsFile && childModData.hasPathAttributeRelativeToParentFile) {
+            modData.recordChildFileInUnusualLocation(childModData.fileId)
+        }
         return childModData
     }
 
@@ -225,6 +228,7 @@ private class ModCollector(
             fileId = fileId,
             fileRelativePath = fileRelativePath,
             ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
+            hasPathAttribute = pathAttribute != null,
             hasMacroUse = childMod.hasMacroUse,
             crateDescription = defMap.crateDescription
         )
@@ -267,6 +271,7 @@ private class ModCollector(
             fileId = modData.fileId,
             fileRelativePath = "${modData.fileRelativePath}::$enumName",
             ownedDirectoryId = modData.ownedDirectoryId,  // actually can use any value here
+            hasPathAttribute = modData.hasPathAttribute,
             isEnum = true,
             hasMacroUse = false,
             crateDescription = defMap.crateDescription

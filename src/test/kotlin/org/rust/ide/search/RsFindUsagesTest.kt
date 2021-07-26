@@ -8,10 +8,12 @@ package org.rust.ide.search
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.openapiext.toPsiFile
 import org.rust.withTestDialog
 
 class RsFindUsagesTest : RsTestBase() {
@@ -248,8 +250,42 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
-    private fun doTestByText(@Language("Rust") code: String) {
-        InlineFile(code)
+    fun `test usage in child mod`() = doTestByFileTree("""
+    //- main.rs
+        struct Foo;
+             //^
+        mod foo;
+    //- foo.rs
+        fn func(_: crate::Foo) {} // - type reference
+    """)
+
+    fun `test usage in child mod with path attribute`() = doTestByFileTree("""
+    //- main.rs
+        mod foo;
+    //- foo/main.rs
+        struct Foo;
+             //^
+        #[path = "../bar.rs"]
+        mod bar;
+    //- bar.rs
+        fn func(_: super::Foo) {} // - type reference
+    """)
+
+    fun `test usage in included file`() = doTestByFileTree("""
+    //- main.rs
+        mod foo;
+    //- foo/main.rs
+        struct Foo;
+             //^
+        include!("../bar.rs");
+    //- bar.rs
+        fn func(_: Foo) {} // - type reference
+    """)
+
+    private fun doTestByText(@Language("Rust") code: String) = doTestByFileTree("//- main.rs\n$code")
+
+    private fun doTestByFileTree(@Language("Rust") code: String) {
+        val testProject = configureByFileTree(code)
 
         val (_, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
         val source = TargetElementUtil.getInstance().findTargetElement(
@@ -258,18 +294,31 @@ class RsFindUsagesTest : RsTestBase() {
             offset
         ) as? RsNamedElement ?: error("Element not found")
 
-        val actual = markersActual(source)
-        val expected = markersFrom(code)
-        assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
+        val actualByFile = markersActual(source)
+        for (filePath in testProject.files) {
+            val file = myFixture.findFileInTempDir(filePath)!!.toPsiFile(project)!!
+            val expected = markersFrom(file.text)
+            val actual = actualByFile[file] ?: emptyList()
+            assertEquals(
+                "Mismatch in file $filePath",
+                expected.joinToString(COMPARE_SEPARATOR),
+                actual.joinToString(COMPARE_SEPARATOR)
+            )
+        }
     }
 
-    private fun markersActual(source: RsNamedElement): List<Pair<Int, String>> =
+    private fun markersActual(source: RsNamedElement): Map<PsiFile, List<Pair<Int, String>>> =
         myFixture.findUsages(source)
-            .flatMap {
-                val element = it.element ?: return@flatMap emptyList()
-                listOf(Pair(element.line ?: -1, RsUsageTypeProvider.getUsageType(element).toString()))
-            }
-            .sortedBy { it.first }
+            .mapNotNull { it.element }
+            .groupBy(
+                { it.containingFile },
+                { element ->
+                    val line = element.line ?: -1
+                    val marker = RsUsageTypeProvider.getUsageType(element).toString()
+                    line to marker
+                }
+            )
+            .mapValues { (_, it) -> it.sortedBy { it.first } }
 
     private fun markersFrom(text: String) =
         text.split('\n')

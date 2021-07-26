@@ -75,6 +75,7 @@ interface FileTreeBuilder {
 
 class FileTree(val rootDirectory: Entry.Directory) {
     fun create(project: Project, directory: VirtualFile): TestProject {
+        val files: MutableList<String> = mutableListOf()
         val filesWithCaret: MutableList<String> = mutableListOf()
         val filesWithSelection: MutableList<String> = mutableListOf()
 
@@ -85,11 +86,13 @@ class FileTree(val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         val vFile = root.findChild(name) ?: root.createChildData(root, name)
                         VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
+                        val filePath = components.joinToString(separator = "/")
+                        files += filePath
                         if (hasCaretMarker(entry.text) || "//^" in entry.text || "#^" in entry.text) {
-                            filesWithCaret += components.joinToString(separator = "/")
+                            filesWithCaret += filePath
                         }
                         if (hasSelectionMarker(entry.text)) {
-                            filesWithSelection += components.joinToString(separator = "/")
+                            filesWithSelection += filePath
                         }
                         Unit
                     }
@@ -112,7 +115,7 @@ class FileTree(val rootDirectory: Entry.Directory) {
             fullyRefreshDirectory(directory)
         }
 
-        return TestProject(project, directory, filesWithCaret, filesWithSelection)
+        return TestProject(project, directory, files, filesWithCaret, filesWithSelection)
     }
 
     fun assertEquals(baseDir: VirtualFile) {
@@ -170,6 +173,7 @@ fun FileTree.createAndOpenFileWithCaretMarker(fixture: CodeInsightTestFixture): 
 class TestProject(
     private val project: Project,
     val root: VirtualFile,
+    val files: List<String>,
     private val filesWithCaret: List<String>,
     private val filesWithSelection: List<String>
 ) {
