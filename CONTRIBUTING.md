@@ -88,10 +88,6 @@ best choice.
 [`help-wanted`]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [`E-mentor`]: https://github.com/intellij-rust/intellij-rust/labels/E-mentor
 
-See [worklist](https://github.com/intellij-rust/intellij-rust/wiki/Worklist) to learn 
-who is doing what right now. This page is a wiki, so feel free to edit it and to write 
-about your plans.
-
 To familiarize yourself with the plugin source code, read
 the [architecture](ARCHITECTURE.md) document and look at some existing pull
 requests. Please do ask questions in our [Gitter]!
