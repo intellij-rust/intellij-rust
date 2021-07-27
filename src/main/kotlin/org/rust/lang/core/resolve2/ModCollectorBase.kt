@@ -208,6 +208,9 @@ class ModCollectorBase private constructor(
         val defLight = Macro2DefLight(
             name = def.name ?: return,
             visibility = VisibilityLight.from(def),
+            body = def.macroBody,
+            bodyHash = def.bodyHash,
+            hasRustcBuiltinMacro = MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP.getByStub(def, crate),
         )
         visitor.collectMacro2Def(defLight)
     }
@@ -501,11 +504,16 @@ data class MacroDefLight(
 data class Macro2DefLight(
     val name: String,
     val visibility: VisibilityLight,
+    val body: String,
+    val bodyHash: HashCode,
+    val hasRustcBuiltinMacro: Boolean,
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {
         IOUtil.writeUTF(data, name)
         visibility.writeTo(data)
+        data.writeHashCode(bodyHash)
+        data.writeBoolean(hasRustcBuiltinMacro)
     }
 }
 

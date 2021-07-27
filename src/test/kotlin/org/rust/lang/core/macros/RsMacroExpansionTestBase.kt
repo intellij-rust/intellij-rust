@@ -16,10 +16,10 @@ import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.macros.errors.DeclMacroExpansionError
 import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.stdext.RsResult
 import org.rust.stdext.unwrapOrElse
 import kotlin.math.min
@@ -81,7 +81,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         mark.checkHit {
             val call = findElementInEditor<RsMacroCall>("^")
             val def = call.resolveToMacro() ?: error("Failed to resolve macro ${call.path.text}")
-            check(expandMacroAsTextWithErr(call, def).isErr)
+            check(expandMacroAsTextWithErr(call, RsDeclMacroData(def)).isErr)
         }
     }
 
@@ -112,7 +112,9 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
 
     private fun expandMacroOrFail(call: RsPossibleMacroCall): MacroExpansion {
         require(call is RsMacroCall)
-        val def = call.resolveToMacro() ?: error("Failed to resolve macro `${call.path.text}`")
+        call.resolveToMacroWithoutPsi()
+        val def = call.resolveToMacroWithoutPsi().ok()?.data as? RsDeclMacroData
+            ?: error("Failed to resolve macro `${call.path.text}`")
         return expandMacroAsTextWithErr(call, def).unwrapOrElse { err ->
             val description = err.formatError(call)
             error("Failed to expand macro `${call.path.text}`: $description")
@@ -121,10 +123,10 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
 
     private fun expandMacroAsTextWithErr(
         call: RsMacroCall,
-        def: RsMacro
+        def: RsDeclMacroData
     ): RsResult<MacroExpansion, MacroExpansionAndParsingError<DeclMacroExpansionError>> {
         val expander = DeclMacroExpander(project)
-        return expander.expandMacro(RsDeclMacroData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
+        return expander.expandMacro(def, call, RsPsiFactory(project, markGenerated = false), true).map {
             it.elements.forEach { el ->
                 el.setContext(call.context as RsElement)
                 el.setExpandedFrom(call)

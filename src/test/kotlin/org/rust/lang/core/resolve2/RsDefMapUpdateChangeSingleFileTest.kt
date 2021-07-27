@@ -345,6 +345,43 @@ class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
         macro foo() {}
     """)
 
+    fun `test add rustc_builtin_macro attr to macro 2 def`() = doTestChanged("""
+        macro foo() {}
+    """, """
+        #[rustc_builtin_macro]
+        macro foo() {}
+    """)
+
+    fun `test change macro 2 def content 1`() = doTestChanged("""
+        macro foo {
+            () => {}
+        }
+    """, """
+        macro foo {
+            () => { fn func() {} }
+        }
+    """)
+
+    fun `test change macro 2 def content 2`() = doTestChanged("""
+        macro foo() {
+
+        }
+    """, """
+        macro foo() {
+            fn func() {}
+        }
+    """)
+
+    fun `test change macro 2 def content 3`() = doTestChanged("""
+        macro foo() {
+
+        }
+    """, """
+        macro foo($ i:ident) {
+
+        }
+    """)
+
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test add file level cfg attribute`() = doTestChanged("""
     """, """

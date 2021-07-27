@@ -149,6 +149,10 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         macro_rules! foo { () => { /*caret*/ } }
     """)
 
+    fun `test macro2`() = doTest(INC, """
+        macro foo { () => { /*caret*/ } }
+    """)
+
     fun `test macro call (old engine)`() = checkModCount(INC, """
         foo! { /*caret*/ }
     """, "a")

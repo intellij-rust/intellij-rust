@@ -48,6 +48,32 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
     }
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+
+    override val macroBodyStubbed: RsMacroBody?
+        get() {
+            val stub = stub ?: return macroBody
+            val text = stub.macroBody ?: return null
+            return CachedValuesManager.getCachedValue(this) {
+                CachedValueProvider.Result.create(
+                    RsPsiFactory(project, markGenerated = false).createMacroBody(text),
+                    modificationTracker
+                )
+            }
+        }
+
+    override val bodyHash: HashCode?
+        get() {
+            val stub = greenStub
+            if (stub !== null) return stub.bodyHash
+            return CachedValuesManager.getCachedValue(this, MACRO_BODY_HASH_KEY) {
+                val body = macroBody?.text
+                val hash = body?.let { HashCode.compute(it) }
+                CachedValueProvider.Result.create(hash, modificationTracker)
+            }
+        }
+
+    override val hasRustcBuiltinMacro: Boolean
+        get() = HAS_RUSTC_BUILTIN_MACRO_PROP.getByPsi(this)
 }
 
 /** "macro_rules" identifier of `macro_rules! foo {}`; guaranteed to be non-null by the grammar */
@@ -77,9 +103,6 @@ val RsMacro.hasMacroExportLocalInnerMacros: Boolean
 val QueryAttributes<*>.hasMacroExportLocalInnerMacros: Boolean
     get() = hasAttributeWithArg("macro_export", "local_inner_macros")
 
-val RsMacro.hasRustcBuiltinMacro: Boolean
-    get() = HAS_RUSTC_BUILTIN_MACRO_PROP.getByPsi(this)
-
 val QueryAttributes<*>.hasRustcBuiltinMacro: Boolean
     get() = hasAttribute("rustc_builtin_macro")
 
@@ -88,18 +111,6 @@ val RsMacro.isRustcDocOnlyMacro: Boolean
 
 val QueryAttributes<*>.isRustcDocOnlyMacro: Boolean
     get() = hasAttribute("rustc_doc_only_macro")
-
-val RsMacro.macroBodyStubbed: RsMacroBody?
-    get() {
-        val stub = stub ?: return macroBody
-        val text = stub.macroBody ?: return null
-        return CachedValuesManager.getCachedValue(this) {
-            CachedValueProvider.Result.create(
-                RsPsiFactory(project, markGenerated = false).createMacroBody(text),
-                modificationTracker
-            )
-        }
-    }
 
 val RsMacro.preferredBraces: MacroBraces
     get() = stub?.preferredBraces ?: guessPreferredBraces()
@@ -125,17 +136,6 @@ private fun RsMacro.guessPreferredBraces(): MacroBraces {
 }
 
 private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")
-
-val RsMacro.bodyHash: HashCode?
-    get() {
-        val stub = greenStub
-        if (stub !== null) return stub.bodyHash
-        return CachedValuesManager.getCachedValue(this, MACRO_BODY_HASH_KEY) {
-            val body = macroBody?.text
-            val hash = body?.let { HashCode.compute(it) }
-            CachedValueProvider.Result.create(hash, modificationTracker)
-        }
-    }
 
 private val MACRO_GRAPH_KEY: Key<CachedValue<MacroGraph?>> = Key.create("MACRO_GRAPH_KEY")
 

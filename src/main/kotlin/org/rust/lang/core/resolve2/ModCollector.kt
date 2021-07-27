@@ -340,7 +340,11 @@ private class ModCollector(
         // save macro body for later use
         modData.macros2[def.name] = DeclMacro2DefInfo(
             crate = modData.crate,
-            path = modData.path.append(def.name)
+            path = modData.path.append(def.name),
+            def.body,
+            def.bodyHash,
+            def.hasRustcBuiltinMacro,
+            project
         )
 
         // add macro to scope

@@ -30,6 +30,7 @@ import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsPsiManager.Companion.isIgnorePsiEvents
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 import org.rust.lang.core.psi.ext.isTopLevelExpansion
 
@@ -193,7 +194,7 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
         // Whitespace/comment changes are meaningful for macros only
         // (b/c they affect range mappings and body hashes)
         if (isWhitespaceOrComment) {
-            if (owner !is RsMacroCall && owner !is RsMacro && !RsProcMacroPsiUtil.canBeInProcMacroCallBody(psi)) return
+            if (owner !is RsMacroCall && owner !is RsMacroDefinitionBase && !RsProcMacroPsiUtil.canBeInProcMacroCallBody(psi)) return
         }
 
         val isStructureModification = owner == null || !owner.incModificationCount(psi)

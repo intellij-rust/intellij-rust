@@ -30,6 +30,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.stubs.common.RsMetaItemArgsPsiOrStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.lang.core.stubs.common.RsPathPsiOrStub
@@ -65,7 +67,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 215
+        private const val STUB_VERSION = 216
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1534,9 +1536,14 @@ class RsMacroStub(
 class RsMacro2Stub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
+    val macroBody: String,
+    val bodyHash: HashCode,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsMacro2>(parent, elementType),
     RsNamedStub {
+
+    val mayHaveRustcBuiltinMacro: Boolean
+        get() = BitUtil.isSet(flags, HAS_RUSTC_BUILTIN_MACRO)
 
     object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -1544,22 +1551,35 @@ class RsMacro2Stub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
+                dataStream.readUTFFast(),
+                dataStream.readHashCode(),
                 dataStream.readUnsignedByte()
             )
 
         override fun serialize(stub: RsMacro2Stub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
+                writeUTFFast(stub.macroBody)
+                writeHashCode(stub.bodyHash)
                 writeByte(stub.flags)
             }
 
         override fun createPsi(stub: RsMacro2Stub): RsMacro2 =
             RsMacro2Impl(stub, this)
 
-        override fun createStub(psi: RsMacro2, parentStub: StubElement<*>?) =
-            RsMacro2Stub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsMacro2, parentStub: StubElement<*>?): RsMacro2Stub {
+            var flags = RsAttributeOwnerStub.extractFlags(psi)
+            flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
+            val body = psi.prepareMacroBody()
+            val bodyHash = HashCode.compute(body)
+            return RsMacro2Stub(parentStub, this, psi.name, body, bodyHash, flags)
+        }
 
         override fun indexStub(stub: RsMacro2Stub, sink: IndexSink) = sink.indexMacroDef(stub)
+    }
+
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val HAS_RUSTC_BUILTIN_MACRO: Int = nextBitMask()
     }
 }
 
