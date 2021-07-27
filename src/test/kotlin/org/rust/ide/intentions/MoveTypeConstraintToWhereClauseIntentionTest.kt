@@ -16,6 +16,11 @@ class MoveTypeConstraintToWhereClauseIntentionTest : RsIntentionTestBase(MoveTyp
         """ fn foo<'a, 'b, T, F>(t: &'a T, f: &'b F) where 'b: 'a, T: Send, F: Sync/*caret*/ { } """
     )
 
+    fun `test const generics and traits`() = doAvailableTest(
+        """ fn foo<const N: usize, T: Send,/*caret*/ F: Sync, const M: usize>(t: T, f: F) { } """,
+        """ fn foo<const N: usize, T, F, const M: usize>(t: T, f: F) where T: Send, F: Sync/*caret*/ { } """
+    )
+
     fun `test multiple bounds`() = doAvailableTest(
         """ fn foo<T: /*caret*/Send + Sync>(t: T, f: F) { } """,
         """ fn foo<T>(t: T, f: F) where T: Send + Sync/*caret*/ { } """

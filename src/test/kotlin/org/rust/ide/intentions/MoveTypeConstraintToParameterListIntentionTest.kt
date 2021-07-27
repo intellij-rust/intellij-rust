@@ -12,6 +12,11 @@ class MoveTypeConstraintToParameterListIntentionTest : RsIntentionTestBase(MoveT
         """ fn foo<'a, 'b: 'a, 'c: 'a, T: Clone, U: Copy>/*caret*/() {} """
     )
 
+    fun `test const generics and traits`() = doAvailableTest(
+        """ fn foo<const N: usize, T, U, const M: usize>() /*caret*/where T: Clone, U: Copy {} """,
+        """ fn foo<const N: usize, T: Clone, U: Copy, const M: usize>/*caret*/() {} """
+    )
+
     fun `test multiple bounds`() = doAvailableTest(
         """ fn foo<'a, 'b, 'c, 'd, T, U>() where /*caret*/'c: 'a + 'b, 'd: 'a + 'b, T: Clone + Copy, U: Copy + Debug {} """,
         """ fn foo<'a, 'b, 'c: 'a + 'b, 'd: 'a + 'b, T: Clone + Copy, U: Copy + Debug>/*caret*/() {} """
