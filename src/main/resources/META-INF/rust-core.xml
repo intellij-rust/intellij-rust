@@ -138,6 +138,7 @@
 
         <!-- Copy paste processors -->
         <copyPastePostProcessor implementation="org.rust.ide.typing.paste.RsConvertJsonToStructCopyPasteProcessor"/>
+        <copyPastePostProcessor implementation="org.rust.ide.typing.paste.RsImportCopyPasteProcessor"/>
 
         <!-- Imports -->
 

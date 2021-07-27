@@ -223,7 +223,9 @@ class TestProject(
             else -> error("More than one file with carets found: $filesWithCaret")
         }
 
-    val fileWithCaretOrSelection: String get() = filesWithCaret.singleOrNull() ?: filesWithSelection.single()
+    val fileWithCaretOrSelection: String get() = filesWithCaret.singleOrNull() ?: fileWithSelection
+
+    val fileWithSelection: String get() = filesWithSelection.single()
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
         return doFindElementInFile(path, T::class.java)
