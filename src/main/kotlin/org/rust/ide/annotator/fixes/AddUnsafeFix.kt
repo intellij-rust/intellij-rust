@@ -13,10 +13,19 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 
 class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-    private val _text = "Add unsafe to ${if (element is RsBlockExpr) "block" else "function"}"
+    private val _text = run {
+        val item = when (element) {
+            is RsBlockExpr -> "block"
+            is RsImplItem -> "impl"
+            else -> "function"
+        }
+        "Add unsafe to $item"
+    }
+
     override fun getFamilyName() = text
     override fun getText() = _text
 
@@ -26,14 +35,19 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
         when (element) {
             is RsBlockExpr -> element.addBefore(unsafe, element.block)
             is RsFunction -> element.addBefore(unsafe, element.fn)
+            is RsImplItem -> element.addBefore(unsafe, element.impl)
             else -> error("unreachable")
         }
     }
 
     companion object {
         fun create(element: PsiElement): AddUnsafeFix? {
-            val parent = PsiTreeUtil.getParentOfType(element, RsBlockExpr::class.java, RsFunction::class.java)
-                ?: return null
+            val parent = PsiTreeUtil.getParentOfType(
+                element,
+                RsBlockExpr::class.java,
+                RsFunction::class.java,
+                RsImplItem::class.java
+            ) ?: return null
             return AddUnsafeFix(parent)
         }
     }

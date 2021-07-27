@@ -404,7 +404,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0200,
-            errorText()
+            errorText(),
+            fixes = listOfNotNull(AddUnsafeFix.create(element))
         )
 
         private fun errorText(): String {

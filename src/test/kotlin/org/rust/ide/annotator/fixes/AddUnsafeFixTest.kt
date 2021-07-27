@@ -5,10 +5,14 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.RsAnnotatorTestBase
-import org.rust.ide.annotator.RsUnsafeExpressionAnnotator
+import org.rust.ide.annotator.*
 
-class AddUnsafeFixTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
+class AddUnsafeFixTest : RsAnnotationTestBase() {
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> {
+        val annotatorClasses = listOf(RsUnsafeExpressionAnnotator::class, RsErrorAnnotator::class)
+        return RsAnnotationTestFixture(this, myFixture, annotatorClasses = annotatorClasses)
+    }
+
     fun `test add unsafe to function`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
@@ -251,5 +255,15 @@ class AddUnsafeFixTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class)
         fn test() {
             unsafe { *foo() = 5; }
         }
+    """)
+
+    fun `test add unsafe to impl`() = checkFixByText("Add unsafe to impl", """
+        unsafe trait Trait {}
+
+        impl <error>Trait/*caret*/</error> for () {}
+    """, """
+        unsafe trait Trait {}
+
+        unsafe impl Trait/*caret*/ for () {}
     """)
 }
