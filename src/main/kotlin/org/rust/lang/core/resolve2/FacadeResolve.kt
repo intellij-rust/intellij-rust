@@ -135,6 +135,25 @@ private fun ModData.processMacros(
     project: Project,
 ): Boolean {
     val isQualified = macroPath == null || macroPath is RsPath && macroPath.qualifier != null
+
+    for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
+        for (visItem in perNs.macros) {
+            val isLegacyMacroDeclaredInSameMod = !isQualified && legacyMacros[name].orEmpty().any {
+                (!isAttrOrDerive || it is ProcMacroDefInfo) && it.path.parent == path
+            }
+            if (isLegacyMacroDeclaredInSameMod) {
+                // Resolve order for unqualified macros:
+                // - textual macros in same mod
+                // - scoped macros (imported by `use`)
+                // - textual macros
+                continue
+            }
+            val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
+            val visibilityFilter = visItem.visibility.createFilter(project)
+            if (processor(name, macro, visibilityFilter)) return true
+        }
+    }
+
     if (!isQualified) {
         check(macroPath != null)
         val macroIndex = getMacroIndex(macroPath, defMap)
@@ -145,22 +164,10 @@ private fun ModData.processMacros(
                 macroInfos.lastOrNull { it is ProcMacroDefInfo }
             } ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
-            if (visibleItems[name]?.macros?.any { it.path == visItem.path } == true) {
-                // macros will be handled in [visibleItems] loop
-                continue
-            }
             val macroContainingMod = visItem.containingMod.toRsMod(defMap, project).singleOrNull() ?: continue
             val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap) ?: continue
             if (processor(name, macro)) return true
-        }
-    }
-
-    for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
-        for (visItem in perNs.macros) {
-            val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
-            val visibilityFilter = visItem.visibility.createFilter(project)
-            if (processor(name, macro, visibilityFilter)) return true
         }
     }
 

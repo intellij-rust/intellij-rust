@@ -411,6 +411,38 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import wins extern crate import`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate dep_lib_target;
+        use test_package::foo;
+        fn main() {
+            foo!();
+        } //^ lib.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {}; }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {}; }
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test import wins macro from prelude`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::assert_eq;
+        fn main() {
+            assert_eq!();
+        } //^ lib.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! assert_eq { () => {}; }
+    """)
+
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro from import inside function wins over macro from crate root`() = stubOnlyResolve("""
     //- lib.rs
