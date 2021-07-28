@@ -271,6 +271,66 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         struct S;
     """)
 
+    @UseNewResolve
+    fun `test resolve custom derive by qualified path with re-export 1`() = stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro_derive(ProcMacroName)]
+            pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+        //- lib.rs
+            pub use dep_proc_macro::ProcMacroName as ProcMacroNameRenamed;
+        //- main.rs
+            #[derive(test_package::ProcMacroNameRenamed)]
+                                  //^ dep-proc-macro/lib.rs
+            struct S;
+    """)
+
+    @UseNewResolve
+    fun `test resolve custom derive by qualified path with re-export 2`() = stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro_derive(ProcMacroName)]
+            pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+        //- lib.rs
+            pub mod foo {
+                pub use dep_proc_macro::ProcMacroName as ProcMacroNameRenamed;
+            }
+        //- main.rs
+            #[derive(test_package::foo::ProcMacroNameRenamed)]
+                                       //^ dep-proc-macro/lib.rs
+            struct S;
+    """)
+
+    @UseNewResolve
+    fun `test resolve attribute macro by qualified path with re-export 1`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro_attribute]
+            pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        //- lib.rs
+            pub use dep_proc_macro::example_proc_macro as example_proc_macro_renamed;
+        //- main.rs
+            #[test_package::example_proc_macro_renamed]
+                          //^ dep-proc-macro/lib.rs
+            struct S;
+    """)
+    }
+
+    @UseNewResolve
+    fun `test resolve attribute macro by qualified path with re-export 2`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro_attribute]
+            pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        //- lib.rs
+            pub mod foo {
+                pub use dep_proc_macro::example_proc_macro as example_proc_macro_renamed;
+            }
+        //- main.rs
+            #[test_package::foo::example_proc_macro_renamed]
+                               //^ dep-proc-macro/lib.rs
+            struct S;
+    """)
+    }
+
     fun `test resolve bang proc macro from macro call through macro_use`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro]
