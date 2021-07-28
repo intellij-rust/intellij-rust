@@ -41,5 +41,11 @@
                          displayName="Unresolved reference"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
+
+        <localInspection language="TOML"
+                         groupName="TOML"
+                         displayName="Property redefinition"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.toml.ide.inspections.TomlPropertyRedefinitionInspection"/>
     </extensions>
 </idea-plugin>
