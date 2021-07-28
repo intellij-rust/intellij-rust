@@ -8,32 +8,37 @@ package org.toml.ide.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parentOfType
 import org.toml.lang.psi.*
 
 class TomlPropertyRedefinitionInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val elements = hashSetOf<List<String>>()
+        val elements = mutableListOf<List<String>>()
 
         return object : TomlVisitor() {
             override fun visitElement(element: TomlElement) {
                 if (element !is TomlKey) return
 
                 val path = element.path
-                if (path in elements) {
+                // Check if `elements` already have a path starting with current `path`
+                if (elements.find { it.size >= path.size && it.zip(path).all { it.first == it.second } } != null) {
                     holder.registerProblem(element, "Property redefinition is not allowed")
                 } else {
-                    elements.add(path)
+                    // There is no need to remember array table paths, as they naturally can be defined multiple times
+                    if (element.parentOfType<TomlArrayTable>() == null) {
+                        elements.add(path)
+                    }
                 }
             }
         }
     }
 }
 
-val TomlElement.path: List<String>
+private val TomlElement.path: List<String>
     get() {
         var current = when (this) {
             is TomlKeyValue -> this.key.segments.map { it.text }
-            is TomlTable -> this.header.key?.segments?.map { it.text }
+            is TomlHeaderOwner -> this.header.key?.segments?.map { it.text }
             else -> null
         } ?: emptyList()
 
