@@ -89,7 +89,7 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         use std::/*caret*/;
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module unix`() {
         if (!SystemInfo.isUnix) return
@@ -100,7 +100,7 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         """)
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module windows`() {
         if (!SystemInfo.isWindows) return

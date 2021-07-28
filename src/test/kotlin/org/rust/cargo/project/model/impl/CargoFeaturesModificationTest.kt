@@ -6,7 +6,8 @@
 package org.rust.cargo.project.model.impl
 
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.MockCargoFeatures
+import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
@@ -18,7 +19,8 @@ import org.rust.workspaceOrFail
  * Mostly tests [org.rust.cargo.project.model.impl.CargoProjectsServiceImpl.modifyFeatures] and
  * [org.rust.cargo.project.workspace.WorkspaceImpl.inferFeatureState]
  */
-class CargoFeaturesModificationTest : RsWithToolchainTestBase() {
+class CargoFeaturesModificationTest : RsTestBase() {
+    @MockCargoFeatures("foo", "bar")
     fun `test independent features`() = doTest("""
         foo = [] # [x]
         bar = [] # [x]
@@ -36,6 +38,7 @@ class CargoFeaturesModificationTest : RsWithToolchainTestBase() {
         bar = [] # [x]
     """))
 
+    @MockCargoFeatures("foo=[dep]", "dep")
     fun `test 2 dependent features`() = doTest("""
         foo = ["dep"] # [x]
         dep = []      # [x]
@@ -56,6 +59,7 @@ class CargoFeaturesModificationTest : RsWithToolchainTestBase() {
         dep = []      # [x]
     """))
 
+    @MockCargoFeatures("foo=[dep]", "bar=[dep]", "dep")
     fun `test 3 dependent features`() = doTest("""
         foo = ["dep"] # [x]
         bar = ["dep"] # [x]
@@ -91,21 +95,6 @@ class CargoFeaturesModificationTest : RsWithToolchainTestBase() {
     """))
 
     private fun doTest(@Language("TOML") toml: String, vararg checkingSteps: CheckingStep) {
-        buildProject {
-            toml("Cargo.toml", """
-                [package]
-                name = "intellij-rust-test"
-                version = "0.1.0"
-                authors = []
-
-                [features]
-                $toml
-            """)
-            dir("src") {
-                rust("lib.rs", "")
-            }
-        }
-
         val tomlTrimmed = toml.trimIndent()
         val baseFeatures = tomlTrimmed.lines().map {
             val line = it.removeAfter("#")

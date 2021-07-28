@@ -103,10 +103,10 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     }
 
     private fun findIntention(): IntentionAction? {
-        return myFixture.availableIntentions.firstOrNull {
+        return IntentionManager.getInstance().intentionActions.firstOrNull {
             val originalIntention = IntentionActionDelegate.unwrap(it)
             intentionClass == originalIntention::class
-        }
+        }?.takeIf { it.isAvailable(project, myFixture.editor, myFixture.file) }
     }
 
     protected fun checkAvailableInSelectionOnly(@Language("Rust") code: String, fileName: String = "main.rs") {

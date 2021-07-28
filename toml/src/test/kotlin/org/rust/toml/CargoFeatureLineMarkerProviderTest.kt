@@ -9,25 +9,19 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.MockCargoFeatures
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.lineMarkers.LineMarkerTestHelper
+import org.rust.fileTree
+import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 import org.rust.ide.lineMarkers.invokeNavigationHandler
 import org.rust.singleProject
 import org.rust.workspaceOrFail
 
-class CargoFeatureLineMarkerProviderTest : RsWithToolchainTestBase() {
-
-    private lateinit var lineMarkerTestHelper: LineMarkerTestHelper
-
-    override fun setUp() {
-        super.setUp()
-        lineMarkerTestHelper = LineMarkerTestHelper(myFixture)
-    }
-
+class CargoFeatureLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
+    @MockCargoFeatures("foo", "bar", "foobar")
     fun `test simple features`() = doTest("foo", """
         [package]
         name = "intellij-rust-test"
@@ -40,6 +34,7 @@ class CargoFeatureLineMarkerProviderTest : RsWithToolchainTestBase() {
         foobar = ["foo", "bar"]  # - Toggle feature `foobar`
     """)
 
+    @MockCargoFeatures("foo")
     fun `test optional dependency`() = doTest("foo", """
         [package]
         name = "intellij-rust-test"
@@ -51,6 +46,7 @@ class CargoFeatureLineMarkerProviderTest : RsWithToolchainTestBase() {
         optional = true
     """)
 
+    @MockCargoFeatures("foo")
     fun `test optional dependency inline table`() = doTest("foo", """
         [package]
         name = "intellij-rust-test"
@@ -62,7 +58,7 @@ class CargoFeatureLineMarkerProviderTest : RsWithToolchainTestBase() {
     """)
 
     private fun doTest(featureName: FeatureName, @Language("Toml") source: String) {
-        val testProject = buildProject {
+        val fileTree = fileTree {
             toml("Cargo.toml", source)
             dir("src") {
                 rust("lib.rs", "")
@@ -80,11 +76,11 @@ class CargoFeatureLineMarkerProviderTest : RsWithToolchainTestBase() {
             }
         }
 
-        lineMarkerTestHelper.doTestFromFile(testProject.file("Cargo.toml"))
+        doTestFromFile("Cargo.toml", fileTree)
 
         val beforeState = featureState(featureName)
         @Suppress("UNCHECKED_CAST")
-        val markerInfo = DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
+        val markerInfo = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
             .first { "Toggle feature `$featureName`" in it.lineMarkerTooltip.orEmpty() } as LineMarkerInfo<PsiElement>
         markerInfo.invokeNavigationHandler(markerInfo.element)
         val afterState = featureState(featureName)

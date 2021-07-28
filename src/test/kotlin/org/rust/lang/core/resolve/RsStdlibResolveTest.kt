@@ -712,7 +712,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                         //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module unix`() {
         if (!SystemInfo.isUnix) return
@@ -723,7 +723,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module windows`() {
         if (!SystemInfo.isWindows) return

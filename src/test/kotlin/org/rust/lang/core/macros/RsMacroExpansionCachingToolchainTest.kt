@@ -6,7 +6,6 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
@@ -117,11 +116,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
     private fun attachCargoProjectAndExpandMacros(p: TestProject) {
         macroExpansionServiceDisposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.WORKSPACE, "mocked")
         check(project.cargoProjects.attachCargoProject(p.file("Cargo.toml").pathAsPath))
-        val future = project.cargoProjects.refreshAllProjects()
-        while (!future.isDone) {
-            Thread.sleep(10)
-            LaterInvocator.dispatchPendingFlushes()
-        }
     }
 
     fun `test re-open project without changes`() = stubBasedRefMatch.checkReExpanded(doNothing(), """
