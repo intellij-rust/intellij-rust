@@ -49,7 +49,9 @@ class RsMoveTopLevelItemsHandler : MoveHandlerDelegate() {
         elements: Array<out PsiElement>,
         targetContainer: PsiElement?,
         moveCallback: MoveCallback?
-    ) = doMove(project, elements.toList(), null)
+    ) {
+        doMove(project, elements.toList(), null)
+    }
 
     // Invoked in editor context
     override fun tryToMove(
@@ -61,21 +63,20 @@ class RsMoveTopLevelItemsHandler : MoveHandlerDelegate() {
     ): Boolean {
         val hasSelection = editor?.selectionModel?.hasSelection() ?: false
         if (hasSelection || element !is PsiFile) {
-            doMove(project, listOf(element), editor)
-            return true
+            return doMove(project, listOf(element), editor)
         }
         return false
     }
 
-    private fun doMove(project: Project, elements: List<PsiElement>, editor: Editor?) {
+    private fun doMove(project: Project, elements: List<PsiElement>, editor: Editor?): Boolean {
         val (itemsToMove, containingMod) = editor?.let { collectInitialItems(project, editor) }
             ?: run {
-                val containingMod = findCommonAncestorStrictOfType<RsMod>(elements) ?: return
+                val containingMod = findCommonAncestorStrictOfType<RsMod>(elements) ?: return false
                 val items = elements.filterIsInstance<RsItemElement>().toSet()
                 items to containingMod
             }
 
-        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, itemsToMove, true)) return
+        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, itemsToMove, true)) return false
 
         val relatedImplItems = collectRelatedImplItems(containingMod, itemsToMove)
         val itemsToMoveAll = itemsToMove + relatedImplItems
@@ -85,6 +86,7 @@ class RsMoveTopLevelItemsHandler : MoveHandlerDelegate() {
         } else {
             dialog.show()
         }
+        return true
     }
 
     private fun collectInitialItems(project: Project, editor: Editor): Pair<Set<RsItemElement>, RsMod>? {
