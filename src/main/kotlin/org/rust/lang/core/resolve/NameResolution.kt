@@ -879,7 +879,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
         }
     } else {
         val call = path.parent
-        if (path.project.isNewResolveEnabled && call is RsMacroCall) {
+        if (path.project.isNewResolveEnabled && call is RsPossibleMacroCall && call.canBeMacroCall) {
             if (isCompletion) {
                 /** Note: here we don't have to handle [MACRO_DOLLAR_CRATE_IDENTIFIER] */
                 processQualifiedPathResolveVariants(null, isCompletion, MACROS, qualifier, path, call, processor)

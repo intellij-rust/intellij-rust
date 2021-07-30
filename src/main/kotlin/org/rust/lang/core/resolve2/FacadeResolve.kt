@@ -180,7 +180,7 @@ private fun filterMacrosByIndex(macroInfos: List<MacroDefInfo>, macroIndex: Macr
         else -> macroInfos.last()  // this is kind of error, can choose anything here
     }
 
-fun <T> RsMacroCall.resolveToMacroUsingNewResolveAndThen(
+fun <T> RsPossibleMacroCall.resolveToMacroUsingNewResolveAndThen(
     withNewResolve: (RsNamedElement?) -> T,
     withoutNewResolve: () -> T
 ): T? =
@@ -240,10 +240,11 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
  * If new resolve can be used, computes result using [withNewResolve].
  * Otherwise fallbacks to [withoutNewResolve].
  */
-private fun <T> RsMacroCall.resolveToMacroAndThen(
+private fun <T> RsPossibleMacroCall.resolveToMacroAndThen(
     withoutNewResolve: () -> T?,
     withNewResolve: (MacroDefInfo, RsModInfo) -> T?
 ): T? {
+    val path = path ?: return null
     val info = when {
         !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
         isTopLevelExpansion || path.qualifier != null -> getModInfo(containingMod)
@@ -253,7 +254,10 @@ private fun <T> RsMacroCall.resolveToMacroAndThen(
         is CantUseNewResolve -> withoutNewResolve()
         InfoNotFound -> null
         is RsModInfo -> {
-            val def = resolveToMacroDefInfo(info) ?: return null
+            val def = when (val kind = kind) {
+                is RsPossibleMacroCallKind.MacroCall -> kind.call.resolveToMacroDefInfo(info)
+                is RsPossibleMacroCallKind.MetaItem -> kind.meta.resolveToProcMacroWithoutPsi()
+            } ?: return null
             withNewResolve(def, info)
         }
     }
