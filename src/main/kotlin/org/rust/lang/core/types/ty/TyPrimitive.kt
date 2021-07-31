@@ -17,7 +17,7 @@ import org.rust.lang.core.types.infer.TypeFolder
  * Definition intentionally differs from the reference: we don't treat
  * tuples or arrays as primitive.
  */
-abstract class TyPrimitive : Ty() {
+sealed class TyPrimitive : Ty() {
     abstract val name: String
 
     override fun superFoldWith(folder: TypeFolder): Ty {
@@ -97,7 +97,7 @@ class TyStr(override val aliasedBy: BoundElement<RsTypeAlias>? = null) : TyPrimi
     }
 }
 
-abstract class TyNumeric : TyPrimitive()
+sealed class TyNumeric : TyPrimitive()
 
 sealed class TyInteger : TyNumeric() {
     abstract val ordinal: Int
