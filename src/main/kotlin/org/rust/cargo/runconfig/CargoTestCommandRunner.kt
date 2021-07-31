@@ -31,7 +31,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultRunExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) return false
         val cleaned = profile.clean().ok ?: return false
-        return !profile.project.isBuildToolWindowEnabled &&
+        return !profile.isBuildToolWindowEnabled &&
             cleaned.cmd.command == "test" &&
             getBuildConfiguration(profile) != null
     }

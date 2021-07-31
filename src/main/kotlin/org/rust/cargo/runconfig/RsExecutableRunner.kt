@@ -37,7 +37,7 @@ abstract class RsExecutableRunner(
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return profile.project.isBuildToolWindowEnabled &&
+        return profile.isBuildToolWindowEnabled &&
             !isBuildConfiguration(profile) &&
             getBuildConfiguration(profile) != null
     }

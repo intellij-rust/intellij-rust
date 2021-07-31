@@ -21,7 +21,7 @@ open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultRunExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) return false
         val cleaned = profile.clean().ok ?: return false
-        return profile.project.isBuildToolWindowEnabled ||
+        return profile.isBuildToolWindowEnabled ||
             cleaned.cmd.command != "test" ||
             getBuildConfiguration(profile) == null
     }
@@ -29,7 +29,7 @@ open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
         val configuration = environment.runProfile
         return if (configuration is CargoCommandConfiguration &&
-            !(isBuildConfiguration(configuration) && configuration.project.isBuildToolWindowEnabled)) {
+            !(isBuildConfiguration(configuration) && configuration.isBuildToolWindowEnabled)) {
             super.doExecute(state, environment)
         } else {
             null

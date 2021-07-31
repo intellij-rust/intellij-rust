@@ -41,8 +41,10 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.ide.experiments.RsExperiments
@@ -58,6 +60,15 @@ object CargoBuildManager {
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
     private val MIN_RUSTC_VERSION: SemVer = SemVer.parseFromText("1.48.0")!!
+
+    val RsCommandConfiguration.isBuildToolWindowEnabled: Boolean
+        get() {
+            if (!project.isBuildToolWindowEnabled) return false
+            return beforeRunTasks.any { task ->
+                task is CargoBuildTaskProvider.BuildTask ||
+                    task is WasmPackBuildTaskProvider.BuildTask
+            }
+        }
 
     val Project.isBuildToolWindowEnabled: Boolean
         get() {
@@ -89,13 +100,15 @@ object CargoBuildManager {
             lastBuildCommandLine = state.prepareCommandLine()
         }
 
-        return execute(CargoBuildContext(
-            cargoProject = cargoProject,
-            environment = environment,
-            taskName = "Build",
-            progressTitle = "Building...",
-            isTestBuild = state.commandLine.command == "test"
-        )) {
+        return execute(
+            CargoBuildContext(
+                cargoProject = cargoProject,
+                environment = environment,
+                taskName = "Build",
+                progressTitle = "Building...",
+                isTestBuild = state.commandLine.command == "test"
+            )
+        ) {
             val buildProgressListener = ServiceManager.getService(project, BuildViewManager::class.java)
             if (!isHeadlessEnvironment) {
                 @Suppress("UsePropertyAccessSyntax")

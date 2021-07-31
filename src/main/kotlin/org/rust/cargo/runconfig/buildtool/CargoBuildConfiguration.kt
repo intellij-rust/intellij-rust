@@ -17,7 +17,7 @@ open class CargoBuildConfiguration(
     val configuration: CargoCommandConfiguration,
     val environment: ExecutionEnvironment
 ) : ProjectModelBuildableElement {
-    open val enabled: Boolean get() = configuration.project.isBuildToolWindowEnabled
+    open val enabled: Boolean get() = configuration.isBuildToolWindowEnabled
 
     init {
         require(isBuildConfiguration(configuration))
