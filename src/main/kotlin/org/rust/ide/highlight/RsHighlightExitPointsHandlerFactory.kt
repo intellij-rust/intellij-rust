@@ -23,9 +23,16 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
 
         val createHandler: (PsiElement) -> RsHighlightExitPointsHandler? = { element ->
             val elementType = element.elementType
-            if (elementType == RETURN || (elementType == Q && element.parent is RsTryExpr) || elementType == BREAK) {
+            val shouldHighlightExitPoints = elementType == RETURN
+                || elementType == Q && element.parent is RsTryExpr
+                || elementType == BREAK
+                || elementType == FN && element.parent is RsFunction
+                || elementType == ARROW && element.parent.let { it is RsRetType && it.parent is RsFunctionOrLambda }
+            if (shouldHighlightExitPoints) {
                 RsHighlightExitPointsHandler(editor, file, element)
-            } else null
+            } else {
+                null
+            }
         }
         val prevToken = PsiTreeUtil.prevLeaf(target) ?: return null
         return createHandler(target) ?: createHandler(prevToken)
@@ -72,7 +79,7 @@ private class RsHighlightExitPointsHandler(
         }
 
         // highlight only if target inside exit point
-        if (usages.any { target.ancestors.contains(it) }) {
+        if (usages.any { target.ancestors.contains(it) } || target.elementType == FN || target.elementType == ARROW) {
             usages.forEach(this::addOccurrence)
         }
     }
