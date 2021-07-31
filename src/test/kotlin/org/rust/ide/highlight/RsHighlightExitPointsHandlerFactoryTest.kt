@@ -22,6 +22,54 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "return 0")
 
+    fun `test highlight all returns with caret at fn keyword`() = doTest("""
+        /*caret*/fn main() {
+            if true {
+                return 1;
+            }
+            return 0;
+        }
+    """, "return 1", "return 0")
+
+    fun `test no highlighting with caret at fn keyword in fn pointer type`() = doTest("""
+        fn main() {
+            let _: /*caret*/fn();
+            if true {
+                return 1;
+            }
+            return 0;
+        }
+    """, "fn")
+
+    fun `test highlight all returns with caret at returning type arrow`() = doTest("""
+        fn main() /*caret*/-> i32 {
+            if true {
+                return 1;
+            }
+            return 0;
+        }
+    """, "return 1", "return 0")
+
+    fun `test no highlighting with caret at arrow in a path`() = doTest("""
+        fn main() {
+            let _: Fn() /*caret*/-> i32;
+            if true {
+                return 1;
+            }
+            return 0;
+        }
+    """)
+
+    fun `test no highlighting with caret at arrow in an fn pointer`() = doTest("""
+        fn main() {
+            let _: fn() /*caret*/-> i32;
+            if true {
+                return 1;
+            }
+            return 0;
+        }
+    """)
+
     fun `test highlight try macro as return`() = doTest("""
         fn main() {
             if true {
@@ -154,6 +202,13 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     fun `test highlight should not highlight outer function`() = doTest("""
         fn main() {
             let one = || { /*caret*/return 1; };
+            return 2;
+        }
+    """, "return 1")
+
+    fun `test highlight should not highlight outer function with caret at lambda return type arrow`() = doTest("""
+        fn main() {
+            let one = || /*caret*/-> i32 { return 1; };
             return 2;
         }
     """, "return 1")

@@ -10,13 +10,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsLambdaExpr
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsRetExpr
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
@@ -66,7 +68,7 @@ class ChangeReturnTypeFix(
         endElement: PsiElement
     ) {
         val owner = findCallableOwner(startElement) ?: return
-        val oldRetType = owner.returnType
+        val oldRetType = owner.retType
 
         if (actualTy is TyUnit) {
             oldRetType?.delete()
@@ -86,15 +88,14 @@ class ChangeReturnTypeFix(
         if (oldRetType != null) {
             oldRetType.replace(retType)
         } else {
-            owner.addAfter(retType, owner.valueParameters)
+            owner.addAfter(retType, owner.valueParameterList)
         }
 
         importTypeReferencesFromTy(owner, actualTy, useAliases = true)
     }
 
     companion object {
-        private fun findCallableOwner(element: PsiElement): RsElement? =
-            PsiTreeUtil.getContextOfType(element, true, RsFunction::class.java, RsLambdaExpr::class.java)
+        private fun findCallableOwner(element: PsiElement): RsFunctionOrLambda? = element.contextStrict()
 
         fun createIfCompatible(element: RsElement, actualTy: Ty): ChangeReturnTypeFix? {
             if (element.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
@@ -120,18 +121,3 @@ class ChangeReturnTypeFix(
         }
     }
 }
-
-private val RsElement.valueParameters: RsValueParameterList?
-    get() = when (this) {
-        is RsFunction -> valueParameterList
-        is RsLambdaExpr -> valueParameterList
-        else -> null
-    }
-
-
-private val RsElement.returnType: RsRetType?
-    get() = when (this) {
-        is RsFunction -> retType
-        is RsLambdaExpr -> retType
-        else -> null
-    }
