@@ -511,7 +511,8 @@ upper Function ::= async? const? unsafe? ExternAbi?
 {
   pin = 'identifier'
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsFunctionOrLambda"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -1150,7 +1151,8 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut])
 }
 
 LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsFunctionOrLambda"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
