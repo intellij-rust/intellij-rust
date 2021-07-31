@@ -145,6 +145,21 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test generic Fn 1`() = doTest("""
+        fn foo<F: Fn(u32, bool) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|/*caret*/);
+        }
+    """, """
+        fn foo<F: Fn(u32, bool) -> ()>(f: F) {}
+
+        fn main() {
+            foo(|i/*caret*/, x| {});
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic FnMut`() = doTest("""
         fn foo<F: FnMut(u32, bool) -> ()>(f: F) {}
 

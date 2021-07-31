@@ -157,7 +157,7 @@ class RsTypeInferenceWalker(
 
         if (expected != null) {
             when (this) {
-                is RsPathExpr, is RsDotExpr, is RsCallExpr -> ctx.writeExpectedExprTy(this, expected)
+                is RsPathExpr, is RsDotExpr, is RsCallExpr, is RsLambdaExpr -> ctx.writeExpectedExprTy(this, expected)
             }
         }
 

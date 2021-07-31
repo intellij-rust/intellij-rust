@@ -403,7 +403,7 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* Variadic? {
 FnParameters          ::= '(' !',' SelfParameter_with_comma?
                                    FnParameter_with_recover*
                           ')' { pin = 1 }
-LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
+LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|' { pin = 2 }
 
 FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
 PathParameters        ::= '::'? '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 2 }

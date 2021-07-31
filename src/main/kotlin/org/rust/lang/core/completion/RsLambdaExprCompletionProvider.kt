@@ -10,18 +10,17 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.rust.ide.refactoring.suggestedNames
 import org.rust.ide.utils.template.newTemplateBuilder
+import org.rust.lang.core.or
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.OR
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.getNextNonWhitespaceSibling
-import org.rust.lang.core.psi.ext.leftSiblings
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.types.expectedType
@@ -32,8 +31,15 @@ import org.rust.openapiext.createSmartPointer
 object RsLambdaExprCompletionProvider : RsCompletionProvider() {
 
     override val elementPattern: ElementPattern<PsiElement>
-        get() = psiElement<PsiElement>()
-            .withSuperParent(2, psiElement<RsPathExpr>())
+        get() = PlatformPatterns.psiElement(IDENTIFIER)
+            .withSuperParent(2, psiElement<RsPathExpr>()) or PlatformPatterns.psiElement(IDENTIFIER)
+            .withParent(
+                psiElement<RsPatBinding>().withParent(
+                    psiElement<RsPatIdent>().withParent(
+                        psiElement<RsValueParameter>().withSuperParent(2, psiElement<RsLambdaExpr>())
+                    )
+                )
+            )
 
     override fun addCompletions(
         parameters: CompletionParameters,
@@ -46,7 +52,7 @@ object RsLambdaExprCompletionProvider : RsCompletionProvider() {
         val paramTypes = expr.implLookup.asTyFunction(exprExpectedType)?.value?.paramTypes ?: return
 
         val params = suggestedParams(paramTypes, expr)
-        val start = if (expr.leftSiblings.filter { it !is PsiErrorElement }.firstOrNull()?.elementType == OR) {
+        val start = if (expr is RsLambdaExpr) {
             ""
         } else {
             "|"
