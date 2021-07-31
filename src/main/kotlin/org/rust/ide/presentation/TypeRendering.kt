@@ -127,7 +127,6 @@ private data class TypeRenderer(
                 is TyStr -> "str"
                 is TyInteger -> ty.name
                 is TyFloat -> ty.name
-                else -> error("unreachable")
             }
         }
 
