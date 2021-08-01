@@ -1365,12 +1365,8 @@ YieldExpr ::= OuterAttr* yield AnyExpr? {
 upper Macro ::= "macro_rules" '!' identifier ShallowMacroBody <<macroSemicolon>> {
   pin = 2
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
-                 "org.rust.lang.core.macros.RsExpandedElement"
-                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1418,10 +1414,8 @@ MacroExpansionGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 upper Macro2 ::= MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2MatchLikeBody ) {
   pin = 1
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsItemElement"
-                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsMacroDefinitionBase" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
+                 "org.rust.lang.core.psi.ext.RsItemElement" ]
   extends = "org.rust.lang.core.psi.ext.RsMacro2ImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacro2Stub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

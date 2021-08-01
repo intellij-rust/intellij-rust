@@ -404,7 +404,17 @@ class DeclMacroDefInfo(
 class DeclMacro2DefInfo(
     override val crate: CratePersistentId,
     override val path: ModPath,
-) : MacroDefInfo()
+    private val bodyText: String,
+    val bodyHash: HashCode,
+    val hasRustcBuiltinMacro: Boolean,
+    project: Project,
+) : MacroDefInfo() {
+    /** Lazy because usually it should not be used (thanks to macro expansion cache) */
+    val body: Lazy<RsMacroBody?> = lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val psiFactory = RsPsiFactory(project, markGenerated = false)
+        psiFactory.createMacroBody(bodyText)
+    }
+}
 
 class ProcMacroDefInfo(
     override val crate: CratePersistentId,

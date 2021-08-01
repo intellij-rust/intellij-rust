@@ -5,7 +5,18 @@
 
 package org.rust.lang.core.psi.ext
 
+import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.psi.RsMacroBody
+import org.rust.stdext.HashCode
+
 /**
  * [org.rust.lang.core.psi.RsMacro] or [org.rust.lang.core.psi.RsMacro2]
  */
-interface RsMacroDefinitionBase : RsElement
+interface RsMacroDefinitionBase : RsNameIdentifierOwner,
+                                  RsQualifiedNamedElement,
+                                  RsExpandedElement,
+                                  RsModificationTrackerOwner {
+    val macroBodyStubbed: RsMacroBody?
+    val bodyHash: HashCode?
+    val hasRustcBuiltinMacro: Boolean
+}
