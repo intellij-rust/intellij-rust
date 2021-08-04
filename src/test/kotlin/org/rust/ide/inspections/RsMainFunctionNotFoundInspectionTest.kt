@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 
@@ -26,6 +27,30 @@ class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctio
         <error descr="`main` function not found in crate `test-package` [E0601]">
         fn foo() {
             fn bar(<error> </error>{/*caret*/}
+        }
+        </error>
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test start feature available`() = checkByFileTree("""
+    //- main.rs
+        #![feature(start)]
+
+        #[start]
+        fn start(_argc: isize, _argv: *const *const u8) -> isize {
+            0/*caret*/
+        }
+    """)
+
+    @MockRustcVersion("1.0.0")
+    fun `test start feature not available`() = checkByFileTree("""
+    //- main.rs
+        <error descr="`main` function not found in crate `test-package` [E0601]">
+        #![feature(start)]
+
+        #[start]
+        fn start(_argc: isize, _argv: *const *const u8) -> isize {
+            0/*caret*/
         }
         </error>
     """)
