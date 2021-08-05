@@ -1373,6 +1373,46 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
+    fun `test respect aliases in extracted function`() = doTest("""
+        struct S;
+        struct R<T>(T);
+
+        type Type1 = S;
+        type Type2 = u32;
+        type Type3 = R<u32>;
+
+        fn foo() -> Type3 {
+            let a: Type1 = S;
+            let b: Type3 = R(0);
+            let e: Type2 = 0;
+
+            <selection>let c = a;
+            let d = b;
+            (d, e)</selection>
+        }
+    """, """
+        struct S;
+        struct R<T>(T);
+
+        type Type1 = S;
+        type Type2 = u32;
+        type Type3 = R<u32>;
+
+        fn foo() -> Type3 {
+            let a: Type1 = S;
+            let b: Type3 = R(0);
+            let e: Type2 = 0;
+
+            bar(a, b, e)
+        }
+
+        fn bar(a: Type1, b: Type3, e: Type2) -> (Type3, Type2) {
+            let c = a;
+            let d = b;
+            (d, e)
+        }
+    """, "bar")
+
     private fun doTest(
         @Language("Rust") code: String,
         @Language("Rust") excepted: String,
