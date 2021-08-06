@@ -30,6 +30,7 @@ import java.lang.Integer.max
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
+            is RsExternAbi -> checkExternAbi(holder, element)
             is RsItemElement -> {
                 checkItem(holder, element)
                 when (element) {
@@ -308,6 +309,14 @@ private fun checkTypeList(typeList: PsiElement, elementsName: String, holder: An
                 "$newStateName $elementsName must be declared prior to ${kind.presentableName} $elementsName"
             ).range(child).create()
         }
+    }
+}
+
+private fun checkExternAbi(holder: AnnotationHolder, element: RsExternAbi) {
+    val litExpr = element.litExpr ?: return
+    val abyLiteralKind = litExpr.kind ?: return
+    if (abyLiteralKind !is RsLiteralKind.String) {
+        holder.newAnnotation(HighlightSeverity.ERROR, "Non-string ABI literal").range(litExpr).create()
     }
 }
 

@@ -387,4 +387,24 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         <error descr="Missing type for `static` item">static MY_STATIC = 1;</error>
         const PARTIAL_TYPE:<error descr="<type> expected, got '='"> </error> = 1;
     """)
+
+    fun `test extern abi`() = checkErrors("""
+        extern fn extern_fn() {}
+        extern "C" fn extern_c_fn() {}
+        extern "R\x75st" fn extern_fn_with_escape_in_abi() {}
+        extern r"system" fn extern_fn_with_raw_abi() {}
+        extern <error descr="Non-string ABI literal">1</error> fn extern_fn_with_invalid_abi() {}
+
+        extern {}
+        extern "C" {}
+        extern "R\u{0075}st" {}
+        extern r"system" {}
+        extern <error descr="Non-string ABI literal">'C'</error> {}
+
+        type ExternFn = extern fn();
+        type ExternCFn = extern "C" fn();
+        type ExternFnWithEscapeInAbi = extern "R\x75st" fn();
+        type ExternFnWithRawAbi = extern r"system" fn();
+        type ExternFnWithInvalidAbi = extern <error descr="Non-string ABI literal">true</error> fn();
+    """)
 }
