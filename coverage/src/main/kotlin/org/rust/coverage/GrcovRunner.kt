@@ -12,7 +12,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
-import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -21,8 +20,6 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -36,11 +33,9 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
 import org.rust.cargo.toolchain.tools.grcov
-import org.rust.cargo.toolchain.tools.rustc
-import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.io.File
 
@@ -61,7 +56,6 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
         val project = environment.project
         if (checkNeedInstallGrcov(project)) return
         val state = environment.state as CargoRunStateBase
-        if (!checkIsNightlyToolchain(project, state.config)) return
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
         environment.cargoPatches += cargoCoveragePatch
@@ -88,6 +82,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             val oldVariables = commandLine.environmentVariables
             val environmentVariables = EnvironmentVariablesData.create(
                 oldVariables.envs + mapOf(
+                    RUSTC_BOOTSTRAP to "1",
                     "CARGO_INCREMENTAL" to "0",
                     "RUSTFLAGS" to "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
                 ),
@@ -136,30 +131,6 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             } catch (e: ExecutionException) {
                 LOG.error(e)
             }
-        }
-
-        private fun checkIsNightlyToolchain(project: Project, config: CargoCommandConfiguration.CleanConfiguration.Ok): Boolean {
-            var channel: RustChannel? = config.cmd.channel
-            if (channel == RustChannel.DEFAULT) {
-                channel = project.computeWithCancelableProgress("Fetching rustc version...") {
-                    config.toolchain.rustc().queryVersion(config.cmd.workingDirectory)?.channel
-                }
-            }
-            if (channel == RustChannel.NIGHTLY) return true
-
-            val option = Messages.showDialog(
-                project,
-                "Code coverage is available only with nightly toolchain",
-                "Unable to Run With Coverage",
-                arrayOf("Configure"),
-                Messages.OK,
-                Messages.getErrorIcon()
-            )
-            if (option == Messages.OK) {
-                EditConfigurationsDialog(project).show()
-            }
-
-            return false
         }
     }
 }
