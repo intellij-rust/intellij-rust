@@ -210,7 +210,7 @@ private fun checkValueParameterList(holder: AnnotationHolder, params: RsValuePar
 
 private fun checkVariadic(holder: AnnotationHolder, fn: RsFunction, dot3: PsiElement?) {
     if (dot3 == null) return
-    if (fn.isUnsafe && fn.abiName == "\"C\"") {
+    if (fn.isUnsafe && fn.abiName == "C") {
         C_VARIADIC.check(holder, dot3, "C-variadic functions")
     } else {
         deny(dot3, holder, "${fn.title} cannot be variadic")

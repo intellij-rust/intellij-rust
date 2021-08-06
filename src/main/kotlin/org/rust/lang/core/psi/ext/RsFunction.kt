@@ -60,7 +60,7 @@ val RsFunction.isVariadic: Boolean
 val RsFunction.abiName: String?
     get() {
         val stub = greenStub
-        return stub?.abiName ?: abi?.stringLiteral?.text
+        return stub?.abiName ?: abi?.litExpr?.stringValue
     }
 
 /**

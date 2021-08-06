@@ -492,7 +492,7 @@ ForLifetimes ::= for '<' LifetimesParams '>' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ExternAbi ::= extern STRING_LITERAL?
+ExternAbi ::= extern LitExpr?
 
 RetType ::= '->' TypeReferenceNoImplicitTraitType {
   pin = 1

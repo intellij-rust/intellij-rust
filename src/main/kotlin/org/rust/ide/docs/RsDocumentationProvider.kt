@@ -365,7 +365,7 @@ private val RsItemElement.declarationModifiers: List<String>
                 }
                 if (isExtern) {
                     modifiers += "extern"
-                    abiName?.let { modifiers += it }
+                    abiName?.let { modifiers += "\"$it\"" }
                 }
                 modifiers += "fn"
             }
