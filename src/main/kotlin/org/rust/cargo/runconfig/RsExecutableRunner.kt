@@ -16,18 +16,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
-import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 abstract class RsExecutableRunner(
@@ -75,34 +74,31 @@ abstract class RsExecutableRunner(
             return null
         }
 
+        val pkg = artifact?.package_id?.let { id ->
+            environment.project.cargoProjects.allProjects
+                .mapNotNull { it.workspace?.findPackageById(id) }
+                .firstOrNull { it.origin == PackageOrigin.WORKSPACE }
+        }
+
         val runCargoCommand = state.prepareCommandLine()
-        val workingDirectory = getWorkingDirectory(environment.project, runCargoCommand, artifact)
+        val workingDirectory = pkg?.rootDirectory
+            ?.takeIf { runCargoCommand.command == "test" }
+            ?: runCargoCommand.workingDirectory
+        val environmentVariables = runCargoCommand.environmentVariables.run { with(envs + pkg?.env.orEmpty()) }
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
         val runExecutable = state.toolchain.createGeneralCommandLine(
             binaries.single().toPath(),
             workingDirectory,
             runCargoCommand.redirectInputFrom,
             runCargoCommand.backtraceMode,
-            runCargoCommand.environmentVariables,
+            environmentVariables,
             executableArguments,
             runCargoCommand.emulateTerminal,
             runCargoCommand.withSudo,
             patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
         )
-        return showRunContent(state, environment, runExecutable)
-    }
 
-    private fun getWorkingDirectory(
-        project: Project,
-        runCargoCommand: CargoCommandLine,
-        artifact: CompilerArtifactMessage?
-    ): Path {
-        if (runCargoCommand.command != "test") return runCargoCommand.workingDirectory
-        val packageId = artifact?.package_id ?: return runCargoCommand.workingDirectory
-        val pkg = project.cargoProjects.allProjects
-            .mapNotNull { it.workspace?.findPackageById(packageId) }
-            .firstOrNull()
-        return pkg?.rootDirectory ?: runCargoCommand.workingDirectory
+        return showRunContent(state, environment, runExecutable)
     }
 
     protected open fun showRunContent(
