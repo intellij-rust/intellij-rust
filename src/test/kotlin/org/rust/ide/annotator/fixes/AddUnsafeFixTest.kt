@@ -257,6 +257,82 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test wrap tail expression with an unsafe block 1`() = checkFixByText("Surround with unsafe block", """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            if <error>ERROR/*caret*/</error> != 0 {
+                panic!();
+            }
+        }
+    """, """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            unsafe {
+                if ERROR != 0 {
+                    panic!();
+                }
+            }
+        }
+    """)
+
+    fun `test wrap tail expression with an unsafe block 2`() = checkFixByText("Surround with unsafe block", """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            if true {
+                if <error>ERROR/*caret*/</error> != 0 {
+                    panic!();
+                }
+            }
+        }
+    """, """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            if true {
+                unsafe {
+                    if ERROR != 0 {
+                        panic!();
+                    }
+                }
+            }
+        }
+    """)
+
+    fun `test wrap tail expression inside closure with an unsafe block`() = checkFixByText("Surround with unsafe block", """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            bar(|| {
+                if <error>ERROR/*caret*/</error> != 0 {
+                    panic!();
+                }
+            });
+        }
+        fn bar(f: fn()) {}
+    """, """
+        static mut ERROR: i32 = 0;
+        fn main() {
+            bar(|| {
+                unsafe {
+                    if ERROR != 0 {
+                        panic!();
+                    }
+                }
+            });
+        }
+        fn bar(f: fn()) {}
+    """)
+
+    fun `test wrap item inside block with an unsafe block`() = checkFixByText("Surround with unsafe block", """
+        static mut C1: i32 = 0;
+        fn main() {
+            static C2: i32 = <error>C1/*caret*/</error>;
+        }
+    """, """
+        static mut C1: i32 = 0;
+        fn main() {
+            static C2: i32 = unsafe { C1 };
+        }
+    """)
+
     fun `test add unsafe to impl`() = checkFixByText("Add unsafe to impl", """
         unsafe trait Trait {}
 
