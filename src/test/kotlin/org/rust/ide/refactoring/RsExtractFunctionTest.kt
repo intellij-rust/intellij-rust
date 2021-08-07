@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
@@ -528,7 +529,164 @@ class RsExtractFunctionTest : RsTestBase() {
                 println!("test2");
             }
         }
-""",  "bar")
+    """,  "bar")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract a function in a impl trait (choose existing impl)`() = doTest("""
+        struct S;
+
+        trait Bar {
+            fn foo();
+        }
+
+        impl Bar for S {
+            fn foo() {
+                <selection>println!("test");
+                println!("test2");</selection>
+            }
+        }
+
+        impl S {}
+    """, """
+        struct S;
+
+        trait Bar {
+            fn foo();
+        }
+
+        impl Bar for S {
+            fn foo() {
+                S::bar();
+            }
+        }
+
+        impl S {
+            fn bar() {
+                println!("test");
+                println!("test2");
+            }
+        }
+    """,  "bar")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract a function in a impl trait (choose existing impl with same generic parameters)`() = doTest("""
+        struct S1;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                <selection>self.foo();</selection>
+            }
+        }
+
+        impl Foo<S1> {}
+    """, """
+        struct S1;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                self.bar();
+            }
+        }
+
+        impl Foo<S1> {
+            fn bar(&self) {
+                self.foo();
+            }
+        }
+    """,  "bar")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract a function in a impl trait (don't choose existing impl with different generic parameters)`() = doTest("""
+        struct S1;
+        struct S2;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                <selection>self.foo();</selection>
+            }
+        }
+
+        impl Foo<S2> {}
+    """, """
+        struct S1;
+        struct S2;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                self.bar();
+            }
+        }
+
+        impl Foo<S1> {
+            fn bar(&self) {
+                self.foo();
+            }
+        }
+
+        impl Foo<S2> {}
+    """, "bar")
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract a function in a impl trait (don't choose existing cfg-disabled impl)`() = doTest("""
+        struct S1;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                <selection>self.foo();</selection>
+            }
+        }
+
+        #[cfg(not(intellij_rust))]
+        impl Foo<S1> {}
+    """, """
+        struct S1;
+        struct Foo<T> { t: T }
+
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl Trait for Foo<S1> {
+            fn foo(&self) {
+                self.bar();
+            }
+        }
+
+        impl Foo<S1> {
+            fn bar(&self) {
+                self.foo();
+            }
+        }
+
+        #[cfg(not(intellij_rust))]
+        impl Foo<S1> {}
+    """, "bar")
 
     fun `test extract a function in a trait`() = doTest("""
         trait Foo {
