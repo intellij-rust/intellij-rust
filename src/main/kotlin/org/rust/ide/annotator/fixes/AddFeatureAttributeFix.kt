@@ -23,17 +23,24 @@ class AddFeatureAttributeFix(
     override fun getText(): String = "Add `$featureName` feature"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val mod = startElement.ancestorOrSelf<RsElement>()?.crateRoot ?: return
-        val lastFeatureAttribute = mod.childrenOfType<RsInnerAttr>()
-            .lastOrNull { it.metaItem.name == "feature" }
+        addFeatureAttribute(project, startElement, featureName)
+    }
 
-        val psiFactory = RsPsiFactory(project)
-        val attr = psiFactory.createInnerAttr("feature($featureName)")
-        if (lastFeatureAttribute != null) {
-            mod.addAfter(attr, lastFeatureAttribute)
-        } else {
-            val insertedElement = mod.addBefore(attr, mod.firstChild)
-            mod.addAfter(psiFactory.createNewline(), insertedElement)
+    companion object {
+
+        fun addFeatureAttribute(project: Project, context: PsiElement, featureName: String) {
+            val mod = context.ancestorOrSelf<RsElement>()?.crateRoot ?: return
+            val lastFeatureAttribute = mod.childrenOfType<RsInnerAttr>()
+                .lastOrNull { it.metaItem.name == "feature" }
+
+            val psiFactory = RsPsiFactory(project)
+            val attr = psiFactory.createInnerAttr("feature($featureName)")
+            if (lastFeatureAttribute != null) {
+                mod.addAfter(attr, lastFeatureAttribute)
+            } else {
+                val insertedElement = mod.addBefore(attr, mod.firstChild)
+                mod.addAfter(psiFactory.createNewline(), insertedElement)
+            }
         }
     }
 }
