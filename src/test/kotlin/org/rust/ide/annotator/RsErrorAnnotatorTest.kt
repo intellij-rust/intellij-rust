@@ -4246,4 +4246,59 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[cfg(<error descr="Invalid predicate `a` [E0537]">a/*caret*/</error>(foo))]
         fn foo() {}
     """)
+
+    fun `test invalid ABI E0703`() = checkErrors("""
+        extern fn extern_fn() {}
+        extern "C" fn extern_c_fn() {}
+        extern "R\x75st" fn extern_fn_with_escape_in_abi() {}
+        extern r"system" fn extern_fn_with_raw_abi() {}
+        extern <error descr="Invalid ABI: found invalid [E0703]">"invalid"</error> fn extern_fn_with_invalid_abi_name() {}
+    """)
+
+    fun `test invalid ABI E0703 suggestion fix`() = checkFixByText("Change to `cdecl`", """
+        extern <error descr="Invalid ABI: found cdelc [E0703]">"cdelc"/*caret*/</error> fn extern_fn() {}
+    """, """
+        extern "cdecl"/*caret*/ fn extern_fn() {}
+    """)
+
+    @MockRustcVersion("1.54.0")
+    fun `test experimental ABI E0658`() = checkErrors("""
+        extern "Rust" fn fn1() {}
+        extern "C" fn fn2() {}
+        extern <error descr="C-unwind ABI is experimental [E0658]">"C-unwind"</error> fn fn3() {}
+        extern "cdecl" fn fn4() {}
+        extern "stdcall" fn fn5() {}
+        extern <error descr="stdcall-unwind ABI is experimental [E0658]">"stdcall-unwind"</error> fn fn6() {}
+        extern "fastcall" fn fn7() {}
+        extern <error descr="vectorcall ABI is experimental [E0658]">"vectorcall"</error> fn fn8() {}
+        extern <error descr="thiscall ABI is experimental [E0658]">"thiscall"</error> fn fn9() {}
+        extern <error descr="thiscall-unwind ABI is experimental [E0658]">"thiscall-unwind"</error> fn fn10() {}
+        extern "aapcs" fn fn11() {}
+        extern "win64" fn fn12() {}
+        extern "sysv64" fn fn13() {}
+        extern <error descr="ptx-kernel ABI is experimental [E0658]">"ptx-kernel"</error> fn fn14() {}
+        extern <error descr="msp430-interrupt ABI is experimental [E0658]">"msp430-interrupt"</error> fn fn15() {}
+        extern <error descr="x86-interrupt ABI is experimental [E0658]">"x86-interrupt"</error> fn fn16() {}
+        extern <error descr="amdgpu-kernel ABI is experimental [E0658]">"amdgpu-kernel"</error> fn fn17() {}
+        extern <error descr="efiapi ABI is experimental [E0658]">"efiapi"</error> fn fn18() {}
+        extern <error descr="avr-interrupt ABI is experimental [E0658]">"avr-interrupt"</error> fn fn19() {}
+        extern <error descr="avr-non-blocking-interrupt ABI is experimental [E0658]">"avr-non-blocking-interrupt"</error> fn fn20() {}
+        extern <error descr="C-cmse-nonsecure-call ABI is experimental [E0658]">"C-cmse-nonsecure-call"</error> fn fn21() {}
+        extern "wasm" fn fn22() {}
+        extern "system" fn fn23() {}
+        extern <error descr="system-unwind ABI is experimental [E0658]">"system-unwind"</error> fn fn24() {}
+        extern <error descr="rust-intrinsic ABI is experimental [E0658]">"rust-intrinsic"</error> fn fn25() {}
+        extern <error descr="rust-call ABI is experimental [E0658]">"rust-call"</error> fn fn26() {}
+        extern <error descr="platform-intrinsic ABI is experimental [E0658]">"platform-intrinsic"</error> fn fn27() {}
+        extern <error descr="unadjusted ABI is experimental [E0658]">"unadjusted"</error> fn fn28() {}
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test add feature for experimental ABI E0658`() = checkFixByText("Add `abi_x86_interrupt` feature", """
+        extern <error descr="x86-interrupt ABI is experimental [E0658]">"x86-interrupt"/*caret*/</error> fn extern_fn() {}
+    """, """
+        #![feature(abi_x86_interrupt)]
+
+        extern "x86-interrupt"/*caret*/ fn extern_fn() {}
+    """)
 }

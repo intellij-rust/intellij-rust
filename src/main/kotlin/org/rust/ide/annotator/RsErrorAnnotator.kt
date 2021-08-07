@@ -44,6 +44,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
 import org.rust.lang.utils.RsErrorCode
+import org.rust.lang.utils.SUPPORTED_CALLING_CONVENTIONS
 import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.evaluate
 
@@ -62,6 +63,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(rsHolder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkEnumItem(rsHolder, o)
             override fun visitEnumVariant(o: RsEnumVariant) = checkEnumVariant(rsHolder, o)
+            override fun visitExternAbi(o: RsExternAbi) = checkExternAbi(rsHolder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(rsHolder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
@@ -1261,6 +1263,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 RsDiagnostic.NonConstantCallInConstantError(pathExpr)
             }
             diagnostic.addToHolder(holder)
+        }
+    }
+
+    private fun checkExternAbi(holder: RsAnnotationHolder, abi: RsExternAbi) {
+        val litExpr = abi.litExpr ?: return
+        val abiName = litExpr.stringValue ?: return
+        if (abiName !in SUPPORTED_CALLING_CONVENTIONS) {
+            RsDiagnostic.InvalidAbi(litExpr, abiName).addToHolder(holder)
+        } else {
+            val compilerFeature = SUPPORTED_CALLING_CONVENTIONS[abiName]
+            compilerFeature?.check(holder, litExpr, "$abiName ABI")
         }
     }
 
