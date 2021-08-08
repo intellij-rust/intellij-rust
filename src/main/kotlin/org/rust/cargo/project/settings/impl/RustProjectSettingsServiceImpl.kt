@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
+import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -51,6 +52,7 @@ class RustProjectSettingsServiceImpl(
 
     override val version: Int? get() = _state.version
     override val toolchain: RsToolchainBase? get() = _state.toolchain
+    override val autoShowErrorsInEditor: ThreeState get() = ThreeState.fromBoolean(_state.autoShowErrorsInEditor)
     override val autoUpdateEnabled: Boolean get() = _state.autoUpdateEnabled
     override val explicitPathToStdlib: String? get() = _state.explicitPathToStdlib
     override val externalLinter: ExternalLinter get() = _state.externalLinter

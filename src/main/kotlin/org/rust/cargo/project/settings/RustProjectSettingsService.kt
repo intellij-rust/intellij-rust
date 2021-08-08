@@ -8,11 +8,15 @@ package org.rust.cargo.project.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Paths
@@ -26,6 +30,7 @@ interface RustProjectSettingsService {
         var version: Int? = null,
         @AffectsCargoMetadata
         var toolchainHomeDirectory: String? = null,
+        var autoShowErrorsInEditor: Boolean = true,
         var autoUpdateEnabled: Boolean = true,
         // Usually, we use `rustup` to find stdlib automatically,
         // but if one does not use rustup, it's possible to
@@ -95,6 +100,7 @@ interface RustProjectSettingsService {
     val version: Int?
     val toolchain: RsToolchainBase?
     val explicitPathToStdlib: String?
+    val autoShowErrorsInEditor: ThreeState
     val autoUpdateEnabled: Boolean
     val externalLinter: ExternalLinter
     val runExternalLinterOnTheFly: Boolean

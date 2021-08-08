@@ -13,7 +13,9 @@ import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.actions.StopProcessAction
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.process.*
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -25,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.createFilters
 import javax.swing.JComponent
 
@@ -48,6 +51,7 @@ class CargoBuildAdapter(
         val activateToolWindow = context.environment.isActivateToolWindowBeforeRun
         buildContentDescriptor.isActivateToolWindowWhenAdded = activateToolWindow
         buildContentDescriptor.isActivateToolWindowWhenFailed = activateToolWindow
+        buildContentDescriptor.isNavigateToErrorWhenFailed = context.project.rustSettings.autoShowErrorsInEditor
 
         val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo Command", context.workingDirectory.toString(), context.started)
             .withContentDescriptor { buildContentDescriptor }
