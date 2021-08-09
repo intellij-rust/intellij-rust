@@ -239,10 +239,16 @@ open class RsPsiRenderer(
 
     open fun appendTypeReference(sb: StringBuilder, ref: RsTypeReference) {
         when (val type = ref.skipParens()) {
-            is RsTupleType ->
-                type.typeReferenceList.joinToWithBuffer(sb, ", ", "(", ")") {
-                    appendTypeReference(it, this)
+            is RsTupleType -> {
+                val types = type.typeReferenceList
+                if (types.size == 1) {
+                    sb.append("(")
+                    appendTypeReference(sb, types.single())
+                    sb.append(",)")
+                } else {
+                    types.joinToWithBuffer(sb, ", ", "(", ")") { appendTypeReference(it, this) }
                 }
+            }
 
             is RsBaseType -> when (val kind = type.kind) {
                 RsBaseTypeKind.Unit -> sb.append("()")

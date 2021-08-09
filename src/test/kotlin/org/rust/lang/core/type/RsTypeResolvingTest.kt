@@ -38,6 +38,14 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test tuple of size 1`() = testType("""
+        struct S;
+        fn main() {
+            let _: (S,) = (S,);
+                 //^ (S,)
+        }
+    """)
+
     fun `test type in parens`() = testType("""
         struct S;
         fn main() {

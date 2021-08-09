@@ -475,4 +475,12 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
 //            let xs/*hint text="[:  [impl  [Iterator [< [Item = i32] >]] ]]"*/ = vec![1,2,3].into_iter();
 //        }
 //    """)
+
+    fun `test tuple type`() = checkByText("""
+        fn main() {
+            let a/*hint text="[:  [( [i32 ,] )]]"*/ = (1,);
+            let b/*hint text="[:  [( [i32 ,  i32] )]]"*/ = (1, 2);
+            let c/*hint text="[:  [( … )]]"*/ = (1, 2, 3);
+        }
+    """)
 }
