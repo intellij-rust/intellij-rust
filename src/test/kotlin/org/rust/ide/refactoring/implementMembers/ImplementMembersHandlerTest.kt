@@ -745,6 +745,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn f3(u32, u64);
             fn f4() -> bool;
             fn f5(a: f64, b: bool) -> (i8, u8);
+            fn f6(a: (i32,)) -> (i8,);
         }
         struct S;
         impl T for S {/*caret*/}
@@ -753,7 +754,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
         ImplementMemberSelection("f2(a: (i32, u32))", true),
         ImplementMemberSelection("f3(u32, u64)", true),
         ImplementMemberSelection("f4() -> bool", true),
-        ImplementMemberSelection("f5(a: f64, b: bool) -> (i8, u8)", true)
+        ImplementMemberSelection("f5(a: f64, b: bool) -> (i8, u8)", true),
+        ImplementMemberSelection("f6(a: (i32,)) -> (i8,)", true),
     ), """
         trait T {
             fn f1(a: i8, b: i16, c: i32, d: i64);
@@ -761,6 +763,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn f3(u32, u64);
             fn f4() -> bool;
             fn f5(a: f64, b: bool) -> (i8, u8);
+            fn f6(a: (i32,)) -> (i8,);
         }
         struct S;
         impl T for S {
@@ -781,6 +784,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             fn f5(a: f64, b: bool) -> (i8, u8) {
+                todo!()
+            }
+
+            fn f6(a: (i32, )) -> (i8, ) {
                 todo!()
             }
         }

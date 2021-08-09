@@ -91,10 +91,16 @@ class RsTypeHintsPresentationFactory(
         factory.collapsible(
             prefix = text("("),
             collapsed = text(PLACEHOLDER),
-            expanded = { parametersHint(type.types, level + 1) },
+            expanded = { tupleTypesHint(type.types, level + 1) },
             suffix = text(")"),
             startWithPlaceholder = checkSize(level, type.types.size)
         )
+
+    private fun tupleTypesHint(types: List<Ty>, level: Int): InlayPresentation = if (types.size == 1) {
+        factory.seq(hint(types.single(), level), text(","))
+    } else {
+        types.map { hint(it, level) }.join(", ")
+    }
 
     private fun adtTypeHint(type: TyAdt, level: Int): InlayPresentation {
         val adtName = type.item.name

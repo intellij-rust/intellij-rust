@@ -134,7 +134,11 @@ private data class TypeRenderer(
             is TyFunction -> formatFnLike("fn", ty.paramTypes, ty.retType, render)
             is TySlice -> "[${render(ty.elementType)}]"
 
-            is TyTuple -> ty.types.joinToString(", ", "(", ")", transform = render)
+            is TyTuple -> if (ty.types.size == 1) {
+                "(${render(ty.types.single())},)"
+            } else {
+                ty.types.joinToString(", ", "(", ")", transform = render)
+            }
             is TyArray -> "[${render(ty.base)}; ${render(ty.const)}]"
             is TyReference -> buildString {
                 append('&')
