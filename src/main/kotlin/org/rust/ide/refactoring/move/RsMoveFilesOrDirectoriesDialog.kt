@@ -50,6 +50,10 @@ class RsMoveFilesOrDirectoriesDialog(
         try {
             for (element in filesOrDirectoriesToMove) {
                 if (element is RsFile) {
+                    if (element.parent == targetDirectory) {
+                        showError("Please choose target directory different from current")
+                        return
+                    }
                     CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, null, element, element.name, "Move")
                 }
                 MoveFilesOrDirectoriesUtil.checkMove(element, targetDirectory)
@@ -63,8 +67,7 @@ class RsMoveFilesOrDirectoriesDialog(
             if (e !is IncorrectOperationException) {
                 logger<RsMoveFilesOrDirectoriesDialog>().error(e)
             }
-            val title = RefactoringBundle.message("error.title")
-            CommonRefactoringUtil.showErrorMessage(title, e.message, "refactoring.moveFile", project)
+            showError(e.message)
         }
     }
 
@@ -116,6 +119,11 @@ class RsMoveFilesOrDirectoriesDialog(
             project = project
         )
         return result == Messages.OK
+    }
+
+    private fun showError(message: String?) {
+        val title = RefactoringBundle.message("error.title")
+        CommonRefactoringUtil.showErrorMessage(title, message, "refactoring.moveFile", project)
     }
 }
 

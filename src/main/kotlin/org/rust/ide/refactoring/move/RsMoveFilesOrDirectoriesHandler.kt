@@ -66,6 +66,11 @@ class RsMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
         if (files.mapToSet { it.`super` }.size != 1) return false
 
         val adjustedTargetContainer = adjustTargetForMove(null, targetContainer)
+        if (files.any { it.parent == adjustedTargetContainer }) {
+            // Can't move file to same directory
+            return false
+        }
+
         return super.canMove(elements, adjustedTargetContainer, reference)
     }
 
