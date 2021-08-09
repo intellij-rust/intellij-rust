@@ -13,6 +13,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.siblings
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.RsFunctionSignatureConfig
+import org.rust.ide.utils.findElementAtIgnoreWhitespaceAfter
 import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -222,6 +223,17 @@ class RsExtractFunctionConfig private constructor(
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
+            doCreate(file, start, end)?.let { return it }
+
+            file.findElementAtIgnoreWhitespaceAfter(end - 1)?.let { lastElement ->
+                if (lastElement.elementType in listOf(RsElementTypes.COMMA, RsElementTypes.SEMICOLON)) {
+                    return doCreate(file, start, lastElement.startOffset)
+                }
+            }
+            return null
+        }
+
+        private fun doCreate(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
             val elements = findStatementsOrExprInRange(file, start, end).asList()
             if (elements.isEmpty()) return null
             val first = elements.first()

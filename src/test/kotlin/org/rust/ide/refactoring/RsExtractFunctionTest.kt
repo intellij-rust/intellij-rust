@@ -919,6 +919,54 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar", noSelected = listOf("a"))
 
+    fun `test extract expr with trailing semicolon`() = doTest("""
+        fn main() {
+            let a = <selection>42;</selection>
+        }
+    """, """
+        fn main() {
+            let a = bar();
+        }
+
+        fn bar() -> i32 {
+            42
+        }
+    """, "bar")
+
+    fun `test extract expr with trailing semicolon and whitespace`() = doTest("""
+        fn main() {
+            let a = <selection>42; </selection> //
+        }
+    """, """
+        fn main() {
+            let a = bar();  //
+        }
+
+        fn bar() -> i32 {
+            42
+        }
+    """, "bar")
+
+    fun `test extract expr with trailing comma`() = doTest("""
+        fn main() {
+            let s = S {
+                a: <selection>42,</selection>
+                b: 0,
+            };
+        }
+    """, """
+        fn main() {
+            let s = S {
+                a: bar(),
+                b: 0,
+            };
+        }
+
+        fn bar() -> i32 {
+            42
+        }
+    """, "bar")
+
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract async function with await`() = doTest("""
         #[lang = "core::future::future::Future"]
