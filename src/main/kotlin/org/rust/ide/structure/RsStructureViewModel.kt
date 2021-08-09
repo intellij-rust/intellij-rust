@@ -35,6 +35,10 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
             RsImplItem::class.java
         )
         withSorters(
+            // Order of sorters matters: if both visibility and alpha sorters are active, we want
+            // to sort alphabetically within each privacy category, rather than by privacy within
+            // each alphabetic group, which is (mostly) a noop
+            RsVisibilitySorter(),
             Sorter.ALPHA_SORTER,
         )
     }

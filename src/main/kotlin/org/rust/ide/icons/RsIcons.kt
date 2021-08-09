@@ -85,6 +85,7 @@ object RsIcons {
     // Structure view
 
     val MACRO_EXPANSION = AllIcons.Nodes.ErrorIntroduction
+    val VISIBILITY_SORT = AllIcons.ObjectBrowser.VisibilitySort
 
     // Gutter
 
