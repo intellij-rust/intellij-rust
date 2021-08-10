@@ -312,7 +312,7 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
     """)
 
-    fun `test no type mismatch E0308 on reference coecrion of partially unknown type`() = checkByText("""
+    fun `test no type mismatch E0308 on reference coercion of partially unknown type`() = checkByText("""
         struct Bar;
         fn foo(a: &Bar) {}
 

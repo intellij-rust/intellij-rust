@@ -18,7 +18,7 @@ class AddTurbofishFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     )
 
 
-    fun `test should not be applied`() = checkNoIntention("""1 < 5 /*carret*/> 3;""")
+    fun `test should not be applied`() = checkNoIntention("""1 < 5 /*caret*/> 3;""")
 
     fun `test should be available also in right side`() = checkStatement(
             """parse<i32>(/*caret*/"42")""",

@@ -7,16 +7,12 @@ package org.rust.ide.refactoring.generate.setter
 
 
 import com.intellij.openapi.editor.Editor
-import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.type
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class GenerateSetterAction : BaseGenerateAction() {

@@ -440,7 +440,7 @@ class ImplLookup(
             // Default (libcore/default.rs)
             addImpl(items.Default)
 
-            // PatrialEq (libcore/cmp.rs)
+            // PartialEq (libcore/cmp.rs)
             if (ty != TyNever && ty !is TyUnit) {
                 addImpl(items.PartialEq, ty)
             }

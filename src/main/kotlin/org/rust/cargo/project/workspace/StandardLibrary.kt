@@ -69,7 +69,7 @@ data class StandardLibrary(
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
                 if (semverVersion == null) {
-                    LOG.warn("Toolchain version is unknown. Hardcoded stdlib struture will be used")
+                    LOG.warn("Toolchain version is unknown. Hardcoded stdlib structure will be used")
                     fetchHardcodedStdlib(srcDir)
                 } else {
                     val result = fetchActualStdlib(project, srcDir, rustcVersion)

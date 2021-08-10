@@ -58,7 +58,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
                 checkMacroExpansion(
                     macroCall,
                     expectedExpansion,
-                    "${i + 1} macro comparision failed",
+                    "${i + 1} macro comparison failed",
                     mark
                 )
             }
@@ -67,13 +67,13 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         InlineFile(code)
         val call = findElementInEditor<RsMacroCall>("^")
-        checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
+        checkMacroExpansion(call, expectedExpansion, "Macro comparison failed")
     }
 
     fun checkSingleMacroByTree(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         val call = findElementInEditor<RsMacroCall>("^")
-        checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
+        checkMacroExpansion(call, expectedExpansion, "Macro comparison failed")
     }
 
     fun doErrorTest(@Language("Rust") code: String, mark: Testmark) {

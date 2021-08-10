@@ -2157,7 +2157,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
         /// foo/*caret*/();
@@ -2173,7 +2173,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import outer item in doctest injection with tildes`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import outer item in doctest injection with tildes`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ~~~
         /// foo/*caret*/();
@@ -2189,7 +2189,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import outer item in doctest injection in star comment`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import outer item in doctest injection in star comment`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /**
          * ```
@@ -2209,7 +2209,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """,  Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
         /// use test_package::foo;
@@ -2230,7 +2230,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import second outer item without grouping in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import second outer item without grouping in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
         /// use test_package::foo;
@@ -2252,7 +2252,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, Testmarks.insertNewLineBeforeUseItem)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
         /// mod bar {

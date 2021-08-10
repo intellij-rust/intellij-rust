@@ -31,7 +31,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         testmark: Testmark? = null
     ) = doTest { checkFixByFileTree(AutoImportFix.NAME, before, after, testmark = testmark) }
 
-    protected fun checkAutoImportFixByFileTreeWithouHighlighting(
+    protected fun checkAutoImportFixByFileTreeWithoutHighlighting(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         testmark: Testmark? = null

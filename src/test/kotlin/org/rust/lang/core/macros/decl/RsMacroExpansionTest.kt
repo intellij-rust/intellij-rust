@@ -9,8 +9,8 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.SemVer
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2021
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE

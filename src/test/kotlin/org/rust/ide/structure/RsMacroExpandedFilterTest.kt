@@ -5,8 +5,6 @@
 
 package org.rust.ide.structure
 
-import org.intellij.lang.annotations.Language
-
 class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
 
     fun `test macro expanded filter`() = doTest("""
