@@ -45,7 +45,7 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
 
     fun `test argument declaration`() = doTest("""
         struct /*caret_after*/Foo;
-        fn foo(foo/*caret_before*/: Foo) { unimplemeneted!() }
+        fn foo(foo/*caret_before*/: Foo) { unimplemented!() }
     """)
 
     fun `test function call`() = doTest("""

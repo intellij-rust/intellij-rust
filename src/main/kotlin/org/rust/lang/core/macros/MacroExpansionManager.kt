@@ -276,7 +276,7 @@ class MacroExpansionManagerImpl(
 
     override fun setUnitTestExpansionModeAndDirectory(mode: MacroExpansionScope, cacheDirectory: String): Disposable {
         check(isUnitTestMode)
-        val dir = updateDirs(if (cacheDirectory.isNotEmpty()) cacheDirectory else null)
+        val dir = updateDirs(cacheDirectory.ifEmpty { null })
         val impl = MacroExpansionServiceBuilder.prepare(dir).buildInReadAction(project)
         this.dirs = dir
         this.inner = impl

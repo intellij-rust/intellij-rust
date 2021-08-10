@@ -51,7 +51,7 @@ class CargoCommandLineTest {
     }
 
     @Test
-    fun `getBuildArguments should return build arguments only preceeding arguments`() {
+    fun `getBuildArguments should return build arguments only preceding arguments`() {
         val cot = CargoCommandLine("run", wd, listOf("--bin", "someproj", "--", "arg1"))
         val actual = cot.subcommandArguments
         val expected = listOf("--bin", "someproj")

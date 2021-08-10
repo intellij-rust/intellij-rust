@@ -691,9 +691,7 @@ class RsTypeInferenceWalker(
             traitToCallee.keys.filterInScope(context).forEach {
                 filtered += traitToCallee.getValue(it)
             }
-            if (filtered.isNotEmpty()) {
-                filtered
-            } else {
+            filtered.ifEmpty {
                 TypeInferenceMarks.methodPickTraitsOutOfScope.hit()
                 list
             }

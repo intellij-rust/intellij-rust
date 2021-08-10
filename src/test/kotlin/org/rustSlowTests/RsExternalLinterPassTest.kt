@@ -73,7 +73,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     """)
 
-    fun `test highlights from other files do not interfer`() {
+    fun `test highlights from other files do not interfere`() {
         fileTree {
             toml("Cargo.toml", """
                 [package]

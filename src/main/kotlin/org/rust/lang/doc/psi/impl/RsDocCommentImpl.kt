@@ -32,7 +32,7 @@ class RsDocCommentImpl(type: IElementType, text: CharSequence?) : LazyParseableP
 
     // Needed for RsFoldingBuilder
     override fun accept(visitor: PsiElementVisitor) {
-        visitor.visitComment(this);
+        visitor.visitComment(this)
     }
 
     override fun toString(): String {

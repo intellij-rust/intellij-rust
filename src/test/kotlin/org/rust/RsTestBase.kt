@@ -42,7 +42,7 @@ import kotlin.reflect.full.createInstance
 
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
-    // Needed for assertion that the directory doesn't acidentally renamed during the test
+    // Needed for assertion that the directory doesn't accidentally renamed during the test
     private var tempDirRootUrl: String? = null
     private var tempDirRoot: VirtualFile? = null
 

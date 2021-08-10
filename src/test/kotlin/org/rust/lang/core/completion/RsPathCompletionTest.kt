@@ -7,10 +7,11 @@ package org.rust.lang.core.completion
 
 import com.intellij.openapi.module.Module
 import com.intellij.util.Urls
-import org.rust.*
+import org.rust.ProjectDescriptor
+import org.rust.RustProjectDescriptorBase
+import org.rust.WithRustup
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import java.nio.file.Paths
 
