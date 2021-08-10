@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.stubs.RsFnPointerTypeStub
 
 val RsFnPointerType.valueParameters: List<RsValueParameter>
-    get() = valueParameterList.valueParameterList
+    get() = valueParameterList?.valueParameterList.orEmpty()
 
 val RsFnPointerType.isUnsafe: Boolean
     get() {
