@@ -25,7 +25,7 @@ abstract class RsMacro2ImplMixin : RsStubbedNamedElementImpl<RsMacro2Stub>,
 
     constructor(stub: RsMacro2Stub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
-    override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
+    override fun getIcon(flags: Int): Icon = iconWithVisibility(flags, RsIcons.MACRO)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
