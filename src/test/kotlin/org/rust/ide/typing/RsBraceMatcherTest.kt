@@ -13,9 +13,99 @@ import org.rust.RsTestBase
 
 class RsBraceMatcherTest : RsTestBase() {
     fun `test don't pair parenthesis before identifier`() = doTest(
-        "fn main() { let _ = /*caret*/typing }",
+        "fn main() { let _ = /*caret*/typing; }",
         '(',
-        "fn main() { let _ = (/*caret*/typing }"
+        "fn main() { let _ = (/*caret*/typing; }"
+    )
+
+    fun `test don't pair parenthesis before string literal`() = doTest(
+        """fn main() { let _ = /*caret*/"foo"; }""",
+        '(',
+        """fn main() { let _ = (/*caret*/"foo"; }"""
+    )
+
+    fun `test don't pair parenthesis before integral literal`() = doTest(
+        "fn main() { let _ = /*caret*/1; }",
+        '(',
+        "fn main() { let _ = (/*caret*/1; }"
+    )
+
+    fun `test don't pair parenthesis before ref operator`() = doTest(
+        "fn main() { let _ = /*caret*/&foo; }",
+        '(',
+        "fn main() { let _ = (/*caret*/&foo; }"
+    )
+
+    fun `test don't pair parenthesis before dereference operator`() = doTest(
+        "fn main() { let _ = /*caret*/*foo.bar; }",
+        '(',
+        "fn main() { let _ = (/*caret*/*foo.bar; }"
+    )
+
+    fun `test don't pair parenthesis before not operator`() = doTest(
+        "fn main() { let _ = /*caret*/!foo; }",
+        '(',
+        "fn main() { let _ = (/*caret*/!foo; }"
+    )
+
+    fun `test don't pair parenthesis before unary minus operator`() = doTest(
+        "fn main() { let _ = /*caret*/-foo; }",
+        '(',
+        "fn main() { let _ = (/*caret*/-foo; }"
+    )
+
+    fun `test don't pair parenthesis before box operator`() = doTest(
+        "fn main() { let _ = /*caret*/box foo; }",
+        '(',
+        "fn main() { let _ = (/*caret*/box foo; }"
+    )
+
+    fun `test don't pair parenthesis before if expression`() = doTest(
+        "fn main() { let _ = /*caret*/if foo { bar } else { baz }; }",
+        '(',
+        "fn main() { let _ = (/*caret*/if foo { bar } else { baz }; }"
+    )
+
+    fun `test don't pair parenthesis before match expression`() = doTest(
+        "fn main() { let _ = /*caret*/match foo { _ => () }; }",
+        '(',
+        "fn main() { let _ = (/*caret*/match foo { _ => () }; }"
+    )
+
+    fun `test don't pair braces before let statement`() = doTest(
+        "fn main() { /*caret*/let _ = 1; }",
+        '{',
+        "fn main() { {/*caret*/let _ = 1; }"
+    )
+
+    fun `test don't pair braces before while expression`() = doTest(
+        "fn main() { /*caret*/while foo {} }",
+        '{',
+        "fn main() { {/*caret*/while foo {} }"
+    )
+
+    fun `test don't pair braces before if expression`() = doTest(
+        "fn main() { /*caret*/if foo { bar; } else { baz; } }",
+        '{',
+        "fn main() { {/*caret*/if foo { bar; } else { baz; } }"
+    )
+
+    fun `test don't pair braces before for expression`() = doTest(
+        "fn main() { /*caret*/for a in b {} }",
+        '{',
+        "fn main() { {/*caret*/for a in b {} }"
+    )
+
+    fun `test don't pair braces before loop expression`() = doTest(
+        "fn main() { /*caret*/loop {} }",
+        '{',
+        "fn main() { {/*caret*/loop {} }"
+    )
+
+    fun `test don't pair braces before match expression`() = doTest(
+        "fn main() { /*caret*/match foo { _ => () } }",
+        '{',
+        "fn main() { {/*caret*/match foo { _ => () } }"
     )
 
     fun `test pair parenthesis before semicolon`() = doTest(
