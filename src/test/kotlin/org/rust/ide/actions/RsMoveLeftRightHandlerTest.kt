@@ -205,6 +205,22 @@ class RsMoveLeftRightHandlerTest : RsTestBase() {
         fn foo() -> impl Sync + Read/*caret*/ {}
     """)
 
+    fun `test where clause predicates`() = doRightLeftTest("""
+        trait Trait1 {}
+        trait Trait2 {}
+        fn foo<A, B>(a: A, b: B)
+            where /*caret*/A: Trait1,
+                  B: Trait2
+        {}
+    """, """
+        trait Trait1 {}
+        trait Trait2 {}
+        fn foo<A, B>(a: A, b: B)
+            where B: Trait2,
+                  A: Trait1
+        {}
+    """)
+
     private fun doRightLeftTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         doMoveRightTest(before, after)
         doMoveLeftTest(after, before)
