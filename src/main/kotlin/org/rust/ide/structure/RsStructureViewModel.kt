@@ -105,26 +105,17 @@ class RsStructureViewElement(
         buildList {
             for (item in itemsAndMacros) {
                 when (item) {
-                    is RsMacro,
-                    is RsFunction,
-                    is RsModDeclItem,
-                    is RsModItem,
-                    is RsStructOrEnumItemElement,
-                    is RsTraitOrImpl,
-                    is RsTypeAlias,
-                    is RsConstant -> add(item)
-
                     is RsForeignModItem -> {
-                        for (child in item.children) {
-                            if (child is RsFunction || child is RsConstant) {
-                                add(child as RsElement)
-                            }
-                        }
+                        addAll(extractItems(item.children.asSequence().filterIsInstance<RsElement>()))
                     }
 
                     is RsMacroCall -> {
                         addAll(extractItems(item.expansionFlatten.asSequence()))
                     }
+
+                    is RsUseItem -> Unit
+
+                    is RsMacro, is RsItemElement -> add(item)
                 }
             }
         }

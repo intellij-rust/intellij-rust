@@ -194,6 +194,7 @@ class RsStructureViewModelTest : RsStructureViewTestBase() {
 
     fun `test extern`() = doTest("""
         extern {
+            type T;
             static N: i32;
             static NAME: &'static str;
             pub static mut MUT_N: i64;
@@ -202,6 +203,7 @@ class RsStructureViewModelTest : RsStructureViewTestBase() {
         }
     """, """
         |-main.rs visibility=none
+        | T visibility=private
         | N: i32 visibility=private
         | NAME: &'static str visibility=private
         | MUT_N: i64 visibility=public
@@ -209,13 +211,19 @@ class RsStructureViewModelTest : RsStructureViewTestBase() {
         | something(i32) -> u8 visibility=restricted
     """)
 
-    fun `test macro`() = doTest("""
+    fun `test macros`() = doTest("""
         macro_rules! makro {
             () => { };
         }
+        macro makro2 {}
+        pub macro makro3 {}
+        pub(crate) macro makro3 {}
     """, """
         |-main.rs visibility=none
         | makro visibility=none
+        | makro2 visibility=private
+        | makro3 visibility=public
+        | makro3 visibility=restricted
     """)
 
     fun `test structs`() = doTest("""
@@ -396,6 +404,14 @@ class RsStructureViewModelTest : RsStructureViewTestBase() {
         | -A<T> where T: ?Sized + Clone visibility=none
         |  aaa() visibility=public
         | Bar<F> for A<T> where T: ?Sized, F: ?Sized visibility=none
+    """)
+
+    fun `test use item is not shown`() = doTest("""
+        use foo::bar;
+        fn function() {}
+    """, """
+        |-main.rs visibility=none
+        | function() visibility=private
     """)
 
     fun `test console variables basic`() = doTestForREPL("""
