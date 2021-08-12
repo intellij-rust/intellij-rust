@@ -399,6 +399,23 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn quux<T: foo::Bar/*caret*/>() {}
     """)
 
+    fun `test unavailable on trait method`() = checkFixIsUnavailable("Make `foo` public", """
+        mod foo {
+            trait Bar {
+                fn foo(&self);
+            }
+
+            impl Bar for super::S {
+                fn foo(&self) {}
+            }
+        }
+        struct S;
+
+        fn bar(s: S) {
+            s.<error>foo/*caret*/</error>();
+        }
+    """)
+
     fun `test make unsafe auto trait public`() = checkFixByText("Make `Bar` public", """
         mod foo {
             // Some unsafe auto trait

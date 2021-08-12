@@ -43,10 +43,15 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
     }
 
     companion object {
-        fun isValidVisibilityOwner(visible: RsVisibilityOwner): Boolean =
-            visible !is RsEnumVariant
-                && visible.parent.parent !is RsTraitItem
-                && visible.containingCrate?.origin == PackageOrigin.WORKSPACE
+        fun isValidVisibilityOwner(visible: RsVisibilityOwner): Boolean {
+            if (visible is RsEnumVariant) return false
+            if (visible.containingCrate?.origin != PackageOrigin.WORKSPACE) return false
+
+            val owner = (visible as? RsAbstractable)?.owner
+            if (owner is RsAbstractableOwner.Trait || owner?.isTraitImpl == true) return false
+
+            return true
+        }
 
         fun makePrivate(element: RsVisibilityOwner) {
             element.vis?.delete()
@@ -108,14 +113,6 @@ private fun getAnchor(element: PsiElement): PsiElement? = when (element) {
  * Returns true if `element` is in a valid place in `visibleElement` for running the intention.
  */
 private fun isValidPlace(visibleElement: RsVisibilityOwner, element: PsiElement): Boolean {
-    /**
-     * Parent trait owner is checked by [ChangeVisibilityIntention.isValidVisibilityOwner].
-     */
-    if (visibleElement is RsAbstractable) {
-        val owner = visibleElement.owner
-        if (owner is RsAbstractableOwner.Impl && owner.isTraitImpl) return false
-    }
-
     val anchor = when (visibleElement) {
         is RsConstant -> visibleElement.const
         is RsEnumItem -> visibleElement.enum
