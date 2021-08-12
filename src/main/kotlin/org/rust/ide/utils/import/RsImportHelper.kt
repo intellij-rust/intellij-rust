@@ -23,8 +23,8 @@ object RsImportHelper {
         context: RsElement,
         elements: Collection<RsElement>,
         subst: Substitution = emptySubstitution,
-        useAliases: Boolean = false,
-        skipUnchangedDefaultTypeArguments: Boolean = false
+        useAliases: Boolean = true,
+        skipUnchangedDefaultTypeArguments: Boolean = true
     ) {
         val (toImport, _) = getTypeReferencesInfoFromElements(context, elements, subst, useAliases, skipUnchangedDefaultTypeArguments)
         importElements(context, toImport)
@@ -33,8 +33,8 @@ object RsImportHelper {
     fun importTypeReferencesFromTys(
         context: RsElement,
         tys: Collection<Ty>,
-        useAliases: Boolean = false,
-        skipUnchangedDefaultTypeArguments: Boolean = false
+        useAliases: Boolean = true,
+        skipUnchangedDefaultTypeArguments: Boolean = true
     ) {
         val (toImport, _) = getTypeReferencesInfoFromTys(
             context,
@@ -48,8 +48,8 @@ object RsImportHelper {
     fun importTypeReferencesFromTy(
         context: RsElement,
         ty: Ty,
-        useAliases: Boolean = false,
-        skipUnchangedDefaultTypeArguments: Boolean = false
+        useAliases: Boolean = true,
+        skipUnchangedDefaultTypeArguments: Boolean = true
     ) {
         importTypeReferencesFromTys(context, listOf(ty), useAliases, skipUnchangedDefaultTypeArguments)
     }
@@ -97,8 +97,8 @@ object RsImportHelper {
     fun getTypeReferencesInfoFromTys(
         context: RsElement,
         vararg elemTys: Ty,
-        useAliases: Boolean = false,
-        skipUnchangedDefaultTypeArguments: Boolean = false
+        useAliases: Boolean = true,
+        skipUnchangedDefaultTypeArguments: Boolean = true
     ): TypeReferencesInfo = getTypeReferencesInfo(context, elemTys.toList()) { ty, result ->
         collectImportSubjectsFromTy(ty, emptySubstitution, result, useAliases, skipUnchangedDefaultTypeArguments)
     }

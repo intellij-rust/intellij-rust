@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ConvertMethodCallToUFCSTest : RsIntentionTestBase(ConvertMethodCallToUFCSIntention::class) {
+class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCallToUFCSIntention::class) {
     fun `test unavailable on function call`() = doUnavailableTest("""
         fn foo() {}
         fn bar() {
@@ -419,6 +419,60 @@ class ConvertMethodCallToUFCSTest : RsIntentionTestBase(ConvertMethodCallToUFCSI
 
         fn foo(foo: &[u8]) {
             <[u8]>::foo(foo);
+        }
+    """)
+
+    fun `test aliased type`() = doAvailableTest("""
+        struct Foo;
+        impl Foo {
+            fn foo(self) {}
+        }
+
+        type Bar = Foo;
+
+        fn foo(foo: Bar) {
+            foo./*caret*/foo();
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn foo(self) {}
+        }
+
+        type Bar = Foo;
+
+        fn foo(foo: Bar) {
+            Bar::foo(foo);
+        }
+    """)
+
+    fun `test import aliased type`() = doAvailableTest("""
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo(self) {}
+            }
+
+            pub type Bar = Foo;
+        }
+
+        fn bar(x: foo::Bar) {
+            x./*caret*/foo();
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo(self) {}
+            }
+
+            pub type Bar = Foo;
+        }
+
+        fn bar(x: foo::Bar) {
+            Bar::foo(x);
         }
     """)
 }

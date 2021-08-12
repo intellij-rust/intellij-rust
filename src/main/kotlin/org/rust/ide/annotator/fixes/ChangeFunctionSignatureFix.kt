@@ -235,11 +235,7 @@ private fun suffix(number: Int): String {
 }
 
 private fun renderType(ty: Ty): String =
-    ty.renderInsertionSafe(
-        skipUnchangedDefaultTypeArguments = true,
-        useAliasNames = true,
-        includeLifetimeArguments = true
-    )
+    ty.renderInsertionSafe(includeLifetimeArguments = true)
 
 private fun getExistingParameterNames(usedNames: MutableSet<String>, function: RsFunction) {
     val visitor = object : RsRecursiveVisitor() {

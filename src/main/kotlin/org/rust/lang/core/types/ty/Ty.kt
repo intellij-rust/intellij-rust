@@ -48,7 +48,7 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
     /**
      * User visible string representation of a type
      */
-    final override fun toString(): String = render()
+    final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultTypeArguments = false)
 }
 
 enum class Mutability {

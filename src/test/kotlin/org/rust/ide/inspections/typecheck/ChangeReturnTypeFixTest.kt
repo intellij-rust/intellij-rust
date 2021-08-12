@@ -13,7 +13,6 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
 class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
-
     fun `test str vs () in function`() = checkFixByText("Change return type of function 'foo' to '&str'", """
         fn foo() {
             <error>"Hello World!"<caret></error>
@@ -114,6 +113,20 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
+    fun `test default type argument`() = checkFixByText("Change return type of function 'foo' to 'S'", """
+        struct S<T = u32>(T);
+
+        fn foo(a: S) {
+            <error>a<caret></error>
+        }
+    """, """
+        struct S<T = u32>(T);
+
+        fn foo(a: S) -> S {
+            a
+        }
+    """)
+
     fun `test import unresolved type (add)`() = checkFixByText("Change return type of function 'foo' to '(S, A)'", """
         use a::bar;
 
@@ -162,6 +175,58 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
 
         fn foo() -> (S, A) {
+            bar()
+        }
+    """)
+
+    fun `test import skip default type argument`() = checkFixByText("Change return type of function 'foo' to 'S'", """
+        use a::bar;
+
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn bar() -> S { S(R) }
+        }
+
+        fn foo() -> i32 {
+            <error>bar()<caret></error>
+        }
+    """, """
+        use a::{bar, S};
+
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn bar() -> S { S(R) }
+        }
+
+        fn foo() -> S {
+            bar()
+        }
+    """)
+
+    fun `test import aliased type`() = checkFixByText("Change return type of function 'foo' to 'S'", """
+        use a::bar;
+
+        mod a {
+            pub struct R;
+            pub type S = R;
+            pub fn bar() -> S { R }
+        }
+
+        fn foo() -> i32 {
+            <error>bar()<caret></error>
+        }
+    """, """
+        use a::{bar, S};
+
+        mod a {
+            pub struct R;
+            pub type S = R;
+            pub fn bar() -> S { R }
+        }
+
+        fn foo() -> S {
             bar()
         }
     """)

@@ -46,7 +46,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             val parameters = config.valueParameters.filter { it.isSelected }
             renameFunctionParameters(extractedFunction, parameters.map { it.name })
             val types = (parameters.map { it.type } + config.returnValue?.type).filterNotNull()
-            importTypeReferencesFromTys(extractedFunction, types, useAliases = true, skipUnchangedDefaultTypeArguments = true)
+            importTypeReferencesFromTys(extractedFunction, types)
         }
     }
 

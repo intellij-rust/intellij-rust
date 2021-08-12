@@ -17,7 +17,7 @@ abstract class ConvertToTyFix(
 ) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     constructor(expr: RsExpr, ty: Ty, convertSubject: String) :
-        this(expr, ty.render(skipUnchangedDefaultTypeArguments = true), convertSubject)
+        this(expr, ty.render(), convertSubject)
 
     override fun getFamilyName(): String = "Convert to type"
     override fun getText(): String = "Convert to $tyName using $convertSubject"

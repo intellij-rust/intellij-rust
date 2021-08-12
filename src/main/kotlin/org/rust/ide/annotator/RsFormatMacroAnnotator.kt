@@ -433,7 +433,7 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
         !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
         return ErrorAnnotation(
             argument.textRange,
-            "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}`" +
+            "`${expr.type.render()}` doesn't implement `${requiredTrait.name}`" +
                 " (required by ${parameter.matchInfo.text})",
             isTraitError = true
         )

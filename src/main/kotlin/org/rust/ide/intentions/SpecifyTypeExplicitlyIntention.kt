@@ -55,11 +55,11 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
-        val createdType = factory.createType(ctx.type.renderInsertionSafe(useAliasNames = true))
+        val createdType = factory.createType(ctx.type.renderInsertionSafe())
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)
-        importTypeReferencesFromTy(ctx.letDecl, ctx.type, useAliases = true)
+        importTypeReferencesFromTy(ctx.letDecl, ctx.type)
     }
 
 

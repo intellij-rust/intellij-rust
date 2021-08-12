@@ -159,6 +159,42 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
+    fun `test add aliased type`() = checkFixByText("Add `Foo` as `1st` parameter to function `foo`", """
+        fn foo() {}
+
+        type Foo = u32;
+
+        fn bar(f: Foo) {
+            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>f/*caret*/</error>)</error>;
+        }
+    """, """
+        fn foo(f: Foo) {}
+
+        type Foo = u32;
+
+        fn bar(f: Foo) {
+            foo(f);
+        }
+    """)
+
+    fun `test add type with default type argument`() = checkFixByText("Add `Foo` as `1st` parameter to function `foo`", """
+        fn foo() {}
+
+        struct Foo<T = u32>(T);
+
+        fn bar(f: Foo) {
+            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>f/*caret*/</error>)</error>;
+        }
+    """, """
+        fn foo(f: Foo) {}
+
+        struct Foo<T = u32>(T);
+
+        fn bar(f: Foo) {
+            foo(f);
+        }
+    """)
+
     fun `test import argument type`() = checkFixByText("Add `S` as `1st` parameter to function `bar`", """
         mod foo {
             pub fn bar() {}

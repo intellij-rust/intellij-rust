@@ -33,6 +33,30 @@ class AddTypeFixTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
         const CONST: (_, _)/*caret*/ = (S, S);
     """)
 
+    fun `test alias`() = checkFixByText("Add type Foo", """
+        type Foo = u32;
+
+        const fn foo() -> Foo { 0 }
+
+        <error>const CONST/*caret*/ = foo();</error>
+    """, """
+        type Foo = u32;
+
+        const fn foo() -> Foo { 0 }
+
+        const CONST: Foo/*caret*/ = foo();
+    """)
+
+    fun `test skip default type argument`() = checkFixByText("Add type Foo", """
+        struct Foo<T = u32>(T);
+
+        <error>const CONST/*caret*/ = Foo(0u32);</error>
+    """, """
+        struct Foo<T = u32>(T);
+
+        const CONST: Foo = Foo(0u32);
+    """)
+
     fun `test missing expr`() = checkFixIsUnavailable("Add type", """
         <error>const CONST/*caret*/;</error>
     """)

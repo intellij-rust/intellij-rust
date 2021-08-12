@@ -32,7 +32,6 @@ Cannot change signature of function with cfg-disabled parameters""")
         }
     """, "The caret should be positioned at a function or method")
 
-
     fun `test unavailable on unresolved function call`() = checkError("""
         fn bar(a: u32) {}
         fn baz() {
@@ -1228,6 +1227,34 @@ Cannot change signature of function with cfg-disabled parameters""")
         val vec = findElementInEditor<RsTypeReference>()
         parameters.add(parameter("a", vec))
         returnTypeDisplay = vec
+    }
+
+    fun `test import aliased type`() = doTest("""
+        mod foo {
+            pub struct S;
+            pub type Foo = S;
+
+            fn bar(t: Foo) {}
+                      //^
+        }
+
+        fn bar/*caret*/() {}
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct S;
+            pub type Foo = S;
+
+            fn bar(t: Foo) {}
+                      //^
+        }
+
+        fn bar(a: Foo) -> Foo {}
+    """) {
+        val foo = findElementInEditor<RsTypeReference>()
+        parameters.add(parameter("a", foo))
+        returnTypeDisplay = foo
     }
 
     private fun RsChangeFunctionSignatureConfig.swapParameters(a: Int, b: Int) {

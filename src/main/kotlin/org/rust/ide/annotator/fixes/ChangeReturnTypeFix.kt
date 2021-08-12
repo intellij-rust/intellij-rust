@@ -25,7 +25,6 @@ import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-
 class ChangeReturnTypeFix(
     element: RsElement,
     private val actualTy: Ty
@@ -44,15 +43,14 @@ class ChangeReturnTypeFix(
         }
 
         val useQualifiedName = if (callable != null) {
-            getTypeReferencesInfoFromTys(callable, actualTy, useAliases = true).toQualify
+            getTypeReferencesInfoFromTys(callable, actualTy).toQualify
         } else {
             emptySet()
         }
 
         val rendered = actualTy.render(
             context = element,
-            useQualifiedName = useQualifiedName,
-            useAliasNames = true
+            useQualifiedName = useQualifiedName
         )
         "Change return type$item$name to '$rendered'"
     }
@@ -76,12 +74,11 @@ class ChangeReturnTypeFix(
         }
 
         val oldTy = oldRetType?.typeReference?.type ?: TyUnknown
-        val (_, useQualifiedName) = getTypeReferencesInfoFromTys(owner, actualTy, oldTy, useAliases = true)
+        val (_, useQualifiedName) = getTypeReferencesInfoFromTys(owner, actualTy, oldTy)
         val text = actualTy.renderInsertionSafe(
             context = startElement as? RsElement,
             useQualifiedName = useQualifiedName,
-            includeLifetimeArguments = true,
-            useAliasNames = true
+            includeLifetimeArguments = true
         )
         val retType = RsPsiFactory(project).createRetType(text)
 
@@ -91,7 +88,7 @@ class ChangeReturnTypeFix(
             owner.addAfter(retType, owner.valueParameterList)
         }
 
-        importTypeReferencesFromTy(owner, actualTy, useAliases = true)
+        importTypeReferencesFromTy(owner, actualTy)
     }
 
     companion object {

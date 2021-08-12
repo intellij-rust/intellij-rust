@@ -16,7 +16,6 @@ import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
 
 class RsExtractFunctionTest : RsTestBase() {
-
     fun `test extract a function without parameters and a return value`() = doTest("""
         fn main() {
             <selection>println!("test");
@@ -1253,6 +1252,38 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
+    fun `test import aliased type`() = doTest("""
+        use a::foo;
+
+        mod a {
+            pub struct A;
+            pub type Foo = A;
+            pub fn foo() -> Foo { unimplemented!() }
+        }
+
+        fn bar() -> a::Foo {
+            let s = foo();
+            <selection>s</selection>
+        }
+    """, """
+        use a::{foo, Foo};
+
+        mod a {
+            pub struct A;
+            pub type Foo = A;
+            pub fn foo() -> Foo { unimplemented!() }
+        }
+
+        fn bar() -> a::Foo {
+            let s = foo();
+            bar(s)
+        }
+
+        fn bar(s: Foo) -> Foo {
+            s
+        }
+    """, "bar")
+
     fun `test extract set value to mutable`() = doTest("""
         fn main() {
             let a = 1u32;
@@ -1410,6 +1441,30 @@ class RsExtractFunctionTest : RsTestBase() {
             let c = a;
             let d = b;
             (d, e)
+        }
+    """, "bar")
+
+    fun `test type with default type argument in extracted function`() = doTest("""
+        struct S<T = u32>(T);
+
+        fn foo() -> S<u32> {
+            let a = S(0u32);
+
+            <selection>let b = a;
+            b</selection>
+        }
+    """, """
+        struct S<T = u32>(T);
+
+        fn foo() -> S<u32> {
+            let a = S(0u32);
+
+            bar(a)
+        }
+
+        fn bar(a: S) -> S {
+            let b = a;
+            b
         }
     """, "bar")
 

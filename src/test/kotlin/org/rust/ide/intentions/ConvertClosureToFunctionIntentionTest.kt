@@ -86,4 +86,32 @@ class ConvertClosureToFunctionIntentionTest : RsIntentionTestBase(ConvertClosure
             fn foo(x: i32) -> i32 { x + 1 }/*caret*/
         }
     """)
+
+    fun `test keep aliases`() = doAvailableTest("""
+        type Foo = (u32, u32);
+
+        fn main() {
+            let foo = |x: Foo/*caret*/| { x };
+        }
+    """, """
+        type Foo = (u32, u32);
+
+        fn main() {
+            fn foo(x: Foo) -> Foo { x }/*caret*/
+        }
+    """)
+
+    fun `test skip default type argument`() = doAvailableTest("""
+        struct S<T = u32>(T);
+
+        fn main() {
+            let foo = |s: S/*caret*/| { s };
+        }
+    """, """
+        struct S<T = u32>(T);
+
+        fn main() {
+            fn foo(s: S) -> S { s }/*caret*/
+        }
+    """)
 }

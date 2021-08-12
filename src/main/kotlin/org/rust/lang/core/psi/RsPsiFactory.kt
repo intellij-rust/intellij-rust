@@ -350,7 +350,7 @@ class RsPsiFactory(
     }
 
     fun createConstant(name: String, expr: RsExpr): RsConstant =
-        createFromText("const $name: ${expr.type.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)} = ${expr.text};")
+        createFromText("const $name: ${expr.type.renderInsertionSafe(includeLifetimeArguments = true)} = ${expr.text};")
             ?: error("Failed to create constant $name from ${expr.text} ")
 
     private inline fun <reified T : RsElement> createFromText(code: CharSequence): T? =
@@ -570,11 +570,7 @@ fun RsTypeReference.substAndGetText(subst: Substitution): String =
     getStubOnlyText(subst)
 
 fun Ty.substAndGetText(subst: Substitution): String =
-    substitute(subst).renderInsertionSafe(
-        includeLifetimeArguments = true,
-        useAliasNames = true,
-        skipUnchangedDefaultTypeArguments = true
-    )
+    substitute(subst).renderInsertionSafe(includeLifetimeArguments = true)
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {

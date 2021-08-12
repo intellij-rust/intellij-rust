@@ -65,7 +65,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
         val (newPat, replaceContext) = createDestructuredPat(ctx, factory, toRename, bindings)
 
         if (ctx is Context.Struct) {
-            importTypeReferencesFromTy(newPat, ctx.type, true)
+            importTypeReferencesFromTy(newPat, ctx.type)
         }
 
         when (replaceContext) {
@@ -94,7 +94,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     ): Pair<RsElement, ReplaceContext> {
         return when (ctx) {
             is Context.Struct -> {
-                val typeName = ctx.type.render(includeTypeArguments = false, useAliasNames = true)
+                val typeName = ctx.type.render(includeTypeArguments = false)
                 val struct = ctx.struct
 
                 if (struct.isTupleStruct) {
