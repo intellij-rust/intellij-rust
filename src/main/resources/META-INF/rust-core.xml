@@ -997,6 +997,10 @@
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
 
+        <applicationService serviceInterface="org.rust.cargo.util.UnitTestRustcCacheService"
+                            serviceImplementation="org.rust.cargo.util.UnitTestRustcCacheServiceImpl"
+                            testServiceImplementation="org.rust.cargo.util.TestUnitTestRustcCacheService"/>
+
         <!-- Icon Provider -->
 
         <fileIconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>

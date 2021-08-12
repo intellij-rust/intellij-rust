@@ -46,6 +46,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.*
 import org.rust.cargo.util.DownloadResult
+import org.rust.cargo.util.UnitTestRustcCacheService
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.mapNotNullToSet
 import java.nio.file.Path
@@ -298,11 +299,11 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
         }
 
         val workingDirectory = childContext.oldCargoProject.workingDirectory
-        val sysroot = childContext.toolchain.rustc().getSysroot(workingDirectory)
-            ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
 
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
-        val rustcTargets = childContext.toolchain.rustc().getTargets(workingDirectory)
+        val sysroot = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getSysroot(workingDirectory) }
+            ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+        val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getTargets(workingDirectory) }
 
         TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustcTargets))
     }
@@ -348,7 +349,9 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
             val cfgOptions = try {
-                cargo.getCfgOption(childContext.project, projectDirectory)
+                 UnitTestRustcCacheService.cached(rustcInfo?.version, cacheIf = { !projectDirectory.resolve(".cargo").exists() }) {
+                     cargo.getCfgOption(childContext.project, projectDirectory)
+                 }
             } catch (e: ExecutionException) {
                 val rustcVersion = rustcInfo?.version?.semver
                 if (rustcVersion == null || rustcVersion > RUST_1_51) {
@@ -401,7 +404,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
 
 
 private fun Rustup.fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
-    return when (val download = downloadStdlib()) {
+    return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {
         is DownloadResult.Ok -> {
             val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, listener = SyncProcessAdapter(context))
             if (lib == null) {
