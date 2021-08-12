@@ -5,7 +5,6 @@
 
 package org.rust.cargo.runconfig.command
 
-import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -27,7 +26,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.*
-import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
@@ -76,15 +74,6 @@ open class CargoCommandConfiguration(
 
     override fun setRedirectInputPath(value: String?) {
         redirectInputPath = value
-    }
-
-    override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
-        val tasks = super.getBeforeRunTasks()
-        return if (tasks.none { it is CargoBuildTaskProvider.BuildTask }) {
-            tasks + CargoBuildTaskProvider.BuildTask()
-        } else {
-            tasks
-        }
     }
 
     override fun writeExternal(element: Element) {
