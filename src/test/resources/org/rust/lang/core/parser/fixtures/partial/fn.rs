@@ -26,3 +26,6 @@ fn bar(a: i32, {}
 fn bar(, {}
 
 fn foo(...,,) {}
+
+fn foo() ->
+fn bar() {}

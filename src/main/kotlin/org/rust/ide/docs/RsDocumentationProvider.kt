@@ -541,7 +541,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
         is RsFnPointerType -> {
             // TODO: handle abi
             buffer += "fn"
-            typeElement.valueParameterList.generateDocumentation(buffer)
+            typeElement.valueParameterList?.generateDocumentation(buffer)
             typeElement.retType?.generateDocumentation(buffer)
         }
         else -> buffer += element.text.escaped

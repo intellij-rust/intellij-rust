@@ -15,6 +15,7 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
 
     fun `test items`() = doTest(true)
     fun `test fn`() = doTest(true)
+    fun `test fn_type`() = doTest(true)
     fun `test use item`() = doTest(true)
     fun `test shifts`() = doTest(true)
     fun `test patterns`() = doTest(true)

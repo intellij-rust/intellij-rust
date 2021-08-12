@@ -936,7 +936,8 @@ RefLikeType ::= RefLikeStart TypeReference {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
+FnPointerType ::= [ unsafe? ExternAbi? ] fn !identifier FnTypeParameters RetType? {
+  pin = 3
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
