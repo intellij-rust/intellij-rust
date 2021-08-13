@@ -14,14 +14,13 @@ import org.rust.ide.inspections.lints.isCamelCase
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.import.RsImportHelper
+import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.PathResolveStatus
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.isAncestorOf
-import org.rust.lang.core.psi.ext.resolveStatus
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.openapiext.createSmartPointer
 
 class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStructIntention.Context>() {
     override fun getFamilyName() = "Create tuple struct"
@@ -63,7 +62,12 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
 
         val fields = inserted.tupleFields?.tupleFieldDeclList.orEmpty()
         if (inserted.containingFile == ctx.call.containingFile && fields.isNotEmpty()) {
-            editor.caretModel.moveToOffset(fields[0].textOffset)
+            val unknownTypes = inserted.descendantsOfType<RsBaseType>().filter { it.underscore != null }
+            if (unknownTypes.isNotEmpty()) {
+                editor.buildAndRunTemplate(inserted, unknownTypes.map { it.createSmartPointer() })
+            } else {
+                editor.caretModel.moveToOffset(fields[0].textOffset)
+            }
         } else {
             inserted.navigate(true)
         }
