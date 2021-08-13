@@ -60,6 +60,8 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
+        // BACKCOMPAT: 2021.1. Drop `build-cache` from excluded dir.
+        // The corresponding code was temporarily left here to handle old not-removed `build-cache` dir
         excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") + file("build-cache")
     }
 }
@@ -384,6 +386,8 @@ project(":") {
             }
         }
 
+        // BACKCOMPAT: 2021.1. Drop `clean` task customization
+        // The corresponding code was temporarily left here to handle old not-removed `build-cache` dir
         clean {
             delete(*(File("${rootDir}/build-cache").listFiles() ?: emptyArray()))
         }
