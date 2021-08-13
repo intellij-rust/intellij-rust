@@ -248,11 +248,9 @@ project(":plugin") {
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
+            javaScriptPlugin,
             mlCompletionPlugin
         )
-        if (platformVersion < 212) {
-            pluginList += javaScriptPlugin
-        }
         if (baseIDE == "idea") {
             pluginList += listOf(
                 copyrightPlugin,
