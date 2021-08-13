@@ -5,7 +5,6 @@
 
 package org.rust.ide.intentions.createFromUsage
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,6 +14,7 @@ import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.RsMultipleVariableRenamer
 import org.rust.ide.utils.import.RsImportHelper
+import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnknown
@@ -52,11 +52,28 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-        val fields = inserted.blockFields?.namedFieldDeclList.orEmpty()
+        val fields = inserted.blockFields?.namedFieldDeclList.orEmpty().map { it.createSmartPointer() }
         if (inserted.containingFile == function.containingFile && fields.isNotEmpty()) {
-            editor.caretModel.moveToOffset(fields[0].textOffset)
-            RsMultipleVariableRenamer(fields.map { it.createSmartPointer() })
-                .doRename(fields[0], editor, DataManager.getInstance().getDataContext(editor.component))
+            val unknownTypes = inserted.descendantsOfType<RsBaseType>()
+                .filter { it.underscore != null }
+                .map { it.createSmartPointer() }
+            val builder = editor.newTemplateBuilder(inserted.containingFile) ?: return
+
+            // Replace unknown types
+            unknownTypes.forEach {
+                builder.replaceElement(it.element ?: return@forEach)
+            }
+
+            // Replace field names
+            for (field in fields) {
+                val element = field.element?.identifier ?: continue
+                val variable = builder.introduceVariable(element)
+                val fieldLiteralIdentifier = ctx.literalElement.structLiteralBody.structLiteralFieldList.find {
+                    it.identifier?.text == element.text
+                }?.identifier ?: continue
+                variable.replaceElementWithVariable(fieldLiteralIdentifier)
+            }
+            builder.runInline()
         } else {
             inserted.navigate(true)
         }
