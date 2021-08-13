@@ -60,6 +60,8 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
+        // BACKCOMPAT: 2021.1. Drop `build-cache` from excluded dir.
+        // The corresponding code was temporarily left here to handle old not-removed `build-cache` dir
         excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") + file("build-cache")
     }
 }
@@ -159,7 +161,7 @@ allprojects {
         }
     }
 
-    configure<JavaPluginConvention> {
+    configure<JavaPluginExtension> {
         sourceCompatibility = VERSION_1_8
         targetCompatibility = VERSION_1_8
     }
@@ -167,12 +169,20 @@ allprojects {
     sourceSets {
         main {
             java.srcDirs("src/gen")
-            kotlin.srcDirs("src/$platformVersion/main/kotlin")
             resources.srcDirs("src/$platformVersion/main/resources")
         }
         test {
-            kotlin.srcDirs("src/$platformVersion/test/kotlin")
             resources.srcDirs("src/$platformVersion/test/resources")
+        }
+    }
+    kotlin {
+        sourceSets {
+            main {
+                kotlin.srcDirs("src/$platformVersion/main/kotlin")
+            }
+            test {
+                kotlin.srcDirs("src/$platformVersion/test/kotlin")
+            }
         }
     }
 
@@ -238,11 +248,9 @@ project(":plugin") {
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
+            javaScriptPlugin,
             mlCompletionPlugin
         )
-        if (platformVersion < 212) {
-            pluginList += javaScriptPlugin
-        }
         if (baseIDE == "idea") {
             pluginList += listOf(
                 copyrightPlugin,
@@ -376,6 +384,8 @@ project(":") {
             }
         }
 
+        // BACKCOMPAT: 2021.1. Drop `clean` task customization
+        // The corresponding code was temporarily left here to handle old not-removed `build-cache` dir
         clean {
             delete(*(File("${rootDir}/build-cache").listFiles() ?: emptyArray()))
         }
@@ -385,8 +395,8 @@ project(":") {
         doLast {
             rootProject.allprojects
                 .map { it.configurations }
-                .flatMap { listOf(it.compile, it.testCompile) }
-                .forEach { it.get().resolve() }
+                .flatMap { it.filter { c -> c.isCanBeResolved } }
+                .forEach { it.resolve() }
         }
     }
 }
@@ -793,18 +803,6 @@ fun prop(name: String): String =
 
 
 inline operator fun <T : Task> T.invoke(a: T.() -> Unit): T = apply(a)
-
-val SourceSet.kotlin: SourceDirectorySet
-    get() =
-        (this as HasConvention)
-            .convention
-            .getPlugin(KotlinSourceSet::class.java)
-            .kotlin
-
-
-fun SourceSet.kotlin(action: SourceDirectorySet.() -> Unit) =
-    kotlin.action()
-
 
 fun String.execute(wd: String? = null, ignoreExitCode: Boolean = false, print: Boolean = true): String =
     split(" ").execute(wd, ignoreExitCode, print)
