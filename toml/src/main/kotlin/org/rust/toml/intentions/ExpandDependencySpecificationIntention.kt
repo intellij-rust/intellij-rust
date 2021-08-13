@@ -19,7 +19,7 @@ import org.toml.lang.psi.TomlTable
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 
-class ExpandDependencySpecificationIntention : TomlElementBaseIntentionAction<TomlKeyValue>() {
+class ExpandDependencySpecificationIntention : RsTomlElementBaseIntentionAction<TomlKeyValue>() {
     override fun getText() = "Expand dependency specification"
     override fun getFamilyName(): String = text
 
