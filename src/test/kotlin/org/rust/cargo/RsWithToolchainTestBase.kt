@@ -20,6 +20,7 @@ import org.rust.cargo.toolchain.tools.rustc
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.pathAsPath
+import org.rust.stdext.RsResult
 
 /**
  * This class allows executing real Cargo during the tests.
@@ -60,20 +61,16 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
             System.err.println("SKIP \"$name\": $skipReason")
             return
         }
-        val minRustVersion = findAnnotationInstance<MinRustcVersion>()
-        if (minRustVersion != null) {
-            val requiredVersion = minRustVersion.semver
-            val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion()
-            if (rustcVersion == null) {
-                System.err.println("SKIP \"$name\": failed to query Rust version")
-                return
-            }
 
-            if (rustcVersion.semver < requiredVersion) {
-                println("SKIP \"$name\": $requiredVersion Rust version required, ${rustcVersion.semver} found")
-                return
-            }
+        val reason = checkRustcVersionRequirements {
+            val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion()?.semver
+            if (rustcVersion != null) RsResult.Ok(rustcVersion) else RsResult.Err("\"$name\": failed to query Rust version")
         }
+        if (reason != null) {
+            System.err.println("SKIP $reason")
+            return
+        }
+
         super.runTestRunnable(testRunnable)
     }
 

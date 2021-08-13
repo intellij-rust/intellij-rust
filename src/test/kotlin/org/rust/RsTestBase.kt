@@ -37,6 +37,8 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
+import org.rust.stdext.RsResult
+import org.rust.stdext.toResult
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.full.createInstance
 
@@ -219,17 +221,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     protected open val skipTestReason: String?
         get() {
             val projectDescriptor = projectDescriptor as? RustProjectDescriptorBase
-
-            fun getMinRustVersionReason(): String? {
-                val minRustVersion = findAnnotationInstance<MinRustcVersion>() ?: return null
-                val requiredVersion = minRustVersion.semver
-                val rustcVersion = projectDescriptor?.rustcInfo?.version ?: return null
-                if (rustcVersion.semver >= requiredVersion) return null
-                return "$requiredVersion Rust version required, ${rustcVersion.semver} found"
+            return projectDescriptor?.skipTestReason ?: run {
+                checkRustcVersionRequirements {
+                    val rustcVersion = projectDescriptor?.rustcInfo?.version?.semver
+                    if (rustcVersion != null) RsResult.Ok(rustcVersion) else RsResult.Err(null)
+                }
             }
-
-            return projectDescriptor?.skipTestReason
-                ?: getMinRustVersionReason()
         }
 
     private fun runTestEdition2015(testRunnable: ThrowableRunnable<Throwable>) {
