@@ -272,6 +272,42 @@ class RsIntroduceParameterTest : RsTestBase() {
         }
     """)
 
+    fun `test aliased type`() = doTest("""
+        type Foo = u32;
+
+        fn bar() -> Foo { 0 }
+
+        fn hello() {
+            foo(/*caret*/bar());
+        }
+    """, listOf("bar()", "foo(bar())"), 0, 0, """
+        type Foo = u32;
+
+        fn bar() -> Foo { 0 }
+
+        fn hello(/*caret*/i: Foo) {
+            foo(i);
+        }
+    """)
+
+    fun `test type with default type argument`() = doTest("""
+        struct S<T = u32>(T);
+
+        fn bar() -> S { S(0) }
+
+        fn hello() {
+            foo(/*caret*/bar());
+        }
+    """, listOf("bar()", "foo(bar())"), 0, 0, """
+        struct S<T = u32>(T);
+
+        fn bar() -> S { S(0) }
+
+        fn hello(/*caret*/s: S) {
+            foo(s);
+        }
+    """)
+
     private fun doTest(
         @Language("Rust") before: String,
         expressions: List<String>,

@@ -58,7 +58,7 @@ class Parameter private constructor(
         } else {
             ""
         }
-    private val typeText: String = type?.renderInsertionSafe(useAliasNames = true, skipUnchangedDefaultTypeArguments = true).orEmpty()
+    private val typeText: String = type?.renderInsertionSafe().orEmpty()
 
     val originalParameterText: String
         get() = if (type != null) "$mutText$originalName: $referenceText$typeText" else originalName
@@ -183,7 +183,7 @@ class RsExtractFunctionConfig private constructor(
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
         if (returnValue != null && returnValue.type !is TyUnit) {
-            append(" -> ${returnValue.type.renderInsertionSafe(useAliasNames = true, skipUnchangedDefaultTypeArguments = true)}")
+            append(" -> ${returnValue.type.renderInsertionSafe()}")
         }
         append(whereClausesText)
     }

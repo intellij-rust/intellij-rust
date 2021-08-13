@@ -23,11 +23,7 @@ class CallInfo private constructor(
     class Parameter(val typeRef: RsTypeReference?, val pattern: String? = null, val type: Ty? = null) {
         fun renderType(): String {
             return if (type != null && type !is TyUnknown) {
-                type.render(
-                    includeLifetimeArguments = true,
-                    useAliasNames = true,
-                    skipUnchangedDefaultTypeArguments = true
-                )
+                type.render(includeLifetimeArguments = true)
             } else {
                 typeRef?.substAndGetText(emptySubstitution) ?: "_"
             }

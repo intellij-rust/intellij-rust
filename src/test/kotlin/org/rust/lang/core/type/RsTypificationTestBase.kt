@@ -9,6 +9,7 @@ import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsMacroCall
@@ -52,7 +53,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         val (expr, data) = findElementAndDataInEditor<RsExpr>()
         val expectedTypes = data.split("|").map(String::trim)
 
-        val type = expr.type.toString()
+        val type = expr.type.render(skipUnchangedDefaultTypeArguments = false, useAliasNames = false)
         check(type in expectedTypes) {
             "Type mismatch. Expected one of $expectedTypes, found: $type. $description"
         }

@@ -35,7 +35,7 @@ class ConvertLetDeclTypeFix(
     ) {
         val decl = startElement as? RsLetDecl ?: return
         val factory = RsPsiFactory(project)
-        val type = factory.tryCreateType(ty.renderInsertionSafe(useAliasNames = true)) ?: return
+        val type = factory.tryCreateType(ty.renderInsertionSafe()) ?: return
 
         decl.typeReference?.replace(type)
     }

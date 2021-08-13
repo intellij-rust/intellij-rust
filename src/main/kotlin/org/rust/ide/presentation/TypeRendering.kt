@@ -40,8 +40,8 @@ fun Ty.render(
     useQualifiedName: Set<RsQualifiedNamedElement> = emptySet(),
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
-    useAliasNames: Boolean = false,
-    skipUnchangedDefaultTypeArguments: Boolean = false
+    useAliasNames: Boolean = true,
+    skipUnchangedDefaultTypeArguments: Boolean = true
 ): String = TypeRenderer(
     context = context,
     unknown = unknown,
@@ -63,8 +63,8 @@ fun Ty.renderInsertionSafe(
     useQualifiedName: Set<RsQualifiedNamedElement> = emptySet(),
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
-    useAliasNames: Boolean = false,
-    skipUnchangedDefaultTypeArguments: Boolean = false
+    useAliasNames: Boolean = true,
+    skipUnchangedDefaultTypeArguments: Boolean = true
 ): String = TypeRenderer(
     context = context,
     unknown = "_",
@@ -82,7 +82,7 @@ fun Ty.renderInsertionSafe(
 
 val Ty.shortPresentableText: String
     get() = generateSequence(1) { it + 1 }
-        .map { render(level = it, unknown = "?", useAliasNames = true) }
+        .map { render(level = it, unknown = "?") }
         .withPrevious()
         .takeWhile { (cur, prev) ->
             cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)

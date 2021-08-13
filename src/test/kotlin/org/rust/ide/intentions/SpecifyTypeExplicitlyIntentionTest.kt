@@ -58,6 +58,20 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
         }
     """)
 
+    fun `test type with default type argument`() = doAvailableTest("""
+        struct S<T = u32>(S);
+
+        fn foo(c: S<u32>) {
+            let b/*caret*/ = c;
+        }
+    """, """
+        struct S<T = u32>(S);
+
+        fn foo(c: S<u32>) {
+            let b: S = c;
+        }
+    """)
+
     fun `test unavailable in expr 1`() = doUnavailableTest(
         """ fn main() { let var = /*caret*/1; } """
     )
@@ -156,7 +170,24 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             fn main() { let var: B = foo(); }
     """)
 
-    // TODO: Don't render default values of type parameters
+    fun `test import skip default type argument`() = doAvailableTest("""
+            use a::foo;
+            mod a {
+                pub struct R;
+                pub struct S<T = R>(T);
+                pub fn foo() -> S<R> { S(R) }
+            }
+            fn main() { let var/*caret*/ = foo(); }
+    """, """
+            use a::{foo, S};
+            mod a {
+                pub struct R;
+                pub struct S<T = R>(T);
+                pub fn foo() -> S<R> { S(R) }
+            }
+            fn main() { let var: S = foo(); }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test import std type`() = doAvailableTest("""
             use a::foo;
@@ -168,14 +199,13 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             fn main() { let var/*caret*/ = foo(); }
     """, """
             use a::foo;
-            use std::collections::hash_map::RandomState;
             use std::collections::HashMap;
 
             mod a {
                 use std::collections::HashMap;
                 pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
             }
-            fn main() { let var: HashMap<i32, i32, RandomState> = foo(); }
+            fn main() { let var: HashMap<i32, i32> = foo(); }
     """)
 
     fun `test ref pat`() = doAvailableTest(

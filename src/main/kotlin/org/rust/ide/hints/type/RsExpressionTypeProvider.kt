@@ -37,7 +37,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
 
     override fun getInformationHint(element: PsiElement): String {
         val type = getType(element)
-        return type.render(useAliasNames = true).escaped
+        return type.render(skipUnchangedDefaultTypeArguments = false).escaped
     }
 
     private fun getType(element: PsiElement): Ty = when (element) {

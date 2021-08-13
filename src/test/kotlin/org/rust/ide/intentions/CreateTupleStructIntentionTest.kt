@@ -111,4 +111,36 @@ class CreateTupleStructIntentionTest : RsIntentionTestBase(CreateTupleStructInte
             }
         }
     """)
+
+    fun `test aliased parameter`() = doAvailableTest("""
+        type Bar = u32;
+
+        fn foo(bar: Bar) {
+            Foo/*caret*/(bar);
+        }
+    """, """
+        type Bar = u32;
+
+        struct Foo(Bar);
+
+        fn foo(bar: Bar) {
+            Foo(bar);
+        }
+    """)
+
+    fun `test type with default type argument`() = doAvailableTest("""
+        struct S<T = u32>(T);
+
+        fn foo(bar: S) {
+            Foo/*caret*/(bar);
+        }
+    """, """
+        struct S<T = u32>(T);
+
+        struct Foo(S);
+
+        fn foo(bar: S) {
+            Foo(bar);
+        }
+    """)
 }

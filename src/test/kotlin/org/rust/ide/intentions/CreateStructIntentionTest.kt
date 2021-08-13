@@ -128,4 +128,40 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             }
         }
     """)
+
+    fun `test field with aliased type`() = doAvailableTest("""
+        type Bar = u32;
+
+        fn foo(bar: Bar) {
+            Foo/*caret*/ { a: bar };
+        }
+    """, """
+        type Bar = u32;
+
+        struct Foo {
+            a: Bar
+        }
+
+        fn foo(bar: Bar) {
+            Foo { a: bar };
+        }
+    """)
+
+    fun `test field with default type argument`() = doAvailableTest("""
+        struct S<T = u32>(T);
+
+        fn foo(bar: S<u32>) {
+            Foo/*caret*/ { a: bar };
+        }
+    """, """
+        struct S<T = u32>(T);
+
+        struct Foo {
+            a: S
+        }
+
+        fn foo(bar: S<u32>) {
+            Foo { a: bar };
+        }
+    """)
 }

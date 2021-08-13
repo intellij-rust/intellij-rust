@@ -88,7 +88,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun generateDoc(element: RsPatBinding, buffer: StringBuilder) {
         val presentationInfo = element.presentationInfo ?: return
-        val type = element.type.render(useAliasNames = true).escaped
+        val type = element.type.render().escaped
         buffer += presentationInfo.type
         buffer += " "
         buffer.b { it += presentationInfo.name }

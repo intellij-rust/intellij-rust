@@ -98,7 +98,7 @@ sealed class RsDiagnostic(
                         val pat = parent.pat
                         if (pat is RsPatIdent &&
                             !actualTy.containsTyOfClass(TyUnknown::class.java, TyAnon::class.java)) {
-                            val text = "Change type of `${pat.patBinding.identifier.text ?: "?"}` to `${actualTy.renderInsertionSafe(useAliasNames = true)}`"
+                            val text = "Change type of `${pat.patBinding.identifier.text ?: "?"}` to `${actualTy.renderInsertionSafe()}`"
                             add(ConvertLetDeclTypeFix(parent, text, actualTy))
                         }
                     }
@@ -1524,12 +1524,12 @@ private val RsSelfParameter.canonicalDecl: String
     }
 
 private fun Ty.rendered(useQualifiedName: Set<RsQualifiedNamedElement> = emptySet()): String =
-    render(useQualifiedName = useQualifiedName, useAliasNames = true)
+    render(useQualifiedName = useQualifiedName)
 
 private fun getConflictingNames(element: PsiElement, vararg tys: Ty): Set<RsQualifiedNamedElement> {
     val context = element.ancestorOrSelf<RsElement>()
     return if (context != null) {
-        getTypeReferencesInfoFromTys(context, *tys, useAliases = true).toQualify
+        getTypeReferencesInfoFromTys(context, *tys).toQualify
     } else {
         emptySet()
     }

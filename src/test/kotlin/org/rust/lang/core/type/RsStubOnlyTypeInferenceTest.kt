@@ -280,7 +280,6 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             s;
           //^ S<1, i32, 1, u32, 1, u32>
         }
-
     """)
 
     fun `test const argument that looks like a type argument`() = stubOnlyTypeInfer("""

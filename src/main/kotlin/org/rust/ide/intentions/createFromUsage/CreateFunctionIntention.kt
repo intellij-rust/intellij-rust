@@ -160,7 +160,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             parameters.add(0, "&self")
         }
         val returnType = if (config.returnType !is TyUnit) {
-            " -> ${config.returnType.renderInsertionSafe(useAliasNames = true)}"
+            " -> ${config.returnType.renderInsertionSafe()}"
         } else ""
         val paramsText = parameters.joinToString(", ")
 
@@ -178,7 +178,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val arguments = ctx.arguments
 
         val parameters = arguments.exprList.mapIndexed { index, expr ->
-            "p$index: ${expr.type.renderInsertionSafe(useAliasNames = true)}"
+            "p$index: ${expr.type.renderInsertionSafe()}"
         }
 
         val returnType = ctx.returnType.type.takeIf { it != TyUnknown } ?: TyUnit.INSTANCE
