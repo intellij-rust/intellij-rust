@@ -80,6 +80,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                 //^ unresolved
     """)
 
+    @MaxRustcVersion("1.53.0")
     fun `test no core excludes core`() = stubOnlyResolve("""
     //- main.rs
         #![no_std]
@@ -712,6 +713,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                         //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
+    // BACKCOMPAT: Rust 1.53. Paths `std/sys/%platform_name%/ext` were moved to `std/os/%platform_name%`
     @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module unix`() {
@@ -719,10 +721,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         stubOnlyResolve("""
             //- main.rs
             use std::os::unix;
-                        //^ ...libstd/sys/unix/ext/mod.rs|...std/src/sys/unix/ext/mod.rs
+                        //^ ...libstd/sys/unix/ext/mod.rs|...std/src/sys/unix/ext/mod.rs|...std/src/os/unix/mod.rs
         """)
     }
 
+    // BACKCOMPAT: Rust 1.53. Paths `std/sys/%platform_name%/ext` were moved to `std/os/%platform_name%`
     @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module windows`() {
@@ -730,7 +733,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         stubOnlyResolve("""
             //- main.rs
             use std::os::windows;
-                        //^ ...libstd/sys/windows/ext/mod.rs|...std/src/sys/windows/ext/mod.rs
+                        //^ ...libstd/sys/windows/ext/mod.rs|...std/src/sys/windows/ext/mod.rs|...std/src/os/windows/mod.rs
         """)
     }
 }
