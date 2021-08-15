@@ -1,0 +1,178 @@
+{
+    "title": "JSON Schema for Cargo manifest files",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "type": "object",
+    "properties": {
+        "cargo-features": {
+            "description": "Unstable, nightly-only features",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "package": {
+            "description": "Package definition",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name of the package",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Version of the package",
+                    "type": "string"
+                },
+                "authors": {
+                    "description": "Authors of the package",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "edition": {
+                    "description": "Rust edition",
+                    "type": "string",
+                    "enum": ["2015", "2018", "2021"],
+                    "default": "2018"
+                },
+                "description": {
+                    "description": "Description of the package",
+                    "type": "string"
+                },
+                "documentation": {
+                    "description": "URL of package documentation",
+                    "type": "string"
+                },
+                "readme": {
+                    "description": "Path to package's README file",
+                    "type": "string"
+                },
+                "homepage": {
+                    "description": "URL of package homepage",
+                    "type": "string"
+                },
+                "repository": {
+                    "description": "URL of package source repository",
+                    "type": "string"
+                },
+                "license": {
+                    "description": "Package license",
+                    "type": "string"
+                },
+                "license-file": {
+                    "description": "Path to full text of license",
+                    "type": "string"
+                },
+                "keywords": {
+                    "description": "Keywords for package",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "categories": {
+                    "description": "Categories of package",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "workspace": {
+                    "description": "Path to workspace for package",
+                    "type": "string"
+                },
+                "build": {
+                    "type": "string"
+                },
+                "links": {
+                    "type": "string"
+                },
+                "exclude": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "include": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "publish": {
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object"
+                },
+                "default-run": {
+                    "type": "string"
+                },
+                "autobins": {
+                    "type": "boolean"
+                },
+                "autoexamples": {
+                    "type": "boolean"
+                },
+                "autotests": {
+                    "type": "boolean"
+                },
+                "autobenches": {
+                    "type": "boolean"
+                },
+                "resolver": {
+                    "type": "string",
+                    "enum": ["1", "2"]
+                }
+            },
+            "required": ["name", "version", "authors"]
+        },
+        "dependencies": {
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string"
+                        },
+                        "features": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dev-dependencies": {
+            "type": "object"
+        },
+        "build-dependencies": {
+            "type": "object"
+        },
+        "target": {
+            "type": "object"
+        },
+        "features": {
+            "type": "object",
+            "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "additionalProperties": {
+                "type": "array"
+            }
+        },
+        "patch": {
+            "type": "object"
+        },
+        "profile": {
+            "type": "object"
+        },
+        "workspace": {
+            "type": "object"
+        }
+    }
+}

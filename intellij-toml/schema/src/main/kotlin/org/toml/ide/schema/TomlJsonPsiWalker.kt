@@ -15,25 +15,15 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import org.toml.lang.psi.*
 
-class TomlJsonPsiWalker private constructor() : JsonLikePsiWalker {
-    override fun isName(element: PsiElement?): ThreeState {
-        if (element is TomlKeySegment) return ThreeState.YES
-        return ThreeState.NO
-    }
+object TomlJsonPsiWalker : JsonLikePsiWalker {
+    override fun isName(element: PsiElement?): ThreeState =
+        if (element is TomlKeySegment) ThreeState.YES else ThreeState.NO
 
     override fun isPropertyWithValue(element: PsiElement): Boolean =
         element is TomlKeyValue && element.value != null
 
-    override fun findElementToCheck(element: PsiElement): PsiElement? {
-        var current: PsiElement? = element
-
-        while (current != null && current !is PsiFile) {
-            if (current is TomlElement) return current
-            current = current.parent
-        }
-
-        return null
-    }
+    override fun findElementToCheck(element: PsiElement): PsiElement? =
+        element.parentOfType<TomlElement>()
 
     override fun findPosition(element: PsiElement, forceLastTransition: Boolean): JsonPointerPosition {
         val position = JsonPointerPosition()
@@ -87,25 +77,14 @@ class TomlJsonPsiWalker private constructor() : JsonLikePsiWalker {
 
     override fun getRoots(file: PsiFile): Collection<PsiElement> {
         if (file !is TomlFile) return emptyList()
-
-        val roots = hashSetOf<PsiElement>()
-        roots.addAll(file.children)
-        return roots
+        return file.children.toHashSet()
     }
 
     override fun getPropertyNameElement(property: PsiElement?): PsiElement? = (property as? TomlKeyValue)?.key
-
-    override fun getNodeTextForValidation(element: PsiElement?): String {
-        return super.getNodeTextForValidation(element)
-    }
 
     override fun hasMissingCommaAfter(element: PsiElement): Boolean = false
 
     override fun acceptsEmptyRoot(): Boolean = true
     override fun requiresNameQuotes(): Boolean = false
     override fun allowsSingleQuotes(): Boolean = false
-
-    companion object {
-        val INSTANCE = TomlJsonPsiWalker()
-    }
 }

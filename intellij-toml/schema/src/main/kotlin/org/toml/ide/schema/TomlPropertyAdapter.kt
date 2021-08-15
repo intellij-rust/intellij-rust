@@ -15,7 +15,7 @@ import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlKeyValueOwner
 
 class TomlPropertyAdapter(private val tomlKeyValue: TomlKeyValue) : JsonPropertyAdapter {
-    override fun getName(): String = tomlKeyValue.key.text
+    override fun getName(): String = tomlKeyValue.key.segments.lastOrNull()?.name ?: ""
 
     override fun getNameValueAdapter(): JsonValueAdapter = TomlGenericValueAdapter(tomlKeyValue.key)
 
@@ -34,7 +34,7 @@ class TomlPropertyAdapter(private val tomlKeyValue: TomlKeyValue) : JsonProperty
     }
 
     companion object {
-        fun createAdapterByType(value: TomlElement) = when (value) {
+        fun createAdapterByType(value: TomlElement): JsonValueAdapter = when (value) {
             is TomlKeyValueOwner -> TomlObjectAdapter(value)
             is TomlArray -> TomlArrayAdapter(value)
             else -> TomlGenericValueAdapter(value)

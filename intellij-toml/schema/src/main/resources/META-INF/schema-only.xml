@@ -1,4 +1,6 @@
 <idea-plugin>
+    <depends>com.intellij.modules.json</depends>
+
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor order="first" language="TOML" id="TomlJsonSchema"
                                 implementationClass="org.toml.ide.schema.TomlJsonSchemaCompletionContributor"/>

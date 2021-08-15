@@ -3,4 +3,8 @@
 
     <xi:include href="/META-INF/toml-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <depends optional="true" config-file="schema-only.xml">com.intellij.modules.json</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+    </extensions>
 </idea-plugin>

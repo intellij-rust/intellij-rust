@@ -14,9 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.Consumer
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
@@ -24,7 +22,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import org.jetbrains.annotations.TestOnly
 import org.toml.ide.experiments.TomlExperiments
 
 class TomlJsonSchemaCompletionContributor : CompletionContributor() {
@@ -36,11 +33,13 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
         val jsonSchemaObject = jsonSchemaService.getSchemaObject(parameters.originalFile)
 
         if (jsonSchemaObject != null) {
-            doCompletion(parameters, result, jsonSchemaObject, true)
+            val completionPosition = parameters.originalPosition ?: parameters.position
+            val worker = Worker(jsonSchemaObject, parameters.position, completionPosition, result)
+            worker.work()
         }
     }
 
-    class Worker(
+    private class Worker(
         private val rootSchema: JsonSchemaObject,
         private val position: PsiElement,
         private val originalPosition: PsiElement,
@@ -86,14 +85,18 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
 
             for (variant in variants) {
                 knownNames.add(variant)
-                addPropertyVariant(variant, schemaProperties[variant])
+                val jsonSchemaObject = schemaProperties[variant]
+
+                if (jsonSchemaObject != null) {
+                    addPropertyVariant(variant, jsonSchemaObject)
+                }
             }
         }
 
         @Suppress("NAME_SHADOWING")
-        private fun addPropertyVariant(key: String, jsonSchemaObject: JsonSchemaObject?) {
-            val currentVariants = JsonSchemaResolver(project, jsonSchemaObject!!).resolve()
-            val jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(currentVariants), jsonSchemaObject)
+        private fun addPropertyVariant(key: String, jsonSchemaObject: JsonSchemaObject) {
+            val currentVariants = JsonSchemaResolver(project, jsonSchemaObject).resolve()
+            val jsonSchemaObject = currentVariants.firstOrNull() ?: jsonSchemaObject
 
             var description = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject)
             if (description.isNullOrBlank()) {
@@ -108,34 +111,9 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
         }
 
         private fun getIconForType(type: JsonSchemaType?) = when (type) {
-            null -> AllIcons.Nodes.Property
             JsonSchemaType._object -> AllIcons.Json.Object
             JsonSchemaType._array -> AllIcons.Json.Array
             else -> AllIcons.Nodes.Property
-        }
-    }
-
-    companion object {
-        fun doCompletion(parameters: CompletionParameters, result: CompletionResultSet, rootSchema: JsonSchemaObject, stop: Boolean) {
-            val completionPosition = parameters.originalPosition ?: parameters.position
-            val worker = Worker(rootSchema, parameters.position, completionPosition, result)
-
-            worker.work()
-
-            if (stop && worker.variants.isNotEmpty()) {
-                result.stopHere()
-            }
-        }
-
-        @TestOnly
-        fun getCompletionVariants(
-            schema: JsonSchemaObject,
-            position: PsiElement,
-            originalPosition: PsiElement
-        ): List<LookupElement> {
-            val result = mutableListOf<LookupElement>()
-            Worker(schema, position, originalPosition) { element: LookupElement? -> result.add(element!!) }.work()
-            return result
         }
     }
 }

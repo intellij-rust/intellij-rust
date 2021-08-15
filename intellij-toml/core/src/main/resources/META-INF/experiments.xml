@@ -1,7 +1,5 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <experimentalFeature id="org.toml.json.schema" percentOfUsers="0">
-            <description>Enables JSON schemas support for TOML</description>
-        </experimentalFeature>
+        <registryKey key="org.toml.json.schema" defaultValue="false" description="JSON schemas support for TOML"/>
     </extensions>
 </idea-plugin>

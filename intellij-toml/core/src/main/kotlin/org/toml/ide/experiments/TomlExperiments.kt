@@ -5,7 +5,7 @@
 
 package org.toml.ide.experiments
 
-import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.util.registry.Registry
 
 object TomlExperiments {
     private const val JSON_SCHEMA = "org.toml.json.schema"
@@ -14,6 +14,6 @@ object TomlExperiments {
         get() = isFeatureEnabled(JSON_SCHEMA)
 
     @Suppress("SameParameterValue")
-    private fun isFeatureEnabled(featureId: String) =
-        Experiments.getInstance().isFeatureEnabled(featureId)
+    private fun isFeatureEnabled(registryKey: String) =
+        Registry.get(registryKey).asBoolean()
 }
