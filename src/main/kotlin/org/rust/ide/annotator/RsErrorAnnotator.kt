@@ -540,8 +540,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.owner.parent
-        if ((owner is RsValueParameter && owner.parent.parent is RsFunction)
-            || (owner is RsRetType && owner.parent is RsFunction) || owner is RsConstant
+        val ownerParent = owner.parent
+        val ownerGrandParent = ownerParent.parent
+        if ((owner is RsValueParameter && ownerGrandParent is RsFunction)
+            || (owner is RsRetType && ownerParent is RsFunction)
+            || owner is RsConstant
+            || (owner is RsFieldDecl && (ownerGrandParent is RsStructItem || ownerGrandParent is RsEnumVariant))
         ) {
             RsDiagnostic.TypePlaceholderForbiddenError(type).addToHolder(holder)
         }
