@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.intellij.lang.annotations.Language
 import org.toml.TomlTestBase
 
-open class TomlCompletionTestBase : TomlTestBase() {
+abstract class TomlCompletionTestBase : TomlTestBase() {
     lateinit var completionFixture: TomlCompletionFixture
 
     override fun setUp() {
