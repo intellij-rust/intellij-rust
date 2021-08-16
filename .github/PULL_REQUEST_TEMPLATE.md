@@ -10,12 +10,21 @@ https://github.com/intellij-rust/intellij-rust/blob/master/CONTRIBUTING.md#cla
 
 After you sign the CLA, please add your name to
 https://github.com/intellij-rust/intellij-rust/blob/master/CONTRIBUTORS.txt
-
-Also, please write a short description explaining your change in the following format: `changelog: %description%`
+Drop these lines for internal only changes
+-->
+<!--
+Also, please provide as much context as possible about the feature, attach a code sample as text, 
+a screenshot or screencast if possible in the following format: `changelog: %description%`
 This description will help a lot to create release changelog. 
 Drop these lines for internal only changes
 
 :)
 -->
 
-changelog:
+##Changelog:
+##Issue:
+<!-- Choose one or several -->
+<!-- **Related issues:** / **Closed issue:** / **Similar issue:** -->
+
+
+
