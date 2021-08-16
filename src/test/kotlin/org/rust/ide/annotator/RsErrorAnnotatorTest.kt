@@ -420,6 +420,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn bar() -> <error>_</error> {}
         fn baz(t: (u32, <error>_</error>)) -> (bool, (f64, <error>_</error>)) { unreachable!() }
         static FOO: <error>_</error> = 42;
+        struct Baz(i32, <error>_</error>);
+        struct S {
+            a: <error>_</error>
+        }
+        enum E {
+            V1(<error>_</error>),
+            V2 { a: <error>_</error> }
+        }
     """)
 
     fun `test name duplication in struct E0124`() = checkErrors("""
