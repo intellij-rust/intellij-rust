@@ -119,7 +119,7 @@ class CargoSyncTask(
                                 .withWorkspace(fetchCargoWorkspace(context, rustcInfo))
                             CargoProjectWithStdlib(
                                 cargoProjectWithRustcInfoAndWorkspace,
-                                fetchStdlib(context, rustcInfo)
+                                fetchStdlib(context, cargoProjectWithRustcInfoAndWorkspace, rustcInfo)
                             )
                         }
                     }
@@ -351,11 +351,11 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
     }
 }
 
-private fun fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
+private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoProjectImpl, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
     return context.runWithChildProgress("Getting Rust stdlib") { childContext ->
 
-        val workingDirectory = childContext.oldCargoProject.workingDirectory
-        if (childContext.oldCargoProject.doesProjectLooksLikeRustc()) {
+        val workingDirectory = cargoProject.workingDirectory
+        if (cargoProject.doesProjectLooksLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
             val std = StandardLibrary.fromPath(
                 childContext.project,
