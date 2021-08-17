@@ -13,6 +13,7 @@ import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.lints.isCamelCase
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.PathResolveStatus
 import org.rust.lang.core.psi.ext.RsMod
@@ -54,6 +55,9 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
         val struct = buildStruct(project, ctx) ?: return
         val containingFunction = ctx.call.parentOfType<RsFunction>() ?: return
         val inserted = insertStruct(ctx.target, struct, containingFunction)
+
+        val types = ctx.call.valueArgumentList.exprList.map { it.type }
+        RsImportHelper.importTypeReferencesFromTys(inserted, types)
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
