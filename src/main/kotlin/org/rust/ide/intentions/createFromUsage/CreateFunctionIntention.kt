@@ -13,6 +13,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -127,6 +128,9 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val function = buildCallable(project, ctx) ?: return
         val inserted = insertCallable(ctx, function) ?: return
+
+        val types = ctx.arguments.exprList.map { it.type } + ctx.returnType.type
+        RsImportHelper.importTypeReferencesFromTys(inserted, types)
 
         if (inserted.containingFile == ctx.callElement.containingFile) {
             val toBeReplaced = inserted.rawValueParameters

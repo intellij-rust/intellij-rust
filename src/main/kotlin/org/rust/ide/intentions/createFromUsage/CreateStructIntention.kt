@@ -14,6 +14,7 @@ import com.intellij.psi.util.parentOfType
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.RsMultipleVariableRenamer
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnknown
@@ -45,6 +46,9 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
         val struct = buildStruct(project, ctx) ?: return
         val function = ctx.literalElement.parentOfType<RsFunction>() ?: return
         val inserted = insertStruct(ctx.target, struct, function)
+
+        val types = ctx.literalElement.structLiteralBody.structLiteralFieldList.mapNotNull { it.expr?.type }
+        RsImportHelper.importTypeReferencesFromTys(inserted, types)
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 

@@ -829,8 +829,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-
-
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type to create async function`() = doAvailableTest("""
         struct S;
@@ -993,6 +991,34 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar(p0: Alias) {
+            todo!()
+        }
+    """)
+
+    fun `test import argument and return types`() = doAvailableTest("""
+        mod bar {
+            pub struct S;
+            pub struct T;
+            pub fn get_s() -> S { S }
+        }
+
+        fn foo() -> bar::T {
+            baz/*caret*/(bar::get_s())
+        }
+    """, """
+        use bar::{S, T};
+
+        mod bar {
+            pub struct S;
+            pub struct T;
+            pub fn get_s() -> S { S }
+        }
+
+        fn foo() -> bar::T {
+            baz(bar::get_s())
+        }
+
+        fn baz(p0: S) -> T {
             todo!()
         }
     """)

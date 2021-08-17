@@ -164,4 +164,28 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             Foo { a: bar };
         }
     """)
+
+    fun `test import type`() = doAvailableTest("""
+        mod bar {
+            pub struct S;
+        }
+
+        fn foo() {
+            Foo/*caret*/ { a: bar::S };
+        }
+    """, """
+        use bar::S;
+
+        mod bar {
+            pub struct S;
+        }
+
+        struct Foo {
+            a: S
+        }
+
+        fn foo() {
+            Foo { a: bar::S };
+        }
+    """)
 }

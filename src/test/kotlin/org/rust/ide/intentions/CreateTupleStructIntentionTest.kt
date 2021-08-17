@@ -143,4 +143,26 @@ class CreateTupleStructIntentionTest : RsIntentionTestBase(CreateTupleStructInte
             Foo(bar);
         }
     """)
+
+    fun `test import`() = doAvailableTest("""
+        mod bar {
+            pub struct S;
+        }
+
+        fn foo() {
+            Foo/*caret*/(bar::S);
+        }
+    """, """
+        use bar::S;
+
+        mod bar {
+            pub struct S;
+        }
+
+        struct Foo(S);
+
+        fn foo() {
+            Foo(bar::S);
+        }
+    """)
 }
