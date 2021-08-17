@@ -14,7 +14,7 @@ Drop these lines for internal only changes
 -->
 <!--
 Also, please provide as much context as possible about the feature, attach a code sample as text, 
-a screenshot or screencast if possible in the following format: `changelog: %description%`
+a screenshot or screencast if possible in the following format: `Changelog: %description%`
 This description will help a lot to create release changelog. 
 Drop these lines for internal only changes
 
@@ -25,6 +25,3 @@ Drop these lines for internal only changes
 ##Issue:
 <!-- Choose one or several -->
 <!-- **Related issues:** / **Closed issue:** / **Similar issue:** -->
-
-
-
