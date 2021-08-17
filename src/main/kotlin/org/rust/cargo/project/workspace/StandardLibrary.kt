@@ -274,6 +274,13 @@ class StdlibDataFetcher private constructor(
     }
 
     private fun VirtualFile.collectPackageMetadata() {
+        val manifest = findChild(CargoConstants.MANIFEST_FILE)
+        // Don't try to get metadata without Cargo.toml, it will fail anyway
+        if (manifest == null) {
+            LOG.warn("There isn't `${CargoConstants.MANIFEST_FILE}` in `$path` directory")
+            return
+        }
+
         val metadataProject = try {
             cargo.fetchMetadata(project, pathAsPath)
         } catch (e: ExecutionException) {
