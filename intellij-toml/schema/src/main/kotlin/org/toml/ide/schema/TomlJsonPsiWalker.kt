@@ -62,18 +62,18 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
             ?: originalPosition.parentOfType<TomlInlineTable>()
             ?: originalPosition.prevSibling as? TomlTable
             ?: return emptySet()
-        return TomlObjectAdapter(table).propertyList.mapNotNull { it.name }.toSet()
+        return TomlJsonObjectAdapter(table).propertyList.mapNotNull { it.name }.toSet()
     }
 
     override fun getParentPropertyAdapter(element: PsiElement): JsonPropertyAdapter? {
         val property = element.parentOfType<TomlKeyValue>(true) ?: return null
-        return TomlPropertyAdapter(property)
+        return TomlJsonPropertyAdapter(property)
     }
 
     override fun isTopJsonElement(element: PsiElement): Boolean = element is TomlFile
 
     override fun createValueAdapter(element: PsiElement): JsonValueAdapter? =
-        if (element is TomlElement) TomlPropertyAdapter.createAdapterByType(element) else null
+        if (element is TomlElement) TomlJsonValueAdapter.createAdapterByType(element) else null
 
     override fun getRoots(file: PsiFile): Collection<PsiElement> {
         if (file !is TomlFile) return emptyList()
