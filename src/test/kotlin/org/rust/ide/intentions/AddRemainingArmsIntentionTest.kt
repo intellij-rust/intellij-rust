@@ -9,7 +9,6 @@ package org.rust.ide.intentions
  * More tests for base functionality can be found in [org.rust.ide.inspections.match.RsNonExhaustiveMatchInspectionTest]
  */
 class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntention::class) {
-
     fun `test empty match`() = doAvailableTest("""
         enum E { A, B, C }
         fn main() {
@@ -133,6 +132,87 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
                 r#type { r#if: true } => {}
                 r#type { r#if: false } => {}
             }
+        }
+    """)
+
+    fun `test import aliased type`() = doAvailableTest("""
+        mod foo {
+            pub enum Enum {
+                Foo,
+                Bar
+            }
+            pub type Alias = Enum;
+
+            pub fn bar() -> Alias { Enum::Foo }
+        }
+
+        fn bar() {
+            match foo::bar()/*caret*/ {
+
+            }
+        }
+    """, """
+        use foo::Alias;
+
+        mod foo {
+            pub enum Enum {
+                Foo,
+                Bar
+            }
+            pub type Alias = Enum;
+
+            pub fn bar() -> Alias { Enum::Foo }
+        }
+
+        fn bar() {
+            match foo::bar() {
+                Alias::Foo => {}
+                Alias::Bar => {}
+            }
+        }
+    """)
+
+    fun `test match aliased enum by alias`() = doAvailableTest("""
+        enum Enum {
+            V1
+        }
+
+        pub type EnumAlias = Enum;
+
+        fn bar(x: EnumAlias) {
+            match x/*caret*/ {}
+        }
+    """, """
+        enum Enum {
+            V1
+        }
+
+        pub type EnumAlias = Enum;
+
+        fn bar(x: EnumAlias) {
+            match x { EnumAlias::V1 => {} }
+        }
+    """)
+
+    fun `test match aliased enum by original name`() = doAvailableTest("""
+        enum Enum {
+            V1
+        }
+
+        pub type EnumAlias = Enum;
+
+        fn bar(x: Enum) {
+            match x/*caret*/ {}
+        }
+    """, """
+        enum Enum {
+            V1
+        }
+
+        pub type EnumAlias = Enum;
+
+        fn bar(x: Enum) {
+            match x { Enum::V1 => {} }
         }
     """)
 }

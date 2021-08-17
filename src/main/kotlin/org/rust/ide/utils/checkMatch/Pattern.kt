@@ -5,6 +5,7 @@
 
 package org.rust.ide.utils.checkMatch
 
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsFieldsOwner
@@ -22,7 +23,7 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
 
             is PatternKind.Variant -> {
                 val variantName = kind.variant.name.orEmpty()
-                val itemName = kind.item.name.orEmpty()
+                val itemName = ty.renderInsertionSafe(includeLifetimeArguments = false, includeTypeArguments = false)
 
                 val variantInScope = ctx?.findInScope(variantName, VALUES)
                     ?.takeIf { (it as? RsEnumVariant)?.parentEnum == kind.item }
