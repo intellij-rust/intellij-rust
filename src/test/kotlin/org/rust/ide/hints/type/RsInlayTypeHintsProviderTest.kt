@@ -6,10 +6,12 @@
 package org.rust.ide.hints.type
 
 import com.intellij.openapi.vfs.VirtualFileFilter
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
 import org.rust.ide.hints.parameter.RsInlayParameterHintsProvider
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
 
 class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsProvider::class) {
@@ -481,6 +483,28 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
             let a/*hint text="[:  [( [i32 ,] )]]"*/ = (1,);
             let b/*hint text="[:  [( [i32 ,  i32] )]]"*/ = (1, 2);
             let c/*hint text="[:  [( … )]]"*/ = (1, 2, 3);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    fun `test iterator into_iter`() = checkByText("""
+        fn main() {
+            let xs<hint text="[:  i32]"/> = vec![1, 2, 3]
+                .into_iter()
+                .find(|x<hint text="[:  [& i32]]"/>| *x == 1)
+                .unwrap();
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    fun `test iterator iter`() = checkByText("""
+        fn main() {
+            let xs<hint text="[:  [& i32]]"/> = vec![1, 2, 3]
+                .iter()
+                .find(|x<hint text="[:  [& [& i32]]]"/>| **x == 1)
+                .unwrap();
         }
     """)
 }

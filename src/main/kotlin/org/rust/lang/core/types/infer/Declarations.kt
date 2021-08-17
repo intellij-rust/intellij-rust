@@ -61,7 +61,8 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
                     target is RsTypeDeclarationElement -> {
                         val ty = target.declaredType
                             .substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
-                        if (target is RsTypeAlias) {
+                        // Ignore associated type aliases, as these are usually not very useful
+                        if (target is RsTypeAlias && !target.owner.isImplOrTrait) {
                             ty.withAlias(boundElement.downcast()!!)
                         } else {
                             ty
