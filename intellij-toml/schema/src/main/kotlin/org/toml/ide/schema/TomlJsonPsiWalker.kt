@@ -30,7 +30,20 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
         var current = element
 
         while (current !is PsiFile) {
+            val parent = current.parent
             when {
+                parent is TomlArray -> {
+                    val entries = parent.elements
+
+                    var currentIndex = -1
+                    for ((idx, entry) in entries.withIndex()) {
+                        if (current == entry) {
+                            currentIndex = idx
+                            break
+                        }
+                    }
+                    position.addPrecedingStep(currentIndex)
+                }
                 current is TomlKeyValue -> {
                     val key = current.key
 
