@@ -23,7 +23,10 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
                     else -> null
                 } ?: return
 
-                val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
+                val convention = SELF_CONVENTIONS.find {
+                    m.identifier.text.startsWith(it.prefix) &&
+                    m.identifier.text.endsWith(it.postfix ?: "")
+                } ?: return
                 if (m.selfSignature in convention.selfSignatures) return
 
                 if (m.selfSignature == SelfSignature.BY_VAL) {
@@ -42,10 +45,12 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
             SelfConvention("from_", listOf(SelfSignature.NO_SELF)),
             SelfConvention("into_", listOf(SelfSignature.BY_VAL)),
             SelfConvention("is_", listOf(SelfSignature.BY_REF, SelfSignature.NO_SELF)),
-            SelfConvention("to_", listOf(SelfSignature.BY_REF)),
+            SelfConvention("to_", listOf(SelfSignature.BY_MUT_REF), postfix = "_mut"),
+            SelfConvention("to_", listOf(SelfSignature.BY_REF, SelfSignature.BY_VAL)),
+            SelfConvention("get_", listOf(SelfSignature.BY_MUT_REF), postfix = "_mut"),
             SelfConvention("get_", listOf(SelfSignature.BY_REF)),
             SelfConvention("set_", listOf(SelfSignature.BY_MUT_REF)),
-            SelfConvention("with_", listOf(SelfSignature.BY_VAL, SelfSignature.BY_MUT_REF))
+            SelfConvention("with_", listOf(SelfSignature.BY_VAL, SelfSignature.BY_MUT_REF, SelfSignature.NO_SELF))
         )
     }
 }
@@ -68,12 +73,16 @@ private val RsFunction.selfSignature: SelfSignature
         }
     }
 
-data class SelfConvention(val prefix: String, val selfSignatures: Collection<SelfSignature>)
+data class SelfConvention(
+    val prefix: String,
+    val selfSignatures: Collection<SelfSignature>,
+    val postfix: String? = null
+)
 
 private fun RsProblemsHolder.registerProblem(element: PsiElement, convention: SelfConvention) {
     val selfTypes = convention.selfSignatures.joinToString(" or ") { it.description }
 
-    val description = "methods called `${convention.prefix}*` usually take $selfTypes; " +
+    val description = "methods called `${convention.prefix}*${convention.postfix ?: ""}` usually take $selfTypes; " +
         "consider choosing a less ambiguous name"
 
     registerProblem(element, description)

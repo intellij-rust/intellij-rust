@@ -33,8 +33,27 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
     fun `test to`() = checkByText("""
         struct Foo;
         impl Foo {
-            fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
-            fn to_something_else(&self) -> u32 { 92 }
+            fn to_a(self) -> u32 { 0 }
+            fn to_b(&self) -> u32 { 92 }
+            fn to_c(<warning descr="methods called `to_*` usually take self by reference or self by value; consider choosing a less ambiguous name">&mut self</warning>) -> u32 { 92 }
+        }
+    """)
+
+    fun `test to mut`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn to_a_mut(<warning descr="methods called `to_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
+            fn to_b_mut(<warning descr="methods called `to_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">&self</warning>) -> u32 { 0 }
+            fn to_c_mut(&mut self) -> u32 { 0 }
+        }
+    """)
+
+    fun `test as`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn as_foo(<warning descr="methods called `as_*` usually take self by reference or self by mutable reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
+            fn as_bar(&self) -> u32 { 92 }
+            fn as_baz(&mut self) -> u32 { 92 }
         }
     """)
 
@@ -49,8 +68,18 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
     fun `test get`() = checkByText("""
         struct Foo;
         impl Foo {
-            fn get_foo(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) {}
-            fn get_bar(&self) {}
+            fn get_a(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) {}
+            fn get_b(&self) {}
+            fn get_c(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">&mut self</warning>) {}
+        }
+    """)
+
+    fun `test get mut`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn get_a_mut(<warning descr="methods called `get_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">self</warning>) {}
+            fn get_b_mut(<warning descr="methods called `get_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
+            fn get_c_mut(&mut self) {}
         }
     """)
 
@@ -65,9 +94,10 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
     fun `test with`() = checkByText("""
         struct Foo;
         impl Foo {
-            fn with_foo(<warning descr="methods called `with_*` usually take self by value or self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
+            fn with_foo(<warning descr="methods called `with_*` usually take self by value or self by mutable reference or no self; consider choosing a less ambiguous name">&self</warning>) {}
             fn with_bar(&mut self) {}
             fn with_baz(self) {}
+            fn with_constructor() {}
         }
     """)
 
@@ -91,7 +121,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
     fun `test suppress to on trait impls but not on traits`() = checkByText("""
         struct Foo;
         trait Bar {
-            fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32;
+            fn to_something(<warning descr="methods called `to_*` usually take self by reference or self by value; consider choosing a less ambiguous name">&mut self</warning>) -> u32;
         }
         impl Bar for Foo {
             fn to_something(self) -> u32 { 0 }
