@@ -242,9 +242,13 @@
         <codeCompletionConfigurable instance="org.rust.ide.settings.RsCodeCompletionConfigurable"/>
 
         <completion.contributor language="Rust"
-                                implementationClass="org.rust.lang.core.completion.RsCompletionContributor"/>
+                                implementationClass="org.rust.lang.core.completion.RsKeywordCompletionContributor"
+                                id="RsKeywordCompletionContributor"
+                                order="first"/>
         <completion.contributor language="Rust"
-                                implementationClass="org.rust.lang.core.completion.RsKeywordCompletionContributor"/>
+                                implementationClass="org.rust.lang.core.completion.RsCompletionContributor"
+                                id="RsCompletionContributor"
+                                order="after RsKeywordCompletionContributor"/>
 
         <!-- Description Provider -->
 
