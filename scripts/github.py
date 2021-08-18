@@ -1,6 +1,7 @@
 # TODO: think about using library for GitHub API
 import json
 from typing import Dict, Optional, List
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from common import get_patch_version
@@ -75,4 +76,18 @@ def get_all_branches(repo: str, token: str) -> List[Dict]:
                "Accept": "application/vnd.github.v3+json"}
     request = Request(f"https://api.github.com/repos/{repo}/branches", headers=headers)
     response = urlopen(request)
+    return json.load(response)
+
+
+def get_branch(repo: str, token: str, branch_name: str) -> Optional[Dict]:
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    request = Request(f"https://api.github.com/repos/{repo}/branches/{branch_name}", headers=headers)
+    try:
+        response = urlopen(request)
+    except HTTPError as e:
+        if e.code == 404:
+            return None
+        else:
+            raise e
     return json.load(response)
