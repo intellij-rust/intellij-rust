@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -60,7 +61,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
             }
             val exitCode = AsyncPromise<Int?>()
 
-            if (environment.isActivateToolWindowBeforeRun) {
+            if (environment.isActivateToolWindowBeforeRun && !isUnitTestMode) {
                 RunContentExecutor(environment.project, buildProcessHandler)
                     .apply { createFilters(state.cargoProject).forEach { withFilter(it) } }
                     .withAfterCompletion { exitCode.setResult(buildProcessHandler.exitCode) }
