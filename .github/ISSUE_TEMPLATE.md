@@ -20,4 +20,6 @@ Feel free to remove all the irrelevant text to request a new feature.
 <!--
 Please include as much of your codebase as needed to reproduce the error.
 If the relevant files are large, please provide a link to a public repository or a [Gist](https://gist.github.com/).
+
+If you provide a screenshot of some code, please also copy-paste the corresponding code snippet here.
 -->
