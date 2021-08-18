@@ -33,6 +33,11 @@ def main():
     date = match_result.group(1)
     with open(CHECK_WORKFLOW_PATH) as f:
         workflow_text = f.read()
+
+    result = re.search(WORKFLOW_RUSTC_VERSION_RE, workflow_text)
+    if result is None:
+        raise ValueError("Failed to find the current version of nightly rust")
+
     new_workflow_text = re.sub(WORKFLOW_RUSTC_VERSION_RE, f"\\g<1>{date}\\g<2>", workflow_text)
     if new_workflow_text == workflow_text:
         print("The latest nightly rustc version is already used")
