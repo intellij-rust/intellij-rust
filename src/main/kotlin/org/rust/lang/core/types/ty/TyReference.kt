@@ -36,6 +36,7 @@ data class TyReference(
         other !is TyReference -> false
         referenced != other.referenced -> false
         mutability != other.mutability -> false
+        aliasedBy != other.aliasedBy -> false
         else -> true
     }
 

@@ -59,6 +59,7 @@ class TyTraitObject(
         javaClass != other?.javaClass -> false
         other !is TyTraitObject -> false
         traits != other.traits -> false
+        aliasedBy != other.aliasedBy -> false
         else -> true
     }
 
