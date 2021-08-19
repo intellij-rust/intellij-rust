@@ -59,6 +59,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
+                rust-version: [ 1.54.0 ]
                 config:
                     - name: linux
                       arch: x86-64
@@ -87,24 +88,24 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
+            - name: Cache native code artifact
+              id: cache-native-code-artifact
+              uses: actions/cache@v2.1.4
+              with:
+                  path: ${{ matrix.config.artifact_path }}
+                  key: ${{ matrix.config.arch }}-${{ runner.os }}-native-helper-${{ matrix.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
+
             - name: Set up Rust
+              if: ${{ !steps.cache-native-code-artifact.outputs.cache-hit }}
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
-                  toolchain: stable
+                  toolchain: ${{ matrix.rust-version }}
                   target: ${{ matrix.config.target }}
                   default: true
 
-            - name: Cache native code
-              uses: actions/cache@v2.1.4
-              with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      native-helper/target
-                  key: ${{ runner.os }}-native-helper-${{ hashFiles('native-helper/Cargo.lock') }}
-
             - name: Build
+              if: ${{ !steps.cache-native-code-artifact.outputs.cache-hit }}
               uses: actions-rs/cargo@v1
               with:
                   command: build
