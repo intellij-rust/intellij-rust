@@ -49,6 +49,20 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
      * User visible string representation of a type
      */
     final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultTypeArguments = false)
+
+    /**
+     * Use it instead of [equals] if you want to check that the types are the same from the Rust perspective.
+     *
+     * ```rust
+     * type A = i32;
+     * fn foo(a: A, b: i32) {
+     *     // Types `A` and `B` are *equivalent*, but not equal
+     * }
+     * ```
+     */
+    fun isEquivalentTo(other: Ty?): Boolean = other != null && isEquivalentToInner(other)
+
+    protected open fun isEquivalentToInner(other: Ty): Boolean = equals(other)
 }
 
 enum class Mutability {

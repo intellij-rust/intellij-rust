@@ -389,6 +389,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test local variable`() = checkBothQuickFix("""
+        type AliasedString = String;
         struct A {
             x: u64
         }
@@ -399,6 +400,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
             d: u32,
             e: u64,
             f: String,
+            g: AliasedString,
             obj: A
         }
 
@@ -410,11 +412,13 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 let e: u64 = 5;
             }
             let f = "".to_string();
+            let g = "".to_string();
             let obj = A { x: 5 };
 
             <error>S</error>{/*caret*/};
         }
     """, """
+        type AliasedString = String;
         struct A {
             x: u64
         }
@@ -425,6 +429,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
             d: u32,
             e: u64,
             f: String,
+            g: AliasedString,
             obj: A
         }
 
@@ -436,6 +441,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 let e: u64 = 5;
             }
             let f = "".to_string();
+            let g = "".to_string();
             let obj = A { x: 5 };
 
             S{
@@ -445,6 +451,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 d: 0,
                 e: 0,
                 f,
+                g,
                 obj
             };
         }

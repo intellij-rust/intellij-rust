@@ -29,6 +29,10 @@ sealed class TyPrimitive : Ty() {
         }
     }
 
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        return javaClass == other.javaClass
+    }
+
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
             if (path.hasColonColon) return null

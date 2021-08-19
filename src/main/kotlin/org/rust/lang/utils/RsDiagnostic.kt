@@ -130,7 +130,7 @@ sealed class RsDiagnostic(
                         add(ConvertToOwnedTyFix(element, expectedTy))
                     }
                     val stringTy = items.String.asTy()
-                    if (expectedTy == stringTy
+                    if (expectedTy.isEquivalentTo(stringTy)
                         && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
                         add(ConvertToStringFix(element))
                     } else if (expectedTy is TyReference) {
@@ -157,17 +157,17 @@ sealed class RsDiagnostic(
                         }
                     } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
                         val (expOkTy, expErrTy) = expectedTy.typeArguments
-                        if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
+                        if (expErrTy.isEquivalentTo(errTyOfTryFromActualImplForTy(expOkTy, items, lookup))) {
                             add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
                         }
-                        if (expErrTy == ifActualIsStrGetErrTyOfFromStrImplForTy(expOkTy, items, lookup)) {
+                        if (expErrTy.isEquivalentTo(ifActualIsStrGetErrTyOfFromStrImplForTy(expOkTy, items, lookup))) {
                             add(ConvertToTyUsingFromStrFix(element, expOkTy))
                         }
                     }
-                    if (actualTy == stringTy) {
-                        if (expectedTy == REF_STR_TY) {
+                    if (actualTy.isEquivalentTo(stringTy)) {
+                        if (expectedTy.isEquivalentTo(REF_STR_TY)) {
                             add(ConvertToImmutableStrFix(element))
-                        } else if (expectedTy == MUT_REF_STR_TY) {
+                        } else if (expectedTy.isEquivalentTo(MUT_REF_STR_TY)) {
                             add(ConvertToMutStrFix(element))
                         }
                     }
@@ -206,7 +206,7 @@ sealed class RsDiagnostic(
             val toOwnedTrait = items.ToOwned ?: return false
             val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
                 toOwnedTrait.findAssociatedType("Owned") ?: return false)
-            return expectedTy == result.ok()?.value
+            return expectedTy.isEquivalentTo(result.ok()?.value)
         }
 
         private fun isToStringImplForActual(items: KnownItems, lookup: ImplLookup): Boolean {

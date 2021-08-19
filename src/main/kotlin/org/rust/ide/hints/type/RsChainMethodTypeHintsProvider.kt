@@ -86,7 +86,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 for (call in chain.dropLast(1)) {
                     val type = normalizeType(call.type, lookup, iterator)
                     if (type != TyUnknown && call.isLastOnLine) {
-                        if (settings.showSameConsecutiveTypes || type != lastType) {
+                        if (settings.showSameConsecutiveTypes || !type.isEquivalentTo(lastType)) {
                             presentTypeForMethodCall(call, type)
                         }
                         lastType = type

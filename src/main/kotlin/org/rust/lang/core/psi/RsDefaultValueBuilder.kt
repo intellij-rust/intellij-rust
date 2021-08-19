@@ -161,7 +161,7 @@ class RsDefaultValueBuilder(
         val binding = bindings[name] ?: return null
         val escapedName = fieldDecl.escapedName ?: return null
         return when {
-            type == binding.type -> {
+            type.isEquivalentTo(binding.type) -> {
                 val field = psiFactory.createStructLiteralField(escapedName, psiFactory.createExpression(escapedName))
                 RsFieldInitShorthandInspection.applyShorthandInit(field)
                 field

@@ -41,4 +41,14 @@ data class TyReference(
     }
 
     override fun hashCode(): Int = 31 * referenced.hashCode() + mutability.hashCode()
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyReference) return false
+
+        if (!referenced.isEquivalentTo(other.referenced)) return false
+        if (mutability != other.mutability) return false
+
+        return true
+    }
 }

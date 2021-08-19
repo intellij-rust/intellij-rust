@@ -7,7 +7,10 @@ package org.rust.ide.utils.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
@@ -162,7 +165,7 @@ object RsImportHelper {
                         if (skipUnchangedDefaultTypeArguments) {
                             val filteredTypeArguments = ty.typeArguments
                                 .zip(ty.item.typeParameters)
-                                .dropLastWhile { (argumentTy, param) -> argumentTy == param.typeReference?.type }
+                                .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.type) }
                                 .map { (argumentTy, _) -> argumentTy }
                             return ty.copy(typeArguments = filteredTypeArguments).superVisitWith(this)
                         }

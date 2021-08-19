@@ -1371,6 +1371,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test inherited generic type parameter method with bound for reference type 2`() = testExpr("""
+        type Alias<'a, T> = &'a T;
+
+        trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
+        trait Tr2<B>: Tr1<B> {}
+        fn bar<'a, T>(t: Alias<'a, T>) where &'a T: Tr2<u8> {
+            let a = t.foo();
+            a;
+        } //^ u8
+    """)
+
     fun `test inherited generic type parameter bound`() = testExpr("""
         trait Tr1<A> {}
         trait Tr2<D>: Tr1<D> {}

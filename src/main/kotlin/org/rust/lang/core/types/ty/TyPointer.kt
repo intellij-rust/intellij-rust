@@ -23,4 +23,14 @@ data class TyPointer(
         referenced.visitWith(visitor)
 
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = copy(aliasedBy = aliasedBy)
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyPointer) return false
+
+        if (!referenced.isEquivalentTo(other.referenced)) return false
+        if (mutability != other.mutability) return false
+
+        return true
+    }
 }
