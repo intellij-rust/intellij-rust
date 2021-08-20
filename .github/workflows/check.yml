@@ -210,7 +210,6 @@ jobs:
                   echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.1.1" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.1.1" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=211.7142.13" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_graziePluginVersion=211.7142.14" >> $GITHUB_ENV
 
             - name: Set up env variable for old resolve
               if: matrix.resolve-engine == 'resolve-old'
