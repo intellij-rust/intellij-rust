@@ -61,6 +61,26 @@ pub fn derive_impl_for_foo(_item: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()
 }
 
+#[proc_macro_derive(DeriveStructFooDeclaration)]
+pub fn derive_struct_foo_declaration(_item: TokenStream) -> TokenStream {
+   "struct Foo;".parse().unwrap()
+}
+
+#[proc_macro_derive(DeriveMacroFooThatExpandsToStructFoo)]
+pub fn derive_macro_foo_that_expands_to_struct_foo(_item: TokenStream) -> TokenStream {
+   "macro_rules! foo { () => { struct Foo; } }".parse().unwrap()
+}
+
+#[proc_macro_derive(DeriveMacroFooInvocation)]
+pub fn derive_macro_foo_invocation(_item: TokenStream) -> TokenStream {
+   "foo!{}".parse().unwrap()
+}
+
+#[proc_macro_derive(DeriveMacroBarInvocation)]
+pub fn derive_macro_bar_invocation(_item: TokenStream) -> TokenStream {
+   "bar!{}".parse().unwrap()
+}
+
 #[proc_macro]
 pub fn function_like_generates_impl_for_foo(_input: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()
