@@ -224,12 +224,12 @@ jobs:
 
             - name: Publish toml plugin
               if: needs.fetch-latest-changes.outputs.toml-commit != needs.fetch-latest-changes.outputs.toml-release
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: ":intellij-toml:publishPlugin"
 
             - name: Publish rust plugin
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: ":plugin:publishPlugin"
 

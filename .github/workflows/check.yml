@@ -210,7 +210,6 @@ jobs:
                   echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.1.1" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.1.1" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=211.7142.13" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_graziePluginVersion=211.7142.14" >> $GITHUB_ENV
 
             - name: Set up env variable for old resolve
               if: matrix.resolve-engine == 'resolve-old'
@@ -253,17 +252,17 @@ jobs:
                   path: bin/macos/arm64
 
             - name: Download
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
 
             - name: Build
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: "assemble testClasses -Pkotlin.incremental=false --no-daemon"
 
             - name: Check
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: "check -PexcludeTests=org/rustPerformanceTests/** --continue -Pkotlin.incremental=false --no-daemon"
 
@@ -278,13 +277,13 @@ jobs:
 
             - name: Verify plugin
               if: matrix.verify-plugin
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: ":plugin:verifyPlugin"
 
             - name: Check bundled Rust formatters
               if: matrix.os != 'windows-latest'
-              uses: eskatos/gradle-command-action@v1
+              uses: gradle/gradle-build-action@v1
               with:
                   arguments: "runPrettyPrintersTests --no-daemon"
 
