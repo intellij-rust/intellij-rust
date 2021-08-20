@@ -14,11 +14,14 @@
 
 ## Installation & Usage
 
-Available installation options and features are described on [intellij-rust.github.io]. All new features are announced in 
-the [changelog](https://intellij-rust.github.io/thisweek/).
-
+For installation options, see the [Quick Start Guide](https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-quick-start.html#install-update).
 If you want to jump straight in, open `Settings > Plugins > Marketplace` in your IDE,
-search for _Rust_ and install the plugin. To open an existing project, use **File | Open** and point to the directory containing `Cargo.toml`. For creating projects, use the **Rust** template. You can find more details in the [Quick Start Guide](https://intellij-rust.github.io/docs/quick-start.html). 
+search for _Rust_ and install the plugin. To open an existing project, use **File | Open** and point to the directory containing `Cargo.toml`. 
+For creating projects, use the **Rust** template.
+
+All the plugin's features are described in [documentation](https://plugins.jetbrains.com/plugin/8182-rust/docs).
+New features are regularly announced in [changelogs](https://intellij-rust.github.io/thisweek/).
+
 
 ## Compatible IDEs
 
