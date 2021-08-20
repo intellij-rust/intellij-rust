@@ -177,6 +177,22 @@ jobs:
                   components: rust-src
                   default: false
 
+            - name: Cache cargo index
+              uses: actions/cache@v2.1.4
+              with:
+                  path: ~/.cargo/registry/index # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+                  key: cache-cargo-index-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
+                  restore-keys: cache-cargo-index-
+
+            - name: Cache cargo dependencies
+              uses: actions/cache@v2.1.4
+              with:
+                  path: | # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+                      ~/.cargo/registry/cache
+                      ~/.cargo/git/db
+                  key: ${{ runner.os }}-cache-cargo-index-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
+                  restore-keys: ${{ runner.os }}-cache-cargo-index-${{ matrix.rust-version }}-
+
             - name: Cache evcxr
               uses: actions/cache@v2
               with:
@@ -185,8 +201,7 @@ jobs:
                       ~/.cargo/.crates.toml
                       ~/.cargo/.crates2.json
                   key: ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
-                  restore-keys: |
-                      ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-
+                  restore-keys: ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-
 
             - name: Install evcxr
               # BACKCOMPAT: Evcxr 0.11 requires at least stable-1.53 or nightly-2021-05-01
