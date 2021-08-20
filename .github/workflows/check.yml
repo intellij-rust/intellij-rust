@@ -7,6 +7,11 @@ on:
             - staging
             - trying
     pull_request:
+    # Trigger workflow every day to create/update caches for other builds
+    # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+    # to get more details about cache access
+    schedule:
+        -   cron: '0 3 * * *'
 
 # Allow cancelling all previous runs for the same branch
 # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
@@ -55,7 +60,10 @@ jobs:
     build-native-code:
         needs: [ calculate-git-info ]
         # `fromJSON` is used here to convert string output to boolean
-        if: ${{ !(fromJSON(needs.calculate-git-info.outputs.is_master_branch) && fromJSON(needs.calculate-git-info.outputs.checked)) }}
+        # We always want to trigger all workflow jobs on `schedule` event because it creates/updates caches for other builds.
+        # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+        # to get more details about cache access
+        if: ${{ github.event_name == 'schedule' || !fromJSON(needs.calculate-git-info.outputs.is_master_branch) || !fromJSON(needs.calculate-git-info.outputs.checked) }}
         strategy:
             fail-fast: true
             matrix:
