@@ -492,6 +492,24 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test make struct field public (from shorthand struct literal)`() = checkFixByText("Make `baz` public", """
+        mod foo {
+            pub(crate) struct Bar { baz: i32 }
+        }
+        fn main() {
+            let baz: i32 = 0;
+            let foo = foo::Bar { <error>baz/*caret*/</error> };
+        }
+    """, """
+        mod foo {
+            pub(crate) struct Bar { pub(crate) baz: i32 }
+        }
+        fn main() {
+            let baz: i32 = 0;
+            let foo = foo::Bar { baz };
+        }
+    """)
+
     fun `test make tuple struct field public`() = checkFixByText("Make `0` public", """
         mod foo {
             pub(crate) struct Bar(i32);
