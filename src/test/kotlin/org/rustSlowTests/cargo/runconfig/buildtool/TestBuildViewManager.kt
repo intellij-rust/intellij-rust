@@ -11,10 +11,8 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.openapi.project.Project
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.ui.UIUtil
+import org.rustSlowTests.cargo.runconfig.waitFinished
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class TestBuildViewManager(project: Project) : BuildViewManager(project) {
     private val latch: CountDownLatch = CountDownLatch(1)
@@ -50,10 +48,7 @@ class TestBuildViewManager(project: Project) : BuildViewManager(project) {
 
     @Throws(InterruptedException::class)
     fun waitFinished(timeoutMs: Long = 5000) {
-        for (i in 1..timeoutMs / ConcurrencyUtil.DEFAULT_TIMEOUT_MS) {
-            UIUtil.dispatchAllInvocationEvents()
-            if (latch.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) break
-        }
+        latch.waitFinished(timeoutMs)
     }
 
     sealed class EventTreeNode(val unorderedGroupId: Int) {

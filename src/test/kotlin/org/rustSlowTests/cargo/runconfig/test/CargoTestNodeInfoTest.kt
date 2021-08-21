@@ -103,7 +103,6 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
         configuration.command += " --unknown"
         val root = executeAndGetTestRoot(configuration)
         assertTrue("Testing started" in root.output)
-        assertTrue("Compiling sandbox" in root.output)
         assertTrue("warning: unused variable: `x`" in root.output)
         assertTrue("Finished" in root.output)
         assertTrue("Running" in root.output)
