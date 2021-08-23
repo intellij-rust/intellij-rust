@@ -141,6 +141,46 @@ class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
         """<p><a href="psi_element://Long::Path::For::MyType">my link</a></p>"""
     )
 
+    fun `test implied shortcut reference link`() = doTest("""
+        fn foo() {}
+        /// [foo]
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://foo">foo</a></p>"""
+    )
+
+    fun `test implied shortcut reference link with backticks`() = doTest("""
+        /// [`Iterator`]
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://Iterator"><code>Iterator</code></a></p>"""
+    )
+
+    fun `test implied shortcut reference link, ignore non-valid rust identifier or path`() {
+        val badVariants = listOf("some.web.site", "foo bar w spaces", "some/path")
+        for (s in badVariants) {
+            doTest("""
+                    /// [${s}]
+                    fn main() {}
+                       //^
+                """, """<p>[${s}]</p>"""
+            )
+        }
+    }
+
+    fun `test implied shortcut reference link with reference, reference has higher priority`() = doTest("""
+        fn foo() {}
+        /// [foo]
+        ///
+        /// [foo]: Path::For::Smth
+        fn main() {}
+           //^
+    """,
+        """<p><a href="psi_element://Path::For::Smth">foo</a></p>"""
+    )
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
         doTest(code, expected) { originalItem, _ ->
             (originalItem as? RsDocAndAttributeOwner)

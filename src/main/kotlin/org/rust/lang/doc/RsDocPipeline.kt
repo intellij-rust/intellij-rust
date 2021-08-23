@@ -22,6 +22,7 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.*
+import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -137,13 +138,12 @@ private class RustDocMarkdownFlavourDescriptor(
         generatingProviders[MarkdownElementTypes.ATX_2] = SimpleTagProvider("h3")
         generatingProviders[MarkdownElementTypes.CODE_FENCE] = RsCodeFenceProvider(context, renderMode)
 
-        val absolutizeAnchorLinks = true
         generatingProviders[MarkdownElementTypes.SHORT_REFERENCE_LINK] =
-            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, absolutizeAnchorLinks)
+            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, resolveAnchors = true)
         generatingProviders[MarkdownElementTypes.FULL_REFERENCE_LINK] =
-            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, absolutizeAnchorLinks)
+            RsReferenceLinksGeneratingProvider(linkMap, uri ?: baseURI, resolveAnchors = true)
         generatingProviders[MarkdownElementTypes.INLINE_LINK] =
-            RsInlineLinkGeneratingProvider(uri ?: baseURI, absolutizeAnchorLinks)
+            RsInlineLinkGeneratingProvider(uri ?: baseURI, resolveAnchors = true)
 
         return generatingProviders
     }
@@ -250,20 +250,48 @@ enum class RsDocRenderMode {
     INLINE_DOC_COMMENT
 }
 
-private fun markLinkAsLanguageItemIfItIsValidRustPath(link: CharSequence): CharSequence {
-    return if (link.none { it in "/.#" }) "${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$link" else link
+private fun linkIsProbablyValidRustPath(link: CharSequence): Boolean {
+    return link.none { it in "/.#" || it.isWhitespace() }
 }
 
-open class RsReferenceLinksGeneratingProvider(linkMap: LinkMap, baseURI: URI?, resolveAnchors: Boolean)
+private fun markLinkAsLanguageItemIfItIsRustPath(link: CharSequence): CharSequence {
+    return if (linkIsProbablyValidRustPath(link)) "${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$link" else link
+}
+
+open class RsReferenceLinksGeneratingProvider(private val linkMap: LinkMap, baseURI: URI?, resolveAnchors: Boolean)
     : ReferenceLinksGeneratingProvider(linkMap, baseURI, resolveAnchors) {
     override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsValidRustPath(info.destination)))
+        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsRustPath(info.destination)))
+    }
+
+    override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
+        val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL } ?: return null
+        val labelText = label.getTextInNode(text)
+
+        val linkInfo = linkMap.getLinkInfo(labelText)
+        val (linkDestination, linkTitle) = if (linkInfo != null) {
+            linkInfo.destination to linkInfo.title
+        } else {
+            // then maybe it's implied shortcut reference link, i.e. shortcut reference link without a matching link reference definition
+            // (see https://rust-lang.github.io/rfcs/1946-intra-rustdoc-links.html#implied-shortcut-reference-links)
+            // so "[Iterator]" is the same as "[Iterator](Iterator)" and will be eventually rendered as "<a href="psi_element://Iterator">Iterator</a>"
+            val linkText = labelText.removeSurrounding("[", "]").removeSurrounding("`")
+            if (!linkIsProbablyValidRustPath(linkText)) return null
+            linkText to null
+        }
+
+        val linkTextNode = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
+        return RenderInfo(
+            linkTextNode ?: label,
+            EntityConverter.replaceEntities(linkDestination, processEntities = true, processEscapes = true),
+            linkTitle?.let { EntityConverter.replaceEntities(it, processEntities = true, processEscapes = true) }
+        )
     }
 }
 
 open class RsInlineLinkGeneratingProvider(baseURI: URI?, resolveAnchors: Boolean)
     : InlineLinkGeneratingProvider(baseURI, resolveAnchors) {
     override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsValidRustPath(info.destination)))
+        super.renderLink(visitor, text, node, info.copy(destination = markLinkAsLanguageItemIfItIsRustPath(info.destination)))
     }
 }
