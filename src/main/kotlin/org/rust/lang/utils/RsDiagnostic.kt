@@ -36,9 +36,8 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
-import org.rust.lang.core.CONST_GENERICS
+import org.rust.lang.core.*
 import org.rust.lang.core.CompilerFeature
-import org.rust.lang.core.MIN_CONST_GENERICS
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -1391,6 +1390,26 @@ sealed class RsDiagnostic(
             fixes = fixes
         )
     }
+
+    class InvalidAbi(
+        element: RsLitExpr,
+        private val abiName: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0703,
+            "Invalid ABI: found $abiName",
+            description = "valid ABIs: ${SUPPORTED_CALLING_CONVENTIONS.keys.joinToString(", ")}",
+            fixes = createSuggestionFixes()
+        )
+
+        private fun createSuggestionFixes(): List<NameSuggestionFix<PsiElement>> {
+            val factory = RsPsiFactory(element.project)
+            return NameSuggestionFix.createApplicable(element, abiName, SUPPORTED_CALLING_CONVENTIONS.keys.toList(), 2) {
+                factory.createExpression("\"$it\"")
+            }
+        }
+    }
 }
 
 enum class RsErrorCode {
@@ -1401,7 +1420,7 @@ enum class RsErrorCode {
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
-    E0704, E0732;
+    E0703, E0704, E0732;
 
     val code: String
         get() = toString()
@@ -1551,4 +1570,36 @@ private fun createAddOrReplaceFeatureFix(element: RsElement, newFix: CompilerFea
         }
     }
 }
+
+val SUPPORTED_CALLING_CONVENTIONS = mapOf(
+    "Rust" to null,
+    "C" to null,
+    "C-unwind" to C_UNWIND,
+    "cdecl" to null,
+    "stdcall" to null,
+    "stdcall-unwind" to C_UNWIND,
+    "fastcall" to null,
+    "vectorcall" to ABI_VECTORCALL,
+    "thiscall" to ABI_THISCALL,
+    "thiscall-unwind" to C_UNWIND,
+    "aapcs" to null,
+    "win64" to null,
+    "sysv64" to null,
+    "ptx-kernel" to ABI_PTX,
+    "msp430-interrupt" to ABI_MSP430_INTERRUPT,
+    "x86-interrupt" to ABI_X86_INTERRUPT,
+    "amdgpu-kernel" to ABI_AMDGPU_KERNEL,
+    "efiapi" to ABI_EFIAPI,
+    "avr-interrupt" to ABI_AVR_INTERRUPT,
+    "avr-non-blocking-interrupt" to ABI_AVR_INTERRUPT,
+    "C-cmse-nonsecure-call" to ABI_C_CMSE_NONSECURE_CALL,
+    // TODO: update compiler features and use `WASM_ABI` here
+    "wasm" to null,
+    "system" to null,
+    "system-unwind" to C_UNWIND,
+    "rust-intrinsic" to INTRINSICS,
+    "rust-call" to UNBOXED_CLOSURES,
+    "platform-intrinsic" to PLATFORM_INTRINSICS,
+    "unadjusted" to ABI_UNADJUSTED
+)
 

@@ -20,7 +20,8 @@ FILE
     RsExternAbiImpl(EXTERN_ABI)
       PsiElement(extern)('extern')
       PsiWhiteSpace(' ')
-      PsiElement(STRING_LITERAL)('"C"')
+      RsLitExprImpl(LIT_EXPR)
+        PsiElement(STRING_LITERAL)('"C"')
     PsiWhiteSpace(' ')
     PsiElement({)('{')
     PsiErrorElement:'#' or '}' expected

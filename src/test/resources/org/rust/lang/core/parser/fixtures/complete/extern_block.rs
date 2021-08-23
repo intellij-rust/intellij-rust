@@ -11,3 +11,8 @@ extern {
 
     pub type Y;
 }
+
+extern "C" {}
+extern "R\u{0075}st" {}
+extern r"system" {}
+extern 'C' {} // semantically invalid

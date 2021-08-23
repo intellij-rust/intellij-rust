@@ -27,5 +27,5 @@ val RsFnPointerType.isExtern: Boolean
 val RsFnPointerType.abiName: String?
     get() {
         val stub = greenStub as? RsFnPointerTypeStub
-        return stub?.abiName ?: externAbi?.stringLiteral?.text
+        return stub?.abiName ?: externAbi?.litExpr?.stringValue
     }

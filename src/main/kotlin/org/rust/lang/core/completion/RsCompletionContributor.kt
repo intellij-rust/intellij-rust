@@ -39,6 +39,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, declarationPattern() or inherentImplDeclarationPattern(), RsVisibilityCompletionProvider())
         extend(CompletionType.BASIC, RsReprCompletionProvider)
         extend(CompletionType.BASIC, RsCrateTypeAttrCompletionProvider)
+        extend(CompletionType.BASIC, RsExternAbiCompletionProvider)
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
