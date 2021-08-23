@@ -25,7 +25,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
         RsPsiFactory(project).createExpression("if a {stmt;}") as RsIfExpr
 
     override fun getWrappedExpression(expression: RsIfExpr): RsExpr =
-        expression.condition!!.expr
+        expression.condition!!.expr!!
 
     override fun isApplicable(expression: RsExpr): Boolean =
         expression.type is TyBool

@@ -375,7 +375,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkCondition(condition: RsCondition) {
-        val init = condition.expr
+        val init = condition.expr ?: return
         walkExpr(init)
         val initCmt = mc.processExpr(init)
         for (pat in condition.patList.orEmpty()) {

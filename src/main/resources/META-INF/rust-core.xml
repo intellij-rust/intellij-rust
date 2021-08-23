@@ -241,6 +241,9 @@
 
         <codeCompletionConfigurable instance="org.rust.ide.settings.RsCodeCompletionConfigurable"/>
 
+        <completion.confidence language="Rust"
+                               implementationClass="org.rust.lang.core.completion.RsCompletionConfidence"/>
+
         <completion.contributor language="Rust"
                                 implementationClass="org.rust.lang.core.completion.RsKeywordCompletionContributor"
                                 id="RsKeywordCompletionContributor"

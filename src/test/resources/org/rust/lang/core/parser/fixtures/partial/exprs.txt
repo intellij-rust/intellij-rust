@@ -318,5 +318,27 @@ FILE
         RsBlockImpl(BLOCK)
           PsiElement({)('{')
           PsiElement(})('}')
+      PsiWhiteSpace('\n\n    ')
+      RsExprStmtImpl(EXPR_STMT)
+        RsIfExprImpl(IF_EXPR)
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          RsConditionImpl(CONDITION)
+            PsiElement(let)('let')
+            PsiErrorElement:<pattern> expected, got ';'
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(;)(';')
+      PsiWhiteSpace('\n    ')
+      RsExprStmtImpl(EXPR_STMT)
+        RsWhileExprImpl(WHILE_EXPR)
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          RsConditionImpl(CONDITION)
+            PsiElement(let)('let')
+            PsiErrorElement:<pattern> expected, got ';'
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(;)(';')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

@@ -31,4 +31,7 @@ fn foo() {
     fn a() {}
     foo11(
     fn a() {}
+
+    if let ;
+    while let ;
 }

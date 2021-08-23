@@ -935,10 +935,10 @@ class RsTypeInferenceWalker(
             // or
             // while let Some(a) = ... {}
             // while let V1(a) | V2(a) = ... {}
-            val exprTy = resolveTypeVarsWithObligations(expr.inferType())
+            val exprTy = resolveTypeVarsWithObligations(expr?.inferType() ?: TyUnknown)
             pat.extractBindings(exprTy)
         } else {
-            expr.inferType(TyBool.INSTANCE)
+            expr?.inferType(TyBool.INSTANCE)
         }
     }
 
