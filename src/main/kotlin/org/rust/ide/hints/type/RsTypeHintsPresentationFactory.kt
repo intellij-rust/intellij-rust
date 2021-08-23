@@ -291,10 +291,10 @@ class RsTypeHintsPresentationFactory(
         level + elementsCount > FOLDING_THRESHOLD
 
     private fun isDefaultTypeParameter(argument: Ty, parameter: RsTypeParameter): Boolean =
-        argument == parameter.typeReference?.type
+        argument.isEquivalentTo(parameter.typeReference?.type)
 
     private fun isDefaultTypeAlias(argument: Ty, alias: RsTypeAlias): Boolean =
-        argument == alias.typeReference?.type
+        argument.isEquivalentTo(alias.typeReference?.type)
 
     private fun List<InlayPresentation>.join(separator: String = ""): InlayPresentation {
         if (separator.isEmpty()) {

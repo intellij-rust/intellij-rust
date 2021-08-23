@@ -201,7 +201,7 @@ sealed class TraitImplSource {
  */
 data class ParamEnv(val callerBounds: List<TraitRef>) {
     fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
-        callerBounds.asSequence().filter { it.selfTy == ty }.map { it.trait }
+        callerBounds.asSequence().filter { it.selfTy.isEquivalentTo(ty) }.map { it.trait }
 
     fun isEmpty(): Boolean = callerBounds.isEmpty()
 

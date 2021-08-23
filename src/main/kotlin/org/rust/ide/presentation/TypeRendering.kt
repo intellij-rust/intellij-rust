@@ -275,7 +275,7 @@ private data class TypeRenderer(
             if (skipUnchangedDefaultTypeArguments && !nonDefaultParamFound) {
                 if (parameter is RsTypeParameter &&
                     parameter.typeReference != null &&
-                    parameter.typeReference?.type == subst[parameter]) {
+                    parameter.typeReference?.type?.isEquivalentTo(subst[parameter]) == true) {
                     continue
                 } else {
                     nonDefaultParamFound = true

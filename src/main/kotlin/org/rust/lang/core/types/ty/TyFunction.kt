@@ -24,4 +24,17 @@ data class TyFunction(
         paramTypes.any { it.visitWith(visitor) } || retType.visitWith(visitor)
 
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = copy(aliasedBy = aliasedBy)
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyFunction) return false
+
+        if (paramTypes.size != other.paramTypes.size) return false
+        for (i in paramTypes.indices) {
+            if (!paramTypes[i].isEquivalentTo(other.paramTypes[i])) return false
+        }
+        if (!retType.isEquivalentTo(other.retType)) return false
+
+        return true
+    }
 }

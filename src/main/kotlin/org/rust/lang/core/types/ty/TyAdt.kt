@@ -69,6 +69,20 @@ data class TyAdt private constructor(
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): TyAdt =
         copy(aliasedBy = aliasedBy)
 
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyAdt) return false
+
+        if (item != other.item) return false
+        if (constArguments != other.constArguments) return false
+        if (typeArguments.size != other.typeArguments.size) return false
+        for (i in typeArguments.indices) {
+            if (!typeArguments[i].isEquivalentTo(other.typeArguments[i])) return false
+        }
+
+        return true
+    }
+
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt =
             TyAdt(

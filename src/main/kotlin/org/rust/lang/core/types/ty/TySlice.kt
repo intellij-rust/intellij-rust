@@ -22,4 +22,13 @@ data class TySlice(
         elementType.visitWith(visitor)
 
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = copy(aliasedBy = aliasedBy)
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TySlice) return false
+
+        if (!elementType.isEquivalentTo(other.elementType)) return false
+
+        return true
+    }
 }

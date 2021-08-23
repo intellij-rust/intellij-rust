@@ -19,6 +19,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.mergeElementFlags
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
+import org.rust.stdext.zipValues
 
 /**
  * A "trait object" type should not be confused with a trait.
@@ -59,10 +60,29 @@ class TyTraitObject(
         javaClass != other?.javaClass -> false
         other !is TyTraitObject -> false
         traits != other.traits -> false
+        aliasedBy != other.aliasedBy -> false
         else -> true
     }
 
     override fun hashCode(): Int = traits.hashCode()
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyTraitObject) return false
+
+        if (traits.size != other.traits.size) return false
+        for (i in traits.indices) {
+            val be1 = traits[i]
+            val be2 = other.traits[i]
+            if (be1.element != be2.element) return false
+
+            if (!be1.subst.zipTypeValues(be2.subst).all { it.first.isEquivalentTo(it.second) }) return false
+            if (be1.subst.constSubst != be2.subst.constSubst) return false
+            if (!zipValues(be1.assoc, be2.assoc).all { it.first.isEquivalentTo(it.second) }) return false
+        }
+
+        return true
+    }
 
     companion object {
         fun valueOf(trait: RsTraitItem): TyTraitObject {

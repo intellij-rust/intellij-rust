@@ -23,4 +23,16 @@ data class TyTuple(
         types.any { it.visitWith(visitor) }
 
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): TyTuple = copy(aliasedBy = aliasedBy)
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyTuple) return false
+
+        if (types.size != other.types.size) return false
+        for (i in types.indices) {
+            if (!types[i].isEquivalentTo(other.types[i])) return false
+        }
+
+        return true
+    }
 }

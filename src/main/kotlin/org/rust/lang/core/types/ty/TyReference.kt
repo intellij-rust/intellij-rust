@@ -36,8 +36,19 @@ data class TyReference(
         other !is TyReference -> false
         referenced != other.referenced -> false
         mutability != other.mutability -> false
+        aliasedBy != other.aliasedBy -> false
         else -> true
     }
 
     override fun hashCode(): Int = 31 * referenced.hashCode() + mutability.hashCode()
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyReference) return false
+
+        if (!referenced.isEquivalentTo(other.referenced)) return false
+        if (mutability != other.mutability) return false
+
+        return true
+    }
 }

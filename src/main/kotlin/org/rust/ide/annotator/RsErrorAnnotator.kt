@@ -1072,10 +1072,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
                         .addToHolder(holder)
                 }
-                if (params[1].typeReference?.type != TyPointer(
+                if (params[1].typeReference?.type?.isEquivalentTo(TyPointer(
                         TyPointer(TyInteger.U8.INSTANCE, Mutability.IMMUTABLE),
                         Mutability.IMMUTABLE
-                    )
+                    )) == false
                 ) {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[1].typeReference ?: params[1], 1)
                         .addToHolder(holder)

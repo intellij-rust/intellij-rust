@@ -26,4 +26,14 @@ data class TyArray(
         base.visitWith(visitor) || const.visitWith(visitor)
 
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = copy(aliasedBy = aliasedBy)
+
+    override fun isEquivalentToInner(other: Ty): Boolean {
+        if (this === other) return true
+        if (other !is TyArray) return false
+
+        if (!base.isEquivalentTo(other.base)) return false
+        if (const != other.const) return false
+
+        return true
+    }
 }
