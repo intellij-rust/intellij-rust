@@ -349,9 +349,7 @@ private val RsTraitItem.declarationText: List<String>
 private val RsItemElement.declarationModifiers: List<String>
     get() {
         val modifiers = mutableListOf<String>()
-        if (isPublic) {
-            modifiers += "pub"
-        }
+        vis?.text?.let { modifiers += it }
         when (this) {
             is RsFunction -> {
                 if (isAsync) {

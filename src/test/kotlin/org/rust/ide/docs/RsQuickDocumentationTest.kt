@@ -46,6 +46,52 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         pub fn <b>foo</b>()</pre></div>
     """)
 
+    fun `test pub(crate) fn`() = doTest("""
+        pub(crate) fn foo() {}
+                     //^
+    """, """
+        <div class='definition'><pre>test_package
+        pub(crate) fn <b>foo</b>()</pre></div>
+    """)
+
+    fun `test pub(self) fn`() = doTest("""
+        pub(self) fn foo() {}
+                     //^
+    """, """
+        <div class='definition'><pre>test_package
+        pub(self) fn <b>foo</b>()</pre></div>
+    """)
+
+    fun `test pub(super) fn`() = doTest("""
+        mod bar {
+            pub(super) fn foo() {}
+                         //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::bar
+        pub(super) fn <b>foo</b>()</pre></div>
+    """)
+
+    fun `test crate fn`() = doTest("""
+        mod bar {
+            crate fn foo() {}
+                    //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::bar
+        crate fn <b>foo</b>()</pre></div>
+    """)
+
+    fun `test pub(in crate-bar) fn`() = doTest("""
+        mod bar {
+            pub(in crate::bar) fn foo() {}
+                                //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::bar
+        pub(in crate::bar) fn <b>foo</b>()</pre></div>
+    """)
+
     fun `test const fn`() = doTest("""
         const fn foo() {}
                  //^
@@ -56,7 +102,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
 
     fun `test unsafe fn`() = doTest("""
         unsafe fn foo() {}
-                  //^
+                 //^
     """, """
         <div class='definition'><pre>test_package
         unsafe fn <b>foo</b>()</pre></div>
