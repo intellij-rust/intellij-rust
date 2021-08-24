@@ -5,8 +5,10 @@
 
 package org.rust.clion.profiler.dtrace
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.profiler.DummyCallTreeBuilder
 import com.intellij.profiler.api.*
 import com.intellij.profiler.dtrace.DTraceProfilerProcessBase
@@ -38,7 +40,12 @@ class RsDTraceProfilerProcess private constructor(
 
     override fun createDumpParser(): FullDumpParser<BaseCallStackElement> {
         val cachingStackElementReader = RsCachingStackElementReader.getInstance(project)
-        return FullDumpParser(NativeThread.Companion::fromId, cachingStackElementReader::parseStackElement)
+        // BACKCOMPAT: 2021.1. Since 2021.2, CLion does not show the thread id, so it should be specified as a thread name
+        val shouldSpecifyThreadName = ApplicationInfo.getInstance().build >= BUILD_212
+        return FullDumpParser(
+            { if (shouldSpecifyThreadName) NativeThread(it, "thread with id $it") else NativeThread(it, "") },
+            cachingStackElementReader::parseStackElement
+        )
     }
 
     override fun createDumpWriter(data: NewCallTreeOnlyProfilerData): ProfilerDumpWriter =
@@ -86,3 +93,6 @@ class RsDTraceProfilerProcess private constructor(
         }
     }
 }
+
+// BACKCOMPAT: 2021.1
+private val BUILD_212: BuildNumber = BuildNumber.fromString("212")!!
