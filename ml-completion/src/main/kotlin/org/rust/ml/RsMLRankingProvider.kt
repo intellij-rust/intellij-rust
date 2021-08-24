@@ -17,4 +17,6 @@ class RsMLRankingProvider : CatBoostJarCompletionModelProvider("Rust", "rust_fea
         DecoratingItemsPolicy.ByAbsoluteThreshold(3.0),
         DecoratingItemsPolicy.ByRelativeThreshold(2.5)
     )
+
+    override fun isEnabledByDefault(): Boolean = true
 }
