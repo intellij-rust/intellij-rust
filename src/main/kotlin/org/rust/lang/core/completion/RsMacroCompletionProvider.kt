@@ -22,10 +22,7 @@ import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.psiElement
-import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processMacroCallVariantsInScope
-import org.rust.lang.core.resolve.processMacrosExportedByCrateName
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.withPrevSiblingSkipping
 
 /**
@@ -67,6 +64,7 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
                 processMacrosExportedByCrateName(rsElement, firstSegmentText, processor)
             } else {
                 processMacroCallVariantsInScope(position, isAttrOrDerive = false, processor)
+                processExternCrateResolveVariants(rsElement, isCompletion = true, withSelf = true, processor = originalProcessor)
             }
         }
     }

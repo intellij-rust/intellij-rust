@@ -613,6 +613,19 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete extern crate for macro`() = doSingleCompletionByFileTree("""
+    //- lib.rs
+        dep_lib_/*caret*/
+        fn foo(){}
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
+    """, """
+        dep_lib_target/*caret*/
+        fn foo(){}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test complete outer macro with qualified path 1`() = doSingleCompletionByFileTree("""
     //- lib.rs
         dep_lib_target::fo/*caret*/
