@@ -55,7 +55,8 @@ object RsIcons {
     val TYPE_ALIAS = load("/icons/nodes/typeAlias.svg")
     val IMPL = load("/icons/nodes/impl.svg")
     val FUNCTION = load("/icons/nodes/function.svg")
-    val MACRO = AllIcons.General.ExclMark
+    val MACRO = load("/icons/nodes/macro.svg")
+    val MACRO2 = load("/icons/nodes/macro2.0.svg")
 
     private val GLOBAL_BINDING = load("/icons/nodes/constant.svg")
     val CONSTANT = GLOBAL_BINDING.addFinalMark()
