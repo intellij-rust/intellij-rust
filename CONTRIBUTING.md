@@ -114,13 +114,6 @@ And also a tutorial series "Contributing to Intellij-Rust" by [@Kobzol](https://
   - [\#5: Lint attribute completion](https://kobzol.github.io/rust/intellij/2020/10/26/contributing-5-lint-attribute-completion.html).
 
 
-## CLA
-
-We require a contributor license agreement for all contributions. You can sign it 
-electronically at https://www.jetbrains.com/agreements/cla/ via DocuSign. The procedure
-consists of a couple of emails and clicks: no need to scan or print or snail-mail anything :)
-`CONTRIBUTORS.txt` file stores GitHub usernames of people who already signed a CLA.
-  
 ## Code style
 
 Please use **reformat code** action to maintain consistent style. Pay attention
