@@ -105,7 +105,7 @@ FILE
     PsiElement(})('}')
   PsiWhiteSpace('\n\n')
   PsiElement(unsafe)('unsafe')
-  PsiErrorElement:extern, fn, impl or trait expected, got 'const'
+  PsiErrorElement:extern, fn, impl, mod or trait expected, got 'const'
     <empty list>
   PsiWhiteSpace(' ')
   RsFunctionImpl(FUNCTION)
