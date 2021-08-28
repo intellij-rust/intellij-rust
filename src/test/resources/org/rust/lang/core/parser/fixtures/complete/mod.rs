@@ -9,9 +9,17 @@ mod arith {
       x * y;
     }
 
+    mod sub_mod_decl;
 }
 
 
 mod empty {
 
 }
+
+pub mod pub_mod {}
+pub(crate) mod pub_crate_mod {}
+
+mod mod_decl;
+pub mod pub_mod_decl;
+pub(crate) mod pub_crate_mod_decl;
