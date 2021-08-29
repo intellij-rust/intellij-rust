@@ -50,14 +50,23 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         impl Foo for Bar {}
     """)
 
+    fun `test negative impls`() = doPopupTest("""
+        trait Foo {}
+        struct Bar/*caret*/;
+        impl !Foo for Bar {}
+    """, "!Foo for Bar")
+
     fun `test impls sorting`() = doPopupTest("""
         trait Bar {}
         trait Foo {}
+        trait Baz {}
         struct FooBar/*caret*/;
 
         impl Foo for FooBar {}
         impl Bar for FooBar {}
+        impl !Baz for FooBar {}
     """,
+        "!Baz for FooBar",
         "Bar for FooBar",
         "Foo for FooBar"
     )

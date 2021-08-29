@@ -74,6 +74,9 @@ private fun presentableName(psi: RsElement): String? {
             val trait = psi.traitRef?.text
             buildString {
                 if (trait != null) {
+                    if (psi.isNegativeImpl) {
+                        append("!")
+                    }
                     append("$trait for ")
                 }
                 append(type)
