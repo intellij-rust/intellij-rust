@@ -12,13 +12,14 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
+import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.io.exists
 import org.jdom.Element
 import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
@@ -37,7 +38,6 @@ import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.stdext.toPathOrNull
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -64,6 +64,17 @@ open class CargoCommandConfiguration(
 
     private var isRedirectInput: Boolean = false
     private var redirectInputPath: String? = null
+    private val redirectInputFile: File?
+        get() {
+            if (!isRedirectInput) return null
+            if (redirectInputPath?.isNotEmpty() != true) return null
+            val redirectInputPath = FileUtil.toSystemDependentName(ProgramParametersUtil.expandPathAndMacros(redirectInputPath, null, project))
+            var file = File(redirectInputPath)
+            if (!file.isAbsolute && workingDirectory != null) {
+                file = File(File(workingDirectory.toString()), redirectInputPath)
+            }
+            return file
+        }
 
     override fun isRedirectInput(): Boolean = isRedirectInput
 
@@ -127,10 +138,10 @@ open class CargoCommandConfiguration(
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
         if (isRedirectInput) {
-            val path = redirectInputPath?.toPathOrNull()
+            val file = redirectInputFile
             when {
-                path?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
-                !path.toFile().isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
+                file?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
+                !file.isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
             }
         }
         // TODO: remove when `com.intellij.execution.process.ElevationService` supports error stream redirection
@@ -188,9 +199,7 @@ open class CargoCommandConfiguration(
     fun clean(): CleanConfiguration {
         val workingDirectory = workingDirectory
             ?: return CleanConfiguration.error("No working directory specified")
-        val redirectInputFrom = redirectInputPath
-            ?.takeIf { isRedirectInput && it.isNotBlank() }
-            ?.let { File(it) }
+
         val cmd = run {
             val args = ParametersListUtil.parse(command)
             if (args.isEmpty()) {
@@ -200,7 +209,7 @@ open class CargoCommandConfiguration(
                 args.first(),
                 workingDirectory,
                 args.drop(1),
-                redirectInputFrom,
+                redirectInputFile,
                 backtrace,
                 channel,
                 env,

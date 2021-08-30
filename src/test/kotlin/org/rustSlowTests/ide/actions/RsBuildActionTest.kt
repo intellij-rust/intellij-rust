@@ -21,7 +21,6 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.fileTree
 import org.rust.ide.actions.RsBuildAction
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest
-import java.nio.file.Path
 
 @MinRustcVersion("1.48.0")
 class RsBuildActionTest : CargoBuildTest() {
