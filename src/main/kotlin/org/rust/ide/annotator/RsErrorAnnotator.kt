@@ -1340,6 +1340,11 @@ private fun checkDuplicates(
 }
 
 private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
+    val default = constParameter.blockExpr
+    if (default != null) {
+        CONST_GENERICS_DEFAULTS.check(holder, default, "const generics defaults")
+    }
+
     val constGenericAvailability = CONST_GENERICS.availability(constParameter)
     if (constGenericAvailability == AVAILABLE) return
 
