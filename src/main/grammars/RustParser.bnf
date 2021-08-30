@@ -448,7 +448,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? DefaultTypeParameterTyp
 }
 private DefaultTypeParameterType ::= '=' TypeReference { pin = 1 }
 
-ConstParameter ::= OuterAttr* const identifier TypeAscription {
+ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParameter? {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -456,6 +456,8 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription {
   stubClass = "org.rust.lang.core.stubs.RsConstParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private DefaultConstParameter ::= '=' BlockExpr { pin = 1 }
 
 private TypeBounds ::= [ Polybound ('+' Polybound)* '+'? ]
 
