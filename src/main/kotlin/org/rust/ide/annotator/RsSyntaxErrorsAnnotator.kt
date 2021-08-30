@@ -38,6 +38,8 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
                     is RsStructItem -> checkStructItem(holder, element)
                     is RsTypeAlias -> checkTypeAlias(holder, element)
                     is RsConstant -> checkConstant(holder, element)
+                    is RsModItem -> checkModItem(holder, element)
+                    is RsModDeclItem -> checkModDeclItem(holder, element)
                 }
             }
             is RsMacro -> checkMacro(holder, element)
@@ -317,6 +319,20 @@ private fun checkExternAbi(holder: AnnotationHolder, element: RsExternAbi) {
     val abyLiteralKind = litExpr.kind ?: return
     if (abyLiteralKind !is RsLiteralKind.String) {
         holder.newAnnotation(HighlightSeverity.ERROR, "Non-string ABI literal").range(litExpr).create()
+    }
+}
+
+private fun checkModDeclItem(holder: AnnotationHolder, element: RsModDeclItem) {
+    checkUnsafeModule(holder, element.unsafe)
+}
+
+private fun checkModItem(holder: AnnotationHolder, element: RsModItem) {
+    checkUnsafeModule(holder, element.unsafe)
+}
+
+private fun checkUnsafeModule(holder: AnnotationHolder, unsafe: PsiElement?) {
+    if (unsafe != null) {
+        holder.newAnnotation(HighlightSeverity.ERROR, "Module cannot be declared unsafe").range(unsafe).create()
     }
 }
 

@@ -681,8 +681,8 @@ upper ExternCrateItem ::= extern crate (identifier | self) Alias? ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-upper ModItem ::= mod identifier '{' InnerAttr* Items '}' {
-  pin = 3
+upper ModItem ::= unsafe? mod identifier '{' InnerAttr* Items '}' {
+  pin = 4
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -693,7 +693,7 @@ upper ModItem ::= mod identifier '{' InnerAttr* Items '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-upper ModDeclItem ::= mod identifier ';' {
+upper ModDeclItem ::= unsafe? mod identifier ';' {
   pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement"

@@ -407,4 +407,16 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         type ExternFnWithRawAbi = extern r"system" fn();
         type ExternFnWithInvalidAbi = extern <error descr="Non-string ABI literal">true</error> fn();
     """)
+
+    fun `test unsafe module`() = checkErrors("""
+        mod module {}
+        pub mod pub_module {}
+        <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_module {}
+        pub <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_module {}
+
+        mod mod_delc;
+        pub mod pub_mmod_delc;
+        <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_mod_delc;
+        pub <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_mod_delc;
+    """)
 }
