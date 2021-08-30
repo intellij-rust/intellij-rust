@@ -451,7 +451,8 @@ private DefaultTypeParameterType ::= '=' TypeReference { pin = 1 }
 ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParameter? {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

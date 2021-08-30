@@ -615,6 +615,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
+        collectDiagnostics(holder, constParameter)
         checkConstGenerics(holder, constParameter)
         checkDuplicates(holder, constParameter)
     }
