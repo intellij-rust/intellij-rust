@@ -19,6 +19,7 @@ val RsInferenceContextOwner.body: RsElement?
     get() = when (this) {
         is RsArrayType -> expr
         is RsConstant -> expr
+        is RsConstParameter -> blockExpr
         is RsFunction -> block
         is RsVariantDiscriminant -> expr
         is RsExpressionCodeFragment -> expr
