@@ -164,10 +164,11 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     fun vendorDependencies(
         owner: Project,
         projectDirectory: Path,
-        dstPath: Path
+        dstPath: Path,
+        listener: ProcessListener? = null
     ) {
         val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
-        commandLine.execute(owner)
+        commandLine.execute(owner, listener = listener)
     }
 
     /**

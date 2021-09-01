@@ -31,6 +31,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.ProcessProgressListener
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -41,10 +42,7 @@ import org.rust.cargo.runconfig.buildtool.isNavigateToErrorWhenFailed
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.toolchain.tools.Rustup
-import org.rust.cargo.toolchain.tools.cargoOrWrapper
-import org.rust.cargo.toolchain.tools.rustc
-import org.rust.cargo.toolchain.tools.rustup
+import org.rust.cargo.toolchain.tools.*
 import org.rust.cargo.util.DownloadResult
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.mapNotNullToSet
@@ -315,15 +313,12 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
             CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
-            val projectDescriptionData = cargo.fullProjectDescription(childContext.project, projectDirectory, object : ProcessAdapter() {
-                override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                    val text = event.text.trim { it <= ' ' }
-                    if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                        childContext.withProgressText(text)
-                    }
-
-                }
-            })
+            val projectDescriptionData = cargo.fullProjectDescription(
+                childContext.project,
+                projectDirectory,
+                // TODO: collect build events and show them in structured way
+                SyncProcessAdapter(childContext)
+            )
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
             val cfgOptions = try {
@@ -332,13 +327,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
                 val rustcVersion = rustcInfo?.version?.semver
                 if (rustcVersion == null || rustcVersion > RUST_1_51) {
                     val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n${e.message.orEmpty()}"
-                    @Suppress("DialogTitleCapitalization")
-                    childContext.syncProgress.message(
-                        "Fetching target specific `cfg` options",
-                        message,
-                        MessageEvent.Kind.WARNING,
-                        null
-                    )
+                    childContext.warning("Fetching target specific `cfg` options", message)
                 }
                 toolchain.rustc().getCfgOptions(projectDirectory)
             }
@@ -380,15 +369,15 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
-        rustup.fetchStdlib(childContext.project, rustcInfo)
+        rustup.fetchStdlib(childContext, rustcInfo)
     }
 }
 
 
-private fun Rustup.fetchStdlib(project: Project, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
+private fun Rustup.fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
     return when (val download = downloadStdlib()) {
         is DownloadResult.Ok -> {
-            val lib = StandardLibrary.fromFile(project, download.value, rustcInfo)
+            val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, listener = SyncProcessAdapter(context))
             if (lib == null) {
                 TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
             } else {
@@ -419,6 +408,37 @@ private fun <T, R> BuildProgress<BuildProgressDescriptor>.runWithChildProgress(
         }
         throw e
     }
+}
+
+private class SyncProcessAdapter(
+    private val context: CargoSyncTask.SyncContext
+) : ProcessAdapter(),
+    ProcessProgressListener {
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+        val text = event.text.trim { it <= ' ' }
+        if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+            context.withProgressText(text)
+        }
+        if (text.startsWith("Vendoring")) {
+            // This code expect that vendoring message has the following format:
+            // "Vendoring %package_name% v%package_version% (%src_dir%) to %dst_dir%".
+            // So let's extract "Vendoring %package_name% v%package_version%" part and show it for users
+            val index = text.indexOf(" (")
+            val progressText = if (index != -1) text.substring(0, index) else text
+            context.withProgressText(progressText)
+        }
+    }
+
+    override fun error(title: String, message: String) = context.error(title, message)
+    override fun warning(title: String, message: String) = context.warning(title, message)
+}
+
+private fun CargoSyncTask.SyncContext.error(title: String, message: String) {
+    syncProgress.message(title, message, MessageEvent.Kind.ERROR, null)
+}
+
+private fun CargoSyncTask.SyncContext.warning(title: String, message: String) {
+    syncProgress.message(title, message, MessageEvent.Kind.WARNING, null)
 }
 
 private val RUST_1_51: SemVer = SemVer.parseFromText("1.51.0")!!
