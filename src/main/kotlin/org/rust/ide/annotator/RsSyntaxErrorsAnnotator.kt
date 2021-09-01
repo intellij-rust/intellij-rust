@@ -40,6 +40,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
                     is RsConstant -> checkConstant(holder, element)
                     is RsModItem -> checkModItem(holder, element)
                     is RsModDeclItem -> checkModDeclItem(holder, element)
+                    is RsForeignModItem -> checkForeignModItem(holder, element)
                 }
             }
             is RsMacro -> checkMacro(holder, element)
@@ -323,16 +324,20 @@ private fun checkExternAbi(holder: AnnotationHolder, element: RsExternAbi) {
 }
 
 private fun checkModDeclItem(holder: AnnotationHolder, element: RsModDeclItem) {
-    checkUnsafeModule(holder, element.unsafe)
+    checkInvalidUnsafe(holder, element.unsafe, "Module")
 }
 
 private fun checkModItem(holder: AnnotationHolder, element: RsModItem) {
-    checkUnsafeModule(holder, element.unsafe)
+    checkInvalidUnsafe(holder, element.unsafe, "Module")
 }
 
-private fun checkUnsafeModule(holder: AnnotationHolder, unsafe: PsiElement?) {
+private fun checkForeignModItem(holder: AnnotationHolder, element: RsForeignModItem) {
+    checkInvalidUnsafe(holder, element.unsafe, "Extern block")
+}
+
+private fun checkInvalidUnsafe(holder: AnnotationHolder, unsafe: PsiElement?, itemName: String) {
     if (unsafe != null) {
-        holder.newAnnotation(HighlightSeverity.ERROR, "Module cannot be declared unsafe").range(unsafe).create()
+        holder.newAnnotation(HighlightSeverity.ERROR, "$itemName cannot be declared unsafe").range(unsafe).create()
     }
 }
 

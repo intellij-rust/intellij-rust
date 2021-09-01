@@ -419,4 +419,11 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_mod_delc;
         pub <error descr="Module cannot be declared unsafe">unsafe</error> mod unsafe_mod_delc;
     """)
+
+    fun `test unsafe extern block`() = checkErrors("""
+        extern {}
+        extern "C" {}
+        <error descr="Extern block cannot be declared unsafe">unsafe</error> extern {}
+        <error descr="Extern block cannot be declared unsafe">unsafe</error> extern "Rust" {}
+    """)
 }
