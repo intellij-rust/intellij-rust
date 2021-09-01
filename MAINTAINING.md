@@ -2,11 +2,6 @@
 
 ## Accepting pull requests
 
-We require a CLA from all contributors. See [CONTRIBUTING.md](CONTRIBUTING.md) 
-for the details. The most important one is that signing is fully electronic 
-and can be done in seconds. The list of GitHub users who have already signed 
-the CLA is at [CONTRIBUTORS.txt](CONTRIBUTORS.txt).
-
 We use [bors](https://bors.tech/) to make sure master is always green. Common commands are
 
 * `bors r+` to merge a PR,
@@ -33,6 +28,14 @@ if the corresponding change should be mentioned in documentation or affects exis
 Each non-stalled pull-request should be assigned to a reviewer, who should make
 sure that PR moves forward. However, anybody with r+ can accept any PR, if
 they are confident that the PR is in a good state.
+
+## Accepting contributions outside of GitHub
+
+In case you receive a contribution (a patch) outside of GitHub (e.g. by email),
+we require a CLA from that contributor. The CLA can be signed at 
+https://www.jetbrains.com/agreements/cla/ via DocuSign. The most important one 
+is that signing is fully electronic and can be done in seconds
+
 
 ## Upgrades
 
