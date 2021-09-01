@@ -19,8 +19,12 @@ open class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) 
     override fun getText(): String = familyName
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-        val oldMatchBody = (startElement as? RsMatchExpr)?.matchBody ?: return
+        if (startElement !is RsMatchExpr) return
+        val expr = startElement.expr ?: return
+
         val rsPsiFactory = RsPsiFactory(project)
+        val oldMatchBody = startElement.matchBody
+            ?: rsPsiFactory.createMatchBody(emptyList()).let { startElement.addAfter(it, expr) as RsMatchBody }
 
         val lastMatchArm = oldMatchBody.matchArmList.lastOrNull()
         if (lastMatchArm != null && lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
@@ -31,8 +35,7 @@ open class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) 
             oldMatchBody.addBefore(arm, oldMatchBody.rbrace)
         }
 
-        val ty = startElement.expr?.type ?: return
-        importTypeReferencesFromTy(startElement, ty)
+        importTypeReferencesFromTy(startElement, expr.type)
     }
 
     open fun createNewArms(psiFactory: RsPsiFactory, oldMatchBody: RsMatchBody): List<RsMatchArm> =
