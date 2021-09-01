@@ -302,6 +302,36 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test lambda has no braces`() = doTest("""
+        fn main() {
+            Some(1).map(|x| <selection>x</selection> + 1);
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            Some(1).map(|x| {
+                let x1 = x;
+                x1 + 1
+            });
+        }
+    """)
+
+    fun `test lambda has no braces with match expr`() = doTest("""
+        fn main() {
+            Some(1).map(|x| match <selection>x</selection> {
+                _ => 0,
+            });
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            Some(1).map(|x| {
+                let x1 = x;
+                match x1 {
+                    _ => 0,
+                }
+            });
+        }
+    """)
+
     private fun doTest(
         @Language("Rust") before: String,
         expressions: List<String>,
