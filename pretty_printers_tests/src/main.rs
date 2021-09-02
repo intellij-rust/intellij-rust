@@ -26,10 +26,20 @@ struct Settings {
     test_dir: String,
     pretty_printers_path: String,
     print_stdout: bool,
-    native_rust: bool,
+    lldb: Option<LLDBSettings>,
+    gdb: Option<GDBSettings>,
+}
+
+#[derive(Deserialize)]
+struct LLDBSettings {
+    python: String,
     lldb_batchmode: String,
     lldb_lookup: String,
-    python: String,
+    native_rust: bool
+}
+
+#[derive(Deserialize)]
+struct GDBSettings {
     gdb_lookup: String
 }
 
@@ -55,25 +65,30 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
     let settings: Settings = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
 
     let config = match debugger {
-        Debugger::LLDB => Config::LLDB(LLDBConfig {
-            test_dir: settings.test_dir.clone(),
-            pretty_printers_path: settings.pretty_printers_path,
-            lldb_batchmode: settings.lldb_batchmode,
-            lldb_lookup: settings.lldb_lookup,
-            lldb_python: path,
-            python: settings.python,
-            print_stdout: settings.print_stdout,
-            native_rust: settings.native_rust,
-        }),
+        Debugger::LLDB => {
+            let lldb_settings = settings.lldb.expect(&format!("No LLDB settings in {}", SETTINGS));
+            Config::LLDB(LLDBConfig {
+                test_dir: settings.test_dir.clone(),
+                pretty_printers_path: settings.pretty_printers_path,
+                print_stdout: settings.print_stdout,
+                lldb_python: path,
+                lldb_batchmode: lldb_settings.lldb_batchmode,
+                lldb_lookup: lldb_settings.lldb_lookup,
+                python: lldb_settings.python,
+                native_rust: lldb_settings.native_rust,
+            })
+        },
 
-        Debugger::GDB => Config::GDB(GDBConfig {
-            test_dir: settings.test_dir.clone(),
-            pretty_printers_path: settings.pretty_printers_path,
-            gdb: path,
-            gdb_lookup: settings.gdb_lookup,
-            print_stdout: settings.print_stdout,
-            native_rust: settings.native_rust,
-        })
+        Debugger::GDB => {
+            let gdb_settings = settings.gdb.expect(&format!("No GDB settings in {}", SETTINGS));
+            Config::GDB(GDBConfig {
+                test_dir: settings.test_dir.clone(),
+                pretty_printers_path: settings.pretty_printers_path,
+                print_stdout: settings.print_stdout,
+                gdb: path,
+                gdb_lookup: gdb_settings.gdb_lookup,
+            })
+        }
     };
 
     let src_dir = Path::new(&settings.test_dir);

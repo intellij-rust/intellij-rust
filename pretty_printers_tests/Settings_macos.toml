@@ -1,8 +1,12 @@
 test_dir = "./tests"
 pretty_printers_path = "./../prettyPrinters/"
 print_stdout = true
-native_rust = false
+
+[lldb]
+python = "python"
 lldb_batchmode = "./lldb_batchmode.py"
 lldb_lookup = "lldb_lookup"
-python = "python"
+native_rust = false
+
+[gdb]
 gdb_lookup = "gdb_lookup"

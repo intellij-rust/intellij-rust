@@ -5,18 +5,20 @@
 // lldb-command:run
 
 // lldb-command:print r
-// lldbg-check:[...]r = strong=2, weak=1 { value = 42 }
+// lldbr-check:[...]r = strong=2, weak=1 { value = 42 }
+// lldbg-check:[...]$0 = strong=2, weak=1 { value = 42 }
 // lldb-command:print a
-// lldbg-check:[...]a = strong=2, weak=1 { data = 42 }
+// lldbr-check:[...]a = strong=2, weak=1 { data = 42 }
+// lldbg-check:[...]$1 = strong=2, weak=1 { data = 42 }
 
 // === GDB TESTS ==================================================================================
 
 // gdb-command:run
 
 // gdb-command:print r
-// gdbg-check:[...]$1 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
+// gdb-check:[...]$1 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
 // gdb-command:print a
-// gdbg-check:[...]$2 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
+// gdb-check:[...]$2 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
 
 use std::rc::Rc;
 use std::sync::Arc;

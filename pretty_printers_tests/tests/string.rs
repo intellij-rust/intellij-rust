@@ -3,38 +3,48 @@
 // lldb-command:run
 
 // lldb-command:print s1
-// lldbg-check:[...]s1 = "A∆й中" [...]
+// lldbr-check:[...]s1 = "A∆й中" [...]
+// lldbg-check:[...]$0 = "A∆й中" [...]
 // lldb-command:print s2
-// lldbg-check:[...]s2 = "A∆й中" [...]
+// lldbr-check:[...]s2 = "A∆й中" [...]
+// lldbg-check:[...]$1 = "A∆й中" [...]
 // lldb-command:print s3
-// lldbg-check:[...]s3 = "A∆й中" [...]
+// lldbr-check:[...]s3 = "A∆й中" [...]
+// lldbg-check:[...]$2 = "A∆й中" [...]
 // lldb-command:print s4
-// lldbg-check:[...]s4 = "A∆й中" [...]
+// lldbr-check:[...]s4 = "A∆й中" [...]
+// lldbg-check:[...]$3 = "A∆й中" [...]
 // lldb-command:print s5
-// lldbg-check:[...]s5 = "A∆й中" [...]
+// lldbr-check:[...]s5 = "A∆й中" [...]
+// lldbg-check:[...]$4 = "A∆й中" [...]
 // lldb-command:print empty_s1
-// lldbg-check:[...]empty_s1 = "" [...]
+// lldbr-check:[...]empty_s1 = "" [...]
+// lldbg-check:[...]$5 = "" [...]
 // lldb-command:print empty_s2
-// lldbg-check:[...]empty_s2 = "" [...]
+// lldbr-check:[...]empty_s2 = "" [...]
+// lldbg-check:[...]$6 = "" [...]
 // lldb-command:print empty_s3
-// lldbg-check:[...]empty_s3 = "" [...]
+// lldbr-check:[...]empty_s3 = "" [...]
+// lldbg-check:[...]$7 = "" [...]
 // lldb-command:print empty_s4
-// lldbg-check:[...]empty_s4 = "" [...]
+// lldbr-check:[...]empty_s4 = "" [...]
+// lldbg-check:[...]$8 = "" [...]
 // lldb-command:print empty_s5
-// lldbg-check:[...]empty_s5 = "" [...]
+// lldbr-check:[...]empty_s5 = "" [...]
+// lldbg-check:[...]$9 = "" [...]
 
 // === GDB TESTS ==================================================================================
 
 // gdb-command:run
 
 // gdb-command:print s1
-// gdbg-check:[...]$1 = "A∆й中"
+// gdb-check:[...]$1 = "A∆й中"
 // gdb-command:print s2
-// gdbg-check:[...]$2 = "A∆й中"
+// gdb-check:[...]$2 = "A∆й中"
 // gdb-command:print empty_s1
-// gdbg-check:[...]$3 = ""
+// gdb-check:[...]$3 = ""
 // gdb-command:print empty_s2
-// gdbg-check:[...]$4 = ""
+// gdb-check:[...]$4 = ""
 
 
 fn main() {
