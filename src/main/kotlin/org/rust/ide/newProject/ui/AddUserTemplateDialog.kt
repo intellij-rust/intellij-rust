@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
+import org.rust.RsBundle
 import org.rust.ide.newProject.state.RsUserTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
 import java.awt.Dimension
@@ -26,18 +27,18 @@ class AddUserTemplateDialog : DialogWrapper(null) {
     private val nameField: JBTextField = JBTextField()
 
     init {
-        title = "Add a Custom Template"
-        setOKButtonText("Add")
+        title = RsBundle.message("dialog.create.project.custom.add.template.title")
+        setOKButtonText(RsBundle.message("dialog.create.project.custom.add.template.action.add"))
         init()
     }
 
     override fun getPreferredFocusedComponent(): JComponent = repoUrlField
 
     override fun createCenterPanel(): JComponent = panel {
-        row("Template URL:") {
-            repoUrlField(comment = "A git repository URL to generate from")
+        row(RsBundle.message("dialog.create.project.custom.add.template.url")) {
+            repoUrlField(comment = RsBundle.message("dialog.create.project.custom.add.template.url.description"))
         }
-        row("Name:") {
+        row(RsBundle.message("dialog.create.project.custom.add.template.name")) {
             nameField()
         }
     }

@@ -56,7 +56,6 @@ import org.rust.lang.RsConstants.MAIN_RS_FILE
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.stdext.buildList
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -293,31 +292,16 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         directory: VirtualFile,
         name: String,
         templateUrl: String
-    ): GeneratedFilesHolder? {
+    ): GeneratedFilesHolder {
         val path = directory.pathAsPath
-        val args = mutableListOf("--name", name, "--git", templateUrl)
-        args.add("--force") // enforce cargo-generate not to do underscores to hyphens name conversion
+        val args = mutableListOf(
+            "--name", name,
+            "--git", templateUrl,
+            "--init", // generate in current directory
+            "--force" // enforce cargo-generate not to do underscores to hyphens name conversion
+        )
 
-        // TODO: Rewrite this for the future versions of cargo-generate when init subcommand will be available
-        // See https://github.com/ashleygwilliams/cargo-generate/issues/193
-
-        // Generate a cargo-generate project inside a subdir
         CargoCommandLine("generate", path, args).execute(project, owner)
-
-        // Move all the generated files to the project root and delete the subdir itself
-        val generatedDir = try {
-            File(path.toString(), name)
-        } catch (e: NullPointerException) {
-            LOG.warn("Failed to generate project using cargo-generate")
-            return null
-        }
-        val generatedFiles = generatedDir.walk().drop(1) // drop the `generatedDir` itself
-        for (generatedFile in generatedFiles) {
-            val newFile = File(path.toString(), generatedFile.name)
-            Files.move(generatedFile.toPath(), newFile.toPath())
-        }
-        generatedDir.delete()
-
         fullyRefreshDirectory(directory)
 
         val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
@@ -423,7 +407,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
     fun checkNeedInstallCargoGenerate(): Boolean {
         val crateName = "cargo-generate"
-        val minVersion = SemVer("v0.5.0", 0, 5, 0)
+        val minVersion = SemVer("v0.9.0", 0, 9, 0)
         return checkBinaryCrateIsNotInstalled(crateName, minVersion)
     }
 

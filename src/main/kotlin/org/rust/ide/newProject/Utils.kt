@@ -27,7 +27,7 @@ fun Cargo.makeProject(
     baseDir: VirtualFile,
     name: String,
     template: RsProjectTemplate
-): GeneratedFilesHolder? = when (template) {
+): GeneratedFilesHolder = when (template) {
     is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary)
     is RsCustomTemplate -> generate(project, module, baseDir, name, template.url)
 }

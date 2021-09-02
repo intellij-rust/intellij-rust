@@ -46,7 +46,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         val name = project.name.replace(' ', '_')
         val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
             cargo.makeProject(project, module, baseDir, name, template)
-        } ?: return
+        }
 
         project.rustSettings.modify {
             it.toolchain = settings.toolchain
