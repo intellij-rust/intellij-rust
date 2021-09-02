@@ -289,7 +289,6 @@ jobs:
                   arguments: ":plugin:verifyPlugin"
 
             - name: Check bundled Rust formatters
-              if: matrix.os != 'windows-latest'
               uses: gradle/gradle-build-action@v1
               with:
                   arguments: "runPrettyPrintersTests --no-daemon"
