@@ -5,7 +5,6 @@
 
 package org.rust.ide.module
 
-import com.intellij.execution.ExecutionException
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -23,6 +22,7 @@ import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.makeDefaultRunConfiguration
 import org.rust.ide.newProject.makeProject
 import org.rust.ide.newProject.openFiles
+import org.rust.stdext.unwrapOrElse
 
 /**
  * Builder which is used when a new project or module is created and not imported from source.
@@ -46,30 +46,28 @@ class RsModuleBuilder : ModuleBuilder() {
 
         // Just work if user "creates new project" over an existing one.
         if (toolchain != null && root.findChild(CargoConstants.MANIFEST_FILE) == null) {
-            try {
-                // TODO: rewrite this somehow to fix `Synchronous execution on EDT` exception
-                // The problem is that `setupRootModel` is called on EDT under write action
-                // so `$ cargo init` invocation blocks UI thread
+            // TODO: rewrite this somehow to fix `Synchronous execution on EDT` exception
+            // The problem is that `setupRootModel` is called on EDT under write action
+            // so `$ cargo init` invocation blocks UI thread
 
-                val template = configurationData?.template ?: return
-                val cargo = toolchain.cargo()
-                val project = modifiableRootModel.project
-                val name = project.name.replace(' ', '_')
+            val template = configurationData?.template ?: return
+            val cargo = toolchain.cargo()
+            val project = modifiableRootModel.project
+            val name = project.name.replace(' ', '_')
 
-                val generatedFiles = cargo.makeProject(
-                    project,
-                    modifiableRootModel.module,
-                    root,
-                    name,
-                    template
-                )
-
-                project.makeDefaultRunConfiguration(template)
-                project.openFiles(generatedFiles)
-            } catch (e: ExecutionException) {
-                LOG.error(e)
-                throw ConfigurationException(e.message)
+            val generatedFiles = cargo.makeProject(
+                project,
+                modifiableRootModel.module,
+                root,
+                name,
+                template
+            ).unwrapOrElse {
+                LOG.error(it)
+                throw ConfigurationException(it.message)
             }
+
+            project.makeDefaultRunConfiguration(template)
+            project.openFiles(generatedFiles)
         }
     }
 

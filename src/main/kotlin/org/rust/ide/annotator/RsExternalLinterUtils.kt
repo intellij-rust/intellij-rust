@@ -46,6 +46,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
+import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
@@ -133,14 +134,13 @@ object RsExternalLinterUtils {
     ): RsExternalLinterResult? {
         ProgressManager.checkCanceled()
         val started = Instant.now()
-        val output = try {
-            toolchain
-                .cargoOrWrapper(workingDirectory)
-                .checkProject(project, owner, args)
-        } catch (e: ExecutionException) {
-            LOG.error(e)
-            return null
-        }
+        val output = toolchain
+            .cargoOrWrapper(workingDirectory)
+            .checkProject(project, owner, args)
+            .unwrapOrElse { e ->
+                LOG.error(e)
+                return null
+            }
         val finish = Instant.now()
         ProgressManager.checkCanceled()
         if (output.isCancelled) return null

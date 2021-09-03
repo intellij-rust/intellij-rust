@@ -24,8 +24,10 @@ import org.rust.cargo.toolchain.tools.rustfmt
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.document
 import org.rust.openapiext.execute
+import org.rust.openapiext.ignoreExitCode
 import org.rust.openapiext.runProcess
 import org.rust.stdext.enumSetOf
+import org.rust.stdext.unwrapOrThrow
 
 @Suppress("UnstableApiUsage")
 class RustfmtFormattingService : AsyncDocumentFormattingService() {
@@ -56,7 +58,6 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
 
                 rustfmt.createCommandLine(cargoProject, document)?.execute(
                     cargoProject.project,
-                    ignoreExitCode = true,
                     stdIn = request.documentText.toByteArray(),
                     runner = {
                         addProcessListener(object : CapturingProcessAdapter() {
@@ -71,7 +72,7 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
                         })
                         runProcess(indicator)
                     }
-                )
+                )?.ignoreExitCode()?.unwrapOrThrow()
             }
 
             override fun cancel(): Boolean {

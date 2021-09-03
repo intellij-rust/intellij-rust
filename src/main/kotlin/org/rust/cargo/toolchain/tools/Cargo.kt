@@ -7,7 +7,6 @@ package org.rust.cargo.toolchain.tools
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
@@ -58,7 +57,11 @@ import org.rust.lang.RsConstants.LIB_RS_FILE
 import org.rust.lang.RsConstants.MAIN_RS_FILE
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.buildList
+import org.rust.stdext.unwrapOrElse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -85,8 +88,10 @@ fun RsToolchainBase.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
-    : RustupComponent(if (useWrapper) WRAPPER_NAME else NAME, toolchain) {
+class Cargo(
+    toolchain: RsToolchainBase,
+    useWrapper: Boolean = false
+) : RustupComponent(if (useWrapper) WRAPPER_NAME else NAME, toolchain) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -129,13 +134,13 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
      * pass an [owner] to correctly kill the process if it
      * runs for too long.
      */
-    @Throws(ExecutionException::class)
     fun fullProjectDescription(
         owner: Project,
         projectDirectory: Path,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
-    ): ProjectDescription {
+    ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
         val rawData = fetchMetadata(owner, projectDirectory, listenerProvider(CargoCallType.METADATA))
+            .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
             fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
@@ -147,54 +152,53 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
         val workspaceData = CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted)
         val status = if (buildScriptsInfo.isSuccessful) OK else BUILD_SCRIPT_EVALUATION_ERROR
-        return ProjectDescription(workspaceData, status)
+        return Ok(ProjectDescription(workspaceData, status))
     }
 
-    @Throws(ExecutionException::class)
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener? = null
-    ): CargoMetadata.Project {
+    ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
+            .unwrapOrElse { return Err(it) }
             .stdout
             .dropWhile { it != '{' }
-        try {
-            return Gson().fromJson(json, CargoMetadata.Project::class.java)
+        return try {
+            val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
                 .convertPaths(toolchain::toLocalPath)
+            Ok(project)
         } catch (e: JsonSyntaxException) {
-            throw ExecutionException(e)
+            Err(JsonDeserializationException(e))
         }
     }
 
-    @Throws(ExecutionException::class)
     fun vendorDependencies(
         owner: Project,
         projectDirectory: Path,
         dstPath: Path,
         listener: ProcessListener? = null
-    ) {
+    ): RsProcessResult<Unit> {
         val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
-        commandLine.execute(owner, listener = listener)
+        commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
+        return Ok(Unit)
     }
 
     /**
      * Execute `cargo rustc --print cfg` and parse output as [CfgOptions].
      * Available since Rust 1.52
      */
-    @Throws(ExecutionException::class)
     fun getCfgOption(
         owner: Project,
         projectDirectory: Path?
-    ): CfgOptions {
-        val output = createBaseCommandLine(
+    ): RsProcessResult<CfgOptions> {
+        return createBaseCommandLine(
             "rustc", "-Z", "unstable-options", "--print", "cfg",
             workingDirectory = projectDirectory,
             environment = mapOf(RUSTC_BOOTSTRAP to "1")
-        ).execute(owner, ignoreExitCode = false)
-        return CfgOptions.parse(output.stdoutLines)
+        ).execute(owner).map { output -> CfgOptions.parse(output.stdoutLines) }
     }
 
     private fun fetchBuildScriptsInfo(
@@ -215,12 +219,12 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs, environmentVariables = envs)
 
-        val processOutput = try {
-            commandLine.execute(owner, ignoreExitCode = true, listener = listener)
-        } catch (e: ExecutionException) {
-            LOG.warn(e)
-            return BuildMessages.FAILED
-        }
+        val processOutput = commandLine.execute(owner, listener = listener)
+            .ignoreExitCode()
+            .unwrapOrElse {
+                LOG.warn(it)
+                return BuildMessages.FAILED
+            }
 
         val messages = mutableMapOf<PackageId, MutableList<CompilerMessage>>()
 
@@ -268,7 +272,6 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         return Pair(project.replacePaths(replacer), buildMessages?.replacePaths(replacer))
     }
 
-    @Throws(ExecutionException::class)
     fun init(
         project: Project,
         owner: Disposable,
@@ -276,7 +279,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         name: String,
         createBinary: Boolean,
         vcs: String? = null
-    ): GeneratedFilesHolder {
+    ): RsProcessResult<GeneratedFilesHolder> {
         val path = directory.pathAsPath
         val crateType = if (createBinary) "--bin" else "--lib"
 
@@ -288,23 +291,22 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         args.add(path.toString())
 
-        CargoCommandLine("init", path, args).execute(project, owner)
+        CargoCommandLine("init", path, args).execute(project, owner).unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
         val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val fileName = if (createBinary) MAIN_RS_FILE else LIB_RS_FILE
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
-        return GeneratedFilesHolder(manifest, sourceFiles)
+        return Ok(GeneratedFilesHolder(manifest, sourceFiles))
     }
 
-    @Throws(ExecutionException::class)
     fun generate(
         project: Project,
         owner: Disposable,
         directory: VirtualFile,
         name: String,
         templateUrl: String
-    ): GeneratedFilesHolder {
+    ): RsProcessResult<GeneratedFilesHolder> {
         val path = directory.pathAsPath
         val args = mutableListOf(
             "--name", name,
@@ -313,20 +315,21 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             "--force" // enforce cargo-generate not to do underscores to hyphens name conversion
         )
 
-        CargoCommandLine("generate", path, args).execute(project, owner)
+        CargoCommandLine("generate", path, args)
+            .execute(project, owner)
+            .unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
         val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val sourceFiles = listOf("main", "lib").mapNotNull { directory.findFileByRelativePath("src/${it}.rs") }
-        return GeneratedFilesHolder(manifest, sourceFiles)
+        return Ok(GeneratedFilesHolder(manifest, sourceFiles))
     }
 
-    @Throws(ExecutionException::class)
     fun checkProject(
         project: Project,
         owner: Disposable,
         args: CargoCheckArgs
-    ): ProcessOutput {
+    ): RsResult<ProcessOutput, RsProcessExecutionException.Start> {
         val useClippy = args.linter == ExternalLinter.CLIPPY
             && !checkNeedInstallClippy(project, args.cargoProjectDirectory)
         val checkCommand = if (useClippy) "clippy" else "check"
@@ -363,7 +366,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             }
         }
 
-        return commandLine.execute(project, owner, ignoreExitCode = true)
+        return commandLine.execute(project, owner).ignoreExitCode()
     }
 
     fun toColoredCommandLine(project: Project, commandLine: CargoCommandLine): GeneralCommandLine =
@@ -404,17 +407,20 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             ).withEnvironment("RUSTC", rustcExecutable)
         }
 
-    @Throws(ExecutionException::class)
     private fun CargoCommandLine.execute(
         project: Project,
         owner: Disposable = project,
-        ignoreExitCode: Boolean = false,
         stdIn: ByteArray? = null,
         listener: ProcessListener? = null
-    ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener = listener)
+    ): RsProcessResult<ProcessOutput> {
+        return toGeneralCommandLine(project, this).execute(owner, stdIn, listener = listener)
+    }
 
-    fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
-        createBaseCommandLine("install", "cargo-generate").execute(owner, listener = listener)
+    fun installCargoGenerate(owner: Disposable, listener: ProcessListener): RsResult<Unit, RsProcessExecutionException.Start> {
+        return createBaseCommandLine("install", "cargo-generate")
+            .execute(owner, listener = listener)
+            .ignoreExitCode()
+            .map { }
     }
 
     fun checkNeedInstallCargoGenerate(): Boolean {
@@ -476,7 +482,8 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             if (requiredFeatures && command in FEATURES_ACCEPTING_COMMANDS) {
                 run {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory) ?: return@run
-                    val cargoPackage = findCargoPackage(cargoProject, additionalArguments, workingDirectory) ?: return@run
+                    val cargoPackage = findCargoPackage(cargoProject, additionalArguments, workingDirectory)
+                        ?: return@run
                     if (workingDirectory != cargoPackage.rootDirectory) {
                         val manifestIdx = pre.indexOf("--manifest-path")
                         val packageIdx = pre.indexOf("--package")

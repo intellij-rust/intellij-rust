@@ -19,6 +19,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.actions.ui.showCargoNewCrateUI
 import org.rust.openapiext.pathAsPath
+import org.rust.stdext.unwrapOrThrow
 
 
 class RsCreateCrateAction : RunCargoCommandActionBase() {
@@ -54,7 +55,7 @@ class RsCreateCrateAction : RunCargoCommandActionBase() {
         val targetDir = runWriteAction {
             root.createChildDirectory(this, name)
         }
-        cargo.init(project, project, targetDir, name, binary, "none")
+        cargo.init(project, project, targetDir, name, binary, "none").unwrapOrThrow()
 
         val manifest = targetDir.findChild(CargoConstants.MANIFEST_FILE)
         manifest?.let {

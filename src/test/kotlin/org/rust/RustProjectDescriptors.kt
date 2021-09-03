@@ -38,6 +38,7 @@ import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.HashCode
+import org.rust.stdext.unwrapOrThrow
 import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 import java.io.File
 import java.nio.file.Path
@@ -278,6 +279,7 @@ open class WithProcMacros(
             val testProcMacroProjectPath = Path.of("testData/$TEST_PROC_MACROS")
             fullyRefreshDirectoryInUnitTests(LocalFileSystem.getInstance().findFileByNioFile(testProcMacroProjectPath)!!)
             val (testProcMacroProject, _) = toolchain!!.cargo().fullProjectDescription(project, testProcMacroProjectPath)
+                .unwrapOrThrow()
             procMacroPackage = testProcMacroProject.packages.find { it.name == TEST_PROC_MACROS }!!
                 .copy(origin = PackageOrigin.DEPENDENCY)
             procMacroPackage

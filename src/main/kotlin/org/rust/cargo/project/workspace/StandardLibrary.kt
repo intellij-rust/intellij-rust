@@ -6,7 +6,6 @@
 package org.rust.cargo.project.workspace
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -33,6 +32,7 @@ import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import org.rust.stdext.toPath
+import org.rust.stdext.unwrapOrElse
 import java.io.IOException
 import java.nio.file.Path
 
@@ -293,11 +293,9 @@ class StdlibDataFetcher private constructor(
             return
         }
 
-        val metadataProject = try {
-            cargo.fetchMetadata(project, pathAsPath, listener)
-        } catch (e: ExecutionException) {
-            listener?.error("Failed to fetch stdlib package info", e.message.orEmpty())
-            LOG.error(e)
+        val metadataProject = cargo.fetchMetadata(project, pathAsPath, listener).unwrapOrElse {
+            listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
+            LOG.error(it)
             return
         }
 
@@ -360,13 +358,11 @@ class StdlibDataFetcher private constructor(
             }
 
             if (!stdlibVendorExists) {
-                try {
-                    // `test` package depends on all other stdlib packages,
-                    // so it's enough to vendor only its dependencies
-                    cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, listener)
-                } catch (e: ExecutionException) {
-                    listener?.error("Failed to load stdlib dependencies", e.message.orEmpty())
-                    LOG.error(e)
+                // `test` package depends on all other stdlib packages,
+                // so it's enough to vendor only its dependencies
+                cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, listener).unwrapOrElse {
+                    listener?.error("Failed to load stdlib dependencies", it.message.orEmpty())
+                    LOG.error(it)
                     return null
                 }
             }

@@ -32,6 +32,7 @@ import org.rust.ide.newProject.RsProjectTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.UiDebouncer
+import org.rust.stdext.unwrapOrThrow
 import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.ListSelectionModel
@@ -111,9 +112,9 @@ class RsNewProjectPanel(
         val cargo = cargo ?: return@Link
 
         object : Task.Modal(null, "Installing cargo-generate", true) {
-            var exitCode = 0
+            var exitCode: Int = Int.MIN_VALUE
 
-            override fun onSuccess() {
+            override fun onFinished() {
                 if (exitCode != 0) {
                     templateList.showBalloon("Failed to install cargo-generate", MessageType.ERROR, this@RsNewProjectPanel)
                 }
@@ -132,7 +133,7 @@ class RsNewProjectPanel(
                     override fun processTerminated(event: ProcessEvent) {
                         exitCode = event.exitCode
                     }
-                })
+                }).unwrapOrThrow()
             }
         }.queue()
     }.apply { isVisible = false }
