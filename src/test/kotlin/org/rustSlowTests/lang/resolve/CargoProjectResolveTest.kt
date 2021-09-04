@@ -17,6 +17,7 @@ import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.cargo.project.settings.toolchain
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
@@ -578,6 +579,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.pathAsPath.resolve("cargo").toString())
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
         val testProject = buildProject {
             toml("Cargo.toml", """
                 [package]

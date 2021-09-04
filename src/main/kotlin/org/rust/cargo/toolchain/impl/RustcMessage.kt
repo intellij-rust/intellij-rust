@@ -145,6 +145,8 @@ sealed class CompilerMessage {
     @Suppress("PropertyName")
     abstract val package_id: PackageId
 
+    abstract fun convertPaths(converter: PathConverter): CompilerMessage
+
     companion object {
         fun fromJson(json: JsonObject): CompilerMessage? {
             val reason = json.getAsJsonPrimitive("reason")?.asString ?: return null
@@ -169,6 +171,11 @@ data class BuildScriptMessage(
     val env: List<List<String>>,
     val out_dir: String?
 ) : CompilerMessage() {
+
+    override fun convertPaths(converter: PathConverter): BuildScriptMessage = copy(
+        out_dir = out_dir?.let(converter)
+    )
+
     companion object {
         const val REASON: String = "build-script-executed"
     }
@@ -201,6 +208,12 @@ data class CompilerArtifactMessage(
                 filenames.filter { !it.endsWith(".dSYM") && !it.endsWith(".pdb") }
             }
         }
+
+    override fun convertPaths(converter: PathConverter): CompilerArtifactMessage = copy(
+        target = target.convertPaths(converter),
+        filenames = filenames.map(converter),
+        executable = executable?.let(converter)
+    )
 
     companion object {
         const val REASON: String = "compiler-artifact"

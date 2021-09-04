@@ -35,6 +35,7 @@ import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
@@ -221,7 +222,8 @@ open class WithProcMacros(
             if (toolchain == null) {
                 return "No toolchain"
             }
-            if (RsPathManager.nativeHelper() == null && System.getenv("CI") == null) {
+            if (RsPathManager.nativeHelper(toolchain is RsWslToolchain) == null &&
+                System.getenv("CI") == null) {
                 return "no native-helper executable"
             }
             return delegate.skipTestReason

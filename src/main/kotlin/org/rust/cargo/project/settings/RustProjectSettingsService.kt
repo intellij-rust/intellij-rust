@@ -8,6 +8,7 @@ package org.rust.cargo.project.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
@@ -123,9 +124,10 @@ interface RustProjectSettingsService {
     fun configureToolchain()
 
     companion object {
-        val RUST_SETTINGS_TOPIC: Topic<RustSettingsListener> = Topic(
+        val RUST_SETTINGS_TOPIC: Topic<RustSettingsListener> = Topic.create(
             "rust settings changes",
-            RustSettingsListener::class.java
+            RustSettingsListener::class.java,
+            Topic.BroadcastDirection.TO_PARENT
         )
 
         private val defaultMacroExpansionEngine: MacroExpansionEngine
@@ -164,4 +166,12 @@ val Project.rustSettings: RustProjectSettingsService
     get() = ServiceManager.getService(this, RustProjectSettingsService::class.java)
         ?: error("Failed to get RustProjectSettingsService for $this")
 
-val Project.toolchain: RsToolchainBase? get() = rustSettings.toolchain
+val Project.toolchain: RsToolchainBase?
+    get() {
+        val toolchain = rustSettings.toolchain
+        return when {
+            toolchain != null -> toolchain
+            isUnitTestMode -> RsToolchainBase.suggest()
+            else -> null
+        }
+    }

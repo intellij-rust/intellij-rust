@@ -10,6 +10,7 @@ import org.rust.ExpandMacros
 import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
@@ -119,7 +120,8 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
     }
 
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (RsPathManager.nativeHelper() == null && System.getenv("CI") == null) {
+        if (RsPathManager.nativeHelper(rustupFixture.toolchain is RsWslToolchain) == null &&
+            System.getenv("CI") == null) {
             System.err.println("SKIP \"$name\": no native-helper executable")
             return
         }

@@ -18,7 +18,7 @@ import java.io.File
 import java.nio.file.Path
 
 class RsWslToolchain(
-    private val wslPath: WslPath
+    val wslPath: WslPath
 ) : RsToolchainBase(wslPath.distribution.getWindowsPathWithFix(wslPath.linuxPath).toPath()) {
     private val distribution: WSLDistribution get() = wslPath.distribution
     private val linuxPath: Path = wslPath.linuxPath.toPath()
@@ -28,6 +28,8 @@ class RsWslToolchain(
     override val executionTimeoutInMilliseconds: Int = 5000
 
     override fun patchCommandLine(commandLine: GeneralCommandLine): GeneralCommandLine {
+        commandLine.exePath = toRemotePath(commandLine.exePath)
+
         val parameters = commandLine.parametersList.list.map { toRemotePath(it) }
         commandLine.parametersList.clearAll()
         commandLine.parametersList.addAll(parameters)
@@ -72,14 +74,12 @@ class RsWslToolchain(
 
     companion object {
 
-        private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String {
-            val mntRoot = mntRoot
-            return if (wslPath.startsWith(mntRoot)) {
-                WSLUtil.getWindowsPath(wslPath, mntRoot)
-            } else {
-                getWindowsPath(wslPath)
+        private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String =
+            when {
+                !wslPath.startsWith("/") -> wslPath
+                wslPath.startsWith(mntRoot) -> WSLUtil.getWindowsPath(wslPath, mntRoot)
+                else -> getWindowsPath(wslPath)
             } ?: wslPath
-        }
 
         private fun WSLDistribution.getWindowsPath(wslPath: Path): Path =
             getWindowsPathWithFix(wslPath.toString()).toPath()
