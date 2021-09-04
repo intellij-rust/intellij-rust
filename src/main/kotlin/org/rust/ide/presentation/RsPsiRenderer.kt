@@ -177,6 +177,7 @@ open class RsPsiRenderer(
                     sb.append(name ?: "_")
                     val type = typeReference
                     if (type != null) {
+                        sb.append(": ")
                         appendTypeReference(sb, type)
                     }
                 }

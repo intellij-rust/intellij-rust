@@ -1752,6 +1752,28 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test const type param`() = doTest("""
+        trait Foo {
+            fn foo<const N: usize>();
+        }
+        struct S;
+        impl Foo for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo<const N: usize>()", byDefault = true)
+    ), """
+        trait Foo {
+            fn foo<const N: usize>();
+        }
+        struct S;
+        impl Foo for S {
+            fn foo<const N: usize>() {
+                todo!()
+            }
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(
