@@ -29,6 +29,7 @@ class RsMoveLeftRightHandler : MoveElementLeftRightHandler() {
             is RsValueArgumentList -> element.exprList
             is RsValueParameterList -> element.valueParameterList
             is RsVecMacroArgument -> if (element.semicolon == null) element.exprList else emptyList()
+            is RsWhereClause -> element.wherePredList
             else -> return PsiElement.EMPTY_ARRAY
         }
         return subElements.toTypedArray()
