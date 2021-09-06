@@ -58,11 +58,6 @@
         </intentionAction>
 
         <intentionAction>
-            <className>org.rust.toml.intentions.ExtractDependencySpecificationIntention</className>
-            <category>Rust/Cargo.toml</category>
-        </intentionAction>
-
-        <intentionAction>
             <className>org.rust.toml.intentions.SimplifyDependencySpecificationIntention</className>
             <category>Rust/Cargo.toml</category>
         </intentionAction>
