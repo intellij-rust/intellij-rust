@@ -26,11 +26,11 @@ class RsImportOptimizer : ImportOptimizer {
         if (document != null) {
             documentManager.commitDocument(document)
         }
-        executeForUseItem(file as RsFile)
-        executeForExternCrate(file)
+        optimizeAndReorderUseItems(file as RsFile)
+        reorderExternCrates(file)
     }
 
-    private fun executeForExternCrate(file: RsFile) {
+    private fun reorderExternCrates(file: RsFile) {
         val first = file.childrenOfType<RsElement>()
             .firstOrNull { it !is RsInnerAttr } ?: return
         val externCrateItems = file.childrenOfType<RsExternCrateItem>()
@@ -42,27 +42,39 @@ class RsImportOptimizer : ImportOptimizer {
         externCrateItems.forEach { it.delete() }
     }
 
-    fun executeForUseItem(mod: RsMod) {
+    private fun optimizeAndReorderUseItems(mod: RsMod) {
         val uses = mod.childrenOfType<RsUseItem>()
         if (uses.isNotEmpty()) {
             replaceOrderOfUseItems(mod, uses)
         }
         val mods = mod.childrenOfType<RsMod>()
-        mods.forEach { executeForUseItem(it) }
+        mods.forEach { optimizeAndReorderUseItems(it) }
     }
 
     companion object {
 
-        /** Returns false if [useSpeck] is empty and should be removed */
-        fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
-            val checkUnusedImports = RsUnusedImportInspection.isEnabled(useSpeck.project)
-            return optimizeUseSpeck(psiFactory, useSpeck, checkUnusedImports)
+        fun optimizeUseItems(mod: RsMod) {
+            val psiFactory = RsPsiFactory(mod.project)
+            val uses = mod.childrenOfType<RsUseItem>()
+            uses.forEach { optimizeUseItem(psiFactory, it) }
+            val mods = mod.childrenOfType<RsMod>()
+            mods.forEach { optimizeUseItems(it) }
         }
 
+        private fun optimizeUseItem(psiFactory: RsPsiFactory, useItem: RsUseItem) {
+            val useSpeck = useItem.useSpeck ?: return
+            val used = optimizeUseSpeck(psiFactory, useSpeck)
+            if (!used) {
+                (useItem.nextSibling as? PsiWhiteSpace)?.delete()
+                useItem.delete()
+            }
+        }
+
+        /** Returns false if [useSpeck] is empty and should be removed */
         private fun optimizeUseSpeck(
             psiFactory: RsPsiFactory,
             useSpeck: RsUseSpeck,
-            checkUnusedImports: Boolean
+            checkUnusedImports: Boolean = RsUnusedImportInspection.isEnabled(useSpeck.project),
         ): Boolean {
             val useGroup = useSpeck.useGroup
             if (useGroup == null) {

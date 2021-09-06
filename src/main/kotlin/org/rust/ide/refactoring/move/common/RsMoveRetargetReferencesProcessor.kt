@@ -27,7 +27,6 @@ class RsMoveRetargetReferencesProcessor(
     private val psiFactory: RsPsiFactory = RsPsiFactory(project)
     private val codeFragmentFactory: RsCodeFragmentFactory = RsCodeFragmentFactory(project)
 
-    private val useSpecksToOptimize: MutableList<RsUseSpeck> = mutableListOf()
     private val filesToOptimizeImports: MutableSet<RsFile> =
         mutableSetOf(sourceMod.containingFile as RsFile, targetMod.containingFile as RsFile)
 
@@ -223,7 +222,6 @@ class RsMoveRetargetReferencesProcessor(
         // we can't optimize use speck right now,
         // because otherwise `use mod1::{foo2};` becomes `use mod1::foo2;` which destroys `foo2` reference
         useGroup.parentUseSpeck.let {
-            useSpecksToOptimize += it
             filesToOptimizeImports += it.containingFile as RsFile
         }
         return true
@@ -231,14 +229,11 @@ class RsMoveRetargetReferencesProcessor(
 
     private fun insertUseItemAndCopyAttributes(useSpeckText: String, existingUseItem: RsUseItem) {
         val containingMod = existingUseItem.containingMod
-        if (existingUseItem.outerAttrList.isEmpty() && existingUseItem.vis == null) {
-            containingMod.insertUseItem(psiFactory, useSpeckText)
-        } else {
-            val useItem = existingUseItem.copy() as RsUseItem
-            val useSpeck = psiFactory.createUseSpeck(useSpeckText)
-            useItem.useSpeck!!.replace(useSpeck)
-            containingMod.addAfter(useItem, existingUseItem)
-        }
+        val useItem = existingUseItem.copy() as RsUseItem
+        val useSpeck = psiFactory.createUseSpeck(useSpeckText)
+        useItem.useSpeck!!.replace(useSpeck)
+        containingMod.insertUseItem(psiFactory, useItem)
+
         filesToOptimizeImports.add(containingMod.containingFile as RsFile)
     }
 
@@ -248,7 +243,6 @@ class RsMoveRetargetReferencesProcessor(
     }
 
     fun optimizeImports() {
-        useSpecksToOptimize.forEach { RsImportOptimizer.optimizeUseSpeck(psiFactory, it) }
-        filesToOptimizeImports.forEach { RsImportOptimizer().executeForUseItem(it) }
+        filesToOptimizeImports.forEach { RsImportOptimizer.optimizeUseItems(it) }
     }
 }
