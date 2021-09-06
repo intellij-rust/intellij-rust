@@ -26,18 +26,20 @@ class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
             holder.registerLintProblem(
                 o,
                 "The `$identifier:` in this pattern is redundant",
-                object : LocalQuickFix {
-                    override fun getFamilyName(): String = "Use shorthand field pattern: `$identifier`"
-
-                    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val field = descriptor.psiElement as RsPatFieldFull
-                        val patBinding = RsPsiFactory(field.project).createPatBinding(field.pat.text)
-                        field.parent.addBefore(patBinding, field)
-                        field.delete()
-                    }
-                }
+                RsLintHighlightingType.WEAK_WARNING,
+                listOf(UseShorthandFieldPatternFix(identifier))
             )
         }
     }
 
+    private class UseShorthandFieldPatternFix(private val identifier: String) : LocalQuickFix {
+        override fun getFamilyName(): String = "Use shorthand field pattern: `$identifier`"
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val field = descriptor.psiElement as RsPatFieldFull
+            val patBinding = RsPsiFactory(field.project).createPatBinding(field.pat.text)
+            field.parent.addBefore(patBinding, field)
+            field.delete()
+        }
+    }
 }

@@ -5,8 +5,6 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemHighlightType.*
 import com.intellij.psi.PsiElement
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
@@ -48,16 +46,11 @@ class RsDeprecationInspection : RsLintInspection() {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
             val (message, highlightType) = attr.extractDeprecatedMessage(identifier.text)
-            holder.registerLintProblem(identifier, message, { level ->
-                when (level) {
-                    RsLint.Deprecated.defaultLevel -> highlightType
-                    else -> null
-                }
-            })
+            holder.registerLintProblem(identifier, message, highlightType)
         }
     }
 
-    private fun RsMetaItem.extractDeprecatedMessage(item: String): Pair<String, ProblemHighlightType> {
+    private fun RsMetaItem.extractDeprecatedMessage(item: String): Pair<String, RsLintHighlightingType> {
         val (note, since) = if (DEPRECATED_ATTR_NAME == name) {
             extract(NOTE_PARAM_NAME, SINCE_PARAM_NAME)
         } else {
@@ -69,12 +62,12 @@ class RsDeprecationInspection : RsLintInspection() {
                 append("`$item` is deprecated")
                 if (since != null) append(" since $since")
                 if (note != null) append(": $note")
-            } to LIKE_DEPRECATED
+            } to RsLintHighlightingType.DEPRECATED
         } else {
             buildString {
                 append("`$item` will be deprecated from $since")
                 if (note != null) append(": $note")
-            } to WEAK_WARNING
+            } to RsLintHighlightingType.WEAK_WARNING
         }
     }
 

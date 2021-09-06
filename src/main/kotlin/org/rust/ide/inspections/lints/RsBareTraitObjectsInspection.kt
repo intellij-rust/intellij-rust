@@ -35,18 +35,20 @@ class RsBareTraitObjectsInspection : RsLintInspection() {
                 holder.registerLintProblem(
                     typeReference,
                     "Trait objects without an explicit 'dyn' are deprecated",
-                    object : LocalQuickFix {
-                        override fun getFamilyName(): String = "Add 'dyn' keyword to trait object"
-
-                        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                            val target = descriptor.psiElement as RsTypeReference
-                            val typeElement = target.skipParens()
-                            val traitText = (typeElement as? RsBaseType)?.path?.text ?: (typeElement as RsTraitType).text
-                            val new = RsPsiFactory(project).createDynTraitType(traitText)
-                            target.replace(new)
-                        }
-                    }
+                    fixes = listOf(AddDynKeywordFix())
                 )
             }
         }
+
+    private class AddDynKeywordFix : LocalQuickFix {
+        override fun getFamilyName(): String = "Add 'dyn' keyword to trait object"
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val target = descriptor.psiElement as RsTypeReference
+            val typeElement = target.skipParens()
+            val traitText = (typeElement as? RsBaseType)?.path?.text ?: (typeElement as RsTraitType).text
+            val new = RsPsiFactory(project).createDynTraitType(traitText)
+            target.replace(new)
+        }
+    }
 }

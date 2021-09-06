@@ -68,7 +68,7 @@ class RsUnreachablePatternsInspection : RsLintInspection() {
                     SubstituteTextFix.delete("Remove unreachable pattern", match.containingFile, range)
                 }
 
-                holder.registerLintProblem(armPat, "Unreachable pattern", fix)
+                holder.registerLintProblem(armPat, "Unreachable pattern", fixes = listOf(fix))
             }
 
             /** If the arm is not guarded, we have "seen" the pattern */

@@ -26,9 +26,9 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
                 if (elementValue !in KNOWN_CRATE_TYPES) {
                     val fixes = NameSuggestionFix.createApplicable(
                         element, elementValue, KNOWN_CRATE_TYPES, 1
-                    ) { RsPsiFactory(element.project).createExpression("\"$it\"") }.toTypedArray()
+                    ) { RsPsiFactory(element.project).createExpression("\"$it\"") }
 
-                    holder.registerLintProblem(element, "Invalid `crate_type` value", *fixes)
+                    holder.registerLintProblem(element, "Invalid `crate_type` value", fixes = fixes)
                 }
             }
         }

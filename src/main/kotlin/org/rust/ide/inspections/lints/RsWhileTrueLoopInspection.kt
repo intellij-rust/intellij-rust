@@ -19,34 +19,37 @@ import org.rust.lang.core.psi.ext.endOffsetInParent
  * Change `while true` to `loop`.
  */
 class RsWhileTrueLoopInspection : RsLintInspection() {
-    override fun getDisplayName() = "While true loop"
+    override fun getDisplayName(): String = "While true loop"
     override fun getLint(element: PsiElement): RsLint = RsLint.WhileTrue
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitWhileExpr(o: RsWhileExpr) {
             val condition = o.condition ?: return
             val expr = condition.skipParenExprDown() as? RsLitExpr ?: return
-            val block = o.block ?: return
-            val label = o.labelDecl?.text ?: ""
+            if (o.block == null) return
             if (expr.textMatches("true")) {
                 holder.registerLintProblem(
                     o,
                     "Denote infinite loops with `loop { ... }`",
                     TextRange.create(o.`while`.startOffsetInParent, condition.endOffsetInParent),
-                    object : LocalQuickFix {
-                        override fun getName() = "Use `loop`"
-
-                        override fun getFamilyName() = name
-
-                        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                            val loopExpr = RsPsiFactory(project).createExpression("${label}loop ${block.text}") as RsLoopExpr
-                            o.replace(loopExpr)
-                        }
-                    }
+                    RsLintHighlightingType.WEAK_WARNING,
+                    listOf(UseLoopFix())
                 )
             }
         }
     }
 
     override val isSyntaxOnly: Boolean = true
+
+    private class UseLoopFix : LocalQuickFix {
+        override fun getFamilyName(): String = "Use `loop`"
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val element = descriptor.psiElement as? RsWhileExpr ?: return
+            val block = element.block ?: return
+            val label = element.labelDecl?.text ?: ""
+            val loopExpr = RsPsiFactory(project).createExpression("${label}loop ${block.text}") as RsLoopExpr
+            element.replace(loopExpr)
+        }
+    }
 }
