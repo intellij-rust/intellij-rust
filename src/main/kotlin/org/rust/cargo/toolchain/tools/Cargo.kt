@@ -48,6 +48,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
@@ -195,7 +196,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     ): BuildMessages? {
         if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
-        val nativeHelper = RsPathManager.nativeHelper()
+        val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
         } else {
@@ -215,7 +216,9 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         for (line in processOutput.stdoutLines) {
             val jsonObject = tryParseJsonObject(line) ?: continue
-            CompilerMessage.fromJson(jsonObject)?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
+            CompilerMessage.fromJson(jsonObject)
+                ?.convertPaths(toolchain::toLocalPath)
+                ?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
         }
         return BuildMessages(messages)
     }

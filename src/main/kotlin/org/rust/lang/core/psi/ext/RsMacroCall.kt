@@ -8,11 +8,15 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.macros.RsExpandedElement
@@ -114,7 +118,10 @@ private fun RsExpr.getValue(crateOrNull: Crate?): String? {
                     val crate = crateOrNull ?: expr.containingCrate ?: return null
                     when (val variableName = expr.getValue(crate)) {
                         "OUT_DIR" -> crate.outDir?.path
-                        else -> crate.env[variableName]
+                        else -> {
+                            val toolchain = if (isUnitTestMode) RsToolchainBase.suggest() else project.toolchain
+                            crate.env[variableName]?.let { toolchain?.toLocalPath(it) }
+                        }
                     }
                 }
                 else -> null

@@ -7,7 +7,6 @@ package org.rustSlowTests.console
 
 import com.intellij.util.ThrowableRunnable
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.evcxr
 import org.rust.ide.console.RsConsoleCommunication
@@ -58,7 +57,7 @@ class RsEvcxrTest : RsWithToolchainTestBase() {
 
     private fun createProcess(): Process {
         val workingDirectory = cargoProjectDirectory.pathAsPath.toFile()
-        val commandLine = project.toolchain!!.evcxr()!!.createCommandLine(workingDirectory)
+        val commandLine = rustupFixture.toolchain!!.evcxr()!!.createCommandLine(workingDirectory)
         return commandLine.createProcess()
     }
 

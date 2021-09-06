@@ -18,9 +18,9 @@ object RsPathManager {
     fun prettyPrintersDir(): Path = pluginDir().resolve("prettyPrinters")
     private fun pluginDir(): Path = plugin().pluginPath
 
-    fun nativeHelper(): Path? {
+    fun nativeHelper(isWslToolchain: Boolean): Path? {
         val (os, binaryName) = when {
-            SystemInfo.isLinux -> "linux" to INTELLIJ_RUST_NATIVE_HELPER
+            SystemInfo.isLinux || isWslToolchain -> "linux" to INTELLIJ_RUST_NATIVE_HELPER
             SystemInfo.isMac -> "macos" to INTELLIJ_RUST_NATIVE_HELPER
             SystemInfo.isWindows -> "windows" to "$INTELLIJ_RUST_NATIVE_HELPER.exe"
             else -> return null

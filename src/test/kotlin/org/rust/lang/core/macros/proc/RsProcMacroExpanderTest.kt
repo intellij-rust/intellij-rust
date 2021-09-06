@@ -9,6 +9,8 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.exists
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.tt.TokenTree
@@ -30,9 +32,11 @@ class RsProcMacroExpanderTest : RsTestBase() {
             .find { it.name == WithProcMacros.TEST_PROC_MACROS }!!
         val lib = pkg.procMacroArtifact?.path?.toString()
             ?: error("Procedural macro artifact is not found. This most likely means a compilation failure")
-        val server = ProcMacroServerPool.tryCreate(testRootDisposable)
+        val toolchain = project.toolchain
+            ?: error("Toolchain is not available")
+        val server = ProcMacroServerPool.tryCreate(toolchain, testRootDisposable)
             ?: error("native-helper is not available")
-        val expander = ProcMacroExpander(project, server)
+        val expander = ProcMacroExpander(project, server = server)
 
         with(expander) {
             checkExpandedAsIs(lib, "function_like_as_is", "")
@@ -54,28 +58,29 @@ class RsProcMacroExpanderTest : RsTestBase() {
     }
 
     fun `test CantRunExpander error`() {
+        val toolchain = project.toolchain!!
         val nonExistingFile = "/non/existing/file".toPath()
         assertFalse(nonExistingFile.exists())
-        val invalidServer = ProcMacroServerPool.createUnchecked(nonExistingFile, testRootDisposable)
-        val expander = ProcMacroExpander(project, invalidServer)
+        val invalidServer = ProcMacroServerPool.createUnchecked(toolchain, nonExistingFile, testRootDisposable)
+        val expander = ProcMacroExpander(project, server = invalidServer)
         expander.checkError<ProcMacroExpansionError.CantRunExpander>("", "", "")
     }
 
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     fun `test ExecutableNotFound error`() {
-        val expander = ProcMacroExpander(project, null)
+        val expander = ProcMacroExpander(project, server = null)
         expander.checkError<ProcMacroExpansionError.ExecutableNotFound>("", "", "")
     }
 
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
     fun `test ProcMacroExpansionIsDisabled error 1`() {
-        val expander = ProcMacroExpander(project, null)
+        val expander = ProcMacroExpander(project, server = null)
         expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
     }
 
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     fun `test ProcMacroExpansionIsDisabled error 2`() {
-        val expander = ProcMacroExpander(project, null)
+        val expander = ProcMacroExpander(project, server = null)
         expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
     }
 
@@ -117,7 +122,8 @@ class RsProcMacroExpanderTest : RsTestBase() {
     }
 
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (RsPathManager.nativeHelper() == null && System.getenv("CI") == null) {
+        if (RsPathManager.nativeHelper(project.toolchain is RsWslToolchain) == null &&
+            System.getenv("CI") == null) {
             System.err.println("SKIP \"$name\": no native-helper executable")
             return
         }

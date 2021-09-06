@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
@@ -20,6 +21,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.rust.cargo.toolchain.BacktraceMode
+import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.lang.core.macros.MACRO_LOG
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.TokenTreeJsonDeserializer
@@ -28,6 +32,7 @@ import org.rust.openapiext.RsPathManager
 import org.rust.stdext.*
 import java.io.*
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.*
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
@@ -35,15 +40,15 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class ProcMacroServerPool private constructor(
-    expanderExecutable: Path,
-    parentDisposable: Disposable
-) {
+    toolchain: RsToolchainBase,
+    expanderExecutable: Path
+) : Disposable {
     private val pool = Pool(4) {
-        ProcMacroServerProcess.createAndRun(expanderExecutable) // Throws ProcessCreationException
+        ProcMacroServerProcess.createAndRun(toolchain, expanderExecutable) // Throws ProcessCreationException
     }
 
     init {
-        Disposer.register(parentDisposable, pool)
+        Disposer.register(this, pool)
     }
 
     @Throws(ProcessCreationException::class, IOException::class, TimeoutException::class)
@@ -56,18 +61,21 @@ class ProcMacroServerPool private constructor(
         }
     }
 
+    override fun dispose() {}
+
     companion object {
-        fun tryCreate(parentDisposable: Disposable): ProcMacroServerPool? {
-            val expanderExecutable = RsPathManager.nativeHelper()
+        fun tryCreate(toolchain: RsToolchainBase, parentDisposable: Disposable): ProcMacroServerPool? {
+            val expanderExecutable = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
             if (expanderExecutable == null || !expanderExecutable.isExecutable()) {
                 return null
             }
-            return createUnchecked(expanderExecutable, parentDisposable)
+            return createUnchecked(toolchain, expanderExecutable, parentDisposable)
         }
 
         @VisibleForTesting
-        fun createUnchecked(expanderExecutable: Path, parentDisposable: Disposable): ProcMacroServerPool {
-            return ProcMacroServerPool(expanderExecutable, parentDisposable)
+        fun createUnchecked(toolchain: RsToolchainBase, expanderExecutable: Path, parentDisposable: Disposable): ProcMacroServerPool {
+            return ProcMacroServerPool(toolchain, expanderExecutable)
+                .also { Disposer.register(parentDisposable, it) }
         }
     }
 }
@@ -162,7 +170,10 @@ private class Pool(
  * [ProcMacroServerProcess] is responsible for communicating with proc macro expander [process] and
  * manages its lifecycle.
  */
-private class ProcMacroServerProcess private constructor(private val process: Process) : Runnable, Disposable {
+private class ProcMacroServerProcess private constructor(
+    private val process: Process,
+    private val isWsl: Boolean, // true if the process is running under Windows WSL
+) : Runnable, Disposable {
     private val stdout: BufferedReader = BufferedReader(InputStreamReader(process.inputStream, Charsets.UTF_8))
     private val stdin: Writer = OutputStreamWriter(process.outputStream, Charsets.UTF_8)
 
@@ -175,6 +186,8 @@ private class ProcMacroServerProcess private constructor(private val process: Pr
 
     @Volatile
     private var isDisposed: Boolean = false
+
+    private var isFirstRequest: Boolean = true
 
     @Throws(IOException::class, TimeoutException::class)
     fun send(request: Request, timeout: Long): Response {
@@ -222,18 +235,10 @@ private class ProcMacroServerProcess private constructor(private val process: Pr
                 val response = try {
                     writeAndRead(request)
                 } catch (e: Throwable) {
-                    // `EOFException` is likely means that the process has been exited; let's try to wait for
-                    // an exit code. Using a longer timeout for tests in order to avoid flaky tests
-                    val isEOF = e is EOFException || e is JsonEOFException // Reading exceptions
-                        || e is IOException && e.message == "Stream Closed" // Writing exceptions
-                    val e2 = if (isEOF && process.waitFor(if (isUnitTestMode) 2000L else 100L, TimeUnit.MILLISECONDS)) {
-                        ProcessAbortedException(e, process.exitValue())
-                    } else {
-                        e
-                    }
-                    responder.completeExceptionally(e2)
+                    responder.completeExceptionally(tryRefineException(e) ?: e)
                     return
                 }
+                isFirstRequest = false
                 responder.complete(response)
             }
         } finally {
@@ -241,6 +246,24 @@ private class ProcMacroServerProcess private constructor(private val process: Pr
                 killProcess()
             }
         }
+    }
+
+    private fun tryRefineException(e: Throwable): Throwable? {
+        // On WSL, a process usually starts without errors (because the root process is `bash`, I guess),
+        // but then fails when trying to communicate with it.
+        if (isWsl && isFirstRequest && e is IOException && e.message == "The pipe is being closed") {
+            return ProcessCreationException(e)
+        }
+
+        // `EOFException` is likely means that the process has been exited; let's try to wait for
+        // an exit code. Using a longer timeout for tests in order to avoid flaky tests
+        val isEOF = e is EOFException || e is JsonEOFException // Reading exceptions
+            || e is IOException && e.message == "Stream Closed" // Writing exceptions
+        if (isEOF && process.waitFor(if (isUnitTestMode) 2000L else 100L, TimeUnit.MILLISECONDS)) {
+            return ProcessAbortedException(e, process.exitValue())
+        }
+
+        return null
     }
 
     @Throws(IOException::class)
@@ -284,16 +307,24 @@ private class ProcMacroServerProcess private constructor(private val process: Pr
 
     companion object {
         @Throws(ProcessCreationException::class)
-        fun createAndRun(expanderExecutable: Path): ProcMacroServerProcess {
+        fun createAndRun(toolchain: RsToolchainBase, expanderExecutable: Path): ProcMacroServerProcess {
             MACRO_LOG.debug { "Starting proc macro expander process $expanderExecutable" }
+
+           val commandLine = toolchain.createGeneralCommandLine(
+                expanderExecutable,
+                Paths.get("."),
+                null,
+                BacktraceMode.NO,
+                // Let a proc macro know that it is ran from intellij-rust
+                EnvironmentVariablesData.create(mapOf("INTELLIJ_RUST" to "1"), true),
+                emptyList(),
+                emulateTerminal = false,
+                withSudo = false,
+                patchToRemote = true
+            ).withRedirectErrorStream(false)
+
             val process: Process = try {
-                ProcessBuilder(expanderExecutable.toString())
-                    .apply {
-                        environment().apply {
-                            // Let a proc macro know that it is ran from intellij-rust
-                            put("INTELLIJ_RUST", "1")
-                        }
-                    }
+                commandLine.toProcessBuilder()
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start()
             } catch (e: IOException) {
@@ -302,7 +333,7 @@ private class ProcMacroServerProcess private constructor(private val process: Pr
 
             MACRO_LOG.debug { "Started proc macro expander process (pid: ${process.pid()})" }
 
-            return ProcMacroServerProcess(process)
+            return ProcMacroServerProcess(process, isWsl = toolchain is RsWslToolchain)
         }
     }
 }

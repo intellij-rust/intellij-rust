@@ -272,6 +272,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
 
         buildProject {
             toml("Cargo.toml", """
@@ -338,6 +339,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
 
         buildProject {
             toml("Cargo.toml", """
@@ -404,6 +406,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
 
         buildProject {
             toml("Cargo.toml", """
@@ -470,6 +473,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
 
         buildProject {
             toml("Cargo.toml", """
@@ -536,6 +540,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.create(project, libraryDir)
 
         val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+            .let { rustupFixture.toolchain?.toRemotePath(it) }
 
         buildProject {
             toml("Cargo.toml", """
