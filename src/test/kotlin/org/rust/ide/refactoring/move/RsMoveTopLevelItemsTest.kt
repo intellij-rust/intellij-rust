@@ -389,8 +389,8 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     """, """
     //- lib.rs
         mod mod1 {
-            use crate::mod2::{foo1, Foo3, Foo4, Foo5, Foo6, Foo7};
             use crate::mod2;
+            use crate::mod2::{foo1, Foo3, Foo4, Foo5, Foo6, Foo7};
 
             fn bar() {
                 foo1::foo1_func();

@@ -163,6 +163,9 @@ fun <T> dequeOf(vararg elements: T): Deque<T> =
 
 inline fun <reified T : Enum<T>> enumSetOf(): EnumSet<T> = EnumSet.noneOf(T::class.java)
 
+fun <T> List<T>.isSortedWith(comparator: Comparator<T>): Boolean =
+    asSequence().zipWithNext { a, b -> comparator.compare(a, b) <= 0 }.all { it }
+
 typealias LookbackValue<T> = Pair<T, T?>
 
 fun <T> Sequence<T>.withPrevious(): Sequence<LookbackValue<T>> = LookbackSequence(this)

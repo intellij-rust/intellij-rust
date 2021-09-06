@@ -72,7 +72,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use dep_lib_target::foo::Bar;
 
         fn foo(t: Bar/*caret*/) {}
-    """)
+    """, checkOptimizeImports = false)
 
     fun `test insert extern crate item after inner attributes`() = checkAutoImportFixByFileTree("""
         //- main.rs

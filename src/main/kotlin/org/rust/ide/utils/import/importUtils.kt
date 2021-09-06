@@ -8,12 +8,14 @@ package org.rust.ide.utils.import
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.refactoring.RsImportOptimizer.Companion.sortUseSpecks
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
+import org.rust.stdext.isSortedWith
 
 /**
  * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
@@ -95,19 +97,12 @@ fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
 
 fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, useItem: RsUseItem) {
     if (tryGroupWithOtherUseItems(psiFactory, useItem)) return
-    val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
-    if (anchor != null) {
-        val insertedUseItem = addAfter(useItem, anchor)
-        if (anchor is RsExternCrateItem || isDoctestInjection) {
-            // Formatting is disabled in injections, so we have to add new line manually
-            Testmarks.insertNewLineBeforeUseItem.hit()
-            addBefore(psiFactory.createNewline(), insertedUseItem)
-        }
-    } else {
-        // `if` is needed to support adding import to empty inline mod (see `RsCodeFragment#importTarget`)
-        addBefore(useItem, if (this is RsModItem && itemsAndMacros.none()) rbrace else firstItem)
-        addAfter(psiFactory.createNewline(), firstItem)
-    }
+    if (tryInsertUseItemAtCorrectLocation(this, useItem)) return
+
+    // else handle case when mod is empty or has no `use`s / `extern crate`s
+    // `if` is needed to support adding import to empty inline mod (see `RsCodeFragment#importTarget`)
+    addBefore(useItem, if (this is RsModItem && itemsAndMacros.none()) rbrace else firstItem)
+    addAfter(psiFactory.createNewline(), firstItem)
 }
 
 private fun RsItemsOwner.tryGroupWithOtherUseItems(psiFactory: RsPsiFactory, newUseItem: RsUseItem): Boolean {
@@ -129,7 +124,40 @@ private fun RsUseItem.tryGroupWith(
     val newUsePath = parentPath.joinToString("::", postfix = "::") +
         (importingNames + newImportingName).joinToString(", ", "{", "}")
     val newUseSpeck = psiFactory.createUseSpeck(newUsePath)
+
+    val isUseSpeckSorted = useSpeck?.useGroup?.useSpeckList?.isSortedWith(COMPARATOR_FOR_SPECKS_IN_USE_GROUP) ?: true
+    if (isUseSpeckSorted) {
+        newUseSpeck.useGroup?.sortUseSpecks()
+    }
+
     useSpeck?.replace(newUseSpeck)
+    return true
+}
+
+private fun tryInsertUseItemAtCorrectLocation(mod: RsItemsOwner, useItem: RsUseItem): Boolean {
+    val newline = RsPsiFactory(mod.project).createNewline()
+    val uses = mod.childrenOfType<RsUseItem>().map(::UseItemWrapper)
+    if (uses.isEmpty()) {
+        val anchor = mod.childrenOfType<RsExternCrateItem>().lastOrNull() ?: return false
+        mod.addBefore(newline, mod.addAfter(useItem, anchor))
+        return true
+    }
+
+    val useWrapper = UseItemWrapper(useItem)
+    val (less, greater) = uses.partition { it < useWrapper }
+    val anchorBefore = less.lastOrNull()
+    val anchorAfter = greater.firstOrNull()
+    when {
+        anchorBefore != null -> {
+            val addedItem = mod.addAfter(useItem, anchorBefore.useItem)
+            mod.addBefore(newline, addedItem)
+        }
+        anchorAfter != null -> {
+            val addedItem = mod.addBefore(useItem, anchorAfter.useItem)
+            mod.addAfter(newline, addedItem)
+        }
+        else -> error("unreachable")
+    }
     return true
 }
 
@@ -174,7 +202,6 @@ object Testmarks {
     val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
     val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
     val doctestInjectionImport = Testmark("doctestInjectionImport")
-    val insertNewLineBeforeUseItem = Testmark("insertNewLineBeforeUseItem")
 }
 
 /**

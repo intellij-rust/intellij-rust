@@ -443,8 +443,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
     """)
 
     fun `test import unresolved type`() = checkFixByText("Add remaining patterns", """
-        use a::foo;
         use a::E::A;
+        use a::foo;
 
         mod a {
             pub enum E { A, B }
@@ -457,8 +457,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             };
         }
     """, """
-        use a::{foo, E};
         use a::E::A;
+        use a::{E, foo};
 
         mod a {
             pub enum E { A, B }

@@ -103,7 +103,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::{T, R};
+        use a::{R, T};
         mod a {
             pub struct R;
             pub trait T {
@@ -172,7 +172,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f(a: <R as WithAssoc>::Item)", byDefault = true, isSelected = true)
     ), """
-        use a::{T, R, WithAssoc};
+        use a::{R, T, WithAssoc};
         mod a {
             pub struct R;
             pub trait WithAssoc { type Item; }
@@ -206,7 +206,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, U, V)", byDefault = true, isSelected = true)
     ), """
-        use a::{T, R, U, V};
+        use a::{R, T, U, V};
         mod a {
             pub struct R;
             pub type U = R;
@@ -301,7 +301,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f<A: Bound1>() where A: Bound2", byDefault = true, isSelected = true)
     ), """
-        use a::{T, Bound1, Bound2};
+        use a::{Bound1, Bound2, T};
         mod a {
             pub trait Bound1 {}
             pub trait Bound2 {}
@@ -330,7 +330,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> [u8; C]", byDefault = true, isSelected = true)
     ), """
-        use a::{T, C};
+        use a::{C, T};
         mod a {
             pub const C: usize = 1;
             pub trait T {

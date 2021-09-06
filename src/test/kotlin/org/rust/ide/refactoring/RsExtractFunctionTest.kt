@@ -1303,7 +1303,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s;</selection>
         }
     """, """
-        use a::{foo, A};
+        use a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1332,7 +1332,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{foo, A};
+        use a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1361,7 +1361,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{foo, A};
+        use a::{A, foo};
 
         mod a {
             pub struct S;
@@ -1392,7 +1392,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{foo, A, S2};
+        use a::{A, foo, S2};
 
         mod a {
             pub struct S1;
