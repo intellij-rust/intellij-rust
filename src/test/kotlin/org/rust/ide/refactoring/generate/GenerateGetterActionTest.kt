@@ -410,6 +410,7 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test type alias 2`() = doTest("""
         type Alias = (u32, u32);
         struct S {
@@ -424,8 +425,8 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
 
         impl S {
-            pub fn a(&self) -> &Alias {
-                &self.a
+            pub fn a(&self) -> Alias {
+                self.a
             }
         }
     """)
