@@ -85,6 +85,6 @@ class RsLivenessInspection : RsLintInspection() {
             }
         }
 
-        holder.registerLintProblem(binding, message, *fixes.toTypedArray())
+        holder.registerLintProblem(binding, message, RsLintHighlightingType.UNUSED_SYMBOL, fixes)
     }
 }

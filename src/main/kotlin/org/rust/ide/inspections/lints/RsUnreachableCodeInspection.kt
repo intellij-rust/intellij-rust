@@ -76,7 +76,8 @@ class RsUnreachableCodeInspection : RsLintInspection() {
             func,
             "Unreachable code",
             strippedRangeInFunction,
-            SubstituteTextFix.delete("Remove unreachable code", func.containingFile, range)
+            RsLintHighlightingType.UNUSED_SYMBOL,
+            listOf(SubstituteTextFix.delete("Remove unreachable code", func.containingFile, range))
         )
     }
 }
