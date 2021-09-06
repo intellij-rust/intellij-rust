@@ -341,6 +341,7 @@ project(":") {
             exclude(module = "kotlin-stdlib")
             exclude(module = "kotlin-stdlib-common")
         }
+        api("com.vdurmont:semver4j:3.1.0")
         testImplementation(project(":common", "testOutput"))
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
     }
@@ -455,7 +456,6 @@ project(":toml") {
     }
     dependencies {
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
-        implementation("com.vdurmont:semver4j:3.1.0")
 
         implementation(project(":"))
         implementation(project(":common"))

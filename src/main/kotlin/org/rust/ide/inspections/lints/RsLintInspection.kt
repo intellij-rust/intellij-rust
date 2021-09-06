@@ -18,6 +18,8 @@ import org.rust.ide.inspections.lints.RsLintLevel.ALLOW
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
+typealias ProblemHighlightSelector = (level: RsLintLevel) -> ProblemHighlightType?
+
 abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected abstract fun getLint(element: PsiElement): RsLint?
@@ -35,14 +37,28 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
     protected fun RsProblemsHolder.registerLintProblem(
         element: PsiElement,
         descriptionTemplate: String,
+        problemHighlightSelector: ProblemHighlightSelector? = null,
+        vararg fixes: LocalQuickFix
+    ) {
+        registerProblem(element, descriptionTemplate, getProblemHighlightType(element, problemHighlightSelector), *fixes)
+    }
+
+    protected fun RsProblemsHolder.registerLintProblem(
+        element: PsiElement,
+        descriptionTemplate: String,
         rangeInElement: TextRange,
         vararg fixes: LocalQuickFix
     ) {
         registerProblem(element, descriptionTemplate, getProblemHighlightType(element), rangeInElement, *fixes)
     }
 
-    private fun getProblemHighlightType(element: PsiElement): ProblemHighlightType =
-        getLint(element)?.getProblemHighlightType(element) ?: ProblemHighlightType.WARNING
+    private fun getProblemHighlightType(
+        element: PsiElement,
+        problemHighlightSelector: ProblemHighlightSelector? = null
+    ): ProblemHighlightType {
+        val lint = getLint(element) ?: return ProblemHighlightType.WARNING
+        return problemHighlightSelector?.invoke(lint.levelFor(element)) ?: lint.getProblemHighlightType(element)
+    }
 
     override fun isSuppressedFor(element: PsiElement): Boolean {
         if (super.isSuppressedFor(element)) return true
