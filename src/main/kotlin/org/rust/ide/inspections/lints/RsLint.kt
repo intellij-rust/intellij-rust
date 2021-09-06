@@ -32,10 +32,12 @@ enum class RsLint(
     BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms")),
     NonShorthandFieldPatterns("non_shorthand_field_patterns"),
     UnusedQualifications("unused_qualifications", listOf("unused")),
+    UnusedMustUse("unused_must_use", listOf("unused")),
     // errors
     UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
     // CLippy lints
-    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"));
+    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy")),
+    DoubleMustUse("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy"));
 
     /**
      * Returns the level of the lint for the given PSI element.
