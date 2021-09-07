@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
+import org.junit.ComparisonFailure
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
@@ -66,7 +67,7 @@ fun fileTreeFromText(@Language("Rust") text: String): FileTree {
 interface FileTreeBuilder {
     fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
     fun dir(name: String, tree: FileTree)
-    fun file(name: String, code: String)
+    fun file(name: String, code: String? = null)
     fun symlink(name: String, targetPath: String)
 
     fun rust(name: String, @Language("Rust") code: String) = file(name, code)
@@ -85,14 +86,16 @@ class FileTree(val rootDirectory: Entry.Directory) {
                 when (entry) {
                     is Entry.File -> {
                         val vFile = root.findChild(name) ?: root.createChildData(root, name)
-                        VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
-                        val filePath = components.joinToString(separator = "/")
-                        files += filePath
-                        if (hasCaretMarker(entry.text) || "//^" in entry.text || "#^" in entry.text) {
-                            filesWithCaret += filePath
-                        }
-                        if (hasSelectionMarker(entry.text)) {
-                            filesWithSelection += filePath
+                        if (entry.text != null) {
+                            VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
+                            val filePath = components.joinToString(separator = "/")
+                            files += filePath
+                            if (hasCaretMarker(entry.text) || "//^" in entry.text || "#^" in entry.text) {
+                                filesWithCaret += filePath
+                            }
+                            if (hasSelectionMarker(entry.text)) {
+                                filesWithSelection += filePath
+                            }
                         }
                         Unit
                     }
@@ -118,13 +121,35 @@ class FileTree(val rootDirectory: Entry.Directory) {
         return TestProject(project, directory, files, filesWithCaret, filesWithSelection)
     }
 
-    fun assertEquals(baseDir: VirtualFile) {
+    fun assertEquals(baseDir: VirtualFile) = assertFiles(baseDir, true)
+
+    fun assertContains(baseDir: VirtualFile) = assertFiles(baseDir, false)
+
+    private fun assertFiles(baseDir: VirtualFile, failOnExtraChildren: Boolean) {
         fun go(expected: Entry.Directory, actual: VirtualFile) {
             val actualChildren = actual.children.associateBy { it.name }
-            check(expected.children.keys == actualChildren.keys) {
-                "Mismatch in directory ${actual.path}\n" +
-                    "Expected: ${expected.children.keys}\n" +
-                    "Actual  : ${actualChildren.keys}"
+
+            val expectedChildrenNames = expected.children.keys
+            val actualChildrenNames = actualChildren.keys
+            val relativePath = actual.path.removePrefix(baseDir.path)
+            if (failOnExtraChildren) {
+                if (expectedChildrenNames != actualChildrenNames) {
+                    throw ComparisonFailure(
+                        "Mismatch in directory $relativePath",
+                        expectedChildrenNames.toString(),
+                        actualChildrenNames.toString()
+                    )
+                }
+            } else {
+                // Take elements that exist in the first collection and absent in the other
+                val nonExistent = expectedChildrenNames - actualChildrenNames
+                if (nonExistent.isNotEmpty()) {
+                    throw ComparisonFailure(
+                        "Missing entries at $relativePath",
+                        expectedChildrenNames.toString(),
+                        actualChildrenNames.toString()
+                    )
+                }
             }
 
             for ((name, entry) in expected.children) {
@@ -133,7 +158,10 @@ class FileTree(val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         check(!a.isDirectory)
                         val actualText = convertLineSeparators(String(a.contentsToByteArray(), UTF_8))
-                        Assert.assertEquals(entry.text.trimEnd(), actualText.trimEnd())
+                        if (entry.text != null) {
+                            Assert.assertEquals(entry.text.trimEnd(), actualText.trimEnd())
+                        }
+                        Unit
                     }
                     is Entry.Directory -> go(entry, a)
                     is Entry.Symlink -> error("Symlink comparison is not supported!")
@@ -150,7 +178,15 @@ class FileTree(val rootDirectory: Entry.Directory) {
             for ((name, entry) in dir.children) {
                 val path = "$rootPath/$name"
                 when (entry) {
-                    is Entry.File -> fixture.checkResult(path, entry.text, true)
+                    is Entry.File -> {
+                        val text = entry.text
+                        if (text == null) {
+                            if (fixture.findFileInTempDir(path) == null) error("No file at $path")
+                            Unit
+                        } else {
+                            fixture.checkResult(path, text, true)
+                        }
+                    }
                     is Entry.Directory -> go(entry, path)
                     is Entry.Symlink -> error("Symlink comparison is not supported!")
                 }.exhaustive
@@ -307,9 +343,9 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
         directory[name] = tree.rootDirectory
     }
 
-    override fun file(name: String, code: String) {
+    override fun file(name: String, code: String?) {
         check('/' !in name) { "Bad file name `$name`" }
-        directory[name] = Entry.File(code.trimIndent())
+        directory[name] = Entry.File(code?.trimIndent())
     }
 
     override fun symlink(name: String, targetPath: String) {
@@ -320,7 +356,7 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
 }
 
 sealed class Entry {
-    class File(val text: String) : Entry()
+    class File(val text: String?) : Entry()
     class Directory(val children: MutableMap<String, Entry>) : Entry()
     class Symlink(val targetPath: String) : Entry()
 }

@@ -185,16 +185,17 @@ jobs:
                   components: rust-src
                   default: false
 
-            - name: Cache evcxr
+            - name: Cache cargo binaries
               uses: actions/cache@v2
               with:
                   path: |
                       ~/.cargo/bin/evcxr
+                      ~/.cargo/bin/cargo-generate
                       ~/.cargo/.crates.toml
                       ~/.cargo/.crates2.json
-                  key: ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
+                  key: ${{ runner.os }}-cache-cargo-binaries-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
                   restore-keys: |
-                      ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-
+                      ${{ runner.os }}-cache-cargo-binaries-${{ matrix.rust-version }}-
 
             - name: Install evcxr
               # BACKCOMPAT: Evcxr 0.11 requires at least stable-1.53 or nightly-2021-05-01
@@ -203,6 +204,14 @@ jobs:
               with:
                   command: install
                   args: evcxr_repl
+
+            - name: Install cargo-generate
+              # BACKCOMPAT: zeroize dependency requires Rust 1.51.0 or newer
+              if: matrix.rust-version >= '1.51.0'
+              uses: actions-rs/cargo@v1
+              with:
+                  command: install
+                  args: cargo-generate
 
             - name: Check environment
               run: |
