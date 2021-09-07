@@ -16,11 +16,16 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.usageView.UsageInfo
+import org.rust.ide.presentation.PsiRenderingOptions
+import org.rust.ide.presentation.RsPsiRenderer
+import org.rust.ide.presentation.renderTypeReference
 import org.rust.ide.refactoring.RsRenameProcessor
+import org.rust.ide.utils.GenericConstraints
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTys
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
+import org.rust.lang.core.types.type
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -51,14 +56,18 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         }
     }
 
-    private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): RsFunction? {
+    private fun addExtractedFunction(
+        project: Project,
+        config: RsExtractFunctionConfig,
+        psiFactory: RsPsiFactory
+    ): RsFunction? {
         val owner = config.function.owner
 
         val function = psiFactory.createFunction(config.functionText)
         val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
         return when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
-                val impl = findExistingInherentImpl(owner.impl) ?: createNewInherentImpl(owner.impl)
+                val impl = findExistingInherentImpl(owner.impl) ?: createNewInherentImpl(owner.impl) ?: return null
                 val members = impl.members ?: return null
                 members.addBefore(psiParserFacade.createWhiteSpaceFromText("\n\n"), members.rbrace)
                 members.addBefore(function, members.rbrace) as? RsFunction
@@ -89,11 +98,22 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             }
     }
 
-    private fun createNewInherentImpl(traitImpl: RsImplItem): RsImplItem {
+    private fun createNewInherentImpl(traitImpl: RsImplItem): RsImplItem? {
         val parent = traitImpl.parent
         val psiFactory = RsPsiFactory(parent.project)
-        val type = traitImpl.typeReference!!
-        val newImpl = psiFactory.createImpl(type.text, emptyList())
+
+        val typeReference = traitImpl.typeReference!!
+        val constraints = GenericConstraints.create(traitImpl).filterByTypeReferences(listOf(typeReference))
+
+        val renderer = RsPsiRenderer(PsiRenderingOptions())
+
+        val typeParameters = constraints.buildTypeParameters()
+        val typeText = renderer.renderTypeReference(typeReference)
+        val whereClause = constraints.buildWhereClause()
+
+        val text = "impl$typeParameters $typeText $whereClause{}"
+        val newImpl = psiFactory.tryCreateImplItem(text) ?: return null
+
         val newImplCopy = parent.addAfter(newImpl, traitImpl) as RsImplItem
         parent.addBefore(psiFactory.createWhitespace("\n\n"), newImplCopy)
         return newImplCopy

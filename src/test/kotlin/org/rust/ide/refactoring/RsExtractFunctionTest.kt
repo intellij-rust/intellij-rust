@@ -1626,6 +1626,72 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
+    fun `test extract a function in a generic impl trait`() = doTest("""
+        trait Trait2 {}
+
+        struct Foo<T> where T: Trait2 { t: T }
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl<T> Trait for Foo<T> where T: Trait2 {
+            fn foo(&self) {
+                <selection>println!("test");</selection>
+            }
+        }
+    """, """
+        trait Trait2 {}
+
+        struct Foo<T> where T: Trait2 { t: T }
+        trait Trait {
+            fn foo(&self);
+        }
+
+        impl<T> Trait for Foo<T> where T: Trait2 {
+            fn foo(&self) {
+                <Foo<T>>::bar();
+            }
+        }
+
+        impl<T> Foo<T> where T: Trait2 {
+            fn bar() {
+                println!("test");
+            }
+        }
+    """, "bar")
+
+    fun `test extract a function in impl trait with lifetimes`() = doTest("""
+        struct Foo<'a, T>(&'a T);
+        trait Trait {
+            fn foo(&self);
+        }
+        trait Trait2<'a> {}
+
+        impl<'a, T> Trait for Foo<'a, T> where T: Trait2<'a> {
+            fn foo(&self) {
+                <selection>println!("test");</selection>
+            }
+        }
+    """, """
+        struct Foo<'a, T>(&'a T);
+        trait Trait {
+            fn foo(&self);
+        }
+        trait Trait2<'a> {}
+
+        impl<'a, T> Trait for Foo<'a, T> where T: Trait2<'a> {
+            fn foo(&self) {
+                <Foo<'a, T>>::bar();
+            }
+        }
+
+        impl<'a, T> Foo<'a, T> where T: Trait2<'a> {
+            fn bar() {
+                println!("test");
+            }
+        }
+    """, "bar")
+
     private fun doTest(
         @Language("Rust") code: String,
         @Language("Rust") excepted: String,
