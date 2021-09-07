@@ -50,6 +50,7 @@ import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.resolve2.*
+import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
@@ -1694,7 +1695,10 @@ inline fun processWithShadowing(
     return f(processor)
 }
 
-fun findPrelude(element: RsElement): RsFile? {
+fun findPrelude(element: RsElement): RsMod? {
+    findPreludeUsingNewResolve(element)?.let { return it }
+
+    // TODO: Always use new resolve to find prelude
     val crateRoot = element.crateRoot as? RsFile ?: return null
     val cargoPackage = crateRoot.containingCargoPackage
     val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB && !element.isDoctestInjection
@@ -1713,6 +1717,12 @@ fun findPrelude(element: RsElement): RsFile? {
         ?.findFileByRelativePath("../prelude/v1.rs")
         ?.toPsiFile(element.project)
         ?.rustFile
+}
+
+private fun findPreludeUsingNewResolve(element: RsElement): RsMod? {
+    val info = getModInfo(element.containingMod) as? RsModInfo ?: return null
+    val prelude = info.defMap.prelude ?: return null
+    return prelude.toRsMod(element.project).singleOrNull()
 }
 
 // Implicit extern crate from stdlib
