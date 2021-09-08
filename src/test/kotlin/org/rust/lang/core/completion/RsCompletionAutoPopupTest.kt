@@ -128,6 +128,18 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
         }
     """, "u")
 
+    fun `test popup is shown when typing let mut 3`() = checkPopupIsShownAfterTyping("""
+        fn main() {
+            let /*caret*/foo
+        }
+    """, "m")
+
+    fun `test popup is shown when typing let mut 4`() = checkPopupIsShownAfterTyping("""
+        fn main() {
+            let m/*caret*/foo
+        }
+    """, "u")
+
     fun `test popup is not shown when typing lowercase let mut binding`() = checkPopupIsNotShownAfterTyping("""
         struct a1 { f: i32 }
         const a2: i32 = 1;
