@@ -231,14 +231,14 @@ private data class CollectTypeParametersTypeVisitor(
     override fun visitTy(ty: Ty): Boolean {
         return when {
             ty is TyTypeParameter -> {
-                val type = ty as? TyTypeParameter ?: return true
-                val parameter = parameters[type.name] ?: return true
+                val type = ty as? TyTypeParameter ?: return false
+                val parameter = parameters[type.name] ?: return false
                 collected.add(parameter)
 
                 parameter.bounds.forEach { bound ->
                     bound.accept(CollectTypeParametersVisitor(this))
                 }
-                return true
+                return false
             }
             ty.hasTyTypeParameters -> ty.superVisitWith(this)
             else -> super.visitTy(ty)

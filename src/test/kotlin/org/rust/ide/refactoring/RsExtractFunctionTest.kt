@@ -1626,7 +1626,53 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    fun `test extract a function in a generic impl trait`() = doTest("""
+    fun `test extract a function in a generic impl trait with multiple type parameters`() = doTest("""
+        trait Trait {
+            fn fn_bar() {}
+        }
+
+        trait Trait2 {
+            fn fn_bar() {}
+        }
+
+        enum Result<T, E> {
+            Ok(T),
+            Err(E),
+        }
+
+        impl<T, E> Trait for Result<T, E> where (T, E): Trait2 {
+            fn fn_bar() {
+                <selection>println!("hello");</selection>
+            }
+        }
+    """, """
+        trait Trait {
+            fn fn_bar() {}
+        }
+
+        trait Trait2 {
+            fn fn_bar() {}
+        }
+
+        enum Result<T, E> {
+            Ok(T),
+            Err(E),
+        }
+
+        impl<T, E> Trait for Result<T, E> where (T, E): Trait2 {
+            fn fn_bar() {
+                <Result<T, E>>::bar();
+            }
+        }
+
+        impl<T, E> Result<T, E> where (T, E): Trait2 {
+            fn bar() {
+                println!("hello");
+            }
+        }
+    """, "bar")
+
+    fun `test extract a function in a generic impl trait with where`() = doTest("""
         trait Trait2 {}
 
         struct Foo<T> where T: Trait2 { t: T }
