@@ -276,6 +276,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }   //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
+    // macro 2.0 since rust 1.55
+    fun `test asm macro`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(asm)]
+        fn main() {
+            asm!("nop");
+        } //^ ...core/src/lib.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+    """)
+
     fun `test iterating a vec`() = stubOnlyResolve("""
     //- main.rs
         struct FooBar;
