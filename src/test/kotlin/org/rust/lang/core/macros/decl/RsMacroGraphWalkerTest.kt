@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.*
 
@@ -16,7 +17,7 @@ class RsMacroGraphWalkerTest : RsTestBase() {
     private fun check(@Language("Rust") code: String, expected: HashSet<FragmentKind>) {
         InlineFile(code)
         val macroCall = myFixture.file.descendantsOfType<RsMacroCall>().single()
-        val macro = macroCall.resolveToMacro()!!
+        val macro = macroCall.resolveToMacro() as RsMacro
         val graph = macro.graph!!
 
         val position = myFixture.file.findElementAt(myFixture.caretOffset - 1)!!

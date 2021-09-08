@@ -379,7 +379,8 @@ private val RsPath.pathSegmentsAdjusted: List<String>?
                 is CantUseNewResolve -> {
                     val expandedFrom = callExpandedFrom.resolveToMacro() ?: return segments
                     val crateId = expandedFrom.containingCrate?.id ?: return segments
-                    expandedFrom.hasMacroExportLocalInnerMacros to crateId
+                    val hasMacroExportLocalInnerMacros = expandedFrom is RsMacro && expandedFrom.hasMacroExportLocalInnerMacros
+                    hasMacroExportLocalInnerMacros to crateId
                 }
                 InfoNotFound -> return segments
                 is RsModInfo -> {
