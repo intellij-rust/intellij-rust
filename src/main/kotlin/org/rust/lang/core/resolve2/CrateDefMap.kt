@@ -151,6 +151,8 @@ class CrateDefMap(
         val fileId = file.virtualFile.fileId
         // TODO: File included in module tree multiple times ?
         // testAssert { fileId !in fileInfos }
+        val existing = fileInfos[fileId]
+        if (existing != null && !modData.isDeeplyEnabledByCfg && existing.modData.isDeeplyEnabledByCfg) return
         fileInfos[fileId] = FileInfo(file.modificationStampForResolve, modData, fileHash)
     }
 

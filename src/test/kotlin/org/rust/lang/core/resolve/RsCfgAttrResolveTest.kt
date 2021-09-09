@@ -987,4 +987,23 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     //- foo.rs
         pub fn func() {}
     """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test cfg-disabled mod does not affect cfg-enabled mod`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(intellij_rust)]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn main() {
+            foo::func();
+        }      //^ foo.rs
+    //- foo.rs
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+        as_is! {
+            pub fn func() {}
+        }
+    """)
 }
