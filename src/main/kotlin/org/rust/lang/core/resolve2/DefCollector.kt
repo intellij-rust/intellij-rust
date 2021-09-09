@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve2
 
+import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
@@ -22,8 +24,13 @@ import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
+import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
+import org.rust.stdext.getWithRethrow
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import kotlin.math.ceil
 
 private const val CONSIDER_INDETERMINATE_IMPORTS_AS_RESOLVED: Boolean = false
 
@@ -32,6 +39,8 @@ class DefCollector(
     private val project: Project,
     private val defMap: CrateDefMap,
     private val context: CollectorContext,
+    private val pool: ExecutorService?,
+    private val indicator: ProgressIndicator,
 ) {
 
     private data class GlobImportInfo(val containingMod: ModData, val visibility: Visibility)
@@ -265,28 +274,70 @@ class DefCollector(
         return changed
     }
 
+    private data class ExpansionInput(val call: MacroCallInfo, val def: MacroDefInfo)
+    private data class ExpansionOutput(
+        val call: MacroCallInfo,
+        val def: MacroDefInfo,
+        val expandedFile: RsFileStub,
+        val expansion: ExpansionResultOk
+    )
+
     private fun expandMacros(): Boolean {
         if (!shouldExpandMacros) return false
-        return macroCallsToExpand.inPlaceRemoveIf { call ->
+        val macrosToExpandInParallel = mutableListOf<ExpansionInput>()
+        val changed = macroCallsToExpand.inPlaceRemoveIf { call ->
             ProgressManager.checkCanceled()
             // TODO: Actually resolve macro instead of name check
             if (call.path.last() == "include") {
                 expandIncludeMacroCall(call)
                 return@inPlaceRemoveIf true
             }
-            tryExpandMacroCall(call)
+
+            val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
+                ?: return@inPlaceRemoveIf false
+            macrosToExpandInParallel += ExpansionInput(call, def)
+            true
+        }
+        expandMacrosInParallel(macrosToExpandInParallel)
+        return changed
+    }
+
+    private fun expandMacrosInParallel(macros: List<ExpansionInput>) {
+        if (macros.isEmpty()) return
+        val batches = macros.splitInBatches(100)
+
+        val result = if (pool != null) {
+            val indicator = indicator.toThreadSafeProgressIndicator()
+            // Don't use `.parallelStream()` - for typical count of batches (10-20) it will run all tasks on current thread
+            val tasks = batches.map { batch ->
+                Callable {
+                    computeInReadActionWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
+                        expandMacrosInBatch(batch)
+                    }
+                }
+            }
+            pool.invokeAll(tasks).map { it.getWithRethrow() }
+        } else {
+            batches.map { expandMacrosInBatch(it) }
+        }
+        for (batch in result) {
+            batch.forEach(this::recordExpansion)
         }
     }
 
-    private fun tryExpandMacroCall(call: MacroCallInfo): Boolean {
-        val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
-            ?: return false
-        val defData = RsMacroDataWithHash.fromDefInfo(def).ok()
-            ?: return false
+    private fun expandMacrosInBatch(batch: List<ExpansionInput>): List<ExpansionOutput> =
+        batch.mapNotNull { (call, def) -> expandMacro(call, def) }
+
+    private fun expandMacro(call: MacroCallInfo, def: MacroDefInfo): ExpansionOutput? {
+        val defData = RsMacroDataWithHash.fromDefInfo(def).ok() ?: return null
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val (expandedFile, expansion) =
-            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return true
+            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return null
+        return ExpansionOutput(call, def, expandedFile, expansion)
+    }
 
+    private fun recordExpansion(result: ExpansionOutput): Boolean {
+        val (call, def, expandedFile, expansion) = result
         val dollarCrateHelper = if (def is DeclMacroDefInfo) {
             createDollarCrateHelper(call, def, expansion)
         } else {
@@ -473,6 +524,13 @@ private inline fun <T> MutableList<T>.inPlaceRemoveIf(filter: (T) -> Boolean): B
         }
     }
     return removed
+}
+
+private fun <T> List<T>.splitInBatches(batchSize: Int): List<List<T>> {
+    if (size <= batchSize) return listOf(this)
+    val numberBatches = ceil(size.toDouble() / batchSize).toInt()
+    val adjustedBatchSize = ceil(size.toDouble() / numberBatches).toInt()
+    return chunked(adjustedBatchSize)
 }
 
 fun pushResolutionFromImport(modData: ModData, name: String, def: PerNs): Boolean {

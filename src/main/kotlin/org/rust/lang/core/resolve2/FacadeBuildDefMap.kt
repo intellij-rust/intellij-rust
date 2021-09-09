@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve2
 
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2015
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
@@ -17,18 +18,24 @@ import org.rust.lang.core.psi.shouldIndexFile
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
+import java.util.concurrent.ExecutorService
 
 /**
  * Returns `null` if [crate] has null `id` or `rootMod`,
  * or if crate should not be indexed (e.g. test/bench non-workspace crate)
  */
-fun buildDefMap(crate: Crate, allDependenciesDefMaps: Map<Crate, CrateDefMap>): CrateDefMap? {
+fun buildDefMap(
+    crate: Crate,
+    allDependenciesDefMaps: Map<Crate, CrateDefMap>,
+    pool: ExecutorService?,
+    indicator: ProgressIndicator
+): CrateDefMap? {
     checkReadAccessAllowed()
     val project = crate.project
     check(project.isNewResolveEnabled)
     val context = CollectorContext(crate, project)
     val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps) ?: return null
-    DefCollector(project, defMap, context).collect()
+    DefCollector(project, defMap, context, pool, indicator).collect()
     defMap.afterBuilt()
     testAssert({ !isCrateChanged(crate, defMap) }, { "DefMap $defMap should be up-to-date just after built" })
     return defMap

@@ -10,7 +10,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.rust.lang.core.crate.Crate
 import org.rust.openapiext.computeInReadActionWithWriteActionPriority
 import org.rust.stdext.getWithRethrow
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
@@ -20,7 +23,8 @@ class DefMapsBuilder(
     private val crates: List<Crate>,  // should be top sorted
     defMaps: Map<Crate, CrateDefMap>,
     private val indicator: ProgressIndicator,
-    private val pool: Executor,
+    private val pool: ExecutorService?,
+    private val poolForMacros: ExecutorService?,
 ) {
 
     init {
@@ -48,10 +52,10 @@ class DefMapsBuilder(
 
     fun build() {
         val wallTime = measureTimeMillis {
-            if (pool is SameThreadExecutor) {
-                buildSync()
-            } else {
+            if (pool != null) {
                 buildAsync()
+            } else {
+                buildSync()
             }
         }
 
@@ -78,6 +82,7 @@ class DefMapsBuilder(
     }
 
     private fun buildDefMapAsync(crate: Crate) {
+        check(pool != null)
         pool.execute {
             try {
                 check(crate !in tasksTimes)
@@ -103,7 +108,7 @@ class DefMapsBuilder(
                 it to dependencyDefMap
             }
             .toMap(hashMapOf())
-        val defMap = buildDefMap(crate, allDependenciesDefMaps)
+        val defMap = buildDefMap(crate, allDependenciesDefMaps, poolForMacros, indicator)
         defMapService.setDefMap(crateId, defMap)
         if (defMap != null) {
             builtDefMaps[crate] = defMap
@@ -134,7 +139,7 @@ class DefMapsBuilder(
             .sortedByDescending { (_, time) -> time }
             .take(5)
             .joinToString { (crate, time) -> "$crate ${time}ms" }
-        val multithread = pool !is SameThreadExecutor
+        val multithread = pool != null
         if (multithread) {
             RESOLVE_LOG.debug("wallTime: $wallTime, totalTime: $totalTime, " +
                 "parallelism coefficient: ${"%.2f".format((totalTime.toDouble() / wallTime))}.    " +
