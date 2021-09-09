@@ -1,0 +1,570 @@
+{
+    "title": "JSON Schema for Cargo manifest files",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "cargo-features": {
+            "type": "array",
+            "description": "Unstable, nightly-only features",
+            "items": {
+                "type": "string",
+                "oneOf": [
+                    {
+                        "const": "named-profiles",
+                        "description": "Custom named profiles"
+                    },
+                    {
+                        "const": "strip",
+                        "description": "Profile strip option"
+                    },
+                    {
+                        "const": "per-package-target",
+                        "description": "Adds `default-target` and `forced-target` in `package`"
+                    },
+                    {
+                        "const": "rust-version",
+                        "description": "Adds `package.rust-version`"
+                    },
+                    {
+                        "const": "edition2021",
+                        "description": "Enable 2021 edition support"
+                    }
+                ]
+            }
+        },
+        "package": {
+            "type": "object",
+            "description": "Package definition",
+            "required": [
+                "name",
+                "version",
+                "authors"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the package"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Version of the package"
+                },
+                "authors": {
+                    "type": "array",
+                    "description": "Authors of the package",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "edition": {
+                    "$ref": "#/$defs/edition"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the package"
+                },
+                "documentation": {
+                    "type": "string",
+                    "description": "URL of package documentation"
+                },
+                "readme": {
+                    "type": "string",
+                    "description": "Path to package's README file"
+                },
+                "homepage": {
+                    "type": "string",
+                    "description": "URL of package homepage"
+                },
+                "repository": {
+                    "type": "string",
+                    "description": "URL of package source repository"
+                },
+                "license": {
+                    "type": "string",
+                    "description": "Package license"
+                },
+                "license-file": {
+                    "type": "string",
+                    "description": "Path to full text of license"
+                },
+                "keywords": {
+                    "type": "array",
+                    "description": "Keywords for package",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "categories": {
+                    "type": "array",
+                    "description": "Categories of package",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "workspace": {
+                    "type": "string",
+                    "description": "Path to workspace for package"
+                },
+                "build": {
+                    "type": "string",
+                    "description": "Path to package build script"
+                },
+                "links": {
+                    "type": "string",
+                    "description": "Name of the native library the package links with"
+                },
+                "exclude": {
+                    "type": "array",
+                    "description": "Files to exclude when publishing",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "include": {
+                    "type": "array",
+                    "description": "Files to include when publishing",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "publish": {
+                    "type": "boolean",
+                    "description": "If false, prevents package publishing"
+                },
+                "metadata": {
+                    "type": "object",
+                    "description": "Extra settings for external tools. Ignored by Cargo"
+                },
+                "default-run": {
+                    "type": "string",
+                    "description": "The default binary to run by `cargo run`"
+                },
+                "autobins": {
+                    "type": "boolean",
+                    "description": "Use binary auto discovery"
+                },
+                "autoexamples": {
+                    "type": "boolean",
+                    "description": "Use example auto discovery"
+                },
+                "autotests": {
+                    "type": "boolean",
+                    "description": "Use test auto discovery"
+                },
+                "autobenches": {
+                    "type": "boolean",
+                    "description": "Use benches auto discovery"
+                },
+                "resolver": {
+                    "type": "string",
+                    "oneOf": [
+                        {
+                            "const": "2",
+                            "description": "New feature resolver"
+                        },
+                        {
+                            "const": "1",
+                            "description": "Original feature resolver shipped up to 1.50"
+                        }
+                    ]
+                }
+            }
+        },
+        "lib": {
+            "type": "object",
+            "description": "Library target settings",
+            "$ref": "#/$defs/target-settings"
+        },
+        "bin": {
+            "type": "array",
+            "description": "Binary target settings",
+            "items": {
+                "$ref": "#/$defs/target-settings"
+            }
+        },
+        "example": {
+            "type": "array",
+            "description": "Example target settings",
+            "items": {
+                "$ref": "#/$defs/target-settings"
+            }
+        },
+        "test": {
+            "type": "array",
+            "description": "Test target settings",
+            "items": {
+                "$ref": "#/$defs/target-settings"
+            }
+        },
+        "bench": {
+            "type": "array",
+            "description": "Benchmark target settings",
+            "items": {
+                "$ref": "#/$defs/target-settings"
+            }
+        },
+        "dependencies": {
+            "type": "object",
+            "description": "Package library dependencies",
+            "$ref": "#/$defs/dependencies"
+        },
+        "dev-dependencies": {
+            "type": "object",
+            "description": "Examples, tests and benchmarks dependencies",
+            "$ref": "#/$defs/dependencies"
+        },
+        "build-dependencies": {
+            "type": "object",
+            "description": "Build scripts dependencies",
+            "$ref": "#/$defs/dependencies"
+        },
+        "target": {
+            "type": "object",
+            "description": "Platform-specific dependencies",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        // TODO: add dev-dependencies etc.
+                        "dependencies": {
+                            "type": "object",
+                            "$ref": "#/$defs/dependencies"
+                        }
+                    }
+                }
+            }
+        },
+        "badges": {
+            "type": "object",
+            "description": "Badges to display on a registry",
+            "deprecated": true
+        },
+        "features": {
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "oneOf": [
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        "patch": {
+            "type": "object",
+            "description": "Override dependencies",
+            "properties": {
+                "crates-io": {
+                    "$ref": "#/$defs/dependencies"
+                }
+            },
+            "patternProperties": {
+                "^.+$": {
+                    "$ref": "#/$defs/dependencies"
+                }
+            }
+        },
+        "replace": {
+            "type": "object",
+            "description": "Override dependencies (deprecated)",
+            "deprecated": true
+        },
+        "profile": {
+            "type": "object",
+            "description": "Compiler settings and optimizations",
+            "properties": {
+                "opt-level": {
+                    "type": ["integer", "string"],
+                    "description": "Optimization level (-C opt-level)",
+                    "oneOf": [
+                        {
+                            "const": 0,
+                            "description": "No optimizations"
+                        },
+                        {
+                            "const": 1,
+                            "description": "Basic optimizations"
+                        },
+                        {
+                            "const": 2,
+                            "description": "Some optimizations"
+                        },
+                        {
+                            "const": 3,
+                            "description": "All optimizations"
+                        },
+                        {
+                            "const": "s",
+                            "description": "Optimize for binary size"
+                        },
+                        {
+                            "const": "z",
+                            "description": "Optimize for binary size, no loop vectorization"
+                        }
+                    ]
+                },
+                "debug": {
+                    "type": ["integer", "boolean"],
+                    "description": "Debug information (-C debuginfo)",
+                    "oneOf": [
+                        {
+                            "enum": [0, false],
+                            "description": "No debug info at all"
+                        },
+                        {
+                            "const": 1,
+                            "description": "Line tables only"
+                        },
+                        {
+                            "enum": [2, true],
+                            "description": "Full debug info"
+                        }
+                    ]
+                },
+                "split-debuginfo": {
+                    "type": "string",
+                    "description": "Debug information generation (-C split-debuginfo)",
+                    "enum": ["off", "packed", "unpacked"]
+                },
+                "debug-assertions": {
+                    "type": "boolean",
+                    "description": "Use `cfg(debug_assertions)` (-C debug-assertions)"
+                },
+                "overflow-checks": {
+                    "type": "boolean",
+                    "description": "Enable runtime integer overflow (-C overflow-checks)"
+                },
+                "lto": {
+                    "type": ["boolean", "string"],
+                    "description": "Link time optimizations (-C lto)",
+                    "oneOf": [
+                        {
+                            "const": false,
+                            "description": "Thin local LTO"
+                        },
+                        {
+                            "enum": [true, "fat"],
+                            "description": "Fat LTO"
+                        },
+                        {
+                            "const": "thin",
+                            "description": "Thin LTO"
+                        },
+                        {
+                            "const": false,
+                            "description": "Disable LTO"
+                        }
+                    ]
+                },
+                "panic": {
+                    "type": "string",
+                    "description": "Panic strategy to use (-C panic)",
+                    "oneOf": [
+                        {
+                            "const": "unwind",
+                            "description": "Unwind the stack upon panic"
+                        },
+                        {
+                            "const": "abort",
+                            "description": "Terminate the process upon panic"
+                        }
+                    ]
+                },
+                "incremental": {
+                    "type": "boolean",
+                    "description": "Enable incremental compilation (-C incremental)"
+                },
+                "codegen-units": {
+                    "type": "integer",
+                    "description": "Codegen units for crate to split in (-C codegen-units)",
+                    "minimum": 0
+                },
+                "rpath": {
+                    "type": "boolean",
+                    "description": "Enable rpath (-C rpath)"
+                }
+            }
+        },
+        "workspace": {
+            "type": "object",
+            "description": "Workspace definition",
+            "properties": {
+                "members": {
+                    "type": "array",
+                    "description": "Workspace members",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exclude": {
+                    "type": "array",
+                    "description": "Excluded paths in a workspace",
+                    "items": {
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "default-members": {
+                    "type": "array",
+                    "description": "Members to operate when in workspace root",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "metadata": {
+                    "type": "object",
+                    "description": "Extra settings for external tools. Ignored by Cargo"
+                }
+            }
+        }
+    },
+    "$defs": {
+        "target-settings": {
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of target"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Source file of the target"
+                },
+                "test": {
+                    "type": "boolean",
+                    "description": "Tested by default"
+                },
+                "doctest": {
+                    "type": "boolean",
+                    "description": "Doc tests are tested by default"
+                },
+                "bench": {
+                    "type": "boolean",
+                    "description": "Benchmarked by default"
+                },
+                "doc": {
+                    "type": "boolean",
+                    "description": "Documented by default"
+                },
+                "plugin": {
+                    "type": "boolean",
+                    "description": "Use as a compiler plugin",
+                    "deprecated": true
+                },
+                "proc-macro": {
+                    "type": "boolean",
+                    "description": "Is procedural macro library"
+                },
+                "harness": {
+                    "type": "boolean",
+                    "description": "Use libtest harness"
+                },
+                "edition": {
+                    "$ref": "#/$defs/edition"
+                },
+                "crate-type": {
+                    "type": "string",
+                    "description": "Crate types to generate",
+                    "oneOf": [
+                        {
+                            "const": "bin",
+                            "description": "Runnable executable"
+                        },
+                        {
+                            "const": "lib",
+                            "description": "Rust library"
+                        },
+                        {
+                            "const": "dylib",
+                            "description": "Dynamic Rust library"
+                        },
+                        {
+                            "const": "cdylib",
+                            "description": "Dynamic system library"
+                        },
+                        {
+                            "const": "rlib",
+                            "description": "Rust intermediate library file"
+                        },
+                        {
+                            "const": "proc-macro",
+                            "description": "Procedural macro"
+                        }
+                    ]
+                },
+                "required-features": {
+                    "type": "array",
+                    "description": "Features required to build target",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "edition": {
+            "type": "string",
+            "description": "Rust edition",
+            "enum": [
+                "2015",
+                "2018",
+                "2021"
+            ],
+            "default": "2018"
+        },
+        "dependencies": {
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string",
+                            "description": "Version requirement"
+                        },
+                        "registry": {
+                            "type": "string",
+                            "description": "Custom registry"
+                        },
+                        "features": {
+                            "type": "array",
+                            "description": "",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "git": {
+                            "type": "string",
+                            "description": "Link to git repository"
+                        },
+                        "branch": {
+                            "type": "string",
+                            "description": "Branch of git repository"
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "Path to crate"
+                        },
+                        "package": {
+                            "type": "string",
+                            "description": "Package name in registry (replacing key)"
+                        },
+                        "default-features": {
+                            "type": "boolean",
+                            "description": "Do not include default features"
+                        },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Optionally include using features"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

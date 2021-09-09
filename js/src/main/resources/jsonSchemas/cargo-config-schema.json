@@ -1,0 +1,382 @@
+// TODO: Review and add default values if they are useful
+{
+    "title": "JSON Schema for Cargo config files",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "paths": {
+            "type": "array",
+            "description": "Path dependency overrides",
+            "items": {
+                "type": "string"
+            }
+        },
+        "alias": {
+            "type": "object",
+            "description": "CLI command aliases",
+            "patternProperties": {
+                "^.+$": {
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "build": {
+            "type": "object",
+            "description": "Build-time operations and compiler settings",
+            "properties": {
+                "jobs": {
+                    "type": "integer",
+                    "description": "Maximum number of parallel compiler processes"
+                },
+                "rustc": {
+                    "type": "string",
+                    "description": "Executable for `rustc`"
+                },
+                "rustc-wrapper": {
+                    "type": "string",
+                    "description": "Wrapper to execute instead of `rustc`"
+                },
+                "rustc-workspace-wrapper": {
+                    "type": "string",
+                    "description": "Wrapper to execute instead of `rustc` (workspace-only)"
+                },
+                "rustdoc": {
+                    "type": "string",
+                    "description": "Executable for `rustdoc`"
+                },
+                "target": {
+                    "type": "string",
+                    "description": "Default target platform triple"
+                },
+                "target-dir": {
+                    "type": "string",
+                    "description": "Compiler output location"
+                },
+                "rustflags": {
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "description": "Extra flags for `rustc`",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rustdocflags": {
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "description": "Extra flags for `rustdoc`",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "incremental": {
+                    "type": "boolean",
+                    "description": "Perform incremental compilation"
+                },
+                "dep-into-basedir": {
+                    "type": "string",
+                    "description": "Strips the given path prefix from dep info file paths"
+                },
+                "pipelining": {
+                    "type": "boolean",
+                    "description": "Use build pipelining"
+                }
+            }
+        },
+        "doc": {
+            "type": "object",
+            "description": "Options for `cargo doc`",
+            "properties": {
+                "browser": {
+                    "type": "string"
+                }
+            }
+        },
+        "cargo-new": {
+            "type": "object",
+            "description": "Defaults for `cargo new`",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "deprecated": true
+                },
+                "email": {
+                    "type": "string",
+                    "deprecated": true
+                },
+                "vcs": {
+                    "type": "string",
+                    "description": "Source control system to use",
+                    "enum": [
+                        "git",
+                        "hg",
+                        "pijul",
+                        "fossil",
+                        "none"
+                    ]
+                }
+            }
+        },
+        "http": {
+            "type": "object",
+            "description": "HTTP behaviour settings",
+            "properties": {
+                "debug": {
+                    "type": "boolean",
+                    "description": "Enable debug for HTTP requests"
+                },
+                "proxy": {
+                    "type": "string",
+                    "description": "HTTP(S) proxy to use"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "Timeout for each request (seconds)"
+                },
+                "cainfo": {
+                    "type": "string",
+                    "description": "Path to a Certificate Authority (CA) bundle file"
+                },
+                "check-revoke": {
+                    "type": "boolean",
+                    "description": "Perform TLS certificate revocation (windows-only)"
+                },
+                "ssl-version": {
+                    "type": [
+                        "string",
+                        "object"
+                    ],
+                    "description": "Minimum TLS version to use",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "const": "default"
+                        },
+                        {
+                            "type": "string",
+                            "$ref": "#/$defs/tls-versions"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "min": {
+                                    "$ref": "#/$defs/tls-versions"
+                                },
+                                "max": {
+                                    "$ref": "#/$defs/tls-versions"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "low-speed-limit": {
+                    "type": "integer",
+                    "description": "Retry when speed is lower for `http.timeout` seconds"
+                },
+                "multiplexing": {
+                    "type": "boolean",
+                    "description": "Use HTTP2 protocol with multiplexing"
+                },
+                "user-agent": {
+                    "type": "string",
+                    "description": "Custom user-agent header to use"
+                }
+            }
+        },
+        "install": {
+            "type": "object",
+            "description": "Defaults for `cargo install`",
+            "properties": {
+                "root": {
+                    "type": "string",
+                    "description": "Root path for installing executables"
+                }
+            }
+        },
+        "net": {
+            "type": "object",
+            "description": "Networking configuration",
+            "properties": {
+                "retry": {
+                    "type": "integer",
+                    "description": "Number of times to retry possibly spurious network errors"
+                },
+                "git-fetch-with-cli": {
+                    "type": "boolean",
+                    "description": "Use `git` executable to fetch registry indexes and git dependencies"
+                },
+                "offline": {
+                    "type": "boolean",
+                    "description": "Avoid accessing network, attempt to proceed with cached data"
+                }
+            }
+        },
+        "profile": {
+            "type": "object",
+            "description": "Globally change profile settings, override settings Cargo.toml",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        // TODO: Reuse profile properties from `cargo-manifest-schema.json`
+                    }
+                }
+            }
+        },
+        "registries": {
+            "type": "object",
+            "description": "Additional registries",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "index": {
+                            "type": "string",
+                            "description": "URL of the git index"
+                        },
+                        "token": {
+                            "type": "string",
+                            // TODO: This value should only appear in credentials file
+                            "description": "Authentication token"
+                        }
+                    }
+                }
+            }
+        },
+        "registry": {
+            "type": "object",
+            "properties": {
+                "default": {
+                    "type": "string",
+                    "description": "Default registry for cargo commands",
+                    "default": "crates-io"
+                },
+                "token": {
+                    "type": "string",
+                    // TODO: This value should only appear in credentials file
+                    "description": "Authentication token"
+                }
+            }
+        },
+        "source": {
+            "type": "object",
+            "description": "Registry sources",
+            "patternProperties": {
+                "^.+$": {
+                    "properties": {
+                        "replace-with": {
+                            "type": "string",
+                            "description": "Replace registry source with given one"
+                        },
+                        "directory": {
+                            "type": "string",
+                            "description": "Path to directory to use as source"
+                        },
+                        "registry": {
+                            "type": "string",
+                            "description": "URL to use for registry source"
+                        },
+                        "local-registry": {
+                            "type": "string",
+                            "description": "Path to directory to use as local registry source"
+                        },
+                        "git": {
+                            "type": "string",
+                            "description": "URL to use for git repository source"
+                        },
+                        "branch": {
+                            "type": "string",
+                            "description": "Branch name to use with git repository source"
+                        },
+                        "tag": {
+                            "type": "string",
+                            "description": "Tag to use with git repository source"
+                        },
+                        "rev": {
+                            "type": "string",
+                            "description": "Revision to use with git repository source"
+                        }
+                    }
+                }
+            }
+        },
+        "target": {
+            "type": "object",
+            "description": "Settings for specific platform targets",
+            "patternProperties": {
+                "^.+$": {
+                    "properties": {
+                        "linker": {
+                            "type": "string",
+                            "description": "Linker to use with rustc (-C linker)"
+                        },
+                        "runner": {
+                            "type": "string",
+                            "description": "Runner for executables to execute with"
+                        },
+                        "rustflags": {
+                            "type": ["string", "array"],
+                            "description": "Custom flags for compiler",
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "term": {
+            "type": "object",
+            "description": "Terminal output and interaction",
+            "properties": {
+                "verbose": {
+                    "type": "boolean",
+                    "description": "Display extra detailed messages"
+                },
+                "color": {
+                    "type": "string",
+                    "description": "Display colors",
+                    "enum": ["auto", "always", "never"],
+                    "default": "auto"
+                },
+                "progress": {
+                    "type": "object",
+                    "properties": {
+                        "when": {
+                            "type": "string",
+                            "description": "Display progress bar",
+                            "enum": ["auto", "always", "never"],
+                            "default": "auto"
+                        },
+                        "width": {
+                            "type": "integer",
+                            "description": "Progress bar width"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "tls-versions": {
+            "enum": ["tlsv1", "tlsv1.0", "tlsv1.1", "tlsv1.2", "tlsv1.3"]
+        }
+    }
+}
