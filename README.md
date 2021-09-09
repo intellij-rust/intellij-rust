@@ -47,7 +47,7 @@ LLDB only
 
 ## TOML
 
-If you are looking for the TOML plugin, see [intellij-toml] directory.
+If you are looking for the TOML plugin, see [toml] directory in [intellij-community](https://github.com/JetBrains/intellij-community) repository.
 
 ## Contributing
 
@@ -61,7 +61,7 @@ understand the high-level structure of the codebase. If you are not sure where t
 [help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
-[intellij-toml]: intellij-toml/
+[toml]: https://github.com/JetBrains/intellij-community/tree/master/plugins/toml
 
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
