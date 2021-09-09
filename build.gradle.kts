@@ -1,7 +1,6 @@
 import groovy.json.JsonSlurper
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_1_8
-import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -11,7 +10,6 @@ import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
 import org.jetbrains.intellij.tasks.RunIdeTask
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
@@ -35,6 +33,7 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
+val tomlPlugin = "org.toml.lang:${prop("tomlPluginVersion")}"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -119,7 +118,7 @@ allprojects {
 
         buildSearchableOptions {
             // buildSearchableOptions task doesn't make sense for non-root subprojects
-            val isRootProject = project.name in listOf("plugin", "intellij-toml")
+            val isRootProject = project.name == "plugin"
             enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
         }
 
@@ -244,7 +243,7 @@ project(":plugin") {
     intellij {
         pluginName.set("intellij-rust")
         val pluginList = mutableListOf(
-            project(":intellij-toml"),
+            tomlPlugin,
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
@@ -452,7 +451,7 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        plugins.set(listOf(project(":intellij-toml")))
+        plugins.set(listOf(tomlPlugin))
     }
     dependencies {
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
@@ -461,10 +460,6 @@ project(":toml") {
         implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
         testImplementation(project(":common", "testOutput"))
-
-        // TODO: Drop when gradle-intellij-plugin will be adding add all transitive dependencies
-        compileOnly(project(":intellij-toml:core"))
-        testCompileOnly(project(":intellij-toml:core"))
     }
 }
 
@@ -545,49 +540,6 @@ project(":ml-completion") {
         implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
         testImplementation(project(":common", "testOutput"))
-    }
-}
-
-project(":intellij-toml") {
-    version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
-
-    dependencies {
-        implementation(project(":intellij-toml:core"))
-    }
-
-    tasks {
-        withType<PublishPluginTask> {
-            token.set(prop("publishToken"))
-            channels.set(listOf(channel))
-        }
-    }
-}
-
-project(":intellij-toml:core") {
-    dependencies {
-        implementation(project(":common"))
-        testImplementation(project(":common", "testOutput"))
-    }
-
-    val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
-        source = "src/main/grammars/TomlLexer.flex"
-        targetDir = "src/gen/org/toml/lang/lexer"
-        targetClass = "_TomlLexer"
-        purgeOldFiles = true
-    }
-
-    val generateTomlParser = task<GenerateParser>("generateTomlParser") {
-        source = "src/main/grammars/TomlParser.bnf"
-        targetRoot = "src/gen"
-        pathToParser = "/org/toml/lang/parse/TomlParser.java"
-        pathToPsiRoot = "/org/toml/lang/psi"
-        purgeOldFiles = true
-    }
-
-    tasks {
-        withType<KotlinCompile> {
-            dependsOn(generateTomlLexer, generateTomlParser)
-        }
     }
 }
 
