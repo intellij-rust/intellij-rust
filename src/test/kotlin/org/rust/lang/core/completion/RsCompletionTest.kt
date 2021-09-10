@@ -644,6 +644,34 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    @UseNewResolve
+    fun `test complete macro2`() = doSingleCompletion("""
+        macro foo() {}
+        fn main() {
+            fo/*caret*/
+        }
+    """, """
+        macro foo() {}
+        fn main() {
+            foo!(/*caret*/)
+        }
+    """)
+
+    @UseNewResolve
+    fun `test complete macro2 in use statement`() = doSingleCompletion("""
+        pub mod bar {
+            pub macro foo() {}
+        }
+
+        use bar::fo/*caret*/
+    """, """
+        pub mod bar {
+            pub macro foo() {}
+        }
+
+        use bar::foo;/*caret*/
+    """)
+
     // https://github.com/intellij-rust/intellij-rust/issues/1598
     fun `test no macro completion in item element definition`() {
         for (itemKeyword in listOf("fn", "struct", "enum", "union", "trait", "type", "impl")) {
