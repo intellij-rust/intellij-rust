@@ -157,6 +157,22 @@ class RsResolveLinkTest : RsTestBase() {
              //^
     """, "test_package/macro.bar.html")
 
+    fun `test macro 2 fqn link 1`() = doTest("""
+        pub macro foo() {}
+                 //X
+        struct Bar;
+              //^
+    """, "test_package/macro.foo.html")
+
+    fun `test macro 2 fqn link 2`() = doTest("""
+        pub mod foo {
+            pub macro bar() {}
+                     //X
+        }
+        struct Foo;
+             //^
+    """, "test_package/foo/macro.bar.html")
+
     fun `test method fqn link`() = doTest("""
         struct Foo;
         impl Foo {
