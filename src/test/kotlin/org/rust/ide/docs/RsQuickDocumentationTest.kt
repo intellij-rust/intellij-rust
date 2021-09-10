@@ -732,8 +732,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         Module level docs</p></div>
     """)
 
-    //
-    fun `test macro outer docstring`() = doTest("""
+    fun `test macro outer docstring 1`() = doTest("""
         /// Outer documentation
         macro_rules! makro {
                    //^
@@ -748,16 +747,48 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Outer documentation</p></div>
     """)
 
-    fun `test macro 2 outer docs`() = doTest("""
+    fun `test macro outer docstring 2`() = doTest("""
+        pub mod foo {
+            /// Outer documentation
+            macro_rules! makro {
+                       //^
+                () => { };
+            }
+        }
+
+        fn main() {
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>makro</b></pre></div>
+        <div class='content'><p>Outer documentation</p></div>
+    """)
+
+    fun `test macro 2 outer docs 1`() = doTest("""
         pub struct Foo;
 
         /// Outer doc
         /// [link](Foo)
-        pub macro Bar() {}
+        pub macro bar() {}
                  //^
     """, """
-        <div class='definition'><pre>test_package::Bar
-        </pre></div>
+        <div class='definition'><pre>test_package
+        pub macro <b>bar</b></pre></div>
+        <div class='content'><p>Outer doc
+        <a href="psi_element://Foo">link</a></p></div>
+    """)
+
+    fun `test macro 2 outer docs 2`() = doTest("""
+        pub mod foo_bar {
+            pub struct Foo;
+
+            /// Outer doc
+            /// [link](Foo)
+            pub macro bar() {}
+        }           //^
+    """, """
+        <div class='definition'><pre>test_package::foo_bar
+        pub macro <b>bar</b></pre></div>
         <div class='content'><p>Outer doc
         <a href="psi_element://Foo">link</a></p></div>
     """)
