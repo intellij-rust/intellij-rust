@@ -39,18 +39,17 @@ class CrateDefMap(
     /** Used only by `extern crate crate_name;` declarations */
     val directDependenciesDefMaps: Map<String, CrateDefMap>,
     private val allDependenciesDefMaps: Map<CratePersistentId, CrateDefMap>,
-    /**
-     * The prelude module for this crate. This either comes from an import
-     * marked with the `prelude_import` attribute, or (in the normal case) from
-     * a dependency (`std` or `core`).
-     */
-    var prelude: ModData?,
     val metaData: CrateMetaData,
     /** Equal to `root.macroIndex.single()` */
     val rootModMacroIndex: Int,
+    /** Attributes of root module */
+    val stdlibAttributes: RsFile.Attributes,
     /** Only for debug */
     val crateDescription: String,
 ) {
+    /** The prelude module for this crate. See [injectPrelude] */
+    var prelude: ModData? = null
+
     /** It is needed at least to handle `extern crate name as alias;` */
     val externPrelude: MutableMap<String, CrateDefMap> = directDependenciesDefMaps.toMap(hashMapOf())
 

@@ -6,9 +6,8 @@
 package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
@@ -211,6 +210,15 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         #[cfg(not(intellij_rust))]
         extern crate unknown_crate2;
     """)
+
+    @MinRustcVersion("1.56.0-nightly")
+    @MockEdition(Edition.EDITION_2021)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test 2021 edition prelude`() = checkByText("""
+        fn main() {
+            char::try_from(0u32);
+        }
+    """, false)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val inspection = inspection as RsUnresolvedReferenceInspection
