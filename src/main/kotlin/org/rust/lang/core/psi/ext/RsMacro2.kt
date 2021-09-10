@@ -63,6 +63,9 @@ abstract class RsMacro2ImplMixin : RsStubbedNamedElementImpl<RsMacro2Stub>,
 
     override val hasRustcBuiltinMacro: Boolean
         get() = MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP.getByPsi(this)
+
+    override val preferredBraces: MacroBraces
+        get() = stub?.preferredBraces ?: guessPreferredBraces()
 }
 
 val MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP: StubbedAttributeProperty<RsMacro2, RsMacro2Stub> =
