@@ -14,7 +14,6 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.crate.Crate
@@ -156,8 +155,8 @@ val RsMacroCall.bodyHash: HashCode?
         }
     }
 
-fun RsMacroCall.resolveToMacro(): RsMacro? =
-    path.reference?.resolve() as? RsMacro
+fun RsMacroCall.resolveToMacro(): RsMacroDefinitionBase? =
+    path.reference?.resolve() as? RsMacroDefinitionBase
 
 val RsMacroCall.expansionFlatten: List<RsExpandedElement>
     get() {

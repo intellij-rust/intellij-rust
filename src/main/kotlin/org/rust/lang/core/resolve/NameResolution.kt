@@ -866,7 +866,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                     ?.resolveToMacroAndProcessLocalInnerMacros(processor) {
                         /* this code will be executed if new resolve can't be used */
                         val def = expandedFrom.resolveToMacro() ?: return@resolveToMacroAndProcessLocalInnerMacros null
-                        if (!def.hasMacroExportLocalInnerMacros) return@resolveToMacroAndProcessLocalInnerMacros null
+                        if (def !is RsMacro || !def.hasMacroExportLocalInnerMacros) return@resolveToMacroAndProcessLocalInnerMacros null
                         val crateRoot = def.crateRoot as? RsFile ?: return@resolveToMacroAndProcessLocalInnerMacros false
                         processAll(exportedMacros(crateRoot), processor)
                     }
