@@ -805,6 +805,28 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(Edition.EDITION_2018)
+    fun `test complex glob imports`() = checkByCode("""
+        pub mod inner1 {
+            pub mod foo {
+                pub fn func() {}
+            }        //X
+
+            mod inner2 {
+                pub mod foo {}
+                pub mod bar {}  // this mod is important
+            }
+            macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+            as_is! {  // import from `inner2` should be resolved after import from `inner1`
+                pub use inner2::*;
+            }
+        }
+        pub use inner1::*;
+        fn main() {
+            foo::func();
+        }      //^
+    """)
+
     // based on https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
     @MockEdition(Edition.EDITION_2018)
     fun `test import adds same name as existing 1`() = checkByCode("""
