@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.AnyPsiChangeListener
 import com.intellij.psi.impl.PsiManagerImpl
@@ -46,11 +45,8 @@ import org.rust.ide.annotator.fixes.ApplySuggestionFix
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
-import org.rust.openapiext.ProjectCache
-import org.rust.openapiext.checkReadAccessAllowed
-import org.rust.openapiext.checkReadAccessNotAllowed
-import org.rust.openapiext.saveAllDocumentsAsTheyAre
 import java.nio.file.Path
 
 object RsExternalLinterUtils {

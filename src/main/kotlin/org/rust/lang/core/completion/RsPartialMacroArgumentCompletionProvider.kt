@@ -7,7 +7,6 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
@@ -24,6 +23,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
+import org.rust.openapiext.Testmark
 
 /**
  * Provides completion inside a macro argument (e.g. `foo!(/*caret*/)`) if the macro is NOT expanded

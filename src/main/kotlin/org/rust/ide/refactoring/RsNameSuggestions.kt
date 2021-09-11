@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring
 
-import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -15,12 +14,9 @@ import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyInteger
-import org.rust.lang.core.types.ty.TyTraitObject
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.openapiext.hitOnFalse
 import org.rust.stdext.mapNotNullToSet
 
 

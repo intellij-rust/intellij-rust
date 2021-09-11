@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.lang.psi
+package org.rust.lang.core.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.LiteralTextEscaper

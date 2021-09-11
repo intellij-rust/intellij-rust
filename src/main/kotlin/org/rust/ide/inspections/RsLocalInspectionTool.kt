@@ -8,7 +8,6 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -16,6 +15,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.existsAfterExpansion
+import org.rust.openapiext.isUnitTestMode
 
 abstract class RsLocalInspectionTool : LocalInspectionTool() {
     final override fun buildVisitor(

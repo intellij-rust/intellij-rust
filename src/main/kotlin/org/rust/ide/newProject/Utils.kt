@@ -12,13 +12,13 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.isHeadlessEnvironment
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Cargo.Companion.GeneratedFilesHolder
+import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.toPath
 
 fun Cargo.makeProject(

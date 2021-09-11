@@ -7,12 +7,12 @@ package org.rust.lang.core.macros
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.lang.PsiBuilder
-import com.intellij.lang.parser.rawLookupText
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import org.rust.lang.core.macros.decl.MacroExpansionMarks
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.lang.core.parser.rawLookupText
 import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
 import org.rust.lang.utils.escapeRust

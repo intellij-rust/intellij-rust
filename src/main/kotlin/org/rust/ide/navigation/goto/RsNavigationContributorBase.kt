@@ -11,7 +11,6 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isInternal
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -26,7 +25,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.contextualFile
 import org.rust.lang.core.psi.ext.qualifiedName
-import java.util.*
+import org.rust.openapiext.isInternal
 
 abstract class RsNavigationContributorBase<T> protected constructor(
     private val indexKey: StubIndexKey<String, T>,

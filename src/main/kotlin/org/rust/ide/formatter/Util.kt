@@ -5,9 +5,9 @@
 
 package org.rust.ide.formatter
 
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
+import org.rust.openapiext.Testmark
 
 val CodeStyleSettings.rust: RsCodeStyleSettings
     get() = getCustomSettings(RsCodeStyleSettings::class.java)

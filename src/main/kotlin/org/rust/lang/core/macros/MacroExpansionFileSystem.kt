@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.readFSItem
@@ -21,6 +20,7 @@ import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.writeFSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem.FSDir
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem.FSFile
+import org.rust.openapiext.isUnitTestMode
 import java.io.*
 import kotlin.math.max
 

@@ -5,11 +5,11 @@
 
 package org.rust.lang.utils
 
-import com.intellij.lang.lexer.parseStringCharacters
-import com.intellij.lang.lexer.tokenize
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN
 import org.rust.lang.core.lexer.RsEscapesLexer
+import org.rust.lang.core.lexer.parseStringCharacters
+import org.rust.lang.core.lexer.tokenize
 
 /**
  * Unescape string escaped using Rust escaping rules.

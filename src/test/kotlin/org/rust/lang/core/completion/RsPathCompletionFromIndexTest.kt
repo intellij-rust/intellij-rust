@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
@@ -15,6 +14,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
+import org.rust.openapiext.Testmark
 
 class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 

@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -29,6 +28,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.filterQuery
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.mapQuery
 import java.awt.event.MouseEvent
 import java.util.*

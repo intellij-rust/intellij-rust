@@ -10,10 +10,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.ide.refactoring.MOCK
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.title
+import org.rust.openapiext.isUnitTestMode
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.DefaultListCellRenderer

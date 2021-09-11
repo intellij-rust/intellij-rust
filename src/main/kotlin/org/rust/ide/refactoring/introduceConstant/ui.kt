@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsExpr
@@ -23,6 +22,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.block
+import org.rust.openapiext.isUnitTestMode
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList

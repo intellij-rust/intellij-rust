@@ -11,7 +11,6 @@ import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -21,6 +20,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.isUnitTestMode
 
 class RsInlineValueHandler : InlineActionHandler() {
     override fun isEnabledForLanguage(language: Language): Boolean = language is RsLanguage

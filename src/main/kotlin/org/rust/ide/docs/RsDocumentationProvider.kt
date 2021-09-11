@@ -10,8 +10,6 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.*
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -26,7 +24,9 @@ import org.rust.lang.core.types.type
 import org.rust.lang.doc.RsDocRenderMode
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.lang.doc.psi.RsDocComment
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
+import org.rust.openapiext.hitOnFalse
 import org.rust.stdext.joinToWithBuffer
 import java.util.function.Consumer
 

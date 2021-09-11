@@ -6,11 +6,11 @@
 package org.rust.ide.annotator
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.Testmark
 import org.rust.FileTree
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.fileTree
+import org.rust.openapiext.Testmark
 
 abstract class RsWithToolchainAnnotationTestBase<C> : RsWithToolchainTestBase() {
 

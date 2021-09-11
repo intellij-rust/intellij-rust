@@ -9,11 +9,11 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapiext.isDispatchThread
 import com.intellij.util.io.isDirectory
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.ide.experiments.RsExperiments.WSL_TOOLCHAIN
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.isDispatchThread
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.stdext.resolveOrNull
 import java.nio.file.Path

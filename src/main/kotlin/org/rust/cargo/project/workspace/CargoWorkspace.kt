@@ -9,7 +9,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
@@ -19,6 +18,7 @@ import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.openapiext.CachedVirtualFile
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.mapToSet
 import java.nio.file.Path

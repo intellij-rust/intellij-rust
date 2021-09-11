@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -28,8 +27,10 @@ import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.ide.utils.import.createVirtualImportContext
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsItemsOwner
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.openapiext.document
+import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout

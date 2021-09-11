@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.search.GlobalSearchScope
@@ -54,6 +53,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
+
+val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
+val isHeadlessEnvironment: Boolean get() = ApplicationManager.getApplication().isHeadlessEnvironment
+val isDispatchThread: Boolean get() = ApplicationManager.getApplication().isDispatchThread
+val isInternal: Boolean get() = ApplicationManager.getApplication().isInternal
 
 fun <T> Project.runWriteCommandAction(command: () -> T): T {
     return WriteCommandAction.runWriteCommandAction(this, Computable { command() })

@@ -5,11 +5,11 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
 

@@ -5,13 +5,13 @@
 
 package org.rust.ide.intentions.createFromUsage
 
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.isUnitTestMode
 
 @Suppress("UNCHECKED_CAST")
 fun <T : PsiElement> addToModule(targetModule: RsMod, element: T): T {

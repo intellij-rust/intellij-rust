@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import org.rust.cargo.CargoConstants
@@ -30,6 +29,7 @@ import org.rust.cargo.util.StdLibType
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import org.rust.stdext.toPath

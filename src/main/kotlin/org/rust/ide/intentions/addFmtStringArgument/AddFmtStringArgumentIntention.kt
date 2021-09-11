@@ -8,7 +8,6 @@ package org.rust.ide.intentions.addFmtStringArgument
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.macros.expansionContext
@@ -19,6 +18,7 @@ import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.runWriteCommandAction
 
 class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringArgumentIntention.Context>() {

@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ide.annotator
+package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
+import org.rust.openapiext.isUnitTestMode
 
 abstract class AnnotatorBase : Annotator {
 

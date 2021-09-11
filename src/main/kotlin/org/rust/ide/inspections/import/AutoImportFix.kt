@@ -10,7 +10,6 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
@@ -23,6 +22,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixOnPsiElement(element), HighPriorityAction {

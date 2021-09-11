@@ -25,8 +25,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapiext.isInternal
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.StatusText
@@ -39,6 +37,8 @@ import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy
+import org.rust.openapiext.isInternal
+import org.rust.openapiext.isUnitTestMode
 import java.io.File
 import java.io.IOException
 

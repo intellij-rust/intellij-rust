@@ -6,10 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.ide.annotator.AnnotationTestFixtureBase
-import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -18,6 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.TestProject
 import org.rust.createAndOpenFileWithCaretMarker
 import org.rust.fileTreeFromText
+import org.rust.openapiext.Testmark
 import kotlin.reflect.KClass
 
 open class RsAnnotationTestFixture<C>(

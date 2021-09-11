@@ -15,7 +15,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow
-import com.intellij.openapiext.isDispatchThread
+import org.rust.openapiext.isDispatchThread
 
 /**
  * A hack that let us know whether [GotoDeclarationAction] is now executes or not

@@ -8,7 +8,6 @@ package org.rust.cargo.project.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
@@ -20,6 +19,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Paths
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation

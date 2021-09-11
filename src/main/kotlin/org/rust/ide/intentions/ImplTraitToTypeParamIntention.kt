@@ -8,15 +8,16 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.getNextNonWhitespaceSibling
+import org.rust.lang.core.psi.ext.getPrevNonWhitespaceSibling
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.createSmartPointer
 
 class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTypeParamIntention.Context>() {

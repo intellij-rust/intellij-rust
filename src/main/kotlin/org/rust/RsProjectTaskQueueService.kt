@@ -16,12 +16,12 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isHeadlessEnvironment
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.QueueProcessor
 import org.rust.RsTask.TaskType.*
 import org.rust.openapiext.DelayedBackgroundableProcessIndicator
 import org.rust.openapiext.checkIsDispatchThread
+import org.rust.openapiext.isHeadlessEnvironment
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.exhaustive
 import java.util.function.BiConsumer
 

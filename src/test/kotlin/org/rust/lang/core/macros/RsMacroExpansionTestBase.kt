@@ -6,7 +6,6 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
@@ -20,6 +19,7 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
+import org.rust.openapiext.Testmark
 import org.rust.stdext.RsResult
 import org.rust.stdext.unwrapOrElse
 import kotlin.math.min

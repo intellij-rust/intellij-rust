@@ -12,8 +12,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
-import com.intellij.openapiext.isUnitTestMode
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -28,6 +30,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathToRsFileTextField
 import org.rust.openapiext.runWriteCommandAction
 import org.rust.openapiext.toPsiFile

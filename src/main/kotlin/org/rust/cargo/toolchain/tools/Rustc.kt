@@ -8,7 +8,6 @@ package org.rust.cargo.toolchain.tools
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
@@ -17,6 +16,7 @@ import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.checkIsBackgroundThread
 import org.rust.openapiext.execute
 import org.rust.openapiext.isSuccess
+import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Path
 
 fun RsToolchainBase.rustc(): Rustc = Rustc(this)

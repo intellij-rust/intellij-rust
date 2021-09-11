@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.infer
 
-import com.intellij.openapiext.Testmark
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
@@ -18,6 +17,7 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ConstExpr
 import org.rust.lang.utils.evaluation.toConst
+import org.rust.openapiext.Testmark
 
 fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {

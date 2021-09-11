@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.AnnotatorBase
 import kotlin.reflect.KClass
 
 abstract class RsWithToolchainAnnotatorTestBase<C>(

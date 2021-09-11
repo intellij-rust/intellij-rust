@@ -6,7 +6,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.psi.LiteralOffsets
 import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.lexer.RsEscapesLexer
 import org.rust.lang.core.psi.RsElementTypes.*

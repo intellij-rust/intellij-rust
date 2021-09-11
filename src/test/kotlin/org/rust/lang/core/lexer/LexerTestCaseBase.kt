@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.lang.lexer
+package org.rust.lang.core.lexer
 
-import com.intellij.TestCase
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.pathToGoldTestFile
-import com.intellij.pathToSourceTestFile
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.annotations.NonNls
+import org.rust.TestCase
+import org.rust.pathToGoldTestFile
+import org.rust.pathToSourceTestFile
 import java.io.IOException
 
 abstract class LexerTestCaseBase : LexerTestCase(), TestCase {

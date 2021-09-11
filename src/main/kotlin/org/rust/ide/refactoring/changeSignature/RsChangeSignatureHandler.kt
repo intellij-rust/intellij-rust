@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
@@ -20,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
+import org.rust.openapiext.isUnitTestMode
 
 class RsChangeSignatureHandler : ChangeSignatureHandler {
     override fun getTargetNotFoundMessage(): String = "The caret should be positioned at a function or method"

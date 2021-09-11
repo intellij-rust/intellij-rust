@@ -5,9 +5,9 @@
 
 package org.rust.cargo.project.workspace
 
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph
+import org.rust.openapiext.isUnitTestMode
 
 private typealias FeaturesGraphInner = PresentableGraph<PackageFeature, Unit>
 private typealias FeatureNode = Node<PackageFeature, Unit>

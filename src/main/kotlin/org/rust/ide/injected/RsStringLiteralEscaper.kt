@@ -5,12 +5,12 @@
 
 package org.rust.ide.injected
 
-import com.intellij.lang.psi.LiteralTextEscaperBase
-import com.intellij.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.psi.LiteralTextEscaper
+import org.rust.lang.core.psi.LiteralTextEscaperBase
 import org.rust.lang.core.psi.RS_ALL_STRING_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsLitExpr
+import org.rust.lang.core.psi.SimpleMultiLineTextEscaper
 import org.rust.lang.utils.parseRustStringCharacters
 
 private class RsNormalStringLiteralEscaper(host: RsLitExpr) : LiteralTextEscaperBase<RsLitExpr>(host) {

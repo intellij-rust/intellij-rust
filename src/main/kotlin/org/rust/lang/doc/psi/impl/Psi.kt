@@ -5,7 +5,6 @@
 
 package org.rust.lang.doc.psi.impl
 
-import com.intellij.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiWhiteSpace
@@ -18,6 +17,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.rust.ide.injected.RsDoctestLanguageInjector
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.SimpleMultiLineTextEscaper
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.*
 

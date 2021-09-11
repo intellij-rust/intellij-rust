@@ -12,7 +12,6 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.containers.addIfNotNull
 import gnu.trove.TIntObjectHashMap
@@ -28,6 +27,7 @@ import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.openapiext.CachedValueDelegate
 import org.rust.openapiext.checkReadAccessAllowed
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.enumSetOf
 import org.rust.stdext.exhaustive

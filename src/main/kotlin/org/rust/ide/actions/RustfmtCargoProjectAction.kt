@@ -9,7 +9,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -17,6 +16,7 @@ import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.toolchain.tools.Rustfmt
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocumentsAsTheyAre
 
 class RustfmtCargoProjectAction : DumbAwareAction() {

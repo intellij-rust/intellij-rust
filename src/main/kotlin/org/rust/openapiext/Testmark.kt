@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.openapiext
+package org.rust.openapiext
 
 import com.intellij.util.ExceptionUtil
 import junit.framework.TestCase.fail

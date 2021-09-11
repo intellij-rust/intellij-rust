@@ -10,11 +10,11 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapiext.Testmark
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.openapiext.Testmark
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.reflect.KClass

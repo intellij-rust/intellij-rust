@@ -5,10 +5,8 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.RsPatBinding
@@ -21,6 +19,7 @@ import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
+import org.rust.openapiext.isUnitTestMode
 
 class RsHighlightingMutableAnnotator : AnnotatorBase() {
 

@@ -5,13 +5,13 @@
 
 package org.rust.ide.formatter
 
-import com.intellij.TestCase
 import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.psi.formatter.FormatterTestCase
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import org.rust.IgnoreInPlatform
+import org.rust.TestCase
 import kotlin.reflect.KMutableProperty0
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
