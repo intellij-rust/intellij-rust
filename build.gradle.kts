@@ -334,14 +334,12 @@ project(":") {
     }
 
     dependencies {
-        implementation(project(":common"))
         implementation("org.jetbrains:markdown:0.2.0") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
             exclude(module = "kotlin-stdlib-common")
         }
         api("com.vdurmont:semver4j:3.1.0")
-        testImplementation(project(":common", "testOutput"))
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
     }
 
@@ -412,9 +410,7 @@ project(":idea") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -425,10 +421,8 @@ project(":clion") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         implementation(project(":debugger"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -443,9 +437,7 @@ project(":debugger") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -457,9 +449,7 @@ project(":toml") {
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
 
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -469,9 +459,7 @@ project(":intelliLang") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -482,27 +470,21 @@ project(":copyright") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":duplicates") {
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":coverage") {
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -512,9 +494,7 @@ project(":grazie") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -524,9 +504,7 @@ project(":js") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -537,13 +515,9 @@ project(":ml-completion") {
     dependencies {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.2")
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
-
-project(":common")
 
 task("runPrettyPrintersTests") {
     doLast {
