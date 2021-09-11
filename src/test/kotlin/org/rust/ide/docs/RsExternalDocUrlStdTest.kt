@@ -97,11 +97,11 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
     """, "https://doc.rust-lang.org/core/option/enum.Option.html#variant.Some")
 
     fun `test struct field`() = doUrlTestByText("""
-        fn foo(x: std::raw::TraitObject) {
-            let data = x.data;
+        fn foo(x: std::process::Child) {
+            let stdin = x.stdin;
                          //^
         }
-    """, "https://doc.rust-lang.org/core/raw/struct.TraitObject.html#structfield.data")
+    """, "https://doc.rust-lang.org/std/process/struct.Child.html#structfield.stdin")
 
     fun `test primitive type`() = doUrlTestByText("""
         fn foo() -> bool {}

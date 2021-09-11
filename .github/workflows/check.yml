@@ -132,7 +132,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.54.0, nightly-2021-03-24 ]
+                rust-version: [ 1.54.0, nightly-2021-08-17 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 211, 212 ]
                 resolve-engine: [ resolve-new ]
