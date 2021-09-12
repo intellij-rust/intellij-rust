@@ -72,6 +72,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
      */
     enum class StmtMode { ON, OFF }
 
+    enum class RestrictedConstExprMode { ON, OFF }
+
     enum class MacroCallParsingMode(
         val attrsAndVis: Boolean,
         val semicolon: Boolean,
@@ -119,6 +121,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val MACRO_BRACE_PARENS: Int = makeBitMask(7)
     private val MACRO_BRACE_BRACKS: Int = makeBitMask(8)
     private val MACRO_BRACE_BRACES: Int = makeBitMask(9)
+
+    private val RESTRICTED_CONST_EXPR_MODE: Int = makeBitMask(10)
+
     private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
         val flag = when (mode) {
             PathParsingMode.VALUE -> PATH_VALUE
@@ -188,6 +193,20 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean =
         b.tokenType != LBRACE || checkStructAllowed(b, level)
+
+    @JvmStatic
+    fun checkGtAllowed(b: PsiBuilder, level: Int): Boolean =
+        !BitUtil.isSet(b.flags, RESTRICTED_CONST_EXPR_MODE)
+
+    @JvmStatic
+    fun withRestrictedConstExprMode(b: PsiBuilder, level: Int, mode: RestrictedConstExprMode, parser: Parser): Boolean {
+        val oldFlags = b.flags
+        val newFlags = oldFlags.setFlag(RESTRICTED_CONST_EXPR_MODE, mode == RestrictedConstExprMode.ON)
+        b.flags = newFlags
+        val result = parser.parse(b, level)
+        b.flags = oldFlags
+        return result
+    }
 
     @JvmStatic
     fun setStmtMode(b: PsiBuilder, level: Int, mode: StmtMode): Boolean {

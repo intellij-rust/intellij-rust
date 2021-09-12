@@ -227,8 +227,7 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= &'::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '::'? '<' !'=' <<list_element AnyTypeArgument>>* '>' { pin = 3 }
-private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | ConstArgument
-private ConstArgument ::= (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)
+private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | RestrictedConstExpr
 
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
@@ -448,7 +447,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? DefaultTypeParameterTyp
 }
 private DefaultTypeParameterType ::= '=' TypeReference { pin = 1 }
 
-ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParameter? {
+ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParameterValue? {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
@@ -458,7 +457,7 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParame
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private DefaultConstParameter ::= '=' BlockExpr { pin = 1 }
+private DefaultConstParameterValue ::= '=' RestrictedConstExpr { pin = 1 }
 
 private TypeBounds ::= [ Polybound ('+' Polybound)* '+'? ]
 
@@ -1075,6 +1074,8 @@ StmtModeExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.ON' Expr>> {
   name = "expr"
 }
 
+private RestrictedConstExpr ::= <<withRestrictedConstExprMode 'RestrictedConstExprMode.ON' AnyExpr>> | never AnyExpr
+
 BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1123,7 +1124,7 @@ AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp <<setStmtMode 'Stmt
 MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
-RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt '>' { name = "operator" }
+RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt <<checkGtAllowed>> '>' { name = "operator" }
 BitShiftBinOp    ::= ltlt | gtgt { name = "operator" }
 AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
@@ -1565,7 +1566,7 @@ fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-SimpleBlock ::= '{' BlockElement* '}' {
+SimpleBlock ::= '{' <<withRestrictedConstExprMode 'RestrictedConstExprMode.OFF' BlockElement*>> '}' {
   pin = 1
   elementType = Block
 }

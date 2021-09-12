@@ -37,7 +37,6 @@ import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.lang.core.*
-import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -1409,6 +1408,15 @@ sealed class RsDiagnostic(
                 factory.createExpression("\"$it\"")
             }
         }
+    }
+
+    class InvalidConstGenericArgument(expr: RsExpr) : RsDiagnostic(expr) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "Expressions must be enclosed in braces to be used as const generic arguments",
+            fixes = listOf(EncloseExprInBracesFix(element as RsExpr))
+        )
     }
 }
 
