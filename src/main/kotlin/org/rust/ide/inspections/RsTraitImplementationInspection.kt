@@ -8,10 +8,7 @@ package org.rust.ide.inspections
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.TraitImplementationInfo
-import org.rust.lang.core.psi.ext.resolveToTrait
-import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
@@ -25,7 +22,7 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
 
             val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 
-            if (implInfo.missingImplementations.isNotEmpty()) {
+            if (!impl.isNegativeImpl && implInfo.missingImplementations.isNotEmpty()) {
                 val missing = implInfo.missingImplementations
                     .mapNotNull { missing -> missing.name?.let { "`$it`" } }
                     .joinToString(", ")
