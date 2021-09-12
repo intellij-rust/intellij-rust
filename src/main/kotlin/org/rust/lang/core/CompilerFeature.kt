@@ -134,6 +134,11 @@ enum class FeatureState {
      */
     ACTIVE,
     /**
+     * Represents incomplete features that may not be safe to use and/or cause compiler.
+     * Such features can be used only with nightly compiler with the corresponding feature attribute
+     */
+    INCOMPLETE,
+    /**
      * Those language feature has since been Accepted (it was once Active)
      * so such language features can be used with stable/beta compiler since some version
      * without any additional attributes
