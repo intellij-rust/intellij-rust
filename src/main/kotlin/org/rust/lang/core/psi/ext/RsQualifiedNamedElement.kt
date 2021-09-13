@@ -245,10 +245,14 @@ data class RsQualifiedName private constructor(
                 element.containingCrate?.normName ?: return null
             }
 
-            val modSegments = if (parentType == PRIMITIVE || parentType == KEYWORD || parentType == MACRO) {
+            val parentElement = parentItem.element
+            val withoutModSegments = parentType == PRIMITIVE ||
+                parentType == KEYWORD ||
+                parentType == MACRO && parentElement is RsMacro
+            val modSegments = if (withoutModSegments) {
                 emptyList()
             } else {
-                val parentElement = parentItem.element ?: return null
+                if (parentElement == null) return null
                 val mod = parentElement as? RsMod ?: parentElement.containingMod
                 mod.superMods
                     .asReversed()
@@ -265,7 +269,7 @@ data class RsQualifiedName private constructor(
             val modSegments = mutableListOf<String>()
 
             val (parentItem, childItem) = qualifiedNamedItem.item.toItems() ?: return null
-            if (parentItem.type != MACRO) {
+            if (parentItem.type != MACRO || parentItem.element is RsMacro2) {
                 qualifiedNamedItem.superMods
                     ?.asReversed()
                     ?.drop(1)

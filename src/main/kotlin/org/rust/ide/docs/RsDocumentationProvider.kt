@@ -267,7 +267,7 @@ private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
         is RsNamedFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
         is RsStructOrEnumItemElement,
         is RsTraitItem,
-        is RsMacro -> listOfNotNull(presentableQualifiedModName)
+        is RsMacroDefinitionBase -> listOfNotNull(presentableQualifiedModName)
         is RsAbstractable -> when (val owner = owner) {
             is RsAbstractableOwner.Foreign,
             is RsAbstractableOwner.Free -> listOfNotNull(presentableQualifiedModName)
@@ -287,8 +287,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
         is RsNamedFieldDecl -> listOfNotNull(presentationInfo?.signatureText)
         is RsFunction -> {
             val buffer = StringBuilder()
-            declarationModifiers.joinTo(buffer, " ")
-            buffer += " "
+            declarationModifiers.joinTo(buffer, separator = " ", postfix = " ")
             buffer.b { it += name }
             typeParameterList?.generateDocumentation(buffer)
             valueParameterList?.generateDocumentation(buffer)
@@ -297,7 +296,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
         }
         is RsConstant -> {
             val buffer = StringBuilder()
-            declarationModifiers.joinTo(buffer, " ", "", " ")
+            declarationModifiers.joinTo(buffer, separator = " ", postfix = " ")
             buffer.b { it += name }
             typeReference?.generateDocumentation(buffer, ": ")
             expr?.generateDocumentation(buffer, " = ")
@@ -308,7 +307,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
             val name = name
             if (name != null) {
                 val buffer = StringBuilder()
-                (this as RsItemElement).declarationModifiers.joinTo(buffer, " ", "", " ")
+                (this as RsItemElement).declarationModifiers.joinTo(buffer, separator = " ", postfix = " ")
                 buffer.b { it += name }
                 (this as RsGenericDeclaration).typeParameterList?.generateDocumentation(buffer)
                 (this as? RsTypeAlias)?.typeReference?.generateDocumentation(buffer, " = ")
@@ -316,6 +315,12 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
             } else emptyList()
         }
         is RsMacro -> listOf("macro <b>$name</b>")
+        is RsMacro2 -> {
+            val buffer = StringBuilder()
+            declarationModifiers.joinTo(buffer, separator = " ", postfix = " ")
+            buffer.b { it += name }
+            listOf(buffer.toString())
+        }
         is RsImplItem -> declarationText
         else -> emptyList()
     }
@@ -377,6 +382,7 @@ private val RsItemElement.declarationModifiers: List<String>
                 }
                 modifiers += "trait"
             }
+            is RsMacro2 -> modifiers += "macro"
             else -> error("unexpected type $javaClass")
         }
         return modifiers

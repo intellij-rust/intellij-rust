@@ -114,6 +114,17 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
 
+    fun `test macro in module`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub mod bar {
+            #[macro_export]
+            macro_rules! foo {
+                        //^
+                () => { unimplemented!() };
+            }
+        }
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
     fun `test not exported macro`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         macro_rules! foo {
@@ -124,9 +135,17 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
 
     fun `test macro 2`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
-        pub macro Bar() {}
+        pub macro bar() {}
                  //^
-    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.Bar.html")
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.bar.html")
+
+    fun `test macro 2 in module`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub macro bar() {}
+        }            //^
+
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/foo/macro.bar.html")
 
     fun `test not external url for workspace package`() = doUrlTestByFileTree("""
         //- lib.rs
