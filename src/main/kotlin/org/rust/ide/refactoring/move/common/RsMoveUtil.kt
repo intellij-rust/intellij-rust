@@ -230,16 +230,21 @@ object RsMoveUtil {
     val LOG: Logger = logger<RsMoveUtil>()
 }
 
-inline fun <reified T : RsElement> movedElementsShallowDescendantsOfType(elementsToMove: List<ElementToMove>): List<T> =
-    movedElementsShallowDescendantsOfType(elementsToMove, T::class.java)
+inline fun <reified T : RsElement> movedElementsShallowDescendantsOfType(
+    elementsToMove: List<ElementToMove>,
+    processInlineModules: Boolean = true
+): List<T> = movedElementsShallowDescendantsOfType(elementsToMove, T::class.java, processInlineModules)
 
 fun <T : RsElement> movedElementsShallowDescendantsOfType(
     elementsToMove: List<ElementToMove>,
-    aClass: Class<T>
+    aClass: Class<T>,
+    processInlineModules: Boolean = true,
 ): List<T> {
     return elementsToMove.flatMap {
         val element = it.element
-        if (element is RsFile) return@flatMap emptyList<T>()
+        if (element is RsFile || !processInlineModules && element is RsMod) {
+            return@flatMap emptyList<T>()
+        }
         PsiTreeUtil.findChildrenOfAnyType(element, false, aClass)
     }
 }

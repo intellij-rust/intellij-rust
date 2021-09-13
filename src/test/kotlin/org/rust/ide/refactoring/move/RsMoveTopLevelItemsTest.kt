@@ -1007,7 +1007,8 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    fun `test copy trait imports from old mod`() = doTest("""
+
+    fun `test copy trait imports from old mod (method call)`() = doTest("""
     //- lib.rs
         mod mod1 {
             use crate::bar::Bar;
@@ -1032,7 +1033,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    fun `test outside reference to method of trait in old mod`() = doTest("""
+    fun `test outside reference to trait in old mod (method call)`() = doTest("""
     //- lib.rs
         mod mod1 {
             fn foo/*caret*/() { ().bar(); }
@@ -1053,7 +1054,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    fun `test self reference to trait method`() = doTest("""
+    fun `test self reference to trait (method call)`() = doTest("""
     //- lib.rs
         mod mod1 {
             fn foo1/*caret*/() { ().foo(); }
@@ -1073,7 +1074,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    fun `test inside reference to method of moved trait`() = doTest("""
+    fun `test inside reference to moved trait (method call)`() = doTest("""
     //- lib.rs
         mod mod1 {
             pub trait Foo/*caret*/ { fn foo(&self) {} }
@@ -1094,6 +1095,194 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
             impl Foo for () {}
         }
     """)
+
+
+    fun `test copy trait imports from old mod (UFCS)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use crate::foo::{Foo, Trait};
+            fn func/*caret*/(foo: &Foo) { Foo::func(foo); }
+        }
+        mod mod2/*target*/ {}
+        mod foo {
+            pub struct Foo;
+            pub trait Trait { fn func(&self) {} }
+            impl Trait for Foo {}
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            use crate::foo::{Foo, Trait};
+
+            fn func(foo: &Foo) { Foo::func(foo); }
+        }
+        mod foo {
+            pub struct Foo;
+            pub trait Trait { fn func(&self) {} }
+            impl Trait for Foo {}
+        }
+    """)
+
+    fun `test outside reference to trait in old mod (UFCS)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub struct Foo;
+            pub trait Trait { fn func(&self) {} }
+            impl Trait for Foo {}
+            fn func/*caret*/(foo: &Foo) { Foo::func(foo); }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub struct Foo;
+            pub trait Trait { fn func(&self) {} }
+            impl Trait for Foo {}
+        }
+        mod mod2 {
+            use crate::mod1::{Foo, Trait};
+
+            fn func(foo: &Foo) { Foo::func(foo); }
+        }
+    """)
+
+    fun `test self reference to trait (UFCS)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            struct Foo/*caret*/;
+            pub trait Trait/*caret*/ { fn func(&self) {} }
+            impl Trait for Foo/*caret*/ {}
+            fn func/*caret*/(foo: &Foo) { Foo::func(foo); }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            struct Foo;
+
+            pub trait Trait { fn func(&self) {} }
+
+            impl Trait for Foo {}
+
+            fn func(foo: &Foo) { Foo::func(foo); }
+        }
+    """)
+
+    fun `test inside reference to moved trait (UFCS)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub trait Trait/*caret*/ { fn func(&self) {} }
+            pub struct Foo;
+            impl Trait for Foo/*caret*/ {}
+            fn func(foo: &Foo) { Foo::func(foo); }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod2::Trait;
+
+            pub struct Foo;
+
+            fn func(foo: &Foo) { Foo::func(foo); }
+        }
+        mod mod2 {
+            use crate::mod1::Foo;
+
+            pub trait Trait { fn func(&self) {} }
+
+            impl Trait for Foo {}
+        }
+    """)
+
+
+    fun `test copy trait imports from old mod (assoc const)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use crate::foo::{Foo, Trait};
+            fn func/*caret*/() {
+                let _ = Foo::C;
+            }
+        }
+
+        mod mod2/*target*/ {}
+
+        mod foo {
+            pub trait Trait { const C: i32 = 1; }
+            pub struct Foo;
+            impl Trait for Foo {}
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+
+        mod mod2 {
+            use crate::foo::{Foo, Trait};
+
+            fn func() {
+                let _ = Foo::C;
+            }
+        }
+
+        mod foo {
+            pub trait Trait { const C: i32 = 1; }
+            pub struct Foo;
+            impl Trait for Foo {}
+        }
+    """)
+
+    fun `test self reference to trait (assoc const)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            struct Foo/*caret*/;
+            pub trait Trait/*caret*/ { const C: i32 = 0; }
+            impl Trait for Foo/*caret*/ {}
+            fn func/*caret*/() { let _ = Foo::C; }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            struct Foo;
+
+            pub trait Trait { const C: i32 = 0; }
+
+            impl Trait for Foo {}
+
+            fn func() { let _ = Foo::C; }
+        }
+    """)
+
+    fun `test inside reference to moved trait (assoc const)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub trait Trait/*caret*/ { const C: i32 = 0; }
+            pub struct Foo;
+            impl Trait for Foo/*caret*/ {}
+            fn func() { let _ = Foo::C; }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod2::Trait;
+
+            pub struct Foo;
+
+            fn func() { let _ = Foo::C; }
+        }
+        mod mod2 {
+            use crate::mod1::Foo;
+
+            pub trait Trait { const C: i32 = 0; }
+
+            impl Trait for Foo {}
+        }
+    """)
+
 
     fun `test outside references which starts with super 1`() = doTest("""
     //- lib.rs

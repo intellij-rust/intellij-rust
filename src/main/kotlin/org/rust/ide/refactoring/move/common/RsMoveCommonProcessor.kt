@@ -159,8 +159,8 @@ class RsMoveCommonProcessor(
                     // TODO: two threads
                     outsideReferences = collectOutsideReferences()
                     val insideReferences = preprocessInsideReferences(usages)
-                    traitMethodsProcessor.preprocessOutsideReferencesToTraitMethods(conflicts, elementsToMove)
-                    traitMethodsProcessor.preprocessInsideReferencesToTraitMethods(conflicts, elementsToMove)
+                    traitMethodsProcessor.preprocessOutsideReferences(conflicts, elementsToMove)
+                    traitMethodsProcessor.preprocessInsideReferences(conflicts, elementsToMove)
 
                     if (!isUnitTestMode) {
                         @Suppress("DialogTitleCapitalization")
