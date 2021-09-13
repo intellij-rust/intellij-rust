@@ -14,6 +14,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroExpansionContext
@@ -194,3 +195,6 @@ fun RsMacroCall.replaceWithExpr(expr: RsExpr): RsElement {
         else -> error("`replaceWithExpr` can only be used for expr or stmt context macros; got $context context")
     } as RsElement
 }
+
+val RsMacroCall.isStdTryMacro
+    get() = macroName == "try" && resolveToMacro()?.containingCargoPackage?.origin == PackageOrigin.STDLIB

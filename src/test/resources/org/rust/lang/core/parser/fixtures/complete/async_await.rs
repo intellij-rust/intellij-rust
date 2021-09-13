@@ -14,10 +14,9 @@ fn main() {
     let _ = await;
 
     let _ = async!();
-    let _ = await!();
-    let _ = await!(await);
-    let _ = await!(foo());
-    let _ = await!(async { () });
+    let _ = await.await;
+    let _ = foo().await;
+    let _ = async { () }.await;
 
     async { () };
     async || { () };

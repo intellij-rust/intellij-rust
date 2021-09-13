@@ -1054,12 +1054,6 @@ class RsTypeInferenceWalker(
         return base.typeArguments.getOrElse(0) { TyUnknown }
     }
 
-    private fun inferTryMacroArgumentType(exprTy: Ty): Ty {
-        val base = exprTy as? TyAdt ?: return TyUnknown
-        if (base.item != items.Result) return TyUnknown
-        return base.typeArguments.firstOrNull() ?: TyUnknown
-    }
-
     private fun inferRangeType(expr: RsRangeExpr): Ty {
         val el = expr.exprList
         val dot2 = expr.dotdot
@@ -1151,9 +1145,7 @@ class RsTypeInferenceWalker(
         if (exprArg != null) {
             val type = exprArg.expr?.inferType() ?: return TyUnknown
             return when (name) {
-                "try" -> inferTryMacroArgumentType(type)
                 "dbg" -> type
-                "await" -> type.lookupFutureOutputTy(lookup)
                 else -> TyUnknown
             }
         }

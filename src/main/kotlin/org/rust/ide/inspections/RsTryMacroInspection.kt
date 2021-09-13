@@ -13,7 +13,8 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.isStdTryMacro
+import org.rust.lang.core.psi.ext.macroBody
 import org.rust.lang.core.psi.ext.replaceWithExpr
 
 /**
@@ -26,7 +27,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitMacroCall(o: RsMacroCall) {
-            val isApplicable = o.isExprOrStmtContext && o.macroName == "try" && o.exprMacroArgument?.expr != null
+            val isApplicable = o.isExprOrStmtContext && o.isStdTryMacro
             if (!isApplicable) return
             holder.registerProblem(
                 o,
@@ -38,9 +39,11 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                         val macro = descriptor.psiElement as? RsMacroCall ?: return
-                        val body = macro.exprMacroArgument?.expr ?: return
-                        val tryExpr = RsPsiFactory(project).createExpression("()?") as RsTryExpr
-                        tryExpr.expr.replace(body.copy())
+                        val factory = RsPsiFactory(project)
+                        val body = macro.macroBody ?: return
+                        val expr = factory.tryCreateExpression(body) ?: return
+                        val tryExpr = factory.createExpression("()?") as RsTryExpr
+                        tryExpr.expr.replace(expr)
                         macro.replaceWithExpr(tryExpr)
                     }
                 }

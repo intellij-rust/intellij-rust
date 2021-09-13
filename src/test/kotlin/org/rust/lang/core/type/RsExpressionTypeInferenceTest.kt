@@ -601,22 +601,6 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
-    fun `test await macro`() = testExpr("""
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn main() {
-            let x = await!(async { 42 });
-            x;
-          //^ i32
-        }
-    """)
-
-    fun `test await macro argument`() = testExpr("""
-        fn main() {
-            let a = await!(42);
-        }                //^ i32
-    """)
-
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test await postfix 2018 (anon)`() = testExpr("""
         #[lang = "core::future::future::Future"]
