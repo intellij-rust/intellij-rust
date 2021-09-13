@@ -105,6 +105,15 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         }
     """)
 
+    fun `test absent method in negative trait impl`() = checkErrors("""
+        trait TError {
+            fn bar();
+            fn baz();
+            fn boo();
+        }
+        impl !TError for (){}
+    """)
+
     fun `test unknown method in trait impl E0407`() = checkErrors("""
         trait T {
             fn foo();

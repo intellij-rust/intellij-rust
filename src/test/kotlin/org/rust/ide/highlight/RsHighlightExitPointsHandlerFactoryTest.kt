@@ -399,6 +399,14 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/7833
+    fun `test string literals in macros are not highlighted`() = doTest("""
+        fn foo() -> i32 {
+            foo!("foobar");
+            /*caret*/return 1;
+        }
+    """, "return 1")
+
     private fun doTest(@Language("Rust") check: String, vararg usages: String) {
         InlineFile(check)
         HighlightUsagesHandler.invoke(myFixture.project, myFixture.editor, myFixture.file)

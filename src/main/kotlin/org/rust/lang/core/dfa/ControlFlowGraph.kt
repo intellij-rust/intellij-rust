@@ -341,7 +341,7 @@ private class ExitPointVisitor(
             for (ancestor in ancestors) {
                 when (ancestor) {
                     is RsFunction, is RsLambdaExpr -> return true
-                    is RsStmt, is RsCondition, is RsMatchArmGuard, is RsPat -> return false
+                    is RsStmt, is RsCondition, is RsMatchArmGuard, is RsPat, is RsMacroArgument -> return false
                     else -> {
                         val parent = ancestor.parent
                         if ((ancestor is RsExpr && parent is RsMatchExpr) || parent is RsLoopExpr)
