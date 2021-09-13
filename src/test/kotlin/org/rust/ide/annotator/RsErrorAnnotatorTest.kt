@@ -641,10 +641,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Tr<<error>'a</error>, 'b, <error>'a</error>> {}
     """)
 
-    @MockRustcVersion("1.34.0-nightly")
+    @MockRustcVersion("1.56.0")
     fun `test name duplication in generic params E0403`() = checkErrors("""
-        #![feature(const_generics)]
-
         fn f1<T1, T2>() {}
         fn f2<T1, const T2: i32>() {}
         fn f3<const T1: i32, const T2: i32>() {}
@@ -2896,21 +2894,49 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl const T for S {}
     """)
 
-    @MockRustcVersion("1.34.0")
-    fun `test const generics E0658 1`() = checkErrors("""
-        fn f<<error descr="const generics is experimental [E0658]">const C: i32</error>>() {}
-        struct S<<error descr="const generics is experimental [E0658]">const C: i32</error>>(A);
-        trait T<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
-        enum E<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
-    """)
-
-    @MockRustcVersion("1.34.0-nightly")
-    fun `test const generics E0658 2`() = checkErrors("""
-        #![feature(const_generics)]
+    @MockRustcVersion("1.56.0")
+    fun `test const generics`() = checkErrors("""
         fn f<const C: i32>() {}
         struct S<const C: i32>(A);
         trait T<const C: i32> {}
         enum E<const C: i32> {}
+    """)
+
+
+    @MockRustcVersion("1.50.0")
+    fun `test min const generics E0658 1`() = checkErrors("""
+        fn f<<error descr="min const generics is experimental [E0658]">const C: i32</error>>() {}
+        struct S<<error descr="min const generics is experimental [E0658]">const C: i32</error>>(A);
+        trait T<<error descr="min const generics is experimental [E0658]">const C: i32</error>> {}
+        enum E<<error descr="min const generics is experimental [E0658]">const C: i32</error>> {}
+    """)
+
+    @MockRustcVersion("1.51.0-nightly")
+    fun `test min const generics E0658 2`() = checkErrors("""
+        #![feature(min_const_generics)]
+        fn f<const C: i32>() {}
+        struct S<const C: i32>(A);
+        trait T<const C: i32> {}
+        enum E<const C: i32> {}
+    """)
+
+    @MockRustcVersion("1.56.0")
+    fun `test adt const params E0658 1`() = checkErrors("""
+        struct F;
+        fn f<const C: <error descr="adt const params is experimental [E0658]">F</error>>() {}
+        struct S<const C: <error descr="adt const params is experimental [E0658]">F</error>>(A);
+        trait T<const C: <error descr="adt const params is experimental [E0658]">F</error>> {}
+        enum E<const C: <error descr="adt const params is experimental [E0658]">F</error>> {}
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test adt const params E0658 2`() = checkErrors("""
+        #![feature(adt_const_params)]
+        struct F;
+        fn f<const C: F>() {}
+        struct S<const C: F>(A);
+        trait T<const C: F> {}
+        enum E<const C: F> {}
     """)
 
     @MockRustcVersion("1.51.0")
@@ -2932,51 +2958,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <const C: i32 = <error descr="Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">0</error>> T<C> for S<C> {}
         enum E<const C: i32 = 0> {}
         type A<const C: i32 = 0> = S<C>;
-    """)
-
-    @MockRustcVersion("1.47.0")
-    fun `test min const generics E0658 1`() = checkErrors("""
-        fn f<<error descr="const generics is experimental [E0658]">const C: i32</error>>() {}
-        struct S<<error descr="const generics is experimental [E0658]">const C: i32</error>>(A);
-        trait T<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
-        enum E<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
-    """)
-
-    @MockRustcVersion("1.51.0-nightly")
-    fun `test min const generics E0658 2`() = checkErrors("""
-        #![feature(min_const_generics)]
-        fn f<const C: i32>() {}
-        struct S<const C: i32>(A);
-        trait T<const C: i32> {}
-        enum E<const C: i32> {}
-    """)
-
-    @MockRustcVersion("1.51.0-nightly")
-    fun `test min const generics E0658 3`() = checkErrors("""
-        #![feature(const_generics)]
-        fn f<const C: i32>() {}
-        struct S<const C: i32>(A);
-        trait T<const C: i32> {}
-        enum E<const C: i32> {}
-    """)
-
-    @MockRustcVersion("1.47.0-nightly")
-    fun `test min const generics vs const generics E0658`() = checkErrors("""
-        #![feature(min_const_generics)]
-        struct A;
-        fn f<const C: <error descr="the only supported types are integers, `bool` and `char`">A</error>>() {}
-        struct S<const C: <error descr="the only supported types are integers, `bool` and `char`">A</error>>(A);
-        trait T<const C: <error descr="the only supported types are integers, `bool` and `char`">A</error>> {}
-        enum E<const C: <error descr="the only supported types are integers, `bool` and `char`">A</error>> {}
-    """)
-
-    @MockRustcVersion("1.51.0")
-    fun `test min const generics vs const generics E0658 (stabilized)`() = checkErrors("""
-        struct A;
-        fn f<<error descr="const generics is experimental [E0658]">const C: A</error>>() {}
-        struct S<<error descr="const generics is experimental [E0658]">const C: A</error>>(A);
-        trait T<<error descr="const generics is experimental [E0658]">const C: A</error>> {}
-        enum E<<error descr="const generics is experimental [E0658]">const C: A</error>> {}
     """)
 
     @MockRustcVersion("1.41.0")

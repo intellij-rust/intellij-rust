@@ -1341,38 +1341,15 @@ private fun checkDuplicates(
 }
 
 private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
+    MIN_CONST_GENERICS.check(holder, constParameter, "min const generics")
     checkConstGenericsDefaults(holder, constParameter.expr)
     checkConstArguments(holder, listOfNotNull(constParameter.expr))
 
-    val constGenericAvailability = CONST_GENERICS.availability(constParameter)
-    if (constGenericAvailability == AVAILABLE) return
-
-    val version = constParameter.cargoProject?.rustcInfo?.version
-    val feature = when (constParameter.typeReference?.type) {
-        is TyInteger, is TyBool, is TyChar -> {
-            val current = version?.semver
-            val since = MIN_CONST_GENERICS.since
-            if (current != null &&
-                since != null &&
-                current.isGreaterOrEqualThan(since.major, since.minor, since.patch)) {
-                MIN_CONST_GENERICS
-            } else {
-                CONST_GENERICS
-            }
-        }
-        else -> CONST_GENERICS
+    val typeReference = constParameter.typeReference
+    val ty = typeReference?.type ?: return
+    if (ty !is TyInteger && ty !is TyBool && ty !is TyChar) {
+        ADT_CONST_PARAMS.check(holder, typeReference, "adt const params")
     }
-
-    if (feature == CONST_GENERICS &&
-        constGenericAvailability == CAN_BE_ADDED &&
-        MIN_CONST_GENERICS.availability(constParameter) == AVAILABLE) {
-        val typeReference = constParameter.typeReference ?: return
-        val message = RsDiagnostic.ForbiddenConstGenericType(typeReference)
-        message.addToHolder(holder)
-        return
-    }
-
-    feature.check(holder, constParameter, "const generics")
 }
 
 private fun checkConstGenericsDefaults(holder: RsAnnotationHolder, default: RsExpr?) {

@@ -195,15 +195,19 @@ sealed class RsDiagnostic(
         private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
             if (lookup.coercionSequence(actualTy).lastOrNull() !is TyStr) return null
             val fromStr = items.FromStr ?: return null
-            val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
-                fromStr.findAssociatedType("Err") ?: return null)
+            val result = lookup.selectProjectionStrict(
+                TraitRef(ty, BoundElement(fromStr)),
+                fromStr.findAssociatedType("Err") ?: return null
+            )
             return result.ok()?.value
         }
 
         private fun isToOwnedImplWithExpectedForActual(items: KnownItems, lookup: ImplLookup): Boolean {
             val toOwnedTrait = items.ToOwned ?: return false
-            val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
-                toOwnedTrait.findAssociatedType("Owned") ?: return false)
+            val result = lookup.selectProjectionStrictWithDeref(
+                TraitRef(actualTy, BoundElement(toOwnedTrait)),
+                toOwnedTrait.findAssociatedType("Owned") ?: return false
+            )
             return expectedTy.isEquivalentTo(result.ok()?.value)
         }
 
@@ -1314,8 +1318,9 @@ sealed class RsDiagnostic(
         )
     }
 
-    class ReprAttrUnsupportedItem(element: PsiElement,
-                                  private val errorText: String
+    class ReprAttrUnsupportedItem(
+        element: PsiElement,
+        private val errorText: String
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
@@ -1325,8 +1330,9 @@ sealed class RsDiagnostic(
         )
     }
 
-    class UnrecognizedReprAttribute(element: PsiElement,
-                                    private val reprName: String
+    class UnrecognizedReprAttribute(
+        element: PsiElement,
+        private val reprName: String
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
@@ -1346,18 +1352,6 @@ sealed class RsDiagnostic(
             if (exportedItem is RsMod) E0365 else E0364,
             "`$name` is private, and cannot be re-exported",
             fixes = listOfNotNull(MakePublicFix.createIfCompatible(exportedItem, exportedItem.name, false))
-        )
-    }
-
-    class ForbiddenConstGenericType(
-        private val typeReference: RsTypeReference
-    ) : RsDiagnostic(typeReference) {
-        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
-            ERROR,
-            null,
-            "the only supported types are integers, `bool` and `char`",
-            "`${typeReference.text}` is forbidden as the type of a const generic parameter",
-            fixes = listOf(createAddOrReplaceFeatureFix(typeReference, CONST_GENERICS, MIN_CONST_GENERICS))
         )
     }
 
@@ -1520,9 +1514,8 @@ fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {
     holder.registerProblem(descriptor)
 }
 
-private val PreparedAnnotation.fullDescription: String get() {
-    return "<html>${htmlHeader(errorCode, escapeString(header))}<br>${escapeString(description)}</html>"
-}
+private val PreparedAnnotation.fullDescription: String
+    get() = "<html>${htmlHeader(errorCode, escapeString(header))}<br>${escapeString(description)}</html>"
 
 private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
     INFO -> ProblemHighlightType.INFORMATION
