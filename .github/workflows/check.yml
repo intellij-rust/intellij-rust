@@ -67,7 +67,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                rust-version: [ 1.54.0 ]
+                rust-version: [ 1.55.0 ]
                 config:
                     - name: linux
                       arch: x86-64
@@ -132,7 +132,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.54.0, nightly-2021-08-17 ]
+                rust-version: [ 1.55.0, nightly-2021-08-17 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 211, 212 ]
                 resolve-engine: [ resolve-new ]
@@ -147,7 +147,7 @@ jobs:
                       resolve-engine: resolve-old
                       verify-plugin: true
                     - os: ubuntu-18.04
-                      rust-version: 1.54.0
+                      rust-version: 1.55.0
                       base-ide: idea
                       platform-version: 212
                       resolve-engine: resolve-old

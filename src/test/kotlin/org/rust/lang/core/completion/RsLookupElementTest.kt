@@ -123,6 +123,11 @@ class RsLookupElementTest : RsTestBase() {
                      //^
     """, tailText = "!", typeText = null)
 
+    fun `test macro 2 definition`() = check("""
+        macro test() {}
+              //^
+    """, tailText = "!", typeText = null)
+
     fun `test deprecated fn`() = check("""
         #[deprecated]
         fn foo() {}

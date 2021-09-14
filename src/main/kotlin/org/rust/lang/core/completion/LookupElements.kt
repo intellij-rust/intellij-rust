@@ -217,7 +217,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
 
         is RsMacroBinding -> base.withTypeText(fragmentSpecifier)
 
-        is RsMacro -> base.withTailText("!")
+        is RsMacroDefinitionBase -> base.withTailText("!")
 
         else -> base
     }
@@ -310,7 +310,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                 }
             }
 
-            is RsMacro -> {
+            is RsMacroDefinitionBase -> {
                 if (curUseItem == null) {
                     var caretShift = 2
                     if (!context.nextCharIs('!')) {

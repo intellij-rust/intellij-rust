@@ -5,25 +5,24 @@
 
 package org.rust.lang.core.completion
 
+import org.intellij.lang.annotations.Language
+import org.rust.lang.core.resolve2.isNewResolveEnabled
+
 class RsMacroBracketCompletionTest : RsCompletionTestBase() {
 
-    fun `test default bracket`() = doSingleCompletion("""
-        macro_rules! foo {
-            () => {};
-        }
+    fun `test default bracket`() = doTest("""
+        $MACRO_PLACEHOLDER
         fn main() {
             foo/*caret*/
         }
     """, """
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo!(/*caret*/)
         }
     """)
 
-    fun `test bracket from documentation`() = doSingleCompletion("""
+    fun `test bracket from documentation`() = doTest("""
         /// `foo![]`
         ///
         /// ```
@@ -34,9 +33,7 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         ///
         /// `foo!()`
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo/*caret*/
         }
@@ -51,33 +48,27 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         ///
         /// `foo!()`
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo![/*caret*/]
         }
     """)
 
-    fun `test insert space for before braces`() = doSingleCompletion("""
+    fun `test insert space for before braces`() = doTest("""
         /// `foo! {}`
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo/*caret*/
         }
     """, """
         /// `foo! {}`
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo! {/*caret*/}
         }
     """)
 
-    fun `test raw macro calls`() = doSingleCompletion("""
+    fun `test raw macro calls`() = doTest("""
         /// `r#foo![]`
         ///
         /// ```
@@ -85,9 +76,7 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         /// foo![];
         /// ```
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo/*caret*/
         }
@@ -99,24 +88,20 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         /// foo![];
         /// ```
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo![/*caret*/]
         }
     """)
 
-    fun `test do not mess with other macro calls`() = doSingleCompletion("""
+    fun `test do not mess with other macro calls`() = doTest("""
         /// ```
         /// foo![];
         /// assert!(true);
         /// assert!(true);
         /// ```
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo/*caret*/
         }
@@ -127,11 +112,34 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         /// assert!(true);
         /// ```
         ///
-        macro_rules! foo {
-            () => {};
-        }
+        $MACRO_PLACEHOLDER
         fn main() {
             foo![/*caret*/]
         }
     """)
+
+    /**
+     * Checks completion for both macro 1.0 and macro 2.0.
+     * It substitutes [MACRO_PLACEHOLDER] with actual macro definition of macro `foo`
+     */
+    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) {
+        fun doTest(macroDefinition: String) {
+            doSingleCompletion(
+                before.replace(MACRO_PLACEHOLDER, macroDefinition),
+                after.replace(MACRO_PLACEHOLDER, macroDefinition)
+            )
+        }
+
+        // macro 1.0
+        doTest("macro_rules! foo { () => {}; }")
+        // macro 2.0 completion works only with new name resolution engine
+        if (project.isNewResolveEnabled) {
+            // macro 2.0
+            doTest("macro foo() {}")
+        }
+    }
+
+    companion object {
+        private const val MACRO_PLACEHOLDER = "%macro_definition%"
+    }
 }
