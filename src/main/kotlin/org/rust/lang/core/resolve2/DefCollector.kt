@@ -34,13 +34,14 @@ class DefCollector(
     private val context: CollectorContext,
 ) {
 
-    private data class GlobImportInfo(val containingMod: ModData, val visibility: Visibility)
-
     /**
      * Reversed glob-imports graph, that is
      * for each module (`targetMod`) store all modules which contain glob import to `targetMod`
      */
-    private val globImports: MutableMap<ModData /* target mod */, MutableList<GlobImportInfo>> = hashMapOf()
+    private val globImports: MutableMap<
+        ModData /* target mod */,
+        MutableMap<ModData /* source mod */, Visibility>
+        > = hashMapOf()
     private val unresolvedImports: MutableList<Import> = context.imports
     private val resolvedImports: MutableList<Import> = mutableListOf()
 
@@ -170,10 +171,10 @@ class DefCollector(
                 val changed = update(containingMod, items, import.visibility, GLOB)
 
                 // record the glob import in case we add further items
-                val globImports = globImports.computeIfAbsent(targetMod) { mutableListOf() }
-                // TODO: If there are two glob imports, we should choose with widest visibility
-                if (globImports.none { (mod, _) -> mod == containingMod }) {
-                    globImports += GlobImportInfo(containingMod, import.visibility)
+                val globImports = globImports.computeIfAbsent(targetMod) { hashMapOf() }
+                val existingGlobImportVisibility = globImports[containingMod]
+                if (existingGlobImportVisibility?.isStrictlyMorePermissive(import.visibility) != true) {
+                    globImports[containingMod] = import.visibility
                 }
                 return changed
             }
