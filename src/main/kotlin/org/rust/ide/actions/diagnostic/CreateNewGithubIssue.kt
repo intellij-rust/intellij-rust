@@ -19,6 +19,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.psi.isRustFile
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
 
@@ -41,7 +42,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
         val os = SystemInfo.getOsNameAndVersion()
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample ?: ""
         val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
-        val resolveEngine = if (project.rustSettings.newResolveEnabled) "new" else "old"
+        val resolveEngine = if (project.isNewResolveEnabled) "new" else "old"
 
         val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, macroEngine, resolveEngine, codeSnippet)
         val link = "https://github.com/intellij-rust/intellij-rust/issues/new?body=${URLUtil.encodeURIComponent(body)}"

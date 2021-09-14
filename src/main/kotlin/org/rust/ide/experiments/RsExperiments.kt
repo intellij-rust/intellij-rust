@@ -12,7 +12,6 @@ object RsExperiments {
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
     const val MACROS_NEW_ENGINE = "org.rust.macros.new.engine"
     const val PROC_MACROS = "org.rust.macros.proc"
-    const val RESOLVE_NEW_ENGINE = "org.rust.resolve.new.engine"
     const val FETCH_ACTUAL_STDLIB_METADATA = "org.rust.cargo.fetch.actual.stdlib.metadata"
     const val CRATES_LOCAL_INDEX = "org.rust.crates.local.index"
     const val WSL_TOOLCHAIN = "org.rust.wsl"

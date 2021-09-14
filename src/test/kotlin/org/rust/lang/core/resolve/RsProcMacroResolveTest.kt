@@ -410,6 +410,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
     """)
 
     // TODO fix name resolution order
+    @UseNewResolve
     fun `test resolve bang proc macro through macro_use to the last extern crate 4`() = expect<IllegalStateException> {
     stubOnlyResolve("""
         //- dep-proc-macro/lib.rs

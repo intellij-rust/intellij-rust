@@ -7,12 +7,14 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
@@ -29,11 +31,13 @@ import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
 
+val IS_NEW_RESOLVE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.resolve.new.engine")
 val Project.isNewResolveEnabled: Boolean
-    get() = rustSettings.newResolveEnabled
+    get() = IS_NEW_RESOLVE_ENABLED_KEY.asBoolean()
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(
