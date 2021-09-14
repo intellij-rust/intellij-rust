@@ -5,9 +5,8 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
-import org.rust.MockRustcVersion
 import org.rust.ExpandMacros
+import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor

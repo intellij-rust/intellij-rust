@@ -2,7 +2,6 @@ rootProject.name = "intellij-rust"
 // Special module with run, build and publish tasks
 include("plugin")
 include(
-    "common",
     "idea",
     "clion",
     "debugger",
@@ -13,9 +12,7 @@ include(
     "duplicates",
     "grazie",
     "js",
-    "ml-completion",
-    "intellij-toml",
-    "intellij-toml:core"
+    "ml-completion"
 )
 
 // Configure Gradle Build Cache. It is enabled in `gradle.properties` via `org.gradle.caching`.

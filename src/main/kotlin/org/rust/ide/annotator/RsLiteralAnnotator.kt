@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity

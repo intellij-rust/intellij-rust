@@ -5,9 +5,6 @@
 
 package org.rust.lang.core.lexer
 
-import com.intellij.lang.lexer.LexerBaseEx
-import com.intellij.lang.lexer.esc
-import com.intellij.lang.lexer.isWhitespaceChar
 import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType

@@ -5,7 +5,6 @@
 
 package org.rust.ide.utils.import
 
-import com.intellij.openapiext.Testmark
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
@@ -13,6 +12,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
 
 /**

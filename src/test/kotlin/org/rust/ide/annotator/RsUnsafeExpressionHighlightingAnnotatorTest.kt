@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
 import org.rust.ide.colors.RsColor
 
 class RsUnsafeExpressionHighlightingAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {

@@ -10,7 +10,6 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.WhitespacesAndCommentsBinder
 import com.intellij.lang.parser.GeneratedParserUtilBase
-import com.intellij.lang.parser.rawLookupText
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType

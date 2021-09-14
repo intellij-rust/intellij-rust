@@ -5,7 +5,6 @@
 
 package org.rust.lang.utils.evaluation
 
-import com.intellij.openapiext.Testmark
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -14,6 +13,7 @@ import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.lang.core.stubs.index.RsCfgNotTestIndex
 import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
+import org.rust.openapiext.Testmark
 
 // See https://doc.rust-lang.org/reference/conditional-compilation.html for more information
 

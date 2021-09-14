@@ -1,7 +1,6 @@
 import groovy.json.JsonSlurper
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_1_8
-import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -11,7 +10,6 @@ import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
 import org.jetbrains.intellij.tasks.RunIdeTask
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
@@ -35,6 +33,7 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
+val tomlPlugin = "org.toml.lang:${prop("tomlPluginVersion")}"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -119,7 +118,7 @@ allprojects {
 
         buildSearchableOptions {
             // buildSearchableOptions task doesn't make sense for non-root subprojects
-            val isRootProject = project.name in listOf("plugin", "intellij-toml")
+            val isRootProject = project.name == "plugin"
             enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
         }
 
@@ -244,7 +243,7 @@ project(":plugin") {
     intellij {
         pluginName.set("intellij-rust")
         val pluginList = mutableListOf(
-            project(":intellij-toml"),
+            tomlPlugin,
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
@@ -335,14 +334,12 @@ project(":") {
     }
 
     dependencies {
-        implementation(project(":common"))
         implementation("org.jetbrains:markdown:0.2.0") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
             exclude(module = "kotlin-stdlib-common")
         }
         api("com.vdurmont:semver4j:3.1.0")
-        testImplementation(project(":common", "testOutput"))
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
     }
 
@@ -413,9 +410,7 @@ project(":idea") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -426,10 +421,8 @@ project(":clion") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         implementation(project(":debugger"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -444,27 +437,19 @@ project(":debugger") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":toml") {
     intellij {
-        plugins.set(listOf(project(":intellij-toml")))
+        plugins.set(listOf(tomlPlugin))
     }
     dependencies {
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
 
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
-
-        // TODO: Drop when gradle-intellij-plugin will be adding add all transitive dependencies
-        compileOnly(project(":intellij-toml:core"))
-        testCompileOnly(project(":intellij-toml:core"))
     }
 }
 
@@ -474,9 +459,7 @@ project(":intelliLang") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -487,27 +470,21 @@ project(":copyright") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":duplicates") {
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":coverage") {
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -517,9 +494,7 @@ project(":grazie") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -529,9 +504,7 @@ project(":js") {
     }
     dependencies {
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -542,56 +515,9 @@ project(":ml-completion") {
     dependencies {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.2")
         implementation(project(":"))
-        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
-        testImplementation(project(":common", "testOutput"))
     }
 }
-
-project(":intellij-toml") {
-    version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
-
-    dependencies {
-        implementation(project(":intellij-toml:core"))
-    }
-
-    tasks {
-        withType<PublishPluginTask> {
-            token.set(prop("publishToken"))
-            channels.set(listOf(channel))
-        }
-    }
-}
-
-project(":intellij-toml:core") {
-    dependencies {
-        implementation(project(":common"))
-        testImplementation(project(":common", "testOutput"))
-    }
-
-    val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
-        source = "src/main/grammars/TomlLexer.flex"
-        targetDir = "src/gen/org/toml/lang/lexer"
-        targetClass = "_TomlLexer"
-        purgeOldFiles = true
-    }
-
-    val generateTomlParser = task<GenerateParser>("generateTomlParser") {
-        source = "src/main/grammars/TomlParser.bnf"
-        targetRoot = "src/gen"
-        pathToParser = "/org/toml/lang/parse/TomlParser.java"
-        pathToPsiRoot = "/org/toml/lang/psi"
-        purgeOldFiles = true
-    }
-
-    tasks {
-        withType<KotlinCompile> {
-            dependsOn(generateTomlLexer, generateTomlParser)
-        }
-    }
-}
-
-project(":common")
 
 task("runPrettyPrintersTests") {
     doLast {

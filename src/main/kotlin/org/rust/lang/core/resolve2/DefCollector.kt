@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
@@ -230,9 +229,8 @@ class DefCollector(
     ): Boolean {
         check(depth <= 100) { "infinite recursion in glob imports!" }
 
-        var changed = false
-        for ((name, def) in resolutions) {
-            val changedCurrent = if (name != "_") {
+        val resolutionsNew = resolutions.filter { (name, def) ->
+            if (name != "_") {
                 val defAdjusted = def.adjust(visibility, isFromNamedImport = importType == NAMED)
                     .adjustMultiresolve()
                 pushResolutionFromImport(modData, name, defAdjusted)
@@ -240,16 +238,15 @@ class DefCollector(
                 // TODO: What if `def` is not trait?
                 pushTraitResolutionFromImport(modData, def, visibility)
             }
-
-            if (changedCurrent) changed = true
         }
+        val changed = resolutionsNew.isNotEmpty()
         if (!changed) return changed
 
         val globImports = globImports[modData] ?: return changed
         for ((globImportingMod, globImportVis) in globImports) {
             // we know all resolutions have the same `visibility`, so we just need to check that once
             if (!visibility.isVisibleFromMod(globImportingMod)) continue
-            updateRecursive(globImportingMod, resolutions, globImportVis, GLOB, depth + 1)
+            updateRecursive(globImportingMod, resolutionsNew, globImportVis, GLOB, depth + 1)
         }
         return changed
     }

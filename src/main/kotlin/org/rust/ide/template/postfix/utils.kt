@@ -9,13 +9,16 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Condition
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.negate
+import org.rust.openapiext.isUnitTestMode
 
 internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     override fun getNegatedExpression(element: PsiElement): PsiElement =

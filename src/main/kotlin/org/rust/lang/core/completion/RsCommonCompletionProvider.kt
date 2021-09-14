@@ -9,7 +9,6 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
-import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.StandardPatterns
@@ -40,6 +39,7 @@ import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.openapiext.Testmark
 
 object RsCommonCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(

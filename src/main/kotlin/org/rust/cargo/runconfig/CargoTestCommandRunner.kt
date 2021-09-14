@@ -17,13 +17,13 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.buildtool.isActivateToolWindowBeforeRun
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 
 class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {

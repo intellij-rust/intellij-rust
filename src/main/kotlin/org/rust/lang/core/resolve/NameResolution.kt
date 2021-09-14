@@ -13,9 +13,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.hitOnFalse
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -58,8 +55,7 @@ import org.rust.lang.core.types.infer.foldCtConstParameterWith
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.openapiext.testAssert
-import org.rust.openapiext.toPsiFile
+import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import org.rust.stdext.intersects
 

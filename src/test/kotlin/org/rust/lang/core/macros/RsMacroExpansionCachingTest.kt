@@ -8,9 +8,6 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.TestmarkPred
-import com.intellij.openapiext.not
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
@@ -24,6 +21,9 @@ import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.stubChildrenOfType
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
+import org.rust.openapiext.Testmark
+import org.rust.openapiext.TestmarkPred
+import org.rust.openapiext.not
 
 @ExpandMacros
 class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {

@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -29,6 +28,7 @@ import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.TokenTreeJsonDeserializer
 import org.rust.lang.core.macros.tt.TokenTreeJsonSerializer
 import org.rust.openapiext.RsPathManager
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.*
 import java.io.*
 import java.nio.file.Path

@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor.MUT_BINDING

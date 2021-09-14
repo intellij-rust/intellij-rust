@@ -31,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiManager
 import com.intellij.ui.GuiUtils
 import com.intellij.util.indexing.LightDirectoryIndex
@@ -59,6 +58,7 @@ import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.TaskResult
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.modules
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.AsyncValue

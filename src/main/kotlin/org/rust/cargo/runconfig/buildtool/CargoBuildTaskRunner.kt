@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
 import com.intellij.util.concurrency.FutureResult
@@ -42,6 +41,7 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.notifications.confirmLoadingUntrustedProject
+import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 

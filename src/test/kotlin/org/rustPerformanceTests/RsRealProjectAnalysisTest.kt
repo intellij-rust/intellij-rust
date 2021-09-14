@@ -7,11 +7,11 @@ package org.rustPerformanceTests
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import org.rust.ide.annotator.AnnotatorBase
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsLocalInspectionTool

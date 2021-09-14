@@ -11,12 +11,12 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.USER_AGENT
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.runWithCheckCanceled
 import org.toml.lang.psi.TomlKeySegment
 import java.io.IOException

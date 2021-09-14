@@ -7,11 +7,11 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.intellij.lang.annotations.Language
 import org.rust.hasCaretMarker
+import org.rust.openapiext.Testmark
 import org.rust.replaceCaretMarker
 
 abstract class RsCompletionTestFixtureBase<IN>(

@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
 import com.intellij.ide.todo.TodoConfiguration
 import org.intellij.lang.annotations.Language
 import org.rust.*

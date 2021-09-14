@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.lexer
 
-import com.intellij.lang.lexer.tokenize
 import com.intellij.lexer.Lexer
 import org.rust.lang.core.lexer.RsEscapesLexer.Companion.ESCAPABLE_LITERALS_TOKEN_SET
 import org.rust.lang.core.psi.RsElementTypes.BYTE_STRING_LITERAL

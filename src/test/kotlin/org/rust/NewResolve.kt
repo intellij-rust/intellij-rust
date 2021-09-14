@@ -8,10 +8,10 @@ package org.rust
 import com.intellij.findAnnotationInstance
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.TestmarkPred
 import junit.framework.TestCase
 import org.rust.lang.core.resolve2.DefMapService
 import org.rust.lang.core.resolve2.isNewResolveEnabled
+import org.rust.openapiext.TestmarkPred
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

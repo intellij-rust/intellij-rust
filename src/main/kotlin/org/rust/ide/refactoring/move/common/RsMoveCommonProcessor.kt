@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
@@ -36,6 +35,7 @@ import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.runWithCancelableProgress
 
 class ItemToMove(val item: RsItemElement) : ElementToMove()

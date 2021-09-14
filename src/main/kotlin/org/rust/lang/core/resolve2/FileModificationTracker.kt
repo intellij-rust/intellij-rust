@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.resolve2
 
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.IOUtil
 import org.rust.lang.core.crate.Crate
@@ -17,6 +16,7 @@ import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.lang.core.stubs.RsModItemStub
 import org.rust.lang.core.stubs.RsNamedStub
 import org.rust.openapiext.fileId
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.BitFlagsBuilder
 import org.rust.stdext.HashCode
 import org.rust.stdext.writeVarInt

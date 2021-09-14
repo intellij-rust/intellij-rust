@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.ide.annotator.BatchMode
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor

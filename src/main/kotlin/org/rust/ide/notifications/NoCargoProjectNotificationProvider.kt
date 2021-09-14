@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.LinkLabel
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapiext.isDispatchThread
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
 import org.rust.RsBundle
 import org.rust.cargo.project.model.AttachCargoProjectAction
@@ -21,6 +19,8 @@ import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.isCargoToml
 import org.rust.lang.core.psi.isRustFile
+import org.rust.openapiext.isDispatchThread
+import org.rust.openapiext.isUnitTestMode
 
 class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvider(project) {
 

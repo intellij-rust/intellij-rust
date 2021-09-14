@@ -11,8 +11,6 @@ import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -28,7 +26,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.fragmentSpecifier
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok

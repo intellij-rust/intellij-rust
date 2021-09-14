@@ -9,11 +9,11 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
+import org.rust.openapiext.Testmark
 import kotlin.reflect.KMutableProperty0
 
 class RsCommenterTest : RsTestBase() {

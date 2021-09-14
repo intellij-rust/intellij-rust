@@ -16,13 +16,13 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Queryable
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.pom.Navigatable
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PlatformIcons
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.buildList
 
 class RsStructureViewModel(editor: Editor?, file: RsFileBase) :

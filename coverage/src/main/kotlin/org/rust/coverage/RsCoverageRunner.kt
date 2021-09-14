@@ -11,11 +11,11 @@ import com.intellij.coverage.CoverageSuite
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapiext.isDispatchThread
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import org.rust.coverage.LcovCoverageReport.Serialization.readLcov
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.isDispatchThread
 import java.io.File
 import java.io.IOException
 

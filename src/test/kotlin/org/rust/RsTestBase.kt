@@ -5,7 +5,6 @@
 
 package org.rust
 
-import com.intellij.TestCase
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.*
@@ -34,11 +32,11 @@ import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import org.rust.stdext.RsResult
-import org.rust.stdext.toResult
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.full.createInstance
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.ResolveResult
@@ -33,6 +32,7 @@ import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
+import org.rust.openapiext.Testmark
 import java.lang.ref.ReferenceQueue
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference

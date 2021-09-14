@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
@@ -30,6 +29,7 @@ import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.USER_AGENT
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.JsonUtils
+import org.rust.openapiext.isUnitTestMode
 import java.awt.datatransfer.StringSelection
 
 class ShareInPlaygroundAction : DumbAwareAction() {

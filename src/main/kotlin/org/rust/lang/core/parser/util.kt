@@ -60,3 +60,10 @@ fun PsiBuilder.clearFrame() {
         currentFrame.lastVariantAt = -1
     }
 }
+
+/** Similar to [com.intellij.lang.PsiBuilderUtil.rawTokenText] */
+fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
+    val start = rawTokenTypeStart(steps)
+    val end = rawTokenTypeStart(steps + 1)
+    return if (start == -1 || end == -1) "" else originalText.subSequence(start, end)
+}

@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapiext.TestmarkPred
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
@@ -16,6 +15,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
 import org.rust.lang.core.psi.ext.contextualFile
+import org.rust.openapiext.TestmarkPred
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) =
