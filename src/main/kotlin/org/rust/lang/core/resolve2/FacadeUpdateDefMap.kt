@@ -8,9 +8,13 @@ package org.rust.lang.core.resolve2
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.util.ConcurrencyUtil.newSameThreadExecutorService
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
@@ -60,7 +64,7 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
 /** Called from macro expansion task */
 fun updateDefMapForAllCrates(
     project: Project,
-    pool: Executor,
+    pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean = true
 ) {
@@ -72,7 +76,7 @@ fun updateDefMapForAllCrates(
 
 private fun doUpdateDefMapForAllCrates(
     project: Project,
-    pool: Executor,
+    pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean,
     rootCrateId: CratePersistentId? = null
@@ -107,7 +111,7 @@ fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
             defMapService.scheduleRebuildDefMap(crateId)
         }
     }
-    doUpdateDefMapForAllCrates(this, SameThreadExecutor(), EmptyProgressIndicator(), multithread = false, crateId)
+    doUpdateDefMapForAllCrates(this, newSameThreadExecutorService(), EmptyProgressIndicator(), multithread = false, crateId)
 }
 
 fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapNotNull {
@@ -122,7 +126,7 @@ private class DefMapUpdater(
      */
     rootCrateId: CratePersistentId?,
     private val defMapService: DefMapService,
-    private val pool: Executor,
+    private val pool: ExecutorService,
     private val indicator: ProgressIndicator,
     multithread: Boolean,
 ) {
@@ -176,9 +180,10 @@ private class DefMapUpdater(
         val builtDefMaps = getBuiltDefMaps(cratesToUpdateAll)
 
         val cratesToUpdateAllSorted = cratesToUpdateAll.topSort(topSortedCrates)
-        val pool = getPool(cratesToUpdateAllSorted.size)
+        val pool = pool.takeIf { multithread && cratesToUpdateAllSorted.size > 1 }
+        val poolForMacros = this.pool.takeIf { multithread }
         numberUpdatedCrates = cratesToUpdateAllSorted.size
-        DefMapsBuilder(defMapService, cratesToUpdateAllSorted, builtDefMaps, indicator, pool).build()
+        DefMapsBuilder(defMapService, cratesToUpdateAllSorted, builtDefMaps, indicator, pool, poolForMacros).build()
     }
 
     private fun findCratesToCheck(): List<Pair<Crate, DefMapHolder>> {
@@ -195,16 +200,15 @@ private class DefMapUpdater(
     }
 
     private fun findCratesToUpdate(cratesToCheck: List<Pair<Crate, DefMapHolder>>): List<Crate> {
-        val pool = getPool(cratesToCheck.size)
-        val cratesToUpdate = if (pool is SameThreadExecutor) {
-            cratesToCheck.filter { (crate, holder) ->
-                holder.updateShouldRebuild(crate)
-            }
-        } else {
+        val cratesToUpdate = if (multithread && cratesToCheck.size > 1) {
             cratesToCheck.filterAsync(pool) { (crate, holder) ->
                 computeInReadActionWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
                     holder.updateShouldRebuild(crate)
                 }
+            }
+        } else {
+            cratesToCheck.filter { (crate, holder) ->
+                holder.updateShouldRebuild(crate)
             }
         }
         return cratesToUpdate.map { it.first }
@@ -232,8 +236,6 @@ private class DefMapUpdater(
             }
             .toMap(hashMapOf())
     }
-
-    private fun getPool(size: Int) = if (multithread && size > 1) pool else SameThreadExecutor()
 }
 
 private fun List<Crate>.withReversedDependencies(): Set<Crate> {
@@ -252,10 +254,6 @@ private fun List<Crate>.withReversedDependencies(): Set<Crate> {
 
 private fun Set<Crate>.topSort(topSortedCrates: List<Crate>): List<Crate> =
     topSortedCrates.filter { it in this }
-
-class SameThreadExecutor : Executor {
-    override fun execute(action: Runnable) = action.run()
-}
 
 /** Does not persist order of elements */
 private fun <T> Collection<T>.filterAsync(pool: Executor, predicate: (T) -> Boolean): List<T> {

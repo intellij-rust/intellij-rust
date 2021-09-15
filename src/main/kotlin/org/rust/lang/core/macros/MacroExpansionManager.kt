@@ -63,10 +63,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Executors
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import kotlin.system.measureTimeMillis
 
 typealias MacroExpansionCachedResult = CachedValueProvider.Result<RsResult<MacroExpansion, GetMacroExpansionError>>
@@ -448,7 +445,7 @@ private class MacroExpansionServiceImplInner(
      * In short, use of [ForkJoinPool.commonPool] in this place leads to crashes.
      * See [issue](https://github.com/intellij-rust/intellij-rust/issues/3966)
      */
-    private val pool = Executors.newWorkStealingPool()
+    private val pool: ExecutorService = Executors.newWorkStealingPool()
 
     private val stepModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 

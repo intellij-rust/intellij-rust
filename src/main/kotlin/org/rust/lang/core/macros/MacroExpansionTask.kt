@@ -49,7 +49,7 @@ import kotlin.system.measureNanoTime
 abstract class MacroExpansionTaskBase(
     project: Project,
     private val storage: ExpandedMacroStorage,
-    private val pool: Executor,
+    private val pool: ExecutorService,
     private val vfsBatchFactory: () -> MacroExpansionVfsBatch,
     private val createExpandedSearchScope: (Int) -> GlobalSearchScope,
     private val stepModificationTracker: SimpleModificationTracker
