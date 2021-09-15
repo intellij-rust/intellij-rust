@@ -140,7 +140,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{bar, A, S};
+        use a::{A, bar, S};
 
         mod a {
             pub struct S;
@@ -166,7 +166,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{bar, A, S};
+        use a::{A, bar, S};
 
         mod a {
             pub struct S;

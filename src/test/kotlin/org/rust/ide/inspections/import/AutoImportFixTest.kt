@@ -269,6 +269,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test insert use item after existing use items`() = checkAutoImportFixByText("""
+        use foo::Bar;
+
         mod foo {
             pub struct Bar;
         }
@@ -276,13 +278,14 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod bar {
             pub struct Foo;
         }
-
-        use foo::Bar;
 
         fn main() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
+        use bar::Foo;
+        use foo::Bar;
+
         mod foo {
             pub struct Bar;
         }
@@ -290,9 +293,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod bar {
             pub struct Foo;
         }
-
-        use foo::Bar;
-        use bar::Foo;
 
         fn main() {
             let f = Foo/*caret*/;
@@ -665,11 +665,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported item`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::Bar;
+
             mod bar {
                 pub struct Bar;
             }
-
-            pub use self::bar::Bar;
         }
 
         fn main() {
@@ -679,11 +679,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::Bar;
 
         mod foo {
+            pub use self::bar::Bar;
+
             mod bar {
                 pub struct Bar;
             }
-
-            pub use self::bar::Bar;
         }
 
         fn main() {
@@ -693,11 +693,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported item with alias`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::Bar as Foo;
+
             mod bar {
                 pub struct Bar;
             }
-
-            pub use self::bar::Bar as Foo;
         }
 
         fn main() {
@@ -707,11 +707,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::Foo;
 
         mod foo {
+            pub use self::bar::Bar as Foo;
+
             mod bar {
                 pub struct Bar;
             }
-
-            pub use self::bar::Bar as Foo;
         }
 
         fn main() {
@@ -721,12 +721,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported item via use group`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::{Baz, Qwe};
+
             mod bar {
                 pub struct Baz;
                 pub struct Qwe;
             }
-
-            pub use self::bar::{Baz, Qwe};
         }
 
         fn main() {
@@ -736,12 +736,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::Baz;
 
         mod foo {
+            pub use self::bar::{Baz, Qwe};
+
             mod bar {
                 pub struct Baz;
                 pub struct Qwe;
             }
-
-            pub use self::bar::{Baz, Qwe};
         }
 
         fn main() {
@@ -751,11 +751,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported item via 'self'`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::Baz::{self};
+
             mod bar {
                 pub struct Baz;
             }
-
-            pub use self::bar::Baz::{self};
         }
 
         fn main() {
@@ -765,11 +765,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::Baz;
 
         mod foo {
+            pub use self::bar::Baz::{self};
+
             mod bar {
                 pub struct Baz;
             }
-
-            pub use self::bar::Baz::{self};
         }
 
         fn main() {
@@ -779,12 +779,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported item with complex reexport`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::{Baz as Foo, Qwe};
+
             mod bar {
                 pub struct Baz;
                 pub struct Qwe;
             }
-
-            pub use self::bar::{Baz as Foo, Qwe};
         }
 
         fn main() {
@@ -794,12 +794,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::Foo;
 
         mod foo {
+            pub use self::bar::{Baz as Foo, Qwe};
+
             mod bar {
                 pub struct Baz;
                 pub struct Qwe;
             }
-
-            pub use self::bar::{Baz as Foo, Qwe};
         }
 
         fn main() {
@@ -809,13 +809,13 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test module reexport`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::baz;
+
             mod bar {
                 pub mod baz {
                     pub struct FooBar;
                 }
             }
-
-            pub use self::bar::baz;
         }
 
         fn main() {
@@ -825,13 +825,13 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::baz::FooBar;
 
         mod foo {
+            pub use self::bar::baz;
+
             mod bar {
                 pub mod baz {
                     pub struct FooBar;
                 }
             }
-
-            pub use self::bar::baz;
         }
 
         fn main() {
@@ -893,19 +893,19 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         mod bar {
+            pub use self::baz::Foo;
+
             mod baz {
                 pub struct Foo;
             }
-
-            pub use self::baz::Foo;
         }
 
         mod qwe {
+            pub use self::xyz::Bar as Foo;
+
             mod xyz {
                 pub struct Bar;
             }
-
-            pub use self::xyz::Bar as Foo;
         }
 
         fn main() {
@@ -919,19 +919,19 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         mod bar {
+            pub use self::baz::Foo;
+
             mod baz {
                 pub struct Foo;
             }
-
-            pub use self::baz::Foo;
         }
 
         mod qwe {
+            pub use self::xyz::Bar as Foo;
+
             mod xyz {
                 pub struct Bar;
             }
-
-            pub use self::xyz::Bar as Foo;
         }
 
         fn main() {
@@ -985,8 +985,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         pub mod x {
-            pub struct Z;
             pub use y;
+
+            pub struct Z;
         }
 
         pub mod y {
@@ -1000,8 +1001,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use x::Z;
 
         pub mod x {
-            pub struct Z;
             pub use y;
+
+            pub struct Z;
         }
 
         pub mod y {
@@ -1016,14 +1018,17 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     fun `test crazy cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         pub mod x {
             pub use u;
+
             pub mod y {
                 pub use u::v;
+
                 pub struct Z;
             }
         }
 
         pub mod u {
             pub use x::y;
+
             pub mod v {
                 pub use x;
             }
@@ -1044,14 +1049,17 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         pub mod x {
             pub use u;
+
             pub mod y {
                 pub use u::v;
+
                 pub struct Z;
             }
         }
 
         pub mod u {
             pub use x::y;
+
             pub mod v {
                 pub use x;
             }
@@ -1064,11 +1072,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test filter imports`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
+            pub use self::bar::FooBar;
+
             pub mod bar {
                 pub struct FooBar;
             }
-
-            pub use self::bar::FooBar;
         }
 
         mod baz {
@@ -1086,11 +1094,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use baz::FooBar;
 
         mod foo {
+            pub use self::bar::FooBar;
+
             pub mod bar {
                 pub struct FooBar;
             }
-
-            pub use self::bar::FooBar;
         }
 
         mod baz {
@@ -1541,6 +1549,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import reexported trait method`() = checkAutoImportFixByText("""
         mod foo {
+            pub use self::bar::baz;
+
             mod bar {
                 pub mod baz {
                     pub trait FooBar {
@@ -1552,8 +1562,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                     }
                 }
             }
-
-            pub use self::bar::baz;
         }
 
         fn main() {
@@ -1563,6 +1571,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::baz::FooBar;
 
         mod foo {
+            pub use self::bar::baz;
+
             mod bar {
                 pub mod baz {
                     pub trait FooBar {
@@ -1574,8 +1584,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                     }
                 }
             }
-
-            pub use self::bar::baz;
         }
 
         fn main() {
@@ -1897,10 +1905,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import with wildcard reexport 1`() = checkAutoImportFixByText("""
         mod c {
+            pub use self::a::*;
+
             mod a {
                 pub struct A;
             }
-            pub use self::a::*;
         }
 
         fn main() {
@@ -1910,10 +1919,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use c::A;
 
         mod c {
+            pub use self::a::*;
+
             mod a {
                 pub struct A;
             }
-            pub use self::a::*;
         }
 
         fn main() {
@@ -1923,10 +1933,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import with wildcard reexport 2`() = checkAutoImportFixByText("""
         mod c {
+            pub use self::a::{{*}};
+
             mod a {
                 pub struct A;
             }
-            pub use self::a::{{*}};
         }
 
         fn main() {
@@ -1936,10 +1947,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use c::A;
 
         mod c {
+            pub use self::a::{{*}};
+
             mod a {
                 pub struct A;
             }
-            pub use self::a::{{*}};
         }
 
         fn main() {
@@ -1961,7 +1973,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         // comment
-        use foo::{Foo, Bar};
+        use foo::{Bar, Foo};
 
         mod foo {
             pub struct Foo;
@@ -1975,7 +1987,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test add import to existing group`() = checkAutoImportFixByText("""
         // comment
-        use foo::{Foo, Bar};
+        use foo::{Bar, Foo};
 
         mod foo {
             pub struct Foo;
@@ -1988,7 +2000,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         // comment
-        use foo::{Foo, Bar, Baz};
+        use foo::{Bar, Baz, Foo};
 
         mod foo {
             pub struct Foo;
@@ -2015,8 +2027,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
         use foo::bar::Bar;
+        use foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2042,8 +2054,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        pub use foo::Foo;
         use foo::Bar;
+        pub use foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2068,9 +2080,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
+        use foo::Bar;
         #[attribute = "value"]
         use foo::Foo;
-        use foo::Bar;
 
         mod foo {
             pub struct Foo;
@@ -2094,7 +2106,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::{Foo as F, Bar};
+        use foo::{Bar, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2107,7 +2119,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports with aliases 2`() = checkAutoImportFixByText("""
-        use foo::{Foo as F, Bar as B};
+        use foo::{Bar as B, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2118,7 +2130,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::{Foo as F, Bar as B, Bar};
+        use foo::{Bar as B, Bar, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2131,7 +2143,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports with nested groups`() = checkAutoImportFixByText("""
-        use foo::{{Foo, Bar}};
+        use foo::{{Bar, Foo}};
 
         mod foo {
             pub struct Foo;
@@ -2143,7 +2155,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
-        use foo::{{Foo, Bar}, Baz};
+        use foo::{{Bar, Foo}, Baz};
 
         mod foo {
             pub struct Foo;
@@ -2155,6 +2167,66 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = Baz/*caret*/;
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test insert import at correct location`() = checkAutoImportFixByText("""
+        use crate::aaa::A;
+        use crate::bbb::B;
+        use crate::ddd::D;
+
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+        pub mod ddd { pub struct D; }
+
+        fn main() {
+            let _ = <error descr="Unresolved reference: `C`">C/*caret*/</error>;
+        }
+    """, """
+        use crate::aaa::A;
+        use crate::bbb::B;
+        use crate::ccc::C;
+        use crate::ddd::D;
+
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+        pub mod ddd { pub struct D; }
+
+        fn main() {
+            let _ = C/*caret*/;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test insert import at correct location (unsorted imports)`() = checkAutoImportFixByText("""
+        use crate::aaa::A;
+        use crate::ddd::D;
+        use crate::bbb::B;
+
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+        pub mod ddd { pub struct D; }
+
+        fn main() {
+            let _ = <error descr="Unresolved reference: `C`">C/*caret*/</error>;
+        }
+    """, """
+        use crate::aaa::A;
+        use crate::ddd::D;
+        use crate::bbb::B;
+        use crate::ccc::C;
+
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+        pub mod ddd { pub struct D; }
+
+        fn main() {
+            let _ = C/*caret*/;
+        }
+    """, checkOptimizeImports = false)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
@@ -2221,7 +2293,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, """
     //- lib.rs
         /// ```
-        /// use test_package::{foo, bar};
+        /// use test_package::{bar, foo};
         /// foo();
         /// bar();
         /// ```
@@ -2242,14 +2314,14 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, """
     //- lib.rs
         /// ```
-        /// use test_package::foo;
         /// use test_package::bar::baz;
+        /// use test_package::foo;
         /// foo();
         /// baz();
         /// ```
         pub fn foo() {}
         pub mod bar { pub fn baz() {} }
-    """, Testmarks.insertNewLineBeforeUseItem)
+    """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
