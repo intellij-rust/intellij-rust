@@ -179,13 +179,31 @@ fun RsElement.deleteWithSurroundingComma() {
  * See [deleteWithSurroundingComma].
  */
 fun RsElement.deleteWithSurroundingCommaAndWhitespace() {
-    while (nextSibling?.isWhitespaceOrComment == true) {
-        nextSibling?.delete()
+    guardedLoop(5) {
+        if (nextSibling?.isWhitespaceOrComment == true) {
+            nextSibling?.delete()
+            return@guardedLoop false
+        }
+        true
     }
-    while (prevSibling?.isWhitespaceOrComment == true) {
-        prevSibling?.delete()
+    guardedLoop(5) {
+        if (prevSibling?.isWhitespaceOrComment == true) {
+            prevSibling?.delete()
+            return@guardedLoop false
+        }
+        true
     }
     deleteWithSurroundingComma()
+}
+
+/**
+ * Run the given `action` up to `count` times.
+ * If the action returns true, the loop immediately ends.
+ */
+private fun guardedLoop(count: Int, action: () -> Boolean) {
+    for (i in 0 until count) {
+        if (action()) return
+    }
 }
 
 private val PsiElement.isWhitespaceOrComment

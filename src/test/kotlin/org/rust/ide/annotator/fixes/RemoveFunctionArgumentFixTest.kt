@@ -96,4 +96,21 @@ class RemoveRedundantFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnot
             foo(0);
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/7830
+    fun `test avoid infinite loop with syntax error`() = checkFixByText("Remove redundant arguments", """
+        fn foo(a: &u32) {}
+
+        fn main() {
+            let a = 1;
+            foo<error>(&<error>'/*caret*/</error>static<error> </error><error>a</error>)</error>;
+        }
+    """, """
+        fn foo(a: &u32) {}
+
+        fn main() {
+            let a = 1;
+            foo(&'static);
+        }
+    """)
 }
