@@ -2915,19 +2915,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     @MockRustcVersion("1.51.0")
     fun `test const generics defaults E0658 1`() = checkErrors("""
-        fn f<const C: i32 = <error descr="const generics defaults is experimental [E0658]">{ 0 }</error>>() {}
-        struct S<const C: i32 = <error descr="const generics defaults is experimental [E0658]">{ 0 }</error>>(A);
-        trait T<const C: i32 = <error descr="const generics defaults is experimental [E0658]">{ 0 }</error>> {}
-        enum E<const C: i32 = <error descr="const generics defaults is experimental [E0658]">{ 0 }</error>> {}
+        fn f<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>>() {}
+        struct S<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>>(A);
+        trait T<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>> {}
+        enum E<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>> {}
     """)
 
     @MockRustcVersion("1.51.0-nightly")
     fun `test const generics defaults E0658 2`() = checkErrors("""
         #![feature(const_generics_defaults)]
-        fn f<const C: i32 = { 0 }>() {}
-        struct S<const C: i32 = { 0 }>(A);
-        trait T<const C: i32 = { 0 }> {}
-        enum E<const C: i32 = { 0 }> {}
+        fn f<const C: i32 = 0>() {}
+        struct S<const C: i32 = 0>(A);
+        trait T<const C: i32 = 0> {}
+        enum E<const C: i32 = 0> {}
     """)
 
     @MockRustcVersion("1.47.0")

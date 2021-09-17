@@ -920,6 +920,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkTypeArgumentList(holder: RsAnnotationHolder, args: RsTypeArgumentList) {
         checkRedundantColonColon(holder, args)
+        checkConstArguments(holder, args.exprList)
     }
 
     private fun checkValueParameterList(holder: RsAnnotationHolder, args: RsValueParameterList) {
@@ -1340,10 +1341,8 @@ private fun checkDuplicates(
 }
 
 private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
-    val default = constParameter.blockExpr
-    if (default != null) {
-        CONST_GENERICS_DEFAULTS.check(holder, default, "const generics defaults")
-    }
+    checkConstGenericsDefaults(holder, constParameter.expr)
+    checkConstArguments(holder, listOfNotNull(constParameter.expr))
 
     val constGenericAvailability = CONST_GENERICS.availability(constParameter)
     if (constGenericAvailability == AVAILABLE) return
@@ -1374,6 +1373,26 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     }
 
     feature.check(holder, constParameter, "const generics")
+}
+
+private fun checkConstGenericsDefaults(holder: RsAnnotationHolder, default: RsExpr?) {
+    if (default == null) return
+    CONST_GENERICS_DEFAULTS.check(holder, default, "const generics defaults")
+}
+
+private fun checkConstArguments(holder: RsAnnotationHolder, args: List<RsExpr>) {
+    for (expr in args) {
+        val ok = when (expr) {
+            is RsLitExpr, is RsBlockExpr -> true
+            is RsPathExpr -> !expr.path.hasColonColon
+            is RsUnaryExpr -> expr.minus != null && expr.expr?.type is TyNumeric
+            else -> false
+        }
+
+        if (!ok) {
+            RsDiagnostic.InvalidConstGenericArgument(expr).addToHolder(holder)
+        }
+    }
 }
 
 private fun checkParamAttrs(holder: RsAnnotationHolder, o: RsOuterAttributeOwner) {

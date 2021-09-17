@@ -204,7 +204,7 @@ class RsInferenceContext(
             else -> {
                 val (retTy, expr) = when (element) {
                     is RsConstant -> element.typeReference?.type to element.expr
-                    is RsConstParameter -> element.typeReference?.type to element.blockExpr
+                    is RsConstParameter -> element.typeReference?.type to element.expr
                     is RsArrayType -> TyInteger.USize.INSTANCE to element.expr
                     is RsVariantDiscriminant -> {
                         val enum = element.contextStrict<RsEnumItem>()

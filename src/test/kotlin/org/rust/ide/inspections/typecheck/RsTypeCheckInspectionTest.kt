@@ -30,9 +30,9 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
     fun `test typecheck in const argument`() = checkByText("""
         #![feature(const_generics)]
         #![feature(const_generics_defaults)]
-        struct S<const N: usize = <error>{ 1u8 }</error>>;
-        trait T<const N: usize = <error>{ 1u8 }</error>> {
-            fn foo<const N: usize>(&self) -> S<{ N }>;
+        struct S<const N: usize = <error>1u8</error>>;
+        trait T<const N: usize = <error>1u8</error>> {
+            fn foo<const N: usize>(&self) -> S<N>;
         }
         impl T<<error>1u8</error>> for S<<error>1u8</error>> {
             fn foo<const N: usize>(self) -> S<<error>1u8</error>> { self }
