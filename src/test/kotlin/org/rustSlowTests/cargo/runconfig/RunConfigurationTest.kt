@@ -214,4 +214,29 @@ class RunConfigurationTest : RunConfigurationTestBase() {
         check("2. bbb" in stdout)
         check("3. ccc" !in stdout)
     }
+
+    fun `test toolchain override`() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    #![feature(if_let)]
+
+                    fn main() {
+                        println!("Hello, world!");
+                    }
+                """)
+            }
+        }.create()
+        val configuration = createConfiguration("+nightly run")
+        val result = executeAndGetOutput(configuration)
+
+        check("Hello, world!" in result.stdout)
+    }
 }

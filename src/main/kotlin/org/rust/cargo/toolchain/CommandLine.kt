@@ -52,6 +52,7 @@ data class CargoCommandLine(
     override val additionalArguments: List<String> = emptyList(),
     override val redirectInputFrom: File? = null,
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
+    val toolchain: String? = null,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val requiredFeatures: Boolean = true,

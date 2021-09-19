@@ -81,6 +81,24 @@ class CargoTest : RsTestBase() {
         env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
+    fun `test use +nightly explicitly`() = checkCommandLine(
+        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "+nightly")), """
+        cmd: /usr/bin/cargo +nightly run --color=always
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
+        """, """
+        cmd: C:/usr/bin/cargo.exe +nightly run --color=always
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
+    """)
+
+    fun `test override explicitly used +toolchain flag if channel is set`() = checkCommandLine(
+        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "+nightly", channel = RustChannel.BETA)), """
+        cmd: /usr/bin/cargo +beta run --color=always
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
+        """, """
+        cmd: C:/usr/bin/cargo.exe +beta run --color=always
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
+    """)
+
     @MockRustcVersion("1.36.0")
     fun `test adds --offline option`() = withOfflineMode {
         checkCommandLine(cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
