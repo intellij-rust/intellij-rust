@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.implLookupAndKnownItems
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
+import org.rust.openapiext.createSmartPointer
 
 private fun RsExpr.returnsStdResult(): Boolean {
     val (_, knownItems) = implLookupAndKnownItems
@@ -55,7 +56,8 @@ private class FixAddExpect(anchor: PsiElement) : LocalQuickFixAndIntentionAction
         val dotExpr = RsPsiFactory(project).createExpression("${startElement.text}.expect(\"\")")
         val newDotExpr = startElement.replace(dotExpr) as RsDotExpr
         val expectArgs = newDotExpr.methodCall?.valueArgumentList?.exprList
-        val stringLiteral = expectArgs?.singleOrNull() as RsLitExpr
+        val stringLiteralPointer = (expectArgs?.singleOrNull() as RsLitExpr).createSmartPointer()
+        val stringLiteral = stringLiteralPointer.element ?: return
         val template = editor?.newTemplateBuilder(newDotExpr) ?: return
         val rangeWithoutQuotes = TextRange(1, stringLiteral.textRange.length - 1)
         template.replaceElement(stringLiteral, rangeWithoutQuotes, "TODO: panic message")
