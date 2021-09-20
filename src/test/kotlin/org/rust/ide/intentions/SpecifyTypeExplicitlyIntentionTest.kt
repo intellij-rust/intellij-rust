@@ -198,8 +198,8 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             }
             fn main() { let var/*caret*/ = foo(); }
     """, """
-            use a::foo;
             use std::collections::HashMap;
+            use a::foo;
 
             mod a {
                 use std::collections::HashMap;

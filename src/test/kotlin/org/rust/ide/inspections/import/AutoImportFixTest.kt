@@ -2229,6 +2229,35 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, checkOptimizeImports = false)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test insert import from different crate at correct location`() = checkAutoImportFixByFileTree("""
+    //- dep-lib/lib.rs
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+    //- main.rs
+        use dep_lib_target::aaa::A;
+        use dep_lib_target::ccc::C;
+
+        fn main() {
+            let _ = <error descr="Unresolved reference: `B`">B/*caret*/</error>;
+        }
+    """, """
+    //- dep-lib/lib.rs
+        pub mod aaa { pub struct A; }
+        pub mod bbb { pub struct B; }
+        pub mod ccc { pub struct C; }
+    //- main.rs
+        use dep_lib_target::aaa::A;
+        use dep_lib_target::bbb::B;
+        use dep_lib_target::ccc::C;
+
+        fn main() {
+            let _ = B/*caret*/;
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```

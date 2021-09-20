@@ -92,6 +92,7 @@ private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: Str
 
 fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     val useItem = psiFactory.createUseItem(usePath)
+    useItem.setContext(containingMod)  // needed for correct sorting of added import
     insertUseItem(psiFactory, useItem)
 }
 
