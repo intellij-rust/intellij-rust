@@ -539,12 +539,12 @@
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unused must_use"
-                         enabledByDefault="true" level="WARNING"
+                         enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnusedMustUseInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Double must_use"
-                         enabledByDefault="true" level="WARNING"
+                         enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsDoubleMustUseInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
