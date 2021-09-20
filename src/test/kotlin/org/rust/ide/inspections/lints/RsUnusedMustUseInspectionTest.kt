@@ -15,7 +15,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> bool { false }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">foo();</warning>
+            <warning descr="Unused return value of foo that must be used">foo()</warning>;
         }
     """)
 
@@ -26,7 +26,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">foo();</warning>
+            <warning descr="Unused return value of foo that must be used">foo()</warning>;
         }
     """)
 
@@ -35,7 +35,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         struct S;
 
         fn main() {
-            <warning descr="Unused S that must be used">S;</warning>
+            <warning descr="Unused S that must be used">S</warning>;
         }
     """)
 
@@ -48,7 +48,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">S.foo();</warning>
+            <warning descr="Unused return value of foo that must be used">S.foo()</warning>;
         }
     """)
 
@@ -59,7 +59,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> S { S }
 
         fn main() {
-            <warning descr="Unused S that must be used">foo();</warning>
+            <warning descr="Unused S that must be used">foo()</warning>;
         }
     """)
 
@@ -74,7 +74,22 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         struct S2 { s: S }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">S2 { s: S }.s.foo();</warning>
+            <warning descr="Unused return value of foo that must be used">S2 { s: S }.s.foo()</warning>;
+        }
+    """)
+
+    fun `test unused must_use block disabled by cfg`() = checkByText("""
+        #[must_use]
+        struct S;
+
+        fn xyz() -> S {
+            #[cfg(undeclared_feature)]
+            { S }
+
+            <warning descr="Unused S that must be used">#[cfg(not(undeclared_feature))]
+            { S }</warning>
+
+            { S }
         }
     """)
 
@@ -83,7 +98,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> bool { false }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">/*caret*/foo();</warning>
+            <warning descr="Unused return value of foo that must be used">/*caret*/foo()</warning>;
         }
     """, """
         #[must_use]
@@ -99,7 +114,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> Result<bool, ()> { false }
 
         fn main() {
-            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo();</warning>
+            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</warning>;
         }
     """, """
         fn foo() -> Result<bool, ()> { false }
@@ -114,7 +129,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> Result<bool, ()> { false }
 
         fn main() {
-            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo();</warning>
+            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</warning>;
         }
     """, """
         fn foo() -> Result<bool, ()> { false }

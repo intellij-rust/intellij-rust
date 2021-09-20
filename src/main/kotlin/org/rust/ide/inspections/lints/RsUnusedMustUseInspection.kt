@@ -33,8 +33,8 @@ private class FixAddLetUnderscore : LocalQuickFix {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddLetUnderscore.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val stmt = descriptor.psiElement as RsExprStmt
-        stmt.replace(RsPsiFactory(project).createLetDeclaration("_", stmt.expr))
+        val expr = descriptor.psiElement as RsExpr
+        expr.parent.replace(RsPsiFactory(project).createLetDeclaration("_", expr))
     }
 }
 
@@ -42,8 +42,8 @@ private class FixAddUnwrap : LocalQuickFix {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddUnwrap.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val stmt = descriptor.psiElement as RsExprStmt
-        stmt.expr.replace(RsPsiFactory(project).createExpression("${stmt.expr.text}.unwrap()"))
+        val expr = descriptor.psiElement as RsExpr
+        expr.replace(RsPsiFactory(project).createExpression("${expr.text}.unwrap()"))
     }
 }
 
@@ -97,7 +97,7 @@ class RsUnusedMustUseInspection : RsLintInspection() {
             super.visitExprStmt(o)
             val problem = inspectAndProposeFixes(o.expr)
             if (problem != null) {
-                holder.registerLintProblem(o, problem.description, fixes=problem.fixes)
+                holder.registerLintProblem(o.expr, problem.description, fixes=problem.fixes)
             }
         }
     }
