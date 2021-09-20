@@ -1137,7 +1137,7 @@
         <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
 
         <!--  Experimental features -->
-        <experimentalFeature id="org.rust.wsl" percentOfUsers="0">
+        <experimentalFeature id="org.rust.wsl" percentOfUsers="100">
             <description>Enables WSL toolchains</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.features.settings.gutter" percentOfUsers="0">
