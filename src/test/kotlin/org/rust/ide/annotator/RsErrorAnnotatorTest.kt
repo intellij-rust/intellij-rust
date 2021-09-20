@@ -2915,19 +2915,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     @MockRustcVersion("1.51.0")
     fun `test const generics defaults E0658 1`() = checkErrors("""
-        fn f<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>>() {}
+        fn f<const C: i32 = <error descr="Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions"><error descr="const generics defaults is experimental [E0658]">0</error></error>>() {}
         struct S<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>>(A);
         trait T<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>> {}
+        impl <const C: i32 = <error descr="Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions"><error descr="const generics defaults is experimental [E0658]">0</error></error>> T<C> for S<C> {}
         enum E<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>> {}
+        type A<const C: i32 = <error descr="const generics defaults is experimental [E0658]">0</error>> = S<C>;
     """)
 
     @MockRustcVersion("1.51.0-nightly")
     fun `test const generics defaults E0658 2`() = checkErrors("""
         #![feature(const_generics_defaults)]
-        fn f<const C: i32 = 0>() {}
+        fn f<const C: i32 = <error descr="Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">0</error>>() {}
         struct S<const C: i32 = 0>(A);
         trait T<const C: i32 = 0> {}
+        impl <const C: i32 = <error descr="Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">0</error>> T<C> for S<C> {}
         enum E<const C: i32 = 0> {}
+        type A<const C: i32 = 0> = S<C>;
     """)
 
     @MockRustcVersion("1.47.0")

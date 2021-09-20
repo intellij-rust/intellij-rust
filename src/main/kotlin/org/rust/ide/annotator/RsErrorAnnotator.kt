@@ -1378,6 +1378,14 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
 private fun checkConstGenericsDefaults(holder: RsAnnotationHolder, default: RsExpr?) {
     if (default == null) return
     CONST_GENERICS_DEFAULTS.check(holder, default, "const generics defaults")
+    when (default.ancestorStrict<RsGenericDeclaration>()) {
+        is RsStructItem,
+        is RsEnumItem,
+        is RsTypeAlias,
+        is RsTraitItem,
+        null -> {}
+        else -> RsDiagnostic.DefaultsConstGenericNotAllowed(default).addToHolder(holder)
+    }
 }
 
 private fun checkConstArguments(holder: RsAnnotationHolder, args: List<RsExpr>) {
