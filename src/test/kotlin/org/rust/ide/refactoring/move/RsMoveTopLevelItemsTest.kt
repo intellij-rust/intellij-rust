@@ -971,8 +971,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     """, """
     //- lib.rs
         mod mod1 {
-            use inner::Bar4;
-
             pub mod inner {
                 pub fn bar3() {}
                 pub struct Bar4 {}

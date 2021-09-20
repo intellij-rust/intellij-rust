@@ -178,6 +178,9 @@ class DefCollector(
                 val items = targetMod.getVisibleItems { it.isVisibleFromMod(containingMod) }
                 val changed = update(containingMod, items, import.visibility, GLOB)
 
+                /** See [CrateDefMap.hasTransitiveGlobImport] */
+                defMap.globImportGraph.recordGlobImport(containingMod, targetMod, import.visibility)
+
                 // record the glob import in case we add further items
                 val globImports = globImports.computeIfAbsent(targetMod) { mutableListOf() }
                 // TODO: If there are two glob imports, we should choose with widest visibility

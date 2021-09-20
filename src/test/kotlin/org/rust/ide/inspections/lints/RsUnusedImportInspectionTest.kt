@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints
 
+import org.junit.ComparisonFailure
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.experiments.RsExperiments
@@ -106,13 +107,13 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
-    fun `test ignore reexport`() = checkByText("""
+    fun `test ignore public reexport`() = checkByText("""
         pub mod foo {
             pub struct S {}
         }
 
         pub use foo::S;
-        pub(crate) use foo::S;
+        <warning descr="Unused import: `foo::S`">pub(crate) use foo::S;</warning>
     """)
 
     fun `test shadowed path`() = checkByText("""
@@ -281,6 +282,19 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             <warning descr="Unused import: `super::foo::S as T`">use super::foo::S as T;</warning>
 
             fn bar(_: S) {}
+        }
+    """)
+
+    fun `test unused import with alias 2`() = checkByText("""
+        mod foo {
+            pub struct S;
+            pub struct T;
+        }
+        mod bar {
+            <warning descr="Unused import: `super::foo::S as T`">use super::foo::S as T;</warning>
+            mod inner {
+                fn bar(_: crate::foo::T) {}
+            }
         }
     """)
 
@@ -692,20 +706,238 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)*/
 
-    /*@MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test private import used in child module`() = checkByText("""
-       mod foo {
-            mod bar {
-                pub struct S;
-            }
-            use bar::S;
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import unused in child module`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        <warning descr="Unused import: `foo::S`">use foo::S;</warning>
 
-            mod baz {
-                use super::S;
-                fn fun(_: S) {}
+        mod bar {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (direct reference)`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            fn fun(_: super::S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (named import)`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            use super::S;
+            fn fun(_: S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (glob import)`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            use super::*;
+            fn fun(_: S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (transitive glob import)`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar1 {
+            pub use crate::*;
+        }
+        mod bar2 {
+            use crate::bar1::*;
+            fn fun(_: S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (private transitive glob import)`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        <warning descr="Unused import: `foo::S`">use foo::S;</warning>
+
+        mod bar1 {
+            <warning descr="Unused import: `crate::*`">use crate::*;</warning>
+        }
+        mod bar2 {
+            <warning descr="Unused import: `crate::bar1::*`">use crate::bar1::*;</warning>
+            use crate::foo::S;
+            fn fun(_: S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test pub(crate) import used in super module`() = checkByText("""
+        mod inner1 {
+            pub fn func() {}
+        }
+        pub mod inner2 {
+            pub(crate) use super::inner1::func;
+        }
+
+        fn main() {
+            inner2::func();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test pub(crate) import with alias used in super module`() = checkByText("""
+        mod inner1 {
+            pub fn func() {}
+        }
+        pub mod inner2 {
+            pub(crate) use super::inner1::func as func2;
+        }
+
+        fn main() {
+            inner2::func2();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module (match pattern)`() = checkByText("""
+        mod foo {
+            pub const S: i32 = 0;
+        }
+        use foo::S;
+
+        mod bar {
+            use super::*;
+            fn fun() {
+                match 0 {
+                    S => {}
+                    _ => {}
+                }
             }
         }
-    """)*/
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module in macro 1`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            as_is! {
+                fn fun(_: super::S) {}
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module in macro 2`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            as_is! {
+                use super::S;
+            }
+            fn fun(_: S) {}
+        }
+    """)
+
+    // TODO: Support text search inside macro expansions
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module in macro 3`() = expect<ComparisonFailure> {
+    checkByText("""
+        mod inner {
+            pub fn bar() {}
+        }
+        use inner::bar;
+
+        mod usage {
+            macro_rules! foo {
+                () => {
+                    fn foo() { super::bar(); }
+                }
+            }
+            foo!();
+        }
+    """)
+    }
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module in nested macro 1`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            as_is! {
+                as_is! {
+                    fn fun(_: super::S) {}
+                }
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module in nested macro 2`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        mod bar {
+            as_is! {
+                as_is! {
+                    use super::S;
+                }
+            }
+            fn fun(_: S) {}
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in expanded child module`() = checkByText("""
+        macro_rules! gen_foo {
+            ($($ t:tt)*) => {
+                mod foo {
+                    use super::*;
+                    $($ t)*
+                }
+            };
+        }
+
+        mod inner {
+            pub struct S;
+        }
+        use inner::S;
+        gen_foo! {
+            fn usage(_: S) {}
+        }
+    """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)

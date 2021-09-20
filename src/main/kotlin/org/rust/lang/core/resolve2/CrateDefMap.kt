@@ -24,6 +24,7 @@ import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.Visibility.*
+import org.rust.lang.core.resolve2.util.GlobImportGraph
 import org.rust.lang.core.resolve2.util.PerNsHashMap
 import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
@@ -73,6 +74,8 @@ class CrateDefMap(
 
     /** Stored as memory optimization */
     val rootAsPerNs: PerNs = PerNs.types(VisItem(root.path, Public, true))
+
+    val globImportGraph: GlobImportGraph = GlobImportGraph()
 
     fun getDefMap(crate: CratePersistentId): CrateDefMap? =
         if (crate == this.crate) this else allDependenciesDefMaps[crate]
