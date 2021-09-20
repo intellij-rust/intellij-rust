@@ -7,6 +7,7 @@ package org.rust.cargo.project.settings.ui
 
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -136,8 +137,9 @@ class RustProjectSettingsPanel(
 
                 pathToStdlibField.isEditable = !hasRustup
                 pathToStdlibField.setButtonEnabled(!hasRustup)
-                if (stdlibLocation != null && (pathToStdlibField.text.isBlank() || hasRustup)) {
-                    pathToStdlibField.text = stdlibLocation
+                if (stdlibLocation != null && (pathToStdlibField.text.isBlank() || hasRustup) ||
+                    !isStdlibLocationCompatible(pathToToolchain?.toString().orEmpty(), pathToStdlibField.text)) {
+                    pathToStdlibField.text = stdlibLocation.orEmpty()
                 }
                 fetchedSysroot = stdlibLocation
 
@@ -154,6 +156,13 @@ class RustProjectSettingsPanel(
     }
 
     private val RsToolchainBase.rustup: Rustup? get() = rustup(cargoProjectDir)
+}
+
+private fun isStdlibLocationCompatible(toolchainLocation: String, stdlibLocation: String): Boolean {
+    val isWslToolchain = WslDistributionManager.isWslPath(toolchainLocation)
+    val isWslStdlib = WslDistributionManager.isWslPath(stdlibLocation)
+    // We should reset [pathToStdlibField] because non-WSL stdlib paths don't work with WSL toolchains
+    return isWslToolchain == isWslStdlib
 }
 
 private fun String.blankToNull(): String? = ifBlank { null }
