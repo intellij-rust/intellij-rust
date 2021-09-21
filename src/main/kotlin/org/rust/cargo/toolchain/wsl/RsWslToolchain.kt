@@ -10,6 +10,7 @@ import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslPath
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.isFile
 import com.intellij.util.io.systemIndependentPath
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -74,12 +75,14 @@ class RsWslToolchain(
 
     companion object {
 
-        private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String =
-            when {
-                !wslPath.startsWith("/") -> wslPath
-                wslPath.startsWith(mntRoot) -> WSLUtil.getWindowsPath(wslPath, mntRoot)
-                else -> getWindowsPath(wslPath)
-            } ?: wslPath
+        private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String {
+            val systemIndependentPath = FileUtil.toSystemIndependentName(wslPath)
+            return when {
+                !systemIndependentPath.startsWith("/") -> systemIndependentPath
+                systemIndependentPath.startsWith(mntRoot) -> WSLUtil.getWindowsPath(systemIndependentPath, mntRoot)
+                else -> getWindowsPath(systemIndependentPath)
+            } ?: systemIndependentPath
+        }
 
         private fun WSLDistribution.getWindowsPath(wslPath: Path): Path =
             getWindowsPathWithFix(wslPath.toString()).toPath()
