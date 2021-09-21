@@ -1048,11 +1048,7 @@ private class MacroResolver private constructor(
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement, isAttrOrDerive: Boolean): MacroResolveResult? {
         if (!project.isNewResolveEnabled) return null
         if (element !is RsElement) return null
-        if (element.parent !is RsMod) return null  // we are interested only in top-level elements
-
-        val expandedFrom = (element as? RsExpandedElement)?.expandedFromRecursively
-        val item = expandedFrom ?: element
-        val scope = item.parent as? RsMod ?: return null
+        val scope = element.context as? RsMod ?: return null // we are interested only in top-level elements
         /** [processRemainedExportedMacros] processes local imports */
         return processMacros(scope, processor, macroPath, isAttrOrDerive, ::processRemainedExportedMacros)
             ?.toResult(usedNewResolve = true)
