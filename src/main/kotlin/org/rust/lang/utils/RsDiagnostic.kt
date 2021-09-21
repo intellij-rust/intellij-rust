@@ -1361,6 +1361,14 @@ sealed class RsDiagnostic(
         )
     }
 
+    class DefaultsConstGenericNotAllowed(expr: RsExpr) : RsDiagnostic(expr) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions",
+        )
+    }
+
     class InherentImplDifferentCrateError(element: PsiElement) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
