@@ -33,8 +33,6 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
-import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -114,11 +112,11 @@ class RsFile(
         if (!project.isNewResolveEnabled || project.macroExpansionManagerIfCreated?.expansionState == null) {
             val declaration = declaration
             if (declaration != null) {
-                val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
-                val parentCachedData = (file as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-                val isEnabledByCfgInner = parentCachedData.crate?.let { file.isEnabledByCfgSelf(it) } ?: true
+                val declarationFile = declaration.contextualFile
+                val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
                 val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
-                    && isEnabledByCfg && isEnabledByCfgInner
+                    && declaration.existsAfterExpansion
+                    && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
                 return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
             }
         }
@@ -285,16 +283,6 @@ private val MOD_DECL_MACROS_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.cre
 private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_KEY")
 private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
 
-private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<PsiFile, Boolean> {
-    if (this is RsDocAndAttributeOwner && !existsAfterExpansionSelf) return contextualFile to false
-    val contextOrMacro = (this as? RsExpandedElement)?.expandedFrom ?: context!!
-    return if (contextOrMacro is PsiFile) {
-        contextOrMacro to (contextOrMacro !is RsDocAndAttributeOwner || contextOrMacro.existsAfterExpansionSelf)
-    } else {
-        contextOrMacro.contextualFileAndIsEnabledByCfgOnThisWay()
-    }
-}
-
 /**
  * @return true if containing crate root is known for this element and this element is not excluded from
  * a project via `#[cfg]` attribute on some level (e.g. its parent module)
@@ -302,9 +290,9 @@ private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<
 @Suppress("KDocUnresolvedReference")
 val RsElement.isValidProjectMember: Boolean
     get() {
-        val (file, isEnabledByCfg) = contextualFileAndIsEnabledByCfgOnThisWay()
+        val file = contextualFile
         if (file !is RsFile) return true
-        return isEnabledByCfg && file.isDeeplyEnabledByCfg && file.crateRoot != null
+        return existsAfterExpansion && file.isDeeplyEnabledByCfg && file.crateRoot != null
     }
 
 /** Usually used to filter out test/bench non-workspace crates */

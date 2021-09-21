@@ -30,7 +30,7 @@ val PsiElement.existsAfterExpansion: Boolean get() = isEnabledByCfg
 fun PsiElement.isEnabledByCfg(crate: Crate): Boolean = isEnabledByCfgInner(crate)
 
 private fun PsiElement.isEnabledByCfgInner(crate: Crate?): Boolean =
-    ancestors.all {
+    stubAncestors.all {
         when (it) {
             is RsDocAndAttributeOwner -> it.isEnabledByCfgSelfInner(crate)
             is RsMetaItem -> !it.isRootMetaItem()
