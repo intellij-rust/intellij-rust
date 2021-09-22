@@ -17,6 +17,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.lang.RsLanguage
 
 class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
@@ -29,10 +30,11 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         val currentState = GrazieConfig.get()
         if (strategy.getID() !in currentState.enabledGrammarStrategies || currentState.enabledLanguages != enabledLanguages) {
             updateSettings { state ->
+                val checkingContext = state.checkingContext
                 state.copy(
                     enabledGrammarStrategies = state.enabledGrammarStrategies + strategy.getID(),
                     enabledLanguages = enabledLanguages,
-                    checkingContext = state.checkingContext.withRsLanguageEnabled()
+                    checkingContext = checkingContext.copy(enabledLanguages = checkingContext.enabledLanguages + RsLanguage.id)
                 )
             }
         }

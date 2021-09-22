@@ -16,10 +16,12 @@ import com.intellij.execution.process.UnixProcessManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.PerformInBackgroundOption
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.profiler.ProfilerToolWindowManager
+import com.intellij.profiler.*
+import com.intellij.profiler.clion.DTraceProfilerConfigurable
 import com.intellij.profiler.clion.NativeTargetProcess
-import com.intellij.profiler.installErrorHandlers
+import com.intellij.profiler.clion.dtrace.DTraceProfilerSettings
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -73,5 +75,13 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         private const val DYLD_INSERT_LIBRARIES = "DYLD_INSERT_LIBRARIES"
 
         private fun profilerStarterPath(): File = File(PathManager.getBinPath(), "profiler/mac/libosx-starter.dylib")
+
+        @Throws(MisConfiguredException::class)
+        private fun validateDTraceSettings(project: Project) {
+            val state = DTraceProfilerSettings.instance.state
+            throw validateLocalPath(state.executablePath.orEmpty(), "DTrace executable", project, DTraceProfilerConfigurable::class.java)
+                ?: validateFrequency(state.samplingFrequency, project, DTraceProfilerConfigurable::class.java)
+                ?: return
+        }
     }
 }

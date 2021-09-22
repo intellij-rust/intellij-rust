@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.PlatformUtils.*
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -82,7 +83,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
                 get() = "Install"
 
             override fun doOkAction(project: Project, pluginId: PluginId) {
-                installPluginsAndEnable(project, setOf(pluginId), false) {}
+                installAndEnable(project, setOf(pluginId), false) {}
             }
         },
         ENABLE {
@@ -92,7 +93,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
                 get() = "Enable"
 
             override fun doOkAction(project: Project, pluginId: PluginId) {
-                installPluginsAndEnable(project, setOf(pluginId), false) {}
+                installAndEnable(project, setOf(pluginId), false) {}
             }
         },
         RESTART {

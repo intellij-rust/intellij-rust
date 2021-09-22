@@ -5,14 +5,12 @@
 
 package org.rust.ide.navigation.goto
 
-import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
-abstract class RsGotoImplementationsTestBase : RsTestBase() {
+class RsGotoImplementationsTest : RsTestBase() {
     fun `test trait`() = doSingleTargetTest("""
         trait T/*caret*/{
             fn test(&self);
@@ -61,15 +59,59 @@ abstract class RsGotoImplementationsTestBase : RsTestBase() {
         }
     """)
 
+    fun `test multiple targets for method impl`() = doMultipleTargetsTest("""
+        struct Foo;
+        struct Bar<T>(T);
+        struct Baz<T> { x: T }
+        trait Trait {
+            fn bar/*caret*/();
+        }
+
+        impl Trait for Foo {
+            fn bar() { todo!() }
+        }
+        impl<T> Trait for Bar<T> {
+            fn bar() { todo!() }
+        }
+        impl<T> Trait for Baz<T> where T : Clone {
+            fn bar() { todo!() }
+        }
+    """,
+        "Trait for Foo test_package",
+        "Trait for Bar<T> test_package",
+        "Trait for Baz<T> where T: Clone test_package"
+    )
+
+    fun `test multiple targets for trait impl`() = doMultipleTargetsTest("""
+        struct Foo;
+        struct Bar<T>(T);
+        struct Baz<T> { x: T }
+        trait Trait/*caret*/ {
+            fn bar();
+        }
+
+        impl Trait for Foo {
+            fn bar() { todo!() }
+        }
+        impl<T> Trait for Bar<T> {
+            fn bar() { todo!() }
+        }
+        impl<T> Trait for Baz<T> where T : Clone {
+            fn bar() { todo!() }
+        }
+    """,
+        "Trait for Foo test_package",
+        "Trait for Bar<T> test_package",
+        "Trait for Baz<T> where T: Clone test_package"
+    )
+
     private fun doSingleTargetTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_GOTO_IMPLEMENTATION)
 
-    protected fun doMultipleTargetsTest(@Language("Rust") before: String, vararg expected: String) {
+    private fun doMultipleTargetsTest(@Language("Rust") before: String, vararg expected: String) {
         InlineFile(before).withCaret()
         val data = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
-        val actual = data.targets.map { data.render(it) }
+        val actual = data.targets.map { data.getComparingObject(it) }
         assertEquals(expected.toList(), actual)
     }
-
-    protected abstract fun GotoTargetHandler.GotoData.render(element: PsiElement): String
 }

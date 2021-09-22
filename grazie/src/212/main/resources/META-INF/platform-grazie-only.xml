@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij.grazie">
-        <disableChecking language="Rust"/>
-    </extensions>
-</idea-plugin>

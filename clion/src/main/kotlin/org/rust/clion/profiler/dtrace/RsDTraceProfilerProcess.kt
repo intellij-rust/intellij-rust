@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.profiler.DummyCallTreeBuilder
 import com.intellij.profiler.api.*
+import com.intellij.profiler.clion.dtrace.DTraceProfilerSettings
 import com.intellij.profiler.dtrace.DTraceProfilerProcessBase
 import com.intellij.profiler.dtrace.FullDumpParser
 import com.intellij.profiler.dtrace.SimpleProfilerSettingsState
@@ -75,7 +76,7 @@ class RsDTraceProfilerProcess private constructor(
             timeoutInMilliseconds: Int,
             project: Project
         ): Promise<RsDTraceProfilerProcess> {
-            val settings = getDTraceSettings()
+            val settings = DTraceProfilerSettings.instance.state
 
             // WARNING: Do not use such solution for other needs!
             // We want to always use -xmangled option because DTrace cannot demangle Rust symbols correctly
