@@ -124,7 +124,7 @@ fun CrateDefMap.resolveExternCrateAsDefMap(name: String): CrateDefMap? =
  * - extern prelude
  * - std prelude
  */
-private fun CrateDefMap.resolveNameInModule(modData: ModData, name: String, withLegacyMacros: Boolean): PerNs {
+fun CrateDefMap.resolveNameInModule(modData: ModData, name: String, withLegacyMacros: Boolean): PerNs {
     val fromLegacyMacro = if (withLegacyMacros) modData.getFirstLegacyMacro(name) ?: PerNs.Empty else PerNs.Empty
     val fromScope = modData.getVisibleItem(name)
     val fromExternPrelude = resolveNameInExternPrelude(name)

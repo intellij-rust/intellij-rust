@@ -51,15 +51,10 @@ fun processItemDeclarations2(
     }
 
     for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
-        val visItemsByNamespace = arrayOf(
-            perNs.types to Namespace.Types,
-            perNs.values to Namespace.Values,
-            perNs.macros to Namespace.Macros,
-        )
         // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
         // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
         val elements = hashSetOf<RsNamedElement>()
-        for ((visItems, namespace) in visItemsByNamespace) {
+        for ((visItems, namespace) in perNs.getVisItemsByNamespace()) {
             if (namespace !in ns) continue
             for (visItem in visItems) {
                 if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue

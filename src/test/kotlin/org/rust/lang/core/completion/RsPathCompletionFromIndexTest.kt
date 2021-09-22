@@ -7,11 +7,8 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
@@ -79,6 +76,42 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 
         fn main() {
             let _ = BTreeMap/*caret*/
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test suggest a symbol with same name as in scope but in different namespace`() = doTestByText("""
+        fn foo() {}
+        mod inner {
+            pub struct foo {}
+        }
+        fn test(x: fo/*caret*/) {}
+    """, """
+        use crate::inner::foo;
+
+        fn foo() {}
+        mod inner {
+            pub struct foo {}
+        }
+        fn test(x: foo/*caret*/) {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test same item as in scope but with different name`() = doTestByText("""
+        use crate::mod1::foo as bar;
+        mod mod1 {
+            pub fn foo() {}
+        }
+        fn main() {
+            fo/*caret*/
+        }
+    """, """
+        use crate::mod1::{foo as bar, foo};
+        mod mod1 {
+            pub fn foo() {}
+        }
+        fn main() {
+            foo()/*caret*/
         }
     """)
 
@@ -324,16 +357,16 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
     fun `test show all re-exports of single item`() {
         withOutOfScopeSettings {
             checkContainsCompletionByFileTree(listOf(
-                "Bar (crate::foo::Bar)",
-                "Bar (dep_lib_target::Bar)"
+                "Bar (dep_lib_target::Bar)",
+                "Bar (dep_lib_target_2::Bar)"
             ), """
-                //- dep-lib/lib.rs
+                //- trans-common-lib/lib.rs
                 pub struct Bar;
+                //- dep-lib/lib.rs
+                pub use trans_common_lib::Bar;
+                //- dep-lib-2/lib.rs
+                pub use trans_common_lib::Bar;
                 //- lib.rs
-
-                pub mod foo {
-                    pub use dep_lib_target::Bar;
-                }
                 fn foo(x: Ba/*caret*/) {}
             """) {
                 val presentation = LookupElementPresentation()
@@ -343,6 +376,74 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             }
         }
     }
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro`() = doTestByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo_macro { () => {} }
+    //- main.rs
+        fn main() {
+            foo_m/*caret*/
+        }
+    """, """
+        use test_package::foo_macro;
+
+        fn main() {
+            foo_macro!()
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro 2`() = doTestByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        pub macro foo_macro() {}
+    //- main.rs
+        fn main() {
+            foo_m/*caret*/
+        }
+    """, """
+        use test_package::foo_macro;
+
+        fn main() {
+            foo_macro!()
+        }
+    """)
+
+    // TODO parse top-level identifier as RsPath
+    // e.g. `lazy_static`
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro with same name as dependency`() = expect<IllegalStateException> {
+        doTestByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! test_package { () => {} }
+    //- main.rs
+        test_p/*caret*/
+    """, """
+        use test_package::test_package;
+
+        test_package!()
+    """)
+    }
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro as type reference`() = doTestByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo_macro { () => { i32 } }
+    //- main.rs
+        fn func(x: foo_m/*caret*/) {}
+    """, """
+        use test_package::foo_macro;
+
+        fn func(x: foo_macro!()) {}
+    """)
 
     private fun doTestByText(
         @Language("Rust") before: String,

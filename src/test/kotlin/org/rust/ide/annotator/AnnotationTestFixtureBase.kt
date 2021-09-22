@@ -189,7 +189,7 @@ abstract class AnnotationTestFixtureBase(
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
-    private fun applyQuickFix(name: String) {
+    fun applyQuickFix(name: String) {
         val action = codeInsightFixture.findSingleIntention(name)
         codeInsightFixture.launchAction(action)
     }

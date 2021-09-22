@@ -361,8 +361,37 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo) : Comparable<ImportCandidate> {
-    override fun compareTo(other: ImportCandidate): Int {
+sealed interface ImportCandidateBase : Comparable<ImportCandidateBase> {
+    val qualifiedNamedItem: QualifiedNamedItemBase
+    val info: ImportInfo
+}
+
+data class ImportCandidate2(
+    override val qualifiedNamedItem: QualifiedNamedItem2,
+    override val info: ImportInfo
+) : ImportCandidateBase {
+    override fun compareTo(other: ImportCandidateBase): Int {
+        fun Crate.originOrder(): Int = when (origin) {
+            PackageOrigin.WORKSPACE -> 0
+            PackageOrigin.STDLIB -> when (normName) {
+                AutoInjectedCrates.STD -> 1
+                AutoInjectedCrates.CORE -> 2
+                else -> 3
+            }
+            PackageOrigin.DEPENDENCY -> 4
+            PackageOrigin.STDLIB_DEPENDENCY -> 5
+        }
+
+        other as ImportCandidate2
+        return compareValuesBy(this, other, { it.qualifiedNamedItem.containingCrate.originOrder() }, { it.info.usePath })
+    }
+}
+
+data class ImportCandidate(
+    override val qualifiedNamedItem: QualifiedNamedItem,
+    override val info: ImportInfo
+) : ImportCandidateBase {
+    override fun compareTo(other: ImportCandidateBase): Int {
         val origin = qualifiedNamedItem.containingCrate?.origin
         val otherOrigin = other.qualifiedNamedItem.containingCrate?.origin
         val usePath = info.usePath
@@ -388,7 +417,7 @@ data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info:
  * it potentially can be accessed by the trait name `Trait::foo` only if there are `self` parameter or
  * `Self` type in the signature
  */
-private val RsAbstractable.canBeAccessedByTraitName: Boolean
+val RsAbstractable.canBeAccessedByTraitName: Boolean
     get() {
         check(owner is RsAbstractableOwner.Trait)
         val type = when (this) {

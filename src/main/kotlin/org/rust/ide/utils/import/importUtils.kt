@@ -21,7 +21,7 @@ import org.rust.stdext.isSortedWith
  * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
  * This action requires write access.
  */
-fun ImportCandidate.import(context: RsElement) {
+fun ImportCandidateBase.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 
@@ -207,6 +207,7 @@ object Testmarks {
     val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
     val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
     val doctestInjectionImport = Testmark("doctestInjectionImport")
+    val ignorePrivateImportInParentMod = Testmark("ignorePrivateImportInParentMod")
 }
 
 /**
