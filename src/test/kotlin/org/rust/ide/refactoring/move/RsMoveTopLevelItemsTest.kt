@@ -9,6 +9,7 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
+@UseNewResolve  // because of RsUnusedImportInspection
 @WithEnabledInspections(RsUnusedImportInspection::class)
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {

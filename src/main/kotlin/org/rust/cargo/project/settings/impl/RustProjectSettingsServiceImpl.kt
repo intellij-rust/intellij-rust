@@ -26,7 +26,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
-import org.rust.lang.core.resolve2.defMapService
 
 private const val serviceName: String = "RustProjectSettings"
 
@@ -61,7 +60,6 @@ class RustProjectSettingsServiceImpl(
     override val compileAllTargets: Boolean get() = _state.compileAllTargets
     override val useOffline: Boolean get() = _state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine
-    override val newResolveEnabled: Boolean get() = _state.newResolveEnabled
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
     override val useRustfmt: Boolean get() = _state.useRustfmt
     override val runRustfmtOnSave: Boolean get() = _state.runRustfmtOnSave
@@ -105,9 +103,6 @@ class RustProjectSettingsServiceImpl(
         if (event.isChanged(State::doctestInjectionEnabled)) {
             // flush injection cache
             PsiManager.getInstance(project).dropPsiCaches()
-        }
-        if (event.isChanged(State::newResolveEnabled)) {
-            project.defMapService.onNewResolveEnabledChanged(newState.newResolveEnabled)
         }
         if (event.affectsHighlighting) {
             DaemonCodeAnalyzer.getInstance(project).restart()

@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionMode
@@ -151,6 +149,9 @@ class DefMapService(val project: Project) : Disposable {
 
     init {
         setupListeners()
+        if (System.getenv("INTELLIJ_RUST_FORCE_USE_OLD_RESOLVE") != null) {
+            IS_NEW_RESOLVE_ENABLED_KEY.setValue(false)
+        }
     }
 
     /**
@@ -256,20 +257,6 @@ class DefMapService(val project: Project) : Disposable {
         }
     }
 
-    fun onNewResolveEnabledChanged(newResolveEnabled: Boolean) {
-        if (isUnitTestMode) return
-        project.rustPsiManager.incRustStructureModificationCount()
-        if (newResolveEnabled) {
-            runWriteAction {
-                scheduleRebuildAllDefMaps()
-            }
-        } else {
-            defMaps.clear()
-            fileIdToCrateId.clear()
-            missedFiles.clear()
-        }
-    }
-
     /** Removes DefMaps for crates not in crate graph */
     fun removeStaleDefMaps(allCrates: List<Crate>) {
         val allCrateIds = allCrates.mapToSet { it.id }
@@ -322,14 +309,10 @@ class DefMapService(val project: Project) : Disposable {
         }
     }
 
-    companion object {
-        @TestOnly
-        fun setNewResolveEnabled(project: Project, disposable: Disposable, value: Boolean) {
-            check(isUnitTestMode)
-            project.rustSettings.modifyTemporary(disposable) {
-                it.newResolveEnabled = value
-            }
-        }
+    @TestOnly
+    fun setNewResolveEnabled(disposable: Disposable, value: Boolean) {
+        check(isUnitTestMode)
+        IS_NEW_RESOLVE_ENABLED_KEY.setValue(value, disposable)
     }
 }
 

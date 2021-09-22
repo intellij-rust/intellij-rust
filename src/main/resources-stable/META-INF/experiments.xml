@@ -18,9 +18,6 @@
         <experimentalFeature id="org.rust.macros.proc" percentOfUsers="0">
             <description>Enables procedural macro expansion</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.resolve.new.engine" percentOfUsers="100">
-            <description>Enables experimental resolve engine</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="0">
             <description>Enables crates local index</description>
         </experimentalFeature>
