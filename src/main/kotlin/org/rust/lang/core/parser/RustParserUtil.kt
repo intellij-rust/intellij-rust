@@ -438,7 +438,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
-        put(RustParser::ExprMacroArgument, true, "try", "await", "dbg")
+        put(RustParser::ExprMacroArgument, true, "dbg")
         put(
             RustParser::FormatMacroArgument, true, "format", "format_args", "format_args_nl", "write", "writeln",
             "print", "println", "eprint", "eprintln", "panic", "unimplemented", "unreachable", "todo"

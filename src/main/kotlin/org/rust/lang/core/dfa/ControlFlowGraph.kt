@@ -270,9 +270,9 @@ private class ExitPointVisitor(
         super.visitMacroExpr(macroExpr)
 
         val macroCall = macroExpr.macroCall
-        if (macroCall.macroName == "try"
-            && macroCall.exprMacroArgument != null
-            && inTry == 0) sink(ExitPoint.TryExpr(macroExpr))
+        if (macroCall.isStdTryMacro && inTry == 0) {
+            sink(ExitPoint.TryExpr(macroExpr))
+        }
 
         macroExpr.markNeverTypeAsExit(sink)
     }

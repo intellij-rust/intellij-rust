@@ -93,11 +93,6 @@ fn foo() {
     // -------------------
 
     // --- expr macros ---
-    try!(bar());
-    try![bar()];
-    try! {
-        bar()
-    }
     dbg!();
     dbg!("Some text");
     dbg!(123 + 567,);

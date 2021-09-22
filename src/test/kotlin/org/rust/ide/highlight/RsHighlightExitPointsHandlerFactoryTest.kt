@@ -8,7 +8,9 @@ package org.rust.ide.highlight
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
 import org.rust.MockEdition
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
@@ -70,6 +72,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test highlight try macro as return`() = doTest("""
         fn main() {
             if true {

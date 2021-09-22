@@ -594,15 +594,6 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test await argument`() = checkByCode("""
-        fn main() {
-            let x = 42;
-              //X
-            await!(x);
-                 //^
-        }
-    """)
-
     fun `test dbg argument`() = checkByCode("""
         fn main() {
             let x = 42;

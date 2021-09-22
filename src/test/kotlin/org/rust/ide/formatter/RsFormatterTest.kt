@@ -405,17 +405,12 @@ class RsFormatterTest : RsFormatterTestBase() {
 
     fun `test special macros`() = doTextTest("""
         fn main() {
-            try !  (foo());
             format  ! ("Hello {}", 92);
             vec ! [1, 2, 3];
             let tests = vec![
             ("1.1.1.1", true),
             ("255.0.0.0", true),
             ];
-
-            try!(
-            foo()
-            );
 
             format!(
             "Hello, World"
@@ -430,27 +425,18 @@ class RsFormatterTest : RsFormatterTestBase() {
             "hello!"
             );
 
-            await!(
-            "hello!"
-            );
-
             include_str!(
             "foo/bar.txt"
             );
         }
     """, """
         fn main() {
-            try!(foo());
             format!("Hello {}", 92);
             vec![1, 2, 3];
             let tests = vec![
                 ("1.1.1.1", true),
                 ("255.0.0.0", true),
             ];
-
-            try!(
-                foo()
-            );
 
             format!(
                 "Hello, World"
@@ -462,10 +448,6 @@ class RsFormatterTest : RsFormatterTestBase() {
             );
 
             dbg!(
-                "hello!"
-            );
-
-            await!(
                 "hello!"
             );
 
