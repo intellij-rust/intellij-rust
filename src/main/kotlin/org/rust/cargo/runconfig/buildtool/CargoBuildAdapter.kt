@@ -51,7 +51,7 @@ class CargoBuildAdapter(
         val activateToolWindow = context.environment.isActivateToolWindowBeforeRun
         buildContentDescriptor.isActivateToolWindowWhenAdded = activateToolWindow
         buildContentDescriptor.isActivateToolWindowWhenFailed = activateToolWindow
-        buildContentDescriptor.isNavigateToErrorWhenFailed = context.project.rustSettings.autoShowErrorsInEditor
+        buildContentDescriptor.isNavigateToError = context.project.rustSettings.autoShowErrorsInEditor
 
         val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo Command", context.workingDirectory.toString(), context.started)
             .withContentDescriptor { buildContentDescriptor }

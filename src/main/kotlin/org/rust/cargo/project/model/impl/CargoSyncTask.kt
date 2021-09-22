@@ -38,11 +38,13 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.runconfig.buildtool.isNavigateToErrorWhenFailed
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.toolchain.tools.*
+import org.rust.cargo.toolchain.tools.Rustup
+import org.rust.cargo.toolchain.tools.cargoOrWrapper
+import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.mapNotNullToSet
@@ -133,7 +135,7 @@ class CargoSyncTask(
         val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Cargo")
         buildContentDescriptor.isActivateToolWindowWhenFailed = true
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
-        buildContentDescriptor.isNavigateToErrorWhenFailed = project.rustSettings.autoShowErrorsInEditor
+        buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
         val descriptor = DefaultBuildDescriptor("Cargo", "Cargo", project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }

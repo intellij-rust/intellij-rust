@@ -1,9 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
     <depends>tanvd.grazi</depends>
-
-    <xi:include href="/META-INF/platform-grazie-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij.grazie">
         <grammar.strategy language="Rust" implementationClass="org.rust.grazie.RsGrammarCheckingStrategy"/>
+        <disableChecking language="Rust"/>
     </extensions>
 </idea-plugin>
