@@ -134,7 +134,7 @@ jobs:
                 os: [ ubuntu-18.04, windows-latest ]
                 rust-version: [ 1.55.0, nightly-2021-08-17 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 211, 212 ]
+                platform-version: [ 212 ]
                 resolve-engine: [ resolve-new ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
@@ -143,7 +143,7 @@ jobs:
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.41.0
                       base-ide: idea
-                      platform-version: 211
+                      platform-version: 212
                       resolve-engine: resolve-old
                       verify-plugin: true
                     - os: ubuntu-18.04
@@ -213,11 +213,10 @@ jobs:
             - name: Set up additional env variables
               if: matrix.rust-version == '1.41.0'
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
-              # BACKCOMPAT: 1.45.0. Don't redefine `compileNativeCode` property
               run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.1.1" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.1.1" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=211.7142.13" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=212.4746.2" >> $GITHUB_ENV
 
             - name: Set up env variable for old resolve
               if: matrix.resolve-engine == 'resolve-old'
