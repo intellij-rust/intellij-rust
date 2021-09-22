@@ -4,9 +4,6 @@
 out/
 bin/
 build/
-# BACKCOMPAT: 2021.1. Drop it
-# The corresponding code was temporarily left here to handle old not-removed `build-cache` dir
-build-cache
 gen/
 deps/
 exampleProject

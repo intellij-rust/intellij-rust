@@ -69,11 +69,9 @@ class TestExecutionListener(
     private var notStartedCause: Throwable? = null
     private var descriptor: RunContentDescriptor? = null
 
-    // BACKCOMPAT: 2021.1.
-    // Use com.intellij.execution.ExecutionListener.processNotStarted(java.lang.String, com.intellij.execution.runners.ExecutionEnvironment, java.lang.Throwable)
-    // And set `cause` to `notStartedCause`
-    override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
+    override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
         checkAndExecute(env) {
+            notStartedCause = cause
             latch.countDown()
         }
     }
