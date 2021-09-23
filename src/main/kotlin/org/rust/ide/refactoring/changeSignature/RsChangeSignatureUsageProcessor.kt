@@ -89,12 +89,11 @@ class RsChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun registerConflictResolvers(
-        snapshots: MutableList<ResolveSnapshotProvider.ResolveSnapshot>?,
+        snapshots: ResolveSnapshots,
         resolveSnapshotProvider: ResolveSnapshotProvider,
-        usages: Array<out UsageInfo>?,
+        usages: Array<out UsageInfo>,
         changeInfo: ChangeInfo?
-    ) {
-    }
+    ) {}
 }
 
 private fun findVisibilityConflicts(

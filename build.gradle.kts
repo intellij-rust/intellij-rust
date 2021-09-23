@@ -100,6 +100,10 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
+    grammarKit {
+        grammarKitRelease = "2021.1.2"
+    }
+
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
