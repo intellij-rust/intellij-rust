@@ -10,11 +10,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isInsideMovedElements
 import org.rust.ide.utils.import.RsImportHelper
-import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
+/**
+ * To resolve some references it is needed to have trait in scope. E.g.:
+ * - `expr.trait_method()`
+ * - `Trait::trait_method(expr)`
+ * - `Trait::AssocConst`
+ * This class finds such references inside [sourceMod] and adds necessary trait imports.
+ * There are two types of references:
+ * - Outside references from moved item to method of trait which is in scope of [sourceMod]
+ * - Inside references from item in [sourceMod] to method of moved trait
+ */
 class RsMoveTraitMethodsProcessor(
     private val psiFactory: RsPsiFactory,
     private val sourceMod: RsMod,
@@ -22,72 +30,68 @@ class RsMoveTraitMethodsProcessor(
     private val pathHelper: RsMovePathHelper
 ) {
 
-    fun preprocessOutsideReferencesToTraitMethods(
-        conflicts: MultiMap<PsiElement, String>,
-        elementsToMove: List<ElementToMove>
-    ) {
-        val methodCalls = movedElementsShallowDescendantsOfType<RsMethodCall>(elementsToMove)
-            .filter { it.containingMod == sourceMod }
-        preprocessReferencesToTraitMethods(
-            methodCalls,
+    fun preprocessOutsideReferences(conflicts: MultiMap<PsiElement, String>, elementsToMove: List<ElementToMove>) {
+        val references = getReferencesToTraitAssocItems(elementsToMove)
+        preprocessReferencesToTraitAssocItems(
+            references,
             conflicts,
             { trait -> RsImportHelper.findPath(targetMod, trait) },
             { trait -> !trait.isInsideMovedElements(elementsToMove) }
         )
     }
 
-    fun preprocessInsideReferencesToTraitMethods(
-        conflicts: MultiMap<PsiElement, String>,
-        elementsToMove: List<ElementToMove>
-    ) {
+    fun preprocessInsideReferences(conflicts: MultiMap<PsiElement, String>, elementsToMove: List<ElementToMove>) {
         val traitsToMove = elementsToMove
             .filterIsInstance<ItemToMove>()
             .map { it.item }
             .filterIsInstance<RsTraitItem>()
             .toSet()
         if (traitsToMove.isEmpty()) return
-        val methodCalls = sourceMod.descendantsOfType<RsMethodCall>()
-            .filter { !it.isInsideMovedElements(elementsToMove) }
-        preprocessReferencesToTraitMethods(
-            methodCalls,
+        val references = sourceMod.descendantsOfType<RsReferenceElement>()
+            .filter { it.isMethodOrPath() && !it.isInsideMovedElements(elementsToMove) }
+        preprocessReferencesToTraitAssocItems(
+            references,
             conflicts,
             { trait -> pathHelper.findPathAfterMove(sourceMod, trait)?.text },
             { trait -> trait in traitsToMove }
         )
     }
 
-    private fun preprocessReferencesToTraitMethods(
-        methodCalls: List<RsMethodCall>,
+    private fun preprocessReferencesToTraitAssocItems(
+        references: List<RsReferenceElement>,
         conflicts: MultiMap<PsiElement, String>,
         findTraitUsePath: (RsTraitItem) -> String?,
         shouldProcessTrait: (RsTraitItem) -> Boolean
     ) {
-        for (methodCall in methodCalls) {
-            val method = methodCall.reference.resolve() as? RsAbstractable ?: continue
-            val trait = method.getTrait() ?: continue
+        for (reference in references) {
+            val assocItem = reference.reference?.resolve() as? RsAbstractable ?: continue
+            if (assocItem !is RsFunction && assocItem !is RsConstant) continue
+            val trait = assocItem.getTrait() ?: continue
             if (!shouldProcessTrait(trait)) continue
 
             val traitUsePath = findTraitUsePath(trait)
             if (traitUsePath == null) {
-                addVisibilityConflict(conflicts, methodCall, method.superItem ?: trait)
+                addVisibilityConflict(conflicts, reference, assocItem.superItem ?: trait)
             } else {
-                methodCall.putCopyableUserData(RS_METHOD_CALL_TRAIT_USE_PATH, Pair(trait, traitUsePath))
+                reference.putCopyableUserData(RS_METHOD_CALL_TRAIT_USE_PATH, Pair(trait, traitUsePath))
             }
         }
     }
 
     fun addTraitImportsForOutsideReferences(elementsToMove: List<ElementToMove>) =
-        addTraitImportsForReferences(movedElementsShallowDescendantsOfType(elementsToMove))
+        addTraitImportsForReferences(getReferencesToTraitAssocItems(elementsToMove))
 
-    fun addTraitImportsForInsideReferences() =
-        addTraitImportsForReferences(sourceMod.descendantsOfType())
+    fun addTraitImportsForInsideReferences() {
+        val references = sourceMod.descendantsOfType<RsReferenceElement>().filter { it.isMethodOrPath() }
+        addTraitImportsForReferences(references)
+    }
 
-    private fun addTraitImportsForReferences(methodCalls: Collection<RsMethodCall>) {
-        for (methodCall in methodCalls) {
-            val (trait, traitUsePath) = methodCall.getCopyableUserData(RS_METHOD_CALL_TRAIT_USE_PATH) ?: continue
-            // can't check `methodCall.reference.resolve() != null`, because it is always not null
-            if (listOf(trait).filterInScope(methodCall).isNotEmpty()) continue
-            addImport(psiFactory, methodCall, traitUsePath)
+    private fun addTraitImportsForReferences(references: Collection<RsReferenceElement>) {
+        for (reference in references) {
+            val (trait, traitUsePath) = reference.getCopyableUserData(RS_METHOD_CALL_TRAIT_USE_PATH) ?: continue
+            // can't check `reference.reference.resolve() != null`, because it is always not null
+            if (listOf(trait).filterInScope(reference).isNotEmpty()) continue
+            addImport(psiFactory, reference, traitUsePath)
         }
     }
 
@@ -95,6 +99,12 @@ class RsMoveTraitMethodsProcessor(
         private val RS_METHOD_CALL_TRAIT_USE_PATH: Key<Pair<RsTraitItem, String>> = Key.create("RS_METHOD_CALL_TRAIT_USE_PATH")
     }
 }
+
+private fun getReferencesToTraitAssocItems(elementsToMove: List<ElementToMove>): List<RsReferenceElement> =
+    movedElementsShallowDescendantsOfType<RsReferenceElement>(elementsToMove, processInlineModules = false)
+        .filter(RsReferenceElement::isMethodOrPath)
+
+private fun RsReferenceElement.isMethodOrPath(): Boolean = this is RsMethodCall || this is RsPath
 
 private fun RsAbstractable.getTrait(): RsTraitItem? {
     return when (val owner = owner) {
