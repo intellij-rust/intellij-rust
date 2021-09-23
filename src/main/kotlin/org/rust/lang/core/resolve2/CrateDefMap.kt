@@ -40,6 +40,7 @@ class CrateDefMap(
     /** Used only by `extern crate crate_name;` declarations */
     val directDependenciesDefMaps: Map<String, CrateDefMap>,
     private val allDependenciesDefMaps: Map<CratePersistentId, CrateDefMap>,
+    initialExternPrelude: Map<String, CrateDefMap>,
     val metaData: CrateMetaData,
     /** Equal to `root.macroIndex.single()` */
     val rootModMacroIndex: Int,
@@ -52,7 +53,7 @@ class CrateDefMap(
     var prelude: ModData? = null
 
     /** It is needed at least to handle `extern crate name as alias;` */
-    val externPrelude: MutableMap<String, CrateDefMap> = directDependenciesDefMaps.toMap(hashMapOf())
+    val externPrelude: MutableMap<String, CrateDefMap> = initialExternPrelude.toMap(hashMapOf())
 
     /**
      * File included via `include!` macro has same [FileInfo.modData] as main file,

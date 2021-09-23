@@ -5,11 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.ignoreInNewResolve
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -29,4 +26,17 @@ class RsStdlibResolveTestEdition2018 : RsResolveTestBase() {
             let a = Vec::<i32>::new();
         }         //^ .../vec.rs|...vec/mod.rs
     """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
+
+    fun `test resolve core crate without extern crate`() = stubOnlyResolve("""
+    //- main.rs
+        use core::cell::Cell;
+          //^ ...core/src/lib.rs|...core/lib.rs
+    """)
+
+    @UseNewResolve
+    fun `test alloc crate unresolved without extern crate`() = stubOnlyResolve("""
+    //- main.rs
+        use alloc::rc::Rc;
+          //^ unresolved
+    """)
 }
