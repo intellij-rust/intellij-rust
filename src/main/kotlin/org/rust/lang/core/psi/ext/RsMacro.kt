@@ -15,8 +15,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.decl.MacroGraph
-import org.rust.lang.core.macros.decl.MacroGraphBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsMacroStub
 import org.rust.stdext.HashCode
@@ -115,11 +113,3 @@ val QueryAttributes<*>.isRustcDocOnlyMacro: Boolean
     get() = hasAttribute("rustc_doc_only_macro")
 
 private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")
-
-private val MACRO_GRAPH_KEY: Key<CachedValue<MacroGraph?>> = Key.create("MACRO_GRAPH_KEY")
-
-val RsMacro.graph: MacroGraph?
-    get() = CachedValuesManager.getCachedValue(this, MACRO_GRAPH_KEY) {
-        val graph = MacroGraphBuilder(this).build()
-        CachedValueProvider.Result.create(graph, modificationTracker)
-    }

@@ -7,7 +7,7 @@ package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.ASTNode
 import org.rust.lang.core.macros.decl.MGNodeData.*
-import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph
 import org.rust.lang.utils.PresentableNodeData
@@ -42,7 +42,7 @@ sealed class MGNodeData : PresentableNodeData {
 typealias MacroGraph = PresentableGraph<MGNodeData, Unit>
 typealias MacroGraphNode = Node<MGNodeData, Unit>
 
-class MacroGraphBuilder(private val macro: RsMacro) {
+class MacroGraphBuilder(private val macro: RsMacroDefinitionBase) {
     private val graph = MacroGraph()
     private val preds: Deque<MacroGraphNode> = ArrayDeque()
     private val pred: MacroGraphNode get() = preds.peek()

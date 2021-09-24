@@ -48,7 +48,7 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
 
         val bodyTextRange = macroCall.bodyTextRange ?: return
         val macroCallBody = macroCall.macroBody ?: return
-        val macro = macroCall.resolveToMacro() as? RsMacro ?: return  // TODO macro 2
+        val macro = macroCall.resolveToMacro() ?: return
         val graph = macro.graph ?: return
         val offsetInArgument = parameters.offset - bodyTextRange.startOffset
 

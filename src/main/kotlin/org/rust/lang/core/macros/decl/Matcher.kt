@@ -7,11 +7,10 @@ package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroBinding
 import org.rust.lang.core.psi.RsMacroBindingGroup
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.fragmentSpecifier
-import org.rust.lang.core.psi.ext.macroBody
 
 sealed class Matcher {
     data class Literal(val value: ASTNode) : Matcher()
@@ -29,8 +28,8 @@ sealed class Matcher {
     class InvalidPatternException : Exception()
 
     companion object {
-        fun buildFor(macro: RsMacro): Matcher? {
-            val body = macro.macroBody ?: return null
+        fun buildFor(macro: RsMacroDefinitionBase): Matcher? {
+            val body = macro.macroBodyStubbed ?: return null
 
             val matchers = mutableListOf<Matcher>()
 

@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.UseNewResolve
 
 class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test expr 1`() = doTest("""
@@ -31,6 +32,18 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
             my_macro!(i/*caret*/);
         }
     """, setOf("iii"), setOf("i32"))
+
+    @UseNewResolve
+    fun `test expr (macro 2)`() = doTest("""
+        macro my_macro($ e:expr, foo) {
+            1
+        }
+
+        fn main() {
+            let iii = 1;
+            my_macro!(i/*caret*/);
+        }
+    """, setOf("iii"))
 
     fun `test expr complex`() = doTest("""
         macro_rules! my_macro {
