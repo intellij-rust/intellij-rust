@@ -145,6 +145,7 @@ class RsTypeInferenceWalker(
                 TyUnknown to TyInfer.TyVar()
             }
             psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(coercedInferredTy))
+            psi.letElseBranch?.block?.inferType(TyNever, coerce = true)
             inferredTy == TyNever
         }
         is RsExprStmt -> psi.expr.inferType() == TyNever
