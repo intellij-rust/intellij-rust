@@ -1597,11 +1597,12 @@ upper ExprStmtUpper ::= () (';' | <<isBlock>>) { pin = 1 elementType = ExprStmt 
 
 fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
 
-LetDecl ::= OuterAttr* let TopPat TypeAscription? [ '=' AnyExpr ] ';' {
+LetDecl ::= OuterAttr* let TopPat TypeAscription? [ '=' AnyExpr LetElseBranch? ] ';' {
   extends = Stmt
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   pin = "let"
 }
+LetElseBranch ::= else SimpleBlock
 
 EmptyStmt ::= ';' { extends = Stmt }
 
