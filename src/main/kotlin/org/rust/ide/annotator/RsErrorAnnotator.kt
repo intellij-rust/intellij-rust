@@ -65,6 +65,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitExternAbi(o: RsExternAbi) = checkExternAbi(rsHolder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(rsHolder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(rsHolder, o)
+            override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(rsHolder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(rsHolder, o)
@@ -655,6 +656,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
             RsDiagnostic.IncorrectVisibilityRestriction(visRestriction).addToHolder(holder)
         }
+    }
+
+    private fun checkLetElseBranch(holder: RsAnnotationHolder, elseBranch: RsLetElseBranch) {
+        LET_ELSE.check(holder, elseBranch, "let else")
     }
 
     private fun checkLabel(holder: RsAnnotationHolder, label: RsLabel) {

@@ -1960,6 +1960,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.56.0")
+    fun `test let else E0658 1`() = checkErrors("""
+        fn main() {
+            let Some(x) = Some(1) <error descr="let else is experimental [E0658]">else { return; }</error>;
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test let else E0658 2`() = checkErrors("""
+        #![feature(let_else)]
+        fn main() {
+            let Some(x) = Some(1) else { return; };
+        }
+    """)
+
     @MockRustcVersion("1.32.0")
     fun `test if while or patterns 1`() = checkErrors("""
         enum V { V1(i32), V2(i32) }
