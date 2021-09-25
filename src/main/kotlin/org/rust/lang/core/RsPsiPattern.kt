@@ -337,7 +337,7 @@ inline infix fun <reified I : PsiElement> ElementPattern<out I>.or(pattern: Elem
     return psiElement<I>().andOr(this, pattern)
 }
 
-private val PsiElement.prevVisibleOrNewLine: PsiElement?
+val PsiElement.prevVisibleOrNewLine: PsiElement?
     get() = leftLeaves
         .filterNot { it is PsiComment || it is PsiErrorElement }
         .filter { it !is PsiWhiteSpace || it.textContains('\n') }

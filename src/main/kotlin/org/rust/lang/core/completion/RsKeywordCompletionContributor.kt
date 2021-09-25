@@ -61,23 +61,20 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         extend(CompletionType.BASIC, afterVisInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
 
-        extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
+        extend(CompletionType.BASIC, ifElsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-                val elseBuilder = LookupElementBuilder
-                    .create("else")
-                    .bold()
-                    .withTailText(" {...}")
-                    .withInsertHandler { ctx, _ ->
-                        ctx.document.insertString(ctx.selectionEndOffset, " {  }")
-                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
-
-                    }
-
+                val elseBuilder = elseLookupElement()
                 val elseIfBuilder = conditionLookupElement("else if")
-
                 // `else` is more common than `else if`
                 result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
                 result.addElement(elseIfBuilder.withPriority(KEYWORD_PRIORITY))
+            }
+        })
+
+        extend(CompletionType.BASIC, letElsePattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+                val elseBuilder = elseLookupElement()
+                result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY))
             }
         })
 
@@ -139,9 +136,17 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(RsPsiPattern.onStatementBeginning(*startWords))
 
-    private fun elsePattern(): PsiElementPattern.Capture<PsiElement> {
+    private fun ifElsePattern(): PsiElementPattern.Capture<PsiElement> {
         val braceAfterIf = psiElement(RBRACE).withSuperParent(2, psiElement(IF_EXPR))
         return psiElement().afterLeafSkipping(RsPsiPattern.whitespace, braceAfterIf)
+    }
+
+    private fun letElsePattern(): PsiElementPattern.Capture<PsiElement> {
+        val withSemicolon = psiElement().withLastChildSkipping(RsPsiPattern.whitespace, psiElement(SEMICOLON))
+        val letPattern = psiElement<RsLetDecl>().andNot(withSemicolon)
+        val parent = psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, letPattern)
+        return psiElement().withSuperParent(2, parent)   // let _ = ... /*caret*/
+            .or(psiElement().withSuperParent(3, parent)) // let _ = ... /*caret*/;
     }
 
     private fun wherePattern(): PsiElementPattern.Capture<PsiElement> {
@@ -232,6 +237,15 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
         siblings.lastOrNull()?.elementType == PUB
     }
+
+    private fun elseLookupElement() = LookupElementBuilder
+        .create("else")
+        .bold()
+        .withTailText(" {...}")
+        .withInsertHandler { ctx, _ ->
+            ctx.document.insertString(ctx.selectionEndOffset, " {  }")
+            EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
+        }
 
     companion object {
         @JvmField
