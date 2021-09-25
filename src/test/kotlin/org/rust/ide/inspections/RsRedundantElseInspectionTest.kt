@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.MockRustcVersion
+
 /**
  * Tests for Redundant Else inspection.
  */
@@ -192,6 +194,24 @@ class RsRedundantElseInspectionTest : RsInspectionsTestBase(RsRedundantElseInspe
             } <warning descr="Redundant `else`">else</warning> {
                 let a = 5;
             }
+        }
+    """)
+
+    @MockRustcVersion("1.56.0")
+    fun `test let else (feature unavailable)`() = checkByText("""
+        fn main() {
+            let x = Some(0) else { return };
+            let Some(x) = Some(0) else { return };
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test let else (feature available)`() = checkByText("""
+        #![feature(let_else)]
+
+        fn main() {
+            let x = Some(0) <warning descr="Redundant `else`">else</warning> { return };
+            let Some(x) = Some(0) else { return };
         }
     """)
 }

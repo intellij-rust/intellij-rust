@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.typecheck
 
 import org.rust.ExpandMacros
+import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
@@ -363,6 +364,16 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         impl<const N: u8> From<u32> for Foo<N, true> {
                                             // ^^^^ the error should not appear here
             fn from(val: u32) -> Self { Foo(val) }
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test let else block`() = checkErrors("""
+        #![feature(let_else)]
+
+        fn main() {
+            let _x = 0 else { <error descr="mismatched types [E0308]expected `!`, found `i32`">0</error> };
+            let _y = 0 else { return <error descr="mismatched types [E0308]expected `()`, found `i32`">0</error> };
         }
     """)
 }
