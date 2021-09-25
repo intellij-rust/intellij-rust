@@ -1960,6 +1960,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.32.0")
+    fun `test irrefutable let else`() = checkErrors("""
+        fn main() {
+            let x = Some(0);
+            let <error descr="irrefutable let pattern is experimental [E0658]">x</error> = Some(0) <error descr="let else is experimental [E0658]">else { return }</error>;
+            let Some(x) = Some(0) <error descr="let else is experimental [E0658]">else { return }</error>;
+        }
+    """)
+
     @MockRustcVersion("1.56.0")
     fun `test let else E0658 1`() = checkErrors("""
         fn main() {

@@ -65,6 +65,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitExternAbi(o: RsExternAbi) = checkExternAbi(rsHolder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(rsHolder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(rsHolder, o)
+            override fun visitLetDecl(o: RsLetDecl) = checkLetDecl(rsHolder, o)
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(rsHolder, o)
@@ -655,6 +656,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // pub(foo) or pub(super::bar)
         if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
             RsDiagnostic.IncorrectVisibilityRestriction(visRestriction).addToHolder(holder)
+        }
+    }
+
+    private fun checkLetDecl(holder: RsAnnotationHolder, letDecl: RsLetDecl) {
+        val pat = letDecl.pat
+        if (letDecl.letElseBranch != null && pat != null && pat.isIrrefutable) {
+            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
         }
     }
 
