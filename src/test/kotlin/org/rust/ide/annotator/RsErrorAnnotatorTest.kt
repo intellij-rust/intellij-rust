@@ -7,6 +7,8 @@ package org.rust.ide.annotator
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -3115,6 +3117,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                 b: u16,
             } = 1,
         }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test non-structural match type as const generic parameter E0741`() = checkErrors("""
+        #![feature(adt_const_params)]
+        struct A;
+        #[derive(PartialEq)]
+        struct B;
+        #[derive(Eq)]
+        struct C;
+        #[derive(PartialEq, Eq)]
+        struct D;
+        struct S<
+            const P1: <error descr="A doesn't derive both `PartialEq` and `Eq` [E0741]">A</error>,
+            const P2: <error descr="B doesn't derive both `PartialEq` and `Eq` [E0741]">B</error>,
+            const P3: <error descr="C doesn't derive both `PartialEq` and `Eq` [E0741]">C</error>,
+            const P4: D
+        >;
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test non-structural match type as const generic parameter E0741 (proc macros are disabled)`() = checkErrors("""
+        #![feature(adt_const_params)]
+        struct A;
+        struct S<const P: A>;
     """)
 
     @MockRustcVersion("1.37.0-nightly")
