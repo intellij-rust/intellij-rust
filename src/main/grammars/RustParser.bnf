@@ -1311,7 +1311,9 @@ OpenRangeExpr ::= ('..' | '...' | '..=') <<setStmtMode 'StmtMode.OFF'>> (<<check
     { elementType = RangeExpr }
 
 IndexExpr ::= Expr <<isIncompleteBlockExpr>> IndexArg {
- elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsIndexExprImplMixin"
 }
 // Do not inline this rule, it breaks expression parsing
 private IndexArg ::= '[' Expr ']'
