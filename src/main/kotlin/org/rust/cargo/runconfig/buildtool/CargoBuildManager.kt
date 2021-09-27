@@ -100,15 +100,16 @@ object CargoBuildManager {
             lastBuildCommandLine = state.prepareCommandLine()
         }
 
-        return execute(
-            CargoBuildContext(
-                cargoProject = cargoProject,
-                environment = environment,
-                taskName = "Build",
-                progressTitle = "Building...",
-                isTestBuild = state.commandLine.command == "test"
-            )
-        ) {
+        val buildId = Any()
+        return execute(CargoBuildContext(
+            cargoProject = cargoProject,
+            environment = environment,
+            taskName = "Build",
+            progressTitle = "Building...",
+            isTestBuild = state.commandLine.command == "test",
+            buildId = buildId,
+            parentId = buildId
+        )) {
             val buildProgressListener = ServiceManager.getService(project, BuildViewManager::class.java)
             if (!isHeadlessEnvironment) {
                 @Suppress("UsePropertyAccessSyntax")

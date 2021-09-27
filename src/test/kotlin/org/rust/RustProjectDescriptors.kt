@@ -242,7 +242,7 @@ open class WithProcMacros(
             setExperimentalFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS, true, disposable)
             val testProcMacroProjectPath = Path.of("testData/$TEST_PROC_MACROS")
             fullyRefreshDirectoryInUnitTests(LocalFileSystem.getInstance().findFileByNioFile(testProcMacroProjectPath)!!)
-            val testProcMacroProject = toolchain!!.cargo().fullProjectDescription(project, testProcMacroProjectPath)
+            val (testProcMacroProject, _) = toolchain!!.cargo().fullProjectDescription(project, testProcMacroProjectPath)
             procMacroPackage = testProcMacroProject.packages.find { it.name == TEST_PROC_MACROS }!!
                 .copy(origin = PackageOrigin.DEPENDENCY)
             procMacroPackage
