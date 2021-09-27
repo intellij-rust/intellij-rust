@@ -19,6 +19,7 @@ class RemoveRedundantFunctionArgumentsFix(
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getText(): String = "Remove redundant arguments"
     override fun getFamilyName(): String = text
+
     override fun invoke(
         project: Project,
         file: PsiFile,

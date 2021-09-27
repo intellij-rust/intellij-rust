@@ -9,14 +9,6 @@ import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
 class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
-    fun `test unavailable with unmatched parameters`() = checkFixIsUnavailable("Add `i32`", """
-        fn foo(a: bool) {}
-
-        fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(1, <error>2/*caret*/</error>)</error>;
-        }
-    """)
-
     fun `test no parameters add one parameter`() = checkFixByText("Add `i32` as `1st` parameter to function `foo`", """
         fn foo() {}
 
@@ -31,7 +23,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
-    fun `test no parameters add multiple parameters`() = checkFixByText("<html>Change signature of foo(<b>i32</b>, <b>bool</b>)</html>", """
+    fun `test no parameters add multiple parameters`() = checkFixByText("<html>Change signature to foo(<b>i32</b>, <b>bool</b>)</html>", """
         fn foo() {}
 
         fn main() {
@@ -93,7 +85,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
-    fun `test add multiple additional parameters forward`() = checkFixByText("<html>Change signature of foo(i32, <b>bool</b>, i32, <b>i32</b>)</html>", """
+    fun `test add multiple additional parameters forward`() = checkFixByText("<html>Change signature to foo(i32, <b>bool</b>, i32, <b>i32</b>)</html>", """
         fn foo(a: i32, b: i32) {}
 
         fn main() {
@@ -109,7 +101,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
-    fun `test add multiple additional parameters backward`() = checkFixByText("<html>Change signature of foo(<b>i32</b>, <b>bool</b>, i32, i32)</html>", """
+    fun `test add multiple additional parameters backward`() = checkFixByText("<html>Change signature to foo(<b>i32</b>, <b>bool</b>, i32, i32)</html>", """
         fn foo(a: i32, b: i32) {}
 
         fn main() {
@@ -122,6 +114,36 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(0, false, 3, 4);
             foo(, , 0, 1);
+        }
+    """)
+
+    fun `test change signature total type mismatch`() = checkFixByText("<html>Change signature to foo(<b>bool</b>, <b>bool</b>, <b>bool</b>)</html>", """
+        fn foo(a: i32, b: i32) {}
+
+        fn main() {
+            foo<error>(true, true, <error>true/*caret*/</error>)</error>;
+        }
+    """, """
+        fn foo(a: bool, b: bool, x: bool) {}
+
+        fn main() {
+            foo(true, true, true);
+        }
+    """)
+
+    fun `test do not offer add parameter fix if argument count would not match 1`() = checkFixIsUnavailable("<html>Change signature to foo(<b>bool</b>, <b>bool</b>, <b>bool</b>, i32, i32)</html>", """
+        fn foo(a: i32, b: i32) {}
+
+        fn main() {
+            foo<error>(true, false, <error>true/*caret*/</error>)</error>;
+        }
+    """)
+
+    fun `test do not offer add parameter fix if argument count would not match 2`() = checkFixIsUnavailable("<html>Change signature to foo(i32, i32, <b>bool</b>, <b>bool</b>, <b>bool</b>)</html>", """
+        fn foo(a: i32, b: i32) {}
+
+        fn main() {
+            foo<error>(true, false, <error>true/*caret*/</error>)</error>;
         }
     """)
 
@@ -195,7 +217,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """)
 
-    fun `test import argument type`() = checkFixByText("Add `S` as `1st` parameter to function `bar`", """
+    fun `test import added argument type`() = checkFixByText("Add `S` as `1st` parameter to function `bar`", """
         mod foo {
             pub fn bar() {}
         }
@@ -211,6 +233,32 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             use S;
 
             pub fn bar(s: S) {}
+        }
+
+        pub struct S;
+
+        fn main() {
+            let s = S;
+            foo::bar(s);
+        }
+    """)
+
+    fun `test import changed argument type`() = checkFixByText("Change type of parameter `a` of function `bar` to `S`", """
+        mod foo {
+            pub fn bar(a: u32) {}
+        }
+
+        pub struct S;
+
+        fn main() {
+            let s = S;
+            foo::bar<error>(s/*caret*/)</error>;
+        }
+    """, """
+        mod foo {
+            use S;
+
+            pub fn bar(a: S) {}
         }
 
         pub struct S;
@@ -256,6 +304,222 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
 
         fn main() {
             foo(1, 2);
+        }
+    """)
+
+    fun `test unavailable on correct method UFCS`() = checkFixIsUnavailable("Change", """
+        struct S {}
+        impl S {
+            fn foo(&self, a: u32) {}
+        }
+
+        fn bar(s: S) {
+            S::foo(1/*caret*/, 1);
+        }
+    """)
+
+    fun `test unavailable with disabled parameter 1`() = checkFixIsUnavailable("Change", """
+        fn foo(a: u32, #[cfg(foo)] b: u32, c: u32) {}
+        fn bar() {
+            foo(1, true/*caret*/);
+        }
+    """)
+
+    fun `test unavailable with disabled parameter 2`() = checkFixIsUnavailable("Add `i32`", """
+        fn foo(i: i32, #[cfg(foo)] b: u32) {}
+
+        fn main() {
+            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(1/*caret*/, <error>2</error>)</error>;
+        }
+    """)
+
+    fun `test change type simple binding`() = checkFixByText("Change type of parameter `a` of function `foo` to `bool`", """
+        fn foo(a: u32) {}
+        fn bar() {
+            foo<error>(true/*caret*/)</error>;
+        }
+    """, """
+        fn foo(a: bool) {}
+        fn bar() {
+            foo(true);
+        }
+    """)
+
+    fun `test change type complex binding`() = checkFixByText("Change type of `1st` parameter of function `foo` to `bool`", """
+        fn foo((a, b): (u32, u32)) {}
+        fn bar() {
+            foo<error>(true/*caret*/)</error>;
+        }
+    """, """
+        fn foo((a, b): bool) {}
+        fn bar() {
+            foo(true);
+        }
+    """)
+
+    fun `test change multiple parameter types`() = checkFixByText("<html>Change signature to foo(<b>bool</b>, <b>&str</b>)</html>", """
+        fn foo(a: u32, b: u32) {}
+        fn bar() {
+            foo<error>(true/*caret*/, "foo")</error>;
+        }
+    """, """
+        fn foo(a: bool, b: &str) {}
+        fn bar() {
+            foo(true/*caret*/, "foo");
+        }
+    """)
+
+    fun `test change type parameter in the middle`() = checkFixByText("Change type of `2nd` parameter of function `foo` to `bool`", """
+        fn foo(x: u32, (a, b): (u32, u32), c: u32) {}
+        fn bar() {
+            foo<error>(0, true/*caret*/, 1)</error>;
+        }
+    """, """
+        fn foo(x: u32, (a, b): bool, c: u32) {}
+        fn bar() {
+            foo(0, true, 1);
+        }
+    """)
+
+    fun `test remove parameter simple binding`() = checkFixByText("Remove parameter `b` from function `foo`", """
+        fn foo(a: u32, b: u32) {}
+        fn bar() {
+            foo<error>(0/*caret*/<error>)</error></error>;
+        }
+    """, """
+        fn foo(a: u32) {}
+        fn bar() {
+            foo(0);
+        }
+    """)
+
+    fun `test remove parameter complex binding`() = checkFixByText("Remove `2nd` parameter from function `foo`", """
+        fn foo(x: u32, (a, b): (u32, u32)) {}
+        fn bar() {
+            foo<error>(0/*caret*/<error>)</error></error>;
+        }
+    """, """
+        fn foo(x: u32) {}
+        fn bar() {
+            foo(0);
+        }
+    """)
+
+    fun `test remove multiple parameters`() = checkFixByText("<html>Change signature to foo()</html>", """
+        fn foo(a: u32, b: u32) {}
+        fn bar() {
+            foo<error>(/*caret*/<error>)</error></error>;
+        }
+    """, """
+        fn foo() {}
+        fn bar() {
+            foo();
+        }
+    """)
+
+    fun `test change type and remove parameters`() = checkFixByText("<html>Change signature to foo(<b>bool</b>)</html>", """
+        fn foo(a: u32, b: u32, c: u32) {}
+        fn bar() {
+            foo<error>(true/*caret*/<error>)</error></error>;
+        }
+    """, """
+        fn foo(a: bool) {}
+        fn bar() {
+            foo(true);
+        }
+    """)
+
+    fun `test remove parameters change usage`() = checkFixByText("<html>Change signature to foo()</html>", """
+        fn foo(a: u32, b: u32) {}
+        fn bar() {
+            foo<error>(/*caret*/<error>)</error></error>;
+            foo(1, 2);
+        }
+    """, """
+        fn foo() {}
+        fn bar() {
+            foo();
+            foo();
+        }
+    """)
+
+    fun `test change method type`() = checkFixByText("Change type of parameter `a` of method `foo` to `&str`", """
+        struct S {}
+        impl S {
+            fn foo(&self, a: u32) {}
+        }
+
+        fn bar(s: S) {
+            s.foo<error>(""/*caret*/)</error>;
+        }
+    """, """
+        struct S {}
+        impl S {
+            fn foo(&self, a: &str) {}
+        }
+
+        fn bar(s: S) {
+            s.foo("");
+        }
+    """)
+
+    fun `test change method parameter type UFCS`() = checkFixByText("Change type of parameter `a` of method `foo` to `&str`", """
+        struct S {}
+        impl S {
+            fn foo(&self, a: u32) {}
+        }
+
+        fn bar(s: S) {
+            S::foo<error>(&s, ""/*caret*/)</error>;
+        }
+    """, """
+        struct S {}
+        impl S {
+            fn foo(&self, a: &str) {}
+        }
+
+        fn bar(s: S) {
+            S::foo(&s, "");
+        }
+    """)
+
+    fun `test remove method parameter type UFCS`() = checkFixByText("Remove parameter `a` from method `foo`", """
+        struct S {}
+        impl S {
+            fn foo(&self, a: u32) {}
+        }
+
+        fn bar(s: S) {
+            S::foo<error>(&s/*caret*/<error>)</error></error>;
+        }
+    """, """
+        struct S {}
+        impl S {
+            fn foo(&self) {}
+        }
+
+        fn bar(s: S) {
+            S::foo(&s);
+        }
+    """)
+
+    fun `test add method parameter UFCS`() = checkFixByText("Add `bool` as `1st` parameter to method `foo`", """
+        struct S {}
+        impl S {
+            fn foo(&self, a: i32) {}
+        }
+
+        fn bar(s: S) {
+            S::foo<error>(&s/*caret*/, true, <error>1</error>)</error>;
+        }
+    """, """
+        struct S {}
+        impl S {
+            fn foo(&self, x: bool, a: i32) {}
+        }
+
+        fn bar(s: S) {
+            S::foo(&s, true, 1);
         }
     """)
 }
