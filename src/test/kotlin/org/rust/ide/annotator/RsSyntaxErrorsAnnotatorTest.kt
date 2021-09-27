@@ -248,21 +248,13 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn foo<const C: usize, <error descr="Lifetime parameters must be declared prior to const parameters">'a</error>>(bar: &'a usize) {}
     """)
 
-    @MockRustcVersion("1.51.0-nightly")
-    fun `test type params after const params (old)`() = checkErrors("""
-        #![feature(min_const_generics)]
-        fn foo<const C: usize, <error descr="Type parameters must be declared prior to const parameters">T</error>>(bar: T) {}
-    """)
-
     @MockRustcVersion("1.34.0-nightly")
     fun `test type params after const params (new)`() = checkErrors("""
-        #![feature(const_generics)]
         fn foo<const C: usize, T>(bar: T) {}
     """)
 
     @MockRustcVersion("1.34.0-nightly")
     fun `test type arguments order`() = checkErrors("""
-        #![feature(const_generics)]
         type A1 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
 
         type A2 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>,
