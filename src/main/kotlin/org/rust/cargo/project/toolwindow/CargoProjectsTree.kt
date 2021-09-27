@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
-class CargoProjectsTree : SimpleTree() {
+open class CargoProjectsTree : SimpleTree() {
 
     val selectedProject: CargoProject? get() {
         val path = selectionPath ?: return null
@@ -32,6 +32,7 @@ class CargoProjectsTree : SimpleTree() {
         showsRootHandles = true
         emptyText.text = "There are no Cargo projects to display."
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+        @Suppress("LeakingThis")
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (e.clickCount < 2 || !SwingUtilities.isLeftMouseButton(e)) return
@@ -45,9 +46,16 @@ class CargoProjectsTree : SimpleTree() {
                     return
                 }
                 val cargoProject = selectedProject ?: return
-                CargoCommandLine.forTarget(target, command).run(cargoProject)
+                // Capitalize command name to be consistent with line market providers
+                // TODO: not to use `capitalize` here
+                val configurationName = "${command.capitalize()} ${target.name}"
+                run(CargoCommandLine.forTarget(target, command), cargoProject, configurationName)
             }
         })
+    }
+
+    protected open fun run(commandLine: CargoCommandLine, project: CargoProject, name: String) {
+        commandLine.run(project, name)
     }
 
     companion object {
