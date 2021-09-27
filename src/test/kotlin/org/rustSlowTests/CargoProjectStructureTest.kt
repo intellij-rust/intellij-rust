@@ -23,9 +23,11 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
          Project
           Targets
            Target(bench[bench])
+           Target(build-script-build[custom-build])
            Target(example[example])
            Target(foo[bin])
            Target(foo[lib])
+           Target(lib_example[example])
            Target(test[test])
     """) {
         toml("Cargo.toml", """
@@ -33,6 +35,13 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
             name = "foo"
             version = "0.1.0"
             authors = []
+
+            [[example]]
+            name = "example"
+
+            [[example]]
+            name = "lib_example"
+            crate-type = ["lib"]
         """)
 
         dir("src") {
@@ -44,10 +53,12 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
         }
         dir("examples") {
             rust("example.rs", "")
+            rust("lib_example.rs", "")
         }
         dir("tests") {
             rust("test.rs", "")
         }
+        rust("build.rs", "")
     }
 
     fun `test workspace members`() = doTest("""
