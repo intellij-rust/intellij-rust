@@ -16,7 +16,7 @@ import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNo
 import org.rust.cargo.project.toolwindow.CargoProjectsTree
 import org.rust.fileTree
 
-class CargoProjectStructureTest : RsWithToolchainTestBase() {
+class CargoProjectsTreeTest : RsWithToolchainTestBase() {
 
     fun `test targets`() = doTest("""
         Root
