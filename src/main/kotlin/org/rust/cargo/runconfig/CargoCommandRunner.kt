@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.ExecutionManagerImpl.Companion.EXECUTION_SKIP_RUN
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -34,6 +35,10 @@ open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
             !(isBuildConfiguration(configuration) && configuration.isBuildToolWindowAvailable)) {
             super.doExecute(state, environment)
         } else {
+            // For commands like `cargo build` or `cargo test --no-run`
+            // we skip execution here because build already was performed
+            // in Build Tool window
+            environment.putUserData(EXECUTION_SKIP_RUN, true)
             null
         }
     }
