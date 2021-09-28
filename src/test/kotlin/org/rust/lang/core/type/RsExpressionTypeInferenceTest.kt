@@ -773,6 +773,18 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ &S
     """)
 
+    fun `test match let guard`() = testExpr("""
+        struct S(i32);
+
+        fn foo() {
+            match y {
+                _ if let S(i) = S(0) => 1,
+                         //^ i32
+                _ => 0
+            };
+        }
+    """)
+
     fun `test parens`() = testExpr("""
         type T = (i32);
         fn foo(x: T) { x; }

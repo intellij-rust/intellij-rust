@@ -1584,7 +1584,16 @@ private fun processLexicalDeclarations(
         }
 
         is RsMatchArm -> {
-            return processPattern(scope.pat, processor)
+            val guardPat = scope.matchArmGuard?.pat
+            if (guardPat == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
+            val prevScope = mutableMapOf<String, Set<Namespace>>()
+            val stop = processWithShadowingAndUpdateScope(prevScope, processor) { shadowingProcessor ->
+                processPattern(guardPat, shadowingProcessor)
+            }
+            if (stop) return true
+            return processWithShadowing(prevScope, processor) { shadowingProcessor ->
+                processPattern(scope.pat, shadowingProcessor)
+            }
         }
     }
     return false

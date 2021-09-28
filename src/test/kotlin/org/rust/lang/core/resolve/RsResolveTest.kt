@@ -114,6 +114,34 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test match if let 1`() = checkByCode("""
+        fn main() {
+            match Some(92) {
+                Some(i)
+                         if let Some(i) = Some(i) => {
+                                   //X
+                    i
+                  //^
+                }
+                _ => 0
+            };
+        }
+    """)
+
+    fun `test match if let 2`() = checkByCode("""
+        fn main() {
+            match Some(92) {
+                Some(i)
+                   //X
+                         if let Some(i) = Some(i) => {
+                                             //^
+                    i
+                }
+                _ => 0
+            };
+        }
+    """)
+
     fun `test let`() = checkByCode("""
         fn f(i: i32) -> Option<i32> {}
 
