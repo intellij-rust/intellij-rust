@@ -25,6 +25,8 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
@@ -253,7 +255,21 @@ class RsFile(
         }
 
     enum class Attributes {
-        NO_CORE, NO_STD, NONE
+        NO_CORE, NO_STD, NONE;
+
+        fun getAutoInjectedCrate(): String? =
+            when (this) {
+                NONE -> STD
+                NO_STD -> CORE
+                NO_CORE -> null
+            }
+
+        fun canUseStdlibCrate(crateName: String): Boolean =
+            when (this) {
+                NONE -> true
+                NO_STD -> crateName != STD
+                NO_CORE -> crateName != STD && crateName != CORE
+            }
     }
 }
 
