@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
-import org.rust.ide.refactoring.RsMultipleVariableRenamer
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*

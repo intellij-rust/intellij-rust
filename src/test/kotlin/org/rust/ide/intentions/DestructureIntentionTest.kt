@@ -210,6 +210,22 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
         }
     """)
 
+    fun `test destructure tuple replace fields with template`() = doAvailableTestWithLiveTemplate("""
+        fn main() {
+            let /*caret*/s = (1, 2);
+            let x = s.0;
+            let y = s.1;
+            let z = (s.0, s.1);
+        }
+    """, "a\tb\t", """
+        fn main() {
+            let (a, b) = (1, 2);
+            let x = a;
+            let y = b;
+            let z = (a, b);
+        }
+    """)
+
     fun `test destructure parameter`() = doAvailableTest("""
         struct S<T, U> { x: T, y: U }
         fn f(/*caret*/x: S<i32, &str>) {}
