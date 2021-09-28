@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.containers.addIfNotNull
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
@@ -947,13 +945,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
-        val (expectedCount, functionType, function) = when (val parent = args.parent) {
-            is RsCallExpr -> parent.getFunctionCallContext()
-            is RsMethodCall -> parent.getFunctionCallContext()
-            else -> null
-        } ?: return
+        val (expectedCount, functionType, function) = args.getFunctionCallContext() ?: return
 
         val realCount = args.exprList.size
+        val fixes = if (function != null) {
+            ChangeFunctionSignatureFix.createIfCompatible(args, function)
+        } else {
+            emptyList()
+        }
+
         if (realCount < expectedCount) {
             // Mark only the right parenthesis
             val rparen = args.rparen
@@ -964,7 +964,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             // But enable the quick fix on the whole argument range
             RsDiagnostic.IncorrectFunctionArgumentCountError(
                 args, expectedCount, realCount, functionType,
-                listOf(FillFunctionArgumentsFix(args)),
+                listOf(FillFunctionArgumentsFix(args)) + fixes,
                 textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
             ).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
@@ -972,24 +972,22 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 holder.newErrorAnnotation(it, null)?.create()
             }
 
-            val fixes = mutableListOf<LocalQuickFix>(RemoveRedundantFunctionArgumentsFix(args, expectedCount))
-            if (function != null) {
-                fixes.addIfNotNull(ChangeFunctionSignatureFix.createIfCompatible(
-                    args, function,
-                    ChangeFunctionSignatureFix.ArgumentScanDirection.Forward
-                ))
-                fixes.addIfNotNull(ChangeFunctionSignatureFix.createIfCompatible(
-                    args, function,
-                    ChangeFunctionSignatureFix.ArgumentScanDirection.Backward
-                ))
-            }
-
             RsDiagnostic.IncorrectFunctionArgumentCountError(
                 args, expectedCount, realCount, functionType,
-                fixes = fixes,
+                fixes = listOf(RemoveRedundantFunctionArgumentsFix(args, expectedCount)) + fixes,
                 textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
             )
-            .addToHolder(holder)
+                .addToHolder(holder)
+        }
+
+        if (realCount == expectedCount && fixes.isNotEmpty()) {
+            val builder = holder.holder.newSilentAnnotation(HighlightSeverity.ERROR)
+                .textAttributes(TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES"))
+                .range(args.textRange)
+            for (fix in fixes) {
+                builder.withFix(fix)
+            }
+            builder.create()
         }
     }
 
@@ -1492,6 +1490,14 @@ data class FunctionCallContext(
     val functionType: FunctionType,
     val function: RsFunction? = null
 )
+
+fun RsValueArgumentList.getFunctionCallContext(): FunctionCallContext? {
+    return when (val parent = parent) {
+        is RsCallExpr -> parent.getFunctionCallContext()
+        is RsMethodCall -> parent.getFunctionCallContext()
+        else -> null
+    }
+}
 
 fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
     val path = (expr as? RsPathExpr)?.path ?: return null

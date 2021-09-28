@@ -42,11 +42,7 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
         val arguments = startElement.parentOfType<RsValueArgumentList>(true) ?: return
         val parent = arguments.parent as? RsElement ?: return
 
-        val requiredParameterCount = when (parent) {
-            is RsCallExpr -> parent.getFunctionCallContext()?.expectedParameterCount
-            is RsMethodCall -> parent.getFunctionCallContext()?.expectedParameterCount
-            else -> null
-        } ?: return
+        val requiredParameterCount = arguments.getFunctionCallContext()?.expectedParameterCount ?: return
         val parameters = getParameterTypes(parent)?.take(requiredParameterCount) ?: return
 
         val factory = RsPsiFactory(project)

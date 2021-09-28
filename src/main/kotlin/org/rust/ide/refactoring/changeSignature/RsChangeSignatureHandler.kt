@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.RsBundle
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.editor
@@ -78,6 +79,9 @@ class RsChangeSignatureHandler : ChangeSignatureHandler {
         }
 
         private fun checkFunction(function: RsFunction): String? {
+            if (function.containingCrate?.origin != PackageOrigin.WORKSPACE) {
+                return "Cannot change signature of function in a foreign crate"
+            }
             if (function.valueParameters != function.rawValueParameters) {
                 return RsBundle.message("refactoring.change.signature.error.cfg.disabled.parameters")
             }
