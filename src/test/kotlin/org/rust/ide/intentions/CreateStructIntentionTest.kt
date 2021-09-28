@@ -71,17 +71,18 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
         }
     """)
 
-    fun `test unknown type`() = doAvailableTest("""
+    fun `test unknown types`() = doAvailableTestWithLiveTemplate("""
         fn main() {
-            Foo/*caret*/ { a: Bar };
+            Foo/*caret*/ { x1: Bar, x2: (Unknown1, Unknown2) };
         }
-    """, """
+    """, "x1\tType1\tx2\tType2\tType3\t", """
         struct Foo {
-            a: _
+            x1: Type1,
+            x2: (Type2, Type3)
         }
 
         fn main() {
-            Foo { a: Bar };
+            Foo { x1: Bar, x2: (Unknown1, Unknown2) };
         }
     """)
 
