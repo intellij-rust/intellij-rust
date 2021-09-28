@@ -5,7 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
 import org.rust.UseNewResolve
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
@@ -775,5 +777,26 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         impl <const N: usize> T for S<{ N }> {
             fn foo(&self) {}
         }
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test item reexported from 'pub(crate)' mod in dependency crate`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::*;
+        use foo::*;
+
+        fn main() {
+            func();
+        } //^ main.rs
+
+        mod foo {
+            pub fn func() {}
+        }        //X
+    //- lib.rs
+        mod foo {
+            pub(crate) fn func() {}
+        }
+        pub use foo::*;
     """)
 }
