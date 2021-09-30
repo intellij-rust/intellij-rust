@@ -10,10 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.rust.lang.core.crate.Crate
 import org.rust.openapiext.computeInReadActionWithWriteActionPriority
 import org.rust.stdext.getWithRethrow
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
@@ -55,7 +52,9 @@ class DefMapsBuilder(
             if (pool != null) {
                 buildAsync()
             } else {
-                buildSync()
+                invokeOnPoolThread(pool ?: poolForMacros, indicator) {
+                    buildSync()
+                }
             }
         }
 
@@ -141,11 +140,32 @@ class DefMapsBuilder(
             .joinToString { (crate, time) -> "$crate ${time}ms" }
         val multithread = pool != null
         if (multithread) {
-            RESOLVE_LOG.debug("wallTime: $wallTime, totalTime: $totalTime, " +
-                "parallelism coefficient: ${"%.2f".format((totalTime.toDouble() / wallTime))}.    " +
-                "Top 5 crates: $top5crates")
+            RESOLVE_LOG.debug(
+                "wallTime: $wallTime, totalTime: $totalTime, " +
+                    "parallelism coefficient: ${"%.2f".format((totalTime.toDouble() / wallTime))}.    " +
+                    "Top 5 crates: $top5crates"
+            )
         } else {
             RESOLVE_LOG.debug("wallTime: $wallTime.    Top 5 crates: $top5crates")
         }
+    }
+}
+
+/**
+ * Needed because of [DefCollector.expandMacrosInParallel].
+ * We use [ForkJoinPool.invokeAll] there, which can execute tasks
+ * from completely different thread pool (associated with current thread).
+ * That's why we need to be sure that we build DefMaps on "fresh" thread.
+ * Also see [org.rust.lang.core.macros.MacroExpansionServiceImplInner.pool].
+ */
+private fun invokeOnPoolThread(pool: ExecutorService?, indicator: ProgressIndicator, action: () -> Unit) {
+    if (pool == null) {
+        action()
+    } else {
+        pool.submit {
+            computeInReadActionWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
+                action()
+            }
+        }.getWithRethrow()
     }
 }
