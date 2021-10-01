@@ -118,11 +118,11 @@ allprojects {
             untilBuild.set(prop("untilBuild"))
         }
 
-        buildSearchableOptions {
-            // buildSearchableOptions task doesn't make sense for non-root subprojects
-            val isRootProject = project.name == "plugin"
-            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
-        }
+        // All these tasks don't make sense for non-root subprojects
+        // Root project (i.e. `:plugin`) enables them itlsef if needed
+        runIde { enabled = false }
+        prepareSandbox { enabled = false }
+        buildSearchableOptions { enabled = false }
 
         test {
             // Drop when `org.jetbrains.intellij` plugin version will be at least 1.2.0
@@ -294,6 +294,11 @@ project(":plugin") {
             // Set proper name for final plugin zip.
             // Otherwise, base name is the same as gradle module name
             archiveBaseName.set("intellij-rust")
+        }
+        runIde { enabled = true }
+        prepareSandbox { enabled = true }
+        buildSearchableOptions {
+            enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
 
         withType<PrepareSandboxTask> {
