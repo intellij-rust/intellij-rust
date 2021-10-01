@@ -7,9 +7,12 @@ package org.rust.ide.todo
 
 import com.intellij.editor.TodoItemsTestCase
 import org.intellij.lang.annotations.Language
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
 import org.rust.lang.RsFileType
 
 // Note, `TodoItemsTestCase` contains some general tests for C-style comments
+@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class RsTodoTest : TodoItemsTestCase() {
 
     override fun supportsCStyleMultiLineComments(): Boolean = true

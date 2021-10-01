@@ -10,10 +10,13 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.psi.formatter.FormatterTestCase
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
 import org.rust.IgnoreInPlatform
 import org.rust.TestCase
 import kotlin.reflect.KMutableProperty0
 
+@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 abstract class RsFormatterTestBase : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
 
