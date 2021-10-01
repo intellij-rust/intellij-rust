@@ -459,6 +459,14 @@ project(":toml") {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
     }
+    tasks {
+        // Set custom plugin directory name.
+        // Otherwise, `prepareSandbox`/`prepareTestingSandbox` tasks merge directories
+        // of `toml` plugin and `toml` module because of the same name into single one that's not expected
+        withType<PrepareSandboxTask> {
+            pluginName.set("rust-toml")
+        }
+    }
 }
 
 project(":intelliLang") {
