@@ -83,7 +83,7 @@ class RsMacroExpansionHighlightingPass(
         val annotators = createAnnotators()
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
-            val holder = AnnotationHolderImpl(AnnotationSession(macro.expansion.file))
+            val holder = AnnotationHolderImpl(AnnotationSession(macro.expansion.file), false)
 
             for (element in macro.elementsForHighlighting) {
                 for (ann in annotators) {
