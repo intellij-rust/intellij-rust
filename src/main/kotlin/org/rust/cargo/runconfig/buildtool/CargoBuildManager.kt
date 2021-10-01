@@ -27,10 +27,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
-import com.intellij.ui.content.MessageView
 import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
@@ -94,7 +92,8 @@ object CargoBuildManager {
         val cargoProject = state.cargoProject ?: return CANCELED_BUILD_RESULT
 
         // Make sure build tool window is initialized:
-        ServiceManager.getService(project, BuildContentManager::class.java)
+        @Suppress("UsePropertyAccessSyntax")
+        BuildContentManager.getInstance(project).getOrCreateToolWindow()
 
         if (isUnitTestMode) {
             lastBuildCommandLine = state.prepareCommandLine()
@@ -194,7 +193,6 @@ object CargoBuildManager {
                         return@Runnable
                     }
 
-                    MessageView.SERVICE.getInstance(context.project) // register ToolWindowId.MESSAGES_WINDOW
                     saveAllDocuments()
                     context.doExecute()
                 }
@@ -270,10 +268,9 @@ object CargoBuildManager {
         notification.notify(project)
 
         if (messageType === MessageType.ERROR) {
-            MessageView.SERVICE.getInstance(project) // register ToolWindowId.MESSAGES_WINDOW
             val manager = ToolWindowManager.getInstance(project)
             invokeLater {
-                manager.notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, notificationContent)
+                manager.notifyByBalloon(BuildContentManager.TOOL_WINDOW_ID, messageType, notificationContent)
             }
         }
 
