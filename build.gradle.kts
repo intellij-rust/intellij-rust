@@ -125,6 +125,8 @@ allprojects {
         }
 
         test {
+            // Drop when `org.jetbrains.intellij` plugin version will be at least 1.2.0
+            systemProperty("idea.force.use.core.classloader", "true")
             testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
             if (isCI) {
                 retry {
