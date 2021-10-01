@@ -127,7 +127,17 @@ allprojects {
         test {
             // Drop when `org.jetbrains.intellij` plugin version will be at least 1.2.0
             systemProperty("idea.force.use.core.classloader", "true")
-            testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
+            testLogging {
+                showStandardStreams = prop("showStandardStreams").toBoolean()
+                afterSuite(
+                    KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+                        if (desc.parent == null) { // will match the outermost suite
+                            val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                            println(output)
+                        }
+                    })
+                )
+            }
             if (isCI) {
                 retry {
                     maxRetries.set(3)
