@@ -14,5 +14,4 @@ val CodeStyleSettings.rust: RsCodeStyleSettings
 
 object RustfmtTestmarks {
     val rustfmtUsed: Testmark = Testmark("rustfmtUsed")
-    val builtinPostProcess: Testmark = Testmark("builtinPostProcess")
 }
