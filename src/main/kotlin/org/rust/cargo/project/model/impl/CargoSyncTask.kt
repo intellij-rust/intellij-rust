@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -38,13 +39,12 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.runconfig.buildtool.CargoBuildAdapterBase
+import org.rust.cargo.runconfig.buildtool.CargoBuildContextBase
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.toolchain.tools.Rustup
-import org.rust.cargo.toolchain.tools.cargoOrWrapper
-import org.rust.cargo.toolchain.tools.rustc
-import org.rust.cargo.toolchain.tools.rustup
+import org.rust.cargo.toolchain.tools.*
 import org.rust.cargo.util.DownloadResult
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.mapNotNullToSet
@@ -112,7 +112,7 @@ class CargoSyncTask(
                             val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
                             CargoProjectWithStdlib(cargoProject.copy(stdlibStatus = stdlibStatus), null)
                         } else {
-                            val context = SyncContext(project, cargoProject, toolchain, indicator, childProgress)
+                            val context = SyncContext(project, cargoProject, toolchain, indicator, syncProgress.id, childProgress)
                             val rustcInfoResult = fetchRustcInfo(context)
                             val rustcInfo = (rustcInfoResult as? TaskResult.Ok)?.value
                             val cargoProjectWithRustcInfoAndWorkspace = cargoProject.withRustcInfo(rustcInfoResult)
@@ -137,7 +137,7 @@ class CargoSyncTask(
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
-        val descriptor = DefaultBuildDescriptor("Cargo", "Cargo", project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(Any(), "Cargo", project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
@@ -168,8 +168,12 @@ class CargoSyncTask(
         val oldCargoProject: CargoProjectImpl,
         val toolchain: RsToolchainBase,
         val progress: ProgressIndicator,
+        val buildId: Any,
         val syncProgress: BuildProgress<BuildProgressDescriptor>
     ) {
+
+        val id: Any get() = syncProgress.id
+
         fun <T> runWithChildProgress(
             title: String,
             action: (SyncContext) -> TaskResult<T>
@@ -315,12 +319,32 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
             CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
-            val projectDescriptionData = cargo.fullProjectDescription(
+            val (projectDescriptionData, status) = cargo.fullProjectDescription(
                 childContext.project,
                 projectDirectory,
-                // TODO: collect build events and show them in structured way
-                SyncProcessAdapter(childContext)
-            )
+            ) {
+                when (it) {
+                    CargoCallType.METADATA -> SyncProcessAdapter(childContext)
+                    CargoCallType.BUILD_SCRIPT_CHECK ->  {
+                        val childProgress = childContext.syncProgress.startChildProgress("Build scripts evaluation")
+                        val syncContext = childContext.copy(syncProgress = childProgress)
+
+                        val buildContext = SyncCargoBuildContext(
+                            childContext.oldCargoProject,
+                            buildId = syncContext.buildId,
+                            parentId = syncContext.id,
+                            progressIndicator = syncContext.progress
+                        )
+
+                        SyncCargoBuildAdapter(syncContext, buildContext)
+                    }
+                }
+            }
+            if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
+                childContext.warning("Build scripts evaluation failed",
+                    "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
+            }
+
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
             val cfgOptions = try {
@@ -433,6 +457,36 @@ private class SyncProcessAdapter(
 
     override fun error(title: String, message: String) = context.error(title, message)
     override fun warning(title: String, message: String) = context.warning(title, message)
+}
+
+private class SyncCargoBuildContext(
+    cargoProject: CargoProject,
+    buildId: Any,
+    parentId: Any,
+    progressIndicator: ProgressIndicator
+) : CargoBuildContextBase(cargoProject, "Building...", false, buildId, parentId) {
+    init {
+        indicator = progressIndicator
+    }
+}
+
+private class SyncCargoBuildAdapter(
+    private val context: CargoSyncTask.SyncContext,
+    buildContext: CargoBuildContextBase
+) : CargoBuildAdapterBase(buildContext, context.project.service<SyncViewManager>()) {
+
+    override fun onBuildOutputReaderFinish(
+        event: ProcessEvent,
+        isSuccess: Boolean,
+        isCanceled: Boolean,
+        error: Throwable?
+    ) {
+        when {
+            isSuccess -> context.syncProgress.finish()
+            isCanceled -> context.syncProgress.cancel()
+            else -> context.syncProgress.fail()
+        }
+    }
 }
 
 private fun CargoSyncTask.SyncContext.error(title: String, message: String) {

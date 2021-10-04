@@ -24,38 +24,48 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-class CargoBuildContext(
+abstract class CargoBuildContextBase(
     val cargoProject: CargoProject,
-    val environment: ExecutionEnvironment,
-    val taskName: String,
     val progressTitle: String,
-    val isTestBuild: Boolean
+    val isTestBuild: Boolean,
+    val buildId: Any,
+    val parentId: Any
 ) {
-    val buildId: Any = Any()
-
     val project: Project get() = cargoProject.project
     val workingDirectory: Path get() = cargoProject.workingDirectory
 
-    val result: FutureResult<CargoBuildResult> = FutureResult()
-
-    private val buildSemaphore: Semaphore = project.getUserData(BUILD_SEMAPHORE_KEY)
-        ?: (project as UserDataHolderEx).putUserDataIfAbsent(BUILD_SEMAPHORE_KEY, Semaphore(1))
-
     @Volatile
     var indicator: ProgressIndicator? = null
-    @Volatile
-    var processHandler: ProcessHandler? = null
-
-    val started: Long = System.currentTimeMillis()
-    @Volatile
-    var finished: Long = started
-    private val duration: Long get() = finished - started
 
     val errors: AtomicInteger = AtomicInteger()
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
     var artifact: CompilerArtifactMessage? = null
+}
+
+class CargoBuildContext(
+    cargoProject: CargoProject,
+    val environment: ExecutionEnvironment,
+    val taskName: String,
+    progressTitle: String,
+    isTestBuild: Boolean,
+    buildId: Any,
+    parentId: Any
+) : CargoBuildContextBase(cargoProject, progressTitle, isTestBuild, buildId, parentId) {
+
+    @Volatile
+    var processHandler: ProcessHandler? = null
+
+    private val buildSemaphore: Semaphore = project.getUserData(BUILD_SEMAPHORE_KEY)
+        ?: (project as UserDataHolderEx).putUserDataIfAbsent(BUILD_SEMAPHORE_KEY, Semaphore(1))
+
+    val result: FutureResult<CargoBuildResult> = FutureResult()
+
+    val started: Long = System.currentTimeMillis()
+    @Volatile
+    var finished: Long = started
+    private val duration: Long get() = finished - started
 
     fun waitAndStart(): Boolean {
         indicator?.pushState()

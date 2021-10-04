@@ -21,16 +21,16 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.quantizeAnsiColors
 import org.rust.cargo.runconfig.removeEscapeSequences
-import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoTopMessage
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
 
-class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutputParser {
+class RsBuildEventsConverter(private val context: CargoBuildContextBase) : BuildOutputParser {
     private val decoder: AnsiEscapeDecoder = AnsiEscapeDecoder()
     private val startEvents: MutableList<StartEvent> = mutableListOf()
     private val messageEvents: MutableSet<MessageEvent> = hashSetOf()
@@ -63,7 +63,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
 
         val detailedMessage = rustcMessage.rendered?.let { quantizeAnsiColors(it) }
         if (detailedMessage != null) {
-            messageConsumer.acceptText(context.buildId, detailedMessage.withNewLine())
+            messageConsumer.acceptText(context.parentId, detailedMessage.withNewLine())
         }
 
         val message = rustcMessage.message.trim().capitalize().trimEnd('.')
@@ -149,7 +149,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
                 handleProblemMessage(kind, message, line, messageConsumer)
         }
 
-        messageConsumer.acceptText(context.buildId, line.withNewLine())
+        messageConsumer.acceptText(context.parentId, line.withNewLine())
         return true
     }
 
@@ -160,12 +160,12 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
     ) {
         val message = originalMessage.replace("Fresh", "Compiling").substringBefore("(").trimEnd()
         val eventId = message.substringAfter(" ").replace(" v", " ")
-        val startEvent = StartEventImpl(eventId, context.buildId, System.currentTimeMillis(), message)
+        val startEvent = StartEventImpl(eventId, context.parentId, System.currentTimeMillis(), message)
         messageConsumer.accept(startEvent)
         if (isUpToDate) {
             val finishEvent = FinishEventImpl(
                 eventId,
-                context.buildId,
+                context.parentId,
                 System.currentTimeMillis(),
                 message,
                 SuccessResultImpl(isUpToDate)
@@ -187,7 +187,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
                     startEventsIterator.remove()
                     val finishEvent = FinishEventImpl(
                         startEvent.id,
-                        context.buildId,
+                        context.parentId,
                         System.currentTimeMillis(),
                         startEvent.message,
                         SuccessResultImpl()
@@ -224,7 +224,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         for (startEvent in startEvents) {
             val finishEvent = FinishEventImpl(
                 startEvent.id,
-                context.buildId,
+                context.parentId,
                 System.currentTimeMillis(),
                 startEvent.message,
                 when (failedTaskName) {
@@ -244,7 +244,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         messageConsumer: Consumer<in BuildEvent>
     ) {
         if (message in MESSAGES_TO_IGNORE) return
-        val messageEvent = createMessageEvent(context.workingDirectory, context.buildId, kind, message, detailedMessage)
+        val messageEvent = createMessageEvent(context.workingDirectory, context.parentId, kind, message, detailedMessage)
         if (messageEvents.add(messageEvent)) {
             messageConsumer.accept(messageEvent)
             if (kind == MessageEvent.Kind.ERROR) {
