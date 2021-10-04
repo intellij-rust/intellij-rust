@@ -521,7 +521,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
             val crateName = "cargo-expand"
-            val minVersion = SemVer("v0.4.9", 0, 4, 9)
+            val minVersion = SemVer("v1.0.0", 1, 0, 0)
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
