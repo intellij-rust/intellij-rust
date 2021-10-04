@@ -100,6 +100,10 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
+    grammarKit {
+        grammarKitRelease = "2021.1.2"
+    }
+
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
@@ -114,14 +118,26 @@ allprojects {
             untilBuild.set(prop("untilBuild"))
         }
 
-        buildSearchableOptions {
-            // buildSearchableOptions task doesn't make sense for non-root subprojects
-            val isRootProject = project.name == "plugin"
-            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
-        }
+        // All these tasks don't make sense for non-root subprojects
+        // Root project (i.e. `:plugin`) enables them itlsef if needed
+        runIde { enabled = false }
+        prepareSandbox { enabled = false }
+        buildSearchableOptions { enabled = false }
 
         test {
-            testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
+            // Drop when `org.jetbrains.intellij` plugin version will be at least 1.2.0
+            systemProperty("idea.force.use.core.classloader", "true")
+            testLogging {
+                showStandardStreams = prop("showStandardStreams").toBoolean()
+                afterSuite(
+                    KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+                        if (desc.parent == null) { // will match the outermost suite
+                            val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                            println(output)
+                        }
+                    })
+                )
+            }
             if (isCI) {
                 retry {
                     maxRetries.set(3)
@@ -278,6 +294,11 @@ project(":plugin") {
             // Set proper name for final plugin zip.
             // Otherwise, base name is the same as gradle module name
             archiveBaseName.set("intellij-rust")
+        }
+        runIde { enabled = true }
+        prepareSandbox { enabled = true }
+        buildSearchableOptions {
+            enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
 
         withType<PrepareSandboxTask> {
@@ -442,6 +463,14 @@ project(":toml") {
 
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
+    }
+    tasks {
+        // Set custom plugin directory name.
+        // Otherwise, `prepareSandbox`/`prepareTestingSandbox` tasks merge directories
+        // of `toml` plugin and `toml` module because of the same name into single one that's not expected
+        withType<PrepareSandboxTask> {
+            pluginName.set("rust-toml")
+        }
     }
 }
 

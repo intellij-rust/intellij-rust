@@ -1006,4 +1006,50 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             pub fn func() {}
         }
     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test cfg-disabled glob-import does not affect cfg-enabled one 1`() = checkByCode("""
+        fn main() {
+            let _ = Foo;
+        }         //^
+
+        pub use mod1::*;
+        mod mod1 {
+            #[cfg(not(intellij_rust))]
+            pub use mod2::*;
+            #[cfg(intellij_rust)]
+            pub use mod2::*;
+            mod mod2 {
+                macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+                as_is! { pub use mod3::*; }
+                mod mod3 {
+                    pub struct Foo;
+                }            //X
+            }
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test cfg-disabled glob-import does not affect cfg-enabled one 2`() = checkByCode("""
+        fn main() {
+            let _ = Foo;
+        }         //^
+
+        pub use mod1::*;
+        mod mod1 {
+            #[cfg(intellij_rust)]
+            pub use mod2::*;
+            #[cfg(not(intellij_rust))]
+            pub use mod2::*;
+            mod mod2 {
+                macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+                as_is! { pub use mod3::*; }
+                mod mod3 {
+                    pub struct Foo;
+                }            //X
+            }
+        }
+    """)
 }

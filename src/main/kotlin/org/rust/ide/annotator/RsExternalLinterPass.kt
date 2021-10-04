@@ -42,7 +42,7 @@ class RsExternalLinterPass(
     private val editor: Editor
 ) : TextEditorHighlightingPass(file.project, editor.document), DumbAware {
     @Suppress("UnstableApiUsage")
-    private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file))
+    private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file), false)
     @Volatile
     private var annotationInfo: Lazy<RsExternalLinterResult?>? = null
     private val annotationResult: RsExternalLinterResult? get() = annotationInfo?.value

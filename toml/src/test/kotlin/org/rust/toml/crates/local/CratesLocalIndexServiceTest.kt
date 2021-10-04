@@ -6,7 +6,10 @@
 package org.rust.toml.crates.local
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
 
+@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     fun `test index has many crates`() {
         assertTrue(cratesService.getAllCrateNames().size > 50_000)
