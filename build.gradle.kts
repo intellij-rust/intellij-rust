@@ -49,11 +49,11 @@ val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
-    kotlin("jvm") version "1.5.20"
-    id("org.jetbrains.intellij") version "1.1.3"
+    kotlin("jvm") version "1.5.31"
+    id("org.jetbrains.intellij") version "1.2.1"
     id("org.jetbrains.grammarkit") version "2021.1.3"
     id("net.saliman.properties") version "1.5.1"
-    id("org.gradle.test-retry") version "1.2.0"
+    id("org.gradle.test-retry") version "1.3.1"
 }
 
 idea {
@@ -125,8 +125,6 @@ allprojects {
         buildSearchableOptions { enabled = false }
 
         test {
-            // Drop when `org.jetbrains.intellij` plugin version will be at least 1.2.0
-            systemProperty("idea.force.use.core.classloader", "true")
             testLogging {
                 showStandardStreams = prop("showStandardStreams").toBoolean()
                 afterSuite(
