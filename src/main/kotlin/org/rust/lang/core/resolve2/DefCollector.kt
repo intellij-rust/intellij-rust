@@ -73,6 +73,7 @@ class DefCollector(
             // two cfg-disabled mods with same name (first one will be shadowed).
             // See [RsCfgAttrResolveTest.`test import inside expanded shadowed mod 1`].
             removeInvalidImportsAndMacroCalls(defMap, context)
+            sortImports(unresolvedImports)
 
             resolveImports()
             val changed = expandMacros()
@@ -87,11 +88,11 @@ class DefCollector(
     private fun resolveImports() {
         do {
             var hasChangedIndeterminateImports = false
-            val hasResolvedImports = unresolvedImports.inPlaceRemoveIf { import ->
+            val hasResolvedImports = unresolvedImports.removeIf { import ->
                 ProgressManager.checkCanceled()
                 when (val status = resolveImport(import)) {
                     is Indeterminate -> {
-                        if (import.status is Indeterminate && import.status == status) return@inPlaceRemoveIf false
+                        if (import.status is Indeterminate && import.status == status) return@removeIf false
 
                         import.status = status
                         val changed = recordResolvedImport(import)
@@ -508,6 +509,20 @@ private fun removeInvalidImportsAndMacroCalls(defMap: CrateDefMap, context: Coll
     collectChildMods(defMap.root, allMods)
     context.imports.removeIf { it.containingMod !in allMods }
     context.macroCalls.removeIf { it.containingMod !in allMods }
+}
+
+/**
+ * This is a workaround for some real-project cases. See:
+ * - [RsUseResolveTest.`test import adds same name as existing`]
+ * - https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
+ */
+private fun sortImports(imports: MutableList<Import>) {
+    imports.sortWith(
+        compareBy<Import> { it.visibility === Visibility.CfgDisabled }  // cfg-enabled imports first
+            .thenBy { it.isGlob }  // named imports first
+            .thenByDescending { it.nameInScope in it.containingMod.visibleItems }
+            .thenByDescending { it.containingMod.path.segments.size }  // imports from nested modules first
+    )
 }
 
 /**

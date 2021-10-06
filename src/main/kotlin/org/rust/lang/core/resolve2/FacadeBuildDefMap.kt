@@ -108,7 +108,6 @@ private fun buildDefMapContainingExplicitItems(
     val modCollectorContext = ModCollectorContext(defMap, crateRootData, context)
     collectFileAndCalculateHash(crateRoot, crateRootData, crateRootData.macroIndex, modCollectorContext)
 
-    sortImports(context.imports)
     return defMap
 }
 
@@ -186,20 +185,6 @@ private fun createExternCrateStdImport(defMap: CrateDefMap): Import? {
         nameInScope = if (defMap.metaData.edition == EDITION_2015) name else "_",
         visibility = defMap.root.visibilityInSelf,
         isExternCrate = true
-    )
-}
-
-/**
- * This is a workaround for some real-project cases. See:
- * - [RsUseResolveTest.`test import adds same name as existing`]
- * - https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
- */
-private fun sortImports(imports: MutableList<Import>) {
-    imports.sortWith(
-        // TODO: Profile & optimize
-        compareByDescending<Import> { it.nameInScope in it.containingMod.visibleItems }
-            .thenBy { it.isGlob }
-            .thenByDescending { it.containingMod.path.segments.size }  // imports from nested modules first
     )
 }
 

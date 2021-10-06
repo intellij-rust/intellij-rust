@@ -1014,4 +1014,26 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                  //^ unresolved
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/7215
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test usual import override glob-import`() = stubOnlyResolve("""
+    //- lib.rs
+        pub mod header {
+            pub struct HeaderMap;
+        }
+    //- main.rs
+        use http::HeaderMap;
+                //^ main.rs
+        pub mod header {
+            pub use test_package::header::*;
+            pub use map::HeaderMap;
+            mod map {
+                pub struct HeaderMap;
+            }            //x
+        }
+        pub mod http {
+            pub use crate::header::HeaderMap;
+        }
+    """)
 }
