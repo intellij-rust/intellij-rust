@@ -9,6 +9,8 @@ import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
@@ -33,6 +35,7 @@ import java.util.concurrent.ExecutorService
 import kotlin.math.ceil
 
 private const val CONSIDER_INDETERMINATE_IMPORTS_AS_RESOLVED: Boolean = false
+private val EXPAND_MACROS_IN_PARALLEL: RegistryValue = Registry.get("org.rust.resolve.new.engine.macros.parallel")
 
 /** Resolves all imports and expands macros (new items are added to [defMap]) using fixed point iteration algorithm */
 class DefCollector(
@@ -310,7 +313,7 @@ class DefCollector(
         if (macros.isEmpty()) return
         val batches = macros.splitInBatches(100)
 
-        val result = if (pool != null) {
+        val result = if (pool != null && EXPAND_MACROS_IN_PARALLEL.asBoolean()) {
             val indicator = indicator.toThreadSafeProgressIndicator()
             // Don't use `.parallelStream()` - for typical count of batches (10-20) it will run all tasks on current thread
             val tasks = batches.map { batch ->
