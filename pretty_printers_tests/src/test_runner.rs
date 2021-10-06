@@ -25,11 +25,11 @@ pub enum Debugger { LLDB, GDB }
 pub struct LLDBConfig {
     pub test_dir: String,
     pub pretty_printers_path: String,
+    pub print_stdout: bool,
+    pub lldb_python: String,
     pub lldb_batchmode: String,
     pub lldb_lookup: String,
-    pub lldb_python: String,
     pub python: String,
-    pub print_stdout: bool,
     pub native_rust: bool,
 }
 
@@ -37,10 +37,9 @@ pub struct LLDBConfig {
 pub struct GDBConfig {
     pub test_dir: String,
     pub pretty_printers_path: String,
+    pub print_stdout: bool,
     pub gdb: String,
     pub gdb_lookup: String,
-    pub print_stdout: bool,
-    pub native_rust: bool,
 }
 
 #[derive(Clone)]
@@ -119,13 +118,7 @@ impl<'test> GDBTestRunner<'test> {
 
 impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
     fn run(&self) -> TestResult {
-        let prefixes = if self.config.native_rust {
-            static PREFIXES: &'static [&'static str] = &["gdb", "gdbr"];
-            PREFIXES
-        } else {
-            static PREFIXES: &'static [&'static str] = &["gdb", "gdbg"];
-            PREFIXES
-        };
+        let prefixes: &'static [&'static str] = &["gdb"];
 
         // Parse debugger commands etc from test files
         let (commands, check_lines, breakpoint_lines) = match parse_debugger_commands(self.src_path, prefixes) {
@@ -164,9 +157,7 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
         script_str.push_str(&format!("file {}\n", exe_file.to_str().unwrap()));
 
         // Force GDB to print values in the Rust format.
-        if self.config.native_rust {
-            script_str.push_str("set language rust\n");
-        }
+        script_str.push_str("set language rust\n");
 
         // Add line breakpoints
         let source_file_name = self.src_path.file_name().unwrap().to_string_lossy();
@@ -222,6 +213,9 @@ impl<'test> LLDBTestRunner<'test> {
 
 impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
     fn run(&self) -> TestResult {
+        // If `native_rust = true` in the `Settings_%os%.toml` configuration file,
+        // the test runner will execute all commands that start with `lldb` or `lldbr`.
+        // Otherwise, the test runner will execute commands that start with `lldb` or `lldbg`.
         let prefixes = if self.config.native_rust {
             static PREFIXES: &'static [&'static str] = &["lldb", "lldbr"];
             PREFIXES

@@ -5,18 +5,18 @@
 // lldb-command:run
 
 // lldb-command:print xs
-// lldbg-check:[...]xs = size=4 { [0] = { 0 = 1 1 = 10 } [1] = { 0 = 2 1 = 20 } [2] = { 0 = 3 1 = 30 } [3] = { 0 = 4 1 = 40 } }
+// lldbr-check:[...]xs = size=4 { [0] = { 0 = 1 1 = 10 } [1] = { 0 = 2 1 = 20 } [2] = { 0 = 3 1 = 30 } [3] = { 0 = 4 1 = 40 } }
 // lldb-command:print ys
-// lldbg-check:[...]ys = size=4 { [0] = 1 [1] = 2 [2] = 3 [3] = 4 }
+// lldbr-check:[...]ys = size=4 { [0] = 1 [1] = 2 [2] = 3 [3] = 4 }
 
 // === GDB TESTS ===================================================================================
 
 // gdb-command:run
 
 // gdb-command:print xs
-// gdbg-check:[...]$1 = size=4 = {[1] = 10, [2] = 20, [3] = 30, [4] = 40}
+// gdb-check:[...]$1 = size=4 = {[1] = 10, [2] = 20, [3] = 30, [4] = 40}
 // gdb-command:print ys
-// gdbg-check:[...]$2 = size=4 = {1, 2, 3, 4}
+// gdb-check:[...]$2 = size=4 = {1, 2, 3, 4}
 
 
 use std::collections::{HashMap, HashSet};

@@ -3,19 +3,21 @@
 // lldb-command:run
 
 // lldb-command:print a
-// lldbg-check:[...]a = -1 [...]
+// lldbr-check:[...]a = -1 [...]
+// lldbg-check:[...]$0 = -1 [...]
 // lldb-command:print b
-// lldbg-check:[...]b = 1024 [...]
+// lldbr-check:[...]b = 1024 [...]
+// lldbg-check:[...]$1 = 1024 [...]
 
 // === GDB TESTS ===================================================================================
 
 // gdb-command:run
 
 // gdb-command:print a
-// gdbg-check:[...]$1 = -1
+// gdb-check:[...]$1 = -1
 
 // gdb-command:print b
-// gdbg-check:[...]$2 = 1024
+// gdb-check:[...]$2 = 1024
 
 use std::num::{NonZeroI32, NonZeroUsize};
 

@@ -5,10 +5,10 @@
 // gdb-command:run
 
 // gdb-command:print a
-// gdbg-check:[...]$1 = enum::EnumA::Var3 = {Var3 = enum::EnumA::Var3 = {a = 5, b = enum::TestEnumB::Var2 = {Var2 = enum::TestEnumB::Var2 = {a = 5, b = "hello", c = enum::EnumC[...] = {Var1 = size=1 = {8}}}}}}
+// gdb-check:[...]$1 = enum::EnumA::Var3 = {Var3 = enum::EnumA::Var3 = {a = 5, b = enum::TestEnumB::Var2 = {Var2 = enum::TestEnumB::Var2 = {a = 5, b = "hello", c = enum::EnumC[...] = {Var1 = size=1 = {8}}}}}}
 
 // gdb-command:print d
-// gdbg-check:[...]$2 = enum::EnumD
+// gdb-check:[...]$2 = enum::EnumD
 
 enum EnumA {
     Var1 { a: u32 },
