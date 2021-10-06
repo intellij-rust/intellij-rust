@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve2
 
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -22,7 +23,10 @@ import org.rust.lang.core.macros.MacroExpansionSharedCache
 import org.rust.openapiext.*
 import org.rust.stdext.getWithRethrow
 import org.rust.stdext.withLockAndCheckingCancelled
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.withLock
 import kotlin.system.measureTimeMillis
@@ -267,21 +271,21 @@ private fun Set<Crate>.topSort(topSortedCrates: List<Crate>): List<Crate> =
 /** Does not persist order of elements */
 private fun <T> Collection<T>.filterAsync(pool: Executor, predicate: (T) -> Boolean): List<T> {
     val result = ConcurrentLinkedQueue<T>()
-    val future = CompletableFuture<Unit>()
+    val future = SettableFuture.create<Unit>()
     val remainingCount = AtomicInteger(size)
 
     for (element in this) {
         pool.execute {
-            if (future.isCompletedExceptionally) return@execute
+            if (future.isDone) return@execute
             try {
                 if (predicate(element)) {
                     result += element
                 }
                 if (remainingCount.decrementAndGet() == 0) {
-                    future.complete(Unit)
+                    future.set(Unit)
                 }
             } catch (e: Throwable) {
-                future.completeExceptionally(e)
+                future.setException(e)
             }
         }
     }
