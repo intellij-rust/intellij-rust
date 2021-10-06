@@ -11,10 +11,10 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
+import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.testAssert
 import org.rust.stdext.optimizeList
@@ -63,8 +63,8 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         val namedImports = SmartList<CachedNamedImport>()
         val starImports = SmartList<CachedStarImport>()
         val macros = SmartList<RsMacro>()
-        val namedCfgEnabled: MutableMap<String, SmartList<RsItemElement>> = THashMap()
-        val namedCfgDisabled: MutableMap<String, SmartList<RsItemElement>> = THashMap()
+        val namedCfgEnabled: SmartListMap<String, RsItemElement> = SmartListMap()
+        val namedCfgDisabled: SmartListMap<String, RsItemElement> = SmartListMap()
         processExpandedItemsInternal { it, isEnabledByCfgSelf ->
             when {
                 // Optimization: impls are not named elements, so we don't need them for name resolution
@@ -93,7 +93,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                     if (it is RsForeignModItem) {
                         for (item in it.stubChildrenOfType<RsItemElement>()) {
                             val name = item.name ?: continue
-                            named.getOrPut(name) { SmartList() }.add(item)
+                            named.addValue(name, item)
                         }
                     } else {
                         val name = when (it) {
@@ -101,7 +101,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                             is RsFunction -> if (it.isProcMacroDef) it.procMacroName else it.name
                             else -> it.name
                         } ?: return@processExpandedItemsInternal false
-                        named.getOrPut(name) { SmartList() }.add(it)
+                        named.addValue(name, it)
                     }
                 }
             }

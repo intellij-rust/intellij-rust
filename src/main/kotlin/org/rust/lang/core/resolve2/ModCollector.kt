@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
-import com.intellij.util.SmartList
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
@@ -234,7 +233,7 @@ private class ModCollector(
             crateDescription = defMap.crateDescription
         )
         for ((name, defs) in modData.legacyMacros) {
-            childModData.legacyMacros[name] = SmartList(defs)
+            childModData.legacyMacros[name] = defs
         }
 
         val childModLegacyMacros = when (childMod) {
