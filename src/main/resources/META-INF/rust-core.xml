@@ -1121,6 +1121,8 @@
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
         <registryKey key="org.rust.resolve.new.engine" defaultValue="true" restartRequired="true"
                      description="Enables new name resolution engine"/>
+        <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="false" restartRequired="false"
+                     description="Expand macros in parallel"/>
 
         <!-- Move refactoring -->
 
