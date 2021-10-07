@@ -796,4 +796,62 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
         pub use foo::*;
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file`() = stubOnlyResolve("""
+    //- detached.rs
+        macro foo() {}
+            //X
+        fn main() {
+            foo!();
+        } //^ detached.rs
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file (to inline mod)`() = stubOnlyResolve("""
+    //- detached.rs
+        mod inner {
+            pub fn func() {}
+        }        //X
+        use inner::func;
+        fn main() {
+            func();
+        } //^ detached.rs
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file (in inline mod)`() = stubOnlyResolve("""
+    //- detached.rs
+        mod inner {
+            fn func() {}
+             //X
+            fn main() {
+                func();
+            } //^ detached.rs
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file (from inline mod)`() = stubOnlyResolve("""
+    //- detached.rs
+        fn func() {}
+         //X
+        mod inner {
+            fn main() {
+                super::func();
+            }        //^ detached.rs
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file (in inner mod)`() = stubOnlyResolve("""
+    //- detached.rs
+        mod inner;
+    //- detached/inner.rs
+        fn func() {}
+         //X
+        fn main() {
+            func();
+        } //^ detached/inner.rs
+    """)
 }

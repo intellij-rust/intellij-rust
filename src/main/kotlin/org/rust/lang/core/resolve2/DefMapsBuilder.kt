@@ -108,7 +108,7 @@ class DefMapsBuilder(
                 it to dependencyDefMap
             }
             .toMap(hashMapOf())
-        val defMap = buildDefMap(crate, allDependenciesDefMaps, poolForMacros, indicator)
+        val defMap = buildDefMap(crate, allDependenciesDefMaps, poolForMacros, indicator, isNormalCrate = true)
         defMapService.setDefMap(crateId, defMap)
         if (defMap != null) {
             builtDefMaps[crate] = defMap

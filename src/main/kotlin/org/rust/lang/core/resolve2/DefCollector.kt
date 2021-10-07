@@ -79,6 +79,7 @@ class DefCollector(
             resolveImports()
             val changed = expandMacros()
         } while (changed)
+        defMap.afterBuilt()
     }
 
     /**
@@ -363,14 +364,14 @@ class DefCollector(
 
     private fun expandIncludeMacroCall(call: MacroCallInfo) {
         val modData = call.containingMod
-        val containingFile = PersistentFS.getInstance().findFileById(modData.fileId) ?: return
+        val containingFile = PersistentFS.getInstance().findFileById(modData.fileId ?: return) ?: return
         val includePath = (call.body as? MacroCallBody.FunctionLike)?.text ?: return
         val parentDirectory = containingFile.parent
         val includingFile = parentDirectory.findFileByMaybeRelativePath(includePath)
         val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
         if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectFileAndCalculateHash(includingRsFile, call.containingMod, call.macroIndex, context)
+            collectFile(includingRsFile, call.containingMod, context, call.macroIndex)
         } else {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
@@ -384,7 +385,6 @@ class DefCollector(
         if (call.depth >= DEFAULT_RECURSION_LIMIT) return null
         return ModCollectorContext(
             defMap = defMap,
-            crateRoot = defMap.root,
             context = context,
             macroDepth = call.depth + 1,
             onAddItem = ::onAddItem
@@ -638,4 +638,13 @@ private fun Array<VisItem>.importType(): ImportType {
     val isFromNamedImport = first().isFromNamedImport
     testAssert { all { it.isFromNamedImport == isFromNamedImport } }
     return if (isFromNamedImport) NAMED else GLOB
+}
+
+private fun CrateDefMap.afterBuilt() {
+    root.visitDescendants {
+        it.isShadowedByOtherFile = false
+    }
+
+    // TODO: uncomment when #[cfg_attr] will be supported
+    // testAssert { missedFiles.isEmpty() }
 }

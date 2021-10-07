@@ -119,7 +119,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
         .mapValues { (item, paths) -> filterForSingleItem(paths, item) }
         .flatMap { (item, paths) ->
             val itemsPsi = item
-                .toPsi(rootDefMap, project)
+                .toPsi(rootInfo)
                 .filterIsInstance<RsQualifiedNamedElement>()
                 .let { list ->
                     if (pathInfo != null) {
@@ -314,8 +314,8 @@ private data class ItemWithNamespace(val path: ModPath, val isModOrEnum: Boolean
     override fun toString(): String = "$path ($namespace)"
 }
 
-private fun ItemWithNamespace.toPsi(defMap: CrateDefMap, project: Project): List<RsNamedElement> =
-    VisItem(path, Visibility.Public, isModOrEnum).toPsi(defMap, project, namespace)
+private fun ItemWithNamespace.toPsi(info: RsModInfo): List<RsNamedElement> =
+    VisItem(path, Visibility.Public, isModOrEnum).toPsi(info, namespace)
 
 private fun filterForSingleItem(paths: List<ItemUsePath>, item: ItemWithNamespace): List<ItemUsePath> =
     filterForSingleCrate(paths, item)

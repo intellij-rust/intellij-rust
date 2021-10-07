@@ -33,7 +33,6 @@ import org.rust.openapiext.toPsiFile
 
 class ModCollectorContext(
     val defMap: CrateDefMap,
-    val crateRoot: ModData,
     val context: CollectorContext,
     val macroDepth: Int = 0,
     /**
@@ -49,17 +48,23 @@ class ModCollectorContext(
 
 typealias LegacyMacros = Map<String, DeclMacroDefInfo>
 
-fun collectFileAndCalculateHash(
+fun collectFile(
     file: RsFile,
     modData: ModData,
-    modMacroIndex: MacroIndex,
-    context: ModCollectorContext
+    context: ModCollectorContext,
+    modMacroIndex: MacroIndex = modData.macroIndex,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
+        .takeIf { modData.isNormalCrate }
+
     val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null)
     collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
-    val fileHash = hashCalculator.getFileHash()
-    context.defMap.addVisitedFile(file, modData, fileHash)
+
+    if (hashCalculator != null) {
+        val fileHash = hashCalculator.getFileHash()
+        context.defMap.addVisitedFile(file, modData, fileHash)
+    }
+
     return collector.legacyMacros
 }
 
@@ -90,7 +95,6 @@ private class ModCollector(
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
-    private val crateRoot: ModData = context.crateRoot
     private val macroDepth: Int = context.macroDepth
     private val onAddItem: (ModData, String, PerNs, Visibility) -> Boolean = context.onAddItem
     private val crate: Crate = context.context.crate
@@ -199,7 +203,7 @@ private class ModCollector(
             modData.addLegacyMacros(childModLegacyMacros)
             legacyMacros += childModLegacyMacros
         }
-        if (childModData.isRsFile && childModData.hasPathAttributeRelativeToParentFile) {
+        if (childModData.isRsFile && childModData.hasPathAttributeRelativeToParentFile && childModData.fileId != null) {
             modData.recordChildFileInUnusualLocation(childModData.fileId)
         }
         return childModData
@@ -248,12 +252,7 @@ private class ModCollector(
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
             }
-            is ChildMod.File -> collectFileAndCalculateHash(
-                childMod.file,
-                childModData,
-                childModData.macroIndex,
-                context
-            )
+            is ChildMod.File -> collectFile(childMod.file, childModData, context)
         }
         return Pair(childModData, childModLegacyMacros)
     }
@@ -357,7 +356,7 @@ private class ModCollector(
             val visibility = Visibility.Public
             val visItem = VisItem(macroPath, visibility)
             val perNs = PerNs.macros(visItem)
-            onAddItem(crateRoot, def.name, perNs, visibility)
+            onAddItem(defMap.root, def.name, perNs, visibility)
         }
     }
 
@@ -407,10 +406,10 @@ private class ModCollector(
         if (!isDeeplyEnabledByCfg) return Visibility.CfgDisabled
         return when (visibility) {
             VisibilityLight.Public -> Visibility.Public
-            VisibilityLight.RestrictedCrate -> crateRoot.visibilityInSelf
+            VisibilityLight.RestrictedCrate -> defMap.root.visibilityInSelf
             VisibilityLight.Private -> modData.visibilityInSelf
             is VisibilityLight.Restricted -> {
-                resolveRestrictedVisibility(visibility.inPath, modData) ?: crateRoot.visibilityInSelf
+                resolveRestrictedVisibility(visibility.inPath, modData) ?: defMap.root.visibilityInSelf
             }
         }
     }
@@ -451,6 +450,7 @@ private class ModCollector(
 }
 
 fun RsFile.getOrBuildStub(): RsFileStub? {
+    val virtualFile = viewProvider.virtualFile
     val stubTree = greenStubTree ?: StubTreeLoader.getInstance().readOrBuild(project, virtualFile, this)
     val stub = stubTree?.root as? RsFileStub
     if (stub == null) RESOLVE_LOG.error("No stub for file ${virtualFile.path}")
@@ -486,7 +486,7 @@ private fun ModData.getOwnedDirectory(): VirtualFile? {
 
 private fun ModData.asVirtualFile(): VirtualFile? {
     check(isRsFile)
-    return PersistentFS.getInstance().findFileById(fileId)
+    return PersistentFS.getInstance().findFileById(fileId ?: return null)
         ?: run {
             RESOLVE_LOG.error("Can't find VirtualFile for $this")
             return null

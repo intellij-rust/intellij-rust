@@ -52,15 +52,17 @@ data class ImportContext private constructor(
 }
 
 class ImportContext2 private constructor(
-    val project: Project,
+    /** Info of mod in which auto-import or completion is called */
+    val rootInfo: RsModInfoBase.RsModInfo,
     /** Mod in which auto-import or completion is called */
     val rootMod: RsMod,
-    val rootModData: ModData,
-    /** DefMap of [rootModData] */
-    val rootDefMap: CrateDefMap,
 
     val pathInfo: PathInfo?,
 ) {
+    val project: Project get() = rootInfo.project
+    val rootModData: ModData get() = rootInfo.modData
+    val rootDefMap: CrateDefMap get() = rootInfo.defMap
+
     companion object {
         fun from(path: RsPath, isCompletion: Boolean): ImportContext2? =
             from(path, PathInfo.from(path, isCompletion))
@@ -68,13 +70,7 @@ class ImportContext2 private constructor(
         fun from(context: RsElement, pathInfo: PathInfo? = null): ImportContext2? {
             val rootMod = context.containingMod
             val info = getModInfo(rootMod) as? RsModInfoBase.RsModInfo ?: return null
-            return ImportContext2(
-                project = info.project,
-                rootMod = rootMod,
-                rootModData = info.modData,
-                rootDefMap = info.defMap,
-                pathInfo = pathInfo,
-            )
+            return ImportContext2(info, rootMod, pathInfo)
         }
     }
 

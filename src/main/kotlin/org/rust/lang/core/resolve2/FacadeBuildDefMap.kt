@@ -31,16 +31,19 @@ fun buildDefMap(
     crate: Crate,
     allDependenciesDefMaps: Map<Crate, CrateDefMap>,
     pool: ExecutorService?,
-    indicator: ProgressIndicator
+    indicator: ProgressIndicator,
+    isNormalCrate: Boolean,
 ): CrateDefMap? {
     checkReadAccessAllowed()
     val project = crate.project
     check(project.isNewResolveEnabled)
     val context = CollectorContext(crate, project)
-    val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps) ?: return null
+    val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps, isNormalCrate)
+        ?: return null
     DefCollector(project, defMap, context, pool, indicator).collect()
-    defMap.afterBuilt()
-    testAssert({ !isCrateChanged(crate, defMap) }, { "DefMap $defMap should be up-to-date just after built" })
+    testAssert({ !isNormalCrate || !isCrateChanged(crate, defMap) }, {
+        "DefMap $defMap should be up-to-date just after built"
+    })
     return defMap
 }
 
@@ -58,22 +61,25 @@ class CollectorContext(
 
 private fun buildDefMapContainingExplicitItems(
     context: CollectorContext,
-    allDependenciesDefMaps: Map<Crate, CrateDefMap>
+    allDependenciesDefMaps: Map<Crate, CrateDefMap>,
+    isNormalCrate: Boolean,
 ): CrateDefMap? {
     val crate = context.crate
     val crateId = crate.id ?: return null
     val crateRoot = crate.rootMod ?: return null
 
-    val crateRootFile = crate.rootModFile ?: return null
-    if (!shouldIndexFile(context.project, crateRootFile)) return null
+    if (isNormalCrate) {
+        check(crateId >= 0)
+        val crateRootFile = crate.rootModFile ?: return null
+        if (!shouldIndexFile(context.project, crateRootFile)) return null
+    }
 
     val stdlibAttributes = crateRoot.getStdlibAttributes(crate)
     val dependenciesInfo = getDependenciesDefMaps(crate, allDependenciesDefMaps, stdlibAttributes)
 
-    val crateRootOwnedDirectory = crateRoot.virtualFile?.parent
-        ?: error("Can't find parent directory for crate root of $crate crate")
     val crateDescription = crate.toString()
     val rootModMacroIndex = allDependenciesDefMaps.values.map { it.rootModMacroIndex + 1 }.maxOrNull() ?: 0
+    val rootVirtualFile = if (isNormalCrate) crateRoot.virtualFile else null
     val crateRootData = ModData(
         parent = null,
         crate = crateId,
@@ -81,11 +87,12 @@ private fun buildDefMapContainingExplicitItems(
         macroIndex = MacroIndex(intArrayOf(rootModMacroIndex)),
         isDeeplyEnabledByCfgOuter = true,
         isEnabledByCfgInner = crateRoot.isEnabledByCfgSelf(crate),
-        fileId = crateRoot.virtualFile.fileId,
+        fileId = rootVirtualFile?.fileId,
         fileRelativePath = "",
-        ownedDirectoryId = crateRootOwnedDirectory.fileId,
+        ownedDirectoryId = rootVirtualFile?.parent?.fileId,
         hasPathAttribute = false,
         hasMacroUse = false,
+        isNormalCrate = isNormalCrate,
         crateDescription = crateDescription
     )
     val defMap = CrateDefMap(
@@ -105,8 +112,8 @@ private fun buildDefMapContainingExplicitItems(
         context.imports += it
         defMap.importExternCrateMacros(it.usePath.single())
     }
-    val modCollectorContext = ModCollectorContext(defMap, crateRootData, context)
-    collectFileAndCalculateHash(crateRoot, crateRootData, crateRootData.macroIndex, modCollectorContext)
+    val modCollectorContext = ModCollectorContext(defMap, context)
+    collectFile(crateRoot, defMap.root, modCollectorContext)
 
     return defMap
 }
@@ -186,13 +193,4 @@ private fun createExternCrateStdImport(defMap: CrateDefMap): Import? {
         visibility = defMap.root.visibilityInSelf,
         isExternCrate = true
     )
-}
-
-private fun CrateDefMap.afterBuilt() {
-    root.visitDescendants {
-        it.isShadowedByOtherFile = false
-    }
-
-    // TODO: uncomment when #[cfg_attr] will be supported
-    // testAssert { missedFiles.isEmpty() }
 }

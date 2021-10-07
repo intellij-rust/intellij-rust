@@ -66,6 +66,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Pair
 import kotlin.reflect.KProperty
 
 val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
@@ -397,6 +398,25 @@ class CachedValueDelegate<T>(provider: () -> CachedValueProvider.Result<T>) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
         return cachedValue.value
     }
+}
+
+/**
+ * Returns result of [provider] and store it in [dataHolder] among with [dependency].
+ * If stored dependency equals [dependency], then returns stored result, without invoking [provider].
+ */
+fun <T, D> getCachedOrCompute(
+    dataHolder: UserDataHolder,
+    key: Key<Pair<T, D>>,
+    dependency: D,
+    provider: () -> T
+): T {
+    val oldResult = dataHolder.getUserData(key)
+    if (oldResult != null && oldResult.second == dependency) {
+        return oldResult.first
+    }
+    val value = provider()
+    dataHolder.putUserData(key, value to dependency)
+    return value
 }
 
 inline fun <R> nonBlocking(project: Project, crossinline block: () -> R, crossinline uiContinuation: (R) -> Unit) {

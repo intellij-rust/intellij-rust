@@ -17,13 +17,13 @@ data class NamedItem(val name: String, val item: RsNamedElement)
 
 /** List of items added to [context] by glob import to [this] */
 fun RsMod.exportedItems(context: RsMod): List<NamedItem> {
-    val (project, defMap, modData) = getModInfo(this) as? RsModInfo ?: return emptyList()
+    val info = getModInfo(this) as? RsModInfo ?: return emptyList()
     val contextInfo = getModInfo(context) as? RsModInfo ?: return emptyList()
-    return modData
+    return info.modData
         .getVisibleItems { it.isVisibleFromMod(contextInfo.modData) }
         .flatMap { (name, perNs) ->
             perNs.allVisItems().flatMap { (visItem, namespace) ->
-                val items = visItem.toPsi(defMap, project, namespace)
+                val items = visItem.toPsi(info, namespace)
                 items.map { NamedItem(name, it) }
             }
         }
@@ -41,7 +41,7 @@ private fun PerNs.allVisItems(): Array<Pair<VisItem, Namespace>> =
  */
 fun RsMod.getDirectoryContainedAllChildFiles(): VirtualFile? {
     val (_, _, modData) = getModInfo(this) as? RsModInfo ?: return null
-    return PersistentFS.getInstance().findFileById(modData.directoryContainedAllChildFiles)
+    return PersistentFS.getInstance().findFileById(modData.directoryContainedAllChildFiles ?: return null)
 }
 
 fun CrateDefMap.hasTransitiveGlobImport(source: RsMod, target: RsMod): Boolean {
