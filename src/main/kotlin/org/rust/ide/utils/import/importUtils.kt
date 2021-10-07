@@ -24,38 +24,10 @@ import org.rust.stdext.isSortedWith
 fun ImportCandidate.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
-    // depth of `mod` relative to module with `extern crate` item
-    // we uses this info to create correct relative use item path if needed
-    var relativeDepth: Int? = null
 
-    val isAtLeastEdition2018 = context.isAtLeastEdition2018
-    val info = info
-    // if crate of importing element differs from current crate
-    // we need to add new extern crate item
-    if (info is ImportInfo.ExternCrateImportInfo) {
-        val crate = info.crate
-        val crateRoot = context.crateRoot
-        val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
-        when {
-            // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
-            // we don't add corresponding extern crate item manually
-            // because it will be done by compiler implicitly
-            attributes == RsFile.Attributes.NONE && crate.isStd -> Testmarks.autoInjectedStdCrate.hit()
-            // if crate of imported element is `core` and there is `#![no_std]`
-            // we don't add corresponding extern crate item manually for the same reason
-            attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
-            else -> {
-                if (info.needInsertExternCrateItem && !isAtLeastEdition2018) {
-                    crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
-                } else {
-                    if (info.depth != null) {
-                        Testmarks.externCrateItemInNotCrateRoot.hit()
-                        relativeDepth = info.depth
-                    }
-                }
-            }
-        }
-    }
+    // depth of `mod` relative to module with `extern crate` item
+    // we use this info to create correct relative use item path if needed
+    val relativeDepth = info.insertExternCrateIfNeeded(context)
     val prefix = when (relativeDepth) {
         null -> ""
         0 -> "self::"
@@ -78,6 +50,38 @@ fun ImportCandidate.import(context: RsElement) {
     } ?: context.containingMod
     insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
 }
+
+/**
+ * Inserts an `extern crate` item if the crate of importing element differs from the crate of `context`.
+ * Returns the relative depth of context `mod` relative to module with `extern crate` item.
+ */
+fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
+    if (this is ImportInfo.ExternCrateImportInfo) {
+        val crateRoot = context.crateRoot
+        val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
+        when {
+            // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
+            // we don't add corresponding extern crate item manually
+            // because it will be done by compiler implicitly
+            attributes == RsFile.Attributes.NONE && crate.isStd -> Testmarks.autoInjectedStdCrate.hit()
+            // if crate of imported element is `core` and there is `#![no_std]`
+            // we don't add corresponding extern crate item manually for the same reason
+            attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
+            else -> {
+                if (needInsertExternCrateItem && !context.isAtLeastEdition2018) {
+                    crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
+                } else {
+                    if (depth != null) {
+                        Testmarks.externCrateItemInNotCrateRoot.hit()
+                        return depth
+                    }
+                }
+            }
+        }
+    }
+    return null
+}
+
 
 private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
     val externCrateItem = psiFactory.createExternCrateItem(crateName)
