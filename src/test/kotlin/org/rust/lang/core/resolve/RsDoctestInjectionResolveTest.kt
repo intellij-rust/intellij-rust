@@ -95,4 +95,47 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         macro_rules! bar { () => {}; }
                    //X
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve to inline mod`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// mod inner {
+        ///     pub fn func() {}
+        /// }
+        /// use inner::func;
+        /// fn main() {
+        ///     func();
+        /// } //^ ...lib.rs
+        /// ```
+        fn foo() {}
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in inline mod`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// mod inner {
+        ///     fn func() {}
+        ///     fn main() {
+        ///         func();
+        ///     } //^ ...lib.rs
+        /// }
+        /// ```
+        fn foo() {}
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve to super mod`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// fn func() {}
+        /// mod inner {
+        ///     fn main() {
+        ///         super::func();
+        ///     }        //^ ...lib.rs
+        /// }
+        /// ```
+        fn foo() {}
+    """)
 }
