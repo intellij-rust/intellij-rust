@@ -971,6 +971,7 @@ class ImplLookup(
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.Sized)
     fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.Debug)
     fun isDefault(ty: Ty): Boolean = ty.isTraitImplemented(items.Default)
+    fun isEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.Eq, rhsType)
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
     fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
     fun isAnyFn(ty: Ty): Boolean = isFn(ty) || isFnOnce(ty) || isFnMut(ty)

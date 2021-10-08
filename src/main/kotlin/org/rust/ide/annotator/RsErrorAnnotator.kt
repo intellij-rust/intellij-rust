@@ -21,12 +21,14 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
@@ -1347,6 +1349,12 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     val ty = typeReference?.type ?: return
     if (ty !is TyInteger && ty !is TyBool && ty !is TyChar) {
         ADT_CONST_PARAMS.check(holder, typeReference, "adt const params")
+    }
+
+    val lookup = ImplLookup.relativeTo(constParameter)
+    if (ProcMacroApplicationService.isEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
+        RsDiagnostic.NonStructuralMatchTypeAsConstGenericParameter(typeReference, ty.shortPresentableText)
+            .addToHolder(holder)
     }
 }
 
