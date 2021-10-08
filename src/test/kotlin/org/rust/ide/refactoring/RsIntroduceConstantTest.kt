@@ -147,6 +147,23 @@ class RsIntroduceConstantTest : RsTestBase() {
         }
     """, replaceAll = true)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test expression containing a constant`() = doTest("""
+        const C: i32 = 1;
+
+        fn foo() {
+            let x = /*caret*/C + 2;
+        }
+    """, listOf("fn foo", "file"), 1, """
+        const C: i32 = 1;
+
+        const I: i32 = C + 2;
+
+        fn foo() {
+            let x = I;
+        }
+    """, expression = "C + 2")
+
     private fun doTest(
         @Language("Rust") before: String,
         candidate: List<String>,

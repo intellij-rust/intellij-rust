@@ -18,13 +18,30 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.isConst
+import org.rust.openapiext.nonBlocking
 import org.rust.openapiext.runWriteCommandAction
 
 class RsIntroduceConstantHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is RsFile) return
-        val exprs = findCandidateExpressionsToExtract(editor, file).filter { it.isExtractable() }
+        val exprs = findCandidateExpressionsToExtract(editor, file)
 
+        // isExtractable uses resolve, so we must not call it from EDT
+        nonBlocking(project, {
+            exprs.filter { it.isExtractable() }
+        }) {
+            if (!editor.isDisposed) {
+                handleExpressions(project, editor, it)
+            }
+        }
+    }
+
+    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
+        //this doesn't get called from the editor.
+    }
+
+    private fun handleExpressions(project: Project, editor: Editor, exprs: List<RsExpr>) {
         when (exprs.size) {
             0 -> {
                 val message = RefactoringBundle.message(if (editor.selectionModel.hasSelection())
@@ -44,16 +61,16 @@ class RsIntroduceConstantHandler : RefactoringActionHandler {
             }
         }
     }
-
-    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        //this doesn't get called from the editor.
-    }
 }
 
 private fun RsExpr.isExtractable(): Boolean {
     return when (this) {
         is RsLitExpr -> true
         is RsBinaryExpr -> this.left.isExtractable() && (this.right?.isExtractable() ?: true)
+        is RsPathExpr -> {
+            val target = path.reference?.resolve() as? RsConstant
+            target?.isConst == true
+        }
         else -> false
     }
 }
