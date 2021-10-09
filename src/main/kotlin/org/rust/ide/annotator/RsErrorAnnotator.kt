@@ -324,7 +324,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val declaration = patTupleStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
 
         val declarationFieldsAmount = declaration.fields.size
-        val bodyFieldsAmount = patTupleStruct.patList.size
+        // Rest is non-binding, meaning it is accepted even if all fields are already bound
+        val bodyFieldsAmount = patTupleStruct.patList.filterNot { it is RsPatRest }.size
         if (bodyFieldsAmount < declarationFieldsAmount && patTupleStruct.patRest == null) {
             RsDiagnostic.MissingFieldsInTuplePattern(
                 patTupleStruct,
