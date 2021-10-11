@@ -12,6 +12,10 @@ struct F<
     const N10: bool = !true
 >();
 
+struct S<const N: Z>;
+struct Z<const N: usize>;
+
 fn main() {
     F::<{ S1 }, 1, { 1 + 1 }, 1 + 1, { [1] }, 1 as usize, { foo(42) }, { S2 { x: 1 } }, { C.0 }, -1, { !true }>();
+    S::<Z::<1>>;
 }

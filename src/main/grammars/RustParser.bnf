@@ -1125,7 +1125,7 @@ MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp <<setStmtMode 'Stmt
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
 RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt <<checkGtAllowed>> '>' { name = "operator" }
-BitShiftBinOp    ::= ltlt | gtgt { name = "operator" }
+BitShiftBinOp    ::= ltlt | <<checkGtAllowed>> gtgt { name = "operator" }
 AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
 
