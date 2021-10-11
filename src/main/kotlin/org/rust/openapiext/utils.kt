@@ -8,6 +8,8 @@ package org.rust.openapiext
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -53,6 +55,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.rust.cargo.RustfmtWatcher
@@ -68,6 +71,11 @@ val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTe
 val isHeadlessEnvironment: Boolean get() = ApplicationManager.getApplication().isHeadlessEnvironment
 val isDispatchThread: Boolean get() = ApplicationManager.getApplication().isDispatchThread
 val isInternal: Boolean get() = ApplicationManager.getApplication().isInternal
+val isUnderDarkTheme: Boolean
+    get() {
+        val lookAndFeel = LafManager.getInstance().currentLookAndFeel as? UIThemeBasedLookAndFeelInfo
+        return lookAndFeel?.theme?.isDark == true || UIUtil.isUnderDarcula()
+    }
 
 fun <T> Project.runWriteCommandAction(command: () -> T): T {
     return WriteCommandAction.runWriteCommandAction(this, Computable { command() })
