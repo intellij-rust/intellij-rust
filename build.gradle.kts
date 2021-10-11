@@ -339,6 +339,15 @@ project(":plugin") {
             channels.set(listOf(channel))
         }
     }
+
+    // Generates event scheme for Rust plugin FUS events to `plugin/build/eventScheme.json`
+    task<RunIdeTask>("buildEventsScheme") {
+        dependsOn(tasks.prepareSandbox)
+        args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
+
+        // BACKCOMPAT: 2021.2
+        enabled = platformVersion >= 213
+    }
 }
 
 project(":") {
