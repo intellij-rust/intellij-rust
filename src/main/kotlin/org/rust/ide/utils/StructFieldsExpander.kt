@@ -30,7 +30,7 @@ fun addMissingFieldsToStructLiteral(
         body,
         declaration.fields,
         fieldsToAdd,
-        structLiteral.getVisibleBindings()
+        structLiteral.getLocalVariableVisibleBindings()
     )
     editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr?.createSmartPointer() })
 }

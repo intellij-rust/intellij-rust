@@ -164,6 +164,71 @@ class RsIntroduceConstantTest : RsTestBase() {
         }
     """, expression = "C + 2")
 
+    fun `test name collision file scope 1`() = doTest("""
+        const I: i32 = 6;
+
+        fn foo() {
+            let x = /*caret*/5;
+            let y = I;
+        }
+    """, listOf("fn foo", "file"), 1, """
+        const I: i32 = 6;
+
+        const I1: i32 = 5;
+
+        fn foo() {
+            let x = I1;
+            let y = I;
+        }
+    """, replaceAll = true)
+
+    fun `test name collision file scope 2`() = doTest("""
+        fn foo() {
+            let x = /*caret*/5;
+            let y = I;
+        }
+
+        const I: i32 = 6;
+    """, listOf("fn foo", "file"), 1, """
+        const I1: i32 = 5;
+
+        fn foo() {
+            let x = I1;
+            let y = I;
+        }
+
+        const I: i32 = 6;
+    """, replaceAll = true)
+
+    fun `test name collision file scope respect binding seen by usage`() = doTest("""
+        fn foo(I: i32) {
+            let x = /*caret*/0;
+        }
+    """, listOf("fn foo", "file"), 1, """
+        const I1: i32 = 0;
+
+        fn foo(I: i32) {
+            let x = I1;
+        }
+    """, replaceAll = true)
+
+    fun `test name collision function scope`() = doTest("""
+        fn foo() {
+            const I: i32 = 6;
+
+            let x = /*caret*/5;
+            let y = I;
+        }
+    """, listOf("fn foo", "file"), 0, """
+        fn foo() {
+            const I: i32 = 6;
+
+            const I1: i32 = 5;
+            let x = I1;
+            let y = I;
+        }
+    """, replaceAll = true)
+
     private fun doTest(
         @Language("Rust") before: String,
         candidate: List<String>,
@@ -183,7 +248,10 @@ class RsIntroduceConstantTest : RsTestBase() {
                 if (replaceAll) occurrences else listOf(expr)
         }) {
             withMockExtractConstantChooser(object : ExtractConstantUi {
-                override fun chooseInsertionPoint(expr: RsExpr, candidates: List<InsertionCandidate>): InsertionCandidate {
+                override fun chooseInsertionPoint(
+                    expr: RsExpr,
+                    candidates: List<InsertionCandidate>
+                ): InsertionCandidate {
                     assertEquals(candidates.map { it.description() }, candidate)
                     return candidates[targetCandidate]
                 }

@@ -22,10 +22,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processLocalVariables
-import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.lang.core.resolve.*
 
 interface RsElement : PsiElement {
     /**
@@ -143,13 +140,25 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
 fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
     findInScope(name, ns) != null
 
-fun RsElement.getVisibleBindings(): Map<String, RsPatBinding> {
+fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
     val bindings = HashMap<String, RsPatBinding>()
     processLocalVariables(this) { variable ->
         variable.name?.let {
             bindings[it] = variable
         }
     }
+    return bindings
+}
+
+fun RsElement.getAllVisibleBindings(): Set<String> {
+    val bindings = mutableSetOf<String>()
+    val processor = createProcessor { entry ->
+        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
+        val name = element.name ?: return@createProcessor false
+        bindings.add(name)
+        false
+    }
+    processNestedScopesUpwards(this, VALUES, processor)
     return bindings
 }
 

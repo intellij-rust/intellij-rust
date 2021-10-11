@@ -66,7 +66,7 @@ fun Ty.suggestedNames(context: PsiElement, additionalNamesInScope: Set<String> =
     return finalizeNameSelection(context, names, additionalNamesInScope)
 }
 
-private fun freshenName(name: String, usedNames: Set<String>): String {
+fun freshenName(name: String, usedNames: Set<String>): String {
     var newName = name
     var i = 1
     while (i < FRESHEN_LIMIT && usedNames.contains(newName)) {

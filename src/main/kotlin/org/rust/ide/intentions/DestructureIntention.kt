@@ -21,9 +21,6 @@ import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
@@ -256,16 +253,4 @@ private sealed class ReplaceContext {
         val fieldNames: List<String>,
         val structName: String? = null
     ) : ReplaceContext()
-}
-
-private fun RsElement.getAllVisibleBindings(): Set<String> {
-    val bindings = mutableSetOf<String>()
-    val processor = createProcessor { entry ->
-        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
-        val name = element.name ?: return@createProcessor false
-        bindings.add(name)
-        false
-    }
-    processNestedScopesUpwards(this, VALUES, processor)
-    return bindings
 }
