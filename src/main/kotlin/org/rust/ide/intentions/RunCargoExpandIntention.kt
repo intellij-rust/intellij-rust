@@ -6,17 +6,15 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallCargoExpand
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.isUnderDarkTheme
 import org.rust.stdext.buildList
 
 class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>(), LowPriorityAction {
@@ -43,7 +41,7 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
         val (cargoProject, cargoTarget, crateRelativePath) = ctx
         if (checkNeedInstallCargoExpand(cargoProject.project)) return
 
-        val theme = if (isUnderDarkTheme()) "Dracula" else "GitHub"
+        val theme = if (isUnderDarkTheme) "Dracula" else "GitHub"
         val additionalArguments = buildList<String> {
             add("--color=always")
             add("--theme=$theme")
@@ -59,11 +57,6 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
             additionalArguments,
             usePackageOption = false
         ).run(cargoProject, "Expand ${cargoTarget.normName}$crateRelativePath")
-    }
-
-    private fun isUnderDarkTheme(): Boolean {
-        val lookAndFeel = LafManager.getInstance().currentLookAndFeel
-        return lookAndFeel is UIThemeBasedLookAndFeelInfo && lookAndFeel.theme.isDark || UIUtil.isUnderDarcula()
     }
 
     companion object {

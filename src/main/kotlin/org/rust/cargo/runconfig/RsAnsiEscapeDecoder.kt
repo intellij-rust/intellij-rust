@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import org.rust.openapiext.isUnderDarkTheme
 import org.rust.stdext.nextOrNull
 import java.awt.Color
 import kotlin.math.roundToInt
@@ -126,7 +127,9 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
         private fun getColorAttribute(realAnsiColor: Ansi4BitColor, isForeground: Boolean): Int {
             // Rude hack for Windows: map the bright white foreground color to black.
             // See https://github.com/intellij-rust/intellij-rust/pull/3312#issue-249111003
-            val ansiColor = if (realAnsiColor == Ansi4BitColor.BRIGHT_WHITE && isForeground && SystemInfo.isWindows) {
+            val isForcedWhiteFontUnderLightTheme = realAnsiColor == Ansi4BitColor.BRIGHT_WHITE &&
+                isForeground && SystemInfo.isWindows && !isUnderDarkTheme
+            val ansiColor = if (isForcedWhiteFontUnderLightTheme) {
                 Ansi4BitColor.BLACK
             } else {
                 realAnsiColor
