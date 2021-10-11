@@ -164,6 +164,9 @@ class RsPsiFactory(
         return structLiteralField
     }
 
+    fun createStructNamedField(text: String): RsNamedFieldDecl =
+        createFromText("struct S { $text }") ?: error("Failed to create block fields")
+
     data class BlockField(val name: String, val type: Ty, val addPub: Boolean)
 
     data class TupleField(val type: Ty, val addPub: Boolean)
