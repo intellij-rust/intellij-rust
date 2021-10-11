@@ -3353,6 +3353,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test no errors when correct field amount in tuple struct with rest pat`() = checkErrors("""
+        struct Foo (i32, i32, i32);
+
+        fn main() {
+            let foo = Foo(1,2,3);
+            let Foo (a, b, c, ..) = foo;
+        }
+    """)
+
     fun `test missing fields in tuple struct`() = checkErrors("""
         struct Foo (i32, i32, i32);
 
@@ -3366,6 +3375,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn main() {
             let <error descr="Extra fields found in the tuple struct pattern: expected 3, found 4 [E0023]">Foo (a, b, c, d)</error> = foo;
+        }
+    """)
+
+    fun `test extra fields in tuple struct with rest pat`() = checkErrors("""
+        struct Foo (i32, i32, i32);
+
+        fn main() {
+            let <error descr="Extra fields found in the tuple struct pattern: expected 3, found 4 [E0023]">Foo (a, b, c, d, ..)</error> = foo;
         }
     """)
 
