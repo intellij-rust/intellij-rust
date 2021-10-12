@@ -503,7 +503,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallGrcov(project: Project): Boolean {
             val crateName = "grcov"
-            val minVersion = SemVer.parseFromText("0.4.3")
+            val minVersion = SemVer.parseFromText("0.7.0")
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
