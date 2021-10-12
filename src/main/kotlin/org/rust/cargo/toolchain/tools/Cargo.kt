@@ -417,7 +417,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
     fun checkNeedInstallCargoGenerate(): Boolean {
         val crateName = "cargo-generate"
-        val minVersion = SemVer("v0.9.0", 0, 9, 0)
+        val minVersion = SemVer.parseFromText("0.9.0")
         return checkBinaryCrateIsNotInstalled(crateName, minVersion)
     }
 
@@ -503,7 +503,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallGrcov(project: Project): Boolean {
             val crateName = "grcov"
-            val minVersion = SemVer("v0.4.3", 0, 4, 3)
+            val minVersion = SemVer.parseFromText("0.4.3")
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -515,7 +515,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
             val crateName = "cargo-expand"
-            val minVersion = SemVer("v1.0.0", 1, 0, 0)
+            val minVersion = SemVer.parseFromText("1.0.0")
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -527,7 +527,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallEvcxr(project: Project): Boolean {
             val crateName = "evcxr_repl"
-            val minVersion = SemVer("v0.10.0", 0, 10, 0)
+            val minVersion = SemVer.parseFromText("0.10.0")
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -539,7 +539,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallWasmPack(project: Project): Boolean {
             val crateName = "wasm-pack"
-            val minVersion = SemVer("v0.9.1", 0, 9, 1)
+            val minVersion = SemVer.parseFromText("0.9.1")
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
