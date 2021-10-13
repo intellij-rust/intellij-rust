@@ -45,6 +45,12 @@ class CargoProjectGenerationTest : RsWithToolchainTestBase() {
     }
 
     fun `test wasm-pack project generation`() = checkTemplate(RsCustomTemplate.WasmPackTemplate) {
+        dir(".cargo") {
+            file("config.toml", """
+                [build]
+                target = "wasm32-unknown-unknown"
+            """)
+        }
         dir("src") {
             file("lib.rs")
             file("utils.rs")
