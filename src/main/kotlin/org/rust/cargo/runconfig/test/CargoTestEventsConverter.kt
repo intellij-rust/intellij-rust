@@ -173,6 +173,7 @@ class CargoTestEventsConverter(
         val messages = mutableListOf<ServiceMessageBuilder>()
         when (suiteMessage.event) {
             "started" -> {
+                processor.onTestsReporterAttached()
                 if (suiteMessage.test_count.toInt() == 0) return emptyList()
                 messages.add(createTestSuiteStartedMessage(target))
                 messages.add(createTestCountMessage(suiteMessage.test_count))
