@@ -653,6 +653,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (parent is RsImplItem ||
             parent is RsForeignModItem ||
             parent is RsEnumVariant ||
+            isInTrait(vis) ||
             isInTraitImpl(vis) ||
             isInEnumVariantField(vis)
         ) {
@@ -948,6 +949,31 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
+        when (val owner = ta.owner) {
+            is RsAbstractableOwner.Trait -> {
+                ta.typeReference?.let { ASSOCIATED_TYPE_DEFAULTS.check(holder, it, "associated type defaults") }
+                val typeParameterList = ta.typeParameterList
+                if (typeParameterList != null && typeParameterList.genericParameterList.isNotEmpty()) {
+                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
+                }
+                ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }
+            }
+            is RsAbstractableOwner.Impl -> {
+                if (owner.isInherent) {
+                    INHERENT_ASSOCIATED_TYPES.check(holder, ta, "inherent associated types")
+                }
+                val typeParameterList = ta.typeParameterList
+                if (typeParameterList != null && typeParameterList.genericParameterList.isNotEmpty()) {
+                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
+                }
+                ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }
+            }
+            is RsAbstractableOwner.Foreign -> {
+                EXTERN_TYPES.check(holder, ta, "extern types")
+            }
+            else -> {}
+        }
+
         checkDuplicates(holder, ta)
     }
 
@@ -1329,10 +1355,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun isInTraitImpl(o: RsVis): Boolean {
-        val impl = o.parent?.parent?.parent
-        return impl is RsImplItem && impl.traitRef != null
-    }
+    private fun isInTrait(o: RsVis): Boolean =
+        (o.parent as? RsAbstractable)?.owner is RsAbstractableOwner.Trait
+
+    private fun isInTraitImpl(o: RsVis): Boolean =
+        (o.parent as? RsAbstractable)?.owner?.isTraitImpl == true
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
         val field = o.parent as? RsNamedFieldDecl

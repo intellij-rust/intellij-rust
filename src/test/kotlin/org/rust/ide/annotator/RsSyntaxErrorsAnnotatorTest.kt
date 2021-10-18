@@ -108,8 +108,8 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         type SizedMaybe<T> where T: Sized = Option<T>;
 
         <error descr="Type `DefBool` cannot have the `default` qualifier">default</error> type DefBool = bool;
-        <error descr="Aliased type must be provided for type `Unknown`">type Unknown;</error>
-        type Show<error descr="Type `Show` cannot have type parameter bounds">: Display</error> = u32;
+        <error descr="Type `Unknown` should have a body`">type Unknown;</error>
+        type Show<error descr="Bounds on Type `Show` have no effect">: Display</error> = u32;
     """)
 
     fun `test type alias in trait`() = checkErrors("""
@@ -119,14 +119,15 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             type Show: Display;
 
             <error descr="Type `DefSize` cannot have the `default` qualifier">default</error> type DefSize = isize;
-            <error descr="Type `PubType` cannot have the `pub` qualifier">pub</error> type PubType;
-            type GenType<error descr="Type `GenType` cannot have generic parameters"><T></error> = Option<T>;
-            type WhereType <error descr="Type `WhereType` cannot have `where` clause">where T: Sized</error> = f64;
+            pub type PubType;
+            type GenType<T> = Option<T>;
+            type WhereType where T: Sized = f64;
         }
     """)
 
     fun `test type alias in trait impl`() = checkErrors("""
             trait Vehicle {
+                type Unknown;
                 type Engine;
                 type Control;
                 type Lock;
@@ -136,13 +137,40 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             }
             struct NumericVehicle<T> { foo: T }
             impl<T> Vehicle for NumericVehicle<T> {
+                <error descr="Type `Unknown` should have a body">type Unknown;</error>
                 type Engine = u32;
                 default type Control = isize;
-                type Lock<error descr="Type `Lock` cannot have generic parameters"><T></error> = Option<T>;
-                type Cage<error descr="Type `Cage` cannot have type parameter bounds">: Sized</error> = f64;
-                type Insurance <error descr="Type `Insurance` cannot have `where` clause">where T: Sized</error> = i8;
-                <error descr="Aliased type must be provided for type `Driver`">type Driver;</error>
+                type Lock<T> = Option<T>;
+                type Cage<error descr="Bounds on Type `Cage` have no effect">: Sized</error> = f64;
+                type Insurance where T: Sized = i8;
+                <error descr="Type `Driver` should have a body">type Driver;</error>
             }
+    """)
+
+    fun `test type alias in inheret impl`() = checkErrors("""
+            struct S;
+            impl S {
+                <error descr="Type `Unknown` should have a body">type Unknown;</error>
+                type Engine = u32;
+                <error descr="Type `Control` cannot have the `default` qualifier">default</error> type Control = isize;
+                type Lock<T> = Option<T>;
+                type Cage<error descr="Bounds on Type `Cage` have no effect">: Sized</error> = f64;
+                type Insurance where T: Sized = i8;
+                <error descr="Type `Driver` should have a body">type Driver;</error>
+            }
+    """)
+
+    fun `test type alias in extern block`() = checkErrors("""
+        extern {
+            <error descr="Type `Int` cannot have a body">type Int = i32;</error>
+            <error descr="Type `UInt` cannot have a body">pub type UInt = u32;</error>
+            <error descr="Type `Maybe` cannot have a body">type Maybe<error descr="Type `Maybe` cannot have generic parameters"><T></error> = Option<T>;</error>
+            <error descr="Type `SizedMaybe` cannot have a body">type SizedMaybe<error descr="Type `SizedMaybe` cannot have generic parameters"><T></error> <error descr="Type `SizedMaybe` cannot have `where` clause">where T: Sized</error> = Option<T>;</error>
+
+            <error descr="Type `DefBool` cannot have a body"><error descr="Type `DefBool` cannot have the `default` qualifier">default</error> type DefBool = bool;</error>
+            type Unknown;
+            <error descr="Type `Show` cannot have a body">type Show<error descr="Bounds on Type `Show` have no effect">: Display</error> = u32;</error>
+        }
     """)
 
     fun `test const free`() = checkErrors("""
@@ -206,13 +234,6 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn anon_param(<error descr="Function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
         fn var_foo(a: bool, <error descr="Function `var_foo` cannot be variadic">...</error>) {}
         <error>default</error> fn two_errors(<error>u8</error>, a: i16) {}
-    """)
-
-    fun `test E0202 type alias in inherent impl`() = checkErrors("""
-        struct Foo;
-        impl Foo {
-            <error descr="Associated types are not allowed in inherent impls [E0202]">type Long = i64;</error>
-        }
     """)
 
     fun `test add parameter_name fix`() = checkFixByText("Add dummy parameter name", """

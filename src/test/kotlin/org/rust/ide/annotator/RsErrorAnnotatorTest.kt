@@ -4456,4 +4456,81 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
     """)
+
+    @MockRustcVersion("1.23.0")
+    fun `test extern types E0658 1`() = checkErrors("""
+        extern { <error descr="extern types is experimental [E0658]">type ItemForeign;</error> }
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test extern types E0658 2`() = checkErrors("""
+        #![feature(extern_types)]
+        extern { type ItemForeign; }
+    """)
+
+    @MockRustcVersion("1.23.0")
+    fun `test generic associated types E0658 1`() = checkErrors("""
+        struct S;
+        type ItemFree<'a> where 'a : 'static = S;
+        impl S { <error>type Item<error descr="generic associated types is experimental [E0658]"><'a></error> <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error> = S;</error> }
+        trait T { type Item<error descr="generic associated types is experimental [E0658]"><'a></error> <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error>; }
+        impl T for S { type Item<error descr="generic associated types is experimental [E0658]"><'a></error> <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error> = S; }
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test generic associated types E0658 2`() = checkErrors("""
+        #![feature(generic_associated_types)]
+        struct S;
+        type ItemFree<'a> where 'a : 'static = S;
+        impl S { <error>type Item<'a> where 'a : 'static = S;</error> }
+        trait T { type Item<'a> where 'a : 'static; }
+        impl T for S { type Item<'a> where 'a : 'static = S; }
+    """)
+
+    fun `test generic associated types E0658 3`() = checkErrors("""
+        struct S;
+        type ItemFree<>;
+        impl S { type Item<>; }
+        trait T { type Item<>; }
+        impl T for S { type Item<>; }
+    """)
+
+    @MockRustcVersion("1.52.0")
+    fun `test inherent associated types E0658 1`() = checkErrors("""
+        impl S { <error descr="inherent associated types is experimental [E0658]">type Item;</error> }
+    """)
+
+    @MockRustcVersion("1.52.0-nightly")
+    fun `test inherent associated types E0658 2`() = checkErrors("""
+        #![feature(inherent_associated_types)]
+        impl S { type Item; }
+    """)
+
+    @MockRustcVersion("1.2.0")
+    fun `test associated type defaults E0658 1`() = checkErrors("""
+        struct S;
+        type ItemFree = S;
+        impl S { <error>type Item = S;</error> }
+        trait T { type Item = <error descr="associated type defaults is experimental [E0658]">S</error>; }
+        impl T for S { type Item = S; }
+    """)
+
+    @MockRustcVersion("1.2.0-nightly")
+    fun `test associated type defaults E0658 2`() = checkErrors("""
+        #![feature(associated_type_defaults)]
+        struct S;
+        type ItemFree = S;
+        impl S { <error>type Item = S;</error> }
+        trait T { type Item = S; }
+        impl T for S { type Item = S; }
+    """)
+
+    fun `test unnecessary visibility qualifier E0449`() = checkErrors("""
+        struct S;
+        pub type ItemFree = S;
+        impl S { pub type Item = S; }
+        trait T { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item; }
+        impl T for S { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item = S; }
+        extern { pub type ItemForeign; }
+    """)
 }
