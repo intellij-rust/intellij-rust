@@ -25,7 +25,6 @@ import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTys
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
-import org.rust.lang.core.types.type
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -147,12 +146,8 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         stmt += if (firstParameter != null && firstParameter.isSelf) {
             "self.${config.name}(${config.argumentsText})"
         } else {
-            val type = when (val owner = config.function.owner) {
-                is RsAbstractableOwner.Impl -> {
-                    owner.impl.typeReference?.text?.let {
-                        if (owner.impl.typeParameterList == null) it else "<$it>"
-                    }
-                }
+            val type = when (config.function.owner) {
+                is RsAbstractableOwner.Impl,
                 is RsAbstractableOwner.Trait -> "Self"
                 else -> null
             }

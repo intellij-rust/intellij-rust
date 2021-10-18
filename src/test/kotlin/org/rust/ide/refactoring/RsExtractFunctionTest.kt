@@ -293,7 +293,7 @@ class RsExtractFunctionTest : RsTestBase() {
         struct S;
         impl S {
             fn foo() {
-                S::bar();
+                Self::bar();
             }
 
             fn bar() {
@@ -314,7 +314,7 @@ class RsExtractFunctionTest : RsTestBase() {
         struct S<T>(T);
         impl<T> S<T> {
             fn foo() {
-                <S<T>>::bar();
+                Self::bar();
             }
 
             fn bar() {
@@ -465,7 +465,7 @@ class RsExtractFunctionTest : RsTestBase() {
         impl S {
             fn foo(self) {
                 let test = 10i32;
-                S::bar(test);
+                Self::bar(test);
             }
 
             fn bar(test: i32) {
@@ -487,7 +487,7 @@ class RsExtractFunctionTest : RsTestBase() {
         struct S;
         impl S {
             fn foo() {
-                S::bar();
+                Self::bar();
             }
 
             pub fn bar() {
@@ -519,7 +519,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         impl Bar for S {
             fn foo() {
-                S::bar();
+                Self::bar();
             }
         }
 
@@ -556,7 +556,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         impl Bar for S {
             fn foo() {
-                S::bar();
+                Self::bar();
             }
         }
 
@@ -1709,7 +1709,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         impl<T, E> Trait for Result<T, E> where (T, E): Trait2 {
             fn fn_bar() {
-                <Result<T, E>>::bar();
+                Self::bar();
             }
         }
 
@@ -1743,7 +1743,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         impl<T> Trait for Foo<T> where T: Trait2 {
             fn foo(&self) {
-                <Foo<T>>::bar();
+                Self::bar();
             }
         }
 
@@ -1775,7 +1775,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         impl<'a, T> Trait for Foo<'a, T> where T: Trait2<'a> {
             fn foo(&self) {
-                <Foo<'a, T>>::bar();
+                Self::bar();
             }
         }
 
