@@ -15,4 +15,6 @@ sealed class ResolveMacroWithoutPsiError {
         val callKind: RsProcMacroKind,
         val defKind: RsProcMacroKind,
     ) : ResolveMacroWithoutPsiError()
+    /** @see org.rust.lang.core.psi.RS_HARDCODED_PROC_MACRO_ATTRIBUTES */
+    object HardcodedProcMacroAttribute : ResolveMacroWithoutPsiError()
 }

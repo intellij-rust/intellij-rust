@@ -6,9 +6,12 @@
 package org.rust.lang.core.stubs
 
 import com.intellij.util.BitUtil
+import org.rust.lang.core.psi.RS_BUILTIN_ATTRIBUTES
+import org.rust.lang.core.psi.RS_BUILTIN_TOOL_ATTRIBUTES
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
+import org.rust.lang.core.stubs.common.RsAttrProcMacroOwnerPsiOrStub
 import org.rust.lang.core.stubs.common.RsAttributeOwnerPsiOrStub
 import org.rust.stdext.BitFlagsBuilder
 import org.rust.stdext.HashCode
@@ -36,12 +39,16 @@ interface RsAttributeOwnerStub : RsAttributeOwnerPsiOrStub<RsMetaItemStub> {
     // #[derive(FooBar)]
     val mayHaveCustomDerive: Boolean
 
+    // #[foobar]
+    val mayHaveCustomAttrs: Boolean
+
     companion object : BitFlagsBuilder(Limit.BYTE) {
         val ATTRS_MASK: Int = nextBitMask()
         val CFG_MASK: Int = nextBitMask()
         val CFG_ATTR_MASK: Int = nextBitMask()
         val HAS_MACRO_USE_MASK: Int = nextBitMask()
         val HAS_CUSTOM_DERIVE: Int = nextBitMask()
+        val HAS_CUSTOM_ATTRS: Int = nextBitMask()
 
         fun extractFlags(element: RsDocAndAttributeOwner): Int =
             extractFlags(element.getTraversedRawAttributes(withCfgAttrAttribute = true))
@@ -52,15 +59,27 @@ interface RsAttributeOwnerStub : RsAttributeOwnerPsiOrStub<RsMetaItemStub> {
             var hasCfgAttr = false
             var hasMacroUse = false
             var hasCustomDerive = false
+            var hasCustomAttrs = false
             for (meta in attrs.metaItems) {
                 hasAttrs = true
-                when (meta.name) {
-                    "cfg" -> hasCfg = true
-                    "cfg_attr" -> hasCfgAttr = true
-                    "macro_use" -> hasMacroUse = true
-                    "derive" -> {
-                        hasCustomDerive = hasCustomDerive || meta.metaItemArgs?.metaItemList.orEmpty()
-                            .any { KNOWN_DERIVABLE_TRAITS[it.name]?.isStd != true }
+                val path = meta.path ?: continue
+                if (path.hasColonColon) {
+                    // `foo::bar` or `::foo`
+                    val basePath = path.basePath()
+                    if (basePath != path && basePath.referenceName !in RS_BUILTIN_TOOL_ATTRIBUTES) {
+                        hasCustomAttrs = true
+                    }
+                } else {
+                    when (path.referenceName) {
+                        null -> Unit
+                        "cfg" -> hasCfg = true
+                        "cfg_attr" -> hasCfgAttr = true
+                        "macro_use" -> hasMacroUse = true
+                        "derive" -> {
+                            hasCustomDerive = hasCustomDerive || meta.metaItemArgs?.metaItemList.orEmpty()
+                                .any { KNOWN_DERIVABLE_TRAITS[it.name]?.isStd != true }
+                        }
+                        !in RS_BUILTIN_ATTRIBUTES -> hasCustomAttrs = true
                     }
                 }
             }
@@ -70,18 +89,21 @@ interface RsAttributeOwnerStub : RsAttributeOwnerPsiOrStub<RsMetaItemStub> {
             flags = BitUtil.set(flags, CFG_ATTR_MASK, hasCfgAttr)
             flags = BitUtil.set(flags, HAS_MACRO_USE_MASK, hasMacroUse)
             flags = BitUtil.set(flags, HAS_CUSTOM_DERIVE, hasCustomDerive)
+            flags = BitUtil.set(flags, HAS_CUSTOM_ATTRS, hasCustomAttrs)
             return flags
         }
     }
 }
 
 /**
- * A common interface for stub for elements that can hold attribute or derive procedural macro attributes
+ * A common interface for stub for elements that can hold attribute or derive procedural macro attributes.
+ *
+ * @see RsAttrProcMacroOwner
  */
-interface RsAttrProcMacroOwnerStub : RsAttributeOwnerStub {
+interface RsAttrProcMacroOwnerStub : RsAttributeOwnerStub, RsAttrProcMacroOwnerPsiOrStub<RsMetaItemStub> {
     /**
      * A text of the item ([com.intellij.psi.PsiElement.getText]). Used for proc macro expansion.
-     * Non-null if [mayHaveCustomDerive] is `true`
+     * Non-null if [mayHaveCustomDerive] or [mayHaveCustomAttrs] is `true`
      */
     val stubbedText: String?
 
@@ -89,7 +111,7 @@ interface RsAttrProcMacroOwnerStub : RsAttributeOwnerStub {
      * A [HashCode] of [stubbedText]. Non-null if [stubbedText] is not `null` and [hasCfgAttr] is `false`.
      * @see RsMetaItem.bodyHash
      */
-    val bodyHash: HashCode?
+    val stubbedTextHash: HashCode?
 
     /**
      * Text offset in parent ([com.intellij.psi.PsiElement.getStartOffsetInParent]) of the first keyword
@@ -106,21 +128,25 @@ interface RsAttrProcMacroOwnerStub : RsAttributeOwnerStub {
      */
     val endOfAttrsOffset: Int
 
+    /** Absolute text offset [com.intellij.psi.PsiElement.startOffset] of the element */
+    val startOffset: Int
+
     companion object {
-        fun extractTextAndOffset(flags: Int, psi: RsStructOrEnumItemElement): Triple<String?, HashCode?, Int> {
+        fun extractTextAndOffset(flags: Int, psi: RsAttrProcMacroOwner): RsProcMacroStubInfo? {
             val isProcMacro = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_DERIVE)
+                || BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_ATTRS)
             return if (isProcMacro) {
-                val stubbedText = psi.stubbedText
-                val hash = if (stubbedText != null && !BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)) {
+                val stubbedText = psi.text // psi.stubbedText
+                val hash = if (!BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)) {
                     HashCode.compute(stubbedText)
                 } else {
-                    // We can calculate the hash during stub building only if the item does not contains
-                    // `cfg_attr` attributes. Otherwise the hash depends on cfg configuration.
+                    // We can calculate the hash during stub building only if the item does not contain
+                    // `cfg_attr` attributes. Otherwise, the hash depends on cfg configuration.
                     null
                 }
-                Triple(stubbedText, hash, psi.endOfAttrsOffset)
+                RsProcMacroStubInfo(stubbedText, hash, psi.endOfAttrsOffset, psi.startOffset)
             } else {
-                Triple(null, null, 0)
+                null
             }
         }
     }

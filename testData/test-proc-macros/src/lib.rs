@@ -65,3 +65,19 @@ pub fn derive_impl_for_foo(_item: TokenStream) -> TokenStream {
 pub fn function_like_generates_impl_for_foo(_input: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()
 }
+
+#[proc_macro_attribute]
+pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+   item
+}
+
+#[proc_macro_attribute]
+pub fn attr_replace_with_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+    attr
+}
+
+/// The macro is hardcoded to be an "identity" macro in `HardcodedProcMacroProperties.kt`
+#[proc_macro_attribute]
+pub fn attr_hardcoded_not_a_macro(_attr: TokenStream, item: TokenStream) -> TokenStream {
+   panic!("Must not be called")
+}

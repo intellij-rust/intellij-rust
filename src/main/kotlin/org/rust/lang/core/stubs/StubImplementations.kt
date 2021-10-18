@@ -22,6 +22,7 @@ import com.intellij.util.CharTable
 import com.intellij.util.diff.FlyweightCapableTreeStructure
 import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.parser.RustParser
@@ -51,7 +52,7 @@ class RsFileStub(
         get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
 
     override val rawMetaItems: Sequence<RsMetaItemStub>
-        get() = RsInnerAttributeOwnerRegistry.rawMetaItemsForStub(this)
+        get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
 
     override val hasAttrs: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
@@ -63,11 +64,13 @@ class RsFileStub(
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
     override val mayHaveCustomDerive: Boolean
         get() = false
+    override val mayHaveCustomAttrs: Boolean
+        get() = false
 
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 218
+        private const val STUB_VERSION = 221
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -337,7 +340,10 @@ abstract class RsAttributeOwnerStubBase<T : RsElement>(
     RsAttributeOwnerStub {
 
     override val rawMetaItems: Sequence<RsMetaItemStub>
-        get() = RsInnerAttributeOwnerRegistry.rawMetaItemsForStub(this)
+        get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
+
+    override val rawOuterMetaItems: Sequence<RsMetaItemStub>
+        get() = RsInnerAttributeOwnerRegistry.rawOuterMetaItems(this)
 
     override val hasAttrs: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
@@ -349,14 +355,30 @@ abstract class RsAttributeOwnerStubBase<T : RsElement>(
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
     override val mayHaveCustomDerive: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_DERIVE)
+    override val mayHaveCustomAttrs: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_ATTRS)
     protected abstract val flags: Int
+}
+
+abstract class RsAttrProcMacroOwnerStubBase<T : RsElement>(
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>
+) : RsAttributeOwnerStubBase<T>(parent, elementType), RsAttrProcMacroOwnerStub {
+    override val stubbedText: String? get() = procMacroInfo?.stubbedText
+    override val stubbedTextHash: HashCode? get() = procMacroInfo?.stubbedTextHash
+    override val endOfAttrsOffset: Int get() = procMacroInfo?.endOfAttrsOffset ?: 0
+    override val startOffset: Int get() = procMacroInfo?.startOffset ?: 0
+
+    @get:VisibleForTesting
+    abstract val procMacroInfo: RsProcMacroStubInfo?
 }
 
 class RsExternCrateItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsExternCrateItem>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsExternCrateItem>(parent, elementType),
     RsNamedStub {
 
     val alias: RsAliasStub?
@@ -369,20 +391,25 @@ class RsExternCrateItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString()!!,
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsExternCrateItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsExternCrateItemStub) =
             RsExternCrateItemImpl(stub, this)
 
-        override fun createStub(psi: RsExternCrateItem, parentStub: StubElement<*>?) =
-            RsExternCrateItemStub(parentStub, this, psi.referenceName, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsExternCrateItem, parentStub: StubElement<*>?): RsExternCrateItemStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsExternCrateItemStub(parentStub, this, psi.referenceName, flags, procMacroInfo)
+        }
 
         override fun indexStub(stub: RsExternCrateItemStub, sink: IndexSink) = sink.indexExternCrate(stub)
     }
@@ -391,8 +418,9 @@ class RsExternCrateItemStub(
 
 class RsUseItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsUseItem>(parent, elementType) {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsUseItem>(parent, elementType) {
 
     val useSpeck: RsUseSpeckStub?
         get() = findChildStubByType(RsUseSpeckStub.Type)
@@ -404,11 +432,18 @@ class RsUseItemStub(
     object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsUseItemStub(parentStub, this, dataStream.readUnsignedByte())
+            RsUseItemStub(
+                parentStub,
+                this,
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
+            )
 
-        override fun serialize(stub: RsUseItemStub, dataStream: StubOutputStream) {
-            dataStream.writeByte(stub.flags)
-        }
+        override fun serialize(stub: RsUseItemStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
+            }
 
         override fun createPsi(stub: RsUseItemStub) =
             RsUseItemImpl(stub, this)
@@ -416,7 +451,8 @@ class RsUseItemStub(
         override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?): RsUseItemStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, HAS_PRELUDE_IMPORT_MASK, HAS_PRELUDE_IMPORT_PROP.getDuringIndexing(psi))
-            return RsUseItemStub(parentStub, this, flags)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsUseItemStub(parentStub, this, flags, procMacroInfo)
         }
     }
 
@@ -475,12 +511,10 @@ class RsUseSpeckStub(
 class RsStructItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val stubbedText: String?,
-    override val bodyHash: HashCode?,
-    override val endOfAttrsOffset: Int,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsStructItem>(parent, elementType),
-    RsNamedStub, RsAttrProcMacroOwnerStub {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsStructItem>(parent, elementType),
+    RsNamedStub  {
 
     val blockFields: StubElement<RsBlockFields>?
         get() = findChildStubByType(RsStubElementTypes.BLOCK_FIELDS)
@@ -493,19 +527,15 @@ class RsStructItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUTFFastAsNullable(),
-                dataStream.readHashCodeNullable(),
-                dataStream.readVarInt(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsStructItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
-                writeUTFFastAsNullable(stub.stubbedText)
-                writeHashCodeNullable(stub.bodyHash)
-                writeVarInt(stub.endOfAttrsOffset)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsStructItemStub): RsStructItem =
@@ -514,8 +544,8 @@ class RsStructItemStub(
         override fun createStub(psi: RsStructItem, parentStub: StubElement<*>?): RsStructItemStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, IS_UNION_MASK, psi.kind == RsStructKind.UNION)
-            val (procMacroBody, bodyHash, endOfAttrsOffset) = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
-            return RsStructItemStub(parentStub, this, psi.name, procMacroBody, bodyHash, endOfAttrsOffset, flags)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsStructItemStub(parentStub, this, psi.name, flags, procMacroInfo)
         }
 
         override fun indexStub(stub: RsStructItemStub, sink: IndexSink) = sink.indexStructItem(stub)
@@ -530,12 +560,10 @@ class RsStructItemStub(
 class RsEnumItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val stubbedText: String?,
-    override val bodyHash: HashCode?,
-    override val endOfAttrsOffset: Int,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsEnumItem>(parent, elementType),
-    RsNamedStub, RsAttrProcMacroOwnerStub {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsEnumItem>(parent, elementType),
+    RsNamedStub {
 
     val enumBody: StubElement<RsEnumBody>?
         get() = findChildStubByType(RsStubElementTypes.ENUM_BODY)
@@ -546,19 +574,15 @@ class RsEnumItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUTFFastAsNullable(),
-                dataStream.readHashCodeNullable(),
-                dataStream.readVarInt(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsEnumItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
-                writeUTFFastAsNullable(stub.stubbedText)
-                writeHashCodeNullable(stub.bodyHash)
-                writeVarInt(stub.endOfAttrsOffset)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsEnumItemStub) =
@@ -566,8 +590,8 @@ class RsEnumItemStub(
 
         override fun createStub(psi: RsEnumItem, parentStub: StubElement<*>?): RsEnumItemStub {
             val flags = RsAttributeOwnerStub.extractFlags(psi)
-            val (procMacroBody, bodyHash, endOfAttrsOffset) = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
-            return RsEnumItemStub(parentStub, this, psi.name, procMacroBody, bodyHash, endOfAttrsOffset, flags)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsEnumItemStub(parentStub, this, psi.name, flags, procMacroInfo)
         }
 
 
@@ -652,8 +676,9 @@ class RsModItemStub(
     parent: StubElement<*>?,
     elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsModItem>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsModItem>(parent, elementType),
     RsNamedStub {
 
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
@@ -663,20 +688,25 @@ class RsModItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsModItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsModItemStub): RsModItem =
             RsModItemImpl(stub, this)
 
-        override fun createStub(psi: RsModItem, parentStub: StubElement<*>?) =
-            RsModItemStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsModItem, parentStub: StubElement<*>?): RsModItemStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsModItemStub(parentStub, this, psi.name, flags, procMacroInfo)
+        }
 
         override fun indexStub(stub: RsModItemStub, sink: IndexSink) = sink.indexModItem(stub)
     }
@@ -686,8 +716,9 @@ class RsModItemStub(
 class RsTraitItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsTraitItem>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsTraitItem>(parent, elementType),
     RsNamedStub {
 
     val isUnsafe: Boolean
@@ -701,7 +732,8 @@ class RsTraitItemStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
         }
 
@@ -709,6 +741,7 @@ class RsTraitItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsTraitItemStub): RsTraitItem =
@@ -719,7 +752,8 @@ class RsTraitItemStub(
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, AUTO_MASK, psi.isAuto)
 
-            return RsTraitItemStub(parentStub, this, psi.name, flags)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsTraitItemStub(parentStub, this, psi.name, flags, procMacroInfo)
         }
 
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
@@ -734,8 +768,9 @@ class RsTraitItemStub(
 
 class RsImplItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsImplItem>(parent, elementType) {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsImplItem>(parent, elementType) {
 
     val isNegativeImpl: Boolean
         get() = BitUtil.isSet(flags, NEGATIVE_IMPL_MASK)
@@ -743,11 +778,16 @@ class RsImplItemStub(
     object Type : RsStubElementType<RsImplItemStub, RsImplItem>("IMPL_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsImplItemStub(parentStub, this, dataStream.readUnsignedByte())
+            RsImplItemStub(parentStub, this,
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
+            )
 
-        override fun serialize(stub: RsImplItemStub, dataStream: StubOutputStream) {
-            dataStream.writeByte(stub.flags)
-        }
+        override fun serialize(stub: RsImplItemStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
+            }
 
         override fun createPsi(stub: RsImplItemStub): RsImplItem =
             RsImplItemImpl(stub, this)
@@ -755,7 +795,8 @@ class RsImplItemStub(
         override fun createStub(psi: RsImplItem, parentStub: StubElement<*>?): RsImplItemStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, NEGATIVE_IMPL_MASK, psi.isNegativeImpl)
-            return RsImplItemStub(parentStub, this, flags)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsImplItemStub(parentStub, this, flags, procMacroInfo)
         }
 
         override fun indexStub(stub: RsImplItemStub, sink: IndexSink) = sink.indexImplItem(stub)
@@ -770,26 +811,37 @@ class RsImplItemStub(
 class RsTraitAliasStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsTraitAlias>(parent, elementType), RsNamedStub {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsTraitAlias>(parent, elementType),
+    RsNamedStub {
 
     object Type : RsStubElementType<RsTraitAliasStub, RsTraitAlias>("TRAIT_ALIAS") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTraitAliasStub(parentStub, this, dataStream.readNameAsString(), dataStream.readUnsignedByte())
+            RsTraitAliasStub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
+            )
 
         override fun serialize(stub: RsTraitAliasStub, dataStream: StubOutputStream) {
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
         }
 
         override fun createPsi(stub: RsTraitAliasStub): RsTraitAlias =
             RsTraitAliasImpl(stub, this)
 
-        override fun createStub(psi: RsTraitAlias, parentStub: StubElement<*>?) =
-            RsTraitAliasStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsTraitAlias, parentStub: StubElement<*>?): RsTraitAliasStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+
+            return RsTraitAliasStub(parentStub, this, psi.name, flags, procMacroInfo)
+        }
 
         override fun indexStub(stub: RsTraitAliasStub, sink: IndexSink) = sink.indexTraitAlias(stub)
     }
@@ -800,8 +852,9 @@ class RsFunctionStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     val abiName: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsFunction>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsFunction>(parent, elementType),
     RsNamedStub {
 
     val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK)
@@ -823,7 +876,8 @@ class RsFunctionStub(
                 this,
                 dataStream.readName()?.string,
                 dataStream.readUTFFastAsNullable(),
-                dataStream.readInt()
+                dataStream.readInt(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsFunctionStub, dataStream: StubOutputStream) =
@@ -831,6 +885,7 @@ class RsFunctionStub(
                 writeName(stub.name)
                 writeUTFFastAsNullable(stub.abiName)
                 writeInt(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsFunctionStub) =
@@ -860,12 +915,16 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, HAS_SELF_PARAMETER_MASK, psi.hasSelfParameters)
             flags = BitUtil.set(flags, IS_PROC_MACRO_DEF, attrs.isProcMacroDef)
+
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+
             return RsFunctionStub(
                 parentStub,
                 this,
                 name = psi.name,
                 abiName = psi.abiName,
-                flags = flags
+                flags = flags,
+                procMacroInfo = procMacroInfo,
             )
         }
 
@@ -888,8 +947,9 @@ class RsFunctionStub(
 class RsConstantStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsConstant>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsConstant>(parent, elementType),
     RsNamedStub {
 
     val isMut: Boolean
@@ -903,13 +963,15 @@ class RsConstantStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsConstantStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsConstantStub) =
@@ -919,7 +981,10 @@ class RsConstantStub(
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, IS_MUT_MASK, psi.isMut)
             flags = BitUtil.set(flags, IS_CONST_MASK, psi.isConst)
-            return RsConstantStub(parentStub, this, psi.name, flags)
+
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+
+            return RsConstantStub(parentStub, this, psi.name, flags, procMacroInfo)
         }
 
         override fun indexStub(stub: RsConstantStub, sink: IndexSink) = sink.indexConstant(stub)
@@ -935,8 +1000,9 @@ class RsConstantStub(
 class RsTypeAliasStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsTypeAlias>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsTypeAlias>(parent, elementType),
     RsNamedStub {
 
     object Type : RsStubElementType<RsTypeAliasStub, RsTypeAlias>("TYPE_ALIAS") {
@@ -946,20 +1012,25 @@ class RsTypeAliasStub(
                 parentStub,
                 this,
                 dataStream.readNameAsString(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsTypeAliasStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsTypeAliasStub) =
             RsTypeAliasImpl(stub, this)
 
-        override fun createStub(psi: RsTypeAlias, parentStub: StubElement<*>?) =
-            RsTypeAliasStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsTypeAlias, parentStub: StubElement<*>?): RsTypeAliasStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsTypeAliasStub(parentStub, this, psi.name, flags, procMacroInfo)
+        }
 
         override fun indexStub(stub: RsTypeAliasStub, sink: IndexSink) = sink.indexTypeAlias(stub)
     }
@@ -968,23 +1039,32 @@ class RsTypeAliasStub(
 
 class RsForeignModStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsForeignModItem>(parent, elementType) {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsForeignModItem>(parent, elementType) {
 
     object Type : RsStubElementType<RsForeignModStub, RsForeignModItem>("FOREIGN_MOD_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsForeignModStub(parentStub, this, dataStream.readUnsignedByte())
+            RsForeignModStub(parentStub, this,
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
+            )
 
-        override fun serialize(stub: RsForeignModStub, dataStream: StubOutputStream) {
-            dataStream.writeByte(stub.flags)
-        }
+        override fun serialize(stub: RsForeignModStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
+            }
 
         override fun createPsi(stub: RsForeignModStub) =
             RsForeignModItemImpl(stub, this)
 
-        override fun createStub(psi: RsForeignModItem, parentStub: StubElement<*>?) =
-            RsForeignModStub(parentStub, this, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsForeignModItem, parentStub: StubElement<*>?): RsForeignModStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsForeignModStub(parentStub, this, flags, procMacroInfo)
+        }
     }
 }
 
@@ -1207,11 +1287,11 @@ class RsSelfParameterStub(
 
     object Type : RsStubElementType<RsSelfParameterStub, RsSelfParameter>("SELF_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsSelfParameterStub(parentStub, this, dataStream.readUnsignedByte())
+            RsSelfParameterStub(parentStub, this, dataStream.readVarInt())
 
         override fun serialize(stub: RsSelfParameterStub, dataStream: StubOutputStream) =
             with(dataStream) {
-                writeByte(stub.flags)
+                writeVarInt(stub.flags)
             }
 
         override fun createPsi(stub: RsSelfParameterStub): RsSelfParameter =
@@ -1226,7 +1306,7 @@ class RsSelfParameterStub(
         }
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
         private val IS_MUT_MASK: Int = nextBitMask()
         private val IS_REF_MASK: Int = nextBitMask()
         private val IS_EXPLICIT_TYPE_MASK: Int = nextBitMask()
@@ -1467,8 +1547,9 @@ class RsMacroStub(
     val macroBody: String?,
     val bodyHash: HashCode?,
     val preferredBraces: MacroBraces,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsMacro>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsMacro>(parent, elementType),
     RsNamedStub {
 
     // stored in stub as an optimization
@@ -1492,7 +1573,8 @@ class RsMacroStub(
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readHashCodeNullable(),
                 dataStream.readEnum(),
-                dataStream.readUnsignedByte()
+                dataStream.readVarInt(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsMacroStub, dataStream: StubOutputStream) =
@@ -1501,7 +1583,8 @@ class RsMacroStub(
                 writeUTFFastAsNullable(stub.macroBody)
                 writeHashCodeNullable(stub.bodyHash)
                 writeEnum(stub.preferredBraces)
-                writeByte(stub.flags)
+                writeVarInt(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsMacroStub): RsMacro =
@@ -1512,6 +1595,7 @@ class RsMacroStub(
             flags = BitUtil.set(flags, HAS_MACRO_EXPORT, HAS_MACRO_EXPORT_PROP.getDuringIndexing(psi))
             flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getDuringIndexing(psi))
             flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsMacroStub(
                 parentStub,
                 this,
@@ -1519,14 +1603,15 @@ class RsMacroStub(
                 psi.macroBody?.text,
                 psi.bodyHash,
                 psi.preferredBraces,
-                flags
+                flags,
+                procMacroInfo,
             )
         }
 
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
         private val HAS_MACRO_EXPORT: Int = nextBitMask()
         private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = nextBitMask()
         private val HAS_RUSTC_BUILTIN_MACRO: Int = nextBitMask()
@@ -1539,8 +1624,9 @@ class RsMacro2Stub(
     val macroBody: String,
     val bodyHash: HashCode,
     val preferredBraces: MacroBraces,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsMacro2>(parent, elementType),
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsMacro2>(parent, elementType),
     RsNamedStub {
 
     val mayHaveRustcBuiltinMacro: Boolean
@@ -1555,7 +1641,8 @@ class RsMacro2Stub(
                 dataStream.readUTFFast(),
                 dataStream.readHashCode(),
                 dataStream.readEnum(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsMacro2Stub, dataStream: StubOutputStream) =
@@ -1565,6 +1652,7 @@ class RsMacro2Stub(
                 writeHashCode(stub.bodyHash)
                 writeEnum(stub.preferredBraces)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsMacro2Stub): RsMacro2 =
@@ -1573,10 +1661,19 @@ class RsMacro2Stub(
         override fun createStub(psi: RsMacro2, parentStub: StubElement<*>?): RsMacro2Stub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
-            val body = psi.prepareMacroBody()
-            val bodyHash = HashCode.compute(body)
             val preferredBraces = psi.preferredBraces
-            return RsMacro2Stub(parentStub, this, psi.name, body, bodyHash, preferredBraces, flags)
+            val body = psi.prepareMacroBody()
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsMacro2Stub(
+                parentStub,
+                this,
+                psi.name,
+                body,
+                HashCode.compute(body),
+                preferredBraces,
+                flags,
+                procMacroInfo
+            )
         }
 
         override fun indexStub(stub: RsMacro2Stub, sink: IndexSink) = sink.indexMacroDef(stub)
@@ -1592,8 +1689,9 @@ class RsMacroCallStub(
     val macroBody: String?,
     val bodyHash: HashCode?,
     val bodyStartOffset: Int,
-    override val flags: Int
-) : RsAttributeOwnerStubBase<RsMacroCall>(parent, elementType) {
+    override val flags: Int,
+    override val procMacroInfo: RsProcMacroStubInfo?,
+) : RsAttrProcMacroOwnerStubBase<RsMacroCall>(parent, elementType) {
 
     val path: RsPathStub
         get() = findChildStubByType(RsPathStub.Type)!! // guaranteed to be non-null by the grammar
@@ -1612,7 +1710,8 @@ class RsMacroCallStub(
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readHashCodeNullable(),
                 dataStream.readVarInt(),
-                dataStream.readUnsignedByte()
+                dataStream.readUnsignedByte(),
+                RsProcMacroStubInfo.deserialize(dataStream),
             )
 
         override fun serialize(stub: RsMacroCallStub, dataStream: StubOutputStream) =
@@ -1621,19 +1720,25 @@ class RsMacroCallStub(
                 writeHashCodeNullable(stub.bodyHash)
                 writeVarInt(stub.bodyStartOffset)
                 writeByte(stub.flags)
+                RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
             }
 
         override fun createPsi(stub: RsMacroCallStub): RsMacroCall =
             RsMacroCallImpl(stub, this)
 
-        override fun createStub(psi: RsMacroCall, parentStub: StubElement<*>?) = RsMacroCallStub(
-            parentStub,
-            this,
-            psi.macroBody,
-            psi.bodyHash,
-            psi.bodyTextRange?.startOffset ?: -1,
-            RsAttributeOwnerStub.extractFlags(psi)
-        )
+        override fun createStub(psi: RsMacroCall, parentStub: StubElement<*>?): RsMacroCallStub {
+            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
+            return RsMacroCallStub(
+                parentStub,
+                this,
+                psi.macroBody,
+                psi.bodyHash,
+                psi.bodyTextRange?.startOffset ?: -1,
+                flags,
+                procMacroInfo,
+            )
+        }
 
         override fun indexStub(stub: RsMacroCallStub, sink: IndexSink) = sink.indexMacroCall(stub)
     }

@@ -11,6 +11,7 @@ import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 
+@UseNewResolve
 @MinRustcVersion("1.46.0")
 @MockEdition(EDITION_2018)
 @ExpandMacros(MacroExpansionScope.WORKSPACE)
@@ -34,7 +35,6 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
-    @UseNewResolve
     fun `test custom derive`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
 
@@ -50,7 +50,6 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
-    @UseNewResolve
     fun `test custom derive dollar crate`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
 
@@ -71,7 +70,6 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test custom derive in enabled cfg_attr attribute`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
@@ -88,7 +86,6 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test custom derive in disabled cfg_attr attribute`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
@@ -105,7 +102,6 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^ unresolved
     """)
 
-    @UseNewResolve
     fun `test not expanded if not a custom derive macro is used in custom derive position`() = checkByCode("""
         use test_proc_macros::function_like_generates_impl_for_foo;
 
@@ -120,4 +116,204 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
             Foo.foo().bar()
         }           //^ unresolved
     """)
+
+    fun `test attr legacy macro`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        struct S;
+
+        macro_rules! foo {
+            () => {};//X
+        }
+
+        foo!{}
+        //^
+    """)
+
+    fun `test attr impl`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        struct S;
+
+        #[attr_as_is]
+        impl S {
+            fn foo(&self) {}
+        }    //X
+
+        fn main() {
+            S.foo();
+        }   //^
+    """)
+
+    fun `test attr mod`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        mod m {
+            pub fn foo() {}
+        }        //X
+
+        fn main() {
+            m::foo();
+        }    //^
+    """)
+
+    fun `test attr fn`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test attr fn under 2 macros`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        #[attr_as_is]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test hardcoded not a macro fn`() = checkByCode("""
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        #[attr_hardcoded_not_a_macro]
+        fn foo() {}
+           //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test hardcoded not a macro impl`() = checkByCode("""
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        struct S;
+
+        #[attr_hardcoded_not_a_macro]
+        impl S {
+            fn foo() {}
+               //X
+        }
+        fn main() {
+            S::foo();
+        }    //^
+    """)
+
+    fun `test attr legacy macro 2`() = checkByCode("""
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        #[attr_hardcoded_not_a_macro]
+        fn foo() {}
+
+        macro_rules! foo {
+            () => {};//X
+        }
+
+        foo!{}
+        //^
+    """)
+
+    fun `test attr replaced item is unresolved`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        #[attr_replace_with_attr(struct X{})]
+        fn foo() {}
+        fn main() {
+            foo();
+        } //^ unresolved
+    """)
+
+    fun `test attr expanded to attribute argument`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        #[attr_replace_with_attr(struct X{})]
+        foo! {}                       //X
+        fn main() {
+            let _: X;
+        }        //^
+    """)
+
+    fun `test attr expanded from a function-like macro`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+        macro_rules! as_is {
+            ($ i:item) => { $ i };
+        }
+        as_is! {
+            #[attr_as_is]
+            fn foo() {}
+             //X
+        }
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test function-like macro expanded from attr macro`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+        macro_rules! as_is {
+            ($ i:item) => { $ i };
+        }
+        #[attr_replace_with_attr(as_is! { struct X{} })]
+        foo! {}                                //X
+        fn main() {
+            let _: X;
+        }        //^
+    """)
+
+    fun `test attr qualified by $crate`() = stubOnlyResolve("""
+    //- lib.rs
+        pub mod foo {
+            pub use test_proc_macros::attr_as_is as attr_as_is_renamed;
+        }
+        #[macro_export]
+        macro_rules! with_proc_macro {
+            ($ i:item) => {
+                #[$ crate::foo::attr_as_is_renamed]
+                $ i
+            };
+        }
+    //- main.rs
+        use test_package::with_proc_macro;
+        with_proc_macro! {
+            fn foo() {}
+        }
+        fn main() {
+            foo();
+        } //^ main.rs
+    """)
+
+    fun `test attr qualified by $crate 2`() = stubOnlyResolve("""
+    //- lib.rs
+        pub mod foo {
+            pub use test_proc_macros::attr_as_is as attr_as_is_renamed;
+        }
+        #[macro_export]
+        macro_rules! with_proc_macro {
+            ($ i:item) => {
+                #[test_proc_macros::attr_as_is]
+                #[$ crate::foo::attr_as_is_renamed]
+                $ i
+            };
+        }
+    //- main.rs
+        use test_package::with_proc_macro;
+        with_proc_macro! {
+            fn foo() {}
+        }
+        fn main() {
+            foo();
+        } //^ main.rs
+    """)
+
+    override val followMacroExpansions: Boolean
+        get() = true
 }

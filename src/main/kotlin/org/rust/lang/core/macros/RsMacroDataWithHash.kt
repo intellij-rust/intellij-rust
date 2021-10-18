@@ -72,6 +72,9 @@ class RsMacroDataWithHash<out T : RsMacroData>(
                     val name = def.path.name
                     val procMacroArtifact = def.procMacroArtifact
                         ?: return Err(ResolveMacroWithoutPsiError.NoProcMacroArtifact)
+                    if (def.kind.treatAsBuiltinAttr) {
+                        return Err(ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute)
+                    }
                     val hash = HashCode.mix(procMacroArtifact.hash, HashCode.compute(name))
                     Ok(RsMacroDataWithHash(RsProcMacroData(name, procMacroArtifact), hash))
                 }

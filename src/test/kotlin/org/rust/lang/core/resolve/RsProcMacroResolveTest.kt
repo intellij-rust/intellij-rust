@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.UseNewResolve
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -300,8 +297,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
     """)
 
     @UseNewResolve
-    fun `test resolve attribute macro by qualified path with re-export 1`() = expect<IllegalStateException> {
-    stubOnlyResolve("""
+    fun `test resolve attribute macro by qualified path with re-export 1`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
             pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
@@ -312,11 +308,9 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                           //^ dep-proc-macro/lib.rs
             struct S;
     """)
-    }
 
     @UseNewResolve
-    fun `test resolve attribute macro by qualified path with re-export 2`() = expect<IllegalStateException> {
-    stubOnlyResolve("""
+    fun `test resolve attribute macro by qualified path with re-export 2`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
             pub fn example_proc_macro(attr: TokenStream, item: TokenStream) -> TokenStream { item }
@@ -329,7 +323,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                                //^ dep-proc-macro/lib.rs
             struct S;
     """)
-    }
 
     fun `test resolve bang proc macro from macro call through macro_use`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
@@ -614,5 +607,15 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             extern crate dep_proc_macro_2;
             #[macro_use]
             extern crate dep_proc_macro;
+    """)
+
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test hardcoded not a macro is resolved`() = stubOnlyResolve("""
+    //- main.rs
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        #[attr_hardcoded_not_a_macro]
+          //^ ...test-proc-macros/src/lib.rs
+        fn main() {}
     """)
 }

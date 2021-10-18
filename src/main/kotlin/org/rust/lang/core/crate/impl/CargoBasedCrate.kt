@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.crate.impl
 
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -25,7 +26,7 @@ class CargoBasedCrate(
     override val dependencies: Collection<Crate.Dependency>,
     override val flatDependencies: LinkedHashSet<Crate>,
     override var procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
-) : Crate {
+) : UserDataHolderBase(), Crate {
     override val reverseDependencies = mutableListOf<CargoBasedCrate>()
     override var features: Map<String, FeatureState> = cargoTarget.pkg.featureState
 

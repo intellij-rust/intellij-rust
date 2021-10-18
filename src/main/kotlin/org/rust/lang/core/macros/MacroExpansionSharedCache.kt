@@ -93,7 +93,7 @@ class MacroExpansionSharedCache : Disposable {
         data.get()?.flush()
     }
 
-    private fun <Key, Value : Any> getOrPut(
+    private fun <Key, Value> getOrPut(
         getMap: (PersistentCacheData) -> PersistentHashMap<Key, Value>,
         cacheRetrievingStrategy: CacheRetrievingStrategy<Value>,
         key: Key,
@@ -135,8 +135,8 @@ class MacroExpansionSharedCache : Disposable {
         fun isRetrievedValueReusable(value: T): Boolean
     }
 
-    private object RetrieveEverythingStrategy : CacheRetrievingStrategy<Any> {
-        override fun isRetrievedValueReusable(value: Any): Boolean = true
+    private object RetrieveEverythingStrategy : CacheRetrievingStrategy<Any?> {
+        override fun isRetrievedValueReusable(value: Any?): Boolean = true
     }
 
     private object DontRetrieveSomeErrorsStrategy : CacheRetrievingStrategy<RsResult<ExpansionResultOk, MacroExpansionError>> {
@@ -193,15 +193,16 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
-    fun cachedBuildStub(fileContent: FileContent, hash: HashCode): SerializedStubTree {
+    fun cachedBuildStub(fileContent: FileContent, hash: HashCode): SerializedStubTree? {
         return cachedBuildStub(hash) { fileContent }
     }
 
-    private fun cachedBuildStub(hash: HashCode, fileContent: () -> FileContent): SerializedStubTree {
+    private fun cachedBuildStub(hash: HashCode, fileContent: () -> FileContent): SerializedStubTree? {
         return getOrPut(PersistentCacheData::stubs, RetrieveEverythingStrategy, hash) { serMgr ->
             val fc = fileContent()
             val stub = StubTreeBuilder.buildStubTree(fc)
-                ?: error("Failed to build Stub for macro expansion. File: `${fc.file}`, fileType: `${fc.fileType}`")
+            // e.g. large expansion which is parsed as plain text (and not as Rust file)
+                ?: return@getOrPut null
             SerializedStubTree.serializeStub(stub, serMgr, stubExternalizer)
         }
     }
@@ -217,7 +218,7 @@ class MacroExpansionSharedCache : Disposable {
         val serializedStub = cachedBuildStub(hash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
             FileContentImpl.createByText(file, result.text, project)
-        }
+        } ?: return null
 
         val stub = try {
             serializedStub.stub
@@ -247,7 +248,7 @@ class MacroExpansionSharedCache : Disposable {
 private class PersistentCacheData(
     val localSerMgr: SerializationManagerImpl,
     val expansions: PersistentHashMap<HashCode, RsResult<ExpansionResultOk, MacroExpansionError>>,
-    val stubs: PersistentHashMap<HashCode, SerializedStubTree>
+    val stubs: PersistentHashMap<HashCode, SerializedStubTree?>
 ) {
     fun flush() {
         localSerMgr.flushNameStorage()
@@ -300,10 +301,10 @@ private class PersistentCacheData(
                 val stubs = newPersistentHashMap(
                     stubCacheFile,
                     HashCodeKeyDescriptor,
-                    SerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer),
+                    NullableExternalizer(SerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer)),
                     1 * 1024 * 1024,
                     DeclMacroExpander.EXPANDER_VERSION + ProcMacroExpander.EXPANDER_VERSION
-                        + RsFileStub.Type.stubVersion
+                        + RsFileStub.Type.stubVersion + 1
                 )
                 cleaners += stubs::close
 
@@ -385,6 +386,26 @@ private object ExpansionResultExternalizer : DataExternalizer<RsResult<Expansion
     }
 }
 
+private class NullableExternalizer<T : Any>(private val inner: DataExternalizer<T>) : DataExternalizer<T?> {
+    @Throws(IOException::class)
+    override fun save(out: DataOutput, value: T?) {
+        if (value != null) {
+            out.writeBoolean(true)
+            inner.save(out, value)
+        } else {
+            out.writeBoolean(false)
+        }
+    }
+
+    @Throws(IOException::class)
+    override fun read(inp: DataInput): T? {
+        return if (inp.readBoolean()) {
+            inner.read(inp)
+        } else {
+            null
+        }
+    }
+}
 
 
 @Throws(IOException::class)

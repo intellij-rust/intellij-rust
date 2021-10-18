@@ -5,7 +5,9 @@
 
 package org.rust.lang.core.psi
 
-// https://github.com/rust-lang/rust/blob/770ed1cf4bff98345df4f9f/compiler/rustc_feature/src/builtin_attrs.rs#L172
+
+// Bump `RsFileStub.Type.STUB_VERSION` if modified
+// https://github.com/rust-lang/rust/blob/1c07096a45a15de64216f12ec726333870e372b1/compiler/rustc_feature/src/builtin_attrs.rs#L172
 val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "cfg",
     "cfg_attr",
@@ -39,6 +41,7 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "recursion_limit",
     "type_length_limit",
     "const_eval_limit",
+    "move_size_limit",
     "main",
     "start",
     "no_start",
@@ -55,12 +58,12 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "target_feature",
     "track_caller",
     "no_sanitize",
+    "no_coverage",
     "doc",
 
     // Unstable attributes:
 
     "naked",
-    "link_args",
     "link_ordinal",
     "plugin_registrar",
     "plugin",
@@ -77,6 +80,7 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "register_attr",
     "register_tool",
     "cmse_nonsecure_entry",
+    "default_method_body_is_const",
     "feature",
     "rustc_deprecated",
     "stable",
@@ -106,7 +110,7 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "rustc_on_unimplemented",
     "rustc_conversion_suggestion",
     "rustc_promotable",
-    "rustc_args_required_const",
+    "rustc_legacy_const_generics",
     "rustc_layout_scalar_valid_range_start",
     "rustc_layout_scalar_valid_range_end",
     "rustc_nonnull_optimization_guaranteed",
@@ -115,20 +119,25 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "prelude_import",
     "rustc_paren_sugar",
     "rustc_inherit_overflow_checks",
+    // BACKCOMPAT: Rust 1.53
+    "rustc_args_required_const",
     "rustc_reservation_impl",
     "rustc_test_marker",
     "rustc_unsafe_specialization_marker",
     "rustc_specialization_trait",
+    "rustc_main",
+    "rustc_skip_array_during_method_dispatch",
     "rustc_outlives",
     "rustc_capture_analysis",
+    "rustc_insignificant_dtor",
     "rustc_variance",
     "rustc_layout",
     "rustc_regions",
     "rustc_error",
     "rustc_dump_user_substs",
+    "rustc_evaluate_where_clauses",
     "rustc_if_this_changed",
     "rustc_then_this_would_need",
-    "rustc_dirty",
     "rustc_clean",
     "rustc_partition_reused",
     "rustc_partition_codegened",
@@ -141,20 +150,26 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "rustc_dump_program_clauses",
     "rustc_dump_env_program_clauses",
     "rustc_object_lifetime_default",
+    "rustc_dump_vtable",
     "rustc_dummy",
     "omit_gdb_pretty_printer_section",
 
-    // For some reason, `derive` is not included into Rustc's list of built-in attributes
+    // Internal stdlib proc macros
 
-    "derive",
+    "simd_test",
+    "assert_instr",
 
     // Proc macros from stdlib. Defined like
     // `pub macro test($item:item) {}`
     // TODO resolve them correctly and remove from this list?
 
+    "derive",
     "test",
     "bench",
     "test_case",
     "global_allocator",
     "cfg_accessible",
 )
+
+// https://github.com/rust-lang/rust/blob/76d18cfb8945f824c8777e04981e930d2037954e/compiler/rustc_resolve/src/macros.rs#L153
+val RS_BUILTIN_TOOL_ATTRIBUTES = setOf("rustfmt", "clippy")

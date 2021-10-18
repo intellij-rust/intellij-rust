@@ -5,7 +5,10 @@
 
 package org.rust.lang.core.resolve2.util
 
-import org.rust.lang.core.stubs.*
+import org.rust.lang.core.stubs.RsPathStub
+import org.rust.lang.core.stubs.RsUseItemStub
+import org.rust.lang.core.stubs.RsUseSpeckStub
+import org.rust.lang.core.stubs.RsVisStub
 
 fun interface RsLeafUseSpeckConsumer {
     fun consume(usePath: Array<String>, alias: String?, isStarImport: Boolean, offsetInExpansion: Int)
@@ -72,9 +75,9 @@ private fun addPathSegments(path: RsPathStub, segments: ArrayList<String>): Bool
     return true
 }
 
-fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String>? {
+fun RsPathStub.getPathWithAdjustedDollarCrate(): Array<String>? {
     val segments = arrayListOf<String>()
-    if (!addPathSegments(path, segments)) return null
+    if (!addPathSegments(this, segments)) return null
     return segments.toTypedArray()
 }
 

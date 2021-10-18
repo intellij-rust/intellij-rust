@@ -16,6 +16,7 @@ import com.intellij.util.SmartList
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.macros.MacroCallBody
 import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -289,7 +290,7 @@ private class ModCollector(
     }
 
     override fun collectMacroCall(call: MacroCallLight, stub: RsMacroCallStub) {
-        check(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
+        require(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
         val bodyHash = call.bodyHash
         if (bodyHash == null && call.path.last() != "include") return
         val path = dollarCrateHelper?.convertPath(call.path, call.pathOffsetInExpansion) ?: call.path
@@ -302,10 +303,35 @@ private class ModCollector(
             modData,
             macroIndex,
             path,
-            call.body,
+            MacroCallBody.FunctionLike(call.body),
             bodyHash,
             macroDepth,
             dollarCrateMap
+        )
+    }
+
+    override fun collectProcMacroCall(call: ProcMacroCallLight) {
+        require(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
+        val (body, bodyHash) = call.lowerBody(project, crate) ?: return
+        val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
+        val path = dollarCrateHelper?.convertPath(call.attrPath, call.attrPathStartOffsetInExpansion) ?: call.attrPath
+        val dollarCrateMap = dollarCrateHelper?.getRangeMap(
+            call.bodyStartOffsetInExpansion,
+            call.bodyEndOffsetInExpansion
+        ) ?: RangeMap.EMPTY
+        val originalItem = call.originalItem?.let {
+            val visItem = convertToVisItem(it, isModOrEnum = false, forceCfgDisabledVisibility = false)
+            visItem to it.namespaces
+        }
+        context.context.macroCalls += MacroCallInfo(
+            modData,
+            macroIndex,
+            path,
+            body,
+            bodyHash,
+            macroDepth,
+            dollarCrateMap,
+            originalItem
         )
     }
 

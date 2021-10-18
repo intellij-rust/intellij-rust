@@ -16,6 +16,7 @@ data class MappedSubtree(val subtree: TokenTree.Subtree, val tokenMap: TokenMap)
 
 class TokenMap(val map: List<TokenMetadata>) {
     fun get(id: TokenId): TokenMetadata? = map.getOrNull(id)
+    fun merge(other: TokenMap): TokenMap = TokenMap(map + other.map)
 }
 
 sealed class TokenMetadata {

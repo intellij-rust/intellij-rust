@@ -11,6 +11,7 @@ import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.DigestInputStream
+import java.security.DigestOutputStream
 
 /**
  * Abstracts byte array of cryptographic hash to provide appropriate equals/hashCode methods.
@@ -44,6 +45,12 @@ import java.security.DigestInputStream
 
         fun compute(input: String): HashCode =
             HashCode(SHA1.digest(input.toByteArray()))
+
+        fun compute(computation: DataOutputStream.() -> Unit): HashCode {
+            val sha1 = SHA1
+            computation(DataOutputStream(DigestOutputStream(OutputStream.nullOutputStream(), sha1)))
+            return HashCode(sha1.digest())
+        }
 
         @Throws(IOException::class)
         fun ofFile(path: Path): HashCode {
