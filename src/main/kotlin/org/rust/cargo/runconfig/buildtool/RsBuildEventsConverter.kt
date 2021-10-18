@@ -108,7 +108,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
         }
         if (!isSuitableTarget || context.isTestBuild && !rustcArtifact.profile.test) return true
 
-        context.artifact = rustcArtifact
+        context.artifacts += rustcArtifact
 
         return true
     }

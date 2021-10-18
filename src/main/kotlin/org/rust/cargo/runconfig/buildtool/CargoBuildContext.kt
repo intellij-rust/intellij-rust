@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
-import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifact
+import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifacts
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
@@ -41,7 +41,7 @@ abstract class CargoBuildContextBase(
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
-    var artifact: CompilerArtifactMessage? = null
+    var artifacts: List<CompilerArtifactMessage> = emptyList()
 }
 
 class CargoBuildContext(
@@ -92,7 +92,7 @@ class CargoBuildContext(
     fun finished(isSuccess: Boolean) {
         val isCanceled = indicator?.isCanceled ?: false
 
-        environment.artifact = artifact.takeIf { isSuccess && !isCanceled }
+        environment.artifacts = artifacts.takeIf { isSuccess && !isCanceled }
 
         finished = System.currentTimeMillis()
         buildSemaphore.release()

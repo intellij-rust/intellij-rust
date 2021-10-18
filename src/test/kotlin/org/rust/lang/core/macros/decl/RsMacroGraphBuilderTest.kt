@@ -7,14 +7,15 @@ package org.rust.lang.core.macros.decl
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.lang.core.psi.RsMacro
+import org.rust.UseNewResolve
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.graph
 
 class RsMacroGraphBuilderTest : RsTestBase() {
     private fun check(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
-        val macro = myFixture.file.descendantsOfType<RsMacro>().single()
+        val macro = myFixture.file.descendantsOfType<RsMacroDefinitionBase>().single()
         val graph = macro.graph!!
         val expected = expectedIndented.trimIndent()
         val actual = graph.depthFirstTraversalTrace()
@@ -24,6 +25,19 @@ class RsMacroGraphBuilderTest : RsTestBase() {
     fun `test one rule simple`() = check("""
         macro_rules! my_macro {
             ($ e:expr) => (1);
+        }
+    """, """
+        START
+        [S]
+        Expr
+        [E]
+        END
+    """)
+
+    @UseNewResolve
+    fun `test one rule simple (macro 2)`() = check("""
+        macro my_macro($ e:expr) {
+            1
         }
     """, """
         START

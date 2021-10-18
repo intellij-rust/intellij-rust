@@ -8,8 +8,8 @@ package org.rust.lang.core.macros.decl
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.UseNewResolve
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.*
 
@@ -17,7 +17,7 @@ class RsMacroGraphWalkerTest : RsTestBase() {
     private fun check(@Language("Rust") code: String, expected: HashSet<FragmentKind>) {
         InlineFile(code)
         val macroCall = myFixture.file.descendantsOfType<RsMacroCall>().single()
-        val macro = macroCall.resolveToMacro() as RsMacro
+        val macro = macroCall.resolveToMacro()!!
         val graph = macro.graph!!
 
         val position = myFixture.file.findElementAt(myFixture.caretOffset - 1)!!
@@ -39,6 +39,17 @@ class RsMacroGraphWalkerTest : RsTestBase() {
             my_macro!(x/*caret*/);
         }
     """, hashSetOf(FragmentKind.Expr, FragmentKind.Ident))
+
+    @UseNewResolve
+    fun `test simple (macro 2)`() = check("""
+        macro my_macro($ e:expr) {
+            1
+        }
+
+        fn main() {
+            my_macro!(x/*caret*/);
+        }
+    """, hashSetOf(FragmentKind.Expr))
 
     fun `test complex expr`() = check("""
         macro_rules! my_macro {

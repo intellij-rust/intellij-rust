@@ -54,21 +54,25 @@ abstract class RsExecutableRunner(
             return
         }
         environment.cargoPatches += getCargoCommonPatch(project)
-        environment.putUserData(ARTIFACT, CompletableFuture())
+        environment.putUserData(ARTIFACTS, CompletableFuture())
         super.execute(environment)
     }
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state !is CargoRunStateBase) return null
 
-        val artifact = environment.artifact
+        val artifacts = environment.artifacts.orEmpty()
+        val artifact = artifacts.firstOrNull()
         val binaries = artifact?.executables.orEmpty()
-        val errorMessage = when {
-            binaries.isEmpty() -> "Can't find a binary."
-            binaries.size > 1 -> "More than one binary was produced. " +
+
+        fun checkErrors(items: List<Any>, itemName: String): String? = when {
+            items.isEmpty() -> "Can't find a $itemName."
+            items.size > 1 -> "More than one $itemName was produced. " +
                 "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly."
             else -> null
         }
+
+        val errorMessage = checkErrors(artifacts, "artifact") ?: checkErrors(binaries, "binary")
         if (errorMessage != null) {
             environment.project.showErrorDialog(errorMessage)
             return null
@@ -126,13 +130,13 @@ abstract class RsExecutableRunner(
     }
 
     companion object {
-        private val ARTIFACT: Key<CompletableFuture<CompilerArtifactMessage>> =
-            Key.create("CARGO.CONFIGURATION.ARTIFACT")
+        private val ARTIFACTS: Key<CompletableFuture<List<CompilerArtifactMessage>>> =
+            Key.create("CARGO.CONFIGURATION.ARTIFACTS")
 
-        var ExecutionEnvironment.artifact: CompilerArtifactMessage?
-            get() = getUserData(this@Companion.ARTIFACT)?.get()
+        var ExecutionEnvironment.artifacts: List<CompilerArtifactMessage>?
+            get() = getUserData(this@Companion.ARTIFACTS)?.get()
             set(value) {
-                getUserData(this@Companion.ARTIFACT)?.complete(value)
+                getUserData(this@Companion.ARTIFACTS)?.complete(value)
             }
     }
 }

@@ -5,7 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.macros.decl.MacroGraph
+import org.rust.lang.core.macros.decl.MacroGraphBuilder
 import org.rust.lang.core.psi.MacroBraces
 import org.rust.lang.core.psi.RsMacroBody
 import org.rust.lang.doc.documentation
@@ -45,3 +51,11 @@ fun RsMacroDefinitionBase.guessPreferredBraces(): MacroBraces {
 }
 
 private val MACRO_CALL_PATTERN: Regex = """(^|[^\p{Alnum}_])(r#)?(?<name>\w+)\s*!\s*(?<brace>[({\[])""".toRegex()
+
+private val MACRO_GRAPH_KEY: Key<CachedValue<MacroGraph?>> = Key.create("MACRO_GRAPH_KEY")
+
+val RsMacroDefinitionBase.graph: MacroGraph?
+    get() = CachedValuesManager.getCachedValue(this, MACRO_GRAPH_KEY) {
+        val graph = MacroGraphBuilder(this).build()
+        CachedValueProvider.Result.create(graph, modificationTracker)
+    }
