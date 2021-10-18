@@ -1452,7 +1452,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2 {
             pub mod inner1 {
                 pub use inner2::*;
-
                 mod inner2 { pub fn bar2() {} }
                 pub fn bar1() {}
             }
@@ -1706,7 +1705,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2 {
             mod foo1 {
                 use crate::mod2;
-
                 fn test() { mod2::bar1(); }
             }
 
@@ -1744,7 +1742,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2 {
             mod foo1 {
                 use crate::mod2::Bar1;
-
                 fn test() { let _ = Bar1 {}; }
             }
 
@@ -1851,7 +1848,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
 
             pub mod inner1 {
                 pub use inner2::*;
-
                 mod inner2 { pub fn foo3() {} }
                 pub fn foo2() {}
             }
@@ -2038,7 +2034,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod usage {
             use crate::mod2::foo1;
             use crate::mod2::Foo2;
-
             fn test() {
                 foo1();
                 let _ = Foo2 {};
@@ -2072,7 +2067,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
 
         mod usage {
             use crate::mod2;
-
             fn test() {
                 mod2::foo1();
                 let _ = mod2::Foo2 {};
@@ -2151,7 +2145,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod inner {
             // can't use this reexport for foo
             pub use mod2::bar;
-
             pub mod mod2 {
                 pub fn bar() {}
 
@@ -2191,7 +2184,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use bar::*;
-
             mod mod1 {}
             // private
             mod bar { pub fn bar_func() {} }
@@ -2215,7 +2207,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             pub use mod1_inner::bar;
-
             mod mod1_inner {
                 pub fn bar() {}
             }
@@ -2244,7 +2235,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner {
             pub use mod1::*;
-
             // private
             mod mod1 {}
             pub mod mod2 {
@@ -2275,7 +2265,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner {
             pub use mod2::*;
-
             pub mod mod1 {}
             // private
             mod mod2 {
@@ -2307,7 +2296,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use inner2::*;
-
             mod inner2 {
                 pub mod mod1 {}
                 pub mod mod2 {
@@ -2340,7 +2328,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use inner2::*;
-
             mod inner2 {  // private
                 pub mod mod1 {}
                 pub mod mod2 {
@@ -2632,7 +2619,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             use Bar::*;
-
             pub enum Bar { Bar1, Bar2 }
         }
         mod mod2 {
@@ -2689,7 +2675,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             use Bar::*;
-
             pub enum Bar { Bar1, Bar2 }
         }
         mod mod2 {
@@ -2872,7 +2857,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
 
             mod inner2 {
                 use crate::mod2::inner1::Foo as Bar;
-
                 fn test(bar: Bar) {}
             }
         }
@@ -2898,10 +2882,55 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
         mod usage {
             use crate::mod2::foo as bar;
-
             fn test() {
                 bar();
             }
+        }
+    """)
+
+    fun `test don't reorder use items`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod inner {}
+            use aaa;
+            fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            mod inner {}
+            use aaa;
+        }
+        mod mod2 {
+            fn foo() {}
+        }
+    """)
+
+    fun `test insert import at correct location`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use crate::mod1::A;
+            use crate::mod3::C;
+            fn foo/*caret*/() {}
+            fn bar() {
+                foo();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod1::A;
+            use crate::mod2;
+            use crate::mod3::C;
+
+            fn bar() {
+                mod2::foo();
+            }
+        }
+        mod mod2 {
+            pub fn foo() {}
         }
     """)
 
