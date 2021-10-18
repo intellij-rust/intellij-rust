@@ -1792,6 +1792,30 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test associated type`() = doTest("""
+        trait Foo {
+            type A<'a, T> where T: 'a;
+            type B: Sized;
+        }
+        struct S;
+        impl Foo for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("A<'a, T> where T: 'a", byDefault = true),
+        ImplementMemberSelection("B: Sized", byDefault = true)
+    ), """
+        trait Foo {
+            type A<'a, T> where T: 'a;
+            type B: Sized;
+        }
+        struct S;
+        impl Foo for S {
+            type A<'a, T> where T: 'a = ();
+            type B = ();
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(
