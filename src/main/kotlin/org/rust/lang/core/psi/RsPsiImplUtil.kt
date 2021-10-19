@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.macros.isExpandedFromIncludeMacro
 import org.rust.lang.core.psi.ext.*
@@ -98,7 +99,11 @@ object RsPsiImplUtil {
         restrictedVis: RsVisibility
     ): SearchScope? {
         val restrictedMod = when (val visibility = restrictedVis.intersect(element.visibility)) {
-            RsVisibility.Public -> return null
+            RsVisibility.Public -> {
+                val crate = containingMod.containingCrate ?: return null
+                if (crate.kind is CargoWorkspace.TargetKind.Lib) return null
+                crate.rootMod ?: return null
+            }
             RsVisibility.Private -> containingMod
             is RsVisibility.Restricted -> visibility.inMod
         }
