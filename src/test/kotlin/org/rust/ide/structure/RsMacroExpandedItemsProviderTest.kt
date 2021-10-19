@@ -5,7 +5,7 @@
 
 package org.rust.ide.structure
 
-class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
+class RsMacroExpandedItemsProviderTest : RsStructureViewToggleableActionTest() {
 
     fun `test macro expanded filter`() = doTest("""
         pub enum Enum { One, Two }
@@ -35,12 +35,6 @@ class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
         |  One visibility=none
         |  Two visibility=none
         | foo visibility=none
-        | -Struct visibility=public
-        |  field: bool visibility=private
-        | -Trait visibility=public
-        |  func() visibility=none
-        | -Trait for Struct visibility=none
-        |  func() visibility=none
         | Persistent visibility=private
     """, """
         |-main.rs visibility=none
@@ -49,6 +43,12 @@ class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
         |  Two visibility=none
         | foo visibility=none
         | Persistent visibility=private
+        | -Struct visibility=public
+        |  field: bool visibility=private
+        | -Trait visibility=public
+        |  func() visibility=none
+        | -Trait for Struct visibility=none
+        |  func() visibility=none
     """)
 
     fun `test filter macro expanded nested functions`() = doTest("""
@@ -70,17 +70,17 @@ class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
     """, """
         |-main.rs visibility=none
         | nested visibility=none
-        | -first() visibility=private
-        |  second() visibility=public
-        |  Inner visibility=public
+        | external() visibility=private
+    """, """
+        |-main.rs visibility=none
+        | nested visibility=none
         | -external() visibility=private
         |  -first() visibility=private
         |   second() visibility=public
         |   Inner visibility=public
-    """, """
-        |-main.rs visibility=none
-        | nested visibility=none
-        | external() visibility=private
+        | -first() visibility=private
+        |  second() visibility=public
+        |  Inner visibility=public
     """)
 
     fun `test filter on macro expanded type definitions has no effect`() = doTest("""
@@ -159,5 +159,5 @@ class RsMacroExpandedFilterTest : RsStructureViewToggleableActionTest() {
         | Ty visibility=private
     """)
 
-    override val actionId: String = RsMacroExpandedFilter.ID
+    override val actionId: String = RsMacroExpandedItemsProvider.ID
 }
