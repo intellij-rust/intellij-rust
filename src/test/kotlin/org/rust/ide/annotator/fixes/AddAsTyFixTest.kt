@@ -52,4 +52,18 @@ class AddAsTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
             let _: f32 = answer() as f32;
         }
     """)
+
+    fun `test type alias`() = checkFixByText("Add safe cast to Foo", """
+        type Foo = f32;
+        fn answer() -> i32 {42}
+        fn main () {
+            let _: Foo = <error>answer()/*caret*/</error>;
+        }
+    """, """
+        type Foo = f32;
+        fn answer() -> i32 {42}
+        fn main () {
+            let _: Foo = answer() as Foo;
+        }
+    """)
 }

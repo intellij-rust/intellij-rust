@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
@@ -21,10 +23,10 @@ class AddAsTyFix(expr: RsExpr, val ty: Ty) : LocalQuickFixAndIntentionActionOnPs
 
     override fun getFamilyName(): String = "Add safe cast"
 
-    override fun getText(): String = "Add safe cast to $ty"
+    override fun getText(): String = "Add safe cast to ${ty.shortPresentableText}"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         if (startElement !is RsExpr) return
-        startElement.replace(RsPsiFactory(project).createCastExpr(startElement, ty.toString()))
+        startElement.replace(RsPsiFactory(project).createCastExpr(startElement, ty.renderInsertionSafe(startElement)))
     }
 }
