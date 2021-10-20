@@ -5,16 +5,13 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.psi.RsCondition
-import org.rust.lang.core.psi.RsElseBranch
-import org.rust.lang.core.psi.RsIfExpr
-import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.isIrrefutable
-import org.rust.lang.core.psi.ext.leftSiblings
-import org.rust.lang.core.psi.ext.patList
-import org.rust.lang.core.psi.ext.rangeWithPrevSpace
+import org.rust.lang.core.FeatureAvailability
+import org.rust.lang.core.LET_ELSE
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.asBool
 import org.rust.lang.utils.evaluation.evaluate
 
@@ -27,13 +24,20 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
-            override fun visitElseBranch(expr: RsElseBranch) {
-                if (!expr.isRedundant) return
 
-                val elseExpr = expr.`else`
+            override fun visitElseBranch(expr: RsElseBranch) {
+                if (expr.isRedundant) registerProblem(expr, expr.`else`.textRangeInParent)
+            }
+
+            override fun visitLetElseBranch(expr: RsLetElseBranch) {
+                if (LET_ELSE.availability(expr) != FeatureAvailability.AVAILABLE) return
+                if (expr.isRedundant) registerProblem(expr, expr.`else`.textRangeInParent)
+            }
+
+            private fun registerProblem(expr: RsElement, textRange: TextRange) {
                 holder.registerProblem(
                     expr,
-                    elseExpr.textRangeInParent,
+                    textRange,
                     "Redundant `else`",
                     SubstituteTextFix.delete(
                         "Remove `else`",
@@ -57,6 +61,10 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
 
                 return set.any { it.isRedundant }
             }
+
+        private val RsLetElseBranch.isRedundant: Boolean
+            get() = (parent as? RsLetDecl)?.pat?.isIrrefutable == true
+
         private val RsCondition.isRedundant: Boolean
             get() {
                 val patList = patList

@@ -524,6 +524,38 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test let else without semicolon`() = checkCompletion("else", """
+        fn main() {
+            let x = 0 /*caret*/
+        }
+    """, """
+        fn main() {
+            let x = 0 else { /*caret*/ }
+        }
+    """)
+
+    fun `test let else before semicolon`() = checkCompletion("else", """
+        fn main() {
+            let x = 0 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let x = 0 else { /*caret*/ };
+        }
+    """)
+
+    fun `test let else after semicolon`() = checkNoCompletion("""
+        fn main() {
+            let x = 0; els/*caret*/
+        }
+    """)
+
+    fun `test let else without expression`() = checkNoCompletion("""
+        fn main() {
+            let x = els/*caret*/
+        }
+    """)
+
     fun `test return from unit function`() = checkCompletion("return",
         "fn foo() { ret/*caret*/}",
         "fn foo() { return;/*caret*/}"
