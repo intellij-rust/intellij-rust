@@ -445,5 +445,22 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve macro from including file included to a function-local mod`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! foo {
+                   //X
+            () => {}
+        }
+
+        fn main() {
+            mod bar {
+                include!("baz.rs");
+            }
+        }
+    //- baz.rs
+        foo!();
+        //^ main.rs
+    """)
+
     /** More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest] */
 }
