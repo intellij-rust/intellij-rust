@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.colors.RsColor
 import org.rust.ide.injected.isDoctestInjection
@@ -513,8 +514,12 @@ private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormat
         "format",
         "format_args",
         "format_args_nl" -> 0
-        // panic macro handle any literal (even with `{}`) if it's single argument
-        "panic" -> if (formatMacroArgs.size < 2) null else 0
+        // panic macro handles any literal (even with `{}`) if it's single argument in 2015 and 2018 editions,
+        // but starting with edition 2021 the first string literal is always format string
+        "panic" -> {
+            val edition = formatMacro.containingCrate?.edition ?: Edition.EDITION_2018
+            if (formatMacroArgs.size < 2 && edition < Edition.EDITION_2021) null else 0
+        }
         "write",
         "writeln" -> 1
         else -> null
