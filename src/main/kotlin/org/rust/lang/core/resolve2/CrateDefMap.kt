@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
-import com.intellij.util.SmartList
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
 import org.rust.lang.core.crate.CratePersistentId
@@ -27,6 +26,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.Visibility.*
 import org.rust.lang.core.resolve2.util.GlobImportGraph
 import org.rust.lang.core.resolve2.util.PerNsHashMap
+import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
@@ -277,10 +277,9 @@ class ModData(
     /**
      * Macros visible in current module in legacy textual scope.
      * Module scoped macros will be inserted into [visibleItems] instead of here.
-     * Currently stores only cfg-enabled macros.
+     * Currently, stores only cfg-enabled macros.
      */
-    // TODO: Custom map? (Profile memory usage)
-    val legacyMacros: THashMap<String, SmartList<MacroDefInfo>> = THashMap()
+    val legacyMacros: SmartListMap<String, MacroDefInfo> = SmartListMap()
 
     /** Explicitly declared macros 2.0 (`pub macro $name ...`) */
     val macros2: MutableMap<String, DeclMacro2DefInfo> = THashMap()
@@ -352,8 +351,7 @@ class ModData(
     }
 
     fun addLegacyMacro(name: String, defInfo: MacroDefInfo) {
-        val existing = legacyMacros.putIfAbsent(name, SmartList(defInfo)) ?: return
-        existing += defInfo
+        legacyMacros.addValue(name, defInfo)
     }
 
     fun addLegacyMacros(defs: Map<String, DeclMacroDefInfo>) {
