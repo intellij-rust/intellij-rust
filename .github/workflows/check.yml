@@ -135,7 +135,6 @@ jobs:
                 rust-version: [ 1.55.0, nightly-2021-08-17 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 212, 213 ]
-                resolve-engine: [ resolve-new ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 include:
@@ -144,13 +143,6 @@ jobs:
                       rust-version: 1.41.0
                       base-ide: idea
                       platform-version: 212
-                      resolve-engine: resolve-old
-                      verify-plugin: true
-                    - os: ubuntu-18.04
-                      rust-version: 1.55.0
-                      base-ide: idea
-                      platform-version: 212
-                      resolve-engine: resolve-old
                       verify-plugin: true
 
         runs-on: ${{ matrix.os }}
@@ -226,10 +218,6 @@ jobs:
                   echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.2" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.2" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=212.4746.2" >> $GITHUB_ENV
-
-            - name: Set up env variable for old resolve
-              if: matrix.resolve-engine == 'resolve-old'
-              run: echo "INTELLIJ_RUST_FORCE_USE_OLD_RESOLVE=" >> $GITHUB_ENV
 
             - name: Set up test env variables
               run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
