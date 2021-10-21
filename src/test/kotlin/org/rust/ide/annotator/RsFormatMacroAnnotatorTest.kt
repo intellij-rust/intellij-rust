@@ -5,10 +5,8 @@
 
 package org.rust.ide.annotator
 
-import org.rust.ExpandMacros
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -520,9 +518,27 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test panic with single literal`() = checkErrors("""
         fn main() {
             panic!("{}");
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2021)
+    fun `test panic macro 2021`() = checkErrors("""
+        use std::fmt;
+
+        struct S;
+        impl fmt::Display for S {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { unimplemented!() }
+        }
+
+        fn main() {
+            panic!("<error descr="Invalid reference to positional argument 0 (no arguments were given)">{}</error>");
+            panic!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S);
+            panic!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER> <error descr="Invalid reference to positional argument 1 (there is 1 argument)">{}</error>", S);
+            panic!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", S, <error descr="Argument never used">S</error>);
         }
     """)
 
