@@ -5,9 +5,7 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.UseNewResolve
 
-@UseNewResolve
 class RsImplTraitMemberCompletionProviderTest : RsCompletionTestBase() {
     fun `test constant`() = doFirstCompletion("""
         trait Foo {

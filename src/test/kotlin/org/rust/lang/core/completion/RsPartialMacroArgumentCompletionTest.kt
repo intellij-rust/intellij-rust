@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
-import org.rust.UseNewResolve
 
 class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test expr 1`() = doTest("""
@@ -33,7 +32,6 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         }
     """, setOf("iii"), setOf("i32"))
 
-    @UseNewResolve
     fun `test expr (macro 2)`() = doTest("""
         macro my_macro($ e:expr, foo) {
             1

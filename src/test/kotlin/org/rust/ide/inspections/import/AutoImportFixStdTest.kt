@@ -5,11 +5,13 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.*
+import org.rust.MinRustcVersion
+import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.utils.import.Testmarks
 
-@UseNewResolve
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
     fun `test import item from std crate`() = checkAutoImportFixByText("""

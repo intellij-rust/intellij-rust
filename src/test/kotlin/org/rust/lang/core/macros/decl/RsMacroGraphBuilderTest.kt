@@ -7,7 +7,6 @@ package org.rust.lang.core.macros.decl
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.UseNewResolve
 import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.graph
@@ -34,7 +33,6 @@ class RsMacroGraphBuilderTest : RsTestBase() {
         END
     """)
 
-    @UseNewResolve
     fun `test one rule simple (macro 2)`() = check("""
         macro my_macro($ e:expr) {
             1

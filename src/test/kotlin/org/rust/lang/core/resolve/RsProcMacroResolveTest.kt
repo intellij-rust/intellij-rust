@@ -268,7 +268,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive by qualified path with re-export 1`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -281,7 +280,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive by qualified path with re-export 2`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -296,7 +294,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve attribute macro by qualified path with re-export 1`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
@@ -309,7 +306,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve attribute macro by qualified path with re-export 2`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
@@ -336,7 +332,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
               //^ dep-proc-macro/lib.rs
     """)
 
-    @UseNewResolve
     fun `test resolve bang proc macro from macro call through macro_use with rename`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro]
@@ -403,7 +398,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
     """)
 
     // TODO fix name resolution order
-    @UseNewResolve
     fun `test resolve bang proc macro through macro_use to the last extern crate 4`() = expect<IllegalStateException> {
     stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
@@ -469,7 +463,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve attr proc macro from macro call through macro_use with rename`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_attribute]
@@ -485,7 +478,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive proc macro from macro call through macro_use`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -499,7 +491,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test custom derive proc macro is not resolved to decl macro through macro_use 1`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -516,7 +507,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test custom derive proc macro is not resolved to decl macro through macro_use 2`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -536,7 +526,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive proc macro from macro call through macro_use with rename`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -552,7 +541,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive through macro_use to the last extern crate 1`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -571,7 +559,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive through macro_use to the last extern crate 2`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]
@@ -590,7 +577,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             struct S;
     """)
 
-    @UseNewResolve
     fun `test resolve custom derive through macro_use to the last extern crate 3`() = stubOnlyResolve("""
         //- dep-proc-macro/lib.rs
             #[proc_macro_derive(ProcMacroName)]

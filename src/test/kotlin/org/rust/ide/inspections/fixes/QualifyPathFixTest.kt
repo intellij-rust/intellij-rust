@@ -5,12 +5,13 @@
 
 package org.rust.ide.inspections.fixes
 
-import org.rust.*
+import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 
-@UseNewResolve
 class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
     fun `test function call`() = checkFixByText("Qualify path to `foo::bar`", """
         mod foo {

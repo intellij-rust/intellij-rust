@@ -7,7 +7,6 @@ package org.rust.lang.core.completion
 
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
-import org.rust.UseNewResolve
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
@@ -165,7 +164,6 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test public item reexported with restricted visibility 1`() = checkNoCompletion("""
         pub mod inner1 {
@@ -179,7 +177,6 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test public item reexported with restricted visibility 2`() = checkContainsCompletion("bar2", """
         pub mod inner1 {

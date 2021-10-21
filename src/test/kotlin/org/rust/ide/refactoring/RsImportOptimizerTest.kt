@@ -10,7 +10,6 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
-@UseNewResolve  // because of RsUnusedImportInspection
 @WithEnabledInspections(RsUnusedImportInspection::class)
 class RsImportOptimizerTest: RsTestBase() {
 
@@ -546,7 +545,6 @@ class RsImportOptimizerTest: RsTestBase() {
         fn usage(p1: bbb::S, p2: mem::S, p3: string:S, p4: io::S) {}
     """)
 
-    @UseNewResolve
     fun `test remove unused use item`() = doTest("""
         struct S;
 
@@ -559,7 +557,6 @@ class RsImportOptimizerTest: RsTestBase() {
         mod foo {}
     """)
 
-    @UseNewResolve
     fun `test remove unused use speck at the beginning`() = doTest("""
         struct S;
 
@@ -574,7 +571,6 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test remove unused use speck in the middle`() = doTest("""
         struct S;
 
@@ -589,7 +585,6 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test remove multiple unused use specks`() = doTest("""
         struct S1;
         struct S2;
@@ -606,7 +601,6 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test remove unused use speck at the end`() = doTest("""
         struct S;
 
@@ -621,7 +615,6 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test remove empty group after unused specks are removed`() = doTest("""
         struct S1;
         struct S2;
@@ -636,7 +629,6 @@ class RsImportOptimizerTest: RsTestBase() {
         mod foo {}
     """)
 
-    @UseNewResolve
     fun `test remove multiple unused use items`() = doTest("""
         struct S1;
         struct S2;
@@ -652,7 +644,6 @@ class RsImportOptimizerTest: RsTestBase() {
         mod foo {}
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test do not remove cfg-disabled import`() = checkNotChanged("""

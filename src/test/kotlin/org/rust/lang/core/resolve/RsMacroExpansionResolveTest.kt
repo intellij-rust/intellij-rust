@@ -914,7 +914,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^ unresolved
     """)
 
-    @UseNewResolve
     fun `test legacy textual macro reexported as macro 2`() = checkByCode("""
         mod inner {
             #[macro_export]
@@ -966,7 +965,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test propagate expanded macro def to grandparent mod`() = checkByCode("""
         mod inner {

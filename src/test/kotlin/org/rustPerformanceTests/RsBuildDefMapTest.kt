@@ -7,7 +7,6 @@ package org.rustPerformanceTests
 
 import com.intellij.openapi.util.Disposer
 import com.sun.management.HotSpotDiagnosticMXBean
-import org.rust.UseNewResolve
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.resolve2.getAllDefMaps
@@ -15,7 +14,6 @@ import java.lang.management.ManagementFactory
 
 private const val DUMP_HEAP: Boolean = false
 
-@UseNewResolve
 class RsBuildDefMapTest : RsRealProjectTestBase() {
 
     fun `test build rustc`() = doTest(RUSTC)

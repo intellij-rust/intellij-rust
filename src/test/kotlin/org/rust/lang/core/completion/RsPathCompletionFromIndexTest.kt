@@ -7,8 +7,11 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
-import org.rust.*
+import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
@@ -377,7 +380,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     }
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro`() = doTestByFileTree("""
     //- lib.rs
@@ -395,7 +397,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2`() = doTestByFileTree("""
     //- lib.rs
@@ -415,7 +416,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 
     // TODO parse top-level identifier as RsPath
     // e.g. `lazy_static`
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro with same name as dependency`() = expect<IllegalStateException> {
         doTestByFileTree("""
@@ -431,7 +431,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
     """)
     }
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro as type reference`() = doTestByFileTree("""
     //- lib.rs

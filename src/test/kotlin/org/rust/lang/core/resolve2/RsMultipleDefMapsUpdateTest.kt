@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.resolve2.CrateInfo.*
 
 /** Tests which exactly [CrateDefMap]s are updated when we modify some crate and then run resolve in some other crate */
-@UseNewResolve
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsMultipleDefMapsUpdateTest : RsTestBase() {
 

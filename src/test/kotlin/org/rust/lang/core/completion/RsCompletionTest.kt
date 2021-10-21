@@ -644,7 +644,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test complete macro2`() = doSingleCompletion("""
         macro foo() {}
         fn main() {
@@ -657,7 +656,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test complete macro2 in use statement`() = doSingleCompletion("""
         pub mod bar {
             pub macro foo() {}
@@ -1093,7 +1091,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub fn func() {}
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 2`() = doSingleCompletionByFileTree("""

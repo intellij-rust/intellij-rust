@@ -9,7 +9,6 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
-@UseNewResolve  // because of RsUnusedImportInspection
 @WithEnabledInspections(RsUnusedImportInspection::class)
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
@@ -915,7 +914,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test copy usual imports from old mod`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -993,7 +991,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test outside reference to function in old mod when move from crate root`() = doTest("""
     //- lib.rs
         fn foo/*caret*/() { bar(); }
@@ -1552,7 +1549,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @UseNewResolve
     fun `test outside reference to items from stdlib`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -1575,7 +1571,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @UseNewResolve
     fun `test outside reference to Arc from stdlib`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -1683,7 +1678,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test self references from inner mod 1`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -1720,7 +1714,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test self references from inner mod 2`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -1789,7 +1782,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test self references to inner mod`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -2074,7 +2066,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test inside references, should add import for grandparent mod`() = doTest("""
     //- lib.rs
         mod inner1 {
@@ -2811,7 +2802,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2/*target*/ {}
     """)
 
-    @UseNewResolve
     fun `test outside references with import alias`() = doTest("""
     //- lib.rs
         mod foo {

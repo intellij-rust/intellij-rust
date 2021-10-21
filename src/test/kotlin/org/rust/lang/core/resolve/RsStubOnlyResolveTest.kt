@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import org.rust.MockEdition
-import org.rust.UseNewResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
@@ -555,7 +554,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         mod b;
     """)
 
-    @UseNewResolve
     fun `test resolve macro multi file 4`() = stubOnlyResolve("""
     //- b.rs
         #![macro_use]
@@ -779,7 +777,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test item reexported from 'pub(crate)' mod in dependency crate`() = stubOnlyResolve("""
     //- main.rs

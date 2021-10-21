@@ -19,7 +19,6 @@ import org.rust.stdext.singleOrFilter
 /**
  * A test for detecting proc macro attributes on items. See [ProcMacroAttribute]
  */
-@UseNewResolve
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 class ProcMacroAttributeTest : RsTestBase() {

@@ -6,14 +6,10 @@
 package org.rust.ide.annotator
 
 import org.rust.ProjectDescriptor
-import org.rust.UseNewResolve
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor
 
-// `asm` macro was converted to macro 2.0 since 1.55.0
-// and the plugin can resolve macro 2.0 only when new name resolution engine is enabled
-@UseNewResolve
 class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
     override fun setUp() {
         super.setUp()

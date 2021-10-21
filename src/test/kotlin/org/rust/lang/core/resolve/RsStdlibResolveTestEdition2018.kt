@@ -33,7 +33,6 @@ class RsStdlibResolveTestEdition2018 : RsResolveTestBase() {
           //^ ...core/src/lib.rs|...core/lib.rs
     """)
 
-    @UseNewResolve
     fun `test alloc crate unresolved without extern crate`() = stubOnlyResolve("""
     //- main.rs
         use alloc::rc::Rc;

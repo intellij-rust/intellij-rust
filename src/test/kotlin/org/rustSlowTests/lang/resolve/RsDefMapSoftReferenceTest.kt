@@ -6,7 +6,6 @@
 package org.rustSlowTests.lang.resolve
 
 import org.intellij.lang.annotations.Language
-import org.rust.UseNewResolve
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.resolve.RsResolveTestBase
@@ -15,7 +14,6 @@ import org.rust.lang.core.resolve2.DefMapService
 import org.rust.lang.core.resolve2.defMapService
 
 /** See [DefMapService.defMaps] for details */
-@UseNewResolve
 class RsDefMapSoftReferenceTest : RsResolveTestBase() {
 
     fun test() = doTest("""
