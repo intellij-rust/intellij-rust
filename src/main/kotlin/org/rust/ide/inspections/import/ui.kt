@@ -20,7 +20,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidateBase
 import org.rust.ide.utils.import.ImportInfo
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
@@ -33,11 +33,11 @@ private var MOCK: ImportItemUi? = null
 fun showItemsToImportChooser(
     project: Project,
     dataContext: DataContext,
-    items: List<ImportCandidate>,
-    callback: (ImportCandidate) -> Unit
+    items: List<ImportCandidateBase>,
+    callback: (ImportCandidateBase) -> Unit
 ) {
     val itemImportUi = if (isUnitTestMode) {
-        MOCK ?: error("You should set mock ui via `withMockImportItemUi`")
+        MOCK ?: error("Multiple items: ${items.map { it.info.usePath }}. You should set mock ui via `withMockImportItemUi`")
     } else {
         PopupImportItemUi(project, dataContext)
     }
@@ -55,12 +55,12 @@ fun withMockImportItemUi(mockUi: ImportItemUi, action: () -> Unit) {
 }
 
 interface ImportItemUi {
-    fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit)
+    fun chooseItem(items: List<ImportCandidateBase>, callback: (ImportCandidateBase) -> Unit)
 }
 
 private class PopupImportItemUi(private val project: Project, private val dataContext: DataContext) : ImportItemUi {
 
-    override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
+    override fun chooseItem(items: List<ImportCandidateBase>, callback: (ImportCandidateBase) -> Unit) {
         val candidatePsiItems = items.map(::ImportCandidatePsiElement)
 
         // TODO: sort items in popup
@@ -96,13 +96,13 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
     }
 }
 
-private class ImportCandidatePsiElement(val importCandidate: ImportCandidate) : FakePsiElement() {
+private class ImportCandidatePsiElement(val importCandidate: ImportCandidateBase) : FakePsiElement() {
     override fun getParent(): PsiElement? = importCandidate.qualifiedNamedItem.item.parent
 }
 
 private class RsImportCandidateCellRenderer : DefaultPsiElementCellRenderer() {
 
-    private val Any.importCandidate: ImportCandidate? get() = (this as? ImportCandidatePsiElement)?.importCandidate
+    private val Any.importCandidate: ImportCandidateBase? get() = (this as? ImportCandidatePsiElement)?.importCandidate
 
     override fun getIcon(element: PsiElement): Icon =
         element.importCandidate?.qualifiedNamedItem?.item?.getIcon(iconFlags) ?: super.getIcon(element)

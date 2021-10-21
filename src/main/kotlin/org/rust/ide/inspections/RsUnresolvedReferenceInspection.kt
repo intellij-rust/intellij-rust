@@ -13,7 +13,7 @@ import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidateBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -103,7 +103,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 }
 
 private fun createQuickFixes(
-    candidates: List<ImportCandidate>?,
+    candidates: List<ImportCandidateBase>?,
     element: RsReferenceElement,
     context: AutoImportFix.Context?
 ): List<LocalQuickFix> {

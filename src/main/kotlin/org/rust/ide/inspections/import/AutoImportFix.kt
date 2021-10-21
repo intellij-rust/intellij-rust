@@ -12,11 +12,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
-import org.rust.ide.utils.import.ImportCandidate
-import org.rust.ide.utils.import.ImportCandidatesCollector
-import org.rust.ide.utils.import.ImportContext
-import org.rust.ide.utils.import.import
+import org.rust.ide.utils.import.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
@@ -61,7 +59,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
     private fun chooseItemAndImport(
         project: Project,
         dataContext: DataContext,
-        items: List<ImportCandidate>,
+        items: List<ImportCandidateBase>,
         context: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
@@ -89,7 +87,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
 
             val referenceName = basePath.referenceName ?: return null
 
-            val isNameInScope = path.hasInScope(referenceName, TYPES_N_VALUES)
+            val isNameInScope = path.hasInScope(referenceName, TYPES_N_VALUES) && path.parent !is RsMacroCall
             if (isNameInScope) {
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
@@ -99,13 +97,18 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             }
 
             val superPath = path.rootPath()
-            val candidates = ImportCandidatesCollector.getImportCandidates(
-                ImportContext.from(project, path, false),
-                referenceName,
-                superPath.text
-            ) {
-                superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
-            }.toList()
+            val candidates = if (project.useAutoImportWithNewResolve && !path.isDoctestInjection) run {
+                val importContext = ImportContext2.from(path, isCompletion = false) ?: return@run emptyList()
+                ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
+            } else {
+                ImportCandidatesCollector.getImportCandidates(
+                    ImportContext.from(project, path, false),
+                    referenceName,
+                    superPath.text
+                ) {
+                    superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+                }.toList()
+            }
 
             return Context(GENERAL_PATH, candidates)
         }
@@ -136,7 +139,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
 
     data class Context(
         val type: Type,
-        val candidates: List<ImportCandidate>
+        val candidates: List<ImportCandidateBase>
     )
 
     enum class Type {

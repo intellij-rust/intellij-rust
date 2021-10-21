@@ -209,7 +209,10 @@ class DefCollector(
         if (import.isExternCrate && containingMod.isCrateRoot && name != "_") {
             val types = def.types.singleOrNull() ?: error("null PerNs.types for extern crate import")
             val externCrateDefMap = defMap.getDefMap(types.path.crate)
-            externCrateDefMap?.let { defMap.externPrelude[name] = it }
+            externCrateDefMap?.let {
+                defMap.externPrelude[name] = it
+                defMap.externCratesInRoot[name] = it
+            }
         }
 
         val defWithAdjustedVisible = def.mapItems {

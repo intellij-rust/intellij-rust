@@ -9,9 +9,9 @@ import org.intellij.lang.annotations.Language
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
-import org.rust.ide.utils.import.ImportCandidate
-import org.rust.openapiext.Testmark
+import org.rust.ide.utils.import.ImportCandidateBase
 import org.rust.lang.core.psi.RsFile
+import org.rust.openapiext.Testmark
 
 abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
@@ -27,6 +27,11 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         testmark: Testmark? = null,
         checkOptimizeImports: Boolean = true,
     ) = doTest(checkOptimizeImports) { checkFixByText(AutoImportFix.NAME, before, after, testmark = testmark) }
+
+    protected fun checkAutoImportFixByTextWithoutHighlighting(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = doTest { checkFixByTextWithoutHighlighting(AutoImportFix.NAME, before, after) }
 
     protected fun checkAutoImportFixByFileTree(
         @Language("Rust") before: String,
@@ -45,22 +50,10 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         @Language("Rust") before: String,
         expectedElements: List<String>,
         choice: String,
-        @Language("Rust") after: String
-    ) = doTest {
-        var chooseItemWasCalled = false
-
-        withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
-                chooseItemWasCalled = true
-                val actualItems = items.map { it.info.usePath }
-                assertEquals(expectedElements, actualItems)
-                val selectedValue = items.find { it.info.usePath == choice }
-                    ?: error("Can't find `$choice` in `$actualItems`")
-                callback(selectedValue)
-            }
-        }) { checkFixByText(AutoImportFix.NAME, before, after) }
-
-        check(chooseItemWasCalled) { "`chooseItem` was not called" }
+        @Language("Rust") after: String,
+        testmark: Testmark? = null
+    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice) {
+        checkFixByText(AutoImportFix.NAME, before, after, testmark = testmark)
     }
 
     protected fun checkAutoImportFixByFileTreeWithMultipleChoice(
@@ -68,21 +61,40 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         expectedElements: List<String>,
         choice: String,
         @Language("Rust") after: String,
+    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice) {
+        checkFixByFileTree(AutoImportFix.NAME, before, after)
+    }
+
+    protected fun checkAutoImportVariantsByText(
+        @Language("Rust") before: String,
+        expectedElements: List<String>
+    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice = null) {
+        configureByText(before)
+        annotationFixture.applyQuickFix(AutoImportFix.NAME)
+    }
+
+    private fun checkAutoImportFixWithMultipleChoice(
+        expectedElements: List<String>,
+        choice: String?,
+        action: () -> Unit,
     ) = doTest {
-        var chooseItemWasCalled = false
+        var areElementEquals: Boolean? = null
 
         withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
-                chooseItemWasCalled = true
+            override fun chooseItem(items: List<ImportCandidateBase>, callback: (ImportCandidateBase) -> Unit) {
                 val actualItems = items.map { it.info.usePath }
-                assertEquals(expectedElements, actualItems)
-                val selectedValue = items.find { it.info.usePath == choice }
-                    ?: error("Can't find `$choice` in `$actualItems`")
-                callback(selectedValue)
+                areElementEquals = expectedElements == actualItems
+                assertEquals(expectedElements, actualItems)  // exception here does not fail the test
+                if (choice != null) {
+                    val selectedValue = items.find { it.info.usePath == choice }
+                        ?: error("Can't find `$choice` in `$actualItems`")
+                    callback(selectedValue)
+                }
             }
-        }) { checkFixByFileTree(AutoImportFix.NAME, before, after) }
+        }, action)
 
-        check(chooseItemWasCalled) { "`chooseItem` was not called" }
+        check(areElementEquals != null) { "`chooseItem` was not called" }
+        check(areElementEquals!!)
     }
 
     private inline fun doTest(checkOptimizeImports: Boolean = true, action: () -> Unit) {

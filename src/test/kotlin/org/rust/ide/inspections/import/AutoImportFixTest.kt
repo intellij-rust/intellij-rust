@@ -5,13 +5,11 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.utils.import.Testmarks
 
+@UseNewResolve
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""
@@ -87,6 +85,35 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn main() {
             let a = A/*caret*/;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import enum variant of reexported enum`() = checkAutoImportFixByText("""
+        mod inner1 {
+            pub use inner2::Foo;
+
+            mod inner2 {
+                pub enum Foo { A }
+            }
+        }
+
+        fn main() {
+            let _ = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
+        }
+    """, """
+        use crate::inner1::Foo::A;
+
+        mod inner1 {
+            pub use inner2::Foo;
+
+            mod inner2 {
+                pub enum Foo { A }
+            }
+        }
+
+        fn main() {
+            let _ = A;
         }
     """)
 
@@ -393,6 +420,105 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import private item from parent mod`() = checkAutoImportFixByText("""
+        mod a1 {
+            struct Foo;
+
+            mod a2 {
+                fn main() {
+                    let _ = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+                }
+            }
+        }
+    """, """
+        mod a1 {
+            struct Foo;
+
+            mod a2 {
+                use crate::a1::Foo;
+
+                fn main() {
+                    let _ = Foo;
+                }
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test don't try to import private reexport from parent mod 1`() = checkAutoImportFixByText("""
+        mod a1 {
+            use crate::b1::b2::Foo;
+
+            mod a2 {
+                fn main() {
+                    let _ = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+                }
+            }
+        }
+        mod b1 {
+            pub mod b2 {
+                pub struct Foo;
+            }
+        }
+    """, """
+        mod a1 {
+            use crate::b1::b2::Foo;
+
+            mod a2 {
+                use crate::b1::b2::Foo;
+
+                fn main() {
+                    let _ = Foo;
+                }
+            }
+        }
+        mod b1 {
+            pub mod b2 {
+                pub struct Foo;
+            }
+        }
+    """, Testmarks.ignorePrivateImportInParentMod)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test don't try to import private reexport from parent mod 2`() = checkAutoImportFixByText("""
+        mod a1 {
+            use crate::b1::b2::b3;
+
+            mod a2 {
+                fn main() {
+                    let _ = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+                }
+            }
+        }
+        mod b1 {
+            pub mod b2 {
+                pub mod b3 {
+                    pub struct Foo;
+                }
+            }
+        }
+    """, """
+        mod a1 {
+            use crate::b1::b2::b3;
+
+            mod a2 {
+                use crate::b1::b2::b3::Foo;
+
+                fn main() {
+                    let _ = Foo;
+                }
+            }
+        }
+        mod b1 {
+            pub mod b2 {
+                pub mod b3 {
+                    pub struct Foo;
+                }
+            }
+        }
+    """, Testmarks.ignorePrivateImportInParentMod)
+
     fun `test complex module structure`() = checkAutoImportFixByText("""
         mod aaa {
             mod bbb {
@@ -554,13 +680,24 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test don't try to import item if it can't be resolved`() = checkAutoImportFixIsUnavailable("""
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item if it can't be resolved`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::unresolved();
+        }
+    """, """
+        use crate::foo::bar;
+
+        mod foo {
+            pub mod bar {
+            }
+        }
+        fn main() {
+            bar::unresolved();
         }
     """)
 
@@ -939,7 +1076,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test double module reexport`() = checkAutoImportFixByTextWithMultipleChoice("""
+    fun `test double module reexport`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
                 pub struct FooBar;
@@ -959,8 +1096,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let a = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
-    """, listOf("baz::qqq::bar::FooBar", "foo::bar::FooBar", "xxx::qqq::bar::FooBar"), "baz::qqq::bar::FooBar", """
-        use baz::qqq::bar::FooBar;
+    """, """
+        use foo::bar::FooBar;
 
         mod foo {
             pub mod bar {
@@ -983,7 +1120,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
+    fun `test cyclic module reexports`() = checkAutoImportFixByText("""
         pub mod x {
             pub use y;
 
@@ -997,7 +1134,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, listOf("x::Z", "y::x::Z"), "x::Z", """
+    """, """
         use x::Z;
 
         pub mod x {
@@ -1037,15 +1174,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let z = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, listOf(
-        "u::v::x::u::y::Z",
-        "u::v::x::y::Z",
-        "u::y::Z",
-        "x::u::v::x::y::Z",
-        "x::u::y::Z",
-        "x::y::Z"
-    ), "u::v::x::u::y::Z", """
-        use u::v::x::u::y::Z;
+    """, listOf("u::y::Z", "x::y::Z"), "u::y::Z", """
+        use u::y::Z;
 
         pub mod x {
             pub use u;
@@ -1090,7 +1220,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
-    """, listOf("baz::FooBar", "foo::FooBar", "quuz::bar::FooBar"), "baz::FooBar", """
+    """, listOf("baz::FooBar", "foo::FooBar"), "baz::FooBar", """
         use baz::FooBar;
 
         mod foo {
@@ -1297,6 +1427,23 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = Foo/*caret*/ { };
         }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item with correct namespace when multiple namespaces available`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod inner {
+            pub struct foo {}
+            pub fn foo() {}
+        }
+        fn test(a: foo/*caret*/) {}
+    """, """
+        use crate::inner::foo;
+
+        mod inner {
+            pub struct foo {}
+            pub fn foo() {}
+        }
+        fn test(a: foo/*caret*/) {}
     """)
 
     fun `test import trait method`() = checkAutoImportFixByText("""
@@ -2561,11 +2708,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """)
 
-    // TODO the fix should not be available if an intermediate use is not public
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test do not try to import an item reexported by intermediate 'pub(crate) use' in dependency crate`() = expect<IllegalStateException> {
-    checkAutoImportFixIsUnavailableByFileTree("""
+    fun `test do not try to import an item reexported by intermediate 'pub(crate) use' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         mod foo {
             pub struct Bar;
@@ -2579,7 +2724,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         //- main.rs
         fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """)
-    }
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -2592,5 +2736,132 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         extern crate dep_lib_target;
 
         fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not try to import item from transitive dependency`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- trans-lib/lib.rs
+        pub mod mod1 {
+            pub struct Foo;
+        }
+    //- dep-lib/lib.rs
+    //- lib.rs
+        fn main() {
+            let _ = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from transitive dependency reexported by dependency`() = checkAutoImportFixByFileTree("""
+    //- trans-lib/lib.rs
+        pub mod mod1 {
+            pub struct Foo;
+        }
+    //- dep-lib/lib.rs
+        pub use trans_lib::mod1;
+    //- lib.rs
+        fn main() {
+            let _ = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+    //- trans-lib/lib.rs
+        pub mod mod1 {
+            pub struct Foo;
+        }
+    //- dep-lib/lib.rs
+        pub use trans_lib::mod1;
+    //- lib.rs
+        use dep_lib_target::mod1::Foo;
+
+        fn main() {
+            let _ = Foo;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {} }
+    //- main.rs
+        fn main() {
+            foo/*caret*/!();
+        }
+    """, """
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {} }
+    //- main.rs
+        use test_package::foo;
+
+        fn main() {
+            foo!();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import macro 2`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- lib.rs
+        pub macro foo() {}
+    //- main.rs
+        fn main() {
+            foo/*caret*/!();
+        }
+    """, """
+    //- lib.rs
+        pub macro foo() {}
+    //- main.rs
+        use test_package::foo;
+
+        fn main() {
+            foo!();
+        }
+    """)
+
+    // e.g. `lazy_static`
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import macro with same name as dependency`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! test_package { () => {} }
+    //- main.rs
+        fn main() {
+            test_package/*caret*/!();
+        }
+    """, """
+    //- lib.rs
+        #[macro_export]
+        macro_rules! test_package { () => {} }
+    //- main.rs
+        use test_package::test_package;
+
+        fn main() {
+            test_package!();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not import function as macro path`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- lib.rs
+        pub fn func() {}
+    //- main.rs
+        fn main() {
+            <error descr="Unresolved reference: `func`">func/*caret*/</error>!();
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test do not import cfg-disabled item`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- foo.rs
+        pub fn func() {}
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn main() {
+            <error descr="Unresolved reference: `func`">func/*caret*/</error>!();
+        }
     """)
 }

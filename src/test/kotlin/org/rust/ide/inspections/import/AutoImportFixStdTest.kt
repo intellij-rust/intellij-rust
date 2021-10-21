@@ -5,20 +5,19 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.utils.import.Testmarks
 
+@UseNewResolve
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
     fun `test import item from std crate`() = checkAutoImportFixByText("""
-        fn foo<T: <error descr="Unresolved reference: `io`">io/*caret*/</error>::Read>(t: T) {}
+        fn foo<T: <error descr="Unresolved reference: `error`">error/*caret*/</error>::Error>(_: T) {}
     """, """
-        use std::io;
+        use std::error;
 
-        fn foo<T: io/*caret*/::Read>(t: T) {}
+        fn foo<T: error/*caret*/::Error>(_: T) {}
     """, Testmarks.autoInjectedStdCrate)
 
     fun `test import item from not std crate`() = checkAutoImportFixByFileTree("""
@@ -228,6 +227,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
+    // existing `extern crate` is ignored for simplicity
     fun `test insert relative use item 1`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub struct Foo;
@@ -247,19 +247,22 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         pub struct Foo;
 
         //- main.rs
+        extern crate dep_lib_target;
+
         mod bar;
         fn main() {}
 
         //- bar.rs
         extern crate dep_lib_target;
 
-        use self::dep_lib_target::Foo;
+        use dep_lib_target::Foo;
 
         fn bar() {
             let x = Foo/*caret*/;
         }
-    """, Testmarks.externCrateItemInNotCrateRoot)
+    """)
 
+    // existing `extern crate` is ignored for simplicity
     fun `test insert relative use item 2`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub struct Foo;
@@ -282,6 +285,8 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         pub struct Foo;
 
         //- main.rs
+        extern crate dep_lib_target;
+
         mod bar;
         fn main() {}
 
@@ -291,12 +296,12 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         mod baz;
 
         //- bar/baz.rs
-        use super::dep_lib_target::Foo;
+        use dep_lib_target::Foo;
 
         fn baz() {
             let x = Foo/*caret*/;
         }
-    """, Testmarks.externCrateItemInNotCrateRoot)
+    """)
 
     fun `test do not try to highlight primitive types`() = checkAutoImportFixIsUnavailable("""
         pub trait Zero<N> {
@@ -742,4 +747,45 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from proc_macro`() = checkAutoImportFixByFileTree("""
+    //- dep-proc-macro/lib.rs
+        fn foo(_: <error descr="Unresolved reference: `TokenStream`">TokenStream/*caret*/</error>) {}
+    """, """
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        fn foo(_: TokenStream) {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test item in core reexported in std`() = checkAutoImportFixByTextWithoutHighlighting("""
+        fn main() {
+            UnsafeCell/*caret*/;
+        }
+    """, """
+        use std::cell::UnsafeCell;
+
+        fn main() {
+            UnsafeCell;
+        }
+    """)
+
+    @MinRustcVersion("1.51.0")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test item in core not reexported in std`() = checkAutoImportVariantsByText("""
+        fn main() {
+            SplitInclusive/*caret*/;
+        }
+    """, listOf("std::str::SplitInclusive", "core::slice::SplitInclusive"))
+
+    @MinRustcVersion("1.51.0")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test item in core not reexported in std (with no_std)`() = checkAutoImportVariantsByText("""
+        #![no_std]
+        fn main() {
+            SplitInclusive/*caret*/;
+        }
+    """, listOf("core::slice::SplitInclusive", "core::str::SplitInclusive"))
 }

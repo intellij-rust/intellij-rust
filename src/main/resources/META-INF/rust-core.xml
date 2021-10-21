@@ -1127,6 +1127,8 @@
                      description="Enables new name resolution engine"/>
         <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="false" restartRequired="false"
                      description="Expand macros in parallel"/>
+        <registryKey key="org.rust.auto.import.using.new.resolve" defaultValue="true" restartRequired="false"
+                     description="Use new name resolution engine for auto import"/>
 
         <!-- Move refactoring -->
 
