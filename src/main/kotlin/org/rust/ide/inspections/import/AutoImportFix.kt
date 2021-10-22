@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.utils.import.*
 import org.rust.lang.core.psi.*
@@ -97,7 +96,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             }
 
             val superPath = path.rootPath()
-            val candidates = if (project.useAutoImportWithNewResolve && !path.isDoctestInjection) run {
+            val candidates = if (path.useAutoImportWithNewResolve) run {
                 val importContext = ImportContext2.from(path, isCompletion = false) ?: return@run emptyList()
                 ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
             } else {
