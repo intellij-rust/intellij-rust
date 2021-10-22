@@ -15,7 +15,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> bool { false }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">foo()</warning>;
+            <weak_warning descr="Unused return value of foo that must be used">foo()</weak_warning>;
         }
     """)
 
@@ -26,7 +26,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">foo()</warning>;
+            <weak_warning descr="Unused return value of foo that must be used">foo()</weak_warning>;
         }
     """)
 
@@ -35,7 +35,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         struct S;
 
         fn main() {
-            <warning descr="Unused S that must be used">S</warning>;
+            <weak_warning descr="Unused S that must be used">S</weak_warning>;
         }
     """)
 
@@ -48,7 +48,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">S.foo()</warning>;
+            <weak_warning descr="Unused return value of foo that must be used">S.foo()</weak_warning>;
         }
     """)
 
@@ -59,7 +59,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> S { S }
 
         fn main() {
-            <warning descr="Unused S that must be used">foo()</warning>;
+            <weak_warning descr="Unused S that must be used">foo()</weak_warning>;
         }
     """)
 
@@ -74,7 +74,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         struct S2 { s: S }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">S2 { s: S }.s.foo()</warning>;
+            <weak_warning descr="Unused return value of foo that must be used">S2 { s: S }.s.foo()</weak_warning>;
         }
     """)
 
@@ -86,9 +86,22 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
             #[cfg(undeclared_feature)]
             { S }
 
-            <warning descr="Unused S that must be used">#[cfg(not(undeclared_feature))]
-            { S }</warning>
+            <weak_warning descr="Unused S that must be used">#[cfg(not(undeclared_feature))]
+            { S }</weak_warning>
 
+            { S }
+        }
+    """)
+
+    fun `test no warning on reverse cfg disabled blocks`() = checkByText("""
+        #[must_use]
+        struct S;
+
+        fn xyz() -> S {
+            #[cfg(not(undeclared_feature))]
+            { S }
+
+            #[cfg(undeclared_feature)]
             { S }
         }
     """)
@@ -98,7 +111,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> bool { false }
 
         fn main() {
-            <warning descr="Unused return value of foo that must be used">/*caret*/foo()</warning>;
+            <weak_warning descr="Unused return value of foo that must be used">/*caret*/foo()</weak_warning>;
         }
     """, """
         #[must_use]
@@ -114,7 +127,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> Result<bool, ()> { false }
 
         fn main() {
-            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</warning>;
+            <weak_warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</weak_warning>;
         }
     """, """
         fn foo() -> Result<bool, ()> { false }
@@ -129,7 +142,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn foo() -> Result<bool, ()> { false }
 
         fn main() {
-            <warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</warning>;
+            <weak_warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</weak_warning>;
         }
     """, """
         fn foo() -> Result<bool, ()> { false }

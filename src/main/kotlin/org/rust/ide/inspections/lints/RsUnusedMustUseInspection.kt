@@ -99,7 +99,7 @@ class RsUnusedMustUseInspection : RsLintInspection() {
             super.visitExprStmt(o)
             val problem = inspectAndProposeFixes(o.expr)
             if (problem != null) {
-                holder.registerLintProblem(o.expr, problem.description, fixes=problem.fixes)
+                holder.registerLintProblem(o.expr, problem.description, RsLintHighlightingType.WEAK_WARNING, problem.fixes)
             }
         }
     }

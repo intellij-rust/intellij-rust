@@ -38,7 +38,8 @@ class RsDoubleMustUseInspection : RsLintInspection() {
             val attrType = type?.item?.findFirstMetaItem(mustUseAttrName)
             if (attrFunc != null && attrType != null) {
                 val description = RsBundle.message("inspection.DoubleMustUse.description")
-                holder.registerLintProblem(attrFunc.parent, description, fixes=listOf(FixRemoveMustUseAttr()))
+                val highlighting = RsLintHighlightingType.WEAK_WARNING
+                holder.registerLintProblem(attrFunc.parent, description, highlighting, fixes = listOf(FixRemoveMustUseAttr()))
             }
         }
     }
