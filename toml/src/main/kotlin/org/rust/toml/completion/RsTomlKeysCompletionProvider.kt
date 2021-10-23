@@ -79,6 +79,7 @@ include = ["src/**/*", "Cargo.toml"]
 publish = false
 workspace = "path/to/workspace/root"
 edition = "2018"
+rust-version = "1.56"  # supported in the coming 1.56 release
 
 description = "..."
 homepage = "..."

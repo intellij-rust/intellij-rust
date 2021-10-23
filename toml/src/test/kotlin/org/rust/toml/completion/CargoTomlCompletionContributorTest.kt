@@ -29,6 +29,15 @@ class CargoTomlCompletionContributorTest : CargoTomlCompletionTestBase() {
         "[build-d<caret>]",
         "[build-dependencies<caret>]"
     )
+    
+    fun `test complete rust version field`() = doSingleCompletion("""
+        [package]
+        rust<caret>
+    """, """
+        [package]
+        rust-version<caret>
+    """
+    )
 
     fun `test complete key in table`() = doSingleCompletion("""
         [profile.release]
