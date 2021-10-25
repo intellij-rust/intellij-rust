@@ -13,5 +13,6 @@ class RustfmtConfigurable(project: Project) : RsConfigurableBase(project, "Rustf
     override fun createPanel(): DialogPanel = panel {
         row { checkBox("Use rustfmt instead of built-in formatter", state::useRustfmt) }
         row { checkBox("Run rustfmt on Save", state::runRustfmtOnSave) }
+        row { checkBox("Run rustfmt with nightly", state::runRustfmtWithNightly) }
     }
 }

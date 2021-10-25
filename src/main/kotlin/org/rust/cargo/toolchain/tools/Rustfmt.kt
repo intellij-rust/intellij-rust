@@ -11,8 +11,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.project.guessProjectForFile
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -41,7 +43,14 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         val file = document.virtualFile ?: return null
         if (file.isNotRustFile || !file.isValid) return null
 
+        val project = guessProjectForFile(file) ?: return null
+        val runRustfmtWithNightly = project.rustSettings.runRustfmtWithNightly
+
         val arguments = buildList<String> {
+            if (runRustfmtWithNightly) {
+                add("+nightly")
+            }
+
             add("--emit=stdout")
 
             val configPath = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)

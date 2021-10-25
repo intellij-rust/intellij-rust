@@ -63,6 +63,7 @@ class RustProjectSettingsServiceImpl(
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
     override val useRustfmt: Boolean get() = _state.useRustfmt
     override val runRustfmtOnSave: Boolean get() = _state.runRustfmtOnSave
+    override val runRustfmtWithNightly: Boolean get() = _state.runRustfmtWithNightly
 
     @Suppress("OverridingDeprecatedMember", "DEPRECATION")
     override fun getToolchain(): RsToolchain? = _state.toolchain?.let(RsToolchain::from)

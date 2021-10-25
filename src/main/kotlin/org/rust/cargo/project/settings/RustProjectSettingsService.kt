@@ -52,6 +52,7 @@ interface RustProjectSettingsService {
         var doctestInjectionEnabled: Boolean = true,
         var useRustfmt: Boolean = false,
         var runRustfmtOnSave: Boolean = false,
+        var runRustfmtWithNightly: Boolean = false,
     ) {
         @get:Transient
         @set:Transient
@@ -109,6 +110,7 @@ interface RustProjectSettingsService {
     val doctestInjectionEnabled: Boolean
     val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean
+    val runRustfmtWithNightly: Boolean
 
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")

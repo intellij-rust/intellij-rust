@@ -39,6 +39,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
               <option name="useRustfmt" value="true" />
+              <option name="runRustfmtWithNightly" value="true" />
               <option name="version" value="2" />
             </RustProjectSettings>
         """.trimIndent()
@@ -60,6 +61,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(false, service.doctestInjectionEnabled)
         assertEquals(true, service.useRustfmt)
         assertEquals(true, service.runRustfmtOnSave)
+        assertEquals(true, service.runRustfmtWithNightly)
     }
 
     fun `test update from version 1`() {
