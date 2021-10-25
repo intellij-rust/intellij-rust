@@ -164,6 +164,7 @@ change. Common tags are:
   * GRD for build changes
   * T for tests
   * DOC for documentation
+  * L10N for changes related to localization
 </details>
 
 Try to keep the summary line of a commit message under 72 characters.
