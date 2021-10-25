@@ -6,10 +6,12 @@
 package org.rust.clion.profiler.legacy
 
 import com.intellij.execution.configurations.RunProfile
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.profiler.clion.ProfilerExecutor
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
+import org.rust.clion.profiler.dtrace.RsDTraceConfigurationExtension
+import org.rust.clion.profiler.perf.RsPerfConfigurationExtension
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run profiler"
 
@@ -19,8 +21,11 @@ private const val ERROR_MESSAGE_TITLE: String = "Unable to run profiler"
 class RsProfilerRunnerLegacy : RsAsyncRunner(ProfilerExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID
 
-    override fun canRun(executorId: String, profile: RunProfile): Boolean =
-        (SystemInfo.isMac || SystemInfo.isLinux) && super.canRun(executorId, profile)
+    override fun canRun(executorId: String, profile: RunProfile): Boolean {
+        if (profile !is CargoCommandConfiguration) return false
+        return (RsDTraceConfigurationExtension.isEnabledFor() || RsPerfConfigurationExtension.isEnabledFor(profile)) &&
+            super.canRun(executorId, profile)
+    }
 
     companion object {
         const val RUNNER_ID: String = "RsProfilerRunnerLegacy"

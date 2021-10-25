@@ -32,8 +32,10 @@ import java.io.File
 class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
 
-    override fun isEnabledFor(applicableConfiguration: CargoCommandConfiguration, runnerSettings: RunnerSettings?): Boolean =
-        SystemInfo.isMac
+    override fun isEnabledFor(
+        applicableConfiguration: CargoCommandConfiguration,
+        runnerSettings: RunnerSettings?
+    ): Boolean = isEnabledFor()
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -83,5 +85,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
                 ?: validateFrequency(state.samplingFrequency, project, DTraceProfilerConfigurable::class.java)
                 ?: return
         }
+
+        fun isEnabledFor(): Boolean = SystemInfo.isMac
     }
 }
