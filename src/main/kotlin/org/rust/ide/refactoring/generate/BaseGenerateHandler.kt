@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
@@ -115,5 +116,5 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         editor: Editor
     )
 
-    protected abstract val dialogTitle: String
+    protected abstract val dialogTitle: @Suppress("UnstableApiUsage") @DialogTitle String
 }

@@ -109,12 +109,11 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         }
     }
 
-    override fun getDisplayName(): String = DISPLAY_NAME
+    override fun getDisplayName(): String = "External Linter"
 
     override fun getShortName(): String = SHORT_NAME
 
     companion object {
-        const val DISPLAY_NAME: String = "External Linter"
         const val SHORT_NAME: String = "RsExternalLinter"
 
         private val ANALYZED_FILES: Key<MutableSet<RsFile>> = Key.create("ANALYZED_FILES")

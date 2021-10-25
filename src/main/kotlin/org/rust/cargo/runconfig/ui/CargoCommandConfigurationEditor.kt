@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -183,7 +184,8 @@ class CargoCommandConfigurationEditor(project: Project)
         labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
     }
 
-    private fun LayoutBuilder.labeledRow(labelText: String, component: JComponent, init: Row.() -> Unit) {
+    @Suppress("UnstableApiUsage")
+    private fun LayoutBuilder.labeledRow(@Label labelText: String, component: JComponent, init: Row.() -> Unit) {
         val label = Label(labelText)
         label.labelFor = component
         row(label) { init() }

@@ -11,6 +11,7 @@ import com.intellij.build.BuildContentDescriptor
 import com.intellij.build.BuildDescriptor
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.progress.BuildProgress
 import com.intellij.build.progress.BuildProgressDescriptor
@@ -489,11 +490,17 @@ private class SyncCargoBuildAdapter(
     }
 }
 
-private fun CargoSyncTask.SyncContext.error(title: String, message: String) {
+private fun CargoSyncTask.SyncContext.error(
+    @BuildEventsNls.Title title: String,
+    @BuildEventsNls.Message message: String
+) {
     syncProgress.message(title, message, MessageEvent.Kind.ERROR, null)
 }
 
-private fun CargoSyncTask.SyncContext.warning(title: String, message: String) {
+private fun CargoSyncTask.SyncContext.warning(
+    @BuildEventsNls.Title title: String,
+    @BuildEventsNls.Message message: String
+) {
     syncProgress.message(title, message, MessageEvent.Kind.WARNING, null)
 }
 

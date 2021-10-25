@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -19,7 +20,7 @@ import org.rust.lang.core.psi.ext.startOffset
 abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
     listClass: Class<TList>,
     elementClass: Class<TElement>,
-    intentionText: String
+    @IntentionName intentionText: String
 ) : ListIntentionBase<TList, TElement>(listClass, elementClass, intentionText) {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): TList? {
         val list = element.listContext ?: return null

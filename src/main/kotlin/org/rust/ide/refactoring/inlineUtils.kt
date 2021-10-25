@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.ListItem
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.inline.InlineOptionsWithSearchSettingsDialog
@@ -76,7 +77,10 @@ abstract class RsInlineDialog(
     }
 }
 
-class RsInlineUsageViewDescriptor(val element: PsiElement, val header: String) : UsageViewDescriptor {
+class RsInlineUsageViewDescriptor(
+    val element: PsiElement,
+    @Suppress("UnstableApiUsage") @ListItem val header: String
+) : UsageViewDescriptor {
     override fun getCommentReferencesText(usagesCount: Int, filesCount: Int) =
         RefactoringBundle.message("comments.elements.header",
             UsageViewBundle.getOccurencesString(usagesCount, filesCount))

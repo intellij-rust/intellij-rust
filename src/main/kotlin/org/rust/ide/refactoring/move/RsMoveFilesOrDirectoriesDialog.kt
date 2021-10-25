@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -121,7 +122,7 @@ class RsMoveFilesOrDirectoriesDialog(
         return result == Messages.OK
     }
 
-    private fun showError(message: String?) {
+    private fun showError(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
         val title = RefactoringBundle.message("error.title")
         CommonRefactoringUtil.showErrorMessage(title, message, "refactoring.moveFile", project)
     }

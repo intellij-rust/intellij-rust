@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
@@ -94,7 +95,7 @@ private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder
         if (o.parent !is RsParenExpr) o.expr.warnIfParens("Redundant parentheses in expression")
     }
 
-    private fun RsExpr?.warnIfParens(message: String) {
+    private fun RsExpr?.warnIfParens(@InspectionMessage message: String) {
         if (this !is RsParenExpr || !canWarn(this)) return
         holder.createWeakWarningAnnotation(this, message, RemoveRedundantParenthesesFix(this))
     }

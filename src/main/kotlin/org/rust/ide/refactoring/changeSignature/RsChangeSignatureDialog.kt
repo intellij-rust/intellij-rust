@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -320,6 +321,8 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         isValid = validateAndUpdateData() == null
     }
 
+    @Suppress("UnstableApiUsage")
+    @DialogMessage
     private fun validateAndUpdateData(): String? {
         val factory = RsPsiFactory(config.function.project)
 

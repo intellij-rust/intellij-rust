@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -20,7 +21,7 @@ import org.rust.lang.core.psi.ext.startOffset
 abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
     listClass: Class<TList>,
     elementClass: Class<TElement>,
-    intentionText: String,
+    @IntentionName intentionText: String,
     private val prefix: String = "",
     private val suffix: String = ""
 ) : ListIntentionBase<TList, TElement>(listClass, elementClass, intentionText) {

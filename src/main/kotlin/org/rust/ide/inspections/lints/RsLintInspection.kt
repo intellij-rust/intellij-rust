@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -26,7 +27,7 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected fun RsProblemsHolder.registerLintProblem(
         element: PsiElement,
-        descriptionTemplate: String,
+        @InspectionMessage descriptionTemplate: String,
         lintHighlightingType: RsLintHighlightingType = RsLintHighlightingType.DEFAULT,
         fixes: List<LocalQuickFix> = emptyList()
     ) {
@@ -35,7 +36,7 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected fun RsProblemsHolder.registerLintProblem(
         element: PsiElement,
-        descriptionTemplate: String,
+        @InspectionMessage descriptionTemplate: String,
         rangeInElement: TextRange,
         lintHighlightingType: RsLintHighlightingType = RsLintHighlightingType.DEFAULT,
         fixes: List<LocalQuickFix> = emptyList()

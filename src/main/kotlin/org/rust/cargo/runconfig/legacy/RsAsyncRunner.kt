@@ -24,6 +24,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.*
@@ -47,7 +49,7 @@ import java.nio.file.Paths
  */
 abstract class RsAsyncRunner(
     private val executorId: String,
-    private val errorMessageTitle: String
+    @Suppress("UnstableApiUsage") @DialogTitle private val errorMessageTitle: String
 ) : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
@@ -226,7 +228,7 @@ abstract class RsAsyncRunner(
         return promise
     }
 
-    protected fun Project.showErrorDialog(message: String) {
+    protected fun Project.showErrorDialog(@Suppress("UnstableApiUsage") @NlsContexts.DialogMessage message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
     }
 

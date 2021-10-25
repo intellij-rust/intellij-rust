@@ -6,6 +6,7 @@
 package org.rust.lang.core
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.SemVer
@@ -96,7 +97,7 @@ class CompilerFeature(
         holder: RsAnnotationHolder,
         startElement: PsiElement,
         endElement: PsiElement?,
-        message: String,
+        @InspectionMessage message: String,
         vararg fixes: LocalQuickFix
     ) {
         getDiagnostic(startElement, endElement, message, *fixes)?.addToHolder(holder)

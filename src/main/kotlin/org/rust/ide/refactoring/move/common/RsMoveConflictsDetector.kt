@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.RefactoringUIUtil
@@ -21,7 +22,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsMoveConflictsDetector(
-    private val conflicts: MultiMap<PsiElement, String>,
+    @Suppress("UnstableApiUsage") private val conflicts: MultiMap<PsiElement, @DialogMessage String>,
     private val elementsToMove: List<ElementToMove>,
     private val sourceMod: RsMod,
     private val targetMod: RsMod
@@ -251,7 +252,11 @@ class RsMoveConflictsDetector(
     }
 }
 
-fun addVisibilityConflict(conflicts: MultiMap<PsiElement, String>, reference: RsElement, target: RsElement) {
+fun addVisibilityConflict(
+    @Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>,
+    reference: RsElement,
+    target: RsElement
+) {
     val referenceDescription = RefactoringUIUtil.getDescription(reference.containingMod, true)
     val targetDescription = RefactoringUIUtil.getDescription(target, true)
     val message = "$referenceDescription uses $targetDescription which will be inaccessible after move"
