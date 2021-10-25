@@ -1808,6 +1808,29 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import trait method, use direct path`() = checkAutoImportFixByFileTree("""
+    //- dep-lib/lib.rs
+        pub trait Foo {
+            fn foo(&self) {}
+        }
+        impl<T> Foo for T {}
+    //- lib.rs
+        pub extern crate dep_lib_target;
+    //- main.rs
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+    //- main.rs
+        use dep_lib_target::Foo;
+
+        fn main() {
+            let x = 123.foo();
+        }
+    """)
+
     fun `test suggest single method`() = checkAutoImportFixByText("""
         struct Foo;
         struct Bar;

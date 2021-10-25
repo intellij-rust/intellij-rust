@@ -115,7 +115,11 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
             if (results.isEmpty()) return Context(METHOD, emptyList())
-            val candidates = ImportCandidatesCollector.getImportCandidates(project, methodCall, results)?.toList() ?: return null
+            val candidates = if (methodCall.useAutoImportWithNewResolve) {
+                ImportCandidatesCollector2.getImportCandidates(methodCall, results)
+            } else {
+                ImportCandidatesCollector.getImportCandidates(project, methodCall, results)?.toList()
+            } ?: return null
             return Context(METHOD, candidates)
         }
 

@@ -59,22 +59,35 @@ class ImportContext2 private constructor(
     /** DefMap of [rootModData] */
     val rootDefMap: CrateDefMap,
 
-    val parentPathText: String?,
-    val pathParsingMode: RustParserUtil.PathParsingMode,
-    val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
+    val pathInfo: PathInfo?,
 ) {
     companion object {
-        fun from(path: RsPath, isCompletion: Boolean): ImportContext2? {
-            val rootMod = path.containingMod
+        fun from(path: RsPath, isCompletion: Boolean): ImportContext2? =
+            from(path, PathInfo.from(path, isCompletion))
+
+        fun from(context: RsElement, pathInfo: PathInfo? = null): ImportContext2? {
+            val rootMod = context.containingMod
             val info = getModInfo(rootMod) as? RsModInfoBase.RsModInfo ?: return null
             return ImportContext2(
                 project = info.project,
                 rootMod = rootMod,
                 rootModData = info.modData,
                 rootDefMap = info.defMap,
+                pathInfo = pathInfo,
+            )
+        }
+    }
+
+    class PathInfo(
+        val parentPathText: String?,
+        val pathParsingMode: RustParserUtil.PathParsingMode,
+        val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
+    ) {
+        companion object {
+            fun from(path: RsPath, isCompletion: Boolean): PathInfo = PathInfo(
                 parentPathText = (path.parent as? RsPath)?.text,
                 pathParsingMode = path.pathParsingMode,
-                namespaceFilter = path.namespaceFilter(isCompletion)
+                namespaceFilter = path.namespaceFilter(isCompletion),
             )
         }
     }
