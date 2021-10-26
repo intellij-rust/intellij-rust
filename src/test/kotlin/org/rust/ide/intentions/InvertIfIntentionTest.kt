@@ -77,6 +77,16 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
         }
     """)
 
+    fun `test bool literal inversion`() = doAvailableTest("""
+        fn foo() {
+            if/*caret*/ true { Ok(()) } else { Err(()) }
+        }
+    """, """
+        fn foo() {
+            if false { Err(()) } else { Ok(()) }
+        }
+    """)
+
     fun `test simple inversion strange formatting`() = doAvailableTest("""
         fn foo() {
             if/*caret*/ 2 == 2 {
