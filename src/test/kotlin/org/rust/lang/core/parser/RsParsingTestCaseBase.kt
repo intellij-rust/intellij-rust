@@ -55,4 +55,10 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String) : ParsingTestCase
         })
         return hasErrors
     }
+
+    /** Just check that the file is parsed (somehow) without checking its AST */
+    protected fun checkFileParsed() {
+        val name = testName
+        parseFile(name, loadFile("$name.$myFileExt"));
+    }
 }

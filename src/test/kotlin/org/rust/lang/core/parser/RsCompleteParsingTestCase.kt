@@ -77,6 +77,9 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test attrs in exprs`() = doTest(true)
     fun `test attrs in params`() = doTest(true)
 
+    // We check only that the parser does not hang here
+    fun `test way too many type quals`() = checkFileParsed()
+
     override fun checkResult(targetDataName: String, file: PsiFile) {
         super.checkResult(targetDataName, file)
         check(!hasError(file)) {
