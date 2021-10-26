@@ -26,6 +26,7 @@ import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.stdext.makeBitMask
+import kotlin.math.max
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -257,7 +258,16 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val newFlags = setPathMod(BitUtil.set(oldFlags, TYPE_QUAL_ALLOWED, typeQualsMode == TypeQualsMode.ON), mode)
         b.flags = newFlags
         check(getPathMod(b.flags) == mode)
-        val result = parser.parse(b, level)
+
+        // A hack that reduces the growth rate of `level`. This actually allows a deeper path nesting.
+        val prevPathFrame = ErrorState.get(b).currentFrame?.parentFrame?.ancestorOfTypeOrSelf(PATH)
+        val nextLevel = if (prevPathFrame != null) {
+            max(prevPathFrame.level + 2, level - 9)
+        } else {
+            level
+        }
+
+        val result = parser.parse(b, nextLevel)
         b.flags = oldFlags
         return result
     }
@@ -394,7 +404,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val bound = enter_section_(b)
         val traitRef = enter_section_(b)
 
-        if (!pathP.parse(b, level + 1) || nextTokenIs(b, EXCL)) {
+        if (!pathP.parse(b, level) || nextTokenIs(b, EXCL)) {
             // May be it is lifetime `'a` or `for<'a>` or `foo!()`
             exit_section_(b, traitRef, null, false)
             exit_section_(b, bound, null, false)
@@ -414,7 +424,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         exit_section_(b, traitRef, TRAIT_REF, true)
         exit_section_(b, bound, BOUND, true)
         exit_section_(b, polybound, POLYBOUND, true)
-        val result = traitTypeUpperP.parse(b, level + 1)
+        val result = traitTypeUpperP.parse(b, level)
         exit_section_(b, baseOrTrait, TRAIT_TYPE, result)
         return result
     }
@@ -764,5 +774,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun parseSimplePat(builder: PsiBuilder): Boolean {
         return RustParser.SimplePat(builder, 0)
+    }
+
+    private tailrec fun Frame.ancestorOfTypeOrSelf(elementType: IElementType): Frame? {
+        return if (this.elementType == elementType) {
+            this
+        } else {
+            parentFrame?.ancestorOfTypeOrSelf(elementType)
+        }
     }
 }
