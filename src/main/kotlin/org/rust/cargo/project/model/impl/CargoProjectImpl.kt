@@ -605,34 +605,12 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                         }
                     }
 
-                    val alreadySetUp = hashSetOf<CargoWorkspace.Package>()
-
-                    fun setupPackage(pkg: CargoWorkspace.Package, module: Module) {
-                        if (pkg in alreadySetUp) return
-                        alreadySetUp += pkg
-                        if (pkg.origin == PackageOrigin.WORKSPACE) {
-                            pkg.contentRoot?.setupContentRoots(project, ContentEntry::setup)
-                        }
-                        val outDir = pkg.outDir
-                        if (outDir != null) {
-                            ModuleRootModificationUtil.updateModel(module) { rootModel ->
-                                val entry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
-                                entry.addSourceFolder(outDir, false)
-                            }
-                        }
-                        for (dependency in pkg.dependencies) {
-                            setupPackage(dependency.pkg, module)
-                        }
-                    }
-
                     val workspacePackages = cargoProject.workspace?.packages
                         .orEmpty()
                         .filter { it.origin == PackageOrigin.WORKSPACE }
 
                     for (pkg in workspacePackages) {
-                        val contentRoot = pkg.contentRoot ?: continue
-                        val packageModule = ModuleUtilCore.findModuleForFile(contentRoot, project) ?: continue
-                        setupPackage(pkg, packageModule)
+                        pkg.contentRoot?.setupContentRoots(project, ContentEntry::setup)
                     }
                 }
             }

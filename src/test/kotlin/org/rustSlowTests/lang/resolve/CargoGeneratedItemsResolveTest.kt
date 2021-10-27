@@ -760,4 +760,50 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
             }
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/bar.rs")
     }
+
+    fun `test custom target directory location`() {
+        val customTargetDir = tempDirFixture.getFile(".")!!.path
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    include!(concat!(env!("OUT_DIR"), "/hello.rs"));
+                    fn main() {
+                        println!("{}", message());
+                                       //^
+                    }
+                """)
+            }
+            dir(".cargo") {
+                toml("config", """
+                    [build]
+                    target-dir = "$customTargetDir"
+                """)
+            }
+            rust("build.rs", """
+                use std::env;
+                use std::fs::File;
+                use std::io::Write;
+                use std::path::Path;
+
+                fn main() {
+                    let out_dir = env::var("OUT_DIR").unwrap();
+                    let dest_path = Path::new(&out_dir).join("hello.rs");
+                    let mut f = File::create(&dest_path).unwrap();
+
+                    f.write_all(b"
+                        pub fn message() -> &'static str {
+                            \"Hello, World!\"
+                        }",
+                    ).unwrap();
+                }
+            """)
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../hello.rs")
+    }
 }
