@@ -126,4 +126,44 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention::cla
             let _ = !(!b && !true);
         }
     """)
+
+    fun `test keep parens if needed 1`() = doAvailableTest("""
+        fn main() {
+            !(b /*caret*/&& c) || a;
+        }
+    """, """
+        fn main() {
+            !b || !c || a;
+        }
+    """)
+
+    fun `test keep parens if needed 2`() = doAvailableTest("""
+        fn main() {
+            !(b /*caret*/&& c) && a;
+        }
+    """, """
+        fn main() {
+            (!b || !c) && a;
+        }
+    """)
+
+    fun `test keep parens if needed 3`() = doAvailableTest("""
+        fn main() {
+            !(b /*caret*/|| c) || a;
+        }
+    """, """
+        fn main() {
+            !b && !c || a;
+        }
+    """)
+
+    fun `test keep parens if needed 4`() = doAvailableTest("""
+        fn main() {
+            !(b /*caret*/|| c) && a;
+        }
+    """, """
+        fn main() {
+            !b && !c && a;
+        }
+    """)
 }
