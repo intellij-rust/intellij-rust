@@ -49,6 +49,14 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
+    protected fun doAvailableSymmetricTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+    ) {
+        doAvailableTest(before, after.replace("/*caret*/", ""))
+        doAvailableTest(after, before.replace("/*caret*/", ""))
+    }
+
     protected fun doAvailableTestWithLiveTemplate(
         @Language("Rust") before: String,
         toType: String,
