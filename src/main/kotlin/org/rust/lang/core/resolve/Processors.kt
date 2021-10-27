@@ -10,9 +10,7 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
@@ -301,6 +299,10 @@ fun processAllWithSubst(
 }
 
 fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolveProcessor): RsResolveProcessor {
+    // Do not filter out private items in debugger
+    if (context.containingFile is RsDebuggerExpressionCodeFragment) {
+        return processor
+    }
     val mod = context.containingMod
     return createProcessor(processor.name) {
         val element = it.element
