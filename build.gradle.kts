@@ -74,7 +74,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
