@@ -12,13 +12,13 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.openapiext.Testmark
 
-abstract class RsCompletionTestBase : RsTestBase() {
+abstract class RsCompletionTestBase(private val defaultFileName: String = "main.rs") : RsTestBase() {
 
     protected lateinit var completionFixture: RsCompletionTestFixture
 
     override fun setUp() {
         super.setUp()
-        completionFixture = RsCompletionTestFixture(myFixture)
+        completionFixture = RsCompletionTestFixture(myFixture, defaultFileName)
         completionFixture.setUp()
     }
 
