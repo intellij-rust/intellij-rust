@@ -1004,6 +1004,8 @@
 
         <!-- Indices -->
 
+        <indexedRootsProvider implementation="org.rust.lang.core.indexing.RsIndexableSetContributor"/>
+
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsModulesIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
@@ -1073,7 +1075,6 @@
 
         <projectService serviceInterface="org.rust.lang.core.macros.MacroExpansionManager"
                         serviceImplementation="org.rust.lang.core.macros.MacroExpansionManagerImpl"/>
-        <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
         <virtualFileSystem key="rust_macros" implementationClass="org.rust.lang.core.macros.MacroExpansionFileSystem"/>
