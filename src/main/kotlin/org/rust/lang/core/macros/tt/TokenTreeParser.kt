@@ -97,7 +97,7 @@ private class TokenTreeParser(
                 result += Leaf.Literal(tokenText2, allocId(offset, nextWhitespaceOrCommentText()))
             }
             in RS_LITERALS -> result += Leaf.Literal(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
-            in RS_IDENTIFIER_TOKENS -> result += Leaf.Ident(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
+            in PROC_MACRO_IDENTIFIER_TOKENS -> result += Leaf.Ident(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
             QUOTE_IDENTIFIER -> {
                 result += Leaf.Punct(tokenText[0].toString(), Spacing.Joint, allocId(offset, ""))
                 result += Leaf.Ident(tokenText.substring(1), allocId(offset + 1, nextWhitespaceOrCommentText()))
@@ -150,11 +150,16 @@ private class TokenTreeParser(
     }
 }
 
+private val PROC_MACRO_IDENTIFIER_TOKENS = TokenSet.orSet(
+    RS_IDENTIFIER_TOKENS,
+    tokenSetOf(UNDERSCORE)
+)
+
 private val NEXT_TOKEN_ALONE_SET = TokenSet.orSet(
     tokenSetOf(WHITE_SPACE, LBRACK, LBRACE, LPAREN, QUOTE_IDENTIFIER),
     RS_COMMENTS,
     RS_LITERALS,
-    RS_IDENTIFIER_TOKENS,
+    PROC_MACRO_IDENTIFIER_TOKENS,
 )
 
 private val WHITESPACE_OR_COMMENTS = TokenSet.orSet(
