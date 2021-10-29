@@ -7,6 +7,7 @@ package org.rust.ide.intentions.addFmtStringArgument
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -38,33 +39,7 @@ object RsAddFmtStringArgumentPopup {
 
     private fun createEditorTextField(project: Project, codeFragment: RsCodeFragment): EditorTextField? {
         val document = codeFragment.containingFile.document ?: return null
-        val editorTextField = object : EditorTextField(document, project, RsFileType, false, true) {
-            override fun createEditor(): EditorEx {
-                val editor = super.createEditor()
-                editor.setHorizontalScrollbarVisible(false)
-                editor.setVerticalScrollbarVisible(false)
-                editor.settings.isUseSoftWraps = false
-                editor.settings.lineCursorWidth = EditorUtil.getDefaultCaretWidth()
-                editor.colorsScheme.editorFontName = font.fontName
-                editor.colorsScheme.editorFontSize = font.size
-                return editor
-            }
-
-            override fun addNotify() {
-                super.addNotify()
-                val editor = editor ?: return
-                for (listener in keyListeners) {
-                    editor.contentComponent.addKeyListener(listener)
-                }
-                editor.contentComponent.focusTraversalKeysEnabled = false
-            }
-
-            @Synchronized
-            override fun removeKeyListener(l: KeyListener?) {
-                super.removeKeyListener(l)
-                editor?.contentComponent?.removeKeyListener(l)
-            }
-        }
+        val editorTextField = RsAddFmtStringArgumentEditorTextField(project, document)
         editorTextField.setFontInheritedFromLAF(false)
         editorTextField.font = EditorUtil.getEditorFont()
         return editorTextField
@@ -121,5 +96,35 @@ object RsAddFmtStringArgumentPopup {
         }
         balloon.show(point, position)
         editorTextField.requestFocus()
+    }
+}
+
+abstract class RsAddFmtStringArgumentEditorTextFieldBase(
+    project: Project,
+    document: Document
+) : EditorTextField(document, project, RsFileType, false, true) {
+
+    override fun createEditor(): EditorEx {
+        val editor = super.createEditor()
+        editor.setHorizontalScrollbarVisible(false)
+        editor.setVerticalScrollbarVisible(false)
+        editor.settings.isUseSoftWraps = false
+        editor.settings.lineCursorWidth = EditorUtil.getDefaultCaretWidth()
+        editor.colorsScheme.editorFontName = font.fontName
+        editor.colorsScheme.editorFontSize = font.size
+        return editor
+    }
+
+    @Synchronized
+    override fun removeKeyListener(l: KeyListener?) {
+        super.removeKeyListener(l)
+        editor?.contentComponent?.removeKeyListener(l)
+    }
+
+    protected fun setUpEditorComponent(editor: Editor) {
+        for (listener in keyListeners) {
+            editor.contentComponent.addKeyListener(listener)
+        }
+        editor.contentComponent.focusTraversalKeysEnabled = false
     }
 }

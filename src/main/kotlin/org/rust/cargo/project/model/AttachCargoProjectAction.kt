@@ -120,8 +120,8 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
         withTitle("Select Cargo.toml")
     }
 
-    override fun isFileSelectable(file: VirtualFile): Boolean {
-        return super.isFileSelectable(file) && (!file.isDirectory || file.findChild(CargoConstants.MANIFEST_FILE) != null)
+    override fun isFileSelectable(file: VirtualFile?): Boolean {
+        return super.isFileSelectable(file) && file != null && (!file.isDirectory || file.findChild(CargoConstants.MANIFEST_FILE) != null)
     }
 }
 
