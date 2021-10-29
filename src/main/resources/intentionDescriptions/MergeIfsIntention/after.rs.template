@@ -1,0 +1,5 @@
+fn test(a: bool, b: bool) {
+    if (a && b) {
+        println!("a and b");
+    }
+}

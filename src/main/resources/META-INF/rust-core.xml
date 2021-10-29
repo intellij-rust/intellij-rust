@@ -767,6 +767,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.MergeIfsIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.RsShowRecursiveMacroExpansionIntention</className>
             <category>Rust</category>
         </intentionAction>
