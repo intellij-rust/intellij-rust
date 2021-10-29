@@ -188,15 +188,6 @@ class RsRedundantElseInspectionTest : RsInspectionsTestBase(RsRedundantElseInspe
         }
     """)
 
-    fun `test boolean constant`() = checkByText("""
-        fn main() {
-            if true {
-            } <warning descr="Redundant `else`">else</warning> {
-                let a = 5;
-            }
-        }
-    """)
-
     @MockRustcVersion("1.56.0")
     fun `test let else (feature unavailable)`() = checkByText("""
         fn main() {
