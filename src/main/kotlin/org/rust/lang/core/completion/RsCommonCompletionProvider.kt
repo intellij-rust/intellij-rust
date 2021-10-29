@@ -437,15 +437,17 @@ private fun methodAndFieldCompletionProcessor(
     false
 }
 
-private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
+private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidateBase? {
     if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
-    return ImportCandidatesCollector
-        .getImportCandidates(methodOrField.project, scope, listOf(resolveVariant))
-        .orEmpty()
-        .singleOrNull()
+    val candidates = if (scope.useAutoImportWithNewResolve) {
+        ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
+    } else {
+        ImportCandidatesCollector.getImportCandidates(methodOrField.project, scope, listOf(resolveVariant))
+    }
+    return candidates.orEmpty().singleOrNull()
 }
 
 private fun addProcessedPathName(

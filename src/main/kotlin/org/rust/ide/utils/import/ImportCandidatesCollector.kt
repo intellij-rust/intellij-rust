@@ -144,7 +144,7 @@ object ImportCandidatesCollector {
     private fun QualifiedNamedItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
         canBeImported(superMods)?.let { ImportCandidate(this, it) }
 
-    private fun collectTraitsToImport(
+    fun collectTraitsToImport(
         scope: RsElement,
         sources: List<TraitImplSource>
     ): List<RsTraitItem>? {
