@@ -597,6 +597,7 @@ private fun processTypeQualifiedPathResolveVariants(
 ): Boolean {
     @Suppress("NAME_SHADOWING")
     val lookup = lookup ?: ImplLookup.relativeTo(path)
+    var hasAppropriateTrait = false
     val shadowingProcessor = if (restrictedTraits != null) {
         createProcessorGeneric<AssocItemScopeEntry>(processor.name) { e ->
             if (e.element !is RsTypeAlias) return@createProcessorGeneric processor(e)
@@ -609,6 +610,7 @@ private fun processTypeQualifiedPathResolveVariants(
             val isAppropriateTrait = restrictedTraits.any {
                 lookup.ctx.probe { lookup.ctx.combineBoundElements(it, implementedTrait) }
             }
+            hasAppropriateTrait = hasAppropriateTrait || isAppropriateTrait
             if (isAppropriateTrait) processor(e) else false
         }
     } else {
@@ -628,6 +630,17 @@ private fun processTypeQualifiedPathResolveVariants(
         emptySubstitution
     }
     if (processAssociatedItemsWithSelfSubst(lookup, path, baseTy, ns, selfSubst, shadowingProcessor)) return true
+
+    // For `Item` in `type Alias<T> = <T as Trait>::Item;`, process members of `Trait`
+    if (!hasAppropriateTrait && restrictedTraits != null && restrictedTraits.size == 1 && Namespace.Types in ns) {
+        val trait = restrictedTraits.single()
+        val source = TraitImplSource.TraitBound(trait.element, isInherent = baseTy is TyTypeParameter)
+        val result = trait.element.members?.expandedMembers?.any {
+            val name = it.name ?: return@any false
+            processor(AssocItemScopeEntry(name, it, trait.subst + selfSubst, baseTy, source))
+        }
+        if (result == true) return true
+    }
     return false
 }
 
