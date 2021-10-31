@@ -864,4 +864,47 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             X.foo();
         }   //^
     """)
+
+    fun `test non-UFCS associated type in type alias with bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T: Trait> = T::Item;
+                                //^
+    """)
+
+    fun `test associated type in type alias with bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T: Trait> = <T as Trait>::Item;
+                                           //^
+    """)
+
+    fun `test associated type in type alias without bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T> = <T as Trait>::Item;
+                                    //^
+    """)
+
+    fun `test nested associated type in type alias without bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias1<Q> = <<Q as Trait>::Item as Trait>::Item;
+                                                      //^
+    """)
+
+    fun `test nested associated type in type alias without bound 2`() = checkByCode("""
+        trait Trait {
+            type Item: Trait2;
+        }
+        trait Trait2 {
+            type Item;
+        }      //X
+        type Alias1<Q> = <<Q as Trait>::Item as Trait2>::Item;
+                                                       //^
+    """)
 }
