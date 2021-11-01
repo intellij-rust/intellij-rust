@@ -18,9 +18,9 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.completion.nextCharIs
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.stdext.unwrapOrElse
 import org.rust.toml.StringValueInsertionHandler
 import org.rust.toml.crates.local.CargoRegistryCrateVersion
-import org.rust.toml.crates.local.CratesLocalIndexException
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
@@ -31,11 +31,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
         val keySegment = keyValue.key.segments.singleOrNull() ?: return
         val prefix = CompletionUtil.getOriginalElement(keySegment)?.text ?: return
 
-        val crateNames = try {
-            CratesLocalIndexService.getInstance().getAllCrateNames()
-        } catch (e: CratesLocalIndexException) {
-            return
-        }
+        val crateNames = CratesLocalIndexService.getInstance().getAllCrateNames().unwrapOrElse { return }
 
         val elements = crateNames.mapNotNull { crateName ->
             PrioritizedLookupElement.withPriority(
@@ -53,11 +49,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
         val keySegment = keyValue.key.segments.singleOrNull() ?: return
         val name = CompletionUtil.getOriginalElement(keySegment)?.text ?: return
 
-        val crate = try {
-            CratesLocalIndexService.getInstance().getCrate(name)
-        } catch (e: CratesLocalIndexException) {
-            return
-        }
+        val crate = CratesLocalIndexService.getInstance().getCrate(name).unwrapOrElse { return }
         val sortedVersions = crate?.sortedVersions ?: return
         val elements = makeVersionCompletions(sortedVersions, keyValue)
         result.withRelevanceSorter(versionsSorter).addAllElements(elements)
@@ -68,11 +60,7 @@ class LocalCargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvi
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val keySegment = parameters.position.parent as? TomlKeySegment ?: return
         val prefix = CompletionUtil.getOriginalElement(keySegment)?.text ?: return
-        val crateNames = try {
-            CratesLocalIndexService.getInstance().getAllCrateNames()
-        } catch (e: CratesLocalIndexException) {
-            return
-        }
+        val crateNames = CratesLocalIndexService.getInstance().getAllCrateNames().unwrapOrElse { return }
 
         val elements = crateNames.map { variant ->
             LookupElementBuilder.create(variant)
@@ -105,11 +93,10 @@ class LocalCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCo
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val dependencyNameKey = keyValue.getDependencyKeyFromTableHeader()
-        val sortedVersions = try {
-            CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)?.sortedVersions ?: return
-        } catch (e: CratesLocalIndexException) {
-            return
-        }
+        val sortedVersions = CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)
+            .unwrapOrElse { return }
+            ?.sortedVersions
+            ?: return
         val elements = makeVersionCompletions(sortedVersions, keyValue)
         result.withRelevanceSorter(versionsSorter).addAllElements(elements)
     }
@@ -123,11 +110,10 @@ class LocalCargoTomlInlineTableVersionCompletionProvider : CompletionProvider<Co
         val keyValue = parent.parent as? TomlKeyValue ?: return
         val dependencyNameKey = (keyValue.parent?.parent as? TomlKeyValue)?.key ?: return
 
-        val sortedVersions = try {
-            CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)?.sortedVersions ?: return
-        } catch (e: CratesLocalIndexException) {
-            return
-        }
+        val sortedVersions = CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)
+            .unwrapOrElse { return }
+            ?.sortedVersions
+            ?: return
         val elements = makeVersionCompletions(sortedVersions, keyValue)
         result.withRelevanceSorter(versionsSorter).addAllElements(elements)
     }

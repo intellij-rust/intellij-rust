@@ -6,13 +6,17 @@
 package org.rust.toml.crates.local
 
 import org.jetbrains.annotations.TestOnly
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Ok
 
 class TestCratesLocalIndexServiceImpl : CratesLocalIndexService {
     var testCrates: Map<String, CargoRegistryCrate> = emptyMap()
 
-    override fun getCrate(crateName: String): CargoRegistryCrate? = testCrates[crateName]
-    override fun getAllCrateNames(): List<String> = testCrates.keys.toList()
-    override fun updateIfNeeded() {}
+    override fun getCrate(crateName: String): RsResult<CargoRegistryCrate?, CratesLocalIndexService.Error> =
+        Ok(testCrates[crateName])
+
+    override fun getAllCrateNames(): RsResult<List<String>, CratesLocalIndexService.Error> =
+        Ok(testCrates.keys.toList())
 }
 
 @TestOnly

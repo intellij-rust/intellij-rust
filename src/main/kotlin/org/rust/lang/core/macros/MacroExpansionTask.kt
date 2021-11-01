@@ -8,16 +8,13 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
@@ -79,18 +76,7 @@ abstract class MacroExpansionTaskBase(
         indicator.checkCanceled()
         indicator.isIndeterminate = false
         realTaskIndicator = indicator
-
-        if (indicator is ProgressIndicatorEx) {
-            // [indicator] can be an instance of [BackgroundableProcessIndicator] class, which is thread
-            // sensitive and its `checkCanceled` method should be used only from a single thread
-            // (see [ProgressWindow.MyDelegate.checkCanceled]). So we propagate cancellation.
-            subTaskIndicator = EmptyProgressIndicator()
-            indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-                override fun cancel() = subTaskIndicator.cancel()
-            })
-        } else {
-            subTaskIndicator = indicator
-        }
+        subTaskIndicator = indicator.toThreadSafeProgressIndicator()
 
         try {
             realTaskIndicator.text = "Preparing resolve data"

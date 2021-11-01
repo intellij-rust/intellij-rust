@@ -7,7 +7,6 @@ package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.toml.crates.local.CargoRegistryCrate
-import org.rust.toml.crates.local.CratesLocalIndexException
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.toml.lang.psi.TomlValue
 import org.toml.lang.psi.TomlVisitor
@@ -27,11 +26,7 @@ abstract class CrateVersionInspection : CargoTomlInspectionToolBase() {
             override fun visitDependency(dependency: DependencyCrate) {
                 if (dependency.isForeign()) return
 
-                val crate = try {
-                    CratesLocalIndexService.getInstance().getCrate(dependency.crateName) ?: return
-                } catch (e: CratesLocalIndexException) {
-                    return
-                }
+                val crate = CratesLocalIndexService.getInstance().getCrate(dependency.crateName).ok() ?: return
 
                 val versionElement = dependency.properties["version"] ?: return
                 handleCrateVersion(dependency, crate, versionElement, holder)

@@ -6,7 +6,7 @@
 package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.rust.toml.crates.local.CratesLocalIndexException
+import org.rust.stdext.unwrapOrElse
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.toml.lang.psi.TomlVisitor
 
@@ -19,11 +19,7 @@ class CrateNotFoundInspection : CargoTomlInspectionToolBase() {
                 if (dependency.isForeign()) return
 
                 val crateName = dependency.crateName
-                val crate = try {
-                    CratesLocalIndexService.getInstance().getCrate(crateName)
-                } catch (e: CratesLocalIndexException) {
-                    return
-                }
+                val crate = CratesLocalIndexService.getInstance().getCrate(crateName).unwrapOrElse { return }
 
                 if (crate == null) {
                     holder.registerProblem(dependency.crateNameElement, "Crate $crateName not found")
