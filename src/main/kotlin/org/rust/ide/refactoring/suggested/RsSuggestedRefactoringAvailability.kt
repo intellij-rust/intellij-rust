@@ -42,7 +42,6 @@ class RsSuggestedRefactoringAvailability(
         oldSignature: SuggestedRefactoringSupport.Signature,
         newSignature: SuggestedRefactoringSupport.Signature
     ): Boolean = hasParameterAddedRemovedOrReordered(oldSignature, newSignature) ||
-        hasTypeChanges(oldSignature, newSignature) ||
         hasNameChanges(oldSignature, newSignature)
 }
 
