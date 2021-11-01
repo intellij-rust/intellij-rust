@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections.import
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
@@ -22,7 +22,7 @@ import org.rust.lang.core.types.inference
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
 
-class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixOnPsiElement(element), HighPriorityAction {
+class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixOnPsiElement(element), PriorityAction {
 
     private var isConsumed: Boolean = false
 
@@ -30,6 +30,8 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
     override fun getText(): String = familyName
 
     public override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
+
+    override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         invoke(project)
@@ -135,7 +137,8 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 if (it !is ResolvedPath.AssocItem) return null
                 it.source
             }
-            val candidates = ImportCandidatesCollector.getTraitImportCandidates(project, path, sources)?.toList() ?: return null
+            val candidates = ImportCandidatesCollector.getTraitImportCandidates(project, path, sources)?.toList()
+                ?: return null
             return Context(ASSOC_ITEM_PATH, candidates)
         }
     }
