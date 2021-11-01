@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     fun `test index has many crates`() {
-        assertTrue(cratesService.getAllCrateNames().size > 50_000)
+        assertTrue(cratesService.getAllCrateNames().unwrap().size > 50_000)
     }
 
     fun `test index has tokio`() {
@@ -21,7 +21,7 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
 
     fun `test tokio first published version`() {
         assertEquals(
-            cratesService.getCrate("tokio")?.versions?.get(0)?.version,
+            cratesService.getCrate("tokio").unwrap()?.versions?.get(0)?.version,
             "0.0.0"
         )
     }
@@ -29,6 +29,7 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     fun `test tokio version is yanked`() {
         assertTrue(
             cratesService.getCrate("tokio")
+                .unwrap()
                 ?.versions
                 ?.find { it.version == "1.0.0" }
                 ?.isYanked == true
@@ -38,6 +39,7 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     fun `test tokio features`() {
         assertEquals(
             cratesService.getCrate("tokio")
+                .unwrap()
                 ?.versions
                 ?.find { it.version == "1.0.0" }
                 ?.features,
@@ -46,7 +48,7 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     }
 
     fun `test code-generation-example has specific versions`() {
-        val versions = cratesService.getCrate("code-generation-example")?.versions?.map { it.version }
+        val versions = cratesService.getCrate("code-generation-example").unwrap()?.versions?.map { it.version }
 
         assertNotNull(versions)
 
@@ -57,7 +59,8 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     companion object {
         private val cratesService: CratesLocalIndexService by lazy {
             CratesLocalIndexServiceImpl().apply {
-                updateIfNeeded()
+                recoverIfNeeded()
+                awaitLoadedAndUpdated()
             }
         }
     }

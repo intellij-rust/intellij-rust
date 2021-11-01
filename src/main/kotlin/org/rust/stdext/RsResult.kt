@@ -31,6 +31,11 @@ sealed class RsResult<out T, out E> {
         is Ok -> Ok(ok)
         is Err -> Err(mapper(err))
     }
+
+    fun unwrap(): T = when (this) {
+        is Ok -> ok
+        is Err -> error("called `RsResult.unwrap()` on an `Err` value: $err")
+    }
 }
 
 inline fun <T, E, U> RsResult<T, E>.andThen(action: (T) -> RsResult<U, E>): RsResult<U, E> = when (this) {
