@@ -8,6 +8,8 @@ package org.rust.ide.inspections
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
@@ -220,12 +222,62 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    fun `test no unresolved reference for built-in attributes`() = checkByText("""
+        #[!forbid()]
+
+        #[allow(foo)]
+        #[rustfmt::skip]
+        #[clippy::foo]
+        #[doc = "docs"]
+        #[cfg_attr(all(unix, unix), allow(foo::bar))]
+        fn foo() { }
+
+        #[derive(Clone, Copy)]
+        struct S;
+    """, false)
+
+    @MockEdition(Edition.EDITION_2018)
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test attribute macro`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn foobar(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        use dep_proc_macro::foobar;/*caret*/
+
+        #[dep_proc_macro::foobar]
+        fn foo() { }
+
+        #[foobar]
+        fn bar() { }
+
+        #[dep_proc_macro::<error descr="Unresolved reference: `unresolved`">unresolved</error>]
+        fn baz() { }
+
+        #[<error descr="Unresolved reference: `unresolved`">unresolved</error>]
+        fn qux() { }
+    """, false)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
+        withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }
+    }
+
+    private fun checkByFileTree(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
+        withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByFileTree(text) }
+    }
+
+    private fun withIgnoreWithoutQuickFix(ignoreWithoutQuickFix: Boolean, check: () -> Unit) {
         val inspection = inspection as RsUnresolvedReferenceInspection
         val defaultValue = inspection.ignoreWithoutQuickFix
         try {
             inspection.ignoreWithoutQuickFix = ignoreWithoutQuickFix
-            checkByText(text)
+            check()
         } finally {
             inspection.ignoreWithoutQuickFix = defaultValue
         }

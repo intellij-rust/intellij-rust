@@ -14,6 +14,7 @@ import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -32,8 +33,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             override fun visitPath(path: RsPath) {
                 if (path.reference == null) return
 
-                // Don't show unresolved reference error in attributes for now
-                if (path.ancestorStrict<RsMetaItem>() != null) return
+                val rootPathParent = path.rootPath().parent
+                if (rootPathParent is RsMetaItem) {
+                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isEnabled()) return
+                }
 
                 val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
                 val qualifier = path.qualifier
