@@ -848,7 +848,7 @@ class RsTypeInferenceWalker(
                             returningTypes += child.expr?.let(ctx::getExprType) ?: TyUnit.INSTANCE
                         }
                     }
-                    is RsLabeledExpression -> {
+                    is RsLooplikeExpr -> {
                         if (label != null) {
                             collectReturningTypes(child, true)
                         }
