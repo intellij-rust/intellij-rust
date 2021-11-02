@@ -147,7 +147,7 @@ class RsChangeFunctionSignatureConfig private constructor(
     companion object {
         fun create(function: RsFunction): RsChangeFunctionSignatureConfig {
             val factory = RsPsiFactory(function.project)
-            val parameters = function.valueParameters.mapIndexed { index, parameter ->
+            val parameters = function.rawValueParameters.mapIndexed { index, parameter ->
                 val patText = parameter.pat?.text ?: "_"
                 val type = ParameterProperty.fromItem(parameter.typeReference)
                 Parameter(factory, patText, type, index)
