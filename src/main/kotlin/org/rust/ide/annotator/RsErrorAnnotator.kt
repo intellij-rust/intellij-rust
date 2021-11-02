@@ -489,7 +489,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val reference = ref.reference ?: return
         val highlightedElement = ref.referenceNameElement ?: return
         val referenceName = ref.referenceName ?: return
-        val resolvedElement = reference.resolve() as? RsVisible ?: return
+        val resolvedElement = when (ref) {
+            is RsStructLiteralField -> reference.multiResolve().firstOrNull { it is RsVisible }
+            else -> reference.resolve()
+        } as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
         if (resolvedElement.isVisibleFrom(oMod)) return
         val withinOneCrate = resolvedElement.crateRoot == o.crateRoot
