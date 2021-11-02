@@ -947,6 +947,10 @@
             <className>org.rust.ide.intentions.ExtractStructFieldsIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.UnwrapConstructorIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
