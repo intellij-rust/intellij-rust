@@ -913,6 +913,44 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    fun `test no match body with enum expr`() = checkFixByText("Add remaining patterns", """
+        enum E { A, B, C }
+
+        fn test(e: E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> e<EOLError descr="'!', '(', '::', <operator>, '[' or '{' expected, got '}'"></EOLError>
+        }
+    """, """
+        enum E { A, B, C }
+
+        fn test(e: E) {
+            match/*caret*/ e {
+                E::A => {}
+                E::B => {}
+                E::C => {}
+            }
+        }
+    """)
+
+    fun `test no match body with i32 expr`() = checkFixByText("Add remaining patterns", """
+        fn test(i: i32) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> i<EOLError descr="'!', '(', '::', <operator>, '[' or '{' expected, got '}'"></EOLError>
+        }
+    """, """
+        fn test(i: i32) {
+            match/*caret*/ i { _ => {} }
+        }
+    """)
+
+    fun `test no match body with {} expr`() = checkFixByText("Add remaining patterns", """
+        fn test() {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> {}<EOLError descr="'(', <operator>, '[' or '{' expected, got '}'"></EOLError>
+        }
+    """, """
+        fn test() {
+            match/*caret*/ {} { _ => {} }
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test pair of Options`() = checkByText("""
         fn foo(a: Option<bool>, b: Option<bool>) {

@@ -483,6 +483,11 @@
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Condition of 'if' expression is constant"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsConstantConditionIfInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="No mutable required"
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>

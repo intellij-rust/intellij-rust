@@ -12,12 +12,12 @@ import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.LET_ELSE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.consts.asBool
-import org.rust.lang.utils.evaluation.evaluate
 
 /**
  * Detects redundant `else` statements preceded by an irrefutable pattern.
  * Quick fix: Remove `else`
+ *
+ * See also [RsConstantConditionIfInspection].
  */
 class RsRedundantElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Redundant else"
@@ -67,13 +67,8 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
 
         private val RsCondition.isRedundant: Boolean
             get() {
-                val patList = patList
-                return if (patList != null) {
-                    patList.all { pat -> pat.isIrrefutable }
-                } else {
-                    val expr = expr ?: return false
-                    expr.evaluate().asBool() == true
-                }
+                val patList = patList ?: return false
+                return patList.all { pat -> pat.isIrrefutable }
             }
     }
 }

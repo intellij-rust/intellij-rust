@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
 
@@ -82,11 +83,12 @@ private class ExpressionReplacer(
         val suggestedNames = chosenExpr.suggestedNames()
         val let = createLet(suggestedNames.default)
         val name = psiFactory.createExpression(suggestedNames.default)
+        val parentLambda = chosenExpr.ancestorStrict<RsLambdaExpr>()
 
         project.runWriteCommandAction {
             val newElement = introduceLet(project, anchor, let)
             exprs.forEach { it.replace(name) }
-            val nameElem = moveEditorToNameElement(editor, newElement)
+            val nameElem = moveEditorToNameElement(editor, newElement.moveIntoLambdaBlockIfNeeded(parentLambda))
 
             if (nameElem != null) {
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -112,6 +114,15 @@ private class ExpressionReplacer(
         val result = context.addBefore(let, anchor)
         context.addAfter(newline, result)
         return result
+    }
+
+    private fun PsiElement?.moveIntoLambdaBlockIfNeeded(lambda: RsLambdaExpr?): PsiElement? {
+        if (this == null) return this
+        val body = lambda?.expr ?: return this
+        if (body is RsBlockExpr) return this
+        val blockExpr = body.replace(RsPsiFactory(project).createBlockExpr("\n${body.text}\n")) as RsBlockExpr
+        val block = blockExpr.block
+        return block.addBefore(this, block.expr).also { this.delete() }
     }
 }
 
