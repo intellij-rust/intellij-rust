@@ -20,6 +20,13 @@ class RsChangeSignatureSuggestedRefactoringTest : RsSuggestedRefactoringTestBase
         fn foo()/*caret*/ {}
     """) { myFixture.type(" -> u32") }
 
+    fun `test unavailable when changing parameter type`() = doUnavailableTest("""
+        fn foo(a: /*caret*/u32) {}
+    """) {
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
+        myFixture.type("i")
+    }
+
     fun `test unavailable on inner binding change`() = doUnavailableTest("""
         struct S {
             a: u32
