@@ -623,6 +623,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLifetimeParameter(holder: RsAnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+        if (lifetimeParameter.name.isIllegalLifetimeName(lifetimeParameter.edition)) {
+            RsDiagnostic.IllegalLifetimeName(lifetimeParameter).addToHolder(holder)
+        }
+
         checkReservedLifetimeName(holder, lifetimeParameter)
         checkDuplicates(holder, lifetimeParameter)
     }
@@ -677,6 +681,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLifetime(holder: RsAnnotationHolder, lifetime: RsLifetime) {
+        if (lifetime.name.isIllegalLifetimeName(lifetime.edition)) {
+            RsDiagnostic.IllegalLifetimeName(lifetime).addToHolder(holder)
+        }
+
         if (lifetime.isPredefined || !hasResolve(lifetime)) return
 
         val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
@@ -1624,3 +1632,19 @@ private fun RsAttr.isBuiltinWithName(target: String): Boolean {
 
 private val RsPat.isTopLevel: Boolean
     get() = findBinding()?.topLevelPattern == this
+
+private fun String?.isIllegalLifetimeName(edition: Edition?): Boolean {
+    if (this == null || this in RESERVED_LIFETIME_NAMES) return false
+    val name = drop(1)
+    val effectiveEdition = edition ?: Edition.EDITION_2018
+    return name in KEYWORDS_EDITION_2015 || effectiveEdition > Edition.EDITION_2015 && name in KEYWORDS_EDITION_2018
+}
+
+private val KEYWORDS_EDITION_2015: Set<String> = hashSetOf(
+    "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield",
+    "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if", "impl", "in",
+    "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self", "static", "struct", "super",
+    "trait", "true", "type", "unsafe", "use", "where", "while"
+)
+
+private val KEYWORDS_EDITION_2018: Set<String> = hashSetOf("async", "await", "dyn", "try")
