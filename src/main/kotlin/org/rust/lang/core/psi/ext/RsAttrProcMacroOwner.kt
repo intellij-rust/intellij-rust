@@ -19,4 +19,9 @@ interface RsAttrProcMacroOwner : RsOuterAttributeOwner, RsAttrProcMacroOwnerPsiO
     @JvmDefault
     val procMacroAttribute: ProcMacroAttribute<RsMetaItem>
         get() = ProcMacroAttribute.getProcMacroAttribute(this)
+
+    /** @see ProcMacroAttribute */
+    @JvmDefault
+    val procMacroAttributeWithDerives: ProcMacroAttribute<RsMetaItem>
+        get() = ProcMacroAttribute.getProcMacroAttribute(this, withDerives = true)
 }

@@ -417,7 +417,7 @@ class ProcMacroAttributeTest : RsTestBase() {
     private fun ProcMacroAttribute<RsMetaItem>.toTestValue() =
         when (this) {
             is ProcMacroAttribute.Attr -> Attr(attr.path!!.text, index)
-            ProcMacroAttribute.Derive -> Derive
+            is ProcMacroAttribute.Derive -> Derive
             ProcMacroAttribute.None -> None
         }
 

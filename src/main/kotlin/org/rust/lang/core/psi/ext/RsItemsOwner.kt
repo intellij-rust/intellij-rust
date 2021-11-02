@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
@@ -146,33 +147,65 @@ class RsCachedItems(
     data class CachedStarImport(val isPublic: Boolean, val speck: RsUseSpeck)
 }
 
-private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsElement, Boolean) -> Boolean): Boolean {
-    return itemsAndMacros.any { it.processItem(processor) }
+@VisibleForTesting
+fun RsItemsOwner.processExpandedItemsInternal(
+    withMacroCalls: Boolean = false,
+    processor: (RsElement, Boolean) -> Boolean
+): Boolean {
+    return itemsAndMacros.any { it.processItem(withMacroCalls, processor) }
 }
 
-private fun RsElement.processItem(processor: (RsElement, Boolean) -> Boolean): Boolean {
-    if (this is RsAttrProcMacroOwner) {
-        val attr = procMacroAttribute
-        if (attr is ProcMacroAttribute.Attr) {
-            if (!isEnabledByCfgSelf) return false
-            return attr.attr.expansion?.elements.orEmpty().any {
-                it.processItem(processor)
-            }
-        }
-    }
-
+private fun RsElement.processItem(withMacroCalls: Boolean, processor: (RsElement, Boolean) -> Boolean): Boolean {
     val existsAfterExpansionSelf = this !is RsDocAndAttributeOwner || evaluateCfg() != ThreeValuedLogic.False
 
-    return when (this) {
+    val derives: Sequence<RsMetaItem>? = if (this is RsAttrProcMacroOwner) {
+        when (val attr = procMacroAttributeWithDerives) {
+            is ProcMacroAttribute.Attr -> {
+                if (withMacroCalls) {
+                    if (processor(attr.attr, existsAfterExpansionSelf)) return true
+                }
+                if (!existsAfterExpansionSelf) return false
+                return attr.attr.expansion?.elements.orEmpty().any {
+                    it.processItem(withMacroCalls, processor)
+                }
+            }
+            is ProcMacroAttribute.Derive -> attr.derives
+            ProcMacroAttribute.None -> null
+        }
+    } else {
+        null
+    }
+
+    when (this) {
         is RsMacroCall -> {
-            if (!existsAfterExpansionSelf) return false
-            processExpansionRecursively {
-                it.processItem(processor)
+            if (withMacroCalls) {
+                if (processor(this, existsAfterExpansionSelf)) return true
+            }
+            if (existsAfterExpansionSelf) {
+                processExpansionRecursively {
+                    it.processItem(withMacroCalls, processor)
+                }
             }
         }
-        is RsItemElement, is RsMacro -> processor(this, existsAfterExpansionSelf)
-        else -> false
+        is RsItemElement, is RsMacro -> {
+            if (processor(this, existsAfterExpansionSelf)) return true
+        }
     }
+
+    // Processing derives *after* `this` item itself
+    if (existsAfterExpansionSelf && derives != null) {
+        for (derive in derives) {
+            if (withMacroCalls) {
+                if (processor(derive, existsAfterExpansionSelf)) return true
+            }
+            val result = derive.expansion?.elements.orEmpty().any {
+                it.processItem(withMacroCalls, processor)
+            }
+            if (result) return true
+        }
+    }
+
+    return false
 }
 
 private val RsPath.isAtom: Boolean

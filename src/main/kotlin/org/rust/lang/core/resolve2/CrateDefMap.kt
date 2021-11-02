@@ -31,6 +31,9 @@ import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
+import org.rust.stdext.writeVarInt
+import java.io.DataOutput
+import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
@@ -217,8 +220,17 @@ class FileInfo(
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
     fun append(index: Int): MacroIndex = MacroIndex(indices + index)
+    fun append(index: MacroIndex): MacroIndex = MacroIndex(indices + index.indices)
 
     override fun compareTo(other: MacroIndex): Int = Arrays.compare(indices, other.indices)
+
+    @Throws(IOException::class)
+    fun writeTo(data: DataOutput) {
+        data.writeVarInt(indices.size)
+        for (index in indices) {
+            data.writeVarInt(index)
+        }
+    }
 
     companion object {
         /** Equivalent to `call < mod && !isPrefix(call, mod)` */

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.completion.RsMacroCompletionProvider
@@ -321,7 +322,24 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
         }
 }
 
-private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap, crate: Crate): MacroIndex? {
+@VisibleForTesting
+fun getMacroIndex(element: PsiElement, defMap: CrateDefMap, crate: Crate): MacroIndex? {
+    if (element is RsMetaItem) {
+        val owner = element.owner as? RsAttrProcMacroOwner
+        if (owner != null && RsProcMacroPsiUtil.canBeCustomDerive(element)) {
+            val ownerIndex = getMacroIndex(owner, defMap, crate) ?: return null
+            val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
+                owner,
+                explicitCrate = crate,
+                withDerives = true
+            )
+            val deriveIndex = when (attr) {
+                is ProcMacroAttribute.Derive -> attr.derives.indexOf(element)
+                else -> 0
+            }
+            return ownerIndex.append(deriveIndex)
+        }
+    }
     val itemAndCallExpandedFrom = element.stubAncestors
         .filterIsInstance<RsExpandedElement>()
         .mapNotNull { it to (it.expandedOrIncludedFrom ?: return@mapNotNull null) }

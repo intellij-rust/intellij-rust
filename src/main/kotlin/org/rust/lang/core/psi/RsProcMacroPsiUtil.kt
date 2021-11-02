@@ -12,6 +12,7 @@ import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.*
+import org.rust.lang.core.stubs.common.RsAttrProcMacroOwnerPsiOrStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 
 object RsProcMacroPsiUtil {
@@ -41,8 +42,11 @@ object RsProcMacroPsiUtil {
      */
     fun canBeCustomDerive(metaItem: RsMetaItem): Boolean {
         val isDerive = RsPsiPattern.derivedTraitMetaItem.accepts(metaItem)
-        return isDerive && KNOWN_DERIVABLE_TRAITS[metaItem.name]?.isStd != true
+        return isDerive && canBeCustomDeriveWithoutContextCheck(metaItem)
     }
+
+    fun canBeCustomDeriveWithoutContextCheck(metaItem: RsMetaItemPsiOrStub) =
+        KNOWN_DERIVABLE_TRAITS[metaItem.name]?.isStd != true
 
     private fun canBeProcMacroAttributeCall(
         metaItem: RsMetaItem,
@@ -108,4 +112,7 @@ object RsProcMacroPsiUtil {
                 && item !is RsModItem
                 && item !is RsMacroDefinitionBase
             )
+
+    fun canOwnDeriveAttrs(item: RsAttrProcMacroOwnerPsiOrStub<*>): Boolean =
+        item is RsStructOrEnumItemElement || item is RsStructItemStub || item is RsEnumItemStub
 }
