@@ -14,7 +14,7 @@ import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.getVisibleBindings
+import org.rust.lang.core.psi.ext.getLocalVariableVisibleBindings
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
@@ -31,7 +31,7 @@ class InitializeWithDefaultValueFix(element: RsElement) : LocalQuickFixAndIntent
         val semicolon = declaration.semicolon ?: return
         val psiFactory = RsPsiFactory(project)
         val initExpr = RsDefaultValueBuilder(declaration.knownItems, declaration.containingMod, psiFactory, true)
-            .buildFor(patBinding.type, (startElement as RsElement).getVisibleBindings())
+            .buildFor(patBinding.type, (startElement as RsElement).getLocalVariableVisibleBindings())
 
         if (declaration.eq == null) {
             declaration.addBefore(psiFactory.createEq(), semicolon)

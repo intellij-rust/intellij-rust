@@ -5,29 +5,23 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.presentation.render
-import org.rust.ide.refactoring.RsMultipleVariableRenamer
 import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
+import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
     override fun getText(): String = "Use destructuring declaration"
@@ -61,7 +55,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
 
         val bindings = findBindings(usages, patBinding)
 
-        val toRename = mutableListOf<PsiNamedElement>()
+        val toRename = mutableListOf<RsPatBinding>()
         val (newPat, replaceContext) = createDestructuredPat(ctx, factory, toRename, bindings)
 
         if (ctx is Context.Struct) {
@@ -73,7 +67,9 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
             is ReplaceContext.Struct -> replaceStructUsages(replaceContext, factory, usages)
         }
 
-        renameNewBindings(editor, toRename)
+        if (toRename.isNotEmpty()) {
+            renameNewBindings(newPat, editor, toRename)
+        }
     }
 
     private fun findBindings(usages: List<RsPath>, patBinding: RsPatBinding): HashSet<String> {
@@ -89,7 +85,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     private fun createDestructuredPat(
         ctx: Context,
         factory: RsPsiFactory,
-        toRename: MutableList<PsiNamedElement>,
+        toRename: MutableList<RsPatBinding>,
         bindings: HashSet<String>
     ): Pair<RsElement, ReplaceContext> {
         return when (ctx) {
@@ -107,11 +103,10 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
                     val newStruct = factory.createPatStruct(struct, typeName)
                     val replaced = ctx.patIdent.replace(newStruct) as RsPatStruct
 
-                    val fieldNames = allocateStructFieldNames(bindings, replaced, toRename,
-                        struct.blockFields?.namedFieldDeclList?.mapNotNull {
-                            it.name
-                        }.orEmpty()
-                    )
+                    val fieldNamesList = struct.blockFields?.namedFieldDeclList?.mapNotNull {
+                        it.name
+                    }.orEmpty()
+                    val fieldNames = allocateStructFieldNames(bindings, replaced, toRename, fieldNamesList)
                     replaced to ReplaceContext.Struct(struct, fieldNames)
                 }
             }
@@ -128,18 +123,21 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
 
     companion object {
         /**
-         * Creates a replacement boxes for the pat (struct / tuple) fields.
-         * Then shows the live template and initiates editing process.
+         * Creates replacement boxes for the pat (struct / tuple) fields.
+         * Then shows a live template and initiates the editing process.
          */
-        private fun renameNewBindings(editor: Editor, toBeRenamed: List<PsiNamedElement>) {
-            val first = toBeRenamed.firstOrNull() ?: return
-
-            val project = first.project
+        private fun renameNewBindings(context: RsElement, editor: Editor, toBeRenamed: List<RsPatBinding>) {
+            val project = context.project
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-            editor.caretModel.moveToOffset(first.textRange.startOffset)
-            RsMultipleVariableRenamer(toBeRenamed.map { it.createSmartPointer() })
-                .doRename(first, editor, DataContext.EMPTY_CONTEXT)
+            val builder = editor.newTemplateBuilder(context.containingFile) ?: return
+            for (binding in toBeRenamed) {
+                val variable = builder.introduceVariable(binding)
+                ReferencesSearch.search(binding, binding.getSearchScope()).forEach {
+                    variable.replaceElementWithVariable(it.element)
+                }
+            }
+            builder.runInline()
         }
     }
 }
@@ -150,7 +148,7 @@ private fun PsiElement.getSearchScope(): SearchScope =
 private fun allocateStructFieldNames(
     bindings: HashSet<String>,
     destructuredElement: RsPatStruct,
-    toRename: MutableList<PsiNamedElement>,
+    toRename: MutableList<RsPatBinding>,
     fieldNames: List<String>
 ): Map<String, String> {
     val factory = RsPsiFactory(destructuredElement.project)
@@ -174,7 +172,7 @@ private fun allocateStructFieldNames(
 private fun allocateTupleFieldNames(
     bindings: HashSet<String>,
     destructuredElement: RsElement,
-    toRename: MutableList<PsiNamedElement>,
+    toRename: MutableList<RsPatBinding>,
     fieldCount: Int
 ): List<String> {
     val factory = RsPsiFactory(destructuredElement.project)
@@ -256,16 +254,4 @@ private sealed class ReplaceContext {
         val fieldNames: List<String>,
         val structName: String? = null
     ) : ReplaceContext()
-}
-
-private fun RsElement.getAllVisibleBindings(): Set<String> {
-    val bindings = mutableSetOf<String>()
-    val processor = createProcessor { entry ->
-        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
-        val name = element.name ?: return@createProcessor false
-        bindings.add(name)
-        false
-    }
-    processNestedScopesUpwards(this, VALUES, processor)
-    return bindings
 }

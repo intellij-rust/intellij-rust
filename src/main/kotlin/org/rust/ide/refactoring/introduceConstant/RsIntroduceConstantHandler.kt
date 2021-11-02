@@ -18,7 +18,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.isConst
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.nonBlocking
 import org.rust.openapiext.runWriteCommandAction
 
@@ -75,11 +75,23 @@ private fun RsExpr.isExtractable(): Boolean {
     }
 }
 
-private fun replaceWithConstant(expr: RsExpr, occurrences: List<RsExpr>, candidate: InsertionCandidate, editor: Editor) {
+private fun replaceWithConstant(
+    expr: RsExpr,
+    occurrences: List<RsExpr>,
+    candidate: InsertionCandidate,
+    editor: Editor
+) {
     val project = expr.project
     val factory = RsPsiFactory(project)
     val suggestedNames = expr.suggestedNames()
-    val name = suggestedNames.default.toUpperCase()
+
+    val owner = candidate.parent
+    val bindings = (owner.children.first() as? RsElement)?.getAllVisibleBindings().orEmpty() +
+        occurrences.flatMap { it.getLocalVariableVisibleBindings().keys }
+
+    val name = suggestedNames.all.map { it.toUpperCase() }.firstOrNull { it !in bindings }
+        ?: freshenName(suggestedNames.default.toUpperCase(), bindings)
+
     val const = factory.createConstant(name, expr)
 
     project.runWriteCommandAction {
@@ -101,7 +113,7 @@ private fun replaceWithConstant(expr: RsExpr, occurrences: List<RsExpr>, candida
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         RsInPlaceVariableIntroducer(insertedConstant, editor, project, "Choose a constant name", replaced)
-            .performInplaceRefactoring(LinkedHashSet(suggestedNames.all.map { it.toUpperCase() }))
+            .performInplaceRefactoring(linkedSetOf(name))
     }
 }
 
