@@ -118,6 +118,7 @@ class KnownItems(
     val FnMut: RsTraitItem? get() = findLangItem("fn_mut")
     val FnOnce: RsTraitItem? get() = findLangItem("fn_once")
     val Index: RsTraitItem? get() = findLangItem("index")
+    val IndexMut: RsTraitItem? get() = findLangItem("index_mut")
     val Clone: RsTraitItem? get() = findLangItem("clone")
     val Copy: RsTraitItem? get() = findLangItem("copy")
     val PartialEq: RsTraitItem? get() = findLangItem("eq")
