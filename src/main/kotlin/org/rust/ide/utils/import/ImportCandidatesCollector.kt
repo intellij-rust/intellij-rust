@@ -34,6 +34,9 @@ object ImportCandidatesCollector {
         }
     }
 
+    fun findImportCandidate(importContext: ImportContext, target: RsQualifiedNamedElement): ImportCandidate? =
+        getImportCandidates(importContext, target).firstOrNull()
+
     /**
      * Returns a sequence of import candidates, after importing any of which it becomes possible to resolve the
      * path created from the `importingPathText`.
@@ -99,19 +102,6 @@ object ImportCandidatesCollector {
         resolvedMethods: List<MethodResolveVariant>
     ): Sequence<ImportCandidate>? {
         return getTraitImportCandidates(project, scope, resolvedMethods.map { it.source })
-    }
-
-    fun findImportCandidate(importingContext: ImportContext, element: RsQualifiedNamedElement): ImportCandidate? {
-        val project = importingContext.project
-        val searchScope = RsWithMacrosProjectScope(project)
-        val explicitItems = sequenceOf(QualifiedNamedItem.ExplicitItem(element))
-        val reexportedItems = getReexportedItems(project, element.name ?: return null, searchScope)
-        return (explicitItems + reexportedItems)
-            .filter { it.item == element }
-            .flatMap { it.withModuleReexports(project).asSequence() }
-            .mapNotNull { it.toImportCandidate(importingContext.superMods) }
-            .filterImportCandidates(importingContext.attributes)
-            .firstOrNull()
     }
 
     fun getTraitImportCandidates(
