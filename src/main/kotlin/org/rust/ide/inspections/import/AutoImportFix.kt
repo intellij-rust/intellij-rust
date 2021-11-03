@@ -137,8 +137,11 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 if (it !is ResolvedPath.AssocItem) return null
                 it.source
             }
-            val candidates = ImportCandidatesCollector.getTraitImportCandidates(project, path, sources)?.toList()
-                ?: return null
+            val candidates = if (path.useAutoImportWithNewResolve) {
+                ImportCandidatesCollector2.getTraitImportCandidates(path, sources)
+            } else {
+                ImportCandidatesCollector.getTraitImportCandidates(project, path, sources)?.toList()
+            } ?: return null
             return Context(ASSOC_ITEM_PATH, candidates)
         }
     }
