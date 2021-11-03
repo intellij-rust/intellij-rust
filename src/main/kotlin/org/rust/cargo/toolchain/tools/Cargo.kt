@@ -201,7 +201,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         projectDirectory: Path,
         listener: ProcessListener?
     ): BuildMessages? {
-        val additionalArgs = listOf("--message-format", "json")
+        val additionalArgs = listOf("--message-format", "json", "--workspace")
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)

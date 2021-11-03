@@ -761,6 +761,36 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../hello.rs")
     }
 
+    fun `test workspace with package`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test-1"
+                version = "0.1.0"
+                authors = []
+
+                [workspace]
+                members = ["intellij-rust-test-2"]
+            """)
+            dir("src") {
+                rust("main.rs", "fn main() {}")
+            }
+            dir("intellij-rust-test-2") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "intellij-rust-test-2"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("main.rs", MAIN_RS)
+                }
+                rust("build.rs", BUILD_RS)
+            }
+        }.checkReferenceIsResolved<RsPath>("intellij-rust-test-2/src/main.rs", toFile = ".../hello.rs")
+    }
+
     companion object {
         @Language("Rust")
         private const val MAIN_RS = """
