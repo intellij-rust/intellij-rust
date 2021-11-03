@@ -59,6 +59,7 @@ private class SimplifyFix(
     override fun getName(): String = "Simplify expression"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val factory = RsPsiFactory(project)
         val ifExpr = descriptor.psiElement.ancestorStrict<RsIfExpr>() ?: return
 
         // `if false {} else if ... {} else ...`
@@ -69,6 +70,16 @@ private class SimplifyFix(
             }
         }
 
+        // fn main() {
+        //     if true { 1 } else { 0 }`
+        //     func();
+        // }
+        if (!isUsedAsExpression && ifExpr.parent is RsExprStmt) run {
+            val tailExpr = ifExpr.block?.expr ?: return@run
+            val tailStmt = factory.tryCreateExprStmt(tailExpr.text) ?: return@run
+            tailExpr.replace(tailStmt)
+        }
+
         val branch = (if (conditionValue) ifExpr.block else ifExpr.elseBranch?.block) ?: return
         val branchFirst = branch.lbrace.getNextNonWhitespaceSibling()!!
         val branchLast = branch.rbrace.getPrevNonWhitespaceSibling()!!
@@ -77,15 +88,16 @@ private class SimplifyFix(
             val replaceWith = when {
                 canUnwrapBlock -> branchFirst
                 isInsideCascadeIf -> branch
-                else -> branch.wrapAsBlockExpr()
+                else -> branch.wrapAsBlockExpr(factory)
             }
             val replaced = ifExpr.replace(replaceWith)
             descriptor.findExistingEditor()?.caretModel?.moveToOffset(replaced.startOffset)
         } else {
+            val ifStmt = ifExpr.parent as? RsExprStmt ?: ifExpr
             if (branchFirst != branch.rbrace) {
-                ifExpr.parent.addRangeAfter(branchFirst, branchLast, ifExpr)
+                ifStmt.parent.addRangeAfter(branchFirst, branchLast, ifStmt)
             }
-            ifExpr.delete()
+            ifStmt.delete()
         }
     }
 }
@@ -97,8 +109,8 @@ private fun RsIfExpr.isUsedAsExpression(): Boolean =
         else -> true
     }
 
-private fun RsBlock.wrapAsBlockExpr(): RsBlockExpr {
-    val blockExpr = RsPsiFactory(project).createBlockExpr("")
+private fun RsBlock.wrapAsBlockExpr(factory: RsPsiFactory): RsBlockExpr {
+    val blockExpr = factory.createBlockExpr("")
     blockExpr.block.replace(this)
     return blockExpr
 }
