@@ -42,28 +42,17 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (binExpr, opType) = ctx
+        val (binaryExpr, opType) = ctx
+        val topBinaryExpr = binaryExpr.getTopmostBinaryExprWithSameOpType()
+        applyDemorgan(project, topBinaryExpr, opType)
+    }
 
-        var topBinExpr = binExpr
-        var isAllSameOpType = true
-        while (topBinExpr.parent is RsBinaryExpr
-            || (topBinExpr.parent is RsParenExpr
-                && topBinExpr.parent.parent.isNegation()
-                && topBinExpr.parent.parent.parent is RsBinaryExpr)) {
-            topBinExpr = if (topBinExpr.parent is RsBinaryExpr) topBinExpr.parent as RsBinaryExpr else topBinExpr.parent.parent.parent as RsBinaryExpr
-            isAllSameOpType = topBinExpr.parent is RsBinaryExpr && topBinExpr.operatorType == opType
-        }
-
-        if (isAllSameOpType) {
-            applyDemorgan(project, topBinExpr, opType)
+    private fun RsBinaryExpr.getTopmostBinaryExprWithSameOpType(): RsBinaryExpr {
+        val parent = parent
+        return if (parent is RsBinaryExpr && parent.binaryOp.op == binaryOp.op) {
+            parent.getTopmostBinaryExprWithSameOpType()
         } else {
-            val binaryExprs = topBinExpr.descendantsOfType<RsBinaryExpr>().filter { e ->
-                !(e.operatorType != opType || e.parent is RsBinaryExpr && (e.parent as RsBinaryExpr).operatorType == opType)
-            }
-
-            binaryExprs.forEach {
-                applyDemorgan(project, it, opType)
-            }
+            this
         }
     }
 

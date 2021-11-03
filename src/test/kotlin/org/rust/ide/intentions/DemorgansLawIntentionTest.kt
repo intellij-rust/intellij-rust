@@ -63,7 +63,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention::cla
         }
     """, """
         fn main() {
-            if !(!(2 + 2 != 2 /*caret*/|| !(foo.bar() || !(78 < 90 || 90 > 78))) || (!(20 < 50 || ((40 == 20))))) {}
+            if !(!(2 + 2 != 2 /*caret*/|| !(foo.bar() || !(78 < 90 || 90 > 78))) || (20 >= 50 && ((40 != 20)))) {}
         }
     """)
 
@@ -77,6 +77,16 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention::cla
         }
     """)
 
+    fun `test complex 5`() = doAvailableTest("""
+        fn main() {
+            !(a /*caret*/&& b) || (c && d);
+        }
+    """, """
+        fn main() {
+            !a || !b || (c && d);
+        }
+    """)
+
     fun `test constant`() = doAvailableSymmetricTest("""
         fn main() {
             let _ = b /*caret*/|| true;
@@ -84,6 +94,26 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention::cla
     """, """
         fn main() {
             let _ = !(!b /*caret*/&& !true);
+        }
+    """)
+
+    fun `test triple 1`() = doAvailableTest("""
+        fn main() {
+            a /*caret*/&& b && c;
+        }
+    """, """
+        fn main() {
+            !(!a || !b || !c);
+        }
+    """)
+
+    fun `test triple 2`() = doAvailableTest("""
+        fn main() {
+            a && b /*caret*/&& c;
+        }
+    """, """
+        fn main() {
+            !(!a || !b || !c);
         }
     """)
 }
