@@ -144,6 +144,79 @@ class RsConstantConditionIfInspectionTest : RsInspectionsTestBase(RsConstantCond
         }
     """)
 
+    fun `test used as tail expression, simple branch`() = checkFixByText("Simplify expression", """
+        fn main() {
+            if <warning descr="Condition is always ''true''">/*caret*/true</warning> {
+                1
+            } else {
+                2
+            }
+        }
+    """, """
+        fn main() {
+            1
+        }
+    """)
+
+    fun `test used as tail expression, complex branch`() = checkFixByText("Simplify expression", """
+        fn main() {
+            if <warning descr="Condition is always ''true''">/*caret*/true</warning> {
+                println!("1");
+                1
+            } else {
+                2
+            }
+        }
+    """, """
+        fn main() {
+            println!("1");
+            1
+        }
+    """)
+
+    fun `test if is not last in function 1`() = checkFixByText("Simplify expression", """
+        fn main() {
+            if <warning descr="Condition is always ''true''">/*caret*/true</warning> {} else {}
+            println!("3");
+        }
+    """, """
+        fn main() {
+            println!("3");
+        }
+    """)
+
+    fun `test if is not last in function 2`() = checkFixByText("Simplify expression", """
+        fn main() {
+            if <warning descr="Condition is always ''true''">/*caret*/true</warning> {
+                println!("1");
+            } else {
+                println!("2");
+            }
+            println!("3");
+        }
+    """, """
+        fn main() {
+            println!("1");
+            println!("3");
+        }
+    """)
+
+    fun `test if is not last in function 3`() = checkFixByText("Simplify expression", """
+        fn main() {
+            if <warning descr="Condition is always ''true''">/*caret*/true</warning> {
+                1
+            } else {
+                2
+            }
+            println!("3");
+        }
+    """, """
+        fn main() {
+            1;
+            println!("3");
+        }
+    """)
+
     fun `test cascade if, first true`() = checkFixByText("Simplify expression", """
         fn main() {
             if <warning descr="Condition is always ''true''">/*caret*/true</warning> {
