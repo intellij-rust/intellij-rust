@@ -60,16 +60,28 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     private fun applyDemorgan(project: Project, topBinExpr: RsBinaryExpr, opType: BinaryOperator) {
         val converted = convertConjunctionExpression(topBinExpr, opType) ?: return
 
-        var expressionToReplace: RsExpr = topBinExpr
-        var expString = "!($converted)"
-        val parent = topBinExpr.parent.parent
-        if (parent.isNegation()) {
-            expressionToReplace = parent as RsExpr
-            expString = converted
+        val parent = topBinExpr.parent?.parent
+        val (expString, expressionToReplace) = if (parent != null && parent.isNegation()) {
+            val grandParent = parent.parent
+            val convertedOpType = if (opType == OR) AND else OR
+            val canOmitParens = grandParent.canOmitParensFor(convertedOpType)
+            val expString = if (canOmitParens) converted else "($converted)"
+            expString to parent as RsExpr
+        } else {
+            "!($converted)" to topBinExpr
         }
         val newExpr = RsPsiFactory(project).createExpression(expString)
 
         expressionToReplace.replace(newExpr)
+    }
+
+    private fun PsiElement.canOmitParensFor(opType: LogicOp): Boolean {
+        if (this !is RsBinaryExpr) return true
+        return when (binaryOp.operatorType) {
+            AND -> opType == AND
+            OR -> true
+            else -> false
+        }
     }
 
     private fun isConjunctionExpression(expression: RsExpr, opType: BinaryOperator): Boolean {
