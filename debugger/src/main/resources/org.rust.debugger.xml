@@ -16,6 +16,7 @@
         <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
         <debugProcessConfigurator implementation="org.rust.debugger.runconfig.RsDebugProcessConfigurator"/>
         <backendConsoleInjectionHelper implementation="org.rust.debugger.RsBackendConsoleInjectionHelper"/>
+        <formatters.natvis.provider implementation="org.rust.debugger.RustcNatvisFileProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
