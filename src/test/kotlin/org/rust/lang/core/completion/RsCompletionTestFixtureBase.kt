@@ -121,7 +121,7 @@ abstract class RsCompletionTestFixtureBase<IN>(
         prepare(code)
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
-            "Expected completions that contain $variants, but no completions found"
+            "Expected completions that don't contain $variants, but no completions found"
         }
         if (lookups.any { it.render() in variants }) {
             error("Expected completions that don't contain $variants, but got ${lookups.map { it.render() }}")
