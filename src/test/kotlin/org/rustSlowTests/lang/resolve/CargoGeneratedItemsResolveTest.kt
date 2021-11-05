@@ -8,6 +8,7 @@ package org.rustSlowTests.lang.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import org.intellij.lang.annotations.Language
 import org.rust.WithExperimentalFeatures
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
@@ -41,33 +42,9 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 version = "0.1.0"
                 authors = []
             """)
-            rust("build.rs", """
-                use std::env;
-                use std::fs::File;
-                use std::io::Write;
-                use std::path::Path;
-
-                fn main() {
-                    let out_dir = env::var("OUT_DIR").unwrap();
-                    let dest_path = Path::new(&out_dir).join("hello.rs");
-                    let mut f = File::create(&dest_path).unwrap();
-
-                    f.write_all(b"
-                        pub fn message() -> &'static str {
-                            \"Hello, World!\"
-                        }",
-                    ).unwrap();
-                }
-            """)
+            rust("build.rs", BUILD_RS)
             dir("src") {
-                rust("main.rs", """
-                    include!(concat!(env!("OUT_DIR"), "/hello.rs"));
-
-                    fn main() {
-                        println!("{}", message());
-                                        //^
-                    }
-                """)
+                rust("main.rs", MAIN_RS)
             }
         }.checkReferenceIsResolved<RsPath>("src/main.rs")
     }
@@ -114,7 +91,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
     // https://github.com/intellij-rust/intellij-rust/issues/4579
     fun `test do not overflow stack 2`() {
-        val testProject = buildProject {
+        buildProject {
             toml("Cargo.toml", """
                 [workspace]
                 members = [
@@ -772,13 +749,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
-                    include!(concat!(env!("OUT_DIR"), "/hello.rs"));
-                    fn main() {
-                        println!("{}", message());
-                                       //^
-                    }
-                """)
+                rust("main.rs", MAIN_RS)
             }
             dir(".cargo") {
                 toml("config", """
@@ -786,24 +757,68 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                     target-dir = "$customTargetDir"
                 """)
             }
-            rust("build.rs", """
-                use std::env;
-                use std::fs::File;
-                use std::io::Write;
-                use std::path::Path;
-
-                fn main() {
-                    let out_dir = env::var("OUT_DIR").unwrap();
-                    let dest_path = Path::new(&out_dir).join("hello.rs");
-                    let mut f = File::create(&dest_path).unwrap();
-
-                    f.write_all(b"
-                        pub fn message() -> &'static str {
-                            \"Hello, World!\"
-                        }",
-                    ).unwrap();
-                }
-            """)
+            rust("build.rs", BUILD_RS)
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../hello.rs")
+    }
+
+    fun `test workspace with package`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test-1"
+                version = "0.1.0"
+                authors = []
+
+                [workspace]
+                members = ["intellij-rust-test-2"]
+            """)
+            dir("src") {
+                rust("main.rs", "fn main() {}")
+            }
+            dir("intellij-rust-test-2") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "intellij-rust-test-2"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("main.rs", MAIN_RS)
+                }
+                rust("build.rs", BUILD_RS)
+            }
+        }.checkReferenceIsResolved<RsPath>("intellij-rust-test-2/src/main.rs", toFile = ".../hello.rs")
+    }
+
+    companion object {
+        @Language("Rust")
+        private const val MAIN_RS = """
+            include!(concat!(env!("OUT_DIR"), "/hello.rs"));
+            fn main() {
+                println!("{}", message());
+                               //^
+            }
+        """
+
+        @Language("Rust")
+        private const val BUILD_RS = """
+            use std::env;
+            use std::fs::File;
+            use std::io::Write;
+            use std::path::Path;
+
+            fn main() {
+                let out_dir = env::var("OUT_DIR").unwrap();
+                let dest_path = Path::new(&out_dir).join("hello.rs");
+                let mut f = File::create(&dest_path).unwrap();
+
+                f.write_all(b"
+                    pub fn message() -> &'static str {
+                        \"Hello, World!\"
+                    }",
+                ).unwrap();
+            }
+        """
     }
 }
