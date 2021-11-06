@@ -1774,6 +1774,30 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test type reference parentheses`() = doTest("""
+        trait T {}
+        trait Foo {
+            fn foo() -> &(dyn T + 'static);
+        }
+        struct S;
+        impl Foo for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo() -> &(dyn T + 'static)", byDefault = true)
+    ), """
+        trait T {}
+        trait Foo {
+            fn foo() -> &(dyn T + 'static);
+        }
+        struct S;
+        impl Foo for S {
+            fn foo() -> &(dyn T + 'static) {
+                todo!()
+            }
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(

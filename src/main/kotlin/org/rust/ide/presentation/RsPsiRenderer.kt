@@ -239,8 +239,14 @@ open class RsPsiRenderer(
         }
     }
 
-    open fun appendTypeReference(sb: StringBuilder, ref: RsTypeReference) {
-        when (val type = ref.skipParens()) {
+    open fun appendTypeReference(sb: StringBuilder, type: RsTypeReference) {
+        when (type) {
+            is RsParenType -> {
+                sb.append("(")
+                type.typeReference?.let { appendTypeReference(sb, it) }
+                sb.append(")")
+            }
+
             is RsTupleType -> {
                 val types = type.typeReferenceList
                 if (types.size == 1) {
@@ -317,10 +323,7 @@ open class RsPsiRenderer(
             is RsMacroType -> {
                 appendPath(sb, type.macroCall.path)
                 sb.append("!(")
-                val macroBody = type.macroCall.macroBody
-                if (macroBody != null) {
-                    sb.append(macroBody)
-                }
+                type.macroCall.macroBody?.let { sb.append(it) }
                 sb.append(")")
             }
         }
