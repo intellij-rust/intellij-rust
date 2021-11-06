@@ -48,11 +48,43 @@ class UnwrapSingleExprIntentionTest : RsIntentionTestBase(UnwrapSingleExprIntent
         }
     """)
 
-    fun `test available lambda unwrap braces single statement`() = doUnavailableTest("""
+    fun `test unavailable lambda unwrap braces single statement`() = doUnavailableTest("""
         fn main() {
             {
                 /*caret*/42;
             }
+        }
+    """)
+
+    fun `test unwrap braces single unit statement caret before`() = doAvailableTest("""
+        fn foo() {}
+
+        fn main() {
+            {
+                /*caret*/foo();
+            }
+        }
+    """, """
+        fn foo() {}
+
+        fn main() {
+            /*caret*/foo()
+        }
+    """)
+
+    fun `test unwrap braces single unit statement caret after`() = doAvailableTest("""
+        fn foo() {}
+
+        fn main() {
+            {
+                foo();/*caret*/
+            }
+        }
+    """, """
+        fn foo() {}
+
+        fn main() {
+            foo()/*caret*/
         }
     """)
 
@@ -149,6 +181,28 @@ class UnwrapSingleExprIntentionTest : RsIntentionTestBase(UnwrapSingleExprIntent
         fn main() {
             match x {
                 0 => /*caret*/println!("x = 0"),
+                _ => println!("x != 0")
+            }
+        }
+    """)
+
+    fun `test available unwrap brace expression statement match`() = doAvailableTest("""
+        fn foo() {}
+
+        fn main() {
+            match x {
+                0 => /*caret*/{
+                    foo();
+                }
+                _ => println!("x != 0")
+            }
+        }
+    """, """
+        fn foo() {}
+
+        fn main() {
+            match x {
+                0 => /*caret*/foo(),
                 _ => println!("x != 0")
             }
         }
