@@ -8,13 +8,16 @@ package org.rust.cargo.project.configurable
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.ConfigurableName
 import com.intellij.util.PlatformUtils
-import org.jetbrains.annotations.Nls
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 
-abstract class RsConfigurableBase(protected val project: Project, @Nls displayName: String) :
-    BoundConfigurable(displayName) {
+@Suppress("UnstableApiUsage")
+abstract class RsConfigurableBase(
+    protected val project: Project,
+    @ConfigurableName displayName: String
+) : BoundConfigurable(displayName) {
 
     protected val state: RustProjectSettingsService.State = project.rustSettings.settingsState
 

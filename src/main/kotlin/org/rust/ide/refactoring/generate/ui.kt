@@ -10,6 +10,7 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsStructItem
@@ -21,7 +22,7 @@ fun showStructMemberChooserDialog(
     project: Project,
     structItem: RsStructItem,
     fields: List<StructMember>,
-    title: String
+    @Suppress("UnstableApiUsage") @DialogTitle title: String
 ): List<StructMember>? {
     val chooser = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockStructMemberChooserUi`")
@@ -58,7 +59,9 @@ interface StructMemberChooserUi {
     fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>?
 }
 
-private class DialogStructMemberChooserUi(private val title: String) : StructMemberChooserUi {
+private class DialogStructMemberChooserUi(
+    @Suppress("UnstableApiUsage") @DialogTitle private val title: String
+) : StructMemberChooserUi {
     override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
         val dialogTitle = title
         val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {

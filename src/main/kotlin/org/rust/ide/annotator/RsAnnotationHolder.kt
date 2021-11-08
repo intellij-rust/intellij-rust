@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationBuilder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -15,31 +16,31 @@ import org.rust.lang.core.psi.ext.existsAfterExpansion
 
 class RsAnnotationHolder(val holder: AnnotationHolder) {
 
-    fun createErrorAnnotation(element: PsiElement, message: String?, vararg fixes: IntentionAction) {
+    fun createErrorAnnotation(element: PsiElement, @InspectionMessage message: String?, vararg fixes: IntentionAction) {
         newErrorAnnotation(element, message, *fixes)?.create()
     }
 
-    fun createWeakWarningAnnotation(element: PsiElement, message: String?, vararg fixes: IntentionAction) {
+    fun createWeakWarningAnnotation(element: PsiElement, @InspectionMessage message: String?, vararg fixes: IntentionAction) {
         newWeakWarningAnnotation(element, message, *fixes)?.create()
     }
 
     fun newErrorAnnotation(
         element: PsiElement,
-        message: String?,
+        @InspectionMessage message: String?,
         vararg fixes: IntentionAction
     ): AnnotationBuilder? =
         newAnnotation(element, HighlightSeverity.ERROR, message, *fixes)
 
     fun newWeakWarningAnnotation(
         element: PsiElement,
-        message: String?,
+        @InspectionMessage message: String?,
         vararg fixes: IntentionAction
     ): AnnotationBuilder? = newAnnotation(element, HighlightSeverity.WEAK_WARNING, message, *fixes)
 
     fun newAnnotation(
         element: PsiElement,
         severity: HighlightSeverity,
-        message: String?,
+        @InspectionMessage message: String?,
         vararg fixes: IntentionAction
     ): AnnotationBuilder? {
         if (!element.existsAfterExpansion) return null

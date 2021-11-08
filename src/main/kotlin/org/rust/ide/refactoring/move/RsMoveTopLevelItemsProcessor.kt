@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -40,7 +41,7 @@ class RsMoveTopLevelItemsProcessor(
         return commonProcessor.findUsages()
     }
 
-    private fun checkNoItemsWithSameName(conflicts: MultiMap<PsiElement, String>) {
+    private fun checkNoItemsWithSameName(@Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>) {
         if (!searchForReferences) return
 
         val targetModItems = targetMod.expandedItemsExceptImplsAndUses

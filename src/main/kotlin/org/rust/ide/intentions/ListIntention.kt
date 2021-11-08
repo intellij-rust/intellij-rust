@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.*
 abstract class ListIntentionBase<TList : RsElement, TElement : RsElement>(
     private val listClass: Class<TList>,
     private val elementClass: Class<TElement>,
-    intentionText: String
+    @IntentionName intentionText: String
 ) : RsElementBaseIntentionAction<TList>() {
 
     init {

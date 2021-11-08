@@ -9,12 +9,14 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
+import com.intellij.openapi.util.NlsContexts.AttributeDescriptor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
-enum class RsColor(humanName: String, default: TextAttributesKey? = null) {
+@Suppress("UnstableApiUsage")
+enum class RsColor(@AttributeDescriptor humanName: String, default: TextAttributesKey? = null) {
     VARIABLE("Variables//Default", Default.IDENTIFIER),
     MUT_BINDING("Variables//Mutable binding", Default.IDENTIFIER),
     FIELD("Variables//Field", Default.INSTANCE_FIELD),

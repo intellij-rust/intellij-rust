@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isInsideMovedElements
@@ -30,7 +31,10 @@ class RsMoveTraitMethodsProcessor(
     private val pathHelper: RsMovePathHelper
 ) {
 
-    fun preprocessOutsideReferences(conflicts: MultiMap<PsiElement, String>, elementsToMove: List<ElementToMove>) {
+    fun preprocessOutsideReferences(
+        @Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>,
+        elementsToMove: List<ElementToMove>
+    ) {
         val references = getReferencesToTraitAssocItems(elementsToMove)
         preprocessReferencesToTraitAssocItems(
             references,
@@ -40,7 +44,10 @@ class RsMoveTraitMethodsProcessor(
         )
     }
 
-    fun preprocessInsideReferences(conflicts: MultiMap<PsiElement, String>, elementsToMove: List<ElementToMove>) {
+    fun preprocessInsideReferences(
+        @Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>,
+        elementsToMove: List<ElementToMove>
+    ) {
         val traitsToMove = elementsToMove
             .filterIsInstance<ItemToMove>()
             .map { it.item }
@@ -59,7 +66,7 @@ class RsMoveTraitMethodsProcessor(
 
     private fun preprocessReferencesToTraitAssocItems(
         references: List<RsReferenceElement>,
-        conflicts: MultiMap<PsiElement, String>,
+        @Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>,
         findTraitUsePath: (RsTraitItem) -> String?,
         shouldProcessTrait: (RsTraitItem) -> Boolean
     ) {

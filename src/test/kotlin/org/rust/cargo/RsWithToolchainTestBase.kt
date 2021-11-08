@@ -96,7 +96,9 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
                 )
             )
         }
-        // RsExperiments.FETCH_ACTUAL_STDLIB_METADATA significantly slows down tests
+        // RsExperiments.FETCH_ACTUAL_STDLIB_METADATA significantly slows down tests.
+        // It's possible to make it cheap, we just need to wrap `Rustup.fetchStdlib()` call into
+        // `UnitTestRustcCache.cached()`
         setExperimentalFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA, fetchActualStdlibMetadata, testRootDisposable)
     }
 

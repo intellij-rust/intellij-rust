@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros.errors
 
+import org.jetbrains.annotations.Nls
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.psi.RsProcMacroKind
@@ -37,6 +38,7 @@ sealed class GetMacroExpansionError {
 
     // Can't expand the macro because ...
     // Failed to expand the macro because ...
+    @Nls
     fun toUserViewableMessage(): String = when(this) {
         MacroExpansionIsDisabled -> "macro expansion is disabled in project settings"
         MacroExpansionEngineIsNotReady -> "macro expansion engine is not ready"

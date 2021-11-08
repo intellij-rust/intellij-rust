@@ -9,6 +9,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.util.io.isDirectory
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.ide.experiments.RsExperiments.WSL_TOOLCHAIN
@@ -67,7 +68,10 @@ fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     }
 }
 
-private fun <T> compute(title: String, getter: () -> T): T = if (isDispatchThread) {
+private fun <T> compute(
+    @Suppress("UnstableApiUsage") @ProgressTitle title: String,
+    getter: () -> T
+): T = if (isDispatchThread) {
     val project = ProjectManager.getInstance().defaultProject
     project.computeWithCancelableProgress(title, getter)
 } else {

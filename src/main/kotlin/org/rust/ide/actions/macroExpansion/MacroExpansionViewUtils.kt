@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -40,7 +41,7 @@ import javax.swing.JPanel
 /** Data class to group title and expansions of macro to show them in the view. */
 data class MacroExpansionViewDetails(
     val macroToExpand: RsPossibleMacroCall,
-    val title: String,
+    @Suppress("UnstableApiUsage") @PopupTitle val title: String,
     val expansion: MacroExpansion
 )
 
@@ -90,6 +91,8 @@ private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursi
     )
 }
 
+@Suppress("UnstableApiUsage")
+@PopupTitle
 private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): String {
     val path = macroToExpand.path?.text
     val name = when (val kind = macroToExpand.kind) {

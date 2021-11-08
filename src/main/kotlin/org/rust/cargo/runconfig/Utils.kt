@@ -17,6 +17,7 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -125,7 +126,7 @@ fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: 
 
 sealed class BuildResult {
     data class Binaries(val paths: List<String>) : BuildResult()
-    sealed class ToolchainError(val message: String) : BuildResult() {
+    sealed class ToolchainError(@Suppress("UnstableApiUsage") @DialogMessage val message: String) : BuildResult() {
         // TODO: move into bundle
         object UnsupportedMSVC : ToolchainError("MSVC toolchain is not supported. Please use GNU toolchain.")
         object UnsupportedGNU : ToolchainError("GNU toolchain is not supported. Please use MSVC toolchain.")

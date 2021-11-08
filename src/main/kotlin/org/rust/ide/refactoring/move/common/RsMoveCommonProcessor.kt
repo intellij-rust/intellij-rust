@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
@@ -146,7 +147,10 @@ class RsMoveCommonProcessor(
         }
     }
 
-    fun preprocessUsages(usages: Array<UsageInfo>, conflicts: MultiMap<PsiElement, String>): Boolean {
+    fun preprocessUsages(
+        usages: Array<UsageInfo>,
+        @Suppress("UnstableApiUsage") conflicts: MultiMap<PsiElement, @DialogMessage String>
+    ): Boolean {
         val title = message("refactoring.preprocess.usages.progress")
         return try {
             /**

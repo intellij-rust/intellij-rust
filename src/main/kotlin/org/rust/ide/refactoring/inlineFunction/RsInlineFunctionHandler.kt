@@ -11,6 +11,7 @@ import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -72,7 +73,7 @@ class RsInlineFunctionHandler : InlineActionHandler() {
     override fun canInlineElement(element: PsiElement): Boolean =
         element is RsFunction && element.navigationElement is RsFunction
 
-    private fun errorHint(project: Project, editor: Editor, message: String) {
+    private fun errorHint(project: Project, editor: Editor, @Suppress("UnstableApiUsage") @DialogMessage message: String) {
         CommonRefactoringUtil.showErrorHint(
             project,
             editor,

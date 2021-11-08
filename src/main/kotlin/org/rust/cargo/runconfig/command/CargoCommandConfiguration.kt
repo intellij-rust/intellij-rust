@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
@@ -180,7 +181,7 @@ open class CargoCommandConfiguration(
         val ok: Ok? get() = this as? Ok
 
         companion object {
-            fun error(message: String) = Err(RuntimeConfigurationError(message))
+            fun error(@Suppress("UnstableApiUsage") @DialogMessage message: String) = Err(RuntimeConfigurationError(message))
         }
     }
 

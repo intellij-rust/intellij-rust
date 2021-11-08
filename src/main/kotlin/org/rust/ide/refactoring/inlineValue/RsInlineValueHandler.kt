@@ -10,6 +10,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -148,7 +149,7 @@ sealed class InlineValueMode {
     object InlineAllAndRemoveOriginal : InlineValueMode()
 }
 
-private fun showErrorHint(project: Project, editor: Editor, message: String) {
+private fun showErrorHint(project: Project, editor: Editor, @Suppress("UnstableApiUsage") @DialogMessage message: String) {
     CommonRefactoringUtil.showErrorHint(
         project,
         editor,

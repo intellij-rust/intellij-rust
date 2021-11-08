@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
@@ -135,7 +136,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         return parent is RsBlockExpr || (parent is RsFunction && parent.isActuallyUnsafe)
     }
 
-    private fun AnnotationHolder.createUnsafeAnnotation(textRange: TextRange, message: String) {
+    private fun AnnotationHolder.createUnsafeAnnotation(textRange: TextRange, @InspectionMessage message: String) {
         if (isBatchMode) return
         val color = RsColor.UNSAFE_CODE
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION

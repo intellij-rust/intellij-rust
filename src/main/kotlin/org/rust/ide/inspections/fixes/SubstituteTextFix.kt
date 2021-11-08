@@ -7,6 +7,7 @@ package org.rust.ide.inspections.fixes
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -21,7 +22,7 @@ import org.rust.openapiext.document
  * @param substitution The text that will be placed starting from `range.startOffset`. If `null`, no text will be inserted.
  */
 class SubstituteTextFix private constructor(
-    private val fixName: String = "Substitute",
+    @IntentionName private val fixName: String = "Substitute",
     file: PsiFile,
     range: TextRange,
     private val substitution: String?
@@ -44,13 +45,13 @@ class SubstituteTextFix private constructor(
     }
 
     companion object {
-        fun delete(fixName: String, file: PsiFile, range: TextRange) =
+        fun delete(@IntentionName fixName: String, file: PsiFile, range: TextRange) =
             SubstituteTextFix(fixName, file, range, null)
 
-        fun insert(fixName: String, file: PsiFile, offsetInElement: Int, text: String) =
+        fun insert(@IntentionName fixName: String, file: PsiFile, offsetInElement: Int, text: String) =
             SubstituteTextFix(fixName, file, TextRange(offsetInElement, offsetInElement), text)
 
-        fun replace(fixName: String, file: PsiFile, range: TextRange, text: String) =
+        fun replace(@IntentionName fixName: String, file: PsiFile, range: TextRange, text: String) =
             SubstituteTextFix(fixName, file, range, text)
     }
 }

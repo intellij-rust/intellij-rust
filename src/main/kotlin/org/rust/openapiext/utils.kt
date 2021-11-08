@@ -39,6 +39,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -257,14 +258,20 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
 fun <T> runWithCheckCanceled(callable: () -> T): T =
     ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
 
-fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
+fun <T> Project.computeWithCancelableProgress(
+    @Suppress("UnstableApiUsage") @ProgressTitle title: String,
+    supplier: () -> T
+): T {
     if (isUnitTestMode) {
         return supplier()
     }
     return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 }
 
-fun Project.runWithCancelableProgress(title: String, process: () -> Unit): Boolean {
+fun Project.runWithCancelableProgress(
+    @Suppress("UnstableApiUsage") @ProgressTitle title: String,
+    process: () -> Unit
+): Boolean {
     if (isUnitTestMode) {
         process()
         return true

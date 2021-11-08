@@ -15,6 +15,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -65,6 +66,8 @@ abstract class RsExecutableRunner(
         val artifact = artifacts.firstOrNull()
         val binaries = artifact?.executables.orEmpty()
 
+        @Suppress("UnstableApiUsage")
+        @DialogMessage
         fun checkErrors(items: List<Any>, itemName: String): String? = when {
             items.isEmpty() -> "Can't find a $itemName."
             items.size > 1 -> "More than one $itemName was produced. " +
@@ -125,7 +128,7 @@ abstract class RsExecutableRunner(
         project.showErrorDialog(toolchainError.message)
     }
 
-    private fun Project.showErrorDialog(message: String) {
+    private fun Project.showErrorDialog(@Suppress("UnstableApiUsage") @DialogMessage message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
     }
 

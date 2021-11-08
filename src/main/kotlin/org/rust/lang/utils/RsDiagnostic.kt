@@ -10,11 +10,13 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
@@ -1464,8 +1466,8 @@ enum class Severity {
 class PreparedAnnotation(
     val severity: Severity,
     val errorCode: RsErrorCode?,
-    val header: String,
-    val description: String = "",
+    @Suppress("UnstableApiUsage") @InspectionMessage val header: String,
+    @Suppress("UnstableApiUsage") @Tooltip val description: String = "",
     val fixes: List<LocalQuickFix> = emptyList(),
     val textAttributes: TextAttributesKey? = null
 )

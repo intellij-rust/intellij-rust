@@ -17,6 +17,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
@@ -54,7 +55,7 @@ class UiDebouncer(
 
 fun pathToDirectoryTextField(
     disposable: Disposable,
-    title: String,
+    @Suppress("UnstableApiUsage") @DialogTitle title: String,
     onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton =
     pathTextField(
@@ -66,7 +67,7 @@ fun pathToDirectoryTextField(
 
 fun pathToRsFileTextField(
     disposable: Disposable,
-    title: String,
+    @DialogTitle title: String,
     project: Project,
     onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton =
@@ -82,7 +83,7 @@ fun pathToRsFileTextField(
 fun pathTextField(
     fileChooserDescriptor: FileChooserDescriptor,
     disposable: Disposable,
-    title: String,
+    @DialogTitle title: String,
     onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton {
 

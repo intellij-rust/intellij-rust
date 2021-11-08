@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
@@ -175,7 +176,11 @@ private class ParseContext(val sourceMap: IntArray, val offset: Int, val paramet
             .shiftRight(offset)
 }
 
-private data class ErrorAnnotation(val range: TextRange, val error: String, val isTraitError: Boolean = false)
+private data class ErrorAnnotation(
+    val range: TextRange,
+    @InspectionMessage val error: String,
+    val isTraitError: Boolean = false
+)
 
 private val formatParser = Regex("""\{\{|}}|(\{([^}]*)}?)|(})""")
 

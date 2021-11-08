@@ -8,6 +8,7 @@ package org.rust.debugger.runconfig
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.SemVer
@@ -171,7 +172,7 @@ class RsDebugProcessConfigurationHelper(
         executeInterpreterCommand(threadId, frameIndex, command)
     }
 
-    private fun checkSysroot(sysroot: String?, message: String): String? {
+    private fun checkSysroot(sysroot: String?, @Suppress("UnstableApiUsage") @NotificationContent message: String): String? {
         if (sysroot == null) {
             project.showBalloon(message, NotificationType.WARNING)
         }

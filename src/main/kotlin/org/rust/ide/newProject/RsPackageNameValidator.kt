@@ -5,6 +5,7 @@
 
 package org.rust.ide.newProject
 
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
 
 /**
@@ -35,6 +36,8 @@ object RsPackageNameValidator {
         "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
     )
 
+    @Suppress("UnstableApiUsage")
+    @DialogMessage
     fun validate(name: String, isBinary: Boolean): String? = when {
         name.isEmpty() -> "Package name can't be empty"
         name in KEYWORDS_BLACKLIST || name == "test" -> "The name `$name` cannot be used as a crate name"

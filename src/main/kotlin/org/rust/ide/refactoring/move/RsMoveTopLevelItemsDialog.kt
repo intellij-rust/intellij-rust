@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -189,7 +190,7 @@ class RsMoveTopLevelItemsDialog(
         }
     }
 
-    private fun showErrorMessage(message: String?) {
+    private fun showErrorMessage(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
         val title = message("error.title")
         CommonRefactoringUtil.showErrorMessage(title, message, null, project)
     }
