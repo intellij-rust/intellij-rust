@@ -6,10 +6,12 @@
 package org.rust.cargo.util
 
 import com.intellij.util.containers.orNull
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.impl.RustcVersion
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+@TestOnly
 class TestUnitTestRustcCacheService : UnitTestRustcCacheService {
     private val cache: ConcurrentHashMap<Pair<RustcVersion, Class<*>>, Optional<Any>> = ConcurrentHashMap()
 
