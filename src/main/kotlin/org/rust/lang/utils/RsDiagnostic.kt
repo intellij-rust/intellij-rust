@@ -102,6 +102,11 @@ sealed class RsDiagnostic(
                         if (retFix != null) {
                             add(retFix)
                         }
+
+                        val reprFix = ChangeReprAttributeFix.createIfCompatible(element, actualTy)
+                        if (reprFix != null) {
+                            add(reprFix)
+                        }
                     }
 
                     val parent = element.parent
