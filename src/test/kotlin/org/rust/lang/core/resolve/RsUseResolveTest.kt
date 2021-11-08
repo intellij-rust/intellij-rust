@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import org.rust.MockEdition
-import org.rust.UseNewResolve
 import org.rust.UseOldResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.stdext.BothEditions
@@ -755,7 +754,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test complex cyclic chain with glob imports and aliases`() = checkByCode("""
         mod a {
@@ -860,7 +858,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test two usual imports with same name in different namespaces`() = checkByCode("""
         mod a {

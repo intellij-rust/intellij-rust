@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.MockEdition
-import org.rust.UseNewResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
@@ -48,7 +47,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test use multi reference, duplicated function`() = doTest("""
         mod m {
             pub fn foo() {}
@@ -60,7 +58,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @UseNewResolve
     fun `test use multi reference, duplicated struct`() = doTest("""
         mod m {
             pub struct Foo {}
@@ -72,7 +69,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }         //^
     """)
 
-    @UseNewResolve
     fun `test use multi reference, duplicated unit struct`() = doTest("""
         mod m {
             pub struct Foo;
@@ -84,7 +80,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }         //^
     """)
 
-    @UseNewResolve
     fun `test use multi reference, duplicated enum variant`() = doTest("""
         enum E { A, A }
         use E::A;
@@ -93,7 +88,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }         //^
     """)
 
-    @UseNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test use multi reference, item in duplicated inline mod`() = doTest("""
         mod m {

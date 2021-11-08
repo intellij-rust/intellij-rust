@@ -7,11 +7,9 @@ package org.rust.lang.core.macros.decl
 
 import org.rust.MinRustcVersion
 import org.rust.ProjectDescriptor
-import org.rust.UseNewResolve
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
 
-@UseNewResolve
 class RsMacro2ExpansionTest : RsMacroExpansionTestBase() {
     fun `test function-like body`() = doTest("""
         macro foo ($ i:ident) {

@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.withPrevious
 
-@UseNewResolve
 @MinRustcVersion("1.46.0")
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 class RsDefMapMacroIndexConsistencyTest : RsTestBase() {

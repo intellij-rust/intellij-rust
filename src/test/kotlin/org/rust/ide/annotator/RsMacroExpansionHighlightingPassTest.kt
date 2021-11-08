@@ -31,7 +31,6 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         }</CFG_DISABLED_CODE>
     """)
 
-    @UseNewResolve
     @MinRustcVersion("1.46.0")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
@@ -46,7 +45,6 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MinRustcVersion("1.46.0")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)

@@ -15,10 +15,6 @@ import org.rust.openapiext.TestmarkPred
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class UseNewResolve
-
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
 annotation class UseOldResolve
 
 fun TestmarkPred.ignoreInNewResolve(project: Project): TestmarkPred {
@@ -32,9 +28,6 @@ fun TestmarkPred.ignoreInNewResolve(project: Project): TestmarkPred {
 
 fun TestCase.setupResolveEngine(project: Project, testRootDisposable: Disposable) {
     val defMap = project.defMapService
-    findAnnotationInstance<UseNewResolve>()?.let {
-        defMap.setNewResolveEnabled(testRootDisposable, true)
-    }
     findAnnotationInstance<UseOldResolve>()?.let {
         defMap.setNewResolveEnabled(testRootDisposable, false)
     }

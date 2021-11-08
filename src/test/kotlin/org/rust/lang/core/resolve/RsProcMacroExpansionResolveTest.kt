@@ -11,7 +11,6 @@ import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 
-@UseNewResolve
 @MinRustcVersion("1.46.0")
 @MockEdition(EDITION_2018)
 @ExpandMacros(MacroExpansionScope.WORKSPACE)

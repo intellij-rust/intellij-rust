@@ -969,7 +969,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         macro_rules! foo { () => {} }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no duplicates with import E0252 private item`() = checkErrors("""
         mod mod1 {

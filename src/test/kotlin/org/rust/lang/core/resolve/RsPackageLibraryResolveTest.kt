@@ -248,7 +248,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 3`() = stubOnlyResolve("""
     //- main.rs
@@ -261,7 +260,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo { () => {} }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 4`() = stubOnlyResolve("""
     //- main.rs
@@ -411,7 +409,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import wins extern crate import`() = stubOnlyResolve("""
     //- main.rs
@@ -429,7 +426,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo { () => {}; }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test import wins macro from prelude`() = stubOnlyResolve("""
@@ -499,7 +495,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test import macro by multi-segment path without extern crate 1`() = stubOnlyResolve("""
     //- lib.rs
         use dep_lib_target;
@@ -514,7 +509,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test import macro by multi-segment path without extern crate 2`() = stubOnlyResolve("""
     //- lib.rs
         use dep_lib_target;
@@ -531,7 +525,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     fun `test import macro by qualified path with aliased extern crate`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_lib_target as aliased;
@@ -545,7 +538,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro reexported as macro 2`() = stubOnlyResolve("""
     //- lib.rs
@@ -558,7 +550,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub use foo_ as foo;
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (same mod)`() = stubOnlyResolve("""
     //- lib.rs
@@ -569,7 +560,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }           //X
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (different mod same crate)`() = stubOnlyResolve("""
     //- lib.rs
@@ -580,7 +570,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }           //X
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (different crate)`() = stubOnlyResolve("""
     //- main.rs
@@ -591,7 +580,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (inside function body)`() = expect<IllegalStateException> {
         stubOnlyResolve("""
@@ -604,7 +592,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (import)`() = stubOnlyResolve("""
     //- main.rs
@@ -617,7 +604,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (unresolved in textual scope)`() = stubOnlyResolve("""
     //- lib.rs

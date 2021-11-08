@@ -11,10 +11,8 @@ import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
-import org.rust.UseNewResolve
 
-/** Tests whether or not [CrateDefMap] should be updated after file modification */
-@UseNewResolve
+/** Tests whether [CrateDefMap] should be updated after file modification */
 @ExpandMacros  // needed to enable precise modification tracker
 class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
 

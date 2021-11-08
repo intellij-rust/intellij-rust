@@ -86,7 +86,6 @@ class RsMacroCallUnderCfgTest : RsTestBase() {
         }
     """)
 
-    @UseNewResolve
     @MockCargoFeatures("feature_foo")
     fun `test macro call in cfg disabled nested mod`() = checkResolvedOnlyWhenFeatureIsEnabledByTree("feature_foo", """
     //- foo.rs

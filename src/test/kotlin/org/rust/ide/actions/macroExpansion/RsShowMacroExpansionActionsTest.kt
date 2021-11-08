@@ -113,7 +113,6 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
         compile_error!("");
     """)
 
-    @UseNewResolve
     @MinRustcVersion("1.46.0")
     @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
@@ -129,7 +128,6 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
         fn foo() {}
     """)
 
-    @UseNewResolve
     @MinRustcVersion("1.46.0")
     @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)

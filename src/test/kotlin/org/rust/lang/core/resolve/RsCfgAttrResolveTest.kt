@@ -682,7 +682,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // Goal of these two tests is to check that there are no exceptions during building CrateDefMap.
     // Actual resolve result is not important, because proper multiresolve is not yet supported in new resolve.
     @ExpandMacros
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside expanded shadowed mod 1`() = stubOnlyResolve("""
@@ -709,7 +708,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
     @ExpandMacros
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside expanded shadowed mod 2`() = stubOnlyResolve("""
@@ -753,7 +751,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     // We check that there are no exceptions during building CrateDefMap (actual resolve result is not important)
     @ExpandMacros
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import to mod shadowed by expanded mod`() = checkByCode("""
@@ -887,7 +884,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }                      //^ dep-lib/not_test.rs
      """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test file level cfg attribute 1`() = stubOnlyResolve("""
@@ -907,7 +903,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
      """)
 
-    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test file level cfg attribute 2`() = stubOnlyResolve("""
@@ -973,7 +968,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
      """)
 
-    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cfg-disabled item is resolved from cfg-disabled function 1`() = stubOnlyResolve("""

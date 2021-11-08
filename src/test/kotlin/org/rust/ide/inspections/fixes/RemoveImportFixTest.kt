@@ -5,11 +5,9 @@
 
 package org.rust.ide.inspections.fixes
 
-import org.rust.UseNewResolve
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
-@UseNewResolve
 class RemoveImportFixTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
     fun `test remove use item in the middle`() = checkFixByText("Remove unused import", """
         struct A;

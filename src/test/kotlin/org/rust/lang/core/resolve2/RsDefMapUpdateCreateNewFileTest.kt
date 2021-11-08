@@ -9,12 +9,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDirectory
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
-import org.rust.UseNewResolve
 import org.rust.fileTreeFromText
 import org.rust.openapiext.toPsiDirectory
 
-/** Tests whether or not [CrateDefMap] should be updated after creation of new file */
-@UseNewResolve
+/** Tests whether [CrateDefMap] should be updated after creation of new file */
 @ExpandMacros
 class RsDefMapUpdateCreateNewFileTest : RsDefMapUpdateTestBase() {
 

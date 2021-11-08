@@ -12,7 +12,6 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.core.macros.MacroExpansionScope
 
-@UseNewResolve
 class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
     fun `test unused import`() = checkByText("""
         mod foo {
