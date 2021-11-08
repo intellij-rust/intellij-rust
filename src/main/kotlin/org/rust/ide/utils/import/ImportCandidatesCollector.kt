@@ -27,7 +27,7 @@ import org.rust.lang.core.types.type
 
 object ImportCandidatesCollector {
 
-    fun getImportCandidates(importContext: ImportContext, target: RsQualifiedNamedElement): Sequence<ImportCandidate> {
+    private fun getImportCandidates(importContext: ImportContext, target: RsQualifiedNamedElement): Sequence<ImportCandidate> {
         val name = target.name ?: return emptySequence()
         return getImportCandidates(importContext, name, name) {
             it.item == target

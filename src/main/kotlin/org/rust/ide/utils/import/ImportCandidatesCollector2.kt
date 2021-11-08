@@ -18,6 +18,7 @@ import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.RsCodeFragmentFactory
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFile.Attributes
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
@@ -106,11 +107,24 @@ object ImportCandidatesCollector2 {
             ?: return null
         val traitsPaths = traits.mapNotNullToSet { it.asModPath() }
 
-        val context = ImportContext2.from(scope) ?: return emptyList()
+        val context = ImportContext2.from(scope, ImportContext2.Type.AUTO_IMPORT) ?: return emptyList()
         val modPaths = context.getAllModPaths()
         val itemsPaths = modPaths.flatMap { context.getTraitsPathsInMod(it, traitsPaths) }
         return context.convertToCandidates(itemsPaths)
     }
+
+    private fun getImportCandidates(context: ImportContext2, target: RsQualifiedNamedElement): List<ImportCandidate2> {
+        val name = if (target is RsFile) {
+            target.modName
+        } else {
+            target.name
+        } ?: return emptyList()
+        return getImportCandidates(context, name)
+            .filter { it.qualifiedNamedItem.item == target }
+    }
+
+    fun findImportCandidate(context: ImportContext2, target: RsQualifiedNamedElement): ImportCandidate2? =
+        getImportCandidates(context, target).firstOrNull()
 }
 
 private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): List<ImportCandidate2> =
@@ -291,7 +305,10 @@ private fun ImportContext2.getAllItemPathsInMod(modPath: ModUsePath, itemName: S
 private fun ImportContext2.getPerNsPaths(modPath: ModUsePath, perNs: PerNs, name: String): List<ItemUsePath> =
     perNs.getVisItemsByNamespace().flatMap { (visItems, namespace) ->
         visItems
-            .filter { checkVisibility(it, modPath.mod) && !hasVisibleItemInRootScope(name, namespace) }
+            .filter {
+                checkVisibility(it, modPath.mod)
+                    && (type == ImportContext2.Type.OTHER || !hasVisibleItemInRootScope(name, namespace))
+            }
             .map { ItemUsePath(modPath.path + name, modPath.crate, it, namespace) }
     }
 

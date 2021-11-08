@@ -60,24 +60,35 @@ object RsImportHelper {
     fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {
         if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return
         val importContext = ImportContext.from(context.project, context)
+        val importContext2 = ImportContext2.from(context, ImportContext2.Type.OTHER)
         for (element in elements) {
-            val name = element.name ?: continue
-            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) {
-                !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+            val candidate = if (context.useAutoImportWithNewResolve && importContext2 != null) {
+                ImportCandidatesCollector2.findImportCandidate(importContext2, element)
+            } else {
+                val name = element.name ?: continue
+                val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) {
+                    !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+                }
+                candidates.firstOrNull { it.qualifiedNamedItem.item in elements }
             }
-            val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item in elements }
             candidate?.import(context)
         }
     }
 
     // finds path to `element` from `context.containingMod`, taking into account reexports and glob imports
     fun findPath(context: RsElement, element: RsQualifiedNamedElement): String? {
-        if (element is RsFile) return element.declaration?.let { findPath(context, it) }
-
-        val importContext = ImportContext.from(context.project, context)
-        val name = element.name ?: return null
-        val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) { it.item.parent !is RsMembers }
-        val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item == element }
+        val candidate = if (context.useAutoImportWithNewResolve) {
+            val importContext2 = ImportContext2.from(context, ImportContext2.Type.OTHER) ?: return null
+            ImportCandidatesCollector2.findImportCandidate(importContext2, element)
+        } else {
+            if (element is RsFile) return element.declaration?.let { findPath(context, it) }
+            val name = element.name ?: return null
+            val importContext = ImportContext.from(context.project, context)
+            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) {
+                it.item.parent !is RsMembers
+            }
+            candidates.firstOrNull { it.qualifiedNamedItem.item == element }
+        }
         return candidate?.info?.usePath
     }
 
