@@ -18,7 +18,10 @@ if __name__ == '__main__':
         f.write(new_text)
 
     git_command("add", PLUGIN_XML)
-    git_command("commit", "-m", "Changelog")
+    # [skip ci] says GitHub not to emit `push` and `pull_request` events, i.e. don't trigger `check` workflow.
+    # It allows not to occupy GitHub Actions agents that are needed for building release builds
+    # See https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
+    git_command("commit", "-m", "Changelog\n\n[skip ci]")
 
     head = git_command("rev-parse", "HEAD")
     release_branch = f"release-{version}"
