@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
@@ -26,7 +27,7 @@ open class Substitution(
     @Suppress("MemberVisibilityCanBePrivate")
     val regionSubst: Map<ReEarlyBound, Region> = emptyMap(),
     val constSubst: Map<CtConstParameter, Const> = emptyMap()
-) {
+): TypeFoldable<Substitution> {
     val types: Collection<Ty> get() = typeSubst.values
     val regions: Collection<Region> get() = regionSubst.values
     val consts: Collection<Const> get() = constSubst.values
@@ -67,6 +68,14 @@ open class Substitution(
             regionSubst.mapValues { (_, value) -> value.foldWith(folder) },
             constSubst.mapValues { (_, value) -> value.foldWith(folder) }
         )
+
+    override fun superFoldWith(folder: TypeFolder): Substitution = foldValues(folder)
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean {
+        return typeSubst.values.any { it.visitWith(visitor) }
+            || regionSubst.values.any { it.visitWith(visitor) }
+            || constSubst.values.any { it.visitWith(visitor) }
+    }
 
     fun zipTypeValues(other: Substitution): List<Pair<Ty, Ty>> = zipValues(typeSubst, other.typeSubst)
 

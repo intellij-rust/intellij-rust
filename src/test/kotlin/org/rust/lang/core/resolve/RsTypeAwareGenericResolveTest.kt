@@ -1133,4 +1133,188 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             a.baz();
         }   //^
     """)
+
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 1)`() = checkByCode("""
+        struct S;
+        trait Trait1<T> { type Item; }
+        trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
+
+        impl Trait1<i32> for S {
+            type Item = i32;
+        }       //X
+        impl Trait1<u8> for S {
+            type Item = u8;
+        }
+        impl Trait2<i32> for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                   //^
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = checkByCode("""
+        struct S;
+        trait Trait1<T=u8> { type Item; }
+        trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
+
+        impl Trait1<i32> for S {
+            type Item = i32;
+        }       //X
+        impl Trait1 for S {
+            type Item = u8;
+        }
+        impl Trait2<i32> for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                   //^
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test non-UFCS associated type in type alias with bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T: Trait> = T::Item;
+                                //^
+    """)
+
+    fun `test associated type in type alias with bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T: Trait> = <T as Trait>::Item;
+                                           //^
+    """)
+
+    fun `test associated type in type alias without bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias<T> = <T as Trait>::Item;
+                                    //^
+    """)
+
+    fun `test nested associated type in type alias without bound`() = checkByCode("""
+        trait Trait {
+            type Item;
+        }      //X
+        type Alias1<Q> = <<Q as Trait>::Item as Trait>::Item;
+                                                      //^
+    """)
+
+    fun `test nested associated type in type alias without bound 2`() = checkByCode("""
+        trait Trait {
+            type Item: Trait2;
+        }
+        trait Trait2 {
+            type Item;
+        }      //X
+        type Alias1<Q> = <<Q as Trait>::Item as Trait2>::Item;
+                                                       //^
+    """)
+
+    fun `test associated type in type alias is resolved to trait when no applicable impl exists`() = checkByCode("""
+        pub trait Trait<T> { type Item; }
+        struct S;               //X
+        impl Trait<i32> for S { type Item = (); }
+        impl Trait<u8> for S { type Item = (); }
+
+        pub type Alias<T> = <S as Trait<T>>::Item;
+                                           //^
+    """)
+
+    fun `test method to impl with associated type projection through type alias`() = checkByCode("""
+        struct A;
+        pub trait Trait<T> { type Item; }
+        impl Trait<i32> for A { type Item = u32; }
+        impl Trait<i8> for A { type Item = u8; }
+
+        pub type Unsigned<T> = <A as Trait<T>>::Item;
+
+        struct B<T>(T);
+        impl B<Unsigned<i32>> {
+            fn foo(&self) {}
+        }
+        impl B<Unsigned<i8>> {
+            fn foo(&self) {}
+        }    //X
+        fn foo(a: B<Unsigned<i8>>) {
+            a.foo()
+        }   //^
+    """)
+
+    fun `test type-qualified path to impl with associated type projection through type alias UFCS`() = checkByCode("""
+        struct A;
+        pub trait Trait<T> { type Item; }
+        impl Trait<i32> for A { type Item = u32; }
+        impl Trait<i8> for A { type Item = u8; }
+
+        pub type Unsigned<T> = <A as Trait<T>>::Item;
+
+        struct B<T>(T);
+        impl B<Unsigned<i32>> {
+            fn foo(&self) {}
+        }
+        impl B<Unsigned<i8>> {
+            fn foo(&self) {}
+        }    //X
+        fn foo(a: B<Unsigned<i8>>) {
+            <B<Unsigned<i8>>>::foo(a)
+        }                    //^
+    """)
+
+    fun `test Self-qualified path to impl with associated type projection through type alias`() = checkByCode("""
+        struct A;
+        pub trait Trait<T> { type Item; }
+        impl Trait<i32> for A { type Item = u32; }
+        impl Trait<i8> for A { type Item = u8; }
+
+        pub type Unsigned<T> = <A as Trait<T>>::Item;
+
+        struct B<T>(T);
+        impl B<Unsigned<i32>> {
+            fn foo(&self) {}
+        }
+        impl B<Unsigned<i8>> {
+            fn foo(&self) {}
+             //X
+            fn bar(a: &Self) {
+                Self::foo(a)
+            }       //^
+        }
+    """)
+
+    fun `test explicit UFCS-like type-qualified path is resolved to correct impl when inapplicable blanket impl exists`() = checkByCode("""
+        trait Trait { type Item; }
+        trait Bound {}
+        impl<I: Bound> Trait for I {
+            type Item = I;
+        }
+        struct S;
+        impl Trait for S {
+            type Item = ();
+        }      //X
+        fn main() {
+            let a: <S as Trait>::Item;
+        }                      //^
+    """)
+
+    fun `test explicit UFCS-like generic type-qualified path to associated function`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        trait Bar { fn foo(&self); }
+        impl<T> Bar for T { fn foo(&self) {} }
+        fn baz<T: Foo+Bar>(t: T) {
+            <T as Foo>::foo(&t);
+        }             //^
+    """)
+
+    fun `test assoc function related to type-parameter-qualified assoc type with trait bound`() = checkByCode("""
+        trait Trait {
+            type Item: AssocTypeBound;
+        }
+        trait AssocTypeBound {
+            fn bar() {}
+        }    //X
+        fn foo<T: Trait>() {
+            T::Item::bar();
+        }          //^
+    """)
 }

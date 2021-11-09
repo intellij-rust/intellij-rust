@@ -18,6 +18,7 @@ import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.stdext.buildMap
@@ -162,6 +163,8 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
 fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWithVisibility<RsElement>> {
     val result = collectPathResolveVariants(path) {
         processPathResolveVariants(lookup, path, false, it)
+    }.let { rawResult ->
+        tryRefineAssocTypePath(path, lookup, rawResult) ?: rawResult
     }
 
     // type A = Foo<T>
@@ -188,6 +191,57 @@ fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWith
         1 -> listOf(result2.single().map { instantiatePathGenerics(path, it) })
         else -> result2
     }
+}
+
+/**
+ * Consider this code:
+ *
+ * ```rust
+ * trait Trait {
+ *     type Type;
+ * }
+ * struct S;
+ * impl Trait for S {
+ *     type Type = ();
+ * }
+ * type A = <S as Trait>::Type;
+ * ```
+ *
+ * On a lower level (in `processPathResolveVariants`/`resolvePathRaw`) we always resolve
+ * `<S as Trait>::Type` to the trait (`trait Trait { type Type; }`). Such behavior is handy
+ * for type inference, but unhandy for users (that most likely want to go to declaration in the `impl`)
+ * and for other clients of name resolution (like intention actions).
+ *
+ * Here we're trying to find concrete `impl` for resolved associated type.
+ */
+private fun tryRefineAssocTypePath(
+    path: RsPath,
+    lookup: ImplLookup?,
+    rawResult: List<BoundElementWithVisibility<RsElement>>
+): List<BoundElementWithVisibility<RsElement>>? {
+    // 1. Check that we're resolved to an associated type inside a trait:
+    // trait Trait {
+    //     type Item;
+    // }      //^ resolved here
+    val resolvedBoundElement = rawResult.singleOrNull() ?: return null
+    val resolved = resolvedBoundElement.inner.element as? RsTypeAlias ?: return null
+    if (resolved.owner !is RsAbstractableOwner.Trait) return null
+
+    // 2. Check that we resolve a `Self`-qualified path or explicit type-qualified path:
+    //    `Self::Type` or `<Foo as Trait>::Type`
+    val typeQual = path.typeQual
+    if (path.path?.hasCself != true && (typeQual == null || typeQual.traitRef == null)) return null
+
+    // 3. Try to select a concrete impl for the associated type
+    @Suppress("NAME_SHADOWING")
+    val lookup = lookup ?: ImplLookup.relativeTo(path)
+    val selection = lookup.selectStrict(
+        (TyProjection.valueOf(resolved).substitute(resolvedBoundElement.inner.subst) as TyProjection).traitRef
+    ).ok()
+    if (selection?.impl !is RsImplItem) return null
+    val element = selection.impl.expandedMembers.types.find { it.name == resolved.name } ?: return null
+    val newSubst = lookup.ctx.fullyResolveWithOrigins(selection.subst)
+    return listOf(resolvedBoundElement.copy(inner = BoundElement(element, newSubst)))
 }
 
 fun <T : RsElement> instantiatePathGenerics(

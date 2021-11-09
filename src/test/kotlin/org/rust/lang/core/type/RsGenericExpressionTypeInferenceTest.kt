@@ -1921,4 +1921,53 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/5897
+    fun `test issue 5897`() = testExpr("""
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Slice1<T>(T);
+        impl<T> Index<usize> for Slice1<T> {
+            type Output = T;
+            fn index(&self, _: usize) -> &Self::Output { todo!() }
+        }
+
+        struct Slice2;
+        impl Index<usize> for Slice2 {
+            type Output = <Slice1<u32> as Index<usize>>::Output;
+            fn index(&self, _: usize) -> &Self::Output { todo!() }
+        }
+        fn bar(x: Slice2) {
+            let a = *x.index(0);
+            a;
+        } //^ u32
+    """)
+
+    fun `test select impl with associated type projection through type alias`() = testExpr("""
+        struct A;
+        pub trait Trait<T> { type Item; }
+        impl Trait<i32> for A { type Item = u32; }
+        impl Trait<i8> for A { type Item = u8; }
+
+        pub type Unsigned<T> = <A as Trait<T>>::Item;
+
+        struct B<T>(T);
+        trait Trait2 {
+            type Item2;
+        }
+        impl Trait2 for B<Unsigned<i32>> {
+            type Item2 = u32;
+        }
+        impl Trait2 for B<Unsigned<i8>> {
+            type Item2 = u8;
+        }
+        fn foo<C: Trait2>(_: C) -> C::Item2 { unimplemented!() }
+        fn bar(a: B<Unsigned<i8>>) {
+            let a = foo(a);
+            a;
+        } //^ u8
+    """)
 }
