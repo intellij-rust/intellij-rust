@@ -12,6 +12,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.WithExperimentalFeatures
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
@@ -789,6 +790,46 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 rust("build.rs", BUILD_RS)
             }
         }.checkReferenceIsResolved<RsPath>("intellij-rust-test-2/src/main.rs", toFile = ".../hello.rs")
+    }
+
+    // https://github.com/intellij-rust/intellij-rust/issues/8057
+    fun `test generated impl block`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    include!(concat!(env!("OUT_DIR"), "/hello.rs"));
+
+                    fn main() {
+                        Hello.hello();
+                    }          //^
+                """)
+            }
+            rust("build.rs", """
+                use std::{fs, path, env};
+
+                fn main() {
+                    let content = "\
+                    pub struct Hello;
+                    impl Hello {
+                        pub fn hello(&self) {
+                            println!(\"Hello!\");
+                        }
+                    }
+                    ";
+
+                    let out_dir = env::var_os("OUT_DIR").unwrap();
+                    let path = path::Path::new(&out_dir).join("hello.rs");
+                    fs::write(&path, content).unwrap();
+                }
+            """)
+        }.checkReferenceIsResolved<RsMethodCall>("src/main.rs", toFile = ".../hello.rs")
     }
 
     companion object {
