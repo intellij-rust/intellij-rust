@@ -535,4 +535,13 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
             0.0.foo();
         } //^ f32
     """)
+
+    fun `test integer literal with returning associated type`() = testExpr("""
+        struct S;
+        trait T { type Item; }
+        impl T for S { type Item = u8; }
+        fn foo() -> <S as T>::Item {
+            0
+        } //^ u8
+    """)
 }

@@ -606,7 +606,8 @@ class RsTypeInferenceWalker(
             }
         }
         val argExprs = expr.valueArgumentList.exprList
-        val calleeType = lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size)
+        val calleeType = (lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size))
+            .foldWith(associatedTypeNormalizer) as TyFunction
         if (expected != null) ctx.combineTypes(expected, calleeType.retType)
         inferArgumentTypes(calleeType.paramTypes, argExprs)
         return calleeType.retType
@@ -1111,10 +1112,7 @@ class RsTypeInferenceWalker(
             if (!isArrayToSlice(prevType, type)) derefCount++
 
             val outputType = lookup.findIndexOutputType(type, indexType)
-            if (outputType != null
-                // TODO fix resolve in `impl<T, I, const N: usize> Index<I> for [T; N]` and remove this line
-                && (outputType.value != TyUnknown || type !is TyArray)
-            ) {
+            if (outputType != null) {
                 result = outputType.register()
                 break
             }
