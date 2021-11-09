@@ -19,11 +19,11 @@ import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
 
 
-fun extractExpression(editor: Editor, expr: RsExpr) {
+fun extractExpression(editor: Editor, expr: RsExpr, isPostfixTemplate: Boolean = false) {
     if (!expr.isValid) return
     val occurrences = findOccurrences(expr)
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
-        replaceExpression(editor, expr, occurrencesToReplace)
+        replaceExpression(editor, expr, occurrencesToReplace, isPostfixTemplate)
     }
 }
 
@@ -34,12 +34,12 @@ fun extractExpression(editor: Editor, expr: RsExpr) {
  * Either we need to put a let in front of a statement on the same line.
  * Or we extract an expression and put that in a let on the line above.
  */
-private fun replaceExpression(editor: Editor, chosenExpr: RsExpr, exprs: List<PsiElement>) {
+private fun replaceExpression(editor: Editor, chosenExpr: RsExpr, exprs: List<PsiElement>, isPostfixTemplate: Boolean) {
     val anchor = findAnchor(chosenExpr)
     val parent = chosenExpr.parent
     val project = chosenExpr.project
 
-    val replacer = ExpressionReplacer(project, editor, chosenExpr)
+    val replacer = ExpressionReplacer(project, editor, chosenExpr, isPostfixTemplate)
     when {
         anchor == chosenExpr -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr)
         parent is RsExprStmt -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr.parent)
@@ -51,7 +51,8 @@ private fun replaceExpression(editor: Editor, chosenExpr: RsExpr, exprs: List<Ps
 private class ExpressionReplacer(
     private val project: Project,
     private val editor: Editor,
-    private val chosenExpr: RsExpr
+    private val chosenExpr: RsExpr,
+    private val isPostfixTemplate: Boolean,
 ) {
     private val psiFactory = RsPsiFactory(project)
 
@@ -62,10 +63,15 @@ private class ExpressionReplacer(
      *         or the statement surrounding the entire expression if it already had a semicolon.
      */
     fun inlineLet(project: Project, editor: Editor, expr: RsExpr, elementToReplace: PsiElement) {
+        val isTailExpr = (expr.parent as? RsBlock)?.expr == expr
         val suggestedNames = expr.suggestedNames()
         project.runWriteCommandAction {
             val statement = psiFactory.createLetDeclaration(suggestedNames.default, expr)
             val newStatement = elementToReplace.replace(statement)
+            if (expr == elementToReplace && isTailExpr && !isPostfixTemplate) {
+                val variable = psiFactory.createExpression(suggestedNames.default)
+                newStatement.parent.addAfter(variable, newStatement)
+            }
             val nameElem = moveEditorToNameElement(editor, newStatement)
 
             if (nameElem != null) {

@@ -79,7 +79,6 @@ class IntroduceLocalVariableIntentionTest : RsIntentionTestBase(IntroduceLocalVa
         }
     """)
 
-    // TODO really should put `i` as a tail expr (leaving semantics the same), looks like a bug in the refactoring
     fun `test tail exp`() = doAvailableTest("""
         fn foo() -> i32 {
             0/*caret*/
@@ -87,6 +86,7 @@ class IntroduceLocalVariableIntentionTest : RsIntentionTestBase(IntroduceLocalVa
     """, """
         fn foo() -> i32 {
             let /*caret*/i = 0;
+            i
         }
     """)
 

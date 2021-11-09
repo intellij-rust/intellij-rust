@@ -36,7 +36,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
-    fun `test top level in block`() = doTest("""
+    fun `test top level in block 1`() = doTest("""
         fn main() {
             let _ = {
                 1/*caret*/
@@ -46,6 +46,23 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         fn main() {
             let _ = {
                 let i = 1;
+                i
+            };
+        }
+    """)
+
+    fun `test top level in block 2`() = doTest("""
+        fn main() {
+            let _ = {
+                1/*caret*/
+                func();
+            };
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let _ = {
+                let i = 1;
+                func();
             };
         }
     """)
@@ -118,12 +135,13 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """)
 
     fun `test file`() = doTest("""
-        fn read_fle() -> Result<Vec<String, io::Error>> {
+        fn read_fle() -> Result<File, io::Error> {
             File::op/*caret*/en("res/input.txt")?
         }
     """, listOf("File::open(\"res/input.txt\")", "File::open(\"res/input.txt\")?"), 1, """
-        fn read_fle() -> Result<Vec<String, io::Error>> {
+        fn read_fle() -> Result<File, io::Error> {
             let x = File::open("res/input.txt")?;
+            x
         }
     """)
 
