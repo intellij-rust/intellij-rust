@@ -39,8 +39,8 @@ private class FixAddLetUnderscore(anchor: PsiElement) : LocalQuickFixAndIntentio
         val letExpr = RsPsiFactory(project).createLetDeclaration("_", originalExpr)
         val newLetExpr = originalExpr.parent.replace(letExpr) as RsLetDecl
         val patPointer = newLetExpr.pat?.createSmartPointer() ?: return
-        val pat = patPointer.element ?: return
         val template = editor?.newTemplateBuilder(newLetExpr) ?: return
+        val pat = patPointer.element ?: return
         template.replaceElement(pat)
         template.runInline()
     }
@@ -63,9 +63,9 @@ private class FixAddExpect(anchor: PsiElement) : LocalQuickFixAndIntentionAction
         val dotExpr = RsPsiFactory(project).createExpression("${startElement.text}.expect(\"\")")
         val newDotExpr = startElement.replace(dotExpr) as RsDotExpr
         val expectArgs = newDotExpr.methodCall?.valueArgumentList?.exprList
+        val template = editor?.newTemplateBuilder(newDotExpr) ?: return
         val stringLiteralPointer = (expectArgs?.singleOrNull() as RsLitExpr).createSmartPointer()
         val stringLiteral = stringLiteralPointer.element ?: return
-        val template = editor?.newTemplateBuilder(newDotExpr) ?: return
         val rangeWithoutQuotes = TextRange(1, stringLiteral.textRange.length - 1)
         template.replaceElement(stringLiteral, rangeWithoutQuotes, "TODO: panic message")
         template.runInline()
