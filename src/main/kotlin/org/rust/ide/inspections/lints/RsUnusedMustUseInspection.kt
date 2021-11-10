@@ -104,6 +104,12 @@ class RsUnusedMustUseInspection : RsLintInspection() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitExprStmt(o: RsExprStmt) {
             super.visitExprStmt(o)
+            val parent = o.parent
+            if (parent is RsBlock) {
+                // Ignore if o is actually a tail expr
+                val (_, tailExpr) = parent.expandedStmtsAndTailExpr
+                if (o.expr == tailExpr) return
+            }
             val problem = inspectAndProposeFixes(o.expr)
             if (problem != null) {
                 holder.registerLintProblem(o.expr, problem.description, RsLintHighlightingType.WEAK_WARNING, problem.fixes)
