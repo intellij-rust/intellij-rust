@@ -13,9 +13,11 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.impl.FakeDetachedCrate
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.ext.RsItemsOwner
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.getChildModule
 import org.rust.openapiext.getCachedOrCompute
+import java.lang.ref.SoftReference
 
 fun Project.getDetachedModInfo(scope: RsMod): RsModInfoBase {
     val rootMod = scope.containingFile as? RsFile ?: return RsModInfoBase.InfoNotFound
@@ -34,7 +36,7 @@ private class DetachedFileDataPsiHelper(
     private val root: RsFile,
     private val defMap: CrateDefMap
 ) : DataPsiHelper {
-    override fun psiToData(scope: RsMod): ModData? {
+    override fun psiToData(scope: RsItemsOwner): ModData? {
         return when {
             scope.containingFile != root -> null
             scope == root -> defMap.root
@@ -79,7 +81,7 @@ private fun DefMapService.getDetachedDefMap(crate: Crate): CrateDefMap? {
     }
 }
 
-private val DEF_MAP_KEY: Key<Pair<CrateDefMap, List<Long>>> = Key.create("DEF_MAP_KEY")
+private val DEF_MAP_KEY: Key<SoftReference<Pair<CrateDefMap, List<Long>>>> = Key.create("DEF_MAP_KEY")
 
 private fun Crate.getAllDependenciesDefMaps(): Map<Crate, CrateDefMap> {
     val allDependencies = flatDependencies

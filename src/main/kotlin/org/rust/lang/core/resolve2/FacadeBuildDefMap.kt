@@ -50,7 +50,9 @@ fun buildDefMap(
 /** Context for [ModCollector] and [DefCollector] */
 class CollectorContext(
     val crate: Crate,
-    val project: Project
+    val project: Project,
+    /** See [getHangingModInfo] */
+    val isHangingMode: Boolean = false,
 ) {
     /** All imports (including expanded from macros - filled in [DefCollector]) */
     val imports: MutableList<Import> = mutableListOf()
@@ -113,7 +115,7 @@ private fun buildDefMapContainingExplicitItems(
         defMap.importExternCrateMacros(it.usePath.single())
     }
     val modCollectorContext = ModCollectorContext(defMap, context)
-    collectFile(crateRoot, defMap.root, modCollectorContext)
+    collectScope(crateRoot, defMap.root, modCollectorContext)
 
     return defMap
 }

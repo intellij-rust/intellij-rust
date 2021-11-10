@@ -41,7 +41,7 @@ val Project.isNewResolveEnabled: Boolean
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(
-    scope: RsMod,
+    scope: RsItemsOwner,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
@@ -81,7 +81,7 @@ fun processItemDeclarations2(
         }
     }
 
-    if (ipm.withExternCrates && Namespace.Types in ns) {
+    if (ipm.withExternCrates && Namespace.Types in ns && scope is RsMod) {
         for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
@@ -97,15 +97,9 @@ fun processItemDeclarations2(
     return false
 }
 
-/**
- * null return value means that new resolve can't be used.
- * [runBeforeResolve] is passed to conform with [MacroResolver],
- * and it should be called only if we are going to use new resolve.
- * We need to get [ModData] to check if we can use new resolve, which is not fast,
- * so we unite check and actual resolve as an optimization.
- */
+/** null return value means that new resolve can't be used. */
 fun processMacros(
-    scope: RsMod,
+    scope: RsItemsOwner,
     processor: RsResolveProcessor,
     /**
      * `RsPath` in resolve, `PsiElement(identifier)` in completion by [RsMacroCompletionProvider].
@@ -114,14 +108,12 @@ fun processMacros(
      */
     macroPath: PsiElement?,
     isAttrOrDerive: Boolean,
-    runBeforeResolve: (() -> Boolean)? = null
 ): Boolean? {
     val info = when (val info = getModInfo(scope)) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
     }
-    if (runBeforeResolve != null && runBeforeResolve()) return true
 
     return info.modData.processMacros(macroPath, isAttrOrDerive, processor, info)
 }
@@ -157,8 +149,8 @@ private fun ModData.processMacros(
                 macroInfos.lastOrNull { it is ProcMacroDefInfo }
             } ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
-            val macroContainingMod = visItem.containingMod.toRsMod(info).singleOrNull() ?: continue
-            val macro = macroInfo.legacyMacroToPsi(macroContainingMod, info) ?: continue
+            val macroContainingScope = visItem.containingMod.toScope(info).singleOrNull() ?: continue
+            val macro = macroInfo.legacyMacroToPsi(macroContainingScope, info) ?: continue
             if (processor(name, macro)) return true
         }
 
@@ -459,12 +451,14 @@ sealed class RsModInfoBase {
 }
 
 interface DataPsiHelper {
-    fun psiToData(scope: RsMod): ModData?
-    fun dataToPsi(data: ModData): RsMod?
+    fun psiToData(scope: RsItemsOwner): ModData?
+    fun dataToPsi(data: ModData): RsItemsOwner?
+    fun findModData(path: ModPath): ModData? = null
 }
 
-fun getModInfo(scope0: RsMod): RsModInfoBase {
-    val scope = scope0.originalElement as? RsMod ?: scope0
+fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
+    val scope = scope0.originalElement as? RsItemsOwner ?: scope0
+    if (scope !is RsMod) return getHangingModInfo(scope)
     val project = scope.project
     if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
@@ -549,17 +543,17 @@ private fun Visibility.createFilter(info: RsModInfo): (RsElement) -> VisibilityS
 }
 
 private fun VisItem.scopedMacroToPsi(info: RsModInfo): RsNamedElement? {
-    val containingMod = containingMod.toRsMod(info).singleOrNull() ?: return null
-    return scopedMacroToPsi(containingMod)
+    val containingScope = containingMod.toScope(info).singleOrNull() ?: return null
+    return scopedMacroToPsi(containingScope)
 }
 
-private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
-    val items = containingMod.expandedItemsCached
+private fun VisItem.scopedMacroToPsi(containingScope: RsItemsOwner): RsNamedElement? {
+    val items = containingScope.expandedItemsCached
     val legacyMacros = items.legacyMacros
         .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
     if (legacyMacros.isNotEmpty()) return legacyMacros.singlePublicOrFirst()
 
-    if (name !in KNOWN_DERIVABLE_TRAITS || containingMod.containingCrate?.origin != PackageOrigin.STDLIB) {
+    if (name !in KNOWN_DERIVABLE_TRAITS || containingScope.containingCrate?.origin != PackageOrigin.STDLIB) {
         items.named[name]
             ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
             ?.let { return it as RsMacro2 }
@@ -573,8 +567,8 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
         }
 }
 
-private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, info: RsModInfo): RsElement? {
-    val items = containingMod.expandedItemsCached
+private fun MacroDefInfo.legacyMacroToPsi(containingScope: RsItemsOwner, info: RsModInfo): RsElement? {
+    val items = containingScope.expandedItemsCached
     return when (this) {
         is DeclMacroDefInfo -> items.legacyMacros.singleOrNull {
             val crate = info.project.crateGraph.findCrateById(crate) ?: return@singleOrNull false
@@ -589,7 +583,7 @@ private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, info: RsModInfo)
 fun VisItem.toPsi(info: RsModInfo, ns: Namespace): List<RsNamedElement> {
     if (isModOrEnum) return path.toRsModOrEnum(info)
 
-    val containingModData = info.defMap.getModData(containingMod) ?: return emptyList()
+    val containingModData = info.findModData(containingMod) ?: return emptyList()
     return if (containingModData.isEnum) {
         val containingEnums = containingModData.toRsEnum(info)
         containingEnums.flatMap { containingEnum ->
@@ -597,7 +591,7 @@ fun VisItem.toPsi(info: RsModInfo, ns: Namespace): List<RsNamedElement> {
                 .filter { it.name == name && ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
         }
     } else {
-        val containingMods = containingModData.toRsMod(info)
+        val containingMods = containingModData.toScope(info)
         containingMods.flatMap { containingMod ->
             if (ns == Namespace.Macros) {
                 val macro = scopedMacroToPsi(containingMod)
@@ -622,14 +616,17 @@ private fun matchesIsEnabledByCfg(itemPsi: RsNamedElement, item: VisItem): Boole
 
 private val VisItem.isEnabledByCfg: Boolean get() = visibility != Visibility.CfgDisabled
 
-private fun ModPath.toRsMod(info: RsModInfo): List<RsMod> {
-    val modData = info.defMap.getModData(this)
+private fun RsModInfo.findModData(path: ModPath): ModData? =
+    dataPsiHelper?.findModData(path) ?: defMap.getModData(path)
+
+private fun ModPath.toScope(info: RsModInfo): List<RsItemsOwner> {
+    val modData = info.findModData(this)
     if (modData == null || modData.isEnum) return emptyList()
-    return modData.toRsMod(info)
+    return modData.toScope(info)
 }
 
 private fun ModPath.toRsModOrEnum(info: RsModInfo): List<RsNamedElement /* RsMod or RsEnumItem */> {
-    val modData = info.defMap.getModData(this) ?: return emptyList()
+    val modData = info.findModData(this) ?: return emptyList()
     return if (modData.isEnum) {
         modData.toRsEnum(info)
     } else {
@@ -639,16 +636,18 @@ private fun ModPath.toRsModOrEnum(info: RsModInfo): List<RsNamedElement /* RsMod
 
 private fun ModData.toRsEnum(info: RsModInfo): List<RsEnumItem> {
     if (!isEnum || parent == null) return emptyList()
-    val containingMods = parent.toRsMod(info)
+    val containingScopes = parent.toScope(info)
     val visItem = asVisItem()
-    return containingMods.flatMap { containingMod ->
-        containingMod
+    return containingScopes.flatMap { containingScope ->
+        containingScope
             .getExpandedItemsWithName<RsEnumItem>(name)
             .filter { matchesIsEnabledByCfg(it, visItem) }
     }
 }
 
-fun ModData.toRsMod(info: RsModInfo): List<RsMod> {
+fun ModData.toRsMod(info: RsModInfo): List<RsMod> = toScope(info).filterIsInstance<RsMod>()
+
+fun ModData.toScope(info: RsModInfo): List<RsItemsOwner> {
     info.dataPsiHelper?.dataToPsi(this)?.let { return listOf(it) }
     return toRsMod(info.project)
 }

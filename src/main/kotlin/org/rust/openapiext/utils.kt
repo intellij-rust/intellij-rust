@@ -61,6 +61,7 @@ import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.rust.cargo.RustfmtWatcher
 import org.rust.ide.annotator.RsExternalLinterPass
+import java.lang.ref.SoftReference
 import java.lang.reflect.Field
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -406,16 +407,16 @@ class CachedValueDelegate<T>(provider: () -> CachedValueProvider.Result<T>) {
  */
 fun <T, D> getCachedOrCompute(
     dataHolder: UserDataHolder,
-    key: Key<Pair<T, D>>,
+    key: Key<SoftReference<Pair<T, D>>>,
     dependency: D,
     provider: () -> T
 ): T {
-    val oldResult = dataHolder.getUserData(key)
+    val oldResult = dataHolder.getUserData(key)?.get()
     if (oldResult != null && oldResult.second == dependency) {
         return oldResult.first
     }
     val value = provider()
-    dataHolder.putUserData(key, value to dependency)
+    dataHolder.putUserData(key, SoftReference(value to dependency))
     return value
 }
 

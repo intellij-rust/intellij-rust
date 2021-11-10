@@ -370,20 +370,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test local use`() = checkByCode("""
-        mod foo {
-            pub struct Bar;
-                     //X
-        }
-
-        fn main() {
-            use foo::Bar;
-
-            let _ = Bar;
-                   //^
-        }
-    """)
-
     fun `test wildcard priority`() = checkByCode("""
         mod a {
             pub struct S;

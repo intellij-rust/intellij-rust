@@ -63,9 +63,7 @@ fun processItemDeclarations(
     originalProcessor: RsResolveProcessor,
     ipm: ItemProcessingMode
 ): Boolean {
-    if (scope is RsMod) {
-        processItemDeclarations2(scope, ns, originalProcessor, ipm)?.let { return it }
-    }
+    processItemDeclarations2(scope, ns, originalProcessor, ipm)?.let { return it }
 
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 

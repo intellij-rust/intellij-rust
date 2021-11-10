@@ -885,6 +885,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
     }
 
+    @UseOldResolve
     fun `test cyclic dev deps`() = buildProject {
         toml("Cargo.toml", """
             [package]

@@ -567,17 +567,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
-    fun `test macro 2 (inside function body)`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
-        //- lib.rs
-            fn main() {
-                foo!();
-                //^ lib.rs
-                pub macro foo() {}
-            }           //X
-        """)
-    }
-
     fun `test macro 2 (import)`() = stubOnlyResolve("""
     //- main.rs
         use test_package::foo;

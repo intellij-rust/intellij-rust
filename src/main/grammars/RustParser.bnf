@@ -527,7 +527,8 @@ upper Function ::= async? const? unsafe? ExternAbi?
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
-                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
+                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

@@ -105,7 +105,7 @@ val RsMod.childModules: List<RsMod>
             }
         }
 
-fun RsMod.getChildModule(name: String): RsMod? =
+fun RsItemsOwner.getChildModule(name: String): RsMod? =
     expandedItemsCached.named[name]?.filterIsInstance<RsMod>()?.singleOrNull()
 
 fun commonParentMod(mod1: RsMod, mod2: RsMod): RsMod? {

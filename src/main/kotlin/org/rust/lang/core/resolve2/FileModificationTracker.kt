@@ -49,7 +49,7 @@ fun isFileChanged(file: RsFile, defMap: CrateDefMap, crate: Crate): Boolean {
         collectChildModules = true,
         stdlibAttributes = if (file.virtualFile == crate.rootModFile) file.getStdlibAttributes(crate) else null,
     )
-    val fileStub = file.getOrBuildStub() ?: return false
+    val fileStub = file.getOrBuildFileStub() ?: return false
     ModCollectorBase.collectMod(fileStub, isDeeplyEnabledByCfg, visitor, crate)
     return hashCalculator.getFileHash() != fileInfo.hash
 }
