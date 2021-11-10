@@ -30,12 +30,19 @@ private fun RsExpr.returnsStdResult(): Boolean {
     return type.item == knownItems.Result
 }
 
-private class FixAddLetUnderscore : LocalQuickFix {
+private class FixAddLetUnderscore(anchor: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddLetUnderscore.name")
+    override fun getText() = familyName
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val expr = descriptor.psiElement as RsExpr
-        expr.parent.replace(RsPsiFactory(project).createLetDeclaration("_", expr))
+    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+        val originalExpr = startElement as RsExpr
+        val letExpr = RsPsiFactory(project).createLetDeclaration("_", originalExpr)
+        val newLetExpr = originalExpr.parent.replace(letExpr) as RsLetDecl
+        val patPointer = newLetExpr.pat?.createSmartPointer() ?: return
+        val pat = patPointer.element ?: return
+        val template = editor?.newTemplateBuilder(newLetExpr) ?: return
+        template.replaceElement(pat)
+        template.runInline()
     }
 }
 
@@ -82,7 +89,7 @@ private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
         attrFunc != null -> RsBundle.message("inspection.UnusedMustUse.description.function.attribute", func.name.toString())
         else -> return null
     }
-    val fixes: MutableList<LocalQuickFix> = mutableListOf(FixAddLetUnderscore())
+    val fixes: MutableList<LocalQuickFix> = mutableListOf(FixAddLetUnderscore(expr))
     if (expr.returnsStdResult()) {
         fixes += FixAddExpect(expr)
         fixes += FixAddUnwrap()
