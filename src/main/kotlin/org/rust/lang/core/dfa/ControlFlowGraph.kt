@@ -338,8 +338,13 @@ private class ExitPointVisitor(
 
     private val RsExpr.isInTailPosition: Boolean
         get() {
+            // Ignore the expression if any of its ancestors are cfg-disabled
+            if (!existsAfterExpansion) return false
+
             for (ancestor in ancestors) {
                 when (ancestor) {
+                    // RsExprStmt may actually be RsExpr because of its rightSiblings' cfg attributes
+                    is RsExprStmt -> return ancestor.semicolon == null
                     is RsFunction, is RsLambdaExpr -> return true
                     is RsStmt, is RsCondition, is RsMatchArmGuard, is RsPat, is RsMacroArgument -> return false
                     else -> {

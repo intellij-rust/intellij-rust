@@ -72,6 +72,30 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    fun `test highlight correct cfg block with an arrow`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(not(undeclared))]
+            { 0 }
+
+            #[cfg(undeclared)]
+            { 1 }
+        }
+
+        fn main() {}
+    """, "0")
+
+    fun `test highlight correct cfg block with an arrow reverse order`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(undeclared)]
+            { 0 }
+
+            #[cfg(not(undeclared))]
+            { 1 }
+        }
+
+        fn main() {}
+    """, "1")
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test highlight try macro as return`() = doTest("""
         fn main() {
