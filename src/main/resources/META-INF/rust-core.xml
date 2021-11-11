@@ -203,6 +203,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsUnsafeExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCfgDisabledCodeAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsDynCallAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <highlightingPassFactory implementation="org.rust.ide.annotator.RsHighlightingPassFactoryRegistrar"/>
@@ -1233,6 +1234,11 @@
         <advancedSetting
             id="org.rust.macros.maximum.recursion.limit"
             default="0"
+            groupKey="advanced.setting.rust.group"
+        />
+        <advancedSetting
+            id="org.rust.dyn.call.highlight"
+            default="false"
             groupKey="advanced.setting.rust.group"
         />
     </extensions>

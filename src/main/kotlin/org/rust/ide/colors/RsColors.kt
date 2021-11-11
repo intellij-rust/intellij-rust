@@ -31,6 +31,7 @@ enum class RsColor(humanName: Supplier<@AttributeDescriptor String>, default: Te
     FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.function.call"), Default.FUNCTION_CALL),
     METHOD_CALL(RsBundle.messagePointer("settings.rust.color.method.call"), Default.FUNCTION_CALL),
     ASSOC_FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.associated.function.call"), Default.STATIC_METHOD),
+    DYN_CALL(RsBundle.messagePointer("settings.rust.color.function.dyn.call")),
     MACRO(RsBundle.messagePointer("settings.rust.color.macro"), Default.IDENTIFIER),
 
     PARAMETER(RsBundle.messagePointer("settings.rust.color.parameter"), Default.PARAMETER),
