@@ -9,7 +9,9 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.suggested.*
 import org.rust.ide.refactoring.changeSignature.RsChangeSignatureHandler
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.isReferenceToConstant
 
 class RsSuggestedRefactoringAvailability(
@@ -17,7 +19,7 @@ class RsSuggestedRefactoringAvailability(
 ) : SuggestedRefactoringAvailability(support) {
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
         val function = state.declaration as? RsFunction
-        if (function != null && hasComplexChanges(state.oldSignature, state.newSignature)) {
+        if (function != null && hasComplexChanges(function, state.oldSignature, state.newSignature)) {
             return SuggestedChangeSignatureData.create(state, function.name.orEmpty())
         }
         val namedElement = state.declaration as? PsiNamedElement ?: return null
@@ -39,10 +41,22 @@ class RsSuggestedRefactoringAvailability(
     }
 
     private fun hasComplexChanges(
+        function: RsFunction,
         oldSignature: SuggestedRefactoringSupport.Signature,
         newSignature: SuggestedRefactoringSupport.Signature
-    ): Boolean = hasParameterAddedRemovedOrReordered(oldSignature, newSignature) ||
-        hasNameChanges(oldSignature, newSignature)
+    ): Boolean {
+        // Condition order is important here.
+        // hasTypeChanges cannot be called if parameters were removed or added
+        if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return true
+
+        // Type changes can only be observed by child method signatures
+        // function.owner is not used here on purpose, to avoid using resolve
+        if (function.parent is RsMembers &&
+            function.parent?.parent is RsTraitItem &&
+            hasTypeChanges(oldSignature, newSignature)) return true
+
+        return hasNameChanges(oldSignature, newSignature)
+    }
 }
 
 

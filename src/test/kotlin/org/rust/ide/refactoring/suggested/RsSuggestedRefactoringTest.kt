@@ -46,8 +46,8 @@ abstract class RsSuggestedRefactoringTestBase : RsTestBase() {
     }
 
     protected fun doTestChangeSignature(
-        initialText: String,
-        textAfterRefactoring: String,
+        @Language("Rust") initialText: String,
+        @Language("Rust") textAfterRefactoring: String,
         usagesName: String,
         editingAction: () -> Unit,
         expectedPresentation: String? = null
