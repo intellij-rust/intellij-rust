@@ -56,16 +56,15 @@ class RsExternalLinterPass(
         val cargoTarget = file.containingCargoTarget ?: return
         if (cargoTarget.pkg.origin != PackageOrigin.WORKSPACE) return
 
-        val project = file.project
-        val args = CargoCheckArgs.forTarget(project, cargoTarget)
 
-        val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: project
-        disposable = project.messageBus.createDisposableOnAnyPsiChange()
+        val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: myProject
+        disposable = myProject.messageBus.createDisposableOnAnyPsiChange()
             .also { Disposer.register(moduleOrProject, it) }
 
+        val args = CargoCheckArgs.forTarget(myProject, cargoTarget)
         annotationInfo = RsExternalLinterUtils.checkLazily(
-            project.toolchain ?: return,
-            project,
+            myProject.toolchain ?: return,
+            myProject,
             disposable,
             cargoTarget.pkg.workspace.contentRoot,
             args
@@ -142,7 +141,7 @@ class RsExternalLinterPass(
         get() = annotationHolder.map(HighlightInfo::fromAnnotation)
 
     private val isAnnotationPassEnabled: Boolean
-        get() = file.project.rustSettings.runExternalLinterOnTheFly
+        get() = myProject.rustSettings.runExternalLinterOnTheFly
 
     companion object {
         private val LOG: Logger = logger<RsExternalLinterPass>()

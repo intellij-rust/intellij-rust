@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
@@ -26,6 +25,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.openapiext.showSettingsDialog
 
 private const val serviceName: String = "RustProjectSettings"
 
@@ -93,7 +93,7 @@ class RustProjectSettingsServiceImpl(
     }
 
     override fun configureToolchain() {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, RsProjectConfigurable::class.java)
+        project.showSettingsDialog<RsProjectConfigurable>()
     }
 
     private fun notifySettingsChanged(oldState: State, newState: State) {

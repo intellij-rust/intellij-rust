@@ -18,7 +18,6 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -39,6 +38,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy
 import org.rust.openapiext.isInternal
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.showSettingsDialog
 import java.io.File
 import java.io.IOException
 
@@ -67,7 +67,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         }
         val project = configuration.project
         if (StringUtil.isEmpty(valgrindPath) || !File(valgrindPath).exists()) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, ValgrindConfigurable::class.java)
+            project.showSettingsDialog<ValgrindConfigurable>()
             return
         }
         try {
