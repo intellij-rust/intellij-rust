@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
@@ -15,14 +14,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.AnyPsiChangeListener
 import com.intellij.psi.impl.PsiManagerImpl
@@ -42,12 +40,16 @@ import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
 import org.rust.ide.annotator.fixes.ApplySuggestionFix
+import org.rust.ide.status.RsExternalLinterWidget
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import java.nio.file.Path
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.CompletableFuture
 
 object RsExternalLinterUtils {
     private val LOG: Logger = logger<RsExternalLinterUtils>()
@@ -100,26 +102,26 @@ object RsExternalLinterUtils {
         workingDirectory: Path,
         args: CargoCheckArgs
     ): RsExternalLinterResult? {
-        val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
+        val widget = WriteAction.computeAndWait<RsExternalLinterWidget?, Throwable> {
             saveAllDocumentsAsTheyAre()
-            if (isUnitTestMode) {
-                EmptyProgressIndicator()
-            } else {
-                BackgroundableProcessIndicator(
-                    project,
-                    "Analyzing project with External Linter",
-                    PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                    CommonBundle.getCancelButtonText(),
-                    @Suppress("DialogTitleCapitalization")
-                    CommonBundle.getCancelButtonText(),
-                    true
-                )
+            val statusBar = WindowManager.getInstance().getStatusBar(project)
+            statusBar?.getWidget(RsExternalLinterWidget.ID) as? RsExternalLinterWidget
+        }
+
+        val future = CompletableFuture<RsExternalLinterResult?>()
+        val task = object : Task.Backgroundable(project, "Analyzing project with ${args.linter.title}...", true) {
+
+            override fun run(indicator: ProgressIndicator) {
+                widget?.inProgress = true
+                future.complete(check(toolchain, project, owner, workingDirectory, args))
+            }
+
+            override fun onFinished() {
+                widget?.inProgress = false
             }
         }
-        return ProgressManager.getInstance().runProcess(
-            Computable { check(toolchain, project, owner, workingDirectory, args) },
-            indicator
-        )
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, EmptyProgressIndicator())
+        return future.get()
     }
 
     private fun check(
@@ -130,6 +132,7 @@ object RsExternalLinterUtils {
         args: CargoCheckArgs
     ): RsExternalLinterResult? {
         ProgressManager.checkCanceled()
+        val started = Instant.now()
         val output = try {
             toolchain
                 .cargoOrWrapper(workingDirectory)
@@ -138,9 +141,10 @@ object RsExternalLinterUtils {
             LOG.error(e)
             return null
         }
+        val finish = Instant.now()
         ProgressManager.checkCanceled()
         if (output.isCancelled) return null
-        return RsExternalLinterResult(output.stdoutLines)
+        return RsExternalLinterResult(output.stdoutLines, Duration.between(started, finish).toMillis())
     }
 
     private data class Key(
@@ -195,7 +199,7 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
     }
 }
 
-class RsExternalLinterResult(commandOutput: List<String>) {
+class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Long) {
     val messages: List<CargoTopMessage> = commandOutput.asSequence()
         .filter { MESSAGE_REGEX.matches(it) }
         .mapNotNull { tryParseJsonObject(it) }
