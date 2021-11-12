@@ -75,22 +75,26 @@ private fun RsExpr.isExtractable(): Boolean {
     }
 }
 
+// This cannot be called from EDT, because it uses resolve
+private fun findExistingBindings(candidate: InsertionCandidate, occurrences: List<RsExpr>): Set<String> {
+    val owner = candidate.parent
+    return (owner.children.first() as? RsElement)?.getAllVisibleBindings().orEmpty() +
+        occurrences.flatMap { it.getLocalVariableVisibleBindings().keys }
+}
+
 private fun replaceWithConstant(
     expr: RsExpr,
     occurrences: List<RsExpr>,
     candidate: InsertionCandidate,
-    editor: Editor
+    existingBindings: Set<String>,
+    editor: Editor,
 ) {
     val project = expr.project
     val factory = RsPsiFactory(project)
     val suggestedNames = expr.suggestedNames()
 
-    val owner = candidate.parent
-    val bindings = (owner.children.first() as? RsElement)?.getAllVisibleBindings().orEmpty() +
-        occurrences.flatMap { it.getLocalVariableVisibleBindings().keys }
-
-    val name = suggestedNames.all.map { it.toUpperCase() }.firstOrNull { it !in bindings }
-        ?: freshenName(suggestedNames.default.toUpperCase(), bindings)
+    val name = suggestedNames.all.map { it.toUpperCase() }.firstOrNull { it !in existingBindings }
+        ?: freshenName(suggestedNames.default.toUpperCase(), existingBindings)
 
     val const = factory.createConstant(name, expr)
 
@@ -121,8 +125,13 @@ private fun extractExpression(editor: Editor, expr: RsExpr) {
     if (!expr.isValid) return
     val occurrences = findOccurrences(expr)
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
-        showInsertionChooser(editor, expr) {
-            replaceWithConstant(expr, occurrencesToReplace, it, editor)
+        showInsertionChooser(editor, expr) { candidate ->
+            val project = editor.project ?: return@showInsertionChooser
+            nonBlocking(project, {
+                findExistingBindings(candidate, occurrences)
+            }) { bindings ->
+                replaceWithConstant(expr, occurrencesToReplace, candidate, bindings, editor)
+            }
         }
     }
 }
