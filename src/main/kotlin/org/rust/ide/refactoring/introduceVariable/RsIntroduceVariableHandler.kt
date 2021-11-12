@@ -34,9 +34,9 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
                 val helpId = "refactoring.extractVariable"
                 CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
             }
-            1 -> extractExpression(editor, exprs.single())
+            1 -> extractExpression(editor, exprs.single(), postfixLet = false)
             else -> showExpressionChooser(editor, exprs) {
-                extractExpression(editor, it)
+                extractExpression(editor, it, postfixLet = false)
             }
         }
     }

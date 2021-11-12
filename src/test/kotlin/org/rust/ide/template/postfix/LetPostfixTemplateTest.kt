@@ -9,10 +9,16 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfixTemplateProvider())) {
-    fun `test not expr`() = doTestNotApplicable("""
+    fun `test not expr 1`() = doTestNotApplicable("""
         fn foo() {
             println!("test");.let/*caret*/
         }
+    """)
+
+    fun `test not expr 2`() = doTestNotApplicable("""
+        fn foo() {
+            println!("test");
+        }.let/*caret*/
     """)
 
     fun `test simple expr`() = doTest("""
@@ -22,6 +28,18 @@ class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfi
     """, """
         fn foo() {
             let /*caret*/i = 4;
+        }
+    """)
+
+    fun `test incomplete expr`() = doTest("""
+        fn foo() {
+            4.let/*caret*/
+            bar();
+        }
+    """, """
+        fn foo() {
+            let /*caret*/i = 4;
+            bar();
         }
     """)
 

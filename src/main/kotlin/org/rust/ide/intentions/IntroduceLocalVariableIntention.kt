@@ -35,6 +35,6 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
-        extractExpression(editor, ctx)
+        extractExpression(editor, ctx, postfixLet = false)
     }
 }
