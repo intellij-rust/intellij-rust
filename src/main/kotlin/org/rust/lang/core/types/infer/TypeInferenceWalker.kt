@@ -885,7 +885,13 @@ class RsTypeInferenceWalker(
         for (arm in arms) {
             arm.pat.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)
-            arm.matchArmGuard?.expr?.inferType(TyBool.INSTANCE)
+
+            val guard = arm.matchArmGuard
+            if (guard != null) {
+                val expectedGuardTy = if (guard.let == null) TyBool.INSTANCE else null
+                val guardTy = guard.expr?.inferType(expectedGuardTy) ?: TyUnknown
+                guard.pat?.extractBindings(guardTy)
+            }
         }
 
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })

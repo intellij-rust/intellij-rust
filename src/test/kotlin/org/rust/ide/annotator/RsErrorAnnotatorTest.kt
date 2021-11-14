@@ -3022,6 +3022,29 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.47.0")
+    fun `test if let guard E0658 1`() = checkErrors("""
+        fn main() {
+            let xs = vec![0i32];
+            match xs.len() {
+                1 if <error descr="if let guard is experimental [E0658]">let</error> Some(x) = xs.iter().next() => {}
+                _ => unreachable!(),
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.47.0-nightly")
+    fun `test if let guard E0658 2`() = checkErrors("""
+        #![feature(if_let_guard)]
+        fn main() {
+            let xs = vec![0i32];
+            match xs.len() {
+                1 if let Some(x) = xs.iter().next() => {}
+                _ => unreachable!(),
+            }
+        }
+    """)
+
     @MockRustcVersion("1.0.0-nightly")
     fun `test stable attr on invalid owner E0132`() = checkErrors("""
         #![feature(start)]

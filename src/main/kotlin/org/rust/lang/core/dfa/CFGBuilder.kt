@@ -624,6 +624,7 @@ class CFGBuilder(
     }
 
     override fun visitMatchArmGuard(guard: RsMatchArmGuard) {
+        // TODO: support `if let guard` feature
         val conditionExit = process(guard.expr, pred)
         finishWithAstNode(guard, conditionExit)
     }

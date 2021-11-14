@@ -1254,7 +1254,7 @@ MatchArm ::= OuterAttr* TopPat MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
 }
-MatchArmGuard ::= if AnyExpr
+MatchArmGuard ::= if (AnyExpr | IfLetCondition)
 
 private MatchArm_with_recover ::= !'}' MatchArm {
   pin = 1
