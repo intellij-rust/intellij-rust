@@ -22,7 +22,7 @@ class TestUnitTestRustcCacheService : UnitTestRustcCacheService {
         cacheIf: () -> Boolean,
         computation: () -> T
     ): T {
-        if (rustcVersion == null) return computation()
+        if (rustcVersion == null || !cacheIf()) return computation()
         return cache.getOrPut(rustcVersion to cls) { Optional.ofNullable(computation()) }.orNull() as T
     }
 }
