@@ -24,5 +24,11 @@ val RsGenericDeclaration.lifetimeParameters: List<RsLifetimeParameter>
 val RsGenericDeclaration.constParameters: List<RsConstParameter>
     get() = typeParameterList?.constParameterList.orEmpty()
 
-val RsGenericDeclaration.requiredGenericParameters: List<RsTypeParameter>
-    get() = typeParameters.filter { it.typeReference == null }
+val RsGenericDeclaration.requiredGenericParameters: List<RsGenericParameter>
+    get() = genericParameters.filter {
+        when (it) {
+            is RsTypeParameter -> it.typeReference == null
+            is RsConstParameter -> it.expr == null
+            else -> false
+        }
+    }

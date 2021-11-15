@@ -1033,7 +1033,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class WrongNumberOfTypeArguments(
+    class WrongNumberOfGenericArguments(
         element: PsiElement,
         private val errorText: String,
         private val fixes: List<LocalQuickFix>
