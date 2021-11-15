@@ -43,7 +43,6 @@ class RsSuggestedRefactoringExecution(support: RsSuggestedRefactoringSupport) : 
         val oldSignature = data.oldSignature
         val newSignature = data.newSignature
 
-
         // We need to mark "new" parameters with the new parameter index and find parameters swaps.
         var newParameterIndex = 0
         val parameters = newSignature.parameters.zip(config.parameters).map { (signatureParameter, parameter) ->

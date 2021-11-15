@@ -49,7 +49,8 @@ sealed class ParameterProperty<T: RsElement> {
     class Empty<T: RsElement> : ParameterProperty<T>()
     class Invalid<T: RsElement>(override val text: String) : ParameterProperty<T>()
     class Valid<T: RsElement>(override val item: T) : ParameterProperty<T>() {
-        override val text: String = item.text
+        override val text: String
+            get() = item.text
     }
 
     open val text: String = ""
@@ -149,7 +150,9 @@ class RsChangeFunctionSignatureConfig private constructor(
             val factory = RsPsiFactory(function.project)
             val parameters = function.rawValueParameters.mapIndexed { index, parameter ->
                 val patText = parameter.pat?.text ?: "_"
-                val type = ParameterProperty.fromItem(parameter.typeReference)
+                // The element has to be copied, otherwise suggested refactoring API
+                // would revert the PSI item to its previous state
+                val type = ParameterProperty.fromItem(parameter.typeReference?.copy() as? RsTypeReference)
                 Parameter(factory, patText, type, index)
             }
             return RsChangeFunctionSignatureConfig(
