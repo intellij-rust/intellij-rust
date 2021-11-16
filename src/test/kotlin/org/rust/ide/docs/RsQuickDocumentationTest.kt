@@ -943,6 +943,13 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>type parameter <b>T</b></pre></div>
     """)
 
+    fun `test const parameter`() = doTest("""
+        fn foo<const N: usize>() { unimplemented!() }
+                   //^
+    """, """
+        <div class='definition'><pre>const parameter <b>N</b>: usize</pre></div>
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test type parameter with single bound`() = doTest("""
         use std::borrow::Borrow;
@@ -979,6 +986,14 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
              //^
     """, """
         <div class='definition'><pre>type parameter <b>T</b> = <a href="psi_element://RandomState">RandomState</a></pre></div>
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test const parameter with default value`() = doTest("""
+        fn foo<const N: usize = 0>() { unimplemented!() }
+                   //^
+    """, """
+        <div class='definition'><pre>const parameter <b>N</b>: usize = 0</pre></div>
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
