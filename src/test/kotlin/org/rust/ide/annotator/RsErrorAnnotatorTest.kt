@@ -4427,4 +4427,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             name: &'async str,
         }
     """)
+
+    @MockRustcVersion("1.56.0")
+    fun `test macro 2 is experimental 1`() = checkErrors("""
+        pub <error descr="`macro` is experimental [E0658]">macro</error> id($ e:expr) {
+            $ e
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test macro 2 is experimental 2`() = checkErrors("""
+        #![feature(decl_macro)]
+
+        pub macro id($ e:expr) {
+            $ e
+        }
+    """)
 }

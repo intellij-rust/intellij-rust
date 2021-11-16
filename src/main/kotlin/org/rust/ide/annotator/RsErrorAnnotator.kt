@@ -69,6 +69,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(rsHolder, o)
+            override fun visitMacro2(o: RsMacro2) = checkMacro2(rsHolder, o)
             override fun visitMatchArmGuard(o: RsMatchArmGuard) = checkMatchArmGuard(rsHolder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(rsHolder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(rsHolder, o)
@@ -116,6 +117,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkMacro2(holder: RsAnnotationHolder, macro: RsMacro2) {
+        DECL_MACRO.check(holder, macro.macroKw, "`macro`")
     }
 
     private fun checkMetaItem(holder: RsAnnotationHolder, metaItem: RsMetaItem) {
