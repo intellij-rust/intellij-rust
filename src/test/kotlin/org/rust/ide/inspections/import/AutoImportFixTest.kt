@@ -2886,4 +2886,23 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `func`">func/*caret*/</error>!();
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test use absolute path when extern crate has same name as child mod`() = checkAutoImportFixByFileTree("""
+    //- lib.rs
+        pub fn func() {}
+    //- main.rs
+        mod test_package {}
+        fn main() {
+            <error descr="Unresolved reference: `func`">func/*caret*/</error>();
+        }
+    """, """
+    //- main.rs
+        use ::test_package::func;
+
+        mod test_package {}
+        fn main() {
+            func();
+        }
+    """)
 }
