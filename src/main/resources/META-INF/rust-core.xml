@@ -1280,6 +1280,11 @@
             <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="Rust.RsExtractEnumVariant"/>
         </action>
 
+        <action id="Rust.RsExtractTrait"
+                class="org.rust.ide.refactoring.extractTrait.RsExtractTraitAction">
+            <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="ExtractInterface"/>
+        </action>
+
         <action id="Rust.ShowSingleStepMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction">
         </action>

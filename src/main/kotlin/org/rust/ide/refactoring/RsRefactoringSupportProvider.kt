@@ -11,6 +11,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import org.rust.ide.refactoring.changeSignature.RsChangeSignatureHandler
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionHandler
+import org.rust.ide.refactoring.extractTrait.RsExtractTraitAction
 import org.rust.ide.refactoring.introduceConstant.RsIntroduceConstantHandler
 import org.rust.ide.refactoring.introduceParameter.RsIntroduceParameterHandler
 import org.rust.ide.refactoring.introduceVariable.RsIntroduceVariableHandler
@@ -32,6 +33,9 @@ class RsRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getExtractMethodHandler(): RefactoringActionHandler = RsExtractFunctionHandler()
 
     override fun getIntroduceParameterHandler(): RefactoringActionHandler = RsIntroduceParameterHandler()
+
+    /** Handled by [RsExtractTraitAction], which is needed to change action text */
+    override fun getExtractInterfaceHandler(): RefactoringActionHandler? = null
 
     override fun getChangeSignatureHandler(): ChangeSignatureHandler = RsChangeSignatureHandler()
 }
