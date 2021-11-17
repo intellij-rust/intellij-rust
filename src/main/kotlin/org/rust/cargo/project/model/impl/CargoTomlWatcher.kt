@@ -84,6 +84,9 @@ class CargoTomlWatcher(
                         false
                     }
                 }
+                event.pathEndsWith(CargoConstants.TOOLCHAIN_FILE) -> true
+                event.pathEndsWith(CargoConstants.TOOLCHAIN_TOML_FILE) -> true
+                event.isCargoConfigChange() -> true
                 event is VFileContentChangeEvent -> false
                 !event.pathEndsWith(".rs") -> false
                 event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME -> false
@@ -98,6 +101,12 @@ class CargoTomlWatcher(
 
         private fun VFileEvent.pathEndsWith(suffix: String): Boolean = path.endsWith(suffix) ||
             this is VFilePropertyChangeEvent && oldPath.endsWith(suffix)
+
+        private fun VFileEvent.isCargoConfigChange(): Boolean {
+            val parent = PathUtil.getParentPath(path)
+            return parent.endsWith(".cargo") &&
+                (pathEndsWith(CargoConstants.CONFIG_FILE) || pathEndsWith(CargoConstants.CONFIG_TOML_FILE))
+        }
 
         private val LOG = logger<CargoTomlWatcher>()
     }

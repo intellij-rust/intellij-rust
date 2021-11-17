@@ -11,6 +11,12 @@ object CargoConstants {
     const val XARGO_MANIFEST_FILE = "Xargo.toml"
     const val LOCK_FILE = "Cargo.lock"
 
+    const val CONFIG_FILE = "config"
+    const val CONFIG_TOML_FILE = "config.toml"
+
+    const val TOOLCHAIN_FILE = "rust-toolchain"
+    const val TOOLCHAIN_TOML_FILE = "rust-toolchain.toml"
+
     const val RUST_BACKTRACE_ENV_VAR = "RUST_BACKTRACE"
 
     object ProjectLayout {

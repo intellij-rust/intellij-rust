@@ -106,6 +106,22 @@ class CargoTomlWatcherTest : RsTestBase() {
         checkTriggered(newRenameEvent(binFile, "foo.rs"))
     }
 
+    fun `test cargo config modifications`() {
+        for (path in listOf(".cargo/config", ".cargo/config.toml")) {
+            val (configFile, createEvent) = newCreateEvent(path)
+            checkTriggered(createEvent)
+            checkTriggered(newChangeEvent(configFile))
+        }
+    }
+
+    fun `test rust toolchain modifications`() {
+        for (path in listOf("rust-toolchain", "rust-toolchain.toml")) {
+            val (configFile, createEvent) = newCreateEvent(path)
+            checkTriggered(createEvent)
+            checkTriggered(newChangeEvent(configFile))
+        }
+    }
+
     private fun checkTriggered(event: VFileEvent) {
         check(CargoTomlWatcher.isInterestingEvent(project, event)) {
             "Watcher ignored $event"
