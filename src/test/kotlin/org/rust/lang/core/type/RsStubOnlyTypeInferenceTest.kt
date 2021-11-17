@@ -234,7 +234,7 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
 
         pub struct S<const N1: usize>;
 
-    //- mod.rs
+    //- lib.rs
         mod foo;
 
         fn bar<const N2: usize>() -> foo::S<{ N2 }> { foo::S }
@@ -249,7 +249,7 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
 
         pub trait T<const N1: usize> {}
 
-    //- mod.rs
+    //- lib.rs
         mod foo;
 
         impl <const N2: usize> foo::T<{ N2 }> for foo::S {}
@@ -272,7 +272,7 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             U=u32
         >(&'a [R; A], &'b [T; B], &'c [U; C]);
 
-    //- mod.rs
+    //- lib.rs
         mod foo;
 
         fn main() {
@@ -287,7 +287,7 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         #![feature(const_generics)]
         pub struct S<const N1: usize>;
         pub fn bar<const N2: usize>() -> S<N2> { S }
-    //- mod.rs
+    //- lib.rs
         mod foo;
         const C: usize = 42;
         fn main() {

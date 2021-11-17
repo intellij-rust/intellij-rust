@@ -1727,7 +1727,7 @@ fun findPrelude(element: RsElement): RsMod? {
 private fun findPreludeUsingNewResolve(element: RsElement): RsMod? {
     val info = getModInfo(element.containingMod) as? RsModInfo ?: return null
     val prelude = info.defMap.prelude ?: return null
-    return prelude.toRsMod(element.project).singleOrNull()
+    return prelude.toRsMod(info).singleOrNull()
 }
 
 // Implicit extern crate from stdlib

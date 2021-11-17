@@ -12,6 +12,7 @@ import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.withPrevious
 
@@ -69,8 +70,7 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
     fun doTest(@Language("Rust") code: String, itemIndices: String) {
         InlineFile(code)
         val crateRoot = myFixture.findFileInTempDir("main.rs").toPsiFile(myFixture.project) as RsFile
-        val crate = crateRoot.crate!!
-        val defMap = project.defMapService.getOrUpdateIfNeeded(crate.id!!)!!
+        val info = getModInfo(crateRoot) as RsModInfo
 
         val expandedItems = mutableListOf<RsElement>()
         crateRoot.processExpandedItemsInternal(withMacroCalls = true) { item, _ ->
@@ -95,14 +95,14 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
                     }
                     else -> error("impossible")
                 }
-                val index = getMacroIndex(it, defMap, crate)!!
+                val index = info.getMacroIndex(it, info.crate)!!
                 index to name
             }
             .withPrevious()
             .filter { (i, prev) -> prev == null || !MacroIndex.equals(i.first, prev.first) }
             .map { it.first }
             .toList()
-        val macroIndicesDuringBuild = defMap.root.legacyMacros.values
+        val macroIndicesDuringBuild = info.defMap.root.legacyMacros.values
             .map { it.single() }
             .filterIsInstance<DeclMacroDefInfo>()
             .sortedBy { it.macroIndex }

@@ -166,7 +166,7 @@ class CfgEvaluator(
                 PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> False
 
                 PackageOrigin.DEPENDENCY -> ThreeValuedLogic.fromBoolean(
-                    crate.cargoTarget?.pkg?.let { !RsCfgNotTestIndex.hasCfgNotTest(crate.cargoProject.project, it) } ?: false
+                    crate.cargoTarget?.pkg?.let { !RsCfgNotTestIndex.hasCfgNotTest(crate.project, it) } ?: false
                 )
 
                 // TODO Provide cfg(test) switching for workspace packages

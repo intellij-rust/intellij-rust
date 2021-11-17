@@ -30,8 +30,8 @@ interface Crate : UserDataHolderEx {
     val id: CratePersistentId?
     val edition: CargoWorkspace.Edition
 
-    val cargoProject: CargoProject
-    val cargoWorkspace: CargoWorkspace
+    val cargoProject: CargoProject?
+    val cargoWorkspace: CargoWorkspace?
     val cargoTarget: CargoWorkspace.Target?
     val kind: CargoWorkspace.TargetKind
     val origin: PackageOrigin
@@ -90,8 +90,7 @@ interface Crate : UserDataHolderEx {
      */
     val normName: String
 
-    @JvmDefault
-    val project: Project get() = cargoProject.project
+    val project: Project
 
     /**
      * A procedural macro compiler artifact (compiled binary).

@@ -33,27 +33,33 @@ import kotlin.system.measureTimeMillis
  * If process is cancelled ([ProcessCanceledException]), then only part of defMaps could be updated,
  * other defMaps will be updated in next call to [getOrUpdateIfNeeded].
  */
-fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
-    check(project.isNewResolveEnabled)
-    val holder = getDefMapHolder(crate)
+fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? =
+    getOrUpdateIfNeeded(listOf(crate))[crate]
 
-    if (holder.hasLatestStamp()) return holder.defMap
+fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<CratePersistentId, CrateDefMap?> {
+    check(project.isNewResolveEnabled)
+    val holders = crates.map(::getDefMapHolder)
+
+    fun List<DefMapHolder>.defMaps() = associate { it.crateId to it.defMap }
+    if (holders.all { it.hasLatestStamp() }) return holders.defMaps()
 
     checkReadAccessAllowed()
     checkIsSmartMode(project)
     return defMapsBuildLock.withLockAndCheckingCancelled {
         check(defMapsBuildLock.holdCount == 1) { "Can't use resolve while building CrateDefMap" }
-        if (holder.hasLatestStamp()) return@withLockAndCheckingCancelled holder.defMap
+        if (holders.all { it.hasLatestStamp() }) return@withLockAndCheckingCancelled holders.defMaps()
 
         val pool = Executors.newWorkStealingPool()
         try {
             val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
             // TODO: Invoke outside of read action ?
-            DefMapUpdater(crate, this, pool, indicator, multithread = true).run()
-            if (hasDefMapFor(crate)) {
-                holder.checkHasLatestStamp()
+            DefMapUpdater(crates, this, pool, indicator, multithread = true).run()
+            for (holder in holders) {
+                if (hasDefMapFor(holder.crateId)) {
+                    holder.checkHasLatestStamp()
+                }
             }
-            holder.defMap
+            holders.defMaps()
         } finally {
             pool.shutdown()
             MacroExpansionSharedCache.getInstance().flush()
@@ -79,14 +85,14 @@ private fun doUpdateDefMapForAllCrates(
     pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean,
-    rootCrateId: CratePersistentId? = null
+    rootCrateIds: List<CratePersistentId>? = null
 ) {
     val dumbService = DumbService.getInstance(project)
     val defMapService = project.defMapService
     runReadActionInSmartMode(dumbService) {
         defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
             check(defMapService.defMapsBuildLock.holdCount == 1)
-            DefMapUpdater(rootCrateId, defMapService, pool, indicator, multithread).run()
+            DefMapUpdater(rootCrateIds, defMapService, pool, indicator, multithread).run()
         }
     }
 }
@@ -111,7 +117,7 @@ fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
             defMapService.scheduleRebuildDefMap(crateId)
         }
     }
-    doUpdateDefMapForAllCrates(this, newSameThreadExecutorService(), EmptyProgressIndicator(), multithread = false, crateId)
+    doUpdateDefMapForAllCrates(this, newSameThreadExecutorService(), EmptyProgressIndicator(), multithread = false, listOf(crateId))
 }
 
 fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapNotNull {
@@ -122,9 +128,9 @@ fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapN
 private class DefMapUpdater(
     /**
      * If null, DefMap is updated for all crates.
-     * Otherwise for [rootCrateId] and all it dependencies.
+     * Otherwise for [rootCrateIds] and all its dependencies.
      */
-    rootCrateId: CratePersistentId?,
+    rootCrateIds: List<CratePersistentId>?,
     private val defMapService: DefMapService,
     private val pool: ExecutorService,
     private val indicator: ProgressIndicator,
@@ -136,9 +142,12 @@ private class DefMapUpdater(
     private val topSortedCrates: List<Crate> = defMapService.project.crateGraph.topSortedCrates
 
     /** Crates to check for update */
-    private val crates: Collection<Crate> = run {
-        val rootCrate = rootCrateId?.let { id -> topSortedCrates.find { it.id == id } }
-        if (rootCrate != null) rootCrate.flatDependencies + rootCrate else topSortedCrates
+    private val crates: Collection<Crate> = if (rootCrateIds == null) {
+        topSortedCrates
+    } else {
+        val rootCrates = rootCrateIds.mapNotNull { id -> topSortedCrates.find { it.id == id } }
+        val crates = rootCrates.flatMapTo(hashSetOf()) { it.flatDependencies } + rootCrates
+        crates.topSort(topSortedCrates)
     }
     private var numberUpdatedCrates: Int = 0
 

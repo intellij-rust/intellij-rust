@@ -36,11 +36,15 @@ import org.rust.stdext.mapToSet
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 
 /** Stores [CrateDefMap] and data needed to determine whether [defMap] is up-to-date. */
-class DefMapHolder(private val structureModificationTracker: ModificationTracker) {
+class DefMapHolder(
+    val crateId: CratePersistentId,
+    private val structureModificationTracker: ModificationTracker,
+) {
 
     /**
      * Write access requires read action with [DefMapService.defMapsBuildLock] or write action.
@@ -71,6 +75,8 @@ class DefMapHolder(private val structureModificationTracker: ModificationTracker
             )
         }
     }
+
+    val modificationCount: Long get() = defMapStamp.get()
 
     /**
      * If true then we should rebuild [defMap], regardless of [shouldRecheck] or [changedFiles] values.
@@ -185,7 +191,7 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     fun getDefMapHolder(crate: CratePersistentId): DefMapHolder {
-        return defMaps.computeIfAbsent(crate) { DefMapHolder(structureModificationTracker) }
+        return defMaps.computeIfAbsent(crate) { DefMapHolder(crate, structureModificationTracker) }
     }
 
     fun hasDefMapFor(crate: CratePersistentId): Boolean = defMaps[crate] != null
@@ -313,6 +319,11 @@ class DefMapService(val project: Project) : Disposable {
     fun setNewResolveEnabled(disposable: Disposable, value: Boolean) {
         check(isUnitTestMode)
         IS_NEW_RESOLVE_ENABLED_KEY.setValue(value, disposable)
+    }
+
+    companion object {
+        private val detachedCrateNextId: AtomicInteger = AtomicInteger(-1)
+        fun getDetachedCrateNextId(): Int = detachedCrateNextId.decrementAndGet()
     }
 }
 

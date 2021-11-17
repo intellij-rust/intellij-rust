@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.crate.impl
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
@@ -28,9 +29,9 @@ class DoctestCrate(
     override val reverseDependencies: List<Crate> get() = emptyList()
 
     override val id: CratePersistentId? get() = null
-    override val cargoProject: CargoProject get() = parentCrate.cargoProject
+    override val cargoProject: CargoProject? get() = parentCrate.cargoProject
     override val cargoTarget: CargoWorkspace.Target? get() = null
-    override val cargoWorkspace: CargoWorkspace get() = parentCrate.cargoWorkspace
+    override val cargoWorkspace: CargoWorkspace? get() = parentCrate.cargoWorkspace
     override val kind: CargoWorkspace.TargetKind get() = CargoWorkspace.TargetKind.Test
 
     override val cfgOptions: CfgOptions get() = CfgOptions.EMPTY
@@ -45,6 +46,7 @@ class DoctestCrate(
     override val areDoctestsEnabled: Boolean get() = false
     override val presentableName: String get() = parentCrate.presentableName + "-doctest"
     override val normName: String get() = parentCrate.normName + "_doctest"
+    override val project: Project get() = parentCrate.project
     override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? get() = null
 
     override fun toString(): String = "Doctest in ${parentCrate.cargoTarget?.name}"
@@ -57,7 +59,7 @@ class DoctestCrate(
                 DoctestCrate(parentCrate, doctestModule, dependencies)
             } else {
                 // A doctest located in the stdlib is depending on all stdlib crates
-                val stdCrates = parentCrate.cargoProject.project.crateGraph.topSortedCrates
+                val stdCrates = parentCrate.project.crateGraph.topSortedCrates
                     .filter { it.origin == PackageOrigin.STDLIB }
                     .map { Crate.Dependency(it.normName, it) }
                     .distinctBy { it.normName }

@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.crate.impl
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
@@ -59,7 +60,8 @@ class CargoBasedCrate(
     override val env: Map<String, String> get() = cargoTarget.pkg.env
     override val outDir: VirtualFile? get() = cargoTarget.pkg.outDir
 
-    override val rootMod: RsFile? get() = rootModFile?.toPsiFile(cargoProject.project)?.rustFile
+    override val rootMod: RsFile? get() = rootModFile?.toPsiFile(project)?.rustFile
+    override val project: Project get() = cargoProject.project
 
     override val origin: PackageOrigin get() = cargoTarget.pkg.origin
     override val edition: CargoWorkspace.Edition get() = cargoTarget.edition

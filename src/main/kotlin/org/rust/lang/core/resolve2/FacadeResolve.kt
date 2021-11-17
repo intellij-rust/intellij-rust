@@ -18,6 +18,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
@@ -45,7 +46,8 @@ fun processItemDeclarations2(
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
 ): Boolean? {
-    val (project, defMap, modData) = when (val info = getModInfo(scope)) {
+    val info = getModInfo(scope)
+    val (_, defMap, modData) = when (info) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
@@ -60,8 +62,8 @@ fun processItemDeclarations2(
             for (visItem in visItems) {
                 if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
                 if (namespace == Namespace.Types && visItem.visibility.isInvisible && name in defMap.externPrelude) continue
-                val visibilityFilter = visItem.visibility.createFilter(project)
-                for (element in visItem.toPsi(defMap, project, namespace)) {
+                val visibilityFilter = visItem.visibility.createFilter(info)
+                for (element in visItem.toPsi(info, namespace)) {
                     if (!elements.add(element)) continue
                     if (processor(name, element, visibilityFilter)) return true
                 }
@@ -72,8 +74,8 @@ fun processItemDeclarations2(
     if (processor.name == null && Namespace.Types in ns) {
         for ((traitPath, traitVisibility) in modData.unnamedTraitImports) {
             val trait = VisItem(traitPath, traitVisibility)
-            val visibilityFilter = traitVisibility.createFilter(project)
-            for (traitPsi in trait.toPsi(defMap, project, Namespace.Types)) {
+            val visibilityFilter = traitVisibility.createFilter(info)
+            for (traitPsi in trait.toPsi(info, Namespace.Types)) {
                 if (processor("_", traitPsi, visibilityFilter)) return true
             }
         }
@@ -84,7 +86,7 @@ fun processItemDeclarations2(
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
-            val externCrateRoot = externCrateDefMap.root.toRsMod(project)
+            val externCrateRoot = externCrateDefMap.root.toRsMod(info)
                 // crate root can't multiresolve
                 .singleOrNull()
                 ?: continue
@@ -114,14 +116,14 @@ fun processMacros(
     isAttrOrDerive: Boolean,
     runBeforeResolve: (() -> Boolean)? = null
 ): Boolean? {
-    val (project, defMap, modData, crate) = when (val info = getModInfo(scope)) {
+    val info = when (val info = getModInfo(scope)) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
     }
     if (runBeforeResolve != null && runBeforeResolve()) return true
 
-    return modData.processMacros(macroPath, isAttrOrDerive, processor, defMap, crate, project)
+    return info.modData.processMacros(macroPath, isAttrOrDerive, processor, info)
 }
 
 private fun ModData.processMacros(
@@ -129,13 +131,11 @@ private fun ModData.processMacros(
     macroPath: PsiElement?,
     isAttrOrDerive: Boolean,
     processor: RsResolveProcessor,
-    defMap: CrateDefMap,
-    crate: Crate,
-    project: Project,
+    info: RsModInfo,
 ): Boolean {
     val isQualified = macroPath == null || macroPath is RsPath && macroPath.qualifier != null
 
-    val stop = processScopedMacros(processor, defMap, project) { name ->
+    val stop = processScopedMacros(processor, info) { name ->
         val isLegacyMacroDeclaredInSameMod = !isQualified && legacyMacros[name].orEmpty().any {
             (!isAttrOrDerive || it is ProcMacroDefInfo) && it.path.parent == path
         }
@@ -149,7 +149,7 @@ private fun ModData.processMacros(
 
     if (!isQualified) {
         check(macroPath != null)
-        val macroIndex = getMacroIndex(macroPath, defMap, crate)
+        val macroIndex = info.getMacroIndex(macroPath, info.crate)
         for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
             val macroInfo = if (!isAttrOrDerive) {
                 filterMacrosByIndex(macroInfos, macroIndex)
@@ -157,15 +157,13 @@ private fun ModData.processMacros(
                 macroInfos.lastOrNull { it is ProcMacroDefInfo }
             } ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
-            val macroContainingMod = visItem.containingMod.toRsMod(defMap, project).singleOrNull() ?: continue
-            val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
-            val macroCrate = project.crateGraph.findCrateById(macroInfo.crate) ?: continue
-            val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap, macroCrate) ?: continue
+            val macroContainingMod = visItem.containingMod.toRsMod(info).singleOrNull() ?: continue
+            val macro = macroInfo.legacyMacroToPsi(macroContainingMod, info) ?: continue
             if (processor(name, macro)) return true
         }
 
-        defMap.prelude?.let { prelude ->
-            if (prelude.processScopedMacros(processor, defMap, project)) return true
+        info.defMap.prelude?.let { prelude ->
+            if (prelude.processScopedMacros(processor, info)) return true
         }
     }
 
@@ -174,15 +172,14 @@ private fun ModData.processMacros(
 
 private fun ModData.processScopedMacros(
     processor: RsResolveProcessor,
-    defMap: CrateDefMap,
-    project: Project,
+    info: RsModInfo,
     filter: (name: String) -> Boolean = { true },
 ): Boolean {
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
         for (visItem in perNs.macros) {
             if (!filter(name)) continue
-            val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
-            val visibilityFilter = visItem.visibility.createFilter(project)
+            val macro = visItem.scopedMacroToPsi(info) ?: continue
+            val visibilityFilter = visItem.visibility.createFilter(info)
             if (processor(name, macro, visibilityFilter)) return true
         }
     }
@@ -201,7 +198,7 @@ fun <T> RsPossibleMacroCall.resolveToMacroUsingNewResolveAndThen(
 ): T? =
     resolveToMacroAndThen(withoutNewResolve) { defInfo, info ->
         val visItem = VisItem(defInfo.path, Visibility.Public)
-        val def = visItem.scopedMacroToPsi(info.defMap, info.project)
+        val def = visItem.scopedMacroToPsi(info)
         withNewResolve(def)
     }
 
@@ -242,14 +239,11 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
         if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return@resolveToMacroAndThen null
         val project = info.project
         val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
-        val crate = project.crateGraph.findCrateById(def.crate) ?: return@resolveToMacroAndThen null
         defMap.root.processMacros(
             macroPath = null,  // null because we resolve qualified macro path
             isAttrOrDerive = false,
             processor = processor,
-            defMap = defMap,
-            crate = crate,
-            project = project
+            info = info,
         )
     }
 
@@ -317,17 +311,17 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
     return RsResolveCache.getInstance(project)
         .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
             val callPath = path.pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
-            val macroIndex = getMacroIndex(this, defMap, crate) ?: return@resolveWithCaching null
+            val macroIndex = containingModInfo.getMacroIndex(this, crate) ?: return@resolveWithCaching null
             defMap.resolveMacroCallToMacroDefInfo(modData, callPath, macroIndex)
         }
 }
 
 @VisibleForTesting
-fun getMacroIndex(element: PsiElement, defMap: CrateDefMap, crate: Crate): MacroIndex? {
+fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroIndex? {
     if (element is RsMetaItem) {
         val owner = element.owner as? RsAttrProcMacroOwner
         if (owner != null && RsProcMacroPsiUtil.canBeCustomDerive(element)) {
-            val ownerIndex = getMacroIndex(owner, defMap, crate) ?: return null
+            val ownerIndex = getMacroIndex(owner, elementCrate) ?: return null
             val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
                 owner,
                 explicitCrate = crate,
@@ -347,16 +341,16 @@ fun getMacroIndex(element: PsiElement, defMap: CrateDefMap, crate: Crate): Macro
     if (itemAndCallExpandedFrom == null) {
         if (element.containingFile is RsCodeFragment) return MacroIndex(intArrayOf(Int.MAX_VALUE))
         val (item, parent) = element.ancestorPairs.first { (_, parent) -> parent is RsMod }
-        val modData = defMap.getModData(parent as RsMod) ?: return null
-        val indexInParent = getMacroIndexInParent(item, parent, crate)
+        val modData = getModData(parent as RsMod, elementCrate.id ?: return null) ?: return null
+        val indexInParent = getMacroIndexInParent(item, parent, elementCrate)
         return modData.macroIndex.append(indexInParent)
     } else {
         val (item, callExpandedFrom) = itemAndCallExpandedFrom
         val parent = item.parent
         // TODO: Possible optimization - store macro index in [resolveToMacroDefInfo] cache
-        val parentIndex = getMacroIndex(callExpandedFrom, defMap, crate) ?: return null
+        val parentIndex = getMacroIndex(callExpandedFrom, elementCrate) ?: return null
         if (parent !is RsMod) return parentIndex  // not top level expansion
-        val indexInParent = getMacroIndexInParent(item, parent, crate)
+        val indexInParent = getMacroIndexInParent(item, parent, elementCrate)
         return parentIndex.append(indexInParent)
     }
 }
@@ -459,16 +453,28 @@ sealed class RsModInfoBase {
         val project: Project,
         val defMap: CrateDefMap,
         val modData: ModData,
-        val crate: Crate
+        val crate: Crate,
+        val dataPsiHelper: DataPsiHelper?,
     ) : RsModInfoBase()
 }
 
-fun getModInfo(scope: RsMod): RsModInfoBase {
+interface DataPsiHelper {
+    fun psiToData(scope: RsMod): ModData?
+    fun dataToPsi(data: ModData): RsMod?
+}
+
+fun getModInfo(scope0: RsMod): RsModInfoBase {
+    val scope = scope0.originalElement as? RsMod ?: scope0
     val project = scope.project
     if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
     if (scope.isLocal) return CantUseNewResolve("local mod")
-    val crate = scope.containingCrate as? CargoBasedCrate ?: return CantUseNewResolve("not CargoBasedCrate")
+    val crate = when (val crate = scope.containingCrate) {
+        is CargoBasedCrate -> crate
+        is DoctestCrate -> return CantUseNewResolve("Doctest crate")
+        null -> return project.getDetachedModInfo(scope)
+        else -> error("unreachable")
+    }
     if (crate.rootModFile != null && !shouldIndexFile(project, crate.rootModFile)) {
         return CantUseNewResolve("crate root isn't indexed")
     }
@@ -478,7 +484,7 @@ fun getModInfo(scope: RsMod): RsModInfoBase {
 
     if (isModShadowedByOtherMod(scope, modData, crate)) return CantUseNewResolve("mod shadowed by other mod")
 
-    return RsModInfo(project, defMap, modData, crate)
+    return RsModInfo(project, defMap, modData, crate, null)
 }
 
 private fun Project.getDefMap(crate: Crate): CrateDefMap? {
@@ -489,6 +495,11 @@ private fun Project.getDefMap(crate: Crate): CrateDefMap? {
         RESOLVE_LOG.warn("DefMap is null for $crate during resolve")
     }
     return defMap
+}
+
+private fun RsModInfo.getModData(mod: RsMod, modCrate: CratePersistentId): ModData? {
+    dataPsiHelper?.psiToData(mod)?.let { return it }
+    return defMap.getDefMap(modCrate)?.getModData(mod)
 }
 
 /** E.g. `fn func() { mod foo { ... } }` */
@@ -513,9 +524,9 @@ private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
 }
 
 /** Creates filter which determines whether item with [this] visibility is visible from specific [RsMod] */
-private fun Visibility.createFilter(project: Project): (RsElement) -> VisibilityStatus {
+private fun Visibility.createFilter(info: RsModInfo): (RsElement) -> VisibilityStatus {
     if (this is Visibility.Restricted) {
-        val inMod = inMod.toRsMod(project)
+        val inMod = inMod.toRsMod(info)
         if (inMod.isNotEmpty()) {
             return { context ->
                 val modOpenedInEditor = context.containingModOrSelf
@@ -524,7 +535,7 @@ private fun Visibility.createFilter(project: Project): (RsElement) -> Visibility
             }
         }
     }
-    // cfg-disabled items should resolves only from cfg-disabled modules
+    // cfg-disabled items should resolve only from cfg-disabled modules
     if (this === Visibility.CfgDisabled) {
         return filter@{ context ->
             val file = context.containingFile as? RsFile ?: return@filter VisibilityStatus.Visible
@@ -537,8 +548,8 @@ private fun Visibility.createFilter(project: Project): (RsElement) -> Visibility
     return { VisibilityStatus.Visible }
 }
 
-private fun VisItem.scopedMacroToPsi(defMap: CrateDefMap, project: Project): RsNamedElement? {
-    val containingMod = containingMod.toRsMod(defMap, project).singleOrNull() ?: return null
+private fun VisItem.scopedMacroToPsi(info: RsModInfo): RsNamedElement? {
+    val containingMod = containingMod.toRsMod(info).singleOrNull() ?: return null
     return scopedMacroToPsi(containingMod)
 }
 
@@ -562,11 +573,12 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
         }
 }
 
-private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap, crate: Crate): RsElement? {
+private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, info: RsModInfo): RsElement? {
     val items = containingMod.expandedItemsCached
     return when (this) {
         is DeclMacroDefInfo -> items.legacyMacros.singleOrNull {
-            val defIndex = getMacroIndex(it, defMap, crate) ?: return@singleOrNull false
+            val crate = info.project.crateGraph.findCrateById(crate) ?: return@singleOrNull false
+            val defIndex = info.getMacroIndex(it, crate) ?: return@singleOrNull false
             MacroIndex.equals(defIndex, macroIndex)
         }
         is ProcMacroDefInfo, is DeclMacro2DefInfo -> items.named[path.name]?.firstOrNull()
@@ -574,18 +586,18 @@ private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDef
     // Note that we can return null, e.g. if old macro engine is enabled and macro definition is itself expanded
 }
 
-fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {
-    if (isModOrEnum) return path.toRsModOrEnum(defMap, project)
+fun VisItem.toPsi(info: RsModInfo, ns: Namespace): List<RsNamedElement> {
+    if (isModOrEnum) return path.toRsModOrEnum(info)
 
-    val containingModData = defMap.getModData(containingMod) ?: return emptyList()
+    val containingModData = info.defMap.getModData(containingMod) ?: return emptyList()
     return if (containingModData.isEnum) {
-        val containingEnums = containingModData.toRsEnum(project)
+        val containingEnums = containingModData.toRsEnum(info)
         containingEnums.flatMap { containingEnum ->
             containingEnum.variants
                 .filter { it.name == name && ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
         }
     } else {
-        val containingMods = containingModData.toRsMod(project)
+        val containingMods = containingModData.toRsMod(info)
         containingMods.flatMap { containingMod ->
             if (ns == Namespace.Macros) {
                 val macro = scopedMacroToPsi(containingMod)
@@ -610,30 +622,35 @@ private fun matchesIsEnabledByCfg(itemPsi: RsNamedElement, item: VisItem): Boole
 
 private val VisItem.isEnabledByCfg: Boolean get() = visibility != Visibility.CfgDisabled
 
-private fun ModPath.toRsMod(defMap: CrateDefMap, project: Project): List<RsMod> {
-    val modData = defMap.getModData(this)
+private fun ModPath.toRsMod(info: RsModInfo): List<RsMod> {
+    val modData = info.defMap.getModData(this)
     if (modData == null || modData.isEnum) return emptyList()
-    return modData.toRsMod(project)
+    return modData.toRsMod(info)
 }
 
-private fun ModPath.toRsModOrEnum(defMap: CrateDefMap, project: Project): List<RsNamedElement /* RsMod or RsEnumItem */> {
-    val modData = defMap.getModData(this) ?: return emptyList()
+private fun ModPath.toRsModOrEnum(info: RsModInfo): List<RsNamedElement /* RsMod or RsEnumItem */> {
+    val modData = info.defMap.getModData(this) ?: return emptyList()
     return if (modData.isEnum) {
-        modData.toRsEnum(project)
+        modData.toRsEnum(info)
     } else {
-        modData.toRsMod(project)
+        modData.toRsMod(info)
     }
 }
 
-private fun ModData.toRsEnum(project: Project): List<RsEnumItem> {
+private fun ModData.toRsEnum(info: RsModInfo): List<RsEnumItem> {
     if (!isEnum || parent == null) return emptyList()
-    val containingMods = parent.toRsMod(project)
+    val containingMods = parent.toRsMod(info)
     val visItem = asVisItem()
     return containingMods.flatMap { containingMod ->
         containingMod
             .getExpandedItemsWithName<RsEnumItem>(name)
             .filter { matchesIsEnabledByCfg(it, visItem) }
     }
+}
+
+fun ModData.toRsMod(info: RsModInfo): List<RsMod> {
+    info.dataPsiHelper?.dataToPsi(this)?.let { return listOf(it) }
+    return toRsMod(info.project)
 }
 
 fun ModData.toRsMod(project: Project): List<RsMod> = toRsModNullable(project)
@@ -644,7 +661,7 @@ fun ModData.toRsMod(project: Project): List<RsMod> = toRsModNullable(project)
     }
 
 private fun ModData.toRsModNullable(project: Project): List<RsMod> {
-    if (isEnum) return emptyList()
+    if (isEnum || fileId == null) return emptyList()
     val file = PersistentFS.getInstance().findFileById(fileId)
         ?.toPsiFile(project) as? RsFile
         ?: return emptyList()
