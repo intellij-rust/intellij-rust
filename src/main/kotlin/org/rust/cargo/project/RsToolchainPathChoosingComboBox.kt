@@ -11,13 +11,12 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import org.rust.openapiext.addTextChangeListener
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.toPathOrNull
 import java.nio.file.Path
-import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 /**
@@ -55,11 +54,7 @@ class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {})
             }
         }
 
-        pathTextField.document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-                onTextChanged()
-            }
-        })
+        pathTextField.addTextChangeListener { onTextChanged() }
     }
 
     fun setBusy(busy: Boolean) {

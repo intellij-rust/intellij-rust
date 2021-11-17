@@ -26,6 +26,7 @@ import com.intellij.ui.layout.RowBuilder
 import com.intellij.util.Alarm
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsElement
+import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KProperty
 
@@ -86,20 +87,24 @@ fun pathTextField(
     @DialogTitle title: String,
     onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton {
-
     val component = TextFieldWithBrowseButton(null, disposable)
     component.addBrowseFolderListener(
         title, null, null,
         fileChooserDescriptor,
         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     )
-    component.childComponent.document.addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-            onTextChanged()
-        }
-    })
-
+    component.childComponent.addTextChangeListener { onTextChanged() }
     return component
+}
+
+fun JTextField.addTextChangeListener(listener: (DocumentEvent) -> Unit) {
+    document.addDocumentListener(
+        object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                listener(e)
+            }
+        }
+    )
 }
 
 class CheckboxDelegate(private val checkbox: JBCheckBox) {
