@@ -1441,6 +1441,14 @@ sealed class RsDiagnostic(
             "Lifetimes cannot use keyword names"
         )
     }
+
+    class InvalidLabelName(element: PsiElement, private val labelName: String) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "Invalid label name `$labelName`"
+        )
+    }
 }
 
 enum class RsErrorCode {

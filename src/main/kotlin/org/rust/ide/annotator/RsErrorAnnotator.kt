@@ -68,6 +68,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitLetDecl(o: RsLetDecl) = checkLetDecl(rsHolder, o)
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
+            override fun visitLabelDecl(o: RsLabelDecl) = checkLabelDecl(rsHolder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(rsHolder, o)
             override fun visitMacro2(o: RsMacro2) = checkMacro2(rsHolder, o)
             override fun visitMatchArmGuard(o: RsMatchArmGuard) = checkMatchArmGuard(rsHolder, o)
@@ -685,8 +686,20 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLabel(holder: RsAnnotationHolder, label: RsLabel) {
-        if (!hasResolve(label)) return
-        RsDiagnostic.UndeclaredLabelError(label).addToHolder(holder)
+        if (hasResolve(label)) {
+            RsDiagnostic.UndeclaredLabelError(label).addToHolder(holder)
+        }
+        val labelName = label.referenceName
+        if (labelName.isInvalidLabelName(label.edition)) {
+            RsDiagnostic.InvalidLabelName(label, labelName).addToHolder(holder)
+        }
+    }
+
+    private fun checkLabelDecl(holder: RsAnnotationHolder, labelDecl: RsLabelDecl) {
+        val labelName = labelDecl.name
+        if (labelName?.isInvalidLabelName(labelDecl.edition) == true) {
+            RsDiagnostic.InvalidLabelName(labelDecl.quoteIdentifier, labelName).addToHolder(holder)
+        }
     }
 
     private fun checkLifetime(holder: RsAnnotationHolder, lifetime: RsLifetime) {
@@ -1651,10 +1664,13 @@ private val RsPat.isTopLevel: Boolean
 
 private fun String?.isIllegalLifetimeName(edition: Edition?): Boolean {
     if (this == null || this in RESERVED_LIFETIME_NAMES) return false
-    val name = drop(1)
-    val effectiveEdition = edition ?: Edition.EDITION_2018
-    return name in KEYWORDS_EDITION_2015 || effectiveEdition > Edition.EDITION_2015 && name in KEYWORDS_EDITION_2018
+    return drop(1) in keywords(edition)
 }
+
+private fun String.isInvalidLabelName(edition: Edition?): Boolean = removePrefix("'") in keywords(edition)
+
+private fun keywords(edition: Edition?): Set<String> =
+    if (edition == null || edition > Edition.EDITION_2015) KEYWORDS_EDITION_2018 else KEYWORDS_EDITION_2015
 
 private val KEYWORDS_EDITION_2015: Set<String> = hashSetOf(
     "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield",
@@ -1663,4 +1679,4 @@ private val KEYWORDS_EDITION_2015: Set<String> = hashSetOf(
     "trait", "true", "type", "unsafe", "use", "where", "while"
 )
 
-private val KEYWORDS_EDITION_2018: Set<String> = hashSetOf("async", "await", "dyn", "try")
+private val KEYWORDS_EDITION_2018: Set<String> = KEYWORDS_EDITION_2015 + hashSetOf("async", "await", "dyn", "try")
