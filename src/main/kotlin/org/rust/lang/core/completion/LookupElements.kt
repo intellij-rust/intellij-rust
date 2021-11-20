@@ -345,8 +345,9 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
 }
 
 private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Document, context: InsertionContext) {
-    // complete only types that have at least one type parameter without a default
-    if (element.typeParameters.all { it.typeReference != null }) return
+    // complete only types that have at least one generic parameter without a default
+    if (element.typeParameters.all { it.typeReference != null } &&
+        element.constParameters.all { it.expr != null }) return
 
     // complete angle brackets only in a type context
     val path = context.getElementOfType<RsPath>()
