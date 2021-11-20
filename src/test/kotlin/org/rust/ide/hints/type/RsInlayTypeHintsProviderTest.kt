@@ -18,6 +18,12 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
+    fun `test array`() = checkByText("""
+        fn main() {
+            let s<hint text="[:  [[ [i32 ;  3] ]]]"/> = [1, 2, 3];
+        }
+    """)
+
     fun `test let stmt without expression`() = checkByText("""
         struct S;
         fn main() {
