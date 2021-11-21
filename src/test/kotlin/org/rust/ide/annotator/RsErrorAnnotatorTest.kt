@@ -721,7 +721,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn err<'a>(a: &'a str) {
             'foo: loop { continue <error descr="Use of undeclared label `'bar` [E0426]">'bar</error> }
-            while true { break <error descr="Use of undeclared label `'static` [E0426]">'static</error> }
+            while true { break <error descr="Invalid label name `'static`"><error descr="Use of undeclared label `'static` [E0426]">'static</error></error> }
             for _ in 0..1 { break <error descr="Use of undeclared label `'a` [E0426]">'a</error> }
         }
     """)
@@ -4441,6 +4441,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         pub macro id($ e:expr) {
             $ e
+        }
+    """)
+
+    fun `test keyword as label name`() = checkErrors("""
+        fn main() {
+            let mut x = 0;
+            <error descr="Invalid label name `'fn`">'fn</error>: while true {
+                println!("hello");
+                x = x + 1;
+                if x == 100 {
+                    break <error descr="Invalid label name `'fn`">'fn</error>;
+                }
+            }
         }
     """)
 }
