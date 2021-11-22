@@ -109,7 +109,8 @@ private class ModCollector(
 
     fun collectMod(mod: StubElement<out RsMod>, propagateLegacyMacros: Boolean = false) {
         val visitor = if (hashCalculator != null) {
-            val hashVisitor = hashCalculator.getVisitor(crate, modData.fileRelativePath)
+            val stdlibAttributes = defMap.stdlibAttributes.takeIf { modData.isNormalCrate && modData.isCrateRoot }
+            val hashVisitor = hashCalculator.getVisitor(crate, modData.fileRelativePath, stdlibAttributes)
             CompositeModVisitor(hashVisitor, this)
         } else {
             this

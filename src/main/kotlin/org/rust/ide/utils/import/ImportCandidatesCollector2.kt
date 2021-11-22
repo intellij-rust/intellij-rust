@@ -132,7 +132,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
                     val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
-                    val importInfo = qualifiedItem.toImportInfo(rootDefMap)
+                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData)
                     ImportCandidate2(qualifiedItem, importInfo)
                 }
             }
@@ -363,7 +363,7 @@ private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
         || element.canBeAccessedByTraitName
 }
 
-private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap): ImportInfo {
+private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData): ImportInfo {
     val crateName = path.first()
     return if (crateName == "crate") {
         val usePath = path.joinToString("::").let {
@@ -373,7 +373,14 @@ private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap): ImportInfo {
     } else {
         val needInsertExternCrateItem = !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
         val crateRelativePath = path.copyOfRange(1, path.size).joinToString("::")
-        ImportInfo.ExternCrateImportInfo(containingCrate, crateName, needInsertExternCrateItem, null, crateRelativePath)
+        ImportInfo.ExternCrateImportInfo(
+            crate = containingCrate,
+            externCrateName = crateName,
+            needInsertExternCrateItem = needInsertExternCrateItem,
+            depth = null,
+            crateRelativePath = crateRelativePath,
+            hasModWithSameNameAsExternCrate = crateName in modData.childModules
+        )
     }
 }
 

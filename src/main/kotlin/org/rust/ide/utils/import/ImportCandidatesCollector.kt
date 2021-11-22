@@ -355,9 +355,13 @@ sealed class ImportInfo {
          * Can be null if extern crate item is absent or it is in crate root.
          */
         val depth: Int?,
-        crateRelativePath: String
+        crateRelativePath: String,
+        hasModWithSameNameAsExternCrate: Boolean = false,
     ) : ImportInfo() {
-        override val usePath: String = "$externCrateName::$crateRelativePath"
+        override val usePath: String = run {
+            val absolutePrefix = if (hasModWithSameNameAsExternCrate) "::" else ""
+            "$absolutePrefix$externCrateName::$crateRelativePath"
+        }
     }
 }
 
