@@ -1706,6 +1706,14 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<i32>
     """)
 
+    fun `test default const argument is not used in expression context 1`() = testExpr("""
+        struct S<const N: usize = 1>;
+        fn main() {
+            let a = S;
+            a;
+        } //^ S<<unknown>>
+    """)
+
     fun `test default type argument is not used in expression context 2`() = testExpr("""
         struct S<T = X>(T);
         struct X;
@@ -1716,6 +1724,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S::new(1);
             a;
         } //^ S<i32>
+    """)
+
+    fun `test default const argument is not used in expression context 2`() = testExpr("""
+        struct S<const N: usize = 1>;
+        impl<const N: usize> S<N> {
+            fn new() -> S<N> { S }
+        }
+
+        fn main() {
+            let a = S::new();
+            a;
+        } //^ S<<unknown>>
     """)
 
     fun `test default type argument is used in expression context`() = testExpr("""
@@ -1729,6 +1749,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<i32, ()>
     """)
 
+    fun `test default const argument is used in expression context`() = testExpr("""
+        struct S<const N: usize, const M: usize = 1>;
+        impl<const N: usize> S<N, 1> {
+            fn id(self) -> Self { unimplemented!() }
+        }
+        fn main() {
+            let s = S::<0>.id();
+            s;
+        } //^ S<0, 1>
+    """)
+
     fun `test default type argument is not used in pat context`() = testExpr("""
         struct S<T = X>(T);
         struct X;
@@ -1736,6 +1767,14 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let S(a) = S(1);
             a;
         } //^ i32
+    """)
+
+    fun `test default const argument is not used in pat context`() = testExpr("""
+        struct S<const N: usize = 1>([i32; N]);
+        fn main() {
+            let S(a) = S([1, 2, 3]);
+            a;
+        } //^ [i32; 3]
     """)
 
     fun `test default type argument is used in type context 1`() = testExpr("""
@@ -1746,12 +1785,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<X>
     """)
 
+    fun `test default const argument is used in type context 1`() = testExpr("""
+        struct S<const N: usize = 1>;
+        fn foo(s: S) {
+            s;
+        } //^ S<1>
+    """)
+
     fun `test default type argument is used in type context 2`() = testExpr("""
         struct S<T1 = X, T2 = Y>(T1, T2);
         struct X; struct Y;
         fn foo(s: S<u8>) {
             s;
         } //^ S<u8, Y>
+    """)
+
+    fun `test default const argument is used in type context 2`() = testExpr("""
+        struct S<const N1: usize = 1, const N2: usize = 2>;
+        fn foo(s: S<0>) {
+            s;
+        } //^ S<0, 2>
     """)
 
     fun `test type argument is unknown if not passed`() = testExpr("""
@@ -1986,5 +2039,28 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = foo(S);
             a;
         } //^ X
+    """)
+
+    fun `test trait impl with default type parameter value`() = testExpr("""
+        struct X;
+        trait Tr<T = X> { fn foo(&self) -> T { todo!() } }
+        struct S;
+        impl Tr for S {}
+        fn foo() {
+            let a = S.foo();
+            a;
+        } //^ X
+    """)
+
+    fun `test trait impl with default const parameter value`() = testExpr("""
+        trait Tr<const T: usize = 1> { fn foo(&self) -> [i32; T] { todo!() } }
+
+        struct S;
+        impl Tr for S {}
+
+        fn foo() {
+            let a = S.foo();
+            a;
+        } //^ [i32; 1]
     """)
 }

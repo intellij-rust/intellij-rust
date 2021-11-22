@@ -611,12 +611,15 @@ open class PsiSubstitutingPsiRenderer(
     override fun appendPathWithoutArgs(sb: StringBuilder, path: RsPath) {
         val replaced = when (val resolved = path.reference?.resolve()) {
             is RsTypeParameter -> when (val s = typeSubst(resolved)) {
-                is RsPsiSubstitution.TypeValue.Present.InAngles -> {
-                    super.appendTypeReference(sb, s.value)
-                    true
+                is RsPsiSubstitution.Value.Present -> when (s.value) {
+                    is RsPsiSubstitution.TypeValue.InAngles -> {
+                        super.appendTypeReference(sb, s.value.value)
+                        true
+                    }
+                    is RsPsiSubstitution.TypeValue.FnSugar -> false
                 }
-                is RsPsiSubstitution.TypeValue.DefaultValue -> {
-                    super.appendTypeReference(sb, s.value)
+                is RsPsiSubstitution.Value.DefaultValue -> {
+                    super.appendTypeReference(sb, s.value.value)
                     true
                 }
                 else -> false
@@ -627,6 +630,10 @@ open class PsiSubstitutingPsiRenderer(
                         is RsExpr -> appendConstExpr(sb, s.value)
                         is RsTypeReference -> appendTypeReference(sb, s.value)
                     }
+                    true
+                }
+                is RsPsiSubstitution.Value.DefaultValue -> {
+                    appendConstExpr(sb, s.value)
                     true
                 }
                 else -> false
@@ -651,13 +658,13 @@ open class PsiSubstitutingPsiRenderer(
         }
     }
 
-    private fun regionSubst(lifetime: RsLifetimeParameter?): RsPsiSubstitution.Value<RsLifetime>? {
+    private fun regionSubst(lifetime: RsLifetimeParameter?): RsPsiSubstitution.Value<RsLifetime, Nothing>? {
         return substitutions.mapNotNull { it.regionSubst[lifetime] }.firstOrNull()
     }
-    private fun constSubst(const: RsConstParameter?): RsPsiSubstitution.Value<RsElement>? {
+    private fun constSubst(const: RsConstParameter?): RsPsiSubstitution.Value<RsElement, RsExpr>? {
         return substitutions.mapNotNull { it.constSubst[const] }.firstOrNull()
     }
-    private fun typeSubst(type: RsTypeParameter?): RsPsiSubstitution.TypeValue? {
+    private fun typeSubst(type: RsTypeParameter?): RsPsiSubstitution.Value<RsPsiSubstitution.TypeValue, RsPsiSubstitution.TypeDefault>? {
         return substitutions.mapNotNull { it.typeSubst[type] }.firstOrNull()
     }
 }
