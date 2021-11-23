@@ -99,7 +99,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
 
             val superPath = path.rootPath()
             val candidates = if (path.useAutoImportWithNewResolve) run {
-                val importContext = ImportContext2.from(path, isCompletion = false) ?: return@run emptyList()
+                val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return@run emptyList()
                 ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
             } else {
                 ImportCandidatesCollector.getImportCandidates(

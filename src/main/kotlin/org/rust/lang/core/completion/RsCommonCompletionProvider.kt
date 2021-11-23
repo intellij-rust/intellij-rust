@@ -17,7 +17,6 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.*
@@ -194,7 +193,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
         val candidates = if (path.useAutoImportWithNewResolve) run {
-            val importContext = ImportContext2.from(path, isCompletion = true) ?: return@run emptyList()
+            val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return@run emptyList()
             ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
         } else {
             val keys = hashSetOf<String>().apply {

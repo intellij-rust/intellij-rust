@@ -27,12 +27,15 @@ import org.rust.lang.core.types.type
 
 object ImportCandidatesCollector {
 
-    fun getImportCandidates(importContext: ImportContext, target: RsQualifiedNamedElement): Sequence<ImportCandidate> {
+    private fun getImportCandidates(importContext: ImportContext, target: RsQualifiedNamedElement): Sequence<ImportCandidate> {
         val name = target.name ?: return emptySequence()
         return getImportCandidates(importContext, name, name) {
             it.item == target
         }
     }
+
+    fun findImportCandidate(importContext: ImportContext, target: RsQualifiedNamedElement): ImportCandidate? =
+        getImportCandidates(importContext, target).firstOrNull()
 
     /**
      * Returns a sequence of import candidates, after importing any of which it becomes possible to resolve the
@@ -99,19 +102,6 @@ object ImportCandidatesCollector {
         resolvedMethods: List<MethodResolveVariant>
     ): Sequence<ImportCandidate>? {
         return getTraitImportCandidates(project, scope, resolvedMethods.map { it.source })
-    }
-
-    fun findImportCandidate(importingContext: ImportContext, element: RsQualifiedNamedElement): ImportCandidate? {
-        val project = importingContext.project
-        val searchScope = RsWithMacrosProjectScope(project)
-        val explicitItems = sequenceOf(QualifiedNamedItem.ExplicitItem(element))
-        val reexportedItems = getReexportedItems(project, element.name ?: return null, searchScope)
-        return (explicitItems + reexportedItems)
-            .filter { it.item == element }
-            .flatMap { it.withModuleReexports(project).asSequence() }
-            .mapNotNull { it.toImportCandidate(importingContext.superMods) }
-            .filterImportCandidates(importingContext.attributes)
-            .firstOrNull()
     }
 
     fun getTraitImportCandidates(

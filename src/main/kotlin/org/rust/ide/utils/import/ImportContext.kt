@@ -56,6 +56,7 @@ class ImportContext2 private constructor(
     val rootInfo: RsModInfoBase.RsModInfo,
     /** Mod in which auto-import or completion is called */
     val rootMod: RsMod,
+    val type: Type,
 
     val pathInfo: PathInfo?,
 ) {
@@ -64,14 +65,20 @@ class ImportContext2 private constructor(
     val rootDefMap: CrateDefMap get() = rootInfo.defMap
 
     companion object {
-        fun from(path: RsPath, isCompletion: Boolean): ImportContext2? =
-            from(path, PathInfo.from(path, isCompletion))
+        fun from(path: RsPath, type: Type = Type.AUTO_IMPORT): ImportContext2? =
+            from(path, type, PathInfo.from(path, type == Type.COMPLETION))
 
-        fun from(context: RsElement, pathInfo: PathInfo? = null): ImportContext2? {
+        fun from(context: RsElement, type: Type = Type.AUTO_IMPORT, pathInfo: PathInfo? = null): ImportContext2? {
             val rootMod = context.containingMod
             val info = getModInfo(rootMod) as? RsModInfoBase.RsModInfo ?: return null
-            return ImportContext2(info, rootMod, pathInfo)
+            return ImportContext2(info, rootMod, type, pathInfo)
         }
+    }
+
+    enum class Type {
+        AUTO_IMPORT,
+        COMPLETION,
+        OTHER,
     }
 
     class PathInfo(

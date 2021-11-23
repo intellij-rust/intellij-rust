@@ -356,4 +356,54 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             a::S
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test use correct path 1`() = checkFixByFileTree("Change return type of function 'func' to 'Foo'", """
+    //- lib.rs
+        pub struct Foo;
+    //- main.rs
+        pub use test_package::Foo;
+        mod inner {
+            fn func() {
+                <error>test_package::Foo/*caret*/</error>
+            }
+        }
+    """, """
+    //- lib.rs
+        pub struct Foo;
+    //- main.rs
+        pub use test_package::Foo;
+        mod inner {
+            use test_package::Foo;
+
+            fn func() -> Foo {
+                test_package::Foo/*caret*/
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test use correct path 2`() = checkFixByFileTree("Change return type of function 'func' to 'test_package::Foo'", """
+    //- lib.rs
+        pub struct Foo;
+    //- main.rs
+        pub use test_package::Foo;
+        mod inner {
+            struct Foo;
+            fn func() {
+                <error>test_package::Foo/*caret*/</error>
+            }
+        }
+    """, """
+    //- lib.rs
+        pub struct Foo;
+    //- main.rs
+        pub use test_package::Foo;
+        mod inner {
+            struct Foo;
+            fn func() -> test_package::Foo {
+                test_package::Foo/*caret*/
+            }
+        }
+    """)
 }
