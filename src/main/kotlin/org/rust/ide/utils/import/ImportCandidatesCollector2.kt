@@ -101,7 +101,7 @@ object ImportCandidatesCollector2 {
     fun getImportCandidates(scope: RsElement, resolvedMethods: List<MethodResolveVariant>): List<ImportCandidate2>? =
         getTraitImportCandidates(scope, resolvedMethods.map { it.source })
 
-    private fun getTraitImportCandidates(scope: RsElement, sources: List<TraitImplSource>): List<ImportCandidate2>? {
+    fun getTraitImportCandidates(scope: RsElement, sources: List<TraitImplSource>): List<ImportCandidate2>? {
         val traits = ImportCandidatesCollector.collectTraitsToImport(scope, sources)
             ?: return null
         val traitsPaths = traits.mapNotNullToSet { it.asModPath() }

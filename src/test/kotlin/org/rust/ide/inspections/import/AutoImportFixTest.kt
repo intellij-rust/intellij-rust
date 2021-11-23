@@ -1663,6 +1663,39 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import trait default method UFCS 2`() = checkAutoImportFixByFileTree("""
+    //- lib.rs
+        pub trait Trait {
+            fn foo() {}
+        }
+        impl<T> Trait for T {}
+    //- main.rs
+        pub use test_package::Trait;
+
+        mod inner {
+            fn main() {
+                i32::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+            }
+        }
+    """, """
+    //- lib.rs
+        pub trait Trait {
+            fn foo() {}
+        }
+        impl<T> Trait for T {}
+    //- main.rs
+        pub use test_package::Trait;
+
+        mod inner {
+            use test_package::Trait;
+
+            fn main() {
+                i32::foo();
+            }
+        }
+    """)
+
     fun `test import trait default assoc function`() = checkAutoImportFixByText("""
         mod foo {
             pub struct S;
