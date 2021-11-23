@@ -47,10 +47,6 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
             SelfConvention("is_", listOf(SelfSignature.BY_REF, SelfSignature.NO_SELF)),
             SelfConvention("to_", listOf(SelfSignature.BY_MUT_REF), postfix = "_mut"),
             SelfConvention("to_", listOf(SelfSignature.BY_REF, SelfSignature.BY_VAL)),
-            SelfConvention("get_", listOf(SelfSignature.BY_MUT_REF), postfix = "_mut"),
-            SelfConvention("get_", listOf(SelfSignature.BY_REF)),
-            SelfConvention("set_", listOf(SelfSignature.BY_MUT_REF)),
-            SelfConvention("with_", listOf(SelfSignature.BY_VAL, SelfSignature.BY_MUT_REF, SelfSignature.NO_SELF))
         )
     }
 }

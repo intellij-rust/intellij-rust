@@ -8,9 +8,6 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-/**
- * Tests for Self Convention inspection
- */
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
     fun `test from`() = checkByText("""
         struct Foo;
@@ -62,42 +59,6 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         impl Foo {
             fn is_awesome(<warning descr="methods called `is_*` usually take self by reference or no self; consider choosing a less ambiguous name">self</warning>) {}
             fn is_awesome_ref(&self) {}
-        }
-    """)
-
-    fun `test get`() = checkByText("""
-        struct Foo;
-        impl Foo {
-            fn get_a(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) {}
-            fn get_b(&self) {}
-            fn get_c(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">&mut self</warning>) {}
-        }
-    """)
-
-    fun `test get mut`() = checkByText("""
-        struct Foo;
-        impl Foo {
-            fn get_a_mut(<warning descr="methods called `get_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">self</warning>) {}
-            fn get_b_mut(<warning descr="methods called `get_*_mut` usually take self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
-            fn get_c_mut(&mut self) {}
-        }
-    """)
-
-    fun `test set`() = checkByText("""
-        struct Foo;
-        impl Foo {
-            fn set_foo(<warning descr="methods called `set_*` usually take self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
-            fn set_bar(&mut self) {}
-        }
-    """)
-
-    fun `test with`() = checkByText("""
-        struct Foo;
-        impl Foo {
-            fn with_foo(<warning descr="methods called `with_*` usually take self by value or self by mutable reference or no self; consider choosing a less ambiguous name">&self</warning>) {}
-            fn with_bar(&mut self) {}
-            fn with_baz(self) {}
-            fn with_constructor() {}
         }
     """)
 
