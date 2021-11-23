@@ -1578,11 +1578,11 @@ private fun processLexicalDeclarations(
             val guardPat = scope.matchArmGuard?.pat
             if (guardPat == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
             val prevScope = mutableMapOf<String, Set<Namespace>>()
-            val stop = processWithShadowingAndUpdateScope(prevScope, processor) { shadowingProcessor ->
+            val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
                 processPattern(guardPat, shadowingProcessor)
             }
             if (stop) return true
-            return processWithShadowing(prevScope, processor) { shadowingProcessor ->
+            return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
                 processPattern(scope.pat, shadowingProcessor)
             }
         }
@@ -1606,7 +1606,7 @@ fun processNestedScopesUpwards(
     }
     val prevScope = mutableMapOf<String, Set<Namespace>>()
     val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
-        processWithShadowingAndUpdateScope(prevScope, processor) { shadowingProcessor ->
+        processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
             val ipm = when {
                 scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
                 isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
@@ -1622,7 +1622,7 @@ fun processNestedScopesUpwards(
 
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
-        return processWithShadowing(prevScope, processor) { shadowingProcessor ->
+        return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
             processItemDeclarations(prelude, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
         }
     }
@@ -1662,14 +1662,18 @@ private tailrec fun PsiFile.unwrapCodeFragments(): PsiFile {
 
 inline fun processWithShadowingAndUpdateScope(
     prevScope: MutableMap<String, Set<Namespace>>,
+    ns: Set<Namespace>,
     processor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val currScope = mutableMapOf<String, Set<Namespace>>()
     val shadowingProcessor = createProcessor(processor.name) { e ->
         val prevNs = prevScope[e.name]
-        if (prevNs != null && (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) == true) {
-            return@createProcessor false
+        if (prevNs != null) {
+            val newNs = (e.element as? RsNamedElement)?.namespaces
+            if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
+                return@createProcessor false
+            }
         }
         val result = processor(e)
         if (e.isInitialized) {
@@ -1689,13 +1693,14 @@ inline fun processWithShadowingAndUpdateScope(
 
 inline fun processWithShadowing(
     prevScope: Map<String, Set<Namespace>>,
+    ns: Set<Namespace>,
     originalProcessor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val processor = createProcessor(originalProcessor.name) { e ->
-        val prevNs = prevScope[e.name]
-        (prevNs == null || (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) != true)
-            && originalProcessor(e)
+        val prevNs = prevScope[e.name] ?: return@createProcessor originalProcessor(e)
+        val newNs = (e.element as? RsNamedElement)?.namespaces
+        (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor(e)
     }
     return f(processor)
 }
