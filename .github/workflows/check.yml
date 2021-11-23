@@ -182,7 +182,9 @@ jobs:
               with:
                   path: |
                       ~/.cargo/bin/evcxr
+                      ~/.cargo/bin/evcxr.exe
                       ~/.cargo/bin/cargo-generate
+                      ~/.cargo/bin/cargo-generate.exe
                       ~/.cargo/.crates.toml
                       ~/.cargo/.crates2.json
                   key: ${{ runner.os }}-cache-cargo-binaries-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
