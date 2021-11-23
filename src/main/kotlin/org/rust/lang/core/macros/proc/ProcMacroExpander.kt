@@ -14,15 +14,11 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ExecutableNotFound
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ProcMacroExpansionIsDisabled
-import org.rust.lang.core.macros.tt.MappedSubtree
-import org.rust.lang.core.macros.tt.TokenTree
-import org.rust.lang.core.macros.tt.parseSubtree
-import org.rust.lang.core.macros.tt.toMappedText
+import org.rust.lang.core.macros.tt.*
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
-import org.rust.stdext.RsResult.Ok
 import java.io.IOException
 import java.util.concurrent.TimeoutException
 
@@ -81,8 +77,15 @@ class ProcMacroExpander(
         val remoteLib = toolchain?.toRemotePath(lib) ?: lib
         val server = server ?: return Err(if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled)
         val envList = env.map { listOf(it.key, toolchain?.toRemotePath(it.value) ?: it.value) }
+        val request = Request.ExpandMacro(
+            FlatTree.fromSubtree(macroCallBody),
+            macroName,
+            attributes?.let { FlatTree.fromSubtree(it) },
+            remoteLib,
+            envList
+        )
         val response = try {
-            server.send(Request.ExpansionMacro(macroCallBody, macroName, attributes, remoteLib, envList), timeout)
+            server.send(request, timeout)
         } catch (ignored: TimeoutException) {
             return Err(ProcMacroExpansionError.Timeout(timeout))
         } catch (e: ProcessCreationException) {
@@ -94,9 +97,11 @@ class ProcMacroExpander(
             MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
             return Err(ProcMacroExpansionError.IOExceptionThrown)
         }
-        return when (response) {
-            is Response.ExpansionMacro -> Ok(response.expansion)
-            is Response.Error -> Err(ProcMacroExpansionError.ServerSideError(response.message))
+        check(response is Response.ExpandMacro)
+        return response.expansion.map {
+            it.toTokenTree()
+        }.mapErr {
+            ProcMacroExpansionError.ServerSideError(it.message)
         }
     }
 

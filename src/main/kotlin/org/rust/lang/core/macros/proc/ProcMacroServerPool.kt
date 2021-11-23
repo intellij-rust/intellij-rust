@@ -24,9 +24,9 @@ import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.lang.core.macros.MACRO_LOG
-import org.rust.lang.core.macros.tt.TokenTree
-import org.rust.lang.core.macros.tt.TokenTreeJsonDeserializer
-import org.rust.lang.core.macros.tt.TokenTreeJsonSerializer
+import org.rust.lang.core.macros.tt.FlatTree
+import org.rust.lang.core.macros.tt.FlatTreeJsonDeserializer
+import org.rust.lang.core.macros.tt.FlatTreeJsonSerializer
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.*
@@ -351,7 +351,7 @@ object ProcMacroJsonParser {
             SimpleModule()
                 .addSerializer(Request::class.java, RequestJsonSerializer())
                 .addDeserializer(Response::class.java, ResponseJsonDeserializer())
-                .addDeserializer(TokenTree::class.java, TokenTreeJsonDeserializer)
-                .addSerializer(TokenTree::class.java, TokenTreeJsonSerializer)
+                .addDeserializer(FlatTree::class.java, FlatTreeJsonDeserializer)
+                .addSerializer(FlatTree::class.java, FlatTreeJsonSerializer)
         )
 }
