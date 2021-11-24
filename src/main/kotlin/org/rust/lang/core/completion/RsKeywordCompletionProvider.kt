@@ -12,10 +12,11 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.util.ProcessingContext
+import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsBaseTypeKind
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.returnType
-import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.psi.ext.kind
 
 class RsKeywordCompletionProvider(
     private vararg val keywords: String
@@ -43,7 +44,9 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
         in ALWAYS_NEEDS_SPACE -> " "
         "return" -> {
             val fn = parameters.position.ancestorStrict<RsFunction>() ?: return builder
-            if (fn.returnType !is TyUnit) " " else ";"
+            val fnRetType = fn.retType
+            val returnsUnit = fnRetType == null || (fnRetType.typeReference as? RsBaseType)?.kind == RsBaseTypeKind.Unit
+            if (returnsUnit) ";" else " "
         }
         else -> return builder
     }

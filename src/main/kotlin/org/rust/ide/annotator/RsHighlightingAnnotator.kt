@@ -106,8 +106,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
         val parent = element.parent
         val reference = element.reference
-        val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null &&
-            (parent is RsBaseType || parent is RsPath && reference != null && reference.multiResolve().isEmpty())
+        val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null
 
         return when {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
