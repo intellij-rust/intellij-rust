@@ -18,7 +18,7 @@ import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.guessAndSetupRustProject
-import org.rust.ide.security.isOldTrustedProjectApiAvailable
+import org.rust.ide.security.isNewTrustedProjectApiAvailable
 import javax.swing.Icon
 
 class CargoProjectOpenProcessor : ProjectOpenProcessor() {
@@ -39,13 +39,13 @@ class CargoProjectOpenProcessor : ProjectOpenProcessor() {
         // if they trust project before opening, i.e. we don't need to check it manually.
         // Moreover, the corresponding API was changed, so we should avoid using old API
         // not to produce runtime errors
-        if (isOldTrustedProjectApiAvailable) {
+        if (!isNewTrustedProjectApiAvailable) {
             choice = confirmOpeningUntrustedProject(basedir, listOf(RsBundle.message("cargo")))
             if (choice == OpenUntrustedProjectChoice.CANCEL) return null
         }
 
         return PlatformProjectOpenProcessor.getInstance().doOpenProject(basedir, projectToClose, forceNewFrame)?.also {
-            if (isOldTrustedProjectApiAvailable) {
+            if (!isNewTrustedProjectApiAvailable) {
                 it.setTrusted(choice == OpenUntrustedProjectChoice.IMPORT)
             }
             StartupManager.getInstance(it).runWhenProjectIsInitialized { guessAndSetupRustProject(it) }

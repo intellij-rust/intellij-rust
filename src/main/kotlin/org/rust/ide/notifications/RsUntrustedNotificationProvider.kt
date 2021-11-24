@@ -17,6 +17,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.isCargoToml
+import org.rust.ide.security.isNewTrustedProjectApiAvailable
 import org.rust.lang.core.psi.isRustFile
 
 class RsUntrustedNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
@@ -26,6 +27,7 @@ class RsUntrustedNotificationProvider : EditorNotifications.Provider<EditorNotif
     @Suppress("UnstableApiUsage")
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
         if (project.isTrusted()) return null
+        if (isNewTrustedProjectApiAvailable) return null
         if (!(file.isRustFile || file.isCargoToml)) return null
 
         val cargoProjects = project.cargoProjects

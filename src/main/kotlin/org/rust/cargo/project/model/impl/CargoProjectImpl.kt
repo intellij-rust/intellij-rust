@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.RunManager
 import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
@@ -55,6 +56,8 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.security.isNewTrustedProjectApiAvailable
+import org.rust.ide.security.whenProjectTrusted
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.TaskResult
@@ -78,7 +81,7 @@ import java.util.concurrent.atomic.AtomicReference
 ])
 open class CargoProjectsServiceImpl(
     final override val project: Project
-) : CargoProjectsService, PersistentStateComponent<Element> {
+) : CargoProjectsService, PersistentStateComponent<Element>, Disposable {
     init {
         with(project.messageBus.connect()) {
             if (!isUnitTestMode) {
@@ -103,6 +106,14 @@ open class CargoProjectsServiceImpl(
                     }, ModalityState.NON_MODAL)
                 }
             })
+        }
+        // BACKCOMPAT: 2021.3. Just declare `com.intellij.ide.impl.TrustStateListener`
+        //  instead of `org.rust.ide.security.RsTrustChangeNotifier`
+        if (isNewTrustedProjectApiAvailable) {
+            @Suppress("LeakingThis")
+            whenProjectTrusted(this) {
+                refreshAllProjects()
+            }
         }
     }
 
@@ -454,6 +465,8 @@ open class CargoProjectsServiceImpl(
         // Should be initialized with this service because it stores a part of cargo projects data
         project.service<UserDisabledFeaturesHolder>()
     }
+
+    override fun dispose() {}
 
     override fun toString(): String =
         "CargoProjectsService(projects = $allProjects)"
