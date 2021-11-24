@@ -7,18 +7,18 @@ package org.rust.lang.core.macros.proc
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
-import org.rust.lang.core.macros.tt.TokenTree
-import org.rust.lang.core.macros.tt.TokenTreeJsonSerializer
+import org.rust.lang.core.macros.tt.FlatTree
+import org.rust.lang.core.macros.tt.FlatTreeJsonSerializer
 import org.rust.stdext.exhaustive
 import org.rust.util.RsJacksonSerializer
 
 // This is a sealed class because there is `ListMacro` request kind which we don't use for now
 sealed class Request {
     // data class ListMacro(...)
-    data class ExpansionMacro(
-        val macroBody: TokenTree.Subtree,
+    data class ExpandMacro(
+        val macroBody: FlatTree,
         val macroName: String,
-        val attributes: TokenTree.Subtree?,
+        val attributes: FlatTree?,
         val lib: String,
         val env: List<List<String>>
     ) : Request()
@@ -27,12 +27,12 @@ sealed class Request {
 class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) {
     override fun serialize(request: Request, gen: JsonGenerator, provider: SerializerProvider) {
         when (request) {
-            is Request.ExpansionMacro -> gen.writeJsonObjectWithSingleField("ExpansionMacro") {
+            is Request.ExpandMacro -> gen.writeJsonObjectWithSingleField("ExpandMacro") {
                 writeJsonObject {
-                    writeField("macro_body") { TokenTreeJsonSerializer.writeSubtree(request.macroBody, gen) }
+                    writeField("macro_body") { FlatTreeJsonSerializer.serialize(request.macroBody, gen, provider) }
                     writeStringField("macro_name", request.macroName)
                     writeNullableField("attributes", request.attributes) { attributes ->
-                        TokenTreeJsonSerializer.writeSubtree(attributes, gen)
+                        FlatTreeJsonSerializer.serialize(attributes, gen, provider)
                     }
                     writeStringField("lib", request.lib)
                     writeArrayField("env", request.env) { list ->

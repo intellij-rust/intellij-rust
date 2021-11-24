@@ -7,6 +7,7 @@ package org.rust.util
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import gnu.trove.TIntArrayList
 
 abstract class RsJacksonSerializer<T>(t: Class<T>) : StdSerializer<T>(t) {
     protected inline fun JsonGenerator.writeJsonObject(writeBody: JsonGenerator.() -> Unit) {
@@ -45,6 +46,20 @@ abstract class RsJacksonSerializer<T>(t: Class<T>) : StdSerializer<T>(t) {
         writeStartArray()
         for (e in list) {
             writeElement(e)
+        }
+        writeEndArray()
+    }
+
+    protected fun JsonGenerator.writeArrayField(name: String, list: TIntArrayList, writeElement: JsonGenerator.(Int) -> Unit) {
+        writeFieldName(name)
+        writeArray(list, writeElement)
+    }
+
+    protected fun JsonGenerator.writeArray(list: TIntArrayList, writeElement: JsonGenerator.(Int) -> Unit) {
+        writeStartArray()
+        list.forEach {
+            writeElement(it)
+            true
         }
         writeEndArray()
     }

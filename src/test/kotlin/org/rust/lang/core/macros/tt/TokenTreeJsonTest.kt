@@ -15,301 +15,125 @@ import org.rust.lang.core.parser.createRustPsiBuilder
 class TokenTreeJsonTest : RsTestBase() {
     fun `test 1`() = doTest(".", """
         {
-          "delimiter": null,
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 0
-                }
-              }
-            }
-          ]
+          "subtree": [ 4294967295, 0, 0, 1 ],
+          "literal": [ ],
+          "punct": [ 0, 46, 0 ],
+          "ident": [ ],
+          "token_tree": [ 2 ],
+          "text": [ ]
         }
     """)
 
     fun `test 2`() = doTest("..", """
         {
-          "delimiter": null,
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 0
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 1
-                }
-              }
-            }
-          ]
+          "subtree": [ 4294967295, 0, 0, 2 ],
+          "literal": [ ],
+          "punct": [ 0, 46, 1, 1, 46, 0 ],
+          "ident": [ ],
+          "token_tree": [ 2, 6 ],
+          "text": [ ]
         }
     """)
 
     fun `test 3`() = doTest(".foo", """
         {
-          "delimiter": null,
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 0
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Ident": {
-                  "text": "foo",
-                  "id": 1
-                }
-              }
-            }
-          ]
+          "subtree": [ 4294967295, 0, 0, 2 ],
+          "literal": [ ],
+          "punct": [ 0, 46, 0 ],
+          "ident": [ 1, 0 ],
+          "token_tree": [ 2, 3 ],
+          "text": [ "foo" ]
         }
     """)
 
     fun `test 4`() = doTest(":::", """
         {
-          "delimiter": null,
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ":",
-                  "spacing": "Joint",
-                  "id": 0
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ":",
-                  "spacing": "Joint",
-                  "id": 1
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ":",
-                  "spacing": "Alone",
-                  "id": 2
-                }
-              }
-            }
-          ]
+          "subtree": [ 4294967295, 0, 0, 3 ],
+          "literal": [ ],
+          "punct": [ 0, 58, 1, 1, 58, 1, 2, 58, 0 ],
+          "ident": [ ],
+          "token_tree": [ 2, 6, 10 ],
+          "text": [ ]
         }
     """)
 
     fun `test 5`() = doTest(". asd .. \"asd\" ...", """
         {
-          "delimiter": null,
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 0
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Ident": {
-                  "text": "asd",
-                  "id": 1
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 2
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 3
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Literal": {
-                  "text": "\"asd\"",
-                  "id": 4
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 5
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 6
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Alone",
-                  "id": 7
-                }
-              }
-            }
-          ]
+          "subtree": [ 4294967295, 0, 0, 8 ],
+          "literal": [ 4, 1 ],
+          "punct": [ 0, 46, 0, 2, 46, 1, 3, 46, 0, 5, 46, 1, 6, 46, 1, 7, 46, 0 ],
+          "ident": [ 1, 0 ],
+          "token_tree": [ 2, 3, 6, 10, 1, 14, 18, 22 ],
+          "text": [ "asd", "\"asd\"" ]
         }
     """)
 
     fun `test 6`() = doTest("{}", """
         {
-          "delimiter": {
-            "id": 0,
-            "kind": "Brace"
-          },
-          "token_trees": [ ]
+          "subtree": [ 0, 2, 0, 0 ],
+          "literal": [ ],
+          "punct": [ ],
+          "ident": [ ],
+          "token_tree": [ ],
+          "text": [ ]
         }
     """)
 
     fun `test 7`() = doTest("[]", """
         {
-          "delimiter": {
-            "id": 0,
-            "kind": "Bracket"
-          },
-          "token_trees": [ ]
+          "subtree": [ 0, 3, 0, 0 ],
+          "literal": [ ],
+          "punct": [ ],
+          "ident": [ ],
+          "token_tree": [ ],
+          "text": [ ]
         }
     """)
 
     fun `test 8`() = doTest("()", """
         {
-          "delimiter": {
-            "id": 0,
-            "kind": "Parenthesis"
-          },
-          "token_trees": [ ]
+          "subtree": [ 0, 1, 0, 0 ],
+          "literal": [ ],
+          "punct": [ ],
+          "ident": [ ],
+          "token_tree": [ ],
+          "text": [ ]
         }
     """)
 
     fun `test 9`() = doTest("(..)", """
         {
-          "delimiter": {
-            "id": 0,
-            "kind": "Parenthesis"
-          },
-          "token_trees": [
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 1
-                }
-              }
-            },
-            {
-              "Leaf": {
-                "Punct": {
-                  "char": ".",
-                  "spacing": "Joint",
-                  "id": 2
-                }
-              }
-            }
-          ]
+          "subtree": [ 0, 1, 0, 2 ],
+          "literal": [ ],
+          "punct": [ 1, 46, 1, 2, 46, 1 ],
+          "ident": [ ],
+          "token_tree": [ 2, 6 ],
+          "text": [ ]
         }
     """)
 
     fun `test 10`() = doTest("([{.}])", """
         {
-          "delimiter": {
-            "id": 0,
-            "kind": "Parenthesis"
-          },
-          "token_trees": [
-            {
-              "Subtree": {
-                "delimiter": {
-                  "id": 1,
-                  "kind": "Bracket"
-                },
-                "token_trees": [
-                  {
-                    "Subtree": {
-                      "delimiter": {
-                        "id": 2,
-                        "kind": "Brace"
-                      },
-                      "token_trees": [
-                        {
-                          "Leaf": {
-                            "Punct": {
-                              "char": ".",
-                              "spacing": "Joint",
-                              "id": 3
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          ]
+          "subtree": [ 0, 1, 0, 1, 1, 3, 1, 2, 2, 2, 2, 3 ],
+          "literal": [ ],
+          "punct": [ 3, 46, 1 ],
+          "ident": [ ],
+          "token_tree": [ 4, 8, 2 ],
+          "text": [ ]
         }
     """)
 
     fun doTest(code: String, @Language("Json") expectedJson: String) {
-        val expectedJson2 = expectedJson
-            .trimIndent()
-            .lineSequence()
-            .drop(1)
-            .joinToString(prefix = "{\n  \"Subtree\": {\n", separator = "\n", postfix = "\n}") { "  $it" }
-
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
 
         val jackson = ProcMacroJsonParser.jackson
         val actualJson = jackson
             .writer()
             .with(DefaultPrettyPrinter(TestPrettyPrinter()))
-            .writeValueAsString(subtree)
+            .writeValueAsString(FlatTree.fromSubtree(subtree))
 
-        assertEquals(expectedJson2, actualJson)
-        assertEquals(jackson.readValue(actualJson, TokenTree::class.java), subtree)
+        assertEquals(expectedJson.trimIndent(), actualJson)
+        assertEquals(jackson.readValue(actualJson, FlatTree::class.java).toTokenTree(), subtree)
     }
 }
 
@@ -317,7 +141,6 @@ private class TestPrettyPrinter : DefaultPrettyPrinter() {
     init {
         _objectFieldValueSeparatorWithSpaces = ": "
         _objectIndenter = UNIX_LINE_FEED_INSTANCE
-        _arrayIndenter = UNIX_LINE_FEED_INSTANCE
     }
 
     companion object {
