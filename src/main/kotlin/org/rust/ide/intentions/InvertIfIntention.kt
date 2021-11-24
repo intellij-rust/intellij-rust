@@ -150,6 +150,7 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
         val factory = RsPsiFactory(negatedCondition.project)
         val source = IfStmts(ctx.thenBlockStmts, ctx.nextStmts)
         val target = source
+            .addSemicolonToControlFlowExprs(factory)
             .convertTailExprToReturn(ctx.block, factory)
             .addImplicitReturnOrContinue(ctx.block, factory)
             .swapSpaces()
@@ -195,6 +196,26 @@ data class IfStmts(
         val thenBlockText = thenBlockStmts.joinToString("") { it.text }
         val nextText = nextStmts.joinToString("") { it.text }
         return "if (...) {$thenBlockText}$nextText"
+    }
+}
+
+/**
+ * `{ return 1 }` => `{ return 1; }`
+ * `{ break }` => `{ break; }`
+ * `{ continue }` => `{ continue; }`
+ */
+private fun IfStmts.addSemicolonToControlFlowExprs(factory: RsPsiFactory): IfStmts =
+    copy(
+        thenBlockStmts = thenBlockStmts.addSemicolonToControlFlowExpr(factory),
+        nextStmts = nextStmts.addSemicolonToControlFlowExpr(factory)
+    )
+
+private fun List<PsiElement>.addSemicolonToControlFlowExpr(factory: RsPsiFactory): List<PsiElement> {
+    val expr = filterIsInstance<RsExpr>().lastOrNull() ?: return this
+    return if (expr is RsRetExpr || expr is RsContExpr || expr is RsBreakExpr) {
+        replace(expr, expr.wrapInStmt(factory))
+    } else {
+        this
     }
 }
 
@@ -268,9 +289,16 @@ private fun IfStmts.removeNestedReturnOrContinueIfNoNextStmts(block: RsBlock): I
 private fun removeLastReturnOrContinue(stmts: List<PsiElement>, block: RsBlock): List<PsiElement> {
     val lastStmt = stmts.filterIsInstance<RsExprStmt>().lastOrNull() ?: return stmts
     val lastExpr = lastStmt.expr
-    val hasImplicitReturn = block.parent is RsFunctionOrLambda && lastExpr is RsRetExpr && lastExpr.expr == null
-    val hasImplicitContinue = block.parent is RsLooplikeExpr && lastExpr is RsContExpr
-    return if (hasImplicitReturn || hasImplicitContinue) {
+    val canRemove = when (block.parent) {
+        is RsFunctionOrLambda -> lastExpr is RsRetExpr && lastExpr.expr == null
+        is RsLooplikeExpr -> when (lastExpr) {
+            is RsContExpr -> lastExpr.label == null
+            is RsBreakExpr -> lastExpr.label == null
+            else -> false
+        }
+        else -> false
+    }
+    return if (canRemove) {
         stmts.filter { it != lastStmt }
     } else {
         stmts
