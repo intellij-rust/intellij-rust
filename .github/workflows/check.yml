@@ -67,7 +67,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                rust-version: [ 1.55.0 ]
+                rust-version: [ 1.56.1 ]
                 config:
                     - name: linux
                       arch: x86-64
