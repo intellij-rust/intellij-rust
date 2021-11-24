@@ -94,6 +94,15 @@ class RsConstArgumentResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
+    fun `test type is preferred in an upper scope (unit struct)`() = checkByCode("""
+        struct N;
+             //X
+        fn bar<T>() {}
+        fn foo<const N: i32>() {
+            bar::<N>();
+        }       //^
+    """)
+
     // Method call arguments:
 
     fun `test disambiguate type argument in method call`() = checkByCode("""

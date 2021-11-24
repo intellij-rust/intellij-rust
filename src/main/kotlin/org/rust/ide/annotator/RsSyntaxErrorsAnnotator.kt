@@ -123,26 +123,26 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
     when (val owner = ta.owner) {
         is RsAbstractableOwner.Free -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-            require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
+            require(ta.typeReference, holder, "$title should have a body`", ta)
         }
         is RsAbstractableOwner.Trait -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
-            deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
-            deny(ta.whereClause, holder, "$title cannot have `where` clause")
         }
         is RsAbstractableOwner.Impl -> {
-            if (owner.impl.`for` == null) {
-                RsDiagnostic.AssociatedTypeInInherentImplError(ta).addToHolder(holder)
-            } else {
-                deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
-                deny(ta.whereClause, holder, "$title cannot have `where` clause")
-                deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-                require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+            if (owner.isInherent) {
+                deny(ta.default, holder, "$title cannot have the `default` qualifier")
             }
+            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
+            require(ta.typeReference, holder, "$title should have a body", ta)
         }
-        RsAbstractableOwner.Foreign -> Unit
+        RsAbstractableOwner.Foreign -> {
+            deny(ta.default, holder, "$title cannot have the `default` qualifier")
+            deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
+            deny(ta.whereClause, holder, "$title cannot have `where` clause")
+            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
+            deny(ta.typeReference, holder, "$title cannot have a body", ta)
+        }
     }
 }
 
