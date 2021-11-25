@@ -1668,7 +1668,7 @@ inline fun processWithShadowingAndUpdateScope(
 ): Boolean {
     val currScope = mutableMapOf<String, Set<Namespace>>()
     val shadowingProcessor = createProcessor(processor.name) { e ->
-        val prevNs = prevScope[e.name]
+        val prevNs = if (e.name != "_") prevScope[e.name] else null
         if (prevNs != null) {
             val newNs = (e.element as? RsNamedElement)?.namespaces
             if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
@@ -1676,7 +1676,7 @@ inline fun processWithShadowingAndUpdateScope(
             }
         }
         val result = processor(e)
-        if (e.isInitialized) {
+        if (e.isInitialized && e.name != "_") {
             val newNs = (e.element as? RsNamedElement)?.namespaces
             if (newNs != null) {
                 currScope[e.name] = prevNs?.let { it + newNs } ?: newNs
@@ -1698,7 +1698,8 @@ inline fun processWithShadowing(
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val processor = createProcessor(originalProcessor.name) { e ->
-        val prevNs = prevScope[e.name] ?: return@createProcessor originalProcessor(e)
+        val prevNs = prevScope[e.name]
+        if (e.name == "_" || prevNs == null) return@createProcessor originalProcessor(e)
         val newNs = (e.element as? RsNamedElement)?.namespaces
         (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor(e)
     }

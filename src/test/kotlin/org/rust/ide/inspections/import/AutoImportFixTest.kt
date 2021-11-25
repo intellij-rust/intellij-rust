@@ -2938,4 +2938,21 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             func();
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test UFCS with unnamed trait import inside another trait impl`() = checkAutoImportFixIsUnavailable("""
+        mod inner {
+            pub struct Foo {}
+            pub trait Trait { fn func() {} }
+            impl Trait for Foo {}
+        }
+        use inner::Trait as _;
+
+        trait OtherTrait { fn other_func(); }
+        impl OtherTrait for () {
+            fn other_func() {
+                inner::Foo::func/*caret*/();
+            }
+        }
+    """)
 }
