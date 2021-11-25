@@ -109,7 +109,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ windows-2022 ]
-                wsl-distribution: [ Ubuntu-20.04 ]
+                wsl-distribution: [ Ubuntu-18.04 ]
                 rust-version: [ 1.55.0 ]
                 base-ide: [ idea ]
                 platform-version: [ 213 ]
@@ -134,7 +134,6 @@ jobs:
               uses: Vampire/setup-wsl@v1
               with:
                   distribution: ${{ matrix.wsl-distribution }}
-                  additional-packages: cargo
                   wsl-shell-user: test
 
             - name: Set up WSL 2
@@ -143,10 +142,7 @@ jobs:
             - name: Set up WSL Rust
               shell: wsl-bash {0}
               run: |
-                  curl https://sh.rustup.rs -sSf | sh -s --  -y --profile minimal --default-toolchain ${{ matrix.rust-version }} -c rust-src rustfmt clippy
-                  source $HOME/.cargo/env
-                  rustup install --profile minimal nightly
-                  rustup +nightly component add rust-src
+                  curl https://sh.rustup.rs -sSf | sh -s -- -y --profile none
 
             - name: Check environment
               shell: wsl-bash {0}
