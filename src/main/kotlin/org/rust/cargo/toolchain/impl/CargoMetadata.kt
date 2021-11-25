@@ -418,8 +418,10 @@ object CargoMetadata {
         val gdb = ((this.metadata as? JsonObject)?.get("gdb") as? JsonObject)?.get("pretty-printers") as? JsonArray
 
         val lldbP = lldb?.asSequence().orEmpty().filterIsInstance<JsonObject>().mapNotNull {
+            val relativePath = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null
+            val absPath = Path.of(rootPath, relativePath).toString()
             CargoWorkspaceData.LLDBPrettyPrinterMetadata(
-                path = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                path = absPath,
                 pythonClassName = (it.get("python_class") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
                 regex = (it.get("regex") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
                 isSummary = (it.get("is-summary") as? JsonPrimitive)?.asBoolean ?: return@mapNotNull null,
@@ -427,8 +429,10 @@ object CargoMetadata {
         }.toList()
 
         val gdbP = gdb?.asSequence().orEmpty().filterIsInstance<JsonObject>().mapNotNull {
+            val relativePath = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null
+            val absPath = Path.of(rootPath, relativePath).toString()
             CargoWorkspaceData.GDBPrettyPrinterMetadata(
-                path = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                path = absPath,
                 pythonClassName = (it.get("python_class") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
             )
         }.toList()
