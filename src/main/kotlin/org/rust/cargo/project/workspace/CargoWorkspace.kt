@@ -110,6 +110,8 @@ interface CargoWorkspace {
 
         val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?
 
+        val prettyPrintersMetadata: CargoWorkspaceData.PrettyPrintersMetadata?
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
@@ -242,6 +244,7 @@ private class WorkspaceImpl(
             pkg.env,
             pkg.outDirUrl,
             pkg.procMacroArtifact,
+            pkg.prettyPrintersMetadata,
         )
     }
 
@@ -583,6 +586,7 @@ private class PackageImpl(
     override val env: Map<String, String>,
     val outDirUrl: String?,
     override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
+    override val prettyPrintersMetadata: CargoWorkspaceData.PrettyPrintersMetadata?,
 ) : UserDataHolderBase(), CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
@@ -722,5 +726,6 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         cfgOptions = cfgOptions,
         env = env,
         outDirUrl = outDirUrl,
-        procMacroArtifact = procMacroArtifact
+        procMacroArtifact = procMacroArtifact,
+        prettyPrintersMetadata = prettyPrintersMetadata,
     )

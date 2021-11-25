@@ -60,6 +60,7 @@ data class CargoWorkspaceData(
         val env: Map<String, String>,
         val outDirUrl: String?,
         val procMacroArtifact: ProcMacroArtifact? = null,
+        val prettyPrintersMetadata: PrettyPrintersMetadata? = null,
     )
 
     data class Target(
@@ -80,5 +81,22 @@ data class CargoWorkspaceData(
     data class ProcMacroArtifact(
         val path: Path,
         val hash: HashCode
+    )
+
+    data class PrettyPrintersMetadata(
+        val lldbPrettyPrinters: List<LLDBPrettyPrinterMetadata>,
+        val gdbPrettyPrinters: List<GDBPrettyPrinterMetadata>
+    )
+
+    data class LLDBPrettyPrinterMetadata(
+        val path: String,
+        val pythonClassName: String,
+        val regex: String,
+        val isSummary: Boolean
+    )
+
+    data class GDBPrettyPrinterMetadata(
+        val path: String,
+        val pythonClassName: String
     )
 }

@@ -5,6 +5,10 @@
 
 package org.rust.cargo.toolchain.impl
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -131,7 +135,9 @@ object CargoMetadata {
          * Dependencies as they listed in the package `Cargo.toml`, without package resolution or
          * any additional data.
          */
-        val dependencies: List<RawDependency>
+        val dependencies: List<RawDependency>,
+
+        val metadata: JsonElement?,
     ) {
         fun convertPaths(converter: PathConverter): Package = copy(
             manifest_path = converter(manifest_path),
@@ -408,6 +414,25 @@ object CargoMetadata {
             ?.let { root.fileSystem.refreshAndFindFileByPath(it) }
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
+        val lldb = ((this.metadata as? JsonObject)?.get("lldb") as? JsonObject)?.get("renderers") as? JsonArray
+        val gdb = ((this.metadata as? JsonObject)?.get("gdb") as? JsonObject)?.get("pretty-printers") as? JsonArray
+
+        val lldbP = lldb?.asSequence().orEmpty().filterIsInstance<JsonObject>().mapNotNull {
+            CargoWorkspaceData.LLDBPrettyPrinterMetadata(
+                path = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                pythonClassName = (it.get("python_class") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                regex = (it.get("regex") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                isSummary = (it.get("is-summary") as? JsonPrimitive)?.asBoolean ?: return@mapNotNull null,
+            )
+        }.toList()
+
+        val gdbP = gdb?.asSequence().orEmpty().filterIsInstance<JsonObject>().mapNotNull {
+            CargoWorkspaceData.GDBPrettyPrinterMetadata(
+                path = (it.get("path") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+                pythonClassName = (it.get("python_class") as? JsonPrimitive)?.asString ?: return@mapNotNull null,
+            )
+        }.toList()
+
         return CargoWorkspaceData.Package(
             id,
             root.url,
@@ -422,7 +447,8 @@ object CargoMetadata {
             cfgOptions = cfgOptions,
             env = env,
             outDirUrl = outDir?.url,
-            procMacroArtifact = procMacroArtifact
+            procMacroArtifact = procMacroArtifact,
+            prettyPrintersMetadata = CargoWorkspaceData.PrettyPrintersMetadata(lldbP, gdbP),
         )
     }
 

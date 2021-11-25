@@ -19,6 +19,7 @@ import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
@@ -51,10 +52,10 @@ class RsDebugProcessConfigurationHelper(
             ?.let { toolchain?.toRemotePath(it) }
     }
 
-    private val packagesPrettyPrintersMetadata: List<PrettyPrintersMetadata>? = cargoProject
+    private val packagesPrettyPrintersMetadata: List<CargoWorkspaceData.PrettyPrintersMetadata>? = cargoProject
         ?.workspace
         ?.packages
-        ?.map { it.getPrettyPrintersMetadata() }
+        ?.mapNotNull { it.prettyPrintersMetadata }
 
     fun configure() {
         process.postCommand { driver ->
