@@ -2,5 +2,14 @@
 name = "example_project"
 version = "0.1.0"
 authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
+edition = "2018"
 
-[dependencies]
+[[package.metadata.lldb.renderers]]
+path = "pretty-printers/lldb/foo.py"
+regex = "^example_project::Foo$"
+python_class = "lldb_lookup.summary_lookup"
+is-summary = false
+
+[[package.metadata.gdb.pretty-printers]]
+path = "pretty-printers/gdb/foo.py"
+python_class = "lldb_lookup.summary_lookup"
