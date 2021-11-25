@@ -190,8 +190,8 @@ class RsBuildActionTest : CargoBuildTest() {
                 """)
 
                 dir("src") {
-                    rust("main.rs", """
-                    fn main() {}
+                    rust("lib.rs", """
+                    fn _foo() {}
                 """)
                 }
             }
