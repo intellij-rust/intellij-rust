@@ -109,7 +109,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ windows-2022 ]
-                wsl-distribution: [ Ubuntu-18.04 ]
+                wsl-distribution: [ Debian, Alpine, kali-linux, openSUSE-Leap-15.2 ]
                 rust-version: [ 1.55.0 ]
                 base-ide: [ idea ]
                 platform-version: [ 213 ]
@@ -135,14 +135,18 @@ jobs:
               with:
                   distribution: ${{ matrix.wsl-distribution }}
                   wsl-shell-user: test
+                  additional-packages: rustup
 
-            - name: Set up WSL 2
-              run: C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
+#            - name: Set up WSL 2
+#              run: C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
 
-            - name: Set up WSL Rust
-              shell: wsl-bash {0}
-              run: |
-                  curl https://sh.rustup.rs -sSf | sh -s -- -y --profile none
+#            - name: Set up WSL Rust
+#              shell: wsl-bash {0}
+#              run: |
+#                  curl https://sh.rustup.rs -sSf | sh -s -- -y --profile none
+#                  source $HOME/.cargo/env
+#                  rustup install --profile minimal nightly
+#                  rustup +nightly component add rust-src
 
             - name: Check environment
               shell: wsl-bash {0}
