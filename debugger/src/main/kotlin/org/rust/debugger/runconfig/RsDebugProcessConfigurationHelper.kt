@@ -161,7 +161,7 @@ class RsDebugProcessConfigurationHelper(
     private fun LLDBDriver.loadCustomPrettyPrinters() {
         if (packagesPrettyPrintersMetadata == null) return
         for (prettyPrinter in packagesPrettyPrintersMetadata.flatMap { it.lldbPrettyPrinters }) {
-            val prettyPrinterPath = prettyPrinter.path
+            val prettyPrinterPath = prettyPrinter.path.systemDependentAndEscaped()
             val prettyPrinterPythonClassName = prettyPrinter.pythonClassName
             val prettyPrinterRegex = prettyPrinter.regex
             executeInterpreterCommand(threadId, frameIndex, """command script import $prettyPrinterPath """)
@@ -204,7 +204,7 @@ class RsDebugProcessConfigurationHelper(
     private fun GDBDriver.loadCustomPrettyPrinters() {
         if (packagesPrettyPrintersMetadata == null) return
         for (prettyPrinter in packagesPrettyPrintersMetadata.flatMap { it.gdbPrettyPrinters }) {
-            val prettyPrinterPath = prettyPrinter.path
+            val prettyPrinterPath = prettyPrinter.path.systemDependentAndEscaped()
             val prettyPrinterPythonClassName = prettyPrinter.pythonClassName
             val command = """python """ +
                 """sys.path.insert(0, "$prettyPrinterPath"); """ +
