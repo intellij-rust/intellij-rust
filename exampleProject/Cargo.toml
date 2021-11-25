@@ -7,7 +7,7 @@ edition = "2018"
 [[package.metadata.lldb.renderers]]
 path = "pretty-printers/lldb/foo.py"
 regex = "^example_project::Foo$"
-python_class = "lldb_lookup.FooSummaryProvider"
+python_class = "foo.FooSummaryProvider"
 is-summary = true
 
 [[package.metadata.gdb.pretty-printers]]
