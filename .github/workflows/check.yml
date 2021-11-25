@@ -130,19 +130,18 @@ jobs:
               with:
                   java-version: 11
 
-            - name: Set up WSL 0
-              run: wsl --set-default-version 2
-
             - name: Set up WSL
               uses: Vampire/setup-wsl@v1
               with:
                   distribution: ${{ matrix.wsl-distribution }}
                   wsl-shell-user: test
+                  additional-packages:
+                      curl
+                      cargo
 
             - name: Set up WSL 2
               run: |
                   C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
-                  wsl --list --verbose
 
             - name: Set up WSL Rust
               shell: wsl-bash {0}
