@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import org.rust.ide.annotator.AnnotatorBase
 import org.rust.ide.annotator.RsErrorAnnotator
-import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
@@ -21,7 +20,6 @@ import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
-import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.openapiext.toPsiFile
 
 open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
@@ -43,9 +41,7 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
     protected fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
         val errorConsumer = if (failOnFirstFileWithErrors) FAIL_FAST else COLLECT_ALL_EXCEPTIONS
-        runWithEnabledFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS) {
-            doTest(info, errorConsumer)
-        }
+        doTest(info, errorConsumer)
     }
 
     protected fun doTest(info: RealProjectInfo, consumer: AnnotationConsumer) {
@@ -146,7 +142,7 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
             override fun finish() {
                 if (annotations.isNotEmpty()) {
-                    error("Error annotations found:\n\n" + annotations.joinToString("\n\n"))
+                    error("Error annotations found (${annotations.size}):\n\n" + annotations.joinToString("\n\n"))
                 }
             }
         }
