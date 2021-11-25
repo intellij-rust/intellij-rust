@@ -506,6 +506,30 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                  //^ Foo<i32>
     """, WITH_ALIAS_NAMES)
 
+    fun `test primitive when there is a mod with the same name`() = testType("""
+        mod u64 {}
+        type T = u64;
+                 //^ u64
+    """)
+
+    fun `test associated type with name f64`() = testType("""
+        trait Trait { type f64; }
+        struct S;
+        impl Trait for S {
+            type f64 = ();
+        }
+        type A = <S as Trait>::f64;
+                             //^ ()
+    """)
+
+    fun `test unresolved associated type with name f64`() = testType("""
+        trait Trait {}
+        struct S;
+        impl Trait for S {}
+        type A = <S as Trait>::f64;
+                             //^ <unknown>
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */

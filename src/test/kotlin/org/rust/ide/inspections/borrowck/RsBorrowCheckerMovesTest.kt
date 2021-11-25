@@ -768,4 +768,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             x;
         }
     """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move when Copy is implemented for struct named as a primitive type`() = checkByText("""
+        struct f64;
+        impl Copy for f64 {}
+
+        fn main() {
+            let a = 1.0;
+            let b = a;
+            let c = a;
+        }
+    """, checkWarn = false)
 }

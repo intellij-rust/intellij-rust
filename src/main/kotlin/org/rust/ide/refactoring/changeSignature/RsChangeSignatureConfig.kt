@@ -12,6 +12,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfo
 import com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER
 import org.rust.ide.refactoring.RsFunctionSignatureConfig
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
@@ -152,7 +153,12 @@ class RsChangeFunctionSignatureConfig private constructor(
                 val patText = parameter.pat?.text ?: "_"
                 // The element has to be copied, otherwise suggested refactoring API
                 // would revert the PSI item to its previous state
-                val type = ParameterProperty.fromItem(parameter.typeReference?.copy() as? RsTypeReference)
+                val parameterCopy = (parameter.typeReference?.copy() as? RsTypeReference)
+                    ?.also {
+                        val context = parameter.typeReference?.parent?.context as? RsElement
+                        context?.let { it1 -> it.setContext(it1) }
+                    }
+                val type = ParameterProperty.fromItem(parameterCopy)
                 Parameter(factory, patText, type, index)
             }
             return RsChangeFunctionSignatureConfig(

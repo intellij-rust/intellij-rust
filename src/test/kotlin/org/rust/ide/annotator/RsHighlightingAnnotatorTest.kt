@@ -160,6 +160,14 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             <VARIABLE>i32</VARIABLE> = 2;
             true
         }
+
+        fn <FUNCTION>not_a_primitive</FUNCTION>() {
+            struct <STRUCT>u8</STRUCT>;
+            mod <MODULE>u16</MODULE> { type <TYPE_ALIAS>T</TYPE_ALIAS> = <PRIMITIVE_TYPE>u16</PRIMITIVE_TYPE>; }
+
+            let <VARIABLE>a</VARIABLE>: <STRUCT>u8</STRUCT> = <STRUCT>u8</STRUCT>;
+            let <VARIABLE>b</VARIABLE>: <MODULE>u16</MODULE>::<TYPE_ALIAS>T</TYPE_ALIAS>;
+        }
     """)
 
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
