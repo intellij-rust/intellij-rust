@@ -21,5 +21,5 @@ class RsMacToolchainFlavor : RsToolchainFlavor() {
         }
     }
 
-    override fun isApplicable(): Boolean = SystemInfo.isMac
+    override fun isApplicable(): Boolean = super.isApplicable() && SystemInfo.isMac
 }

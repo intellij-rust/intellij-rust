@@ -1184,8 +1184,7 @@
         <!-- Toolchain flavors -->
 
         <toolchainFlavor id="rust.rustupToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"
-                         order="first"/>
+                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"/>
 
         <toolchainFlavor id="rust.sysPathToolchainFlavor"
                          implementation="org.rust.cargo.toolchain.flavors.RsSysPathToolchainFlavor"/>
@@ -1200,7 +1199,8 @@
                          implementation="org.rust.cargo.toolchain.flavors.RsWinToolchainFlavor"/>
 
         <toolchainFlavor id="rust.wslToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainFlavor"/>
+                         implementation="org.rust.cargo.toolchain.wsl.RsWslToolchainFlavor"
+                         order="first"/>
 
     </extensions>
 

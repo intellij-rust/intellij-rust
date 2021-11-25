@@ -6,32 +6,27 @@
 package org.rust.cargo.toolchain.wsl
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
-import org.rust.ide.experiments.RsExperiments.WSL_TOOLCHAIN
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isDispatchThread
-import org.rust.openapiext.isFeatureEnabled
 import org.rust.stdext.resolveOrNull
 import java.nio.file.Path
 
 class RsWslToolchainFlavor : RsToolchainFlavor() {
 
     override fun getHomePathCandidates(): Sequence<Path> = sequence {
-        val distributions = compute("Getting installed distributions...") {
-            WslDistributionManager.getInstance().installedDistributions
-        }
+        val distributions = WslDistributionManager.getInstance().computeInstalledDistributions()
         for (distro in distributions) {
             yieldAll(distro.getHomePathCandidates())
         }
     }
 
-    override fun isApplicable(): Boolean =
-        WSLUtil.isSystemCompatible() && isFeatureEnabled(WSL_TOOLCHAIN)
+    override fun isApplicable(): Boolean = RsWslToolchain.isWslEnabled
 
     override fun isValidToolchainPath(path: Path): Boolean =
         WslDistributionManager.isWslPath(path.toString()) && super.isValidToolchainPath(path)
@@ -49,7 +44,7 @@ fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     val home = environment["HOME"]
     val remoteCargoPath = home?.let { "$it/.cargo/bin" }
     val localCargoPath = remoteCargoPath?.let { root.resolve(it) }
-    if (localCargoPath?.isDirectory() == true) {
+    if (localCargoPath?.exists() == true) {
         yield(localCargoPath)
     }
 
@@ -68,7 +63,7 @@ fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     }
 }
 
-private fun <T> compute(
+fun <T> compute(
     @Suppress("UnstableApiUsage") @ProgressTitle title: String,
     getter: () -> T
 ): T = if (isDispatchThread) {

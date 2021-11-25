@@ -49,14 +49,6 @@ jobs:
                   echo "is_master_branch: ${{ steps.calculate-git-info.outputs.is_master_branch }}"
                   echo "checked: ${{ steps.calculate-git-info.outputs.checked }}"
 
-    check-license:
-        runs-on: ubuntu-18.04
-        steps:
-            - uses: actions/checkout@v2
-
-            - name: Check license
-              run: ./check-license.sh
-
     build-native-code:
         needs: [ calculate-git-info ]
         # `fromJSON` is used here to convert string output to boolean
@@ -74,21 +66,6 @@ jobs:
                       os: ubuntu-latest
                       target: x86_64-unknown-linux-gnu
                       artifact_path: native-helper/target/x86_64-unknown-linux-gnu/release/intellij-rust-native-helper
-                    - name: windows
-                      arch: x86-64
-                      os: windows-latest
-                      target: x86_64-pc-windows-msvc
-                      artifact_path: native-helper/target/x86_64-pc-windows-msvc/release/intellij-rust-native-helper.exe
-                    - name: macos
-                      arch: x86-64
-                      os: macos-latest
-                      target: x86_64-apple-darwin
-                      artifact_path: native-helper/target/x86_64-apple-darwin/release/intellij-rust-native-helper
-                    - name: macos
-                      arch: arm64
-                      os: macos-11
-                      target: aarch64-apple-darwin
-                      artifact_path: native-helper/target/aarch64-apple-darwin/release/intellij-rust-native-helper
 
         name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
         runs-on: ${{ matrix.config.os }}
@@ -131,19 +108,12 @@ jobs:
             # `fromJSON` is used here to convert string output to boolean
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
-                os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.56.1, nightly-2021-09-11 ]
-                base-ide: [ idea, clion ]
-                platform-version: [ 212, 213 ]
-                # it's enough to verify plugin structure only once per platform version
+                os: [ windows-2022 ]
+                wsl-distribution: [ Ubuntu-20.04 ]
+                rust-version: [ 1.55.0 ]
+                base-ide: [ idea ]
+                platform-version: [ 213 ]
                 verify-plugin: [ false ]
-                include:
-                    - os: ubuntu-18.04
-                      # Don't forget to update condition in `Set up additional env variables` step
-                      rust-version: 1.41.0
-                      base-ide: idea
-                      platform-version: 212
-                      verify-plugin: true
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
@@ -160,102 +130,39 @@ jobs:
               with:
                   java-version: 11
 
-            - name: Set up Rust
-              uses: actions-rs/toolchain@v1
+            - name: Set up WSL
+              uses: Vampire/setup-wsl@v1
               with:
-                  profile: minimal
-                  toolchain: ${{ matrix.rust-version }}
-                  components: rust-src, rustfmt, clippy
-                  default: true
+                  distribution: ${{ matrix.wsl-distribution }}
+                  additional-packages: cargo
+                  wsl-shell-user: test
 
-            # Requires for tests with overridden toolchain
-            - name: Set up nightly Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: nightly
-                  components: rust-src
-                  default: false
+            - name: Set up WSL 2
+              run: C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
 
-            - name: Cache cargo binaries
-              uses: actions/cache@v2
-              with:
-                  path: |
-                      ~/.cargo/bin/evcxr
-                      ~/.cargo/bin/evcxr.exe
-                      ~/.cargo/bin/cargo-generate
-                      ~/.cargo/bin/cargo-generate.exe
-                      ~/.cargo/.crates.toml
-                      ~/.cargo/.crates2.json
-                  key: ${{ runner.os }}-cache-cargo-binaries-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
-                  restore-keys: |
-                      ${{ runner.os }}-cache-cargo-binaries-${{ matrix.rust-version }}-
-
-            - name: Install evcxr
-              # BACKCOMPAT: Evcxr 0.11 requires at least stable-1.53 or nightly-2021-05-01
-              if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.53.0' && matrix.rust-version != 'nightly-2021-03-24'
-              uses: actions-rs/cargo@v1
-              with:
-                  command: install
-                  args: evcxr_repl
-
-            - name: Install cargo-generate
-              # BACKCOMPAT: zeroize dependency requires Rust 1.51.0 or newer
-              if: matrix.rust-version >= '1.51.0'
-              uses: actions-rs/cargo@v1
-              with:
-                  command: install
-                  args: cargo-generate
+            - name: Set up WSL Rust
+              shell: wsl-bash {0}
+              run: |
+                  curl https://sh.rustup.rs -sSf | sh -s --  -y --profile minimal --default-toolchain ${{ matrix.rust-version }} -c rust-src rustfmt clippy
+                  source $HOME/.cargo/env
+                  rustup install --profile minimal nightly
+                  rustup +nightly component add rust-src
 
             - name: Check environment
+              shell: wsl-bash {0}
               run: |
                   rustc --version
-                  rustup component list --installed
                   cargo install --list
 
-            - name: Set up additional env variables
-              if: matrix.rust-version == '1.41.0'
-              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
-              run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2021.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2021.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=212.4746.2" >> $GITHUB_ENV
-
-            - name: Set up test env variables
-              run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
-
-            - name: Create symlink for Rust stdlib Unix
-              if: matrix.os != 'windows-latest'
-              run: ln -s $(rustc --print sysroot)/lib/rustlib/src/rust $RUST_SRC_WITH_SYMLINK
-
-            # FIXME: find out why it doesn't work on CI
-            # - name: Create symlink for Rust stdlib Windows
-            #  if: matrix.os == 'windows-latest'
-            #  run: New-Item -ItemType Junction -Path "$env:RUST_SRC_WITH_SYMLINK" -Target "$(rustc --print sysroot)/lib/rustlib/src/rust"
+            - name: Set up WSL env variables
+              shell: pwsh
+              run: echo "CI_WSL_DISTRO=${{ matrix.wsl-distribution }}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
             - name: Load linux binaries
               uses: actions/download-artifact@v2
               with:
                   name: linux-x86-64
                   path: bin/linux/x86-64
-
-            - name: Load windows binaries
-              uses: actions/download-artifact@v2
-              with:
-                  name: windows-x86-64
-                  path: bin/windows/x86-64
-
-            - name: Load macos x86 binaries
-              uses: actions/download-artifact@v2
-              with:
-                  name: macos-x86-64
-                  path: bin/macos/x86-64
-
-            - name: Load macos arm64 binaries
-              uses: actions/download-artifact@v2
-              with:
-                  name: macos-arm64
-                  path: bin/macos/arm64
 
             - name: Download
               uses: gradle/gradle-build-action@v1
@@ -293,7 +200,7 @@ jobs:
                   arguments: "runPrettyPrintersTests --no-daemon"
 
     check:
-        needs: [ check-license, check-plugin ]
+        needs: [ check-plugin ]
         runs-on: ubuntu-18.04
         steps:
             - name: Finish check

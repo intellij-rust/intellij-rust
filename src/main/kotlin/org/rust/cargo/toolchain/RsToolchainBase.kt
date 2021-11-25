@@ -8,7 +8,6 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
@@ -16,7 +15,6 @@ import com.intellij.util.text.SemVer
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.cargo.toolchain.tools.Cargo
-import org.rust.cargo.toolchain.wsl.getHomePathCandidates
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
 import java.io.File
@@ -131,19 +129,21 @@ abstract class RsToolchainBase(val location: Path) {
 
         @JvmOverloads
         fun suggest(projectDir: Path? = null): RsToolchainBase? {
-            val distribution = projectDir?.let { WslPath.getDistributionByWindowsUncPath(it.toString()) }
-            val toolchain = distribution
-                ?.getHomePathCandidates()
-                ?.filter { RsToolchainFlavor.getFlavor(it) != null }
-                ?.mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
-                ?.firstOrNull()
-            if (toolchain != null) return toolchain
+            val flavors = RsToolchainFlavor.getApplicableFlavors()
+            val candidates = flavors.flatMap { it.getHomePathCandidates() }
+            val homePaths = flavors.flatMap { it.suggestHomePaths() }
+            val toolchains = homePaths.mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
 
-            return RsToolchainFlavor.getApplicableFlavors()
-                .asSequence()
-                .flatMap { it.suggestHomePaths() }
-                .mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
-                .firstOrNull()
+            check(toolchains.isNotEmpty()) {
+                """
+                    flavors: $flavors
+                    candidates: $candidates
+                    homePaths: $homePaths
+                    toolchains: $toolchains
+                """.trimIndent()
+            }
+
+            return toolchains.firstOrNull()
         }
     }
 }

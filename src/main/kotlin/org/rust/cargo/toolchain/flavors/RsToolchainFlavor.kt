@@ -17,13 +17,13 @@ abstract class RsToolchainFlavor {
 
     fun suggestHomePaths(): Sequence<Path> = getHomePathCandidates().filter { isValidToolchainPath(it) }
 
-    protected abstract fun getHomePathCandidates(): Sequence<Path>
+    abstract fun getHomePathCandidates(): Sequence<Path>
 
     /**
      * Flavor is added to result in [getApplicableFlavors] if this method returns true.
      * @return whether this flavor is applicable.
      */
-    protected open fun isApplicable(): Boolean = true
+    protected open fun isApplicable(): Boolean = System.getenv("CI_WSL_DISTRO") == null
 
     /**
      * Checks if the path is the name of a Rust toolchain of this flavor.
