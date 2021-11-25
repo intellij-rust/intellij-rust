@@ -140,13 +140,13 @@ jobs:
               run: |
                   C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
                   wsl --list --verbose
-                  wsl --set-verstion ${{ matrix.wsl-distribution }} 2
+                  wsl --set-version ${{ matrix.wsl-distribution }} 2
                   wsl --list --verbose
 
             - name: Set up WSL Rust
               shell: wsl-bash {0}
               run: |
-                  curl https://sh.rustup.rs -sSf | sh -s -- -y --profile none
+                  curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${{ matrix.rust-version }} -c rust-src rustfmt clippy
                   source $HOME/.cargo/env
                   rustup install --profile minimal nightly
                   rustup +nightly component add rust-src
