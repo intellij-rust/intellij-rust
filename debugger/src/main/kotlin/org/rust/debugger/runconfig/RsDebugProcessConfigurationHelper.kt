@@ -51,11 +51,17 @@ class RsDebugProcessConfigurationHelper(
             ?.let { toolchain?.toRemotePath(it) }
     }
 
+    private val packagesPrettyPrintersMetadata: List<PrettyPrintersMetadata>? = cargoProject
+        ?.workspace
+        ?.packages
+        ?.map { it.getPrettyPrintersMetadata() }
+
     fun configure() {
         process.postCommand { driver ->
             try {
                 driver.loadRustcSources()
-                driver.loadPrettyPrinters()
+                driver.loadStandardPrettyPrinters()
+                driver.loadCustomPrettyPrinters()
                 if (settings.breakOnPanic) {
                     driver.setBreakOnPanic()
                 }
@@ -96,14 +102,21 @@ class RsDebugProcessConfigurationHelper(
         executeInterpreterCommand(threadId, frameIndex, fullCommand)
     }
 
-    private fun DebuggerDriver.loadPrettyPrinters() {
+    private fun DebuggerDriver.loadStandardPrettyPrinters() {
         when (this) {
-            is LLDBDriver -> loadPrettyPrinters()
-            is GDBDriver -> loadPrettyPrinters()
+            is LLDBDriver -> loadStandardPrettyPrinters()
+            is GDBDriver -> loadStandardPrettyPrinters()
         }
     }
 
-    private fun LLDBDriver.loadPrettyPrinters() {
+    private fun DebuggerDriver.loadCustomPrettyPrinters() {
+        when (this) {
+            is LLDBDriver -> loadCustomPrettyPrinters()
+            is GDBDriver -> loadCustomPrettyPrinters()
+        }
+    }
+
+    private fun LLDBDriver.loadStandardPrettyPrinters() {
         when (settings.lldbRenderers) {
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
@@ -144,7 +157,22 @@ class RsDebugProcessConfigurationHelper(
         }
     }
 
-    private fun GDBDriver.loadPrettyPrinters() {
+    private fun LLDBDriver.loadCustomPrettyPrinters() {
+        if (packagesPrettyPrintersMetadata == null) return
+        for (prettyPrinter in packagesPrettyPrintersMetadata.flatMap { it.lldbPrettyPrinters }) {
+            val prettyPrinterPath = prettyPrinter.path
+            val prettyPrinterPythonClassName = prettyPrinter.pythonClassName
+            val prettyPrinterRegex = prettyPrinter.regex
+            executeInterpreterCommand(threadId, frameIndex, """command script import $prettyPrinterPath """)
+            if (prettyPrinter.isSummary) {
+                executeInterpreterCommand(threadId, frameIndex, """type summary add -F $prettyPrinterPythonClassName  -e -x -h "$prettyPrinterRegex" --category Rust""")
+            } else {
+                executeInterpreterCommand(threadId, frameIndex, """type synthetic add -l $prettyPrinterPythonClassName -x "$prettyPrinterRegex" --category Rust""")
+            }
+        }
+    }
+
+    private fun GDBDriver.loadStandardPrettyPrinters() {
         val path = when (settings.gdbRenderers) {
             GDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
@@ -170,6 +198,19 @@ class RsDebugProcessConfigurationHelper(
             """import $GDB_LOOKUP; """ +
             """$GDB_LOOKUP.register_printers(gdb); """
         executeInterpreterCommand(threadId, frameIndex, command)
+    }
+
+    private fun GDBDriver.loadCustomPrettyPrinters() {
+        if (packagesPrettyPrintersMetadata == null) return
+        for (prettyPrinter in packagesPrettyPrintersMetadata.flatMap { it.gdbPrettyPrinters }) {
+            val prettyPrinterPath = prettyPrinter.path
+            val prettyPrinterPythonClassName = prettyPrinter.pythonClassName
+            val command = """python """ +
+                """sys.path.insert(0, "$prettyPrinterPath"); """ +
+                """import $prettyPrinterPythonClassName; """ +
+                """$prettyPrinterPythonClassName.register_printers(gdb); """
+            executeInterpreterCommand(threadId, frameIndex, command)
+        }
     }
 
     private fun checkSysroot(sysroot: String?, @Suppress("UnstableApiUsage") @NotificationContent message: String): String? {
@@ -226,3 +267,20 @@ class RsDebugProcessConfigurationHelper(
         )
     }
 }
+
+data class PrettyPrintersMetadata(
+    val lldbPrettyPrinters: List<LLDBPrettyPrinterMetadata>,
+    val gdbPrettyPrinters: List<GDBPrettyPrinterMetadata>
+)
+
+data class LLDBPrettyPrinterMetadata(
+    val path: String,
+    val pythonClassName: String,
+    val regex: String,
+    val isSummary: Boolean
+)
+
+data class GDBPrettyPrinterMetadata(
+    val path: String,
+    val pythonClassName: String
+)
