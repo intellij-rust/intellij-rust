@@ -48,10 +48,10 @@ def main():
 
     if has_git_changes():
         git_command("add", CHECK_WORKFLOW_PATH)
-        git_command("commit", "-m", ":arrow_up nightly")
+        git_command("commit", "-m", ":arrow_up: nightly")
 
         git_command("push", "origin", NIGHTLY_BRANCH)
-        pull_request = create_pull_request(repo, args.token, NIGHTLY_BRANCH, ":arrow_up nightly")
+        pull_request = create_pull_request(repo, args.token, NIGHTLY_BRANCH, ":arrow_up: nightly")
         add_assignee(repo, args.token, pull_request["number"], DEFAULT_ASSIGNEE)
     else:
         print("Everything is up to date")
