@@ -70,6 +70,7 @@ object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectD
  * Constructs a project with dependency `testData/test-proc-macros`
  */
 object WithProcMacroRustProjectDescriptor : WithProcMacros(DefaultDescriptor)
+object WithProcMacroAndDependencyRustProjectDescriptor : WithProcMacros(WithDependencyRustProjectDescriptor)
 
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
 

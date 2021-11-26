@@ -227,7 +227,7 @@ class ModCollectorBase private constructor(
         val attrPathSegments = attrPath.getPathWithAdjustedDollarCrate() ?: return
 
         val originalItem = if (item is RsNamedStub && RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(item)) {
-            lowerSimpleItem(item)?.takeIf { it.procMacroKind == null }
+            lowerSimpleItem(item)
         } else {
             null
         }

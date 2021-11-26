@@ -306,17 +306,25 @@ class DefCollector(
             val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
                 ?: return@inPlaceRemoveIf false
 
-            if (def is ProcMacroDefInfo && def.kind.treatAsBuiltinAttr && call.originalItem != null) {
-                val (visItem, namespaces) = call.originalItem
-                call.containingMod.addVisibleItem(visItem.name, PerNs.from(visItem, namespaces))
-                return@inPlaceRemoveIf true
-            }
+            if (tryTreatAsIdentityMacro(call, def)) return@inPlaceRemoveIf true
 
             macrosToExpandInParallel += ExpansionInput(call, def)
             true
         }
         expandMacrosInParallel(macrosToExpandInParallel)
         return changed
+    }
+
+    private fun tryTreatAsIdentityMacro(call: MacroCallInfo, def: MacroDefInfo): Boolean {
+        if (def !is ProcMacroDefInfo || !def.kind.treatAsBuiltinAttr || call.originalItem == null) return false
+        val (visItem, namespaces, procMacroKind) = call.originalItem
+
+        /** See also [ModCollector.collectSimpleItem] */
+        call.containingMod.addVisibleItem(visItem.name, PerNs.from(visItem, namespaces))
+        if (procMacroKind != null) {
+            call.containingMod.procMacros[visItem.name] = procMacroKind
+        }
+        return true
     }
 
     private fun expandMacrosInParallel(macros: List<ExpansionInput>) {
@@ -501,7 +509,7 @@ class MacroCallInfo(
      * Non-null in the case of attribute procedural macro if we can fall back that item
      * ([org.rust.lang.core.psi.RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem])
      */
-    val originalItem: Pair<VisItem, Set<Namespace>>? = null,
+    val originalItem: Triple<VisItem, Set<Namespace>, RsProcMacroKind?>? = null,
 ) {
     override fun toString(): String = "${containingMod.path}:  ${path.joinToString("::")}! { $body }"
 }
