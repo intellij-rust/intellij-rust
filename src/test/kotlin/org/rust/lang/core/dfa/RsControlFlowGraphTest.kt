@@ -622,6 +622,122 @@ class RsControlFlowGraphTest : RsTestBase() {
         return
     """)
 
+    fun `test match with missing arms`() = testCFG("""
+        enum E { A(i32), B }
+
+        fn main() {
+            if let [] = match f() { } {
+                return;
+            } else {
+                main();
+            };
+        }
+
+        fn f() -> E { E::A(1) }
+    """, """
+        Entry
+        f
+        f()
+        MATCH
+        []
+        Dummy
+        return
+        Exit
+        Termination
+        main
+        main()
+        main();
+        BLOCK
+        IF
+        IF;
+        BLOCK
+    """)
+
+    fun `test match on never type`() = testCFG("""
+        fn main() {
+            g(true, match f() { }, 5u8);
+        }
+
+        fn f() -> ! { loop {} }
+        fn g<A, B, C>(_ :A, _ :B, _ :C) {}
+    """, """
+        Entry
+        g
+        true
+        f
+        f()
+        Termination
+    """)
+
+    fun `test match on infinite loop`() = testCFG("""
+        fn main() {
+            let x = match (loop {}) { };
+            let y = 0;
+        }
+    """, """
+        Entry
+        Dummy
+        BLOCK
+        Termination
+    """)
+
+    fun `test match on early exit`() = testCFG("""
+        fn main() {
+            let x = match { return; } { };
+            let y = 0;
+        }
+    """, """
+        Entry
+        return
+        Exit
+        Termination
+    """)
+
+    fun `test match on break block`() = testCFG("""
+        fn main() {
+            let x = 'b: { match break 'b true { } };
+            let y = 0;
+        }
+    """, """
+        Entry
+        true
+        break 'b true
+        BLOCK
+        x
+        x
+        let x = 'b: { match break 'b true { } };
+        0
+        y
+        y
+        let y = 0;
+        BLOCK
+        Exit
+        Termination
+    """)
+
+    fun `test match on break loop`() = testCFG("""
+        fn main() {
+            let x = loop { match break true { } };
+            let y = 0;
+        }
+    """, """
+        Entry
+        Dummy
+        true
+        break true
+        LOOP
+        x
+        x
+        let x = loop { match break true { } };
+        0
+        y
+        y
+        let y = 0;
+        BLOCK
+        Exit
+        Termination
+    """)
+
     fun `test try`() = testCFG("""
         fn main() {
             x.foo(a, b)?;
