@@ -134,7 +134,6 @@ jobs:
               uses: Vampire/setup-wsl@v1
               with:
                   distribution: ${{ matrix.wsl-distribution }}
-                  additional-packages: curl
 
 #            - name: Set up WSL 2
 #              run: |
