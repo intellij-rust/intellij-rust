@@ -145,7 +145,7 @@ jobs:
               run: |
                   curl --proto '=https' --tlsv1.2 --silent --show-error --fail --location https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init --output rustup-init
                   chmod u+x rustup-init
-                  ./rustup-init -y --profile minimal --default-toolchain none
+                  ./rustup-init -y --profile minimal --default-toolchain ${{ matrix.rust-version }}
 
             - name: Check environment
               shell: wsl-bash {0}
