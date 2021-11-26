@@ -51,14 +51,14 @@ class RsCompletionSortingTest : RsTestBase() {
 
     fun `test enum variants before associated constants`() = doTest("""
         enum E { A, B }
-        trait T { const A: i32; }
-        impl T for E { const A: i32 = 0; }
+        trait T { const C: i32; }
+        impl T for E { const C: i32 = 0; }
 
         fn main() { E::/*caret*/ }
     """, listOf(
         RsEnumVariant::class to "A",
         RsEnumVariant::class to "B",
-        RsConstant::class to "A"
+        RsConstant::class to "C"
     ))
 
     fun `test inherent impl methods before trait impl methods`() = doTest("""

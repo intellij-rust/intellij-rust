@@ -325,7 +325,9 @@ class ImplLookup(
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
             }
             is TyAnon -> {
-                ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
+                ty.getTraitBoundsTransitively()
+                    .distinctBy { it.element }
+                    .mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
                 RsImplIndex.findFreeImpls(project) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
             }
             is TyProjection -> {

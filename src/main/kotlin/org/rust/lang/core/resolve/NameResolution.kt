@@ -432,16 +432,19 @@ private fun processQualifiedPathResolveVariants(
         if (processor("self", base)) return true
     }
 
+    val prevScope = hashMapOf<String, Set<Namespace>>()
+
     // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
     // avoid this, we exclude `MACROS` from passed namespaces
-    if (processItemOrEnumVariantDeclarations(
+    val result1 = processWithShadowingAndUpdateScope(prevScope, ns - MACROS, processor) {
+        processItemOrEnumVariantDeclarations(
             base,
             ns - MACROS,
-            processor,
+            it,
             withPrivateImports = { withPrivateImports(qualifier, base) }
-        )) {
-        return true
+        )
     }
+    if (result1) return true
 
     if (base is RsTraitItem && parent !is RsUseSpeck && !qualifier.hasCself) {
         if (processTraitRelativePath(BoundElement(base, subst), ns, processor)) return true
@@ -476,11 +479,14 @@ private fun processQualifiedPathResolveVariants(
             null
         }
 
-        if (restrictedTraits != null) {
-            return processTypeAsTraitUFCSQualifiedPathResolveVariants(ns, baseTy, restrictedTraits, processor)
+        val result2 = processWithShadowing(prevScope, ns, processor) {
+            if (restrictedTraits != null) {
+                processTypeAsTraitUFCSQualifiedPathResolveVariants(ns, baseTy, restrictedTraits, it)
+            } else {
+                processTypeQualifiedPathResolveVariants(lookup, path, it, ns, baseTy)
+            }
         }
-
-        if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, baseTy)) return true
+        if (result2) return true
     }
     return false
 }
@@ -1577,7 +1583,7 @@ private fun processLexicalDeclarations(
         is RsMatchArm -> {
             val guardPat = scope.matchArmGuard?.pat
             if (guardPat == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
-            val prevScope = mutableMapOf<String, Set<Namespace>>()
+            val prevScope = hashMapOf<String, Set<Namespace>>()
             val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
                 processPattern(guardPat, shadowingProcessor)
             }
@@ -1604,7 +1610,7 @@ fun processNestedScopesUpwards(
     } else {
         { true }
     }
-    val prevScope = mutableMapOf<String, Set<Namespace>>()
+    val prevScope = hashMapOf<String, Set<Namespace>>()
     val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
             val ipm = when {

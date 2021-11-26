@@ -1317,4 +1317,58 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             T::Item::bar();
         }          //^
     """)
+
+    fun `test a enum variant wins an associated type in a struct literal context`() = checkByCode("""
+        trait Trait { type Foo; }
+        impl<T> Trait for T { type Foo = (); }
+        enum E {
+            Foo {},
+            //X
+            Bar {}
+        }
+        fn main() {
+            let _ = E::Foo {};
+        }            //^
+    """)
+
+    fun `test a enum variant wins an associated type in a pattern context`() = checkByCode("""
+        trait Trait { type Foo; }
+        impl<T> Trait for T { type Foo = (); }
+        enum E {
+            Foo {},
+            //X
+            Bar {}
+        }
+        fn main() {
+            let a = E::Foo {};
+            if let E::Foo {} = a {}
+        }           //^
+    """)
+
+    fun `test a enum variant wins an associated function in a function call context`() = checkByCode("""
+        trait Trait { fn Foo(a: i32); }
+        impl<T> Trait for T { fn Foo(a: i32) {} }
+        enum E {
+            Foo(i32),
+            //X
+            Bar()
+        }
+        fn main123() {
+            let a = E::Foo(1);
+        }            //^
+    """)
+
+    fun `test a enum variant wins an associated function in a pattern context`() = checkByCode("""
+        trait Trait { fn Foo(a: i32); }
+        impl<T> Trait for T { fn Foo(a: i32) {} }
+        enum E {
+            Foo(i32),
+            //X
+            Bar()
+        }
+        fn main123() {
+            let a = E::Foo(1);
+            if let E::Foo(_) = a {}
+        }           //^
+    """)
 }
