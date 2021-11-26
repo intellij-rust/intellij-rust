@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -603,5 +605,20 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         #[attr_hardcoded_not_a_macro]
           //^ ...test-proc-macros/src/lib.rs
         fn main() {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroAndDependencyRustProjectDescriptor::class)
+    fun `test hardcoded not a macro on proc macro definition`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[test_proc_macros::attr_hardcoded_not_a_macro]
+        #[proc_macro]
+        pub fn example_proc_macro(input: TokenStream) -> TokenStream {
+            input
+        }
+    //- lib.rs
+        fn main() {
+            dep_proc_macro::example_proc_macro!();
+        }                 //^ dep-proc-macro/lib.rs
     """)
 }
