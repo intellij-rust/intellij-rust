@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
@@ -18,10 +19,14 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.ide.experiments.EnabledInStable
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.isRustFile
 import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.memberProperties
 
 class CreateNewGithubIssue : DumbAwareAction() {
 
@@ -40,11 +45,21 @@ class CreateNewGithubIssue : DumbAwareAction() {
             ?.displayText
         val ideNameAndVersion = ideNameAndVersion
         val os = SystemInfo.getOsNameAndVersion()
-        val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample ?: ""
         val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
         val resolveEngine = if (project.isNewResolveEnabled) "new" else "old"
+        val additionalExperimentalFeatures = additionalExperimentalFeatures
+        val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample.orEmpty()
 
-        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, macroEngine, resolveEngine, codeSnippet)
+        val environmentInfo = buildEnvironmentInfo(
+            pluginVersion,
+            toolchainVersion,
+            ideNameAndVersion,
+            os,
+            macroEngine,
+            resolveEngine,
+            additionalExperimentalFeatures
+        )
+        val body = ISSUE_TEMPLATE.format(environmentInfo, codeSnippet)
         val link = "https://github.com/intellij-rust/intellij-rust/issues/new?body=${URLUtil.encodeURIComponent(body)}"
         BrowserUtil.browse(link)
     }
@@ -59,12 +74,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
 
             ## Environment
 
-            * **IntelliJ Rust plugin version:** %s
-            * **Rust toolchain version:** %s
-            * **IDE name and version:** %s
-            * **Operating system:** %s
-            * **Macro expansion engine:** %s
-            * **Name resolution engine:** %s
+            %s
 
             ## Problem description
 
@@ -77,6 +87,24 @@ class CreateNewGithubIssue : DumbAwareAction() {
             If the relevant files are large, please provide a link to a public repository or a [Gist](https://gist.github.com/).
             -->
         """.trimIndent()
+
+        private fun buildEnvironmentInfo(
+            pluginVersion: String,
+            toolchainVersion: String?,
+            ideNameAndVersion: String,
+            os: String,
+            macroEngine: String,
+            resolveEngine: String,
+            additionalExperimentalFeatures: String?,
+        ): String = """
+            * **IntelliJ Rust plugin version:** $pluginVersion
+            * **Rust toolchain version:** $toolchainVersion
+            * **IDE name and version:** $ideNameAndVersion
+            * **Operating system:** $os
+            * **Macro expansion engine:** $macroEngine
+            * **Name resolution engine:** $resolveEngine
+            ${additionalExperimentalFeatures?.let { "* **Additional experimental features:** $it" }.orEmpty()}    
+        """.trimEnd().trimIndent()
 
         private val ideNameAndVersion: String
             get() {
@@ -94,6 +122,17 @@ class CreateNewGithubIssue : DumbAwareAction() {
                     append(ideVersion)
                     append(")")
                 }
+            }
+
+        /** Collects additional (disabled in stable releases) experimental features enabled by user */
+        private val additionalExperimentalFeatures: String?
+            get() = with(Experiments.getInstance()) {
+                RsExperiments::class.memberProperties
+                    .filterNot { it.hasAnnotation<EnabledInStable>() }
+                    .mapNotNull { it.call() as? String }
+                    .filter { isFeatureEnabled(it) }
+                    .takeIf { it.isNotEmpty() }
+                    ?.joinToString(", ")
             }
 
         private val RustcVersion.displayText: String
