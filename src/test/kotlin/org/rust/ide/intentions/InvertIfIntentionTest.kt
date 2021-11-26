@@ -428,4 +428,30 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
             }
         }
     """)
+
+    fun `test if without else comments`() = doAvailableTest("""
+        fn func(f: bool) -> i32 {
+            // a
+            /*caret*/if f {   // b
+                // c
+                println!("1"); // d
+                return 1; // e
+            } // f
+            // g
+            println!("2"); // h
+            2 // i
+        }
+    """, """
+        fn func(f: bool) -> i32 {
+            // a
+            /*caret*/if !f {   // f
+                // g
+                println!("2"); // h
+                return 2; // i
+            } // b
+            // c
+            println!("1"); // d
+            1 // e
+        }
+    """)
 }
