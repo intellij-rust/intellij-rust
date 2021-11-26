@@ -134,17 +134,18 @@ jobs:
               uses: Vampire/setup-wsl@v1
               with:
                   distribution: ${{ matrix.wsl-distribution }}
+                  additional-packages: cargo
 
 #            - name: Set up WSL 2
 #              run: |
 #                  C:\hostedtoolcache\windows\Ubuntu\18.4.0\x64\ubuntu1804.exe config --default-user test
 
-            - name: Set up WSL Rust
-              shell: wsl-bash {0}
-              run: |
-                  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
-                  source $HOME/.cargo/env
-                  rustup toolchain install nightly --allow-downgrade --profile minimal
+#            - name: Set up WSL Rust
+#              shell: wsl-bash {0}
+#              run: |
+#                  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+#                  source $HOME/.cargo/env
+#                  rustup toolchain install nightly --allow-downgrade --profile minimal
 
             - name: Check environment
               shell: wsl-bash {0}
