@@ -144,6 +144,7 @@ jobs:
               shell: wsl-bash {0}
               run: |
                   curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+                  source $HOME/.cargo/env
                   rustup toolchain install nightly --allow-downgrade --profile minimal
 
             - name: Check environment
