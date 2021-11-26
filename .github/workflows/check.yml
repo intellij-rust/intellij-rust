@@ -148,12 +148,11 @@ jobs:
 #                  rustup toolchain install nightly --allow-downgrade --profile minimal
 
             - name: Check environment
-              shell: wsl-bash {0}
               run: |
-                  which rustc
-                  rustc --version
-                  which cargo
-                  cargo install --list
+                  wsl which rustc
+                  wsl rustc --version
+                  wsl which cargo
+                  wsl cargo install --list
 
             - name: Set up WSL env variables
               shell: pwsh
