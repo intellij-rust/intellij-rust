@@ -119,7 +119,7 @@ private fun RsExpr.getValue(crateOrNull: Crate?): String? {
                     when (val variableName = expr.getValue(crate)) {
                         "OUT_DIR" -> crate.outDir?.path
                         else -> {
-                            val toolchain = if (isUnitTestMode) RsToolchainBase.suggest() else project.toolchain
+                            val toolchain = if (isUnitTestMode) RsToolchainBase.suggest() else crate.project.toolchain
                             crate.env[variableName]?.let { toolchain?.toLocalPath(it) }
                         }
                     }
