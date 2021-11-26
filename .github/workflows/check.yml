@@ -142,7 +142,9 @@ jobs:
 
             - name: Set up WSL Rust
               shell: wsl-bash {0}
-              run: curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${{ matrix.rust-version }}
+              run: |
+                  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+                  rustup toolchain install nightly --allow-downgrade --profile minimal
 
             - name: Check environment
               shell: wsl-bash {0}
