@@ -11,9 +11,9 @@ import com.intellij.openapi.components.ServiceManager
 abstract class RsCodeFoldingSettings {
 
     abstract var collapsibleOneLineMethods: Boolean
+    abstract var foldableParameterLists: Boolean
 
     companion object {
         val instance: RsCodeFoldingSettings get() = ServiceManager.getService(RsCodeFoldingSettings::class.java)
     }
 }
-

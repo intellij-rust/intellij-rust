@@ -16,6 +16,7 @@ class RsCodeFoldingOptionsProvider :
         val settings = instance
         if (settings != null) {
             checkBox("One-line methods", settings::collapsibleOneLineMethods)
+            checkBox("Enable folding function parameter lists", settings::foldableParameterLists)
         }
     }
 }

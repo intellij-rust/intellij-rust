@@ -105,7 +105,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         override fun visitValueParameterList(o: RsValueParameterList) {
-            if (o.valueParameterList.isEmpty()) return
+            if (o.valueParameterList.isEmpty() || !RsCodeFoldingSettings.instance.foldableParameterLists) return
             foldBetween(o, o.firstChild, o.lastChild)
         }
 

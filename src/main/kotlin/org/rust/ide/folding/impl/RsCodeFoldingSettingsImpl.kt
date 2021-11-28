@@ -15,6 +15,7 @@ import org.rust.ide.folding.RsCodeFoldingSettings
 class RsCodeFoldingSettingsImpl : RsCodeFoldingSettings(), PersistentStateComponent<RsCodeFoldingSettingsImpl> {
 
     override var collapsibleOneLineMethods: Boolean = true
+    override var foldableParameterLists: Boolean = true
 
     override fun getState(): RsCodeFoldingSettingsImpl = this
 
