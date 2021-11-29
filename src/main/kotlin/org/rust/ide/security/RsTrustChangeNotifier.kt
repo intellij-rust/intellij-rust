@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.model.cargoProjects
 
+// BACKCOMPAT: 2021.3. Replace with implementation of `com.intellij.ide.impl.TrustStateListener`
 @Suppress("UnstableApiUsage")
 class RsTrustChangeNotifier : TrustChangeNotifier {
     override fun projectTrusted(project: Project) {
