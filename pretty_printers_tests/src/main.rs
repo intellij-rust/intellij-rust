@@ -96,7 +96,9 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
     let src_dir = Path::new(&settings.test_dir);
     let src_paths: Vec<_> = read_dir(src_dir)
         .unwrap_or_else(|_| panic!("Tests not found!"))
-        .map(|file| file.unwrap().path().as_os_str().to_owned())
+        .map(|file| file.unwrap().path())
+        .map(|path| fs::canonicalize(path))
+        .map(|canonical_path| canonical_path.unwrap().as_os_str().to_owned())
         .collect();
 
     let mut status = Ok(());

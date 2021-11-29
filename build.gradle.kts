@@ -564,8 +564,6 @@ project(":ml-completion") {
 }
 
 task("runPrettyPrintersTests") {
-    // https://github.com/intellij-rust/intellij-rust/issues/8028
-    enabled = platformVersion < 213 || !isFamily(FAMILY_UNIX)
     doLast {
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
