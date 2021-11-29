@@ -434,6 +434,13 @@ project(":idea") {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
     }
+    tasks {
+        test {
+            // Temporarily disable tests 2021.3 platform in CLion.
+            // They fail because of incompatibility between the latest 2021.3 IDEA and CLion snapshots
+            enabled = baseIDE != "clion" || platformVersion != 213
+        }
+    }
 }
 
 project(":clion") {
@@ -474,6 +481,11 @@ project(":toml") {
         testImplementation(project(":", "testOutput"))
     }
     tasks {
+        test {
+            // Temporarily disable tests with TOML integration on 2021.3 platform.
+            // They fail because of incompatibility between the latest TOML plugin and the latest 2021.3 IDEA snapshots
+            enabled = platformVersion != 213
+        }
         // Set custom plugin directory name.
         // Otherwise, `prepareSandbox`/`prepareTestingSandbox` tasks merge directories
         // of `toml` plugin and `toml` module because of the same name into single one that's not expected
@@ -501,6 +513,13 @@ project(":copyright") {
     dependencies {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
+    }
+    tasks {
+        test {
+            // Temporarily disable tests with copyright plugin integration on 2021.3 platform in CLion.
+            // They fail because of incompatibility between the latest 2021.3 IDEA and CLion snapshots
+            enabled = baseIDE != "clion" || platformVersion != 213
+        }
     }
 }
 
