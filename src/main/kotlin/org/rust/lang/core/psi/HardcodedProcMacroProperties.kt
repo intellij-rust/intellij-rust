@@ -52,6 +52,7 @@ private val RS_HARDCODED_PROC_MACRO_ATTRIBUTES: Map<String, Map<String, KnownPro
         "count_alloc" to KnownProcMacroKind.IDENTITY,
     ),
     "uefi_macros" to mapOf("entry" to KnownProcMacroKind.CUSTOM_MAIN),
+    "async_trait" to mapOf("async_trait" to KnownProcMacroKind.ASYNC_TRAIT),
 )
 
 fun getHardcodeProcMacroProperties(packageName: String, macroName: String): KnownProcMacroKind {
@@ -114,6 +115,9 @@ enum class KnownProcMacroKind {
      * Also, the macro can produce multiple test functions.
      */
     CUSTOM_TEST_RENAME,
+
+    /** https://crates.io/crates/async-trait */
+    ASYNC_TRAIT,
     ;
 
     val treatAsBuiltinAttr: Boolean
