@@ -16,3 +16,13 @@ import org.rust.lang.core.psi.RsPolybound
  */
 val RsPolybound.hasQ: Boolean
     get() = greenStub?.hasQ ?: (q != null)
+
+/**
+ * Return true if there is the tilde const before a bound:
+ * ```
+ * fn foo<T: ~const A>() {}
+ *            //^
+ * ```
+ */
+val RsPolybound.hasConst: Boolean
+    get() = greenStub?.hasConst ?: (tildeConst != null)
