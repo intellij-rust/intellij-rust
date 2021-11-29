@@ -7,10 +7,18 @@ package org.rust.ide.settings
 
 import com.intellij.application.options.editor.AutoImportOptionsProvider
 import com.intellij.openapi.options.ConfigurableBuilder
+import org.rust.RsBundle
 
-class RsAutoImportOptions : ConfigurableBuilder("Rust"), AutoImportOptionsProvider {
+class RsAutoImportOptions : ConfigurableBuilder(RsBundle.message("settings.rust.auto.import.title")),
+                            AutoImportOptionsProvider {
     init {
-        checkBox("Show import popup", RsCodeInsightSettings.getInstance()::showImportPopup)
-        checkBox("Import out-of-scope items on completion", RsCodeInsightSettings.getInstance()::importOutOfScopeItems)
+        checkBox(
+            RsBundle.message("settings.rust.auto.import.show.popup"),
+            RsCodeInsightSettings.getInstance()::showImportPopup
+        )
+        checkBox(
+            RsBundle.message("settings.rust.auto.import.on.completion"),
+            RsCodeInsightSettings.getInstance()::importOutOfScopeItems
+        )
     }
 }
