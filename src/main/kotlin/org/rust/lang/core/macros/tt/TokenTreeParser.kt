@@ -50,8 +50,6 @@ private class TokenTreeParser(
         } else {
             parseLeaf(offset, tokenType, result)
         }
-
-        lexer.advanceLexer()
     }
 
     private fun parseSubtree(offset: Int, delimKind: MacroBraces, result: MutableList<TokenTree>) {
@@ -77,14 +75,17 @@ private class TokenTreeParser(
         closeDelim(delimLeaf.id, lexer.currentOffset, nextWhitespaceOrCommentText())
 
         result += Subtree(delimLeaf, subtreeResult)
+        lexer.advanceLexer()
     }
 
     private fun parseLeaf(offset: Int, tokenType: IElementType, result: MutableList<TokenTree>) {
+        var shouldAdvanceLexer = true
         val tokenText = lexer.tokenText!!
         when (tokenType) {
             INTEGER_LITERAL -> {
                 val lastMarker = lexer.latestDoneMarker
                 val tokenText2 = if (RustParserUtil.parseFloatLiteral(lexer, 0)) {
+                    shouldAdvanceLexer = false
                     val floatMarker = lexer.latestDoneMarker
                     if (floatMarker != null && floatMarker != lastMarker) {
                         lexer.originalText.substring(floatMarker.startOffset, floatMarker.endOffset)
@@ -94,7 +95,7 @@ private class TokenTreeParser(
                 } else {
                     tokenText
                 }
-                result += Leaf.Literal(tokenText2, allocId(offset, nextWhitespaceOrCommentText()))
+                result += Leaf.Literal(tokenText2, allocId(offset, nextWhitespaceOrCommentText(shouldAdvanceLexer)))
             }
             in RS_LITERALS -> result += Leaf.Literal(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
             in PROC_MACRO_IDENTIFIER_TOKENS -> result += Leaf.Ident(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
@@ -119,6 +120,9 @@ private class TokenTreeParser(
                 }
             }
         }
+        if (shouldAdvanceLexer) {
+            lexer.advanceLexer()
+        }
     }
 
     private fun allocId(startOffset: Int, rightTrivia: CharSequence): Int {
@@ -138,13 +142,14 @@ private class TokenTreeParser(
             .copy(close = TokenMetadata.Token(textOffset + closeOffset, rightTrivia))
     }
 
-    private fun nextWhitespaceOrCommentText(): CharSequence {
-        var counter = 1
+    private fun nextWhitespaceOrCommentText(startFromNextToken: Boolean = true): CharSequence {
+        val start = if (startFromNextToken) 1 else 0
+        var counter = start
         while (lexer.rawLookup(counter) in WHITESPACE_OR_COMMENTS) {
             counter++
         }
-        if (counter == 1) return ""
-        val startOffset = lexer.rawTokenTypeStart(1)
+        if (counter == start) return ""
+        val startOffset = lexer.rawTokenTypeStart(start)
         val endOffset = lexer.rawTokenTypeStart(counter)
         return lexer.originalText.subSequence(startOffset, endOffset)
     }
