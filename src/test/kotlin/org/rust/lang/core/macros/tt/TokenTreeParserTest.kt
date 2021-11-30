@@ -224,8 +224,16 @@ class TokenTreeParserTest : RsTestBase() {
           IDENT   _ 1
     """)
 
+    fun `test 35`() = doTest("1.0 foo bar", """
+        SUBTREE $
+          LITERAL 1.0 0
+          IDENT   foo 1
+          IDENT   bar 2
+    """)
+
     fun doTest(code: String, expected: String) {
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
+        assertEquals(subtree, FlatTree.fromSubtree(subtree).toTokenTree())
         assertEquals(expected.trimIndent(), subtree.toDebugString())
     }
 }
