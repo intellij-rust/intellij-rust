@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-ra_ap_proc_macro_srv = "=0.0.83"
+ra_ap_proc_macro_srv = "=0.0.84"
 
 [profile.release]
 lto = "fat"
