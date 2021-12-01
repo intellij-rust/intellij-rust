@@ -36,9 +36,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
-import org.rust.cargo.toolchain.tools.grcov
 import org.rust.stdext.toPath
-import java.io.File
+import java.nio.file.Path
 
 class GrcovRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID
@@ -54,17 +53,15 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
     }
 
     override fun execute(environment: ExecutionEnvironment) {
-        val project = environment.project
-        if (checkNeedInstallGrcov(project)) return
-        val state = environment.state as CargoRunStateBase
-        val workingDirectory = state.commandLine.workingDirectory.toFile()
+        if (checkNeedInstallGrcov(environment.project)) return
+        val workingDirectory = environment.workingDirectory
         cleanOldCoverageData(workingDirectory)
         environment.cargoPatches += cargoCoveragePatch
         super.execute(environment)
     }
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-        val workingDirectory = (state as CargoRunStateBase).commandLine.workingDirectory.toFile()
+        val workingDirectory = environment.workingDirectory
         val descriptor = super.doExecute(state, environment)
         descriptor?.processHandler?.addProcessListener(object : ProcessAdapter() {
             override fun processTerminated(event: ProcessEvent) {
@@ -81,19 +78,23 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
 
         private val cargoCoveragePatch: CargoPatch = { commandLine ->
             val oldVariables = commandLine.environmentVariables
+            val rustcFlags = "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
             val environmentVariables = EnvironmentVariablesData.create(
                 oldVariables.envs + mapOf(
                     RUSTC_BOOTSTRAP to "1",
                     "CARGO_INCREMENTAL" to "0",
-                    "RUSTFLAGS" to "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
+                    "RUSTFLAGS" to rustcFlags
                 ),
                 oldVariables.isPassParentEnvs
             )
             commandLine.copy(environmentVariables = environmentVariables)
         }
 
-        private fun cleanOldCoverageData(workingDirectory: File) {
-            val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(workingDirectory) ?: return
+        private val ExecutionEnvironment.workingDirectory: Path
+            get() = (state as CargoRunStateBase).commandLine.workingDirectory
+
+        private fun cleanOldCoverageData(workingDirectory: Path) {
+            val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(workingDirectory.toFile()) ?: return
             val targetDir = root.findChild(ProjectLayout.target) ?: return
 
             val toDelete = mutableListOf<VirtualFile>()
@@ -108,7 +109,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             WriteAction.runAndWait<Throwable> { toDelete.forEach { it.delete(null) } }
         }
 
-        private fun startCollectingCoverage(workingDirectory: File, environment: ExecutionEnvironment) {
+        private fun startCollectingCoverage(workingDirectory: Path, environment: ExecutionEnvironment) {
             val project = environment.project
             val runConfiguration = environment.runProfile as? RunConfigurationBase<*> ?: return
             val runnerSettings = environment.runnerSettings ?: return

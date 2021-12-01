@@ -3,28 +3,28 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain.tools
+package org.rust.coverage
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import org.rust.cargo.CargoConstants.ProjectLayout
 import org.rust.cargo.toolchain.RsToolchainBase
-import java.io.File
+import org.rust.cargo.toolchain.tools.CargoBinary
 import java.nio.file.Path
 
 fun RsToolchainBase.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
 
 class Grcov(toolchain: RsToolchainBase) : CargoBinary(NAME, toolchain) {
 
-    fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
-        createBaseCommandLine(
-            ProjectLayout.target,
+    fun createCommandLine(workingDirectory: Path, coverageFilePath: Path): GeneralCommandLine {
+        val parameters = mutableListOf(
+            "./target/",
             "-t", "lcov",
-            "--llvm",
             "--branch",
             "--ignore-not-existing",
             "-o", coverageFilePath.toString(),
-            workingDirectory = workingDirectory.toPath()
+            "-b", "./target/debug/"
         )
+        return createBaseCommandLine(parameters, workingDirectory = workingDirectory)
+    }
 
     companion object {
         const val NAME: String = "grcov"
