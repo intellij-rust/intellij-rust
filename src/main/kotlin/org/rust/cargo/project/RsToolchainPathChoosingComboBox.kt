@@ -5,6 +5,9 @@
 
 package org.rust.cargo.project
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBoxWithWidePopup
@@ -24,8 +27,7 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  * A combobox with browse button for choosing a path to a toolchain, also capable of showing progress indicator.
  * To toggle progress indicator visibility use [setBusy] method.
  */
-class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {})
-    : ComponentWithBrowseButton<ComboBoxWithWidePopup<Path>>(ComboBoxWithWidePopup(), null) {
+class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {}) : ComponentWithBrowseButton<ComboBoxWithWidePopup<Path>>(ComboBoxWithWidePopup(), null) {
     private val editor: BasicComboBoxEditor = object : BasicComboBoxEditor() {
         override fun createEditorComponent(): ExtendableTextField = ExtendableTextField()
     }
@@ -69,5 +71,33 @@ class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {})
             pathTextField.removeExtension(busyIconExtension)
         }
         repaint()
+    }
+
+    /**
+     * Obtains a list of toolchains on a pool using [toolchainObtainer], then fills the combobox and calls [callback] on the EDT.
+     */
+    @Suppress("UnstableApiUsage")
+    fun addToolchainsAsync(toolchainObtainer: () -> List<Path>, callback: () -> Unit) {
+        setBusy(true)
+        ApplicationManager.getApplication().executeOnPooledThread {
+            var toolchains = emptyList<Path>()
+            try {
+                toolchains = toolchainObtainer()
+            } finally {
+                val executor = AppUIExecutor.onUiThread(ModalityState.any()).expireWith(this)
+                executor.execute {
+                    setBusy(false)
+                    val oldSelectedPath = selectedPath
+                    childComponent.removeAllItems()
+                    toolchains.forEach(childComponent::addItem)
+                    selectedPath = oldSelectedPath
+                    callback()
+                }
+            }
+        }
+    }
+
+    fun addToolchainsAsync(toolchainObtainer: () -> List<Path>) {
+        addToolchainsAsync(toolchainObtainer) {}
     }
 }
