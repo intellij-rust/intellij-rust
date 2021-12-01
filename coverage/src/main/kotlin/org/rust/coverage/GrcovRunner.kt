@@ -36,6 +36,9 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
+import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallLlvmTools
+import org.rust.ide.experiments.RsExperiments.SOURCE_BASED_COVERAGE
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.stdext.toPath
 import java.nio.file.Path
 
@@ -55,7 +58,11 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
     override fun execute(environment: ExecutionEnvironment) {
         if (checkNeedInstallGrcov(environment.project)) return
         val workingDirectory = environment.workingDirectory
-        cleanOldCoverageData(workingDirectory)
+        if (isFeatureEnabled(SOURCE_BASED_COVERAGE)) {
+            if (checkNeedInstallLlvmTools(environment.project, workingDirectory)) return
+        } else {
+            cleanOldCoverageData(workingDirectory)
+        }
         environment.cargoPatches += cargoCoveragePatch
         super.execute(environment)
     }
@@ -76,14 +83,20 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
 
         const val RUNNER_ID: String = "GrcovRunner"
 
+        // Variables are copied from here - https://github.com/mozilla/grcov#grcov-with-travis
         private val cargoCoveragePatch: CargoPatch = { commandLine ->
+            val rustcFlags = if (isFeatureEnabled(SOURCE_BASED_COVERAGE)) {
+                "-Cinstrument-coverage"
+            } else {
+                "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
+            }
             val oldVariables = commandLine.environmentVariables
-            val rustcFlags = "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
             val environmentVariables = EnvironmentVariablesData.create(
                 oldVariables.envs + mapOf(
                     RUSTC_BOOTSTRAP to "1",
                     "CARGO_INCREMENTAL" to "0",
-                    "RUSTFLAGS" to rustcFlags
+                    "RUSTFLAGS" to rustcFlags,
+                    "LLVM_PROFILE_FILE" to "grcov-%p-%m.profraw"
                 ),
                 oldVariables.isPassParentEnvs
             )
