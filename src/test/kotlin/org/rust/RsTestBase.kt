@@ -344,16 +344,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     private fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
-    protected inline fun <reified X : Throwable> expect(f: () -> Unit) {
-        try {
-            f()
-        } catch (e: Throwable) {
-            if (e is X)
-                return
-            throw e
-        }
-        fail("No ${X::class.java} was thrown during the test")
-    }
+    protected inline fun <reified X : Throwable> expect(f: () -> Unit) = org.rust.expect<X>(f)
 
     @Suppress("TestFunctionName")
     protected fun InlineFile(@Language("Rust") code: String, name: String = "main.rs"): InlineFile {
