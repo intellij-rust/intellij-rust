@@ -381,7 +381,6 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "?", "return 0")
 
-
     fun `test ? in macro`() = doTest("""
         fn main(){
             macrocall![ ?/*caret*/ ];
