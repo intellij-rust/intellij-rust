@@ -1125,7 +1125,7 @@ sealed class RsDiagnostic(
             E0004,
             "Match must be exhaustive",
             fixes = listOfNotNull(
-                AddRemainingArmsFix(matchExpr, patterns),
+                AddRemainingArmsFix(matchExpr, patterns).takeIf { patterns.isNotEmpty() },
                 AddWildcardArmFix(matchExpr).takeIf { matchExpr.arms.isNotEmpty() }
             )
         )
