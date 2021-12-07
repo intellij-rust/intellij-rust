@@ -56,6 +56,16 @@ pub fn function_like_do_brace_println_and_process_exit(input: TokenStream) -> To
     std::process::exit(101)
 }
 
+#[proc_macro]
+pub fn function_like_reverse_spans(item: TokenStream) -> TokenStream {
+    let tts = item.into_iter().collect::<Vec<_>>();
+    tts.iter().enumerate().map(|(i, tt)| {
+        let mut tt2 = tt.clone();
+        tt2.set_span(tts[tts.len() - 1 - i].span());
+        tt2
+    }).collect::<TokenStream>()
+}
+
 #[proc_macro_derive(DeriveImplForFoo)]
 pub fn derive_impl_for_foo(_item: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()

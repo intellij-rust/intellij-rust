@@ -116,6 +116,22 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^ unresolved
     """)
 
+    fun `test incorrect spans`() = checkByCode("""
+        use test_proc_macros::function_like_reverse_spans;
+
+        mod foo {
+            pub fn bar() {}
+        }        //X
+
+        function_like_reverse_spans! {
+            use foo:: bar;
+        }// 1   2  34 5  6
+
+        fn main() {
+            bar();
+        } //^
+    """)
+
     fun `test custom derive expands to a struct`() = checkByCode("""
         use test_proc_macros::DeriveStructFooDeclaration;
 

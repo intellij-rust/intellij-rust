@@ -62,7 +62,7 @@ private class TokenTreeParser(
             val tokenType = lexer.tokenType
 
             if (tokenType == null) {
-                result += Leaf.Punct(delimKind.openText, Spacing.Alone, allocId(offset, ""))
+                result += punct(delimKind.openText, Spacing.Alone, offset, "")
                 result += subtreeResult
                 return
             }
@@ -95,13 +95,13 @@ private class TokenTreeParser(
                 } else {
                     tokenText
                 }
-                result += Leaf.Literal(tokenText2, allocId(offset, nextWhitespaceOrCommentText(shouldAdvanceLexer)))
+                result += lit(tokenText2, offset, nextWhitespaceOrCommentText(shouldAdvanceLexer))
             }
-            in RS_LITERALS -> result += Leaf.Literal(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
-            in PROC_MACRO_IDENTIFIER_TOKENS -> result += Leaf.Ident(tokenText, allocId(offset, nextWhitespaceOrCommentText()))
+            in RS_LITERALS -> result += lit(tokenText, offset)
+            in PROC_MACRO_IDENTIFIER_TOKENS -> result += ident(tokenText, offset)
             QUOTE_IDENTIFIER -> {
-                result += Leaf.Punct(tokenText[0].toString(), Spacing.Joint, allocId(offset, ""))
-                result += Leaf.Ident(tokenText.substring(1), allocId(offset + 1, nextWhitespaceOrCommentText()))
+                result += punct(tokenText[0].toString(), Spacing.Joint, offset, "")
+                result += ident(tokenText.substring(1), offset + 1)
             }
             else -> {
                 for (i in tokenText.indices) {
@@ -116,7 +116,7 @@ private class TokenTreeParser(
                             else -> Spacing.Joint to ""
                         }
                     }
-                    result += Leaf.Punct(char, spacing, allocId(offset + i, rightTrivia))
+                    result += punct(char, spacing, offset + i, rightTrivia)
                 }
             }
         }
@@ -125,21 +125,40 @@ private class TokenTreeParser(
         }
     }
 
-    private fun allocId(startOffset: Int, rightTrivia: CharSequence): Int {
-        val id = idOffset + tokenMap.size
-        tokenMap += TokenMetadata.Token(textOffset + startOffset, rightTrivia)
-        return id
+    private fun ident(text: String, startOffset: Int, rightTrivia: CharSequence = nextWhitespaceOrCommentText()): Leaf.Ident {
+        val leaf = Leaf.Ident(text, nextId())
+        writeMeta(startOffset, rightTrivia, leaf)
+        return leaf
+    }
+
+    private fun lit(text: String, startOffset: Int, rightTrivia: CharSequence = nextWhitespaceOrCommentText()): Leaf.Literal {
+        val leaf = Leaf.Literal(text, nextId())
+        writeMeta(startOffset, rightTrivia, leaf)
+        return leaf
+    }
+
+    private fun punct(text: String, spacing: Spacing, startOffset: Int, rightTrivia: CharSequence = nextWhitespaceOrCommentText()): Leaf.Punct {
+        val leaf = Leaf.Punct(text, spacing, nextId())
+        writeMeta(startOffset, rightTrivia, leaf)
+        return leaf
+    }
+
+    private fun nextId() = idOffset + tokenMap.size
+
+    private fun writeMeta(startOffset: Int, rightTrivia: CharSequence, leaf: Leaf) {
+        check(nextId() == leaf.id)
+        tokenMap += TokenMetadata.Token(textOffset + startOffset, rightTrivia, leaf)
     }
 
     private fun allocDelimId(openOffset: Int, rightTrivia: CharSequence): Int {
-        val id = idOffset + tokenMap.size
-        tokenMap += TokenMetadata.Delimiter(TokenMetadata.Token(textOffset + openOffset, rightTrivia), null)
+        val id = nextId()
+        tokenMap += TokenMetadata.Delimiter(TokenMetadata.Delimiter.DelimiterPart(textOffset + openOffset, rightTrivia), null)
         return id
     }
 
     private fun closeDelim(tokenId: Int, closeOffset: Int, rightTrivia: CharSequence) {
         tokenMap[tokenId - idOffset] = (tokenMap[tokenId - idOffset] as TokenMetadata.Delimiter)
-            .copy(close = TokenMetadata.Token(textOffset + closeOffset, rightTrivia))
+            .copy(close = TokenMetadata.Delimiter.DelimiterPart(textOffset + closeOffset, rightTrivia))
     }
 
     private fun nextWhitespaceOrCommentText(startFromNextToken: Boolean = true): CharSequence {
