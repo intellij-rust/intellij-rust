@@ -13,10 +13,7 @@ import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyTuple
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.lang.utils.evaluation.evaluate
 
@@ -55,7 +52,11 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             }
             is RsPsiSubstitution.TypeValue.OptionalAbsent -> paramTy
             is RsPsiSubstitution.TypeValue.Present.InAngles -> value.value.type
-            is RsPsiSubstitution.TypeValue.Present.FnSugar -> TyTuple(value.inputArgs.map { it?.type ?: TyUnknown })
+            is RsPsiSubstitution.TypeValue.Present.FnSugar -> if (value.inputArgs.isNotEmpty()) {
+                TyTuple(value.inputArgs.map { it?.type ?: TyUnknown })
+            } else {
+                TyUnit.INSTANCE
+            }
             RsPsiSubstitution.TypeValue.RequiredAbsent -> TyUnknown
         }
         paramTy to valueTy

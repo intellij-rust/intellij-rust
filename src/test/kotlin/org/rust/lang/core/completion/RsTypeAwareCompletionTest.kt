@@ -217,6 +217,7 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test impl for 'Sized' type parameter is not completed for trait object`() = checkNotContainsCompletion("bar", """
+        #[lang = "sized"] trait Sized {}
         trait Foo { fn foo(&self); fn foo2(&self); }
         trait Bar { fn bar(&self); }
         impl<T> Bar for T {

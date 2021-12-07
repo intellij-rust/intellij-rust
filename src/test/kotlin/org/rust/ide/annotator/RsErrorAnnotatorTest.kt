@@ -1515,13 +1515,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
     """)
 
     fun `test function return type should implement Sized trait E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         fn foo1() -> <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error> { unimplemented!() }
         fn foo2() -> i32 { unimplemented!() }
+    """)
+
+    fun `test type parameter with Sized bound on member function is Sized E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
+        struct Foo<T>(T);
+        impl<T: ?Sized> Foo<T> {
+            fn foo() -> T where T: Sized { unimplemented!() }
+        }
+        impl<T: ?Sized> Foo<T> {
+            fn foo() -> T where T: Sized { unimplemented!() }
+        }
     """)
 
     fun `test trait method without body can have arg with '?Sized' type E0277`() = checkErrors("""
@@ -1546,10 +1559,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Bar where Self: Sized {
             fn foo() -> (Self, Self) { unimplemented!() }
         }
-        // TODO
-//        trait Baz {
-//            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
-//        }
+        trait Baz {
+            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
+        }
     """)
 
     fun `test supertrait is not implemented E0277 simple trait`() = checkErrors("""

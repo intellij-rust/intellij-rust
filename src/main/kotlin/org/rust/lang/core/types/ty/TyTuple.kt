@@ -10,11 +10,16 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.mergeFlags
+import org.rust.openapiext.testAssert
 
 data class TyTuple(
     val types: List<Ty>,
     override val aliasedBy: BoundElement<RsTypeAlias>? = null
 ) : Ty(mergeFlags(types)) {
+
+    init {
+        testAssert { types.isNotEmpty() }
+    }
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyTuple(types.map { it.foldWith(folder) }, aliasedBy?.foldWith(folder))

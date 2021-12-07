@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -37,4 +38,20 @@ class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Foo {}
         fn foo() -> Box<Foo> { unimplemented!() }
     """)
+
+    private fun checkFixByText(
+        fixName: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+    ) {
+        super.checkFixByText(
+            fixName,
+            "#[lang = \"sized\"] trait Sized {}\n" + before.trimIndent(),
+            "#[lang = \"sized\"] trait Sized {}\n" + after.trimIndent(),
+            checkWarn = true,
+            checkInfo = false,
+            checkWeakWarn = false,
+            testmark = null
+        )
+    }
 }

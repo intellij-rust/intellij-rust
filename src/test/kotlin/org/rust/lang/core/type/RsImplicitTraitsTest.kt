@@ -112,6 +112,18 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                          //^ !Sized
     """)
 
+    fun `test type parameter with Sized bound on impl member function is Sized`() = doTest("""
+        impl<T: ?Sized> Box<T> {
+            fn foo() -> Box<T> where T: Sized { unimplemented!() }
+        }                 //^ Sized
+    """)
+
+    fun `test type parameter with Sized bound on triat member function is Sized`() = doTest("""
+        trait Tra<T: ?Sized> {
+            fn foo() -> T where T: Sized { todo!() }
+        }             //^ Sized
+    """)
+
     fun `test Self is ?Sized by default`() = doTest("""
         trait Foo {
             fn foo(self: Self);
