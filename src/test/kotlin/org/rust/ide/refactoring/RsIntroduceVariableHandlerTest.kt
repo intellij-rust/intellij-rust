@@ -402,6 +402,58 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """, replaceAll = true)
 
+    fun `test lambda scoping 1`() = doTest("""
+        fn main() {
+            let _ = <selection>false</selection>;
+            || false;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let x = false;
+            let _ = x;
+            || x;
+        }
+    """, replaceAll = true)
+
+    fun `test lambda scoping 2`() = doTest("""
+        fn main() {
+            let _ = false;
+            || <selection>false</selection>;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let x = false;
+            let _ = x;
+            || x;
+        }
+    """, replaceAll = true)
+
+    fun `test lambda scoping 3`() = doTest("""
+        fn main() {
+            || false;
+            let _ = <selection>false</selection>;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let x = false;
+            || x;
+            let _ = x;
+        }
+    """, replaceAll = true)
+
+    fun `test lambda scoping 4`() = doTest("""
+        fn main() {
+            || <selection>false</selection>;
+            let _ = false;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let x = false;
+            || x;
+            let _ = x;
+        }
+    """, replaceAll = true)
+
     fun `test lambda has no braces with match expr`() = doTest("""
         fn main() {
             Some(1).map(|x| match <selection>x</selection> {
