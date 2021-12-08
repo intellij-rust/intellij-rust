@@ -818,6 +818,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val traitRef = impl.traitRef ?: return
         val typeRef = impl.typeReference ?: return
         val type = typeRef.type
+        // If type is not fully known, the plugin should produce some another error, like E0412
+        if (type.containsTyOfClass(TyUnknown::class.java)) return
         val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
         val lookup = typeRef.implLookup
 

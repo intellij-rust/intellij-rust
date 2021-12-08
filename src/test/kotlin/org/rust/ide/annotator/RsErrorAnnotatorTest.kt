@@ -1658,6 +1658,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<T> Baz for T {}
     """)
 
+    fun `test no E0277 for unknown type`() = checkErrors("""
+        trait Foo {}
+        trait Bar: Foo {}
+
+        impl Bar for S {}
+    """)
+
+    fun `test no E0277 for not fully known type`() = checkErrors("""
+        trait Foo {}
+        trait Bar: Foo {}
+        struct S<T>(T);
+        impl <T: Foo> Foo for S<T> {}
+        impl Bar for S<Q> {}
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
