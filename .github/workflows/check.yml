@@ -197,7 +197,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: evcxr_repl
+                  args: evcxr_repl --locked
 
             - name: Install cargo-generate
               # BACKCOMPAT: zeroize dependency requires Rust 1.51.0 or newer
@@ -205,7 +205,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: cargo-generate
+                  args: cargo-generate --locked
 
             - name: Check environment
               run: |
