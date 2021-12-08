@@ -75,13 +75,15 @@ fun findStatementsOrExprInRange(file: PsiFile, startOffset: Int, endOffset: Int)
     val (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
     val parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return emptyArray()
 
-    val mostDistantParent = parent.ancestors
-        .last { it.textRange == parent.textRange }
-
-    if (mostDistantParent is RsExpr || mostDistantParent is RsStmt) {
-        if (startOffset == mostDistantParent.startOffset && endOffset == mostDistantParent.endOffset) {
-            return arrayOf(mostDistantParent)
-        }
+    if (startOffset == parent.startOffset && endOffset == parent.endOffset) {
+        // Note that argument of macro with hardcoded PSI (like `println!`)
+        // will have parents `RsExpr` and`RsFormatMacroArgImpl` with same text range,
+        // and we should use `RsExpr`.
+        val mostDistantParent = parent.ancestors
+            .lastOrNull {
+                it.textRange == parent.textRange && (it is RsExpr || it is RsStmt)
+            }
+        mostDistantParent?.let { return arrayOf(it) }
     }
 
     return findStatementsInRange(element1, element2)

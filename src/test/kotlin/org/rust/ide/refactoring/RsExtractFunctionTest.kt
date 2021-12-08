@@ -1786,6 +1786,36 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test extract println! argument expression`() = doTest("""
+        fn main() {
+            println!("{}", <selection>1 + 2</selection>);
+        }
+    """, """
+        fn main() {
+            println!("{}", bar());
+        }
+
+        fn bar() -> i32 {
+            1 + 2
+        }
+    """, "bar")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test extract vec! argument expression`() = doTest("""
+        fn main() {
+            vec![<selection>1 + 2</selection>];
+        }
+    """, """
+        fn main() {
+            vec![bar()];
+        }
+
+        fn bar() -> i32 {
+            1 + 2
+        }
+    """, "bar")
+
     private fun doTest(
         @Language("Rust") code: String,
         @Language("Rust") excepted: String,
