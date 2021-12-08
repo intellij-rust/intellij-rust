@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij
+package org.rust
 
 import junit.framework.TestCase
 

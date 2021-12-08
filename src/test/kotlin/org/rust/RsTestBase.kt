@@ -6,7 +6,6 @@
 package org.rust
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
