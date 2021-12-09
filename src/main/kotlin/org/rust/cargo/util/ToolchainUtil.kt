@@ -5,6 +5,7 @@
 
 package org.rust.cargo.util
 
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.util.SystemInfo
 import org.rust.stdext.isExecutable
 import java.nio.file.Path
@@ -12,6 +13,6 @@ import java.nio.file.Path
 fun Path.hasExecutable(toolName: String): Boolean = pathToExecutable(toolName).isExecutable()
 
 fun Path.pathToExecutable(toolName: String): Path {
-    val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
+    val exeName = if (SystemInfo.isWindows && !WslDistributionManager.isWslPath(this.toString())) "$toolName.exe" else toolName
     return resolve(exeName).toAbsolutePath()
 }
