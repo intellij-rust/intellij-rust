@@ -5,15 +5,13 @@
 
 package org.rust.lang.core.resolve2
 
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.progress.ProgressIndicator
 import org.rust.lang.core.crate.Crate
 import org.rust.openapiext.computeInReadActionWithWriteActionPriority
 import org.rust.stdext.getWithRethrow
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
@@ -43,9 +41,9 @@ class DefMapsBuilder(
     }
     private val builtDefMaps: MutableMap<Crate, CrateDefMap> = ConcurrentHashMap(defMaps)
 
-    /** We don't use [CountDownLatch] because [CompletableFuture] allows easier exception handling */
+    /** We don't use [CountDownLatch] because [Future] allows easier exception handling */
     private val remainingNumberCrates: AtomicInteger = AtomicInteger(crates.size)
-    private val completableFuture: CompletableFuture<Unit> = CompletableFuture()
+    private val future: SettableFuture<Unit> = SettableFuture.create()
 
     /** Only for profiling */
     private val tasksTimes: MutableMap<Crate, Long> = ConcurrentHashMap()
@@ -70,10 +68,22 @@ class DefMapsBuilder(
         for (crate in cratesWithoutDependencies) {
             buildDefMapAsync(crate)
         }
-        completableFuture.getWithRethrow()
+        future.getWithRethrow()
     }
 
     private fun buildSync() {
+        if (poolForMacros == null) {
+            doBuildSync()
+        } else {
+            invokeWithoutHelpingOtherForkJoinPools(poolForMacros) {
+                computeInReadActionWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
+                    doBuildSync()
+                }
+            }
+        }
+    }
+
+    private fun doBuildSync() {
         for (crate in crates) {
             tasksTimes[crate] = measureTimeMillis {
                 doBuildDefMap(crate)
@@ -92,7 +102,7 @@ class DefMapsBuilder(
                     }
                 }
             } catch (e: Throwable) {
-                completableFuture.completeExceptionally(e)
+                future.setException(e)
                 return@execute
             }
             onCrateFinished(crate)
@@ -116,11 +126,12 @@ class DefMapsBuilder(
     }
 
     private fun onCrateFinished(crate: Crate) {
-        if (completableFuture.isCompletedExceptionally) return
+        /** Here we want to check for any exceptions, and `isDone` is equivalent check */
+        if (future.isDone) return
 
         crate.reverseDependencies.forEach { onDependencyCrateFinished(it) }
         if (remainingNumberCrates.decrementAndGet() == 0) {
-            completableFuture.complete(Unit)
+            future.set(Unit)
         }
     }
 
@@ -150,4 +161,24 @@ class DefMapsBuilder(
             RESOLVE_LOG.debug("wallTime: $wallTime.    Top 5 crates: $top5crates")
         }
     }
+}
+
+/**
+ * Needed because of [DefCollector.expandMacrosInParallel].
+ * We use [ForkJoinPool.invokeAll] there, which can execute tasks
+ * from completely different thread pool (associated with current thread).
+ * That's why we need to be sure that we build DefMaps on thread associated with our [ForkJoinPool].
+ * Also see [org.rust.lang.core.macros.MacroExpansionServiceImplInner.pool].
+ */
+private fun invokeWithoutHelpingOtherForkJoinPools(forkJoinPool: ExecutorService, action: () -> Unit) {
+    val future = SettableFuture.create<Unit>()
+    forkJoinPool.submit {
+        try {
+            action()
+        } catch (e: Throwable) {
+            future.setException(e)
+        }
+        future.set(Unit)
+    }
+    future.getWithRethrow()
 }
