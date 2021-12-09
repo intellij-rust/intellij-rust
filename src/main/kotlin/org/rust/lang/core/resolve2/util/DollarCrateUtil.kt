@@ -5,11 +5,9 @@
 
 package org.rust.lang.core.resolve2.util
 
-import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.ExpansionResultOk
 import org.rust.lang.core.macros.MacroCallBody
-import org.rust.lang.core.macros.MappedTextRange
 import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
@@ -84,14 +82,12 @@ class DollarCrateHelper(
     }
 
     /** expandedText = 'foo! { ... $crate ... }' */
-    fun getRangeMap(startOffsetInExpansion: Int, endOffsetInExpansion: Int): RangeMap {
+    fun getDollarCrateMap(startOffsetInExpansion: Int, endOffsetInExpansion: Int): DollarCrateMap {
         val rangesInMacro = filterRangesInside(startOffsetInExpansion, endOffsetInExpansion)
-            .map { (offsetInExpansion, crateId) ->
-                val offsetInMacro = offsetInExpansion - startOffsetInExpansion
-                MappedTextRange(crateId, offsetInMacro, MACRO_DOLLAR_CRATE_IDENTIFIER.length)
+            .mapKeys { (offsetInExpansion, _) ->
+                /* offsetInMacro = */ offsetInExpansion - startOffsetInExpansion
             }
-        if (rangesInMacro.isEmpty()) return RangeMap.EMPTY
-        return RangeMap.from(SmartList(rangesInMacro))
+        return DollarCrateMap(rangesInMacro)
     }
 
     private fun filterRangesInside(macroStart: Int, macroEnd: Int): Map<Int, CratePersistentId> =
@@ -135,4 +131,17 @@ private fun findCrateIdForEachDollarCrate(
             indexInExpandedText to crateId
         }
         .toMap(hashMapOf())
+}
+
+/**
+ * Consider macro call with $crate in body:
+ * `foo! { ... $crate ... }`
+ *        <---> offset = keys in [ranges]
+ */
+class DollarCrateMap(private val ranges: Map<Int, CratePersistentId>) {
+    fun mapOffsetFromExpansionToCallBody(offset: Int): CratePersistentId? = ranges[offset]
+
+    companion object {
+        val EMPTY: DollarCrateMap = DollarCrateMap(emptyMap())
+    }
 }

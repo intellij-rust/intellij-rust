@@ -854,4 +854,26 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             func();
         } //^ detached/inner.rs
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file ($crate)`() = stubOnlyResolve("""
+    //- detached.rs
+        mod inner {
+            pub fn func() {}
+        }        //X
+
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        macro_rules! gen {
+            () => {
+                as_is! {
+                    use $ crate::inner::func;
+                }
+            }
+        }
+        gen!();
+
+        fn main() {
+            func();
+        } //^ detached.rs
+    """)
 }

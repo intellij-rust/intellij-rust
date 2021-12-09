@@ -23,6 +23,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
+import org.rust.lang.core.resolve2.util.DollarCrateMap
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
@@ -503,7 +504,7 @@ class MacroCallInfo(
      * `srcOffset` - [CratePersistentId]
      * `dstOffset` - index of [MACRO_DOLLAR_CRATE_IDENTIFIER] in [body]
      */
-    val dollarCrateMap: RangeMap = RangeMap.EMPTY,
+    val dollarCrateMap: DollarCrateMap = DollarCrateMap.EMPTY,
 
     /**
      * Non-null in the case of attribute procedural macro if we can fall back that item

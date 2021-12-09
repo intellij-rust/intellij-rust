@@ -16,7 +16,6 @@ import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroCallBody
-import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -25,6 +24,7 @@ import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.processModDeclResolveVariants
 import org.rust.lang.core.resolve2.util.DollarCrateHelper
+import org.rust.lang.core.resolve2.util.DollarCrateMap
 import org.rust.lang.core.stubs.*
 import org.rust.openapiext.fileId
 import org.rust.openapiext.findFileByMaybeRelativePath
@@ -294,10 +294,10 @@ private class ModCollector(
         val bodyHash = call.bodyHash
         if (bodyHash == null && call.path.last() != "include") return
         val path = dollarCrateHelper?.convertPath(call.path, call.pathOffsetInExpansion) ?: call.path
-        val dollarCrateMap = dollarCrateHelper?.getRangeMap(
+        val dollarCrateMap = dollarCrateHelper?.getDollarCrateMap(
             call.bodyStartOffsetInExpansion,
             call.bodyEndOffsetInExpansion
-        ) ?: RangeMap.EMPTY
+        ) ?: DollarCrateMap.EMPTY
         val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
         context.context.macroCalls += MacroCallInfo(
             modData,
@@ -315,10 +315,10 @@ private class ModCollector(
         val (body, bodyHash) = call.lowerBody(project, crate) ?: return
         val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
         val path = dollarCrateHelper?.convertPath(call.attrPath, call.attrPathStartOffsetInExpansion) ?: call.attrPath
-        val dollarCrateMap = dollarCrateHelper?.getRangeMap(
+        val dollarCrateMap = dollarCrateHelper?.getDollarCrateMap(
             call.bodyStartOffsetInExpansion,
             call.bodyEndOffsetInExpansion
-        ) ?: RangeMap.EMPTY
+        ) ?: DollarCrateMap.EMPTY
         val originalItem = call.originalItem?.let {
             val visItem = convertToVisItem(it, isModOrEnum = false, forceCfgDisabledVisibility = false)
             Triple(visItem, it.namespaces, it.procMacroKind)
