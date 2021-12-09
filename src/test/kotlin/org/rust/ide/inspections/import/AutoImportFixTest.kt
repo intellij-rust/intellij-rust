@@ -2955,4 +2955,29 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import inside included file`() = checkAutoImportFixByFileTree("""
+        //- foo.rs
+        fn func() {
+            <error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+        //- lib.rs
+        include!("foo.rs");
+        mod inner {
+            pub fn foo() {}
+        }
+    """, """
+        //- foo.rs
+        use crate::inner::foo;
+
+        fn func() {
+            foo();
+        }
+        //- lib.rs
+        include!("foo.rs");
+        mod inner {
+            pub fn foo() {}
+        }
+    """)
 }

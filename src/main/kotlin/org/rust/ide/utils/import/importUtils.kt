@@ -13,6 +13,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.stdext.isSortedWith
@@ -46,6 +47,7 @@ fun ImportCandidateBase.import(context: RsElement) {
             ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
         }
         containingFile is RsCodeFragment -> containingFile.importTarget
+        containingFile is RsFile && RsIncludeMacroIndex.getIncludedFrom(containingFile) != null -> containingFile
         else -> null
     } ?: context.containingMod
     insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
