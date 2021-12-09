@@ -134,7 +134,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         projectDirectory: Path,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): ProjectDescription {
-        val rawData = fetchMetadata(owner, projectDirectory, listenerProvider(CargoCallType.METADATA))
+        val rawData = fetchMetadata(owner = owner, projectDirectory = projectDirectory, bazelSandbox = true, listener = listenerProvider(CargoCallType.METADATA))
 
         val (buildScriptsInfo, status) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
             val info = fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
@@ -153,16 +153,21 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
+        bazelSandbox: Boolean,
         listener: ProcessListener? = null
     ): CargoMetadata.Project {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        val projDir = projectDirectory
+//        val projDir = if (bazelSandbox) projectDirectory.resolve("bazel-bin") else projectDirectory
+        val json = CargoCommandLine("metadata", projDir, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
         try {
+            val srcPathConverter = if (bazelSandbox) { path -> bazelPathToLocal(path, projectDirectory.toString()) } else toolchain::toLocalPath
             return Gson().fromJson(json, CargoMetadata.Project::class.java)
-                .convertPaths(toolchain::toLocalPath)
+//                .convertPaths(toolchain::toLocalPath, toolchain::toLocalPath)
+                .convertPaths(toolchain::toLocalPath, srcPathConverter)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
@@ -231,6 +236,17 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         return BuildMessages(messages)
     }
 
+    private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
+        // TODO: apply Windows fix from WslToolchainBase
+        println("bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
+        if ("/bazel-out/" !in bazelPath) return bazelPath
+        val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
+        if (relativePathStartIndex == -1) return bazelPath
+        val projectRelativePath = bazelPath.substring(relativePathStartIndex).trim('/').replace("src/lib.rs", "lib.rs").replace("src/main.rs", "main.rs")
+        val projectRoot = bazelBinPath.substring(0, bazelBinPath.length - "bazel-bin".length)
+        return Path.of(projectRoot, projectRelativePath).toString()
+    }
+
     /**
      * If project directory is 'source' which is a symlink to 'target' directory,
      * then `cargo metadata` command inside 'source' directory produces output with 'target' paths.
@@ -275,6 +291,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         createBinary: Boolean,
         vcs: String? = null
     ): GeneratedFilesHolder {
+        println("Cargo.init")
         val path = directory.pathAsPath
         val crateType = if (createBinary) "--bin" else "--lib"
 
@@ -303,6 +320,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         name: String,
         templateUrl: String
     ): GeneratedFilesHolder {
+        println("Cargo.generate")
         val path = directory.pathAsPath
         val args = mutableListOf(
             "--name", name,
@@ -459,6 +477,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         fun getCargoCommonPatch(project: Project): CargoPatch = { it.patchArgs(project, true) }
 
         fun CargoCommandLine.patchArgs(project: Project, colors: Boolean): CargoCommandLine {
+            println("CargoCommandLine.patchArgs")
             val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 

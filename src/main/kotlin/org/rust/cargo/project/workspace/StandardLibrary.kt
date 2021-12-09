@@ -294,7 +294,7 @@ class StdlibDataFetcher private constructor(
         }
 
         val metadataProject = try {
-            cargo.fetchMetadata(project, pathAsPath, listener)
+            cargo.fetchMetadata(project, pathAsPath, false, listener)
         } catch (e: ExecutionException) {
             listener?.error("Failed to fetch stdlib package info", e.message.orEmpty())
             LOG.error(e)

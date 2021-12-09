@@ -17,6 +17,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -126,7 +127,7 @@ open class CargoProjectsServiceImpl(
 
 
     @Suppress("LeakingThis")
-    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
+    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this).also { println("noProjectMarker: $it") }
 
     /**
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
@@ -186,7 +187,9 @@ open class CargoProjectsServiceImpl(
     private var isLegacyRustNotificationShowed: Boolean = false
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { info -> info !== noProjectMarker } }
+        file.applyWithSymlink { directoryIndex.getInfoForFile(it).also { info ->
+            if ("rust-poc/main.rs" in file.path) println("findProjectForFile: file=$file, info=$info")
+        }.takeIf { info -> info !== noProjectMarker } }
 
     override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
         file.applyWithSymlink(packageIndex::findPackageForFile)
@@ -197,7 +200,7 @@ open class CargoProjectsServiceImpl(
             if (isExistingProject(projects, manifest))
                 CompletableFuture.completedFuture(projects)
             else
-                doRefresh(project, projects + CargoProjectImpl(manifest, this))
+                doRefresh(project, projects + CargoProjectImpl(manifest, this).also { println("attachCargoProject: $it") })
         }
         return true
     }
@@ -210,7 +213,7 @@ open class CargoProjectsServiceImpl(
             if (newManifests3.isEmpty())
                 CompletableFuture.completedFuture(projects)
             else
-                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this) })
+                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this).also { println("attachCargoProjects: $it") } })
         }
     }
 
@@ -224,20 +227,24 @@ open class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
+        println("discoverAndRefresh: entered")
         val guessManifest = suggestManifests().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
             if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
-            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
+            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this).also { println("discoverAndRefresh: $it") }))
         }
     }
 
-    override fun suggestManifests(): Sequence<VirtualFile> =
-        project.modules
+    override fun suggestManifests(): Sequence<VirtualFile> {
+        println("CargoProjectImpl.suggestManifests")
+        return project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
+            .mapNotNull { val manifest = it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE); println("suggestManifests RETURNED $manifest for content root $it"); manifest }
+//            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
+    }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
@@ -430,7 +437,7 @@ open class CargoProjectsServiceImpl(
             val file = cargoProject.getAttributeValue("FILE")
             val manifest = Paths.get(file)
             val userDisabledFeatures = userDisabledFeaturesMap[manifest] ?: UserDisabledFeatures.EMPTY
-            val newProject = CargoProjectImpl(manifest, this, userDisabledFeatures)
+            val newProject = CargoProjectImpl(manifest, this, userDisabledFeatures).also { println("loadState: $it") }
             loaded.add(newProject)
         }
 
@@ -483,6 +490,9 @@ data class CargoProjectImpl(
     override val stdlibStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
+    init {
+        println(this)
+    }
     override val project get() = projectService.project
 
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {

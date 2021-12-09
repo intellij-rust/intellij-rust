@@ -64,9 +64,12 @@ object CargoMetadata {
          */
         val workspace_root: String
     ) {
-        fun convertPaths(converter: PathConverter): Project = copy(
-            packages = packages.map { it.convertPaths(converter) },
-            workspace_root = converter(workspace_root)
+        init {
+            println("Fetched Cargo metadata: $this")
+        }
+        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Project = copy(
+            packages = packages.map { it.convertPaths(converter, srcPathConverter) },
+            workspace_root = srcPathConverter(workspace_root)
         )
     }
 
@@ -133,9 +136,9 @@ object CargoMetadata {
          */
         val dependencies: List<RawDependency>
     ) {
-        fun convertPaths(converter: PathConverter): Package = copy(
+        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Package = copy(
             manifest_path = converter(manifest_path),
-            targets = targets.map { it.convertPaths(converter) }
+            targets = targets.map { it.convertPaths(srcPathConverter) }
         )
     }
 

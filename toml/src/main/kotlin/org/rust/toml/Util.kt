@@ -136,6 +136,7 @@ fun getClosestKeyValueAncestor(position: PsiElement): TomlKeyValue? {
 }
 
 fun CargoWorkspace.Package.getPackageTomlFile(project: Project): TomlFile? {
+    println("getPackageTomlFile")
     return contentRoot?.findChild(CargoConstants.MANIFEST_FILE)
         ?.toPsiFile(project)
         as? TomlFile

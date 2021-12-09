@@ -11,8 +11,10 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,7 +45,7 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
             else -> e.getData(PlatformDataKeys.VIRTUAL_FILE)
         } ?: return
 
-        val cargoToml = file.findCargoToml() ?: return
+        val cargoToml = file.findCargoToml(project) ?: return
 
         if (!project.cargoProjects.attachCargoProject(cargoToml.pathAsPath)) {
             Messages.showErrorDialog(
@@ -76,15 +78,20 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
                 // so disable the action in dumb mode
                 if (DumbService.isDumb(project)) return false
                 val file = e.getData(PlatformDataKeys.VIRTUAL_FILE)
-                val cargoToml = file?.findCargoToml() ?: return false
+                val cargoToml = file?.findCargoToml(project) ?: return false
 
                 canBeAttached(project, cargoToml)
             }
         }
     }
 
-    private fun VirtualFile.findCargoToml(): VirtualFile? {
-        return if (isDirectory) findChild(CargoConstants.MANIFEST_FILE) else takeIf { it.isCargoToml }
+    private fun VirtualFile.findCargoToml(project: Project): VirtualFile? {
+        println("AttachCargoProjectAction.findCargoToml")
+        return if (isDirectory) {
+            ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots()[0]
+//            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
+                .findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE)
+        } else takeIf { it.isCargoToml }
     }
 
     companion object {
@@ -121,6 +128,8 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
     }
 
     override fun isFileSelectable(file: VirtualFile?): Boolean {
+        // TODO (AW)
+        println("CargoProjectChooserDescriptor: isFileSelectable")
         return super.isFileSelectable(file) && file != null && (!file.isDirectory || file.findChild(CargoConstants.MANIFEST_FILE) != null)
     }
 }

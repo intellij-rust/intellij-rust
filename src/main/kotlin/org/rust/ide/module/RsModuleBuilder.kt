@@ -45,6 +45,7 @@ class RsModuleBuilder : ModuleBuilder() {
         root.refresh(/* async = */ false, /* recursive = */ true)
 
         // Just work if user "creates new project" over an existing one.
+        throw Exception("setupRootModel: banana")
         if (toolchain != null && root.findChild(CargoConstants.MANIFEST_FILE) == null) {
             try {
                 // TODO: rewrite this somehow to fix `Synchronous execution on EDT` exception

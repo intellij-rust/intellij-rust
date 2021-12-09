@@ -25,7 +25,8 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         base: File,
         result: MutableList<DetectedProjectRoot>
     ): DirectoryProcessingResult {
-        if (children.any { it.name == CargoConstants.MANIFEST_FILE }) {
+//        if (children.any { it.name == CargoConstants.MANIFEST_FILE }) {
+        if (children.any { it.name in listOf("main.rs", "lib.rs") }) {
             result.add(object : DetectedProjectRoot(dir) {
                 override fun getRootTypeName(): String = "Rust"
             })

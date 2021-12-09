@@ -11,6 +11,7 @@ import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -26,8 +27,13 @@ class CargoProjectOpenProcessor : ProjectOpenProcessor() {
     override fun getName(): String = "Cargo"
 
     override fun canOpenProject(file: VirtualFile): Boolean {
-        return FileUtil.namesEqual(file.name, CargoConstants.MANIFEST_FILE) ||
-            file.isDirectory && file.findChild(CargoConstants.MANIFEST_FILE) != null
+        return true // TODO: review
+//        throw Exception("canOpenProject: banana")
+//        return file.isDirectory && LocalFileSystem.getInstance().findFileByIoFile(java.io.File(
+//            "/Users/aw/Desktop/workspace/rust-poc/bazel-bin/${file.path}/${CargoConstants.MANIFEST_FILE}"
+//        )) != null
+//        return FileUtil.namesEqual(file.name, CargoConstants.MANIFEST_FILE) ||
+//            file.isDirectory && file.findChild(CargoConstants.MANIFEST_FILE) != null
     }
 
     @Suppress("UnstableApiUsage")

@@ -58,6 +58,7 @@ class CargoConfigurationWizardStep(
         var data: RustProjectSettingsPanel.Data? = null
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
+            throw Exception("ConfigurationUpdater.update: banana")
             val data = data
             if (data != null) {
                 module.project.rustSettings.modify {
