@@ -2946,6 +2946,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl const T for S {}
     """)
 
+    @MockRustcVersion("1.53.0")
+    fun `test const fn trait bound E0658 1`() = checkErrors("""
+        trait T {}
+        const fn foo<A: <error descr="const trait impls is experimental [E0658]"><error descr="const fn trait bound is experimental [E0658]">~const</error></error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 2`() = checkErrors("""
+        #![feature(const_trait_impl)]
+        trait T {}
+        const fn foo<A: <error descr="const fn trait bound is experimental [E0658]">~const</error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 3`() = checkErrors("""
+        #![feature(const_fn_trait_bound)]
+        trait T {}
+        const fn foo<A: <error descr="const trait impls is experimental [E0658]">~const</error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 4`() = checkErrors("""
+        #![feature(const_trait_impl)]
+        #![feature(const_fn_trait_bound)]
+        trait T {}
+        const fn foo<A: ~const T>() {}
+    """)
+
     @MockRustcVersion("1.56.0")
     fun `test const generics`() = checkErrors("""
         fn f<const C: i32>() {}

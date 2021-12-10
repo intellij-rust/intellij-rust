@@ -61,6 +61,7 @@
         FAT_ARROW   =  '=>'
         ARROW       =  '->'
         Q           =  '?'
+        T           =  '~'
         AT          =  '@'
         UNDERSCORE  =  '_'
         DOLLAR      =  '$'
@@ -473,7 +474,7 @@ Polybound ::= '(' PolyboundInner ')' | PolyboundInner {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private PolyboundInner ::= [ ForLifetimes | '?' ] Bound
+private PolyboundInner ::= [ ForLifetimes | '?' | TildeConst ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -492,6 +493,10 @@ ForLifetimes ::= for '<' LifetimesParams '>' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+TildeConst ::= '~' const {
+  pin = 1
 }
 
 ExternAbi ::= extern LitExpr?

@@ -99,6 +99,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitArrayExpr(o: RsArrayExpr) = checkArrayExpr(rsHolder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(rsHolder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(rsHolder, o)
+            override fun visitTildeConst(o: RsTildeConst) = checkTildeConst(rsHolder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(rsHolder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(rsHolder, o)
             override fun visitBlockExpr(o: RsBlockExpr) = checkBlockExpr(rsHolder, o)
@@ -1250,6 +1251,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (o.lparen != null && o.bound.lifetime != null) {
             holder.createErrorAnnotation(o, "Parenthesized lifetime bounds are not supported")
         }
+    }
+
+    private fun checkTildeConst(holder: RsAnnotationHolder, o: RsTildeConst) {
+        CONST_TRAIT_IMPL.check(holder, o, "const trait impls")
+        CONST_FN_TRAIT_BOUND.check(holder, o, "const fn trait bound")
     }
 
     private fun checkBlockExpr(holder: RsAnnotationHolder, expr: RsBlockExpr) {
