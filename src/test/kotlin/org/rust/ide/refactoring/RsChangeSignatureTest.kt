@@ -580,7 +580,7 @@ Cannot change signature of function with cfg-disabled parameters""")
             foo::bar(0);
         }
     """, """
-        use foo::S;
+        use crate::foo::S;
 
         mod foo {
             pub struct S(u32);
@@ -612,7 +612,7 @@ Cannot change signature of function with cfg-disabled parameters""")
             foo::bar(0);
         }
     """, """
-        use foo::{Option, S1, S2};
+        use crate::foo::{Option, S1, S2};
 
         mod foo {
             pub enum Option<T> {
@@ -1212,7 +1212,7 @@ Cannot change signature of function with cfg-disabled parameters""")
 
         fn bar/*caret*/() {}
     """, """
-        use foo::Vec;
+        use crate::foo::Vec;
 
         mod foo {
             pub struct S;
@@ -1240,7 +1240,7 @@ Cannot change signature of function with cfg-disabled parameters""")
 
         fn bar/*caret*/() {}
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct S;

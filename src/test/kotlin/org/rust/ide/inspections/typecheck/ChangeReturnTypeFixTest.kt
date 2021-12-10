@@ -128,7 +128,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
     """)
 
     fun `test import unresolved type (add)`() = checkFixByText("Change return type of function 'foo' to '(S, A)'", """
-        use a::bar;
+        use crate::a::bar;
 
         mod a {
             pub struct S;
@@ -140,7 +140,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{A, bar, S};
+        use crate::a::{A, bar, S};
 
         mod a {
             pub struct S;
@@ -154,7 +154,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
     """)
 
     fun `test import unresolved type (replace)`() = checkFixByText("Change return type of function 'foo' to '(S, A)'", """
-        use a::bar;
+        use crate::a::bar;
 
         mod a {
             pub struct S;
@@ -166,7 +166,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{A, bar, S};
+        use crate::a::{A, bar, S};
 
         mod a {
             pub struct S;
@@ -180,7 +180,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
     """)
 
     fun `test import skip default type argument`() = checkFixByText("Change return type of function 'foo' to 'S'", """
-        use a::bar;
+        use crate::a::bar;
 
         mod a {
             pub struct R;
@@ -192,7 +192,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{bar, S};
+        use crate::a::{bar, S};
 
         mod a {
             pub struct R;
@@ -206,7 +206,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
     """)
 
     fun `test import aliased type`() = checkFixByText("Change return type of function 'foo' to 'S'", """
-        use a::bar;
+        use crate::a::bar;
 
         mod a {
             pub struct R;
@@ -218,7 +218,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             <error>bar()<caret></error>
         }
     """, """
-        use a::{bar, S};
+        use crate::a::{bar, S};
 
         mod a {
             pub struct R;
@@ -260,7 +260,8 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
-    fun `test use qualified name for ambiguous type`() = checkFixByText("Change return type of function 'foo' to 'a::Foo'", """
+    fun `test use qualified name for ambiguous type`() = checkFixByText(
+        "Change return type of function 'foo' to 'crate::a::Foo'", """
         mod a {
             pub struct Foo;
         }
@@ -275,12 +276,13 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
         struct Foo;
 
-        fn foo() -> a::Foo {
+        fn foo() -> crate::a::Foo {
             a::Foo
         }
     """)
 
-    fun `test use qualified name for ambiguous nested type`() = checkFixByText("Change return type of function 'foo' to '(a::S, b::S)'", """
+    fun `test use qualified name for ambiguous nested type`() = checkFixByText(
+        "Change return type of function 'foo' to '(crate::a::S, crate::b::S)'", """
         struct S;
         mod a {
             pub struct S;
@@ -301,12 +303,12 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub struct S;
         }
 
-        fn foo() -> (a::S, b::S) {
+        fn foo() -> (crate::a::S, crate::b::S) {
             (a::S, b::S)
         }
     """)
 
-    fun `test do not qualify type parameter`() = checkFixByText("Change return type of function 'foo' to 'b::S<T>'", """
+    fun `test do not qualify type parameter`() = checkFixByText("Change return type of function 'foo' to 'crate::b::S<T>'", """
         struct T;
         struct S<T>(T);
         mod b {
@@ -323,7 +325,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub struct S<T>(T);
         }
 
-        fn foo() -> b::S<T> {
+        fn foo() -> crate::b::S<T> {
             b::S::<T>(T)
         }
     """)

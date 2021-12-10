@@ -8,12 +8,12 @@ package org.rust.ide.inspections.fixes
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 
 class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
-    fun `test function call`() = checkFixByText("Qualify path to `foo::bar`", """
+    fun `test function call`() = checkFixByText("Qualify path to `crate::foo::bar`", """
         mod foo {
             pub fn bar() {}
         }
@@ -25,11 +25,11 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
             pub fn bar() {}
         }
         fn main() {
-            foo::bar();
+            crate::foo::bar();
         }
     """)
 
-    fun `test struct type`() = checkFixByText("Qualify path to `foo::S`", """
+    fun `test struct type`() = checkFixByText("Qualify path to `crate::foo::S`", """
         mod foo {
             pub struct S;
         }
@@ -41,11 +41,11 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
             pub struct S;
         }
         fn main() {
-            let x: foo::S;
+            let x: crate::foo::S;
         }
     """)
 
-    fun `test generic struct type`() = checkFixByText("Qualify path to `foo::S`", """
+    fun `test generic struct type`() = checkFixByText("Qualify path to `crate::foo::S`", """
         mod foo {
             pub struct S<T>(T);
         }
@@ -57,11 +57,11 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
             pub struct S<T>(T);
         }
         fn main() {
-            let x: foo::S<u32>;
+            let x: crate::foo::S<u32>;
         }
     """)
 
-    fun `test struct associated method call`() = checkFixByText("Qualify path to `foo::S`", """
+    fun `test struct associated method call`() = checkFixByText("Qualify path to `crate::foo::S`", """
         mod foo {
             pub struct S;
             impl S {
@@ -79,11 +79,11 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
             }
         }
         fn main() {
-            let x = foo::S::bar();
+            let x = crate::foo::S::bar();
         }
     """)
 
-    fun `test generic struct associated method call`() = checkFixByText("Qualify path to `foo::S`", """
+    fun `test generic struct associated method call`() = checkFixByText("Qualify path to `crate::foo::S`", """
         mod foo {
             pub struct S<T>(T);
             impl<T> S<T> {
@@ -101,7 +101,7 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
             }
         }
         fn main() {
-            let x = foo::S::<u32>::bar();
+            let x = crate::foo::S::<u32>::bar();
         }
     """)
 
@@ -148,7 +148,7 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test add extern crate with 2015 edition`() = checkFixByFileTree("Qualify path", """
         //- dep-lib/lib.rs
         pub mod foo {

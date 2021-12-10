@@ -443,8 +443,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
     """)
 
     fun `test import unresolved type`() = checkFixByText("Add remaining patterns", """
-        use a::E::A;
-        use a::foo;
+        use crate::a::E::A;
+        use crate::a::foo;
 
         mod a {
             pub enum E { A, B }
@@ -457,8 +457,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             };
         }
     """, """
-        use a::E::A;
-        use a::{E, foo};
+        use crate::a::E::A;
+        use crate::a::{E, foo};
 
         mod a {
             pub enum E { A, B }
@@ -908,7 +908,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
     """)
 
     fun `test empty match import unresolved type`() = checkFixByText("Add remaining patterns", """
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub enum FooBar { Foo, Bar }
@@ -919,7 +919,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> foo() {};
         }
     """, """
-        use a::{foo, FooBar};
+        use crate::a::{foo, FooBar};
 
         mod a {
             pub enum FooBar { Foo, Bar }

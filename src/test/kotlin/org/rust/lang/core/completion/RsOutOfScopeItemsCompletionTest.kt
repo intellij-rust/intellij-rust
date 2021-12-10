@@ -27,7 +27,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             let _ = BTreeM/*caret*/
         }
     """, """
-        use collections::BTreeMap;
+        use crate::collections::BTreeMap;
 
         mod collections {
             pub struct BTreeMap;
@@ -172,7 +172,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             let a = Enu/*caret*/
         }
     """, """
-        use a::Enum;
+        use crate::a::Enum;
 
         mod a {
             pub enum Enum {
@@ -192,7 +192,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             let a = V/*caret*/
         }
     """, """
-        use Enum::V1;
+        use crate::Enum::V1;
 
         enum Enum { V1 }
 
@@ -213,7 +213,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             pub struct Bar;
         }
         mod baz {
-            use foo::Bar;
+            use crate::foo::Bar;
 
             fn x(x: Bar/*caret*/) {}
         }
@@ -231,7 +231,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             pub struct Bar;
         }
         pub mod baz {
-            use foo::Bar;
+            use crate::foo::Bar;
 
             fn x(x: Bar/*caret*/) {}
         }
@@ -246,7 +246,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             ba/*caret*/
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub fn bar(x: i32) {}
@@ -268,7 +268,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             ba/*caret*/
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub fn bar(x: i32) {}
@@ -310,7 +310,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
             }
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo { pub struct Foo; }
         macro_rules! foo {

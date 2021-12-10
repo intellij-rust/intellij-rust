@@ -153,7 +153,7 @@ class CreateTupleStructIntentionTest : RsIntentionTestBase(CreateTupleStructInte
             Foo/*caret*/(bar::S);
         }
     """, """
-        use bar::S;
+        use crate::bar::S;
 
         mod bar {
             pub struct S;

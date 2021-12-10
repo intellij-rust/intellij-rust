@@ -8,9 +8,9 @@ package org.rust.lang.core.resolve
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2015)
+@MockEdition(Edition.EDITION_2015)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTestEdition2015 : RsResolveTestBase() {
 

@@ -6,9 +6,11 @@
 package org.rust.lang.core.completion
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.*
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithActualStdlibRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.lang.core.macros.MacroExpansionScope
 
@@ -86,7 +88,6 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         fn main() { std::stringify!(/*caret*/) }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
     fun `test complete all in std in 'use' in crate root`() = checkContainsCompletion("vec", """
         use std::/*caret*/;
     """)

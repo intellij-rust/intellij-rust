@@ -63,19 +63,17 @@ class RsResolveCacheTest : RsTestBase() {
     """, "\b2", Testmarks.removeChangedElement)
 
     fun `test resolve correctly without global cache invalidation 4`() = checkResolvedToXY("""
-        mod foo { pub struct S; }
+        mod really_long_name { pub struct S; }
            //Y
         mod bar {
-            mod foo { pub struct S; }
+            mod really_long_name { pub struct S; }
                //X
             fn baz() {
                 /*caret*/
-                foo
-                //^
-                ::S;
-            }
+                really_long_name::S;
+            }             //^
         }
-    """, "::")
+    """, "crate::")
 
     fun `test edit local pat binding`() = checkResolvedAndThenUnresolved("""
         fn main() {

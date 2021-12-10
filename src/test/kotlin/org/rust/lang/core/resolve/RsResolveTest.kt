@@ -1002,9 +1002,8 @@ class RsResolveTest : RsResolveTestBase() {
           //X
         mod inner {
             fn main() {
-                ::inner::super::foo();
-                               //^
-            }
+                crate::inner::super::foo();
+            }                      //^
         }
     """)
 

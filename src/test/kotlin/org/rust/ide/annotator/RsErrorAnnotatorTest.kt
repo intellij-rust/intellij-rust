@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
@@ -1430,7 +1431,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         mod bar {
             mod baz {
-                use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
+                use crate::foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
             }
         }
     """)
@@ -1446,7 +1447,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         //- bar/mod.rs
             mod baz;
         //- bar/baz.rs
-            use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
+            use crate::foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
     """, filePath = "bar/baz.rs")
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -1753,6 +1754,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use crate::foo::{<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo};
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.28.0")
     fun `test crate in path feature E0658`() = checkErrors("""
         mod foo {
@@ -1762,6 +1764,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.29.0-nightly")
     fun `test crate in path feature E0658 2`() = checkErrors("""
         mod foo {
@@ -4479,6 +4482,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test use edition 2018 keyword as lifetime name in the edition 2015`() = checkErrors("""
         struct Me<'async>  {
             name: &'async str,

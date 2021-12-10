@@ -1006,7 +1006,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             baz/*caret*/(bar::get_s())
         }
     """, """
-        use bar::{S, T};
+        use crate::bar::{S, T};
 
         mod bar {
             pub struct S;

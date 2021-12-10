@@ -8,10 +8,10 @@ package org.rust.ide.refactoring
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.refactoring.generate.RsStructMemberChooserObject
-import org.rust.ide.refactoring.generate.StructMemberChooserUi
 import org.rust.ide.refactoring.extractStructFields.ExtractFieldsUi
 import org.rust.ide.refactoring.extractStructFields.withMockExtractFieldsUi
+import org.rust.ide.refactoring.generate.RsStructMemberChooserObject
+import org.rust.ide.refactoring.generate.StructMemberChooserUi
 import org.rust.ide.refactoring.generate.withMockStructMemberChooserUi
 import org.rust.launchAction
 
@@ -319,7 +319,7 @@ class RsExtractStructFieldsTest : RsTestBase() {
             foo::A { a: 0 }
         }
     """, "S1", listOf("a"), """
-        use foo::S1;
+        use crate::foo::S1;
 
         mod foo {
             pub struct S1 {

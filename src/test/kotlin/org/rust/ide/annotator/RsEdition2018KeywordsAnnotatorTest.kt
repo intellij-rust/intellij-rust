@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
 class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018KeywordsAnnotator::class) {
@@ -16,6 +17,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
         annotationFixture.registerSeverities(listOf(RsColor.KEYWORD.testSeverity))
     }
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test edition 2018 keywords in edition 2015`() = checkErrors("""
         fn main() {
             let async = ();
@@ -49,6 +51,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test async in edition 2015`() = checkErrors("""
         <error descr="This feature is only available in Edition 2018">async</error> fn foo() {}
 
@@ -70,6 +73,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test try in edition 2015`() = checkErrors("""
         fn main() {
             <error descr="This feature is only available in Edition 2018">try</error> { () };

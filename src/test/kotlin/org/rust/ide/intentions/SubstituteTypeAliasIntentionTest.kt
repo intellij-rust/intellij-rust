@@ -208,7 +208,7 @@ class SubstituteTypeAliasIntentionTest : RsIntentionTestBase(SubstituteTypeAlias
             unimplemented!()
         }
     """, """
-        use foo::S;
+        use crate::foo::S;
 
         mod foo {
             pub struct S;

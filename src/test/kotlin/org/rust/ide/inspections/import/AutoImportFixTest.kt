@@ -7,6 +7,7 @@ package org.rust.ide.inspections.import
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.utils.import.Testmarks
 
 class AutoImportFixTest : AutoImportFixTestBase() {
@@ -20,7 +21,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -40,7 +41,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::A;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub enum Foo { A }
@@ -60,7 +61,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use foo::Foo::A;
+        use crate::foo::Foo::A;
 
         mod foo {
             pub enum Foo { A }
@@ -78,7 +79,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use Foo::A;
+        use crate::Foo::A;
 
         enum Foo { A }
 
@@ -125,7 +126,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `bar`">bar/*caret*/</error>();
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub fn bar() -> i32 { 0 }
@@ -148,7 +149,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::foo();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -169,7 +170,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn f<T>(foo: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error><T>) {}
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo<T>(T);
@@ -187,7 +188,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32> {};
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo<T> { x: T }
@@ -210,7 +211,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32>::bar();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo<T>(T);
@@ -233,7 +234,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32> { x } = ();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo<T> { x: T }
@@ -256,7 +257,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32>::bar(x) = ();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo<T>(T);
@@ -281,7 +282,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub mod bar {
@@ -295,7 +296,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test insert use item after existing use items`() = checkAutoImportFixByText("""
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub struct Bar;
@@ -309,8 +310,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use bar::Foo;
-        use foo::Bar;
+        use crate::bar::Foo;
+        use crate::foo::Bar;
 
         mod foo {
             pub struct Bar;
@@ -338,7 +339,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, """
         #![allow(non_snake_case)]
 
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -365,7 +366,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         mod tests {
-            use foo::Foo;
+            use crate::foo::Foo;
 
             fn foo() {
                 let f = Foo/*caret*/;
@@ -384,7 +385,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::bar::Foo;
+        use crate::foo::bar::Foo;
 
         mod foo {
             pub mod bar {
@@ -537,7 +538,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, """
         mod aaa {
             mod bbb {
-                use ccc::ddd::Foo;
+                use crate::ccc::ddd::Foo;
 
                 fn foo() {
                     let x = Foo/*caret*/;
@@ -573,7 +574,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod ccc;
     """, """
         //- aaa/bbb/mod.rs
-        use ccc::ddd::Foo;
+        use crate::ccc::ddd::Foo;
 
         fn foo() {
             let x = Foo/*caret*/;
@@ -592,7 +593,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         //- main.rs
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub mod bar;
@@ -617,7 +618,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `bar`">bar/*caret*/</error>();
         }
     """, """
-        use foo1::bar;
+        use crate::foo1::bar;
 
         mod foo1 {
             pub fn bar() {}
@@ -649,7 +650,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """, """
-        use foo2::bar;
+        use crate::foo2::bar;
 
         mod foo1 {
             pub fn bar() {}
@@ -721,7 +722,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::bar();
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub trait Bar {
@@ -743,7 +744,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::bar();
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub trait Bar {
@@ -776,7 +777,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::C;
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub trait Bar {
@@ -812,7 +813,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub use self::bar::Bar;
@@ -840,7 +841,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub use self::bar::Bar as Foo;
@@ -869,7 +870,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
-        use foo::Baz;
+        use crate::foo::Baz;
 
         mod foo {
             pub use self::bar::{Baz, Qwe};
@@ -898,7 +899,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
-        use foo::Baz;
+        use crate::foo::Baz;
 
         mod foo {
             pub use self::bar::Baz::{self};
@@ -927,7 +928,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub use self::bar::{Baz as Foo, Qwe};
@@ -958,7 +959,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, """
-        use foo::baz::FooBar;
+        use crate::foo::baz::FooBar;
 
         mod foo {
             pub use self::bar::baz;
@@ -1001,8 +1002,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, listOf("baz::Foo", "foo::Foo", "foo::bar::Foo"), "baz::Foo", """
-        use baz::Foo;
+    """, listOf("crate::baz::Foo", "crate::foo::Foo", "crate::foo::bar::Foo"), "crate::baz::Foo", """
+        use crate::baz::Foo;
 
         mod foo {
             pub struct Foo;
@@ -1047,8 +1048,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, listOf( "bar::Foo","foo::Foo", "qwe::Foo"),  "bar::Foo", """
-        use bar::Foo;
+    """, listOf("crate::bar::Foo", "crate::foo::Foo", "crate::qwe::Foo"), "crate::bar::Foo", """
+        use crate::bar::Foo;
 
         mod foo {
             pub struct Foo;
@@ -1084,19 +1085,19 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         mod baz {
             pub mod qqq {
-                pub use foo::bar;
+                pub use crate::foo::bar;
             }
         }
 
         mod xxx {
-            pub use baz::qqq;
+            pub use crate::baz::qqq;
         }
 
         fn main() {
             let a = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, """
-        use foo::bar::FooBar;
+        use crate::foo::bar::FooBar;
 
         mod foo {
             pub mod bar {
@@ -1106,12 +1107,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         mod baz {
             pub mod qqq {
-                pub use foo::bar;
+                pub use crate::foo::bar;
             }
         }
 
         mod xxx {
-            pub use baz::qqq;
+            pub use crate::baz::qqq;
         }
 
         fn main() {
@@ -1121,29 +1122,29 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test cyclic module reexports`() = checkAutoImportFixByText("""
         pub mod x {
-            pub use y;
+            pub use crate::y;
 
             pub struct Z;
         }
 
         pub mod y {
-            pub use x;
+            pub use crate::x;
         }
 
         fn main() {
             let x = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
     """, """
-        use x::Z;
+        use crate::x::Z;
 
         pub mod x {
-            pub use y;
+            pub use crate::y;
 
             pub struct Z;
         }
 
         pub mod y {
-            pub use x;
+            pub use crate::x;
         }
 
         fn main() {
@@ -1153,44 +1154,44 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test crazy cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         pub mod x {
-            pub use u;
+            pub use crate::u;
 
             pub mod y {
-                pub use u::v;
+                pub use crate::u::v;
 
                 pub struct Z;
             }
         }
 
         pub mod u {
-            pub use x::y;
+            pub use crate::x::y;
 
             pub mod v {
-                pub use x;
+                pub use crate::x;
             }
         }
 
         fn main() {
             let z = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, listOf("u::y::Z", "x::y::Z"), "u::y::Z", """
-        use u::y::Z;
+    """, listOf("crate::u::y::Z", "crate::x::y::Z"), "crate::u::y::Z", """
+        use crate::u::y::Z;
 
         pub mod x {
-            pub use u;
+            pub use crate::u;
 
             pub mod y {
-                pub use u::v;
+                pub use crate::u::v;
 
                 pub struct Z;
             }
         }
 
         pub mod u {
-            pub use x::y;
+            pub use crate::x::y;
 
             pub mod v {
-                pub use x;
+                pub use crate::x;
             }
         }
 
@@ -1209,18 +1210,18 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         mod baz {
-            pub use foo::bar::FooBar;
+            pub use crate::foo::bar::FooBar;
         }
 
         mod quuz {
-            pub use foo::bar;
+            pub use crate::foo::bar;
         }
 
         fn main() {
             let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
-    """, listOf("baz::FooBar", "foo::FooBar"), "baz::FooBar", """
-        use baz::FooBar;
+    """, listOf("crate::baz::FooBar", "crate::foo::FooBar"), "crate::baz::FooBar", """
+        use crate::baz::FooBar;
 
         mod foo {
             pub use self::bar::FooBar;
@@ -1231,11 +1232,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         mod baz {
-            pub use foo::bar::FooBar;
+            pub use crate::foo::bar::FooBar;
         }
 
         mod quuz {
-            pub use foo::bar;
+            pub use crate::foo::bar;
         }
 
         fn main() {
@@ -1256,7 +1257,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn foo(x: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>) {}
     """, """
-        use struct_mod::Foo;
+        use crate::struct_mod::Foo;
 
         mod struct_mod {
             pub struct Foo { foo: i32 }
@@ -1295,8 +1296,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, listOf("enum_mod::Bar::Foo", "struct_mod::Foo", "type_alias_mod::Foo"), "enum_mod::Bar::Foo", """
-        use enum_mod::Bar::Foo;
+    """, listOf("crate::enum_mod::Bar::Foo", "crate::struct_mod::Foo", "crate::type_alias_mod::Foo"),
+        "crate::enum_mod::Bar::Foo", """
+        use crate::enum_mod::Bar::Foo;
 
         mod struct_mod {
             pub struct Foo { foo: i32 }
@@ -1339,7 +1341,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn foo<T: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>>(x: T) {}
     """, """
-        use trait_mod::Foo;
+        use crate::trait_mod::Foo;
 
         mod struct_mod {
             pub struct Foo { foo: i32 }
@@ -1391,8 +1393,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error> { };
         }
-    """, listOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
-        use enum_struct_mod::Bar::Foo;
+    """, listOf("crate::block_struct_mod::Foo", "crate::enum_struct_mod::Bar::Foo", "crate::type_alias_mod::Foo"),
+        "crate::enum_struct_mod::Bar::Foo", """
+        use crate::enum_struct_mod::Bar::Foo;
 
         mod struct_mod {
             pub struct Foo;
@@ -1460,7 +1463,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1490,7 +1493,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1520,7 +1523,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = i32::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1553,7 +1556,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = S::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1586,7 +1589,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = <i32>::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1618,7 +1621,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = i32::<error descr="Unresolved reference: `C`">C/*caret*/</error>(123);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1648,7 +1651,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = i32::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {
@@ -1710,7 +1713,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = <error descr="Unresolved reference: `S`">S/*caret*/</error>::foo();
         }
     """, """
-        use foo::S;
+        use crate::foo::S;
 
         mod foo {
             pub struct S;
@@ -1747,7 +1750,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = 123.<error descr="Unresolved reference: `foo_bar`">foo_bar/*caret*/</error>();
         }
     """, """
-        use foo::baz::FooBar;
+        use crate::foo::baz::FooBar;
 
         mod foo {
             pub use self::bar::baz;
@@ -1814,8 +1817,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
-    """, listOf("foo::Bar", "foo::Foo"), "foo::Bar", """
-        use foo::Bar;
+    """, listOf("crate::foo::Bar", "crate::foo::Foo"), "crate::foo::Bar", """
+        use crate::foo::Bar;
 
         mod foo {
             pub trait Foo {
@@ -1880,11 +1883,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                 fn do_x(&self);
             }
 
-            impl X for ::Foo {
+            impl X for crate::Foo {
                 fn do_x(&self) {}
             }
 
-            impl X for ::Bar {
+            impl X for crate::Bar {
                 fn do_x(&self) {}
             }
         }
@@ -1893,7 +1896,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             Bar.<error>do_x/*caret*/</error>();
         }
     """, """
-        use a::X;
+        use crate::a::X;
 
         struct Foo;
         struct Bar;
@@ -1911,11 +1914,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                 fn do_x(&self);
             }
 
-            impl X for ::Foo {
+            impl X for crate::Foo {
                 fn do_x(&self) {}
             }
 
-            impl X for ::Bar {
+            impl X for crate::Bar {
                 fn do_x(&self) {}
             }
         }
@@ -2051,7 +2054,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct S;
         }
         mod c {
-            use b::S;
+            use crate::b::S;
 
             fn x() -> S {
 
@@ -2071,7 +2074,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct S;
         }
         pub mod c {
-            use b::S;
+            use crate::b::S;
 
             fn x() -> S {}
         }
@@ -2089,7 +2092,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
             }
         }
-    """, listOf("a::S", "b::S"), "b::S", """
+    """, listOf("crate::a::S", "crate::b::S"), "crate::b::S", """
         mod a {
             pub struct S;
         }
@@ -2097,7 +2100,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct S;
         }
         mod c {
-            use b::S;
+            use crate::b::S;
 
             fn x() -> S {
 
@@ -2118,7 +2121,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use c::A;
+        use crate::c::A;
 
         mod c {
             pub use self::a::*;
@@ -2146,7 +2149,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use c::A;
+        use crate::c::A;
 
         mod c {
             pub use self::a::{{*}};
@@ -2163,7 +2166,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test group imports`() = checkAutoImportFixByText("""
         // comment
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2175,7 +2178,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         // comment
-        use foo::{Bar, Foo};
+        use crate::foo::{Bar, Foo};
 
         mod foo {
             pub struct Foo;
@@ -2189,7 +2192,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test add import to existing group`() = checkAutoImportFixByText("""
         // comment
-        use foo::{Bar, Foo};
+        use crate::foo::{Bar, Foo};
 
         mod foo {
             pub struct Foo;
@@ -2202,7 +2205,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         // comment
-        use foo::{Bar, Baz, Foo};
+        use crate::foo::{Bar, Baz, Foo};
 
         mod foo {
             pub struct Foo;
@@ -2216,7 +2219,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports only at the last level`() = checkAutoImportFixByText("""
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2229,8 +2232,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::bar::Bar;
-        use foo::Foo;
+        use crate::foo::bar::Bar;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2245,7 +2248,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports only if the other import doesn't have a modifier`() = checkAutoImportFixByText("""
-        pub use foo::Foo;
+        pub use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2256,8 +2259,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::Bar;
-        pub use foo::Foo;
+        use crate::foo::Bar;
+        pub use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2271,7 +2274,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test group imports only if the other import doesn't have an attribute`() = checkAutoImportFixByText("""
         #[attribute = "value"]
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2282,9 +2285,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
         #[attribute = "value"]
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -2297,7 +2300,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports with aliases 1`() = checkAutoImportFixByText("""
-        use foo::Foo as F;
+        use crate::foo::Foo as F;
 
         mod foo {
             pub struct Foo;
@@ -2308,7 +2311,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::{Bar, Foo as F};
+        use crate::foo::{Bar, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2321,7 +2324,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports with aliases 2`() = checkAutoImportFixByText("""
-        use foo::{Bar as B, Foo as F};
+        use crate::foo::{Bar as B, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2332,7 +2335,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
-        use foo::{Bar as B, Bar, Foo as F};
+        use crate::foo::{Bar as B, Bar, Foo as F};
 
         mod foo {
             pub struct Foo;
@@ -2345,7 +2348,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports with nested groups`() = checkAutoImportFixByText("""
-        use foo::{{Bar, Foo}};
+        use crate::foo::{{Bar, Foo}};
 
         mod foo {
             pub struct Foo;
@@ -2357,7 +2360,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
-        use foo::{{Bar, Foo}, Baz};
+        use crate::foo::{{Bar, Foo}, Baz};
 
         mod foo {
             pub struct Foo;
@@ -2591,7 +2594,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             macro_rules! foo {
@@ -2614,7 +2617,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <S<T>>::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(&a);
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo { fn foo(&self) {} }
@@ -2634,7 +2637,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             a.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo { fn foo(&self) {} }
@@ -2646,7 +2649,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test import item from a renamed crate (2015 edition)`() = checkAutoImportFixByFileTree("""
         //- dep-lib-to-be-renamed/lib.rs
         pub mod foo {
@@ -2688,7 +2691,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub(crate) struct Foo;

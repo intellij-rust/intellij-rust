@@ -91,7 +91,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test import unresolved types`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub struct R;
             pub trait T {
@@ -103,7 +103,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::{R, T};
+        use crate::a::{R, T};
         mod a {
             pub struct R;
             pub trait T {
@@ -120,7 +120,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test import unresolved types 2`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             mod private {
                 pub struct R;
@@ -135,9 +135,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (private::R, private::R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
-        use crate::a::R;
-
+        use crate::a::{R, T};
         mod a {
             mod private {
                 pub struct R;
@@ -156,7 +154,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test import unresolved types inside type qualifier`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub struct R;
             pub trait WithAssoc { type Item; }
@@ -172,7 +170,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f(a: <R as WithAssoc>::Item)", byDefault = true, isSelected = true)
     ), """
-        use a::{R, T, WithAssoc};
+        use crate::a::{R, T, WithAssoc};
         mod a {
             pub struct R;
             pub trait WithAssoc { type Item; }
@@ -192,7 +190,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test import unresolved type aliases`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub struct R;
             pub type U = R;
@@ -206,7 +204,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, U, V)", byDefault = true, isSelected = true)
     ), """
-        use a::{R, T, U, V};
+        use crate::a::{R, T, U, V};
         mod a {
             pub struct R;
             pub type U = R;
@@ -224,7 +222,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test don't import type alias inner type`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub struct A;
             pub struct B;
@@ -239,7 +237,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> U<P>", byDefault = true, isSelected = true)
     ), """
-        use a::{T, U};
+        use crate::a::{T, U};
         mod a {
             pub struct A;
             pub struct B;
@@ -258,8 +256,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test don't import a type if it is already in the scope with a different name`() = doTest("""
-        use a::T;
-        use a::R as U;
+        use crate::a::T;
+        use crate::a::R as U;
         mod a {
             pub struct R;
             pub trait T {
@@ -271,8 +269,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
-        use a::R as U;
+        use crate::a::T;
+        use crate::a::R as U;
         mod a {
             pub struct R;
             pub trait T {
@@ -288,7 +286,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test import unresolved trait bounds`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub trait Bound1 {}
             pub trait Bound2 {}
@@ -301,7 +299,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f<A: Bound1>() where A: Bound2", byDefault = true, isSelected = true)
     ), """
-        use a::{Bound1, Bound2, T};
+        use crate::a::{Bound1, Bound2, T};
         mod a {
             pub trait Bound1 {}
             pub trait Bound2 {}
@@ -318,7 +316,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test import unresolved constant`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             pub const C: usize = 1;
             pub trait T {
@@ -330,7 +328,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> [u8; C]", byDefault = true, isSelected = true)
     ), """
-        use a::{C, T};
+        use crate::a::{C, T};
         mod a {
             pub const C: usize = 1;
             pub trait T {
@@ -346,8 +344,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test don't import a constant if it is already in the scope with a different name`() = doTest("""
-        use a::T;
-        use a::C as D;
+        use crate::a::T;
+        use crate::a::C as D;
         mod a {
             pub const C: usize = 1;
             pub trait T {
@@ -359,8 +357,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> [u8; C]", byDefault = true, isSelected = true)
     ), """
-        use a::T;
-        use a::C as D;
+        use crate::a::T;
+        use crate::a::C as D;
         mod a {
             pub const C: usize = 1;
             pub trait T {
@@ -377,7 +375,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test use absolute path in the case of name conflict`() = doTest("""
-        use a::T;
+        use crate::a::T;
         struct R;
         mod a {
             pub struct R;
@@ -390,7 +388,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
+        use crate::a::T;
         struct R;
         mod a {
             pub struct R;
@@ -408,8 +406,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test use relative path in the case of name conflict if intermediate mod is imported`() = doTest("""
-        use a::T;
-        use a::b;
+        use crate::a::T;
+        use crate::a::b;
         struct R;
         mod a {
             pub mod b {
@@ -425,8 +423,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
-        use a::b;
+        use crate::a::T;
+        use crate::a::b;
         struct R;
         mod a {
             pub mod b {
@@ -447,8 +445,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test use relative path in the case of name conflict if intermediate mod is imported (aliased)`() = doTest("""
-        use a::T;
-        use a::b as c;
+        use crate::a::T;
+        use crate::a::b as c;
         struct R;
         mod a {
             pub mod b {
@@ -464,8 +462,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
-        use a::b as c;
+        use crate::a::T;
+        use crate::a::b as c;
         struct R;
         mod a {
             pub mod b {
@@ -486,7 +484,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test use absolute path in the case of name conflict (name conflict is created during importing)`() = doTest("""
-        use a::T;
+        use crate::a::T;
         use crate::a::foo::R;
         mod a {
             pub mod foo { pub struct R; }
@@ -500,7 +498,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (foo::R, bar::R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
+        use crate::a::T;
         use crate::a::foo::R;
         mod a {
             pub mod foo { pub struct R; }
@@ -519,7 +517,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
     @MockEdition(EDITION_2018)
     fun `test use fully qualified path if cannot import an item`() = doTest("""
-        use a::T;
+        use crate::a::T;
         mod a {
             /*private*/ struct R;
             pub trait T {
@@ -531,7 +529,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
-        use a::T;
+        use crate::a::T;
         mod a {
             /*private*/ struct R;
             pub trait T {

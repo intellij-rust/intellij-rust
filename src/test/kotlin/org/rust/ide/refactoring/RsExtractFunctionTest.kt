@@ -1339,7 +1339,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "foo")
 
     fun `test import parameter types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1351,7 +1351,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s;</selection>
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1369,7 +1369,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import return type`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1380,7 +1380,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1397,7 +1397,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test do not import default types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S;
@@ -1409,7 +1409,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct S;
@@ -1427,7 +1427,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import non default types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S1;
@@ -1440,7 +1440,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo, S2};
+        use crate::a::{A, foo, S2};
 
         mod a {
             pub struct S1;
@@ -1459,7 +1459,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import aliased type`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1472,7 +1472,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s</selection>
         }
     """, """
-        use a::{foo, Foo};
+        use crate::a::{foo, Foo};
 
         mod a {
             pub struct A;

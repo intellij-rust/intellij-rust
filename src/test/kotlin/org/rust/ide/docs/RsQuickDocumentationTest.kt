@@ -12,6 +12,7 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.ext.RsElement
@@ -1229,7 +1230,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>false</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test await doc 1`() = doTest("""
         fn main() {

@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
@@ -624,8 +625,8 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         mod baz;
     //- baz.rs
-        use bar::S;
-               //^ lib.rs
+        use crate::bar::S;
+                      //^ lib.rs
     """)
 
     fun `test transitive dependency on the same crate`() = stubOnlyResolve("""
@@ -660,7 +661,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve reference without extern crate item 1 (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -669,7 +670,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //^ unresolved
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve reference without extern crate item 2 (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -690,7 +691,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve module instead of crate (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;

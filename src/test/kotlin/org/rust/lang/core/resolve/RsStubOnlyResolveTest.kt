@@ -51,8 +51,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     fun `test mod decl 2`() = stubOnlyResolve("""
     //- foo/mod.rs
-        use bar::Bar;
-                //^ bar.rs
+        use crate::bar::Bar;
+                      //^ bar.rs
 
     //- main.rs
         mod bar;
@@ -197,9 +197,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test resolve explicit mod path mod rs 2`() = stubOnlyResolve("""
@@ -210,9 +209,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/bar/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test resolve explicit mod path mod rs windows path separator`() = stubOnlyResolve("""
@@ -223,9 +221,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/bar/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test module path`() = stubOnlyResolve("""
@@ -238,9 +235,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test module path 2`() = stubOnlyResolve("""
@@ -253,9 +249,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bbb/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test module path 3`() = stubOnlyResolve("""
@@ -269,9 +264,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bbb/ccc.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test empty module path`() = stubOnlyResolve("""
@@ -285,9 +279,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- bbb.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test relative module path`() = stubOnlyResolve("""
@@ -301,9 +294,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     //- aaa/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test path inside inline module in crate root`() = stubOnlyResolve("""
@@ -408,8 +400,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         stubOnlyResolve("""
         //- foo.rs
             fn main() {
-                ::bar::hello();
-            }         //^ bar.rs
+                crate::bar::hello();
+            }             //^ bar.rs
 
         //- lib.rs
             mod foo;

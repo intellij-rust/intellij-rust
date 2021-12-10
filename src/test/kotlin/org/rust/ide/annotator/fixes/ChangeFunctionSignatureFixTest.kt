@@ -230,7 +230,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """, """
         mod foo {
-            use S;
+            use crate::S;
 
             pub fn bar(s: S) {}
         }
@@ -256,7 +256,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
     """, """
         mod foo {
-            use S;
+            use crate::S;
 
             pub fn bar(a: S) {}
         }

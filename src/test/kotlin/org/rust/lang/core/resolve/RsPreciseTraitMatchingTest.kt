@@ -365,11 +365,11 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
                 fn do_x(&self);
             }
 
-            impl X for ::Foo {
+            impl X for crate::Foo {
                 fn do_x(&self) {}
             }
 
-            impl X for ::Bar {
+            impl X for crate::Bar {
                 fn do_x(&self) {}
                    //X
             }

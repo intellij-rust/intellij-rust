@@ -343,7 +343,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         <error>impl <error>foo::B/*caret*/</error> for S</error> {}
     """, """
-        use foo::A;
+        use crate::foo::A;
 
         mod foo {
             pub trait A {}
