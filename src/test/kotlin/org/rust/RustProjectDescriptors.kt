@@ -20,13 +20,14 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.*
+import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
-import org.rust.cargo.project.workspace.CargoWorkspaceData.Dependency
-import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
+import org.rust.cargo.project.workspace.CargoWorkspaceData.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -114,11 +115,11 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
                 Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList())
+                    TargetKind.Lib(libKind), DEFAULT_EDITION_FOR_TESTS, doctest = true, requiredFeatures = emptyList())
             ),
             source = source,
             origin = origin,
-            edition = Edition.EDITION_2015,
+            edition = DEFAULT_EDITION_FOR_TESTS,
             features = emptyMap(),
             enabledFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
@@ -134,28 +135,31 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         name = name,
         version = "0.0.1",
         targets = listOf(
-            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bin/a.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bin/a/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/tests/a.rs", name, TargetKind.Test, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/tests/a/main.rs", name, TargetKind.Test, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bench/a.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bench/a/main.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example/a.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example/a/main.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB)), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, edition = Edition.EDITION_2015, doctest = false, requiredFeatures = emptyList())
+            testTarget("$contentRoot/main.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB)),
+            testTarget("$contentRoot/bin/a.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/bin/a/main.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/tests/a.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/tests/a/main.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/bench/a.rs", name, TargetKind.Bench),
+            testTarget("$contentRoot/bench/a/main.rs", name, TargetKind.Bench),
+            testTarget("$contentRoot/example/a.rs", name, TargetKind.ExampleBin),
+            testTarget("$contentRoot/example/a/main.rs", name, TargetKind.ExampleBin),
+            testTarget("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB))),
+            testTarget("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, doctest = false),
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
-        edition = Edition.EDITION_2015,
+        edition = DEFAULT_EDITION_FOR_TESTS,
         features = emptyMap(),
         enabledFeatures = emptySet(),
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
     )
+
+    private fun testTarget(crateRootUrl: String, name: String, kind: TargetKind, doctest: Boolean = true): Target =
+        Target(crateRootUrl, name, kind, DEFAULT_EDITION_FOR_TESTS, doctest, requiredFeatures = emptyList())
 }
 
 open class WithRustup(

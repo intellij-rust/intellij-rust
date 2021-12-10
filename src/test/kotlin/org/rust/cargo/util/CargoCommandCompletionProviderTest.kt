@@ -10,6 +10,7 @@ import org.rust.RsTestBase
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -143,7 +144,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         fun target(
             name: String,
             kind: TargetKind,
-            edition: Edition = Edition.EDITION_2015
+            edition: Edition = DEFAULT_EDITION_FOR_TESTS
         ): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
             crateRootUrl = "/tmp/lib/rs",
             name = name,
@@ -157,7 +158,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             name: String,
             isWorkspaceMember: Boolean,
             targets: List<CargoWorkspaceData.Target>,
-            edition: Edition = Edition.EDITION_2015
+            edition: Edition = DEFAULT_EDITION_FOR_TESTS
         ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
             name = name,
             id = "$name 1.0.0",

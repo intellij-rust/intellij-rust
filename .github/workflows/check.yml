@@ -137,6 +137,7 @@ jobs:
                 platform-version: [ 212, 213 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
+                default-edition-for-tests: [ 2021 ]
                 include:
                     - os: ubuntu-18.04
                       # Don't forget to update condition in `Set up additional env variables` step
@@ -144,6 +145,8 @@ jobs:
                       base-ide: idea
                       platform-version: 212
                       verify-plugin: true
+                      # BACKCOMPAT: 2021 edition needs at least 1.56
+                      default-edition-for-tests: 2018
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
@@ -151,6 +154,7 @@ jobs:
             ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
+            DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
 
         steps:
             - uses: actions/checkout@v2

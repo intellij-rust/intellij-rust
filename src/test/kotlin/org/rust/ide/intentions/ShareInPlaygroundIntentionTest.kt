@@ -7,7 +7,7 @@ package org.rust.ide.intentions
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockServerFixture
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2015
+import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.ide.actions.ShareInPlaygroundActionTest
 
 class ShareInPlaygroundIntentionTest : RsIntentionTestBase(ShareInPlaygroundIntention::class) {
@@ -42,6 +42,6 @@ class ShareInPlaygroundIntentionTest : RsIntentionTestBase(ShareInPlaygroundInte
 
     private fun doTest(@Language("Rust") code: String, @Language("Rust") codeToShare: String) {
         InlineFile(code.trimIndent())
-        ShareInPlaygroundActionTest.doTest(project, mockServerFixture, codeToShare, EDITION_2015, "stable", ::launchAction)
+        ShareInPlaygroundActionTest.doTest(project, mockServerFixture, codeToShare, DEFAULT_EDITION_FOR_TESTS, "stable", ::launchAction)
     }
 }
