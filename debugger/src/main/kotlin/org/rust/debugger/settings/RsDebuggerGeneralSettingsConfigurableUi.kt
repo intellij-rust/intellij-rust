@@ -8,7 +8,6 @@ package org.rust.debugger.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.panel
-import com.intellij.util.PlatformUtils
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import javax.swing.JComponent
@@ -16,11 +15,9 @@ import javax.swing.JComponent
 class RsDebuggerGeneralSettingsConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
     private val needsToolchainSettings: Boolean
         get() {
-            // CLion has own Toolchain settings
-            if (PlatformUtils.isCLion()) return false
-            val status = RsDebuggerToolchainService.getInstance().getBundledLLDBStatus()
+            val status = RsDebuggerToolchainService.getInstance().getLLDBStatus()
             // If there is bundled LLDB, no need to show this toolchain settings
-            return status !is LLDBStatus.Binaries
+            return status !is LLDBStatus.Bundled
         }
 
     private val components: List<RsDebuggerUiComponent> = run {
