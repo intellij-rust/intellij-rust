@@ -93,6 +93,15 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         return true
     }
 
+    override fun fixSilently(editor: Editor): Boolean {
+        if (!RsCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) return false
+        val candidates = context.candidates
+        if (candidates.size != 1) return false
+        val project = editor.project ?: return false
+        invoke(project)
+        return true
+    }
+
     companion object {
 
         const val NAME = "Import"

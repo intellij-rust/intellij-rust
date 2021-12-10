@@ -139,6 +139,7 @@
         <!-- Imports -->
 
         <lang.importOptimizer language="Rust" implementationClass="org.rust.ide.refactoring.RsImportOptimizer"/>
+        <referenceImporter implementation="org.rust.ide.inspections.import.RsReferenceImporter"/>
         <autoImportOptionsProvider instance="org.rust.ide.settings.RsAutoImportOptions"/>
 
         <!-- Navigation -->
