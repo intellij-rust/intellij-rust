@@ -5,10 +5,8 @@
 
 package org.rust.ide.inspections.typecheck
 
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
@@ -330,7 +328,6 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test qualify ambiguous type with reexported path`() = checkFixByText("Change return type of function 'foo' to 'crate::a::S'", """
         struct S;
         mod a {
@@ -359,7 +356,6 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test use correct path 1`() = checkFixByFileTree("Change return type of function 'func' to 'Foo'", """
     //- lib.rs
         pub struct Foo;
@@ -384,7 +380,6 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test use correct path 2`() = checkFixByFileTree("Change return type of function 'func' to 'test_package::Foo'", """
     //- lib.rs
         pub struct Foo;

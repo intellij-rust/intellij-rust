@@ -6,7 +6,6 @@
 package org.rust.ide.inspections.import
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.utils.import.Testmarks
 
@@ -88,7 +87,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import enum variant of reexported enum`() = checkAutoImportFixByText("""
         mod inner1 {
             pub use inner2::Foo;
@@ -420,7 +418,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import private item from parent mod`() = checkAutoImportFixByText("""
         mod a1 {
             struct Foo;
@@ -445,7 +442,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test don't try to import private reexport from parent mod 1`() = checkAutoImportFixByText("""
         mod a1 {
             use crate::b1::b2::Foo;
@@ -480,7 +476,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, Testmarks.ignorePrivateImportInParentMod)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test don't try to import private reexport from parent mod 2`() = checkAutoImportFixByText("""
         mod a1 {
             use crate::b1::b2::b3;
@@ -680,7 +675,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item if it can't be resolved`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
@@ -1431,7 +1425,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item with correct namespace when multiple namespaces available`() = checkAutoImportFixByTextWithoutHighlighting("""
         mod inner {
             pub struct foo {}
@@ -1666,7 +1659,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import trait default method UFCS 2`() = checkAutoImportFixByFileTree("""
     //- lib.rs
         pub trait Trait {
@@ -1843,7 +1835,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import trait method, use direct path`() = checkAutoImportFixByFileTree("""
     //- dep-lib/lib.rs
@@ -2002,7 +1993,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item in root module (edition 2018)`() = checkAutoImportFixByText("""
         mod foo {
             pub struct Foo;
@@ -2023,7 +2013,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from root module (edition 2018)`() = checkAutoImportFixByText("""
         struct Foo;
 
@@ -2373,7 +2362,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test insert import at correct location`() = checkAutoImportFixByText("""
         use crate::aaa::A;
         use crate::bbb::B;
@@ -2403,7 +2391,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test insert import at correct location (unsorted imports)`() = checkAutoImportFixByText("""
         use crate::aaa::A;
         use crate::ddd::D;
@@ -2434,7 +2421,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, checkOptimizeImports = false)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test insert import from different crate at correct location`() = checkAutoImportFixByFileTree("""
     //- dep-lib/lib.rs
         pub mod aaa { pub struct A; }
@@ -2667,7 +2653,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from a renamed crate (2018 edition)`() = checkAutoImportFixByFileTree("""
         //- dep-lib-to-be-renamed/lib.rs
         pub mod foo {
@@ -2703,7 +2688,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import 'pub(crate)' item from dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
@@ -2714,7 +2698,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import an item from 'pub(crate)' mod in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         pub(crate) mod foo {
@@ -2725,7 +2708,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import an item reexported from 'pub(crate)' mod in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         mod foo {
@@ -2739,7 +2721,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import 'pub(crate)' item reexported from dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         mod foo {
@@ -2753,7 +2734,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import an item reexported by 'pub(crate) use' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         mod foo {
@@ -2767,7 +2747,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import an item reexported by intermediate 'pub(crate) use' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- dep-lib/lib.rs
         mod foo {
@@ -2784,7 +2763,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import an item reexported by 'pub(crate) extern crate' in dependency crate`() = checkAutoImportFixIsUnavailableByFileTree("""
         //- trans-lib/lib.rs
         pub struct FooBar;
@@ -2797,7 +2775,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not try to import item from transitive dependency`() = checkAutoImportFixIsUnavailableByFileTree("""
     //- trans-lib/lib.rs
         pub mod mod1 {
@@ -2811,7 +2788,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from transitive dependency reexported by dependency`() = checkAutoImportFixByFileTree("""
     //- trans-lib/lib.rs
         pub mod mod1 {
@@ -2838,7 +2814,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         #[macro_export]
@@ -2859,7 +2834,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import macro 2`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         pub macro foo() {}
@@ -2879,7 +2853,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     // e.g. `lazy_static`
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import macro with same name as dependency`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         #[macro_export]
@@ -2900,7 +2873,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not import function as macro path`() = checkAutoImportFixIsUnavailableByFileTree("""
     //- lib.rs
         pub fn func() {}
@@ -2911,7 +2883,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test do not import cfg-disabled item`() = checkAutoImportFixIsUnavailableByFileTree("""
     //- foo.rs
         pub fn func() {}
@@ -2923,7 +2894,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test use absolute path when extern crate has same name as child mod`() = checkAutoImportFixByFileTree("""
     //- lib.rs
         pub fn func() {}
@@ -2942,7 +2912,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test UFCS with unnamed trait import inside another trait impl`() = checkAutoImportFixIsUnavailable("""
         mod inner {
             pub struct Foo {}
@@ -2959,7 +2928,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside included file`() = checkAutoImportFixByFileTree("""
         //- foo.rs
         fn func() {

@@ -7,11 +7,8 @@ package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.util.IncorrectOperationException
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.withTestDialog
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveFileTest : RsMoveFileTestBase() {
     override val dataPath = "org/rust/ide/refactoring/move/fixtures/"
 

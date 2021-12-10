@@ -9,7 +9,6 @@ import org.rust.MinRustcVersion
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.utils.import.Testmarks
 
@@ -426,7 +425,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from not std crate (edition 2018)`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
@@ -611,7 +609,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test module re-export with module alias 1`() = checkAutoImportFixByFileTree("""
         //- trans-lib/lib.rs
         pub mod foo {
@@ -628,7 +625,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(x: bar/*caret*/::FooBar) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test module re-export with module alias 2`() = checkAutoImportFixByFileTree("""
         //- trans-lib/lib.rs
         pub mod foo {
@@ -645,7 +641,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate re-export in use item`() = checkAutoImportFixByFileTree("""
         //- trans-lib/lib.rs
         pub struct FooBar;
@@ -661,7 +656,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate re-export in use item with alias`() = checkAutoImportFixByFileTree("""
         //- trans-lib/lib.rs
         pub struct FooBar;
@@ -677,7 +671,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from workspace over std and extern crate`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
         //- dep-lib/lib.rs
         pub mod foo {
@@ -708,7 +701,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from std over extern crate`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
         //- dep-lib/lib.rs
         pub mod foo {
@@ -727,7 +719,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item from proc_macro`() = checkAutoImportFixByFileTree("""
     //- dep-proc-macro/lib.rs
         fn foo(_: <error descr="Unresolved reference: `TokenStream`">TokenStream/*caret*/</error>) {}
@@ -738,7 +729,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(_: TokenStream) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test item in core reexported in std`() = checkAutoImportFixByTextWithoutHighlighting("""
         fn main() {
             UnsafeCell/*caret*/;
@@ -752,7 +742,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
     """)
 
     @MinRustcVersion("1.51.0")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test item in core not reexported in std (with no_std)`() = checkAutoImportVariantsByText("""
         #![no_std]
         fn main() {
@@ -760,14 +749,12 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """, listOf("core::slice::SplitInclusive", "core::str::SplitInclusive"))
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test item from 'test' crate (without extern crate)`() = checkAutoImportFixIsUnavailable("""
         fn main() {
             <error descr="Unresolved reference: `test_main`">/*caret*/test_main</error>();
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test item from 'test' crate (with extern crate)`() = checkAutoImportFixByTextWithoutHighlighting("""
         extern crate test;
         fn main() {
@@ -783,7 +770,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test add extern crate for alloc (with no_std)`() = checkAutoImportFixByTextWithoutHighlighting("""
         #![no_std]
         fn main() {

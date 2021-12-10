@@ -5,9 +5,6 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
-
 class RsVisibilityCompletionTest : RsCompletionTestBase() {
     fun `test named field decl`() = checkCompletion("pub", """
         struct S {
@@ -116,7 +113,6 @@ class RsVisibilityCompletionTest : RsCompletionTestBase() {
         const /*caret*/fn foo() {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no completion for function after async`() = checkNotContainsCompletion("pub", """
         async /*caret*/fn foo() {}
     """)

@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -574,7 +573,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complete macro 3`() = checkContainsCompletion("foobar1", """
         mod inner {
             macro_rules! foobar1 { () => {} }
@@ -1090,7 +1088,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(f: FnOnce(/*caret*/)) {}
     """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
 
-    @MockEdition(Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 1`() = checkNoCompletionByFileTree("""
     //- main.rs
@@ -1103,7 +1100,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub fn func() {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 2`() = doSingleCompletionByFileTree("""
     //- main.rs
@@ -1192,7 +1188,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test do not complete non-mod items in vis restriction path`() = checkNoCompletion("""
         pub mod bar {
             pub mod foo {
@@ -1202,7 +1197,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub struct Item;
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test do not complete non-ancestor mods in vis restriction path`() = checkNoCompletion("""
         pub mod bar {
             pub mod foo {
@@ -1212,7 +1206,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub mod foo {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complete ancestor module in vis restriction path`() = doFirstCompletion("""
         pub mod bar {
             pub mod foo {

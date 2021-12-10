@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsAwaitCompletionTest : RsCompletionTestBase() {
@@ -33,7 +32,6 @@ class RsAwaitCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test postfix await 2018 (anon)`() = checkCompletion("await", """
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -50,7 +48,6 @@ class RsAwaitCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test postfix await 2018 (adt)`() = checkCompletion("await", """
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }

@@ -11,7 +11,6 @@ import org.rust.ExpandMacros
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstant
@@ -1199,7 +1198,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>enum</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test async keyword doc`() = doTestRegex("""
         async fn foo() {}
@@ -1239,7 +1237,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, null)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test await doc 2`() = doTestRegex("""
         fn main() {

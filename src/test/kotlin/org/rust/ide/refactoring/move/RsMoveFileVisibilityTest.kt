@@ -6,10 +6,7 @@
 package org.rust.ide.refactoring.move
 
 import com.intellij.refactoring.BaseRefactoringProcessor
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
 
     private fun expectConflicts(action: () -> Unit) {
@@ -329,7 +326,6 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
         """)
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test inside reference, when new parent module is private`() = expectConflicts {
         doTestExpectError(
             arrayOf("mod1/foo.rs"),

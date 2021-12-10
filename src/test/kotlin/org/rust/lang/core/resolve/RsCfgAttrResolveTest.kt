@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsCfgAttrResolveTest : RsResolveTestBase() {
@@ -103,7 +102,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test inline mod with cfg 2`() = checkByCode("""
         #[cfg(not(intellij_rust))]
         mod my {
@@ -117,7 +115,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     // From https://github.com/rust-lang/hashbrown/blob/09e43a8cf97f37b17768b98f28291a24c5767847/src/lib.rs#L52-L68
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside inline mod with cfg`() = checkByCode("""
         #[cfg(not(intellij_rust))]
         mod my {
@@ -136,7 +133,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import overrides cfg-disabled item`() = checkByCode("""
         use foo::func;
         mod foo {
@@ -156,7 +152,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     // https://github.com/clap-rs/clap/blob/5a1a209965bf28d3badafec8da6c5c975d3a686f/src/util/mod.rs#L13-L17
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test atom import of extern crate overrides cfg-disabled item`() = stubOnlyResolve("""
     //- lib.rs
         pub fn func() {}
@@ -175,7 +170,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         } //^ lib.rs
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test resolve inside inline mod with cfg 1`() = checkByCode("""
         #[cfg(not(intellij_rust))]
@@ -192,7 +186,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test resolve inside inline mod with cfg 2`() = checkByCode("""
         #[cfg(not(intellij_rust))]
@@ -206,7 +199,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
          //X
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test resolve inside non-inline mod with cfg`() = stubOnlyResolve("""
     //- main.rs
@@ -629,7 +621,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ lib.rs
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg_attr with path on mod declaration`() = stubOnlyResolve("""
     //- bar.rs
@@ -643,7 +634,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }  //^ bar.rs
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test disabled cfg_attr with path on mod declaration`() = stubOnlyResolve("""
     //- foo.rs
@@ -658,7 +648,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @ExpandMacros
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-disabled macro call expanded to inline mod`() = stubOnlyResolve("""
     //- main.rs
@@ -683,7 +672,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // Actual resolve result is not important, because proper multiresolve is not yet supported in new resolve.
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside expanded shadowed mod 1`() = stubOnlyResolve("""
     //- lib.rs
         macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
@@ -709,7 +697,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import inside expanded shadowed mod 2`() = stubOnlyResolve("""
     //- lib.rs
         macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
@@ -735,7 +722,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // From https://github.com/rust-lang/rust/blob/e0ef0fc392963438af5f0343bf7caa46fb9c3ec3/library/alloc/src/lib.rs#L164-L169
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import to shadowed mod`() = checkByCode("""
         #[cfg(intellij_rust)]
         pub mod boxed {
@@ -752,7 +738,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // We check that there are no exceptions during building CrateDefMap (actual resolve result is not important)
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import to mod shadowed by expanded mod`() = checkByCode("""
         #[cfg(not(intellij_rust))]
         mod my {
@@ -865,7 +850,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve to 'cfg(not(test))' in external dependencies`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         #[cfg(test)]
@@ -884,7 +868,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }                      //^ dep-lib/not_test.rs
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test file level cfg attribute 1`() = stubOnlyResolve("""
     //- main.rs
@@ -903,7 +886,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test file level cfg attribute 2`() = stubOnlyResolve("""
     //- main.rs
@@ -922,7 +904,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-enabled glob import overrides cfg-disabled named import`() = checkByCode("""
         #[cfg(not(intellij_rust))]
@@ -942,7 +923,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         } //^
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-disabled item is unresolved 1`() = stubOnlyResolve("""
     //- main.rs
@@ -955,7 +935,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
      """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-disabled item is unresolved 2`() = stubOnlyResolve("""
     //- main.rs
@@ -969,7 +948,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cfg-disabled item is resolved from cfg-disabled function 1`() = stubOnlyResolve("""
     //- main.rs
         #[cfg(not(intellij_rust))]
@@ -984,7 +962,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cfg-disabled mod does not affect cfg-enabled mod`() = stubOnlyResolve("""
     //- main.rs
         #[cfg(intellij_rust)]
@@ -1002,7 +979,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cfg-disabled glob-import does not affect cfg-enabled one 1`() = checkByCode("""
         fn main() {
             let _ = Foo;
@@ -1025,7 +1001,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cfg-disabled glob-import does not affect cfg-enabled one 2`() = checkByCode("""
         fn main() {
             let _ = Foo;

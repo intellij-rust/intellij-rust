@@ -5,10 +5,6 @@
 
 package org.rust.ide.refactoring.move
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
-
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveFileReexportTest : RsMoveFileTestBase() {
     override val dataPath = "org/rust/ide/refactoring/move/fixtures/"
 

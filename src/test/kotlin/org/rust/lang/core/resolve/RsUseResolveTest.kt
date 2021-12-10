@@ -694,7 +694,6 @@ class RsUseResolveTest : RsResolveTestBase() {
                   //^ unresolved
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test unified paths 2018 edition`() = checkByCode("""
         mod foo {
             pub fn bar() {}
@@ -735,7 +734,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test use incomplete path`() = checkByCode("""
         use foo::;
         mod foo {
@@ -750,7 +748,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complex cyclic chain with glob imports and aliases`() = checkByCode("""
         mod a {
             pub use crate::b::*;
@@ -770,7 +767,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     @UseOldResolve
-    @MockEdition(Edition.EDITION_2018)
     fun `test usual import overrides glob import`() = checkByCode("""
         mod foo1 {
             pub mod bar {
@@ -799,7 +795,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complex glob imports`() = checkByCode("""
         pub mod inner1 {
             pub mod foo {
@@ -822,7 +817,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     // based on https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
-    @MockEdition(Edition.EDITION_2018)
     fun `test import adds same name as existing 1`() = checkByCode("""
         use foo::foo;
         mod foo {
@@ -837,7 +831,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     // based on https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
-    @MockEdition(Edition.EDITION_2018)
     fun `test import adds same name as existing 2`() = checkByCode("""
         use foo::foo;
         mod foo {
@@ -854,7 +847,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test two usual imports with same name in different namespaces`() = checkByCode("""
         mod a {
             pub mod foo {}

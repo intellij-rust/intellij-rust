@@ -6,15 +6,12 @@
 package org.rustPerformanceTests
 
 import com.intellij.openapi.util.registry.Registry
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.completion.RsCompletionTestBase
 import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
 
-@MockEdition(Edition.EDITION_2018)
 class RsCompletionPerformanceTest : RsCompletionTestBase() {
     override fun isPerformanceTest(): Boolean = false
 

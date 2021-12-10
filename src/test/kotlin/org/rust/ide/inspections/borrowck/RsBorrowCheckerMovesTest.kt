@@ -6,10 +6,8 @@
 package org.rust.ide.inspections.borrowck
 
 import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -725,7 +723,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test move in async block`() = checkByText("""
         struct S;
 

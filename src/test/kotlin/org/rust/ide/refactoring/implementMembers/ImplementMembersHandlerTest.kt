@@ -7,8 +7,10 @@ package org.rust.ide.refactoring.implementMembers
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import org.intellij.lang.annotations.Language
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -118,7 +120,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test import unresolved types 2`() = doTest("""
         use crate::a::T;
         mod a {
@@ -373,7 +374,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test use absolute path in the case of name conflict`() = doTest("""
         use crate::a::T;
         struct R;
@@ -404,7 +404,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test use relative path in the case of name conflict if intermediate mod is imported`() = doTest("""
         use crate::a::T;
         use crate::a::b;
@@ -443,7 +442,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test use relative path in the case of name conflict if intermediate mod is imported (aliased)`() = doTest("""
         use crate::a::T;
         use crate::a::b as c;
@@ -482,7 +480,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test use absolute path in the case of name conflict (name conflict is created during importing)`() = doTest("""
         use crate::a::T;
         use crate::a::foo::R;
@@ -515,7 +512,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test use fully qualified path if cannot import an item`() = doTest("""
         use crate::a::T;
         mod a {

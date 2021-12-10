@@ -7,11 +7,9 @@ package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
 
@@ -306,7 +304,6 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "2", "3", "4", "5")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no highlight for ? in try `() = doTest("""
         fn main(){
             let a = try {

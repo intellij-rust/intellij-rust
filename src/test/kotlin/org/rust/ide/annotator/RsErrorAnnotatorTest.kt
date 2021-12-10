@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
@@ -962,7 +961,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no duplicates with import E0252 textual-scoped macros`() = checkDontTouchAstInOtherFiles("""
     //- main.rs
         use test_package::foo;
@@ -972,7 +970,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         macro_rules! foo { () => {} }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no duplicates with import E0252 private item`() = checkErrors("""
         mod mod1 {
             fn foo() {}
@@ -1744,12 +1741,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate keyword not at the beginning E0433`() = checkErrors("""
         use crate::foo::<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo;
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate keyword not at the beginning in use group E0433`() = checkErrors("""
         use crate::foo::{<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo};
     """)
@@ -1774,7 +1769,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate in path feature E0658 3`() = checkErrors("""
         mod foo {
             pub struct Foo;
@@ -4251,7 +4245,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo() -> impl FooBar {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test E0116 inherent impls should be in same crate`() = checkByFileTree("""
     //- lib.rs
         pub struct ForeignStruct {}
@@ -4274,7 +4267,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0117 trait impls orphan rules`() = checkByFileTree("""
     //- lib.rs
@@ -4475,7 +4467,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test edition 2018 keyword as lifetime name`() = checkErrors("""
         struct Me<<error descr="Lifetimes cannot use keyword names">'async</error>> {
             name: &<error descr="Lifetimes cannot use keyword names">'async</error> str,

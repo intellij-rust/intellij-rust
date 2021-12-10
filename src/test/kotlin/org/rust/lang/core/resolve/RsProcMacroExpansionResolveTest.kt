@@ -6,13 +6,11 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 
 @MinRustcVersion("1.46.0")
-@MockEdition(EDITION_2018)
 @ExpandMacros(MacroExpansionScope.WORKSPACE)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)

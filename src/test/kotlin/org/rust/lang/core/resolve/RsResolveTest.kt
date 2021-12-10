@@ -5,9 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
 import org.rust.MockRustcVersion
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ignoreInNewResolve
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsFieldDecl
@@ -574,7 +572,6 @@ class RsResolveTest : RsResolveTestBase() {
          //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test nested super 2`() = checkByCode("""
         mod foo {
             mod bar {
@@ -590,7 +587,6 @@ class RsResolveTest : RsResolveTestBase() {
          //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function and mod with same name`() = checkByCode("""
         mod foo {}
 
@@ -1416,7 +1412,6 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test 'pub (in incomplete_path)'`() = checkByCode("""
         mod foo {
             mod bar {

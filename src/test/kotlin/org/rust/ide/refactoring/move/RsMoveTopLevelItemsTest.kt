@@ -5,12 +5,13 @@
 
 package org.rust.ide.refactoring.move
 
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithEnabledInspections
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
 @WithEnabledInspections(RsUnusedImportInspection::class)
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
 
     fun `test simple`() = doTest("""

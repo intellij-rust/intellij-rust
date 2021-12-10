@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
@@ -769,7 +767,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test item reexported from 'pub(crate)' mod in dependency crate`() = stubOnlyResolve("""
     //- main.rs
         use test_package::*;
@@ -789,7 +786,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub use foo::*;
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file`() = stubOnlyResolve("""
     //- detached.rs
         macro foo() {}
@@ -799,7 +795,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (to inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -811,7 +806,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -823,7 +817,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (from inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         fn func() {}
@@ -835,7 +828,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in inner mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner;
@@ -847,7 +839,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached/inner.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file ($crate)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -869,7 +860,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in import)`() = stubOnlyResolve("""
     //- detached.rs
         pub use foo::func;

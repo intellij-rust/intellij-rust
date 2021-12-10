@@ -5,10 +5,13 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ignoreInNewResolve
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
+@MockEdition(Edition.EDITION_2018)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTestEdition2018 : RsResolveTestBase() {
     fun `test extern crate std is not injected on 2018 edition`() = stubOnlyResolve("""

@@ -7,10 +7,8 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
@@ -82,7 +80,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test suggest a symbol with same name as in scope but in different namespace`() = doTestByText("""
         fn foo() {}
         mod inner {
@@ -99,7 +96,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         fn test(x: foo/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test same item as in scope but with different name`() = doTestByText("""
         use crate::mod1::foo as bar;
         mod mod1 {
@@ -355,7 +351,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test show all re-exports of single item`() {
         withOutOfScopeSettings {
@@ -380,7 +375,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
@@ -397,7 +391,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
@@ -416,7 +409,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
 
     // TODO parse top-level identifier as RsPath
     // e.g. `lazy_static`
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro with same name as dependency`() = expect<IllegalStateException> {
         doTestByFileTree("""
     //- lib.rs
@@ -431,7 +423,6 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
     """)
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro as type reference`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]

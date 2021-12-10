@@ -7,11 +7,9 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
@@ -531,7 +529,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (choose existing impl)`() = doTest("""
         struct S;
 
@@ -568,7 +565,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (choose existing impl with same generic parameters)`() = doTest("""
         struct S1;
         struct Foo<T> { t: T }
@@ -605,7 +601,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (don't choose existing impl with different generic parameters)`() = doTest("""
         struct S1;
         struct S2;
@@ -647,7 +642,6 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (don't choose existing cfg-disabled impl)`() = doTest("""
         struct S1;
         struct Foo<T> { t: T }
@@ -1124,7 +1118,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract async function with await`() = doTest("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -1145,7 +1138,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract async function with nested await`() = doTest("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -1180,7 +1172,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract sync function with await inside block`() = doTest("""
         async fn foo() {
             <selection>async { async { () }.await };</selection>
@@ -1195,7 +1186,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract sync function with await inside closure`() = doTest("""
         #![feature(async_closure)]
         async fn foo() {

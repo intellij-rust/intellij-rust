@@ -6,11 +6,9 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsProcMacroResolveTest : RsResolveTestBase() {
     // FIXME

@@ -7,7 +7,6 @@ package org.rust.ide.annotator
 
 import org.intellij.lang.annotations.Language
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 import org.rust.ide.experiments.RsExperiments
 
@@ -32,7 +31,6 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attributes under attribute proc macro`() = checkHighlighting("""
@@ -46,7 +44,6 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attributes under attribute proc macro 2`() = checkHighlighting("""

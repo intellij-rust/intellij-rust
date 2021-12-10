@@ -237,7 +237,6 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         struct S;
     """, false)
 
-    @MockEdition(Edition.EDITION_2018)
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test attribute macro`() = checkByFileTree("""
