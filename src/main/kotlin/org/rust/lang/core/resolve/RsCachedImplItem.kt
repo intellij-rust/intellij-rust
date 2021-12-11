@@ -6,9 +6,13 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.util.SmartList
+import com.intellij.util.recursionSafeLazy
 import gnu.trove.THashMap
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -29,7 +33,7 @@ class RsCachedImplItem(
     val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl && !impl.isNegativeImpl
     val isInherent: Boolean get() = traitRef == null
 
-    val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }
+    val implementedTrait: BoundElement<RsTraitItem>? by recursionSafeLazy { traitRef?.resolveToBoundTrait() }
     val typeAndGenerics: Triple<Ty, List<TyTypeParameter>, List<CtConstParameter>>? by lazy(PUBLICATION) {
         impl.typeReference?.type?.let { Triple(it, impl.generics, impl.constGenerics) }
     }

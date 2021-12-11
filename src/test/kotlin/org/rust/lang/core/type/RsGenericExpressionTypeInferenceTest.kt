@@ -1970,4 +1970,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ u8
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/8236
+    fun `test select impl with associated type projection in trait ref`() = testExpr("""
+        struct S;
+        struct X;
+        trait Trait { type Item; }
+        impl Trait for S { type Item = X; }
+
+        trait Bound<A> {}
+        impl Bound<<S as Trait>::Item> for S {}
+
+        fn foo<B, C>(_: B) -> C where B: Bound<C> { todo!() }
+        fn main() {
+            let a = foo(S);
+            a;
+        } //^ X
+    """)
 }
