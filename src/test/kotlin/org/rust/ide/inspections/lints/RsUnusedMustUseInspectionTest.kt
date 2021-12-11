@@ -122,6 +122,22 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
+    fun `test fixing by adding assigning to _ with template`() = checkFixByTextWithLiveTemplate("Add `let _ =`","""
+        #[must_use]
+        fn foo() -> bool { false }
+
+        fn main() {
+            <weak_warning descr="Unused return value of foo that must be used">/*caret*/foo()</weak_warning>;
+        }
+    """, "a\t", """
+        #[must_use]
+        fn foo() -> bool { false }
+
+        fn main() {
+            let a = foo();
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test fixing unused result by adding unwrap`() = checkFixByText("Add `.unwrap()`","""
         fn foo() -> Result<bool, ()> { false }
@@ -149,6 +165,21 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
 
         fn main() {
             foo().expect("TODO: panic message");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test fixing unused result by adding expect with template`() = checkFixByTextWithLiveTemplate("Add `.expect(\"\")`","""
+        fn foo() -> Result<bool, ()> { false }
+
+        fn main() {
+            <weak_warning descr="Unused Result<bool, ()> that must be used">/*caret*/foo()</weak_warning>;
+        }
+    """, "abc\t", """
+        fn foo() -> Result<bool, ()> { false }
+
+        fn main() {
+            foo().expect("abc");
         }
     """)
 }
