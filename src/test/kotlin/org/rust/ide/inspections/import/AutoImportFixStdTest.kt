@@ -776,14 +776,6 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
     @MinRustcVersion("1.51.0")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test item in core not reexported in std`() = checkAutoImportVariantsByText("""
-        fn main() {
-            SplitInclusive/*caret*/;
-        }
-    """, listOf("std::str::SplitInclusive", "core::slice::SplitInclusive"))
-
-    @MinRustcVersion("1.51.0")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test item in core not reexported in std (with no_std)`() = checkAutoImportVariantsByText("""
         #![no_std]
         fn main() {
