@@ -410,7 +410,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve derive traits`() {
+    fun `test resolve derive traits`() = resolveDeriveTraits()
+
+    @ProjectDescriptor(WithStdlibAndStdlibLikeDependencyRustProjectDescriptor::class)
+    fun `test resolve derive traits with stdlib-like dependencies`() = resolveDeriveTraits()
+
+    private fun resolveDeriveTraits() {
         val traitToPath = mapOf(
             "std::marker::Clone" to "clone.rs",
             "std::marker::Copy" to "marker.rs",

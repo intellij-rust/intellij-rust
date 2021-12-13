@@ -9,6 +9,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
@@ -48,7 +49,14 @@ interface CargoWorkspace {
     val featureGraph: FeatureGraph
 
     fun findPackageById(id: PackageId): Package? = packages.find { it.id == id }
-    fun findPackageByName(name: String): Package? = packages.find { it.name == name || it.normName == name }
+    fun findPackageByName(name: String, isStd: ThreeState = ThreeState.UNSURE): Package? = packages.find {
+        if (it.name != name && it.normName != name) return@find false
+        when (isStd) {
+            ThreeState.YES -> it.origin == STDLIB
+            ThreeState.NO -> it.origin == WORKSPACE || it.origin == DEPENDENCY
+            ThreeState.UNSURE -> true
+        }
+    }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null

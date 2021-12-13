@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.type
 
-import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.*
@@ -118,6 +115,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test vec!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let x = vec!(1, 2u16, 4, 8);
+            x;
+          //^ Vec<u16> | Vec<u16, Global>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibAndStdlibLikeDependencyRustProjectDescriptor::class)
+    fun `test vec! with stdlib-like dependencies`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
