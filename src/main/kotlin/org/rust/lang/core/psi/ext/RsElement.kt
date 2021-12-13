@@ -17,6 +17,7 @@ import com.intellij.util.Query
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
@@ -59,13 +60,13 @@ val RsElement.containingCrate: Crate?
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
-val PsiElement.edition: CargoWorkspace.Edition?
+val PsiElement.edition: Edition?
     get() = contextOrSelf<RsElement>()?.containingCrate?.edition
 
 val PsiElement.isAtLeastEdition2018: Boolean
     get() {
-        val edition = edition ?: return false
-        return edition >= CargoWorkspace.Edition.EDITION_2018
+        val edition = edition ?: Edition.DEFAULT
+        return edition >= Edition.EDITION_2018
     }
 
 /**
