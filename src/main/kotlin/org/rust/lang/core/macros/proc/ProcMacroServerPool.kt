@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.createDirectories
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
@@ -306,13 +307,25 @@ private class ProcMacroServerProcess private constructor(
     }
 
     companion object {
+        private val workingDir: Path by lazy {
+            try {
+                RsPathManager.tempPluginDirInSystem().resolve("proc-macro-expander-pwd").apply {
+                    createDirectories()
+                    cleanDirectory()
+                }
+            } catch (e: IOException) {
+                MACRO_LOG.error(e)
+                Paths.get(".")
+            }
+        }
+
         @Throws(ProcessCreationException::class)
         fun createAndRun(toolchain: RsToolchainBase, expanderExecutable: Path): ProcMacroServerProcess {
             MACRO_LOG.debug { "Starting proc macro expander process $expanderExecutable" }
 
-           val commandLine = toolchain.createGeneralCommandLine(
+            val commandLine = toolchain.createGeneralCommandLine(
                 expanderExecutable,
-                Paths.get("."),
+                workingDir,
                 null,
                 BacktraceMode.NO,
                 // Let a proc macro know that it is ran from intellij-rust
