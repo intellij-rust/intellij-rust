@@ -31,21 +31,28 @@ val RsTypeParameter.bounds: List<RsPolybound> get() {
     return typeParamBounds?.polyboundList.orEmpty() + whereBounds
 }
 
-val RsTypeParameter.isSized: Boolean get() {
-    val stub = greenStub
-    if (stub != null) return stub.isSized
-
-    // We can't use `resolve` here to find `?Sized` bound because it causes `IndexNotReadyException` while indexing.
-    // Instead of it we just check `?` before trait name in bound
-    // because at this moment only `Sized` trait can have `?` modifier
-    val owner = parent?.parent as? RsGenericDeclaration
-    val whereBounds =
-        owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.skipParens() as? RsBaseType)?.name == name }
-            .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
-    val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
-    return bounds.none { it.q != null }
-}
+/**
+ * Note that a type parameter can be sized or not sized in different contexts:
+ *
+ * ```
+ *     impl<T: ?Sized> Box<T> {
+ *         fn foo() -> Box<T> { unimplemented!() }
+ *                       //^ `T` is NOT sized
+ *         fn foo() -> Box<T> where T: Sized { unimplemented!() }
+ *     }                 //^ `T` is sized
+ * ```
+ */
+val RsTypeParameter.isSized: Boolean
+    get() {
+        // We just check `?` before trait name in bound because at this moment only `Sized` trait can have `?` modifier
+        val owner = parent?.parent as? RsGenericDeclaration
+        val whereBounds =
+            owner?.whereClause?.wherePredList.orEmpty()
+                .filter { (it.typeReference?.skipParens() as? RsBaseType)?.name == name }
+                .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+        val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
+        return bounds.none { it.hasQ }
+    }
 
 abstract class RsTypeParameterImplMixin : RsStubbedNamedElementImpl<RsTypeParameterStub>, RsTypeParameter {
     constructor(node: ASTNode) : super(node)

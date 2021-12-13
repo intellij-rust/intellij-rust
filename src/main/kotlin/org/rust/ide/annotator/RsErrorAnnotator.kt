@@ -822,7 +822,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // If type is not fully known, the plugin should produce some another error, like E0412
         if (type.containsTyOfClass(TyUnknown::class.java)) return
         val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
-        val lookup = typeRef.implLookup
+        val lookup = impl.implLookup
 
         val selfSubst = mapOf(TyTypeParameter.self() to type).toTypeSubst()
         val substitution = (impl.implementedTrait?.subst ?: emptySubstitution).substituteInValues(selfSubst) + selfSubst
@@ -1650,8 +1650,9 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     if (arguments.isEmpty() && retType == null) return
 
     val owner = fn.owner
+    val lookup = ImplLookup.relativeTo(fn)
 
-    fun isError(ty: Ty): Boolean = !ty.isSized() &&
+    fun isError(ty: Ty): Boolean = !lookup.isSized(ty) &&
         // '?Sized' type parameter types in abstract trait method is not an error
         !(owner is RsAbstractableOwner.Trait && fn.isAbstract)
 

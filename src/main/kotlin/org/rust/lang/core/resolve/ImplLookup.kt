@@ -496,10 +496,7 @@ class ImplLookup(
             val isAppropriateImpl = canCombineTypes(selfTy, type, generics, constGenerics) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
-                (cachedImpl.isInherent || cachedImpl.implementedTrait != null) &&
-                // Ignore `Sized` blanket implementations for trait objects.
-                // TODO remove it after support of completion results filtering by `Sized` trait
-                (selfTy !is TyTraitObject || type !is TyTypeParameter || !type.isSized)
+                (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
             isAppropriateImpl && processor(cachedImpl)
         }
     }
@@ -732,9 +729,46 @@ class ImplLookup(
     }
 
     private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): List<SelectionCandidate> {
-        if (!ty.isSized()) return emptyList()
         val candidate = SelectionCandidate.TypeParameter(BoundElement(sizedTrait))
+        if (!isSizedTypeImpl(ty)) return emptyList()
         return listOf(candidate)
+    }
+
+    /** See `org.rust.lang.core.type.RsImplicitTraitsTest` */
+    private fun isSizedTypeImpl(ty: Ty): Boolean {
+        val ancestors = mutableSetOf(ty)
+
+        fun Ty.isSizedInner(): Boolean {
+            return when (this) {
+                is TyNumeric,
+                is TyBool,
+                is TyChar,
+                is TyUnit,
+                is TyNever,
+                is TyReference,
+                is TyPointer,
+                is TyArray,
+                is TyFunction -> true
+
+                is TyStr, is TySlice, is TyTraitObject -> false
+
+                is TyTypeParameter -> getEnvBoundTransitivelyFor(this).any { it.element == items.Sized }
+
+                is TyAdt -> {
+                    val item = item as? RsStructItem ?: return true
+                    val typeRef = item.fields.lastOrNull()?.typeReference
+                    val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
+                    if (!ancestors.add(type)) return true
+                    type.isSizedInner()
+                }
+
+                is TyTuple -> types.last().isSizedInner()
+
+                else -> true
+            }
+        }
+
+        return ty.isSizedInner()
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -973,10 +1007,15 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
+    fun isSized(ty: Ty): Boolean {
+        // Treat all types as sized if `Sized` trait is not found. This suppresses error noise in the
+        // case of the toolchain misconfiguration (when there is not a `Sized` trait)
+        val sizedTrait = items.Sized ?: return true
+        return ty.isTraitImplemented(sizedTrait)
+    }
     fun isDeref(ty: Ty): Boolean = ty.isTraitImplemented(items.Deref)
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.Copy)
     fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.Clone)
-    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.Sized)
     fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.Debug)
     fun isDefault(ty: Ty): Boolean = ty.isTraitImplemented(items.Default)
     fun isEq(ty: Ty): Boolean = ty.isTraitImplemented(items.Eq)

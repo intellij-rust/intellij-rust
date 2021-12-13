@@ -1178,9 +1178,6 @@ class RsTypeParameterStub(
 ) : RsAttributeOwnerStubBase<RsTypeParameter>(parent, elementType),
     RsNamedStub {
 
-    val isSized: Boolean
-        get() = BitUtil.isSet(flags, IS_SIZED_MASK)
-
     object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeParameterStub(
@@ -1200,14 +1197,8 @@ class RsTypeParameterStub(
             RsTypeParameterImpl(stub, this)
 
         override fun createStub(psi: RsTypeParameter, parentStub: StubElement<*>?): RsTypeParameterStub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, IS_SIZED_MASK, psi.isSized)
-            return RsTypeParameterStub(parentStub, this, psi.name, flags)
+            return RsTypeParameterStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
         }
-    }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
-        private val IS_SIZED_MASK: Int = nextBitMask()
     }
 }
 

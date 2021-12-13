@@ -24,6 +24,7 @@ import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
+import org.rust.stdext.mapToSet
 import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
@@ -978,33 +979,48 @@ private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
     } else {
         emptySequence()
     }
-    return (bounds + whereBounds + assocTypeBounds).toList()
+    val explicitPredicates = (bounds + whereBounds + assocTypeBounds).toList()
+    val unbounds = explicitPredicates.filterIsInstance<PsiPredicate.Unbound>().mapToSet { it.selfTy }
+    val sized = knownItems.Sized
+    val implicitPredicates = if (sized != null) {
+        generics.filter { it !in unbounds }.map { Predicate.Trait(TraitRef(it, sized.withSubst())) }
+    } else {
+        emptyList()
+    }
+    return explicitPredicates.mapNotNull { (it as? PsiPredicate.Bound)?.predicate } + implicitPredicates
 }
 
-private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<Predicate> = orEmpty().asSequence()
-    .filter { !it.hasQ } // ignore `?Sized`
+private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<PsiPredicate> = orEmpty().asSequence()
     .flatMap { bound ->
-        val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<Predicate>()
-        val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<Predicate>()
+        if (bound.hasQ) { // ?Sized
+            return@flatMap sequenceOf(PsiPredicate.Unbound(selfTy))
+        }
+        val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<PsiPredicate>()
+        val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<PsiPredicate>()
 
         val assocTypeBounds = traitRef.path.typeArgumentList?.assocTypeBindingList.orEmpty().asSequence()
             .flatMap nestedFlatMap@{
                 val assoc = it.reference.resolve() as? RsTypeAlias
-                    ?: return@nestedFlatMap emptySequence<Predicate>()
+                    ?: return@nestedFlatMap emptySequence<PsiPredicate>()
                 val projectionTy = TyProjection.valueOf(selfTy, assoc)
                 val typeRef = it.typeReference
                 if (typeRef != null) {
                     // T: Iterator<Item = Foo>
                     //             ~~~~~~~~~~ expands to predicate `T::Item = Foo`
-                    sequenceOf(Predicate.Equate(projectionTy, typeRef.type))
+                    sequenceOf(PsiPredicate.Bound(Predicate.Equate(projectionTy, typeRef.type)))
                 } else {
                     // T: Iterator<Item: Debug>
                     //             ~~~~~~~~~~~ equivalent to `T::Item: Debug`
                     it.polyboundList.toPredicates(projectionTy)
                 }
             }
-        sequenceOf(Predicate.Trait(TraitRef(selfTy, boundTrait))) + assocTypeBounds
+        sequenceOf(PsiPredicate.Bound(Predicate.Trait(TraitRef(selfTy, boundTrait)))) + assocTypeBounds
     }
+
+private sealed class PsiPredicate {
+    data class Bound(val predicate: Predicate) : PsiPredicate()
+    data class Unbound(val selfTy: Ty) : PsiPredicate()
+}
 
 
 data class TyWithObligations<out T>(
