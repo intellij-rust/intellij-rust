@@ -112,14 +112,19 @@ abstract class RsCodeFragment(
     }
 }
 
-class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
-    constructor(fileViewProvider: FileViewProvider, context: RsElement)
+open class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
+    protected constructor(fileViewProvider: FileViewProvider, context: RsElement)
         : super(fileViewProvider, RsCodeFragmentElementType.EXPR, context)
 
     constructor(project: Project, text: CharSequence, context: RsElement, importTarget: RsItemsOwner? = null)
         : super(project, text, RsCodeFragmentElementType.EXPR, context, importTarget = importTarget)
 
     val expr: RsExpr? get() = childOfType()
+}
+
+class RsDebuggerExpressionCodeFragment : RsExpressionCodeFragment {
+    constructor(fileViewProvider: FileViewProvider, context: RsElement) : super(fileViewProvider, context)
+    constructor(project: Project, text: CharSequence, context: RsElement) : super(project, text, context)
 }
 
 class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsElement)

@@ -19,54 +19,54 @@ import org.rust.lang.utils.evaluation.evaluate
 
 /** Similar to [Substitution], but maps PSI to PSI instead of [Ty] to [Ty] */
 open class RsPsiSubstitution(
-    val typeSubst: Map<RsTypeParameter, TypeValue> = emptyMap(),
-    val regionSubst: Map<RsLifetimeParameter, Value<RsLifetime>> = emptyMap(),
-    val constSubst: Map<RsConstParameter, Value<RsElement>> = emptyMap(),
+    val typeSubst: Map<RsTypeParameter, Value<TypeValue, TypeDefault>> = emptyMap(),
+    val regionSubst: Map<RsLifetimeParameter, Value<RsLifetime, Nothing>> = emptyMap(),
+    val constSubst: Map<RsConstParameter, Value<RsElement, RsExpr>> = emptyMap(),
     val assoc: Map<RsTypeAlias, RsTypeReference> = emptyMap(),
 ) {
-    sealed class TypeValue {
-        object RequiredAbsent : TypeValue()
-        object OptionalAbsent : TypeValue()
-        sealed class Present : TypeValue() {
-            class InAngles(val value: RsTypeReference) : Present()
-            class FnSugar(val inputArgs: List<RsTypeReference?>) : Present()
-        }
-        class DefaultValue(val value: RsTypeReference, val selfTy: Ty?) : TypeValue()
+    sealed class Value<out P, out D> {
+        object RequiredAbsent : Value<Nothing, Nothing>()
+        object OptionalAbsent : Value<Nothing, Nothing>()
+        class Present<P>(val value: P) : Value<P, Nothing>()
+        class DefaultValue<D>(val value: D) : Value<Nothing, D>()
     }
 
-    sealed class Value<out T> {
-        object RequiredAbsent : Value<Nothing>()
-        object OptionalAbsent : Value<Nothing>()
-        class Present<T>(val value: T) : Value<T>()
+    sealed class TypeValue {
+        class InAngles(val value: RsTypeReference) : TypeValue()
+        class FnSugar(val inputArgs: List<RsTypeReference?>) : TypeValue()
     }
+    data class TypeDefault(val value: RsTypeReference, val selfTy: Ty?)
 }
 
 fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.default): Substitution {
     val typeSubst = typeSubst.entries.associate { (param, value) ->
         val paramTy = TyTypeParameter.named(param)
         val valueTy = when (value) {
-            is RsPsiSubstitution.TypeValue.DefaultValue -> if (value.selfTy != null) {
-                value.value.type.substitute(mapOf(TyTypeParameter.self() to value.selfTy).toTypeSubst())
+            is RsPsiSubstitution.Value.DefaultValue -> if (value.value.selfTy != null) {
+                value.value.value.type.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
             } else {
-                value.value.type
+                value.value.value.type
             }
-            is RsPsiSubstitution.TypeValue.OptionalAbsent -> paramTy
-            is RsPsiSubstitution.TypeValue.Present.InAngles -> value.value.type
-            is RsPsiSubstitution.TypeValue.Present.FnSugar -> if (value.inputArgs.isNotEmpty()) {
-                TyTuple(value.inputArgs.map { it?.type ?: TyUnknown })
-            } else {
-                TyUnit.INSTANCE
+            is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
+            is RsPsiSubstitution.Value.Present -> when (value.value) {
+                is RsPsiSubstitution.TypeValue.InAngles -> value.value.value.type
+                is RsPsiSubstitution.TypeValue.FnSugar -> if (value.value.inputArgs.isNotEmpty()) {
+                    TyTuple(value.value.inputArgs.map { it?.type ?: TyUnknown })
+                } else {
+                    TyUnit.INSTANCE
+                }
             }
-            RsPsiSubstitution.TypeValue.RequiredAbsent -> TyUnknown
+            RsPsiSubstitution.Value.RequiredAbsent -> TyUnknown
         }
         paramTy to valueTy
     }
 
     val regionSubst = regionSubst.entries.mapNotNull { (psiParam, psiValue) ->
         val param = ReEarlyBound(psiParam)
-        val value = when (psiValue) {
-            RsPsiSubstitution.Value.RequiredAbsent, RsPsiSubstitution.Value.OptionalAbsent -> return@mapNotNull null
-            is RsPsiSubstitution.Value.Present -> psiValue.value.resolve()
+        val value = if (psiValue is RsPsiSubstitution.Value.Present) {
+            psiValue.value.resolve()
+        } else {
+            return@mapNotNull null
         }
 
         param to value
@@ -80,7 +80,7 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             is RsPsiSubstitution.Value.Present -> {
                 val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
                 when (val value = psiValue.value) {
-                    is RsExpr -> value.evaluate(expectedTy, resolver)
+                    is RsExpr -> value.evaluate(expectedTy, resolver) // TODO check types
                     is RsBaseType -> when (val resolved = value.path?.reference?.resolve()) {
                         is RsConstParameter -> CtConstParameter(resolved)
                         is RsConstant -> when {
@@ -95,6 +95,9 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
                     }
                     else -> CtUnknown
                 }
+            }
+            is RsPsiSubstitution.Value.DefaultValue -> {
+                psiValue.value.evaluate(psiParam.typeReference?.type ?: TyUnknown)
             }
         }
 

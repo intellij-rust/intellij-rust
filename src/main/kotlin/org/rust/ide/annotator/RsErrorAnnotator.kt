@@ -494,6 +494,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: RsAnnotationHolder) {
+        // Do not annotate usages of private items in debugger
+        if (o.containingFile is RsDebuggerExpressionCodeFragment) {
+            return
+        }
         val reference = ref.reference ?: return
         val highlightedElement = ref.referenceNameElement ?: return
         val referenceName = ref.referenceName ?: return

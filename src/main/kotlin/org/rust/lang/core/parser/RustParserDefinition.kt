@@ -46,7 +46,7 @@ class RustParserDefinition : ParserDefinition {
             injectionListener.evalDebugContext(injectionHost, contextResult)
             val context = contextResult.element ?: return default()
 
-            val fragment = RsExpressionCodeFragment(viewProvider, context)
+            val fragment = RsDebuggerExpressionCodeFragment(viewProvider, context)
             injectionListener.didInject(injectionHost)
 
             return fragment

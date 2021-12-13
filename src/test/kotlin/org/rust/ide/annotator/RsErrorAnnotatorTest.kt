@@ -9,6 +9,8 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
+import org.rust.lang.core.psi.RsExpressionCodeFragment
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -4588,4 +4590,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item = S; }
         extern { pub type ItemForeign; }
     """)
+
+    fun `test do not annotate usage of private field in debugger code fragment`() = checkByCodeFragment("""
+        mod my {
+            pub struct Foo { inner: i32 }
+        }
+        fn bar(foo: my::Foo) {
+            /*caret*/;
+        }
+    """, """foo.inner""", ::RsDebuggerExpressionCodeFragment)
+
+    fun `test annotate usage of private field in expr code fragment`() = checkByCodeFragment("""
+        mod my {
+            pub struct Foo { inner: i32 }
+        }
+        fn bar(foo: my::Foo) {
+            /*caret*/;
+        }
+    """, """foo.<error descr="Field `inner` of struct `my::Foo` is private [E0616]">inner</error>""", ::RsExpressionCodeFragment)
 }

@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -95,8 +96,14 @@ abstract class RsCompletionTestFixtureBase<IN>(
         variants: Iterable<String>,
         render: LookupElement.() -> String = { lookupString }
     ) {
-        prepare(code)
-        doContainsCompletion(variants.toSet(), render)
+        val oldAutocomplete = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
+        CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+        try {
+            prepare(code)
+            doContainsCompletion(variants.toSet(), render)
+        } finally {
+            CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = oldAutocomplete
+        }
     }
 
     fun doContainsCompletion(variants: Set<String>, render: LookupElement.() -> String) {
@@ -121,7 +128,7 @@ abstract class RsCompletionTestFixtureBase<IN>(
         prepare(code)
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
-            "Expected completions that contain $variants, but no completions found"
+            "Expected completions that don't contain $variants, but no completions found"
         }
         if (lookups.any { it.render() in variants }) {
             error("Expected completions that don't contain $variants, but got ${lookups.map { it.render() }}")
