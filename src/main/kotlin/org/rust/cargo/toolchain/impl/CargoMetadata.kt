@@ -21,6 +21,7 @@ import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
+import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -402,6 +403,9 @@ object CargoMetadata {
             "CARGO_PKG_LICENSE" to license.orEmpty(),
             "CARGO_PKG_LICENSE_FILE" to license_file.orEmpty(),
             "CARGO_CRATE_NAME" to name.replace('-', '_'),
+            // A hack to make `sqlx` use correct `target` directory. Really, we should just set
+            // PWD for proc macro expander process to `rootPath`
+            "CARGO_TARGET_DIR" to rootPath + File.separator + "target"
         )
 
         val outDir = buildScriptMessage?.out_dir
