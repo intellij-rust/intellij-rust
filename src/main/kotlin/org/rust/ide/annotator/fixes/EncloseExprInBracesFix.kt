@@ -10,10 +10,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.RsElement
 
-class EncloseExprInBracesFix(expr: RsExpr) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class EncloseExprInBracesFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getFamilyName(): String = text
     override fun getText(): String = "Enclose the expression in braces"
 

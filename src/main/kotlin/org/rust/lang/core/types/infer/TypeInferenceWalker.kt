@@ -654,11 +654,11 @@ class RsTypeInferenceWalker(
 
         val constParameters = callee.element.constParameters.map { CtConstParameter(it) }
         val resolver = PathExprResolver.fromContext(ctx)
-        val constArguments = methodCall.constArguments.withIndex().map { (i, expr) ->
-            val expectedTy = constParameters.getOrNull(i)?.parameter?.typeReference?.type ?: TyUnknown
-            expr.evaluate(expectedTy, resolver)
+        val constSubst = constParameters.zip(methodCall.constArguments).associate { (param, psiValue) ->
+            val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
+            val value = psiValue.toConst(expectedTy, resolver)
+            param to value
         }
-        val constSubst = constParameters.zip(constArguments).toMap()
 
         val fnSubst = Substitution(typeSubst = typeSubst, constSubst = constSubst)
         unifySubst(fnSubst, newSubst)
@@ -790,8 +790,23 @@ class RsTypeInferenceWalker(
         }
     }
 
-    fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsExpr>) {
-        inferArgumentTypes(constParameters.map { it.typeReference?.type ?: TyUnknown }, constArguments)
+    fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsElement>) {
+        val argDefs = constParameters.asSequence()
+            .map { it.typeReference?.type ?: TyUnknown }
+            .infiniteWithTyUnknown()
+        for ((type, expr) in argDefs.zip(constArguments.asSequence())) {
+            when (expr) {
+                is RsExpr -> expr.inferTypeCoercableTo(type)
+                is RsBaseType -> {
+                    val typeReference = when (val def = expr.path?.reference?.resolve()) {
+                        is RsConstant -> def.typeReference?.takeIf { def.isConst }
+                        is RsConstParameter -> def.typeReference
+                        else -> null
+                    }
+                    coerce(expr, typeReference?.type ?: TyUnknown, type)
+                }
+            }
+        }
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {

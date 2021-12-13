@@ -376,4 +376,32 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             let _y = 0 else { return <error descr="mismatched types [E0308]expected `()`, found `i32`">0</error> };
         }
     """)
+
+    fun `test const arguments`() = checkErrors("""
+        fn foo<T, const C: i32>() {}
+        const C1: i32 = 1;
+        const C2: bool = true;
+        struct S;
+
+        fn main() {
+            foo::<i32, 1>;
+            foo::<i32, <error descr="mismatched types [E0308]expected `i32`, found `bool`">true</error>>;
+            foo::<S, C1>;
+            foo::<S, <error descr="mismatched types [E0308]expected `i32`, found `bool`">C2</error>>;
+        }
+    """)
+
+    fun `test const arguments in path exprs`() = checkErrors("""
+        struct S<const N: usize>;
+
+        impl <const N: usize> S<N> {
+            fn foo() {}
+            fn bar(&self) {}
+        }
+
+        fn main() {
+            S::<"">::foo(); // TODO: issue https://github.com/intellij-rust/intellij-rust/issues/8150
+            S::<<error descr="mismatched types [E0308]expected `usize`, found `&str`">""</error>>.bar();
+        }
+    """)
 }

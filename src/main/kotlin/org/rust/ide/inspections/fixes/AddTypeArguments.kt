@@ -12,9 +12,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.ide.utils.template.buildAndRunTemplate
-import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LT
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsTypeArgumentList
+import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
@@ -41,8 +44,8 @@ class AddTypeArguments(element: RsElement) : LocalQuickFixAndIntentionActionOnPs
 /**
  * Inserts type arguments if they are needed and returns a list of inserted type arguments.
  */
-fun insertTypeArgumentsIfNeeded(element: RsElement): List<RsTypeReference>? {
-    val (typeArguments, declaration) = getTypeArgumentsAndDeclaration(element) ?: return null
+fun insertTypeArgumentsIfNeeded(pathOrMethodCall: RsElement): List<RsTypeReference>? {
+    val (typeArguments, declaration) = getTypeArgumentsAndDeclaration(pathOrMethodCall) ?: return null
 
     val requiredParameters = declaration.requiredGenericParameters
     if (requiredParameters.isEmpty()) return null
@@ -50,7 +53,7 @@ fun insertTypeArgumentsIfNeeded(element: RsElement): List<RsTypeReference>? {
     val argumentCount = typeArguments?.typeReferenceList?.size ?: 0
     if (argumentCount >= requiredParameters.size) return null
 
-    val factory = RsPsiFactory(element.project)
+    val factory = RsPsiFactory(pathOrMethodCall.project)
     val missingTypes = requiredParameters.drop(argumentCount).map { it.name ?: "_" }
 
     val replaced = if (typeArguments != null) {
@@ -79,16 +82,10 @@ fun insertTypeArgumentsIfNeeded(element: RsElement): List<RsTypeReference>? {
         val newArgumentList = factory.createTypeArgumentList(missingTypes)
 
         // this can only happen for type references (base types/trait refs)
-        val path = getPath(element) ?: return null
-        path.addAfter(newArgumentList, path.identifier) as RsTypeArgumentList
+        if (pathOrMethodCall !is RsPath) return null
+        pathOrMethodCall.addAfter(newArgumentList, pathOrMethodCall.identifier) as RsTypeArgumentList
     }
     return replaced.typeReferenceList.drop(argumentCount)
-}
-
-private fun getPath(element: PsiElement): RsPath? = when (element) {
-    is RsBaseType -> element.path
-    is RsTraitRef -> element.path
-    else -> null
 }
 
 private val PsiElement.isComma: Boolean

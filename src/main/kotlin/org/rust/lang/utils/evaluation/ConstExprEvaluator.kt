@@ -5,26 +5,44 @@
 
 package org.rust.lang.utils.evaluation
 
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsConstParameter
+import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.LogicOp
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.types.consts.Const
-import org.rust.lang.core.types.consts.CtUnevaluated
-import org.rust.lang.core.types.consts.CtUnknown
-import org.rust.lang.core.types.consts.CtValue
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.consts.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.needsEval
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.ty.TyInteger
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 fun RsExpr.evaluate(
     expectedTy: Ty = type,
     resolver: PathExprResolver? = PathExprResolver.default
 ): Const = toConstExpr(expectedTy, resolver)?.evaluate()?.toConst() ?: CtUnknown
+
+fun RsElement.toConst(
+    expectedTy: Ty,
+    resolver: PathExprResolver? = PathExprResolver.default
+): Const = when (this) {
+    is RsExpr -> evaluate(expectedTy, resolver)
+    is RsBaseType -> when (val resolved = path?.reference?.resolve()) {
+        is RsConstParameter -> CtConstParameter(resolved)
+        is RsConstant -> when {
+            resolved.isConst -> {
+                val type = resolved.typeReference?.type ?: TyUnknown
+                resolved.expr?.evaluate(type, resolver) ?: CtUnknown
+            }
+            else -> CtUnknown
+        }
+        else -> CtUnknown
+    }
+    else -> CtUnknown
+}
 
 private fun <T : Ty> ConstExpr<T>.evaluate(): ConstExpr<T> =
     when (expectedTy) {
