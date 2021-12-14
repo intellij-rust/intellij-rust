@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
@@ -17,6 +18,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.ui.UIUtil
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.*
@@ -145,7 +147,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         } else {
             ::processDotExprResolveVariants
         }
-        val processor = methodAndFieldCompletionProcessor(element, result, context)
+        val (processor, cb) = methodAndFieldCompletionProcessor(lookup, receiverTy, element, result, context)
 
         processResolveVariants(
             lookup,
@@ -153,13 +155,16 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             element,
             filterCompletionVariantsByVisibility(
                 receiver,
-                filterMethodCompletionVariantsByTraitBounds(
-                    lookup,
-                    receiverTy,
-                    deduplicateMethodCompletionVariants(processor)
-                )
+                processor
+//                filterMethodCompletionVariantsByTraitBounds(
+//                    lookup,
+//                    receiverTy,
+//                    deduplicateMethodCompletionVariants(processor)
+//                )
             )
         )
+
+        cb()
     }
 
     private fun addCompletionsFromIndex(
@@ -399,42 +404,105 @@ private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): 
 }
 
 private fun methodAndFieldCompletionProcessor(
+    lookup: ImplLookup,
+    receiver: Ty,
     methodOrField: RsMethodOrField,
     result: CompletionResultSet,
     context: RsCompletionContext
-): RsResolveProcessor = createProcessor { e ->
-    when (e) {
-        is FieldResolveVariant -> result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context
-        ))
-        is MethodResolveVariant -> {
-            if (e.element.isTest) return@createProcessor false
+): Pair<RsResolveProcessor, () -> Unit> {
+    val receiverContainsTyUnknown = receiver.containsTyOfClass(TyUnknown::class.java)
 
-            result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context,
-                insertHandler = object : RsDefaultInsertHandler() {
-                    override fun handleInsert(
-                        element: RsElement,
-                        scopeName: String,
-                        context: InsertionContext,
-                        item: LookupElement
-                    ) {
-                        val traitImportCandidate = findTraitImportCandidate(methodOrField, e)
-                        super.handleInsert(element, scopeName, context, item)
+    val cache = mutableMapOf<TraitImplSource, Boolean>()
 
-                        if (traitImportCandidate != null) {
-                            context.commitDocument()
-                            context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
-                        }
-                    }
-                }
-            ))
+    fun canEvaluateBounds(it: MethodResolveVariant): Boolean {
+        if (receiverContainsTyUnknown) return true
+        // Filter methods by trait bounds (try to select all obligations for each impl)
+        // We're caching evaluation results here because we can often complete methods
+        // in the same impl and always have the same receiver type
+        return cache.getOrPut(it.source) {
+            lookup.ctx.canEvaluateBounds(it.source, receiver)
         }
     }
-    false
+
+    val processedNamesAndTraits = mutableSetOf<Pair<String, RsTraitItem?>>()
+
+    fun isNotADuplicate(it: MethodResolveVariant): Boolean {
+        return processedNamesAndTraits.add(it.name to it.source.implementedTrait?.element)
+    }
+
+    val last = mutableListOf<MethodResolveVariant>()
+
+    val prc = createProcessor { e ->
+        when (e) {
+            is FieldResolveVariant -> result.addElement(createLookupElement(
+                scopeEntry = e,
+                context = context
+            ))
+            is MethodResolveVariant -> {
+                if (e.element.isTest) return@createProcessor false
+
+                if (!canEvaluateBounds(e)) {
+                    last += e
+                    return@createProcessor false
+                }
+                if (!isNotADuplicate(e)) return@createProcessor false
+                result.addElement(createLookupElementForMethodCall(e, ScopedBaseCompletionEntity(e), context, methodOrField))
+            }
+        }
+        false
+    }
+
+    val doLast = {
+        for (e in last) {
+            if (!isNotADuplicate(e)) continue
+            val ceb = ScopedBaseCompletionEntity(e)
+            val ce = object : CompletionEntity {
+                override val ty: Ty? get() = ceb.ty
+
+                override fun getBasePriority(context: RsCompletionContext): Double {
+                    val basePriority = ceb.getBasePriority(context)
+                    return basePriority - 1000
+                }
+
+                override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
+                    val baseLookup = ceb.createBaseLookupElement(context)
+                    return baseLookup.withItemTextForeground(UIUtil.getContextHelpForeground())
+                }
+
+            }
+            result.addElement(createLookupElementForMethodCall(e, ce, context, methodOrField))
+        }
+    }
+
+    return prc to doLast
 }
+
+private fun createLookupElementForMethodCall(
+    e: MethodResolveVariant,
+    completionEntity: CompletionEntity,
+    context: RsCompletionContext,
+    methodOrField: RsMethodOrField
+) =
+    createLookupElement(
+        completionEntity = completionEntity,
+        context = context,
+        insertHandler = object : RsDefaultInsertHandler() {
+            override fun handleInsert(
+                element: RsElement,
+                scopeName: String,
+                context: InsertionContext,
+                item: LookupElement
+            ) {
+                val traitImportCandidate = findTraitImportCandidate(methodOrField, e)
+                super.handleInsert(element, scopeName, context, item)
+
+                if (traitImportCandidate != null) {
+                    context.commitDocument()
+                    context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                }
+            }
+        }
+    )
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidateBase? {
     if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
