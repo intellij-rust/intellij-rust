@@ -20,9 +20,7 @@ import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.psiElement
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.expectedType
-import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
@@ -50,12 +48,11 @@ object RsTupleFieldCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val (fieldLookup, type) = context[TUPLE_FIELD_INFO] ?: return
 
-        val completionContext = RsCompletionContext(expectedTy = fieldLookup.parentDotExpr.expectedType)
+        val completionContext = RsCompletionContext(fieldLookup, expectedTy = fieldLookup.parentDotExpr.expectedType)
 
         val elements = type.types.withIndex().map { (index, ty) ->
             createLookupElement(object : CompletionEntity {
                 override val ty: Ty get() = ty
-                override val implLookup: ImplLookup get() = fieldLookup.implLookup
                 override fun getBasePriority(context: RsCompletionContext): Double = FIELD_DECL_PRIORITY
                 override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
                     return LookupElementBuilder
