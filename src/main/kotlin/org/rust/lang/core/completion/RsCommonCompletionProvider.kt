@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
@@ -65,8 +64,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             addMethodAndFieldCompletion(element, result, context)
         }
 
-        if (context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsForOutOfScopeItems(parameters, result, processedPathElements, context.expectedTy)
+        if (element is RsPath && context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+            addCompletionsForOutOfScopeItems(position, element, result, processedPathElements, context.expectedTy)
         }
     }
 
@@ -163,39 +162,35 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
     }
 
     private fun addCompletionsForOutOfScopeItems(
-        parameters: CompletionParameters,
+        position: PsiElement,
+        path: RsPath,
         result: CompletionResultSet,
         processedPathElements: MultiMap<String, RsElement>,
         expectedTy: Ty?
     ) {
-        val path = run {
+        run {
+            // true if delegated from RsPartialMacroArgumentCompletionProvider
+            if (position.containingFile.originalFile is RsExpressionCodeFragment) return
+
             // Not null if delegated from RsMacroCallBodyCompletionProvider
-            val positionInMacroArgument = parameters.position.findElementExpandedFrom()
-            val originalPosition = if (positionInMacroArgument != null) positionInMacroArgument.safeGetOriginalElement() else parameters.originalPosition
-            // We use the position in the original file in order not to process empty paths
-            if (originalPosition == null || originalPosition.elementType != RsElementTypes.IDENTIFIER) {
-                result.restartCompletionOnPrefixChange(StandardPatterns.string().withLength(1))
-                return
-            }
-            val actualPosition = if (positionInMacroArgument != null) parameters.position else originalPosition
+            val positionInMacroArgument = position.findElementExpandedFrom()
+
             // Checks that macro call and expanded element are located in the same modules
-            if (positionInMacroArgument != null && !isInSameRustMod(positionInMacroArgument, actualPosition)) {
+            if (positionInMacroArgument != null && !isInSameRustMod(positionInMacroArgument, position)) {
                 return
             }
-            actualPosition.parent as? RsPath ?: return
         }
         if (TyPrimitive.fromPath(path) != null) return
         // TODO: implement special rules paths in meta items
         if (path.parent is RsMetaItem) return
         Testmarks.outOfScopeItemsCompletion.hit()
 
-        val project = parameters.originalFile.project
-
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
         val candidates = if (path.useAutoImportWithNewResolve) run {
             val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return@run emptyList()
             ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
         } else {
+            val project = path.project
             val keys = hashSetOf<String>().apply {
                 val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
                 val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project).mapNotNull {
