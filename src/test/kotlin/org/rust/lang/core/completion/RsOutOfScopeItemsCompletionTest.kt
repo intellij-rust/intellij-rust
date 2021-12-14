@@ -16,9 +16,9 @@ import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
 
-class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
+class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
 
-    fun `test suggest an non-imported symbol from index and add proper import`() = doTestByText("""
+    fun `test suggest an non-imported symbol and add proper import`() = doTestByText("""
         mod collections {
             pub struct BTreeMap;
         }
@@ -118,7 +118,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test doesn't suggest an non-imported symbol from index when setting disabled`() = doTestByText("""
+    fun `test doesn't suggest an non-imported symbol when setting disabled`() = doTestByText("""
         struct BTreeMap;
 
         mod collections {
@@ -142,14 +142,14 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """, suggestOutOfScopeItems = false)
 
-    fun `test doesn't suggest symbols from index for empty path`() = doTest("""
+    fun `test doesn't suggest non-imported symbols for empty path`() = doTest("""
         pub mod foo {}
         fn main() {
             let _ = /*caret*/;
         }
-    """, Testmarks.pathCompletionFromIndex)
+    """, Testmarks.outOfScopeItemsCompletion)
 
-    fun `test doesn't suggest symbols from index for empty path in macro bodies`() = doTest("""
+    fun `test doesn't suggest non-imported symbols for empty path in macro bodies`() = doTest("""
         pub mod foo {}
         macro_rules! foo {
             ($($ i:item)*) => { $($ i)* };
@@ -159,7 +159,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
                 let _ = /*caret*/
             }
         }
-    """, Testmarks.pathCompletionFromIndex)
+    """, Testmarks.outOfScopeItemsCompletion)
 
     fun `test enum completion`() = doTestByText("""
         mod a {

@@ -9,9 +9,6 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -108,7 +105,7 @@ class RustProjectSettingsPanel(
         row("Standard library:") { wrapComponent(pathToStdlibField)(growX, pushX) }
         row("") { downloadStdlibLink() }
 
-        addToolchainsAsync(pathToToolchainComboBox) {
+        pathToToolchainComboBox.addToolchainsAsync {
             RsToolchainFlavor.getApplicableFlavors().flatMap { it.suggestHomePaths() }.distinct()
         }
     }
@@ -171,29 +168,3 @@ private fun wrapComponent(component: JComponent): JComponent =
     JPanel(BorderLayout()).apply {
         add(component, BorderLayout.NORTH)
     }
-
-/**
- * Obtains a list of toolchains on a pool using [toolchainObtainer], then fills [toolchainComboBox] on the EDT.
- */
-@Suppress("UnstableApiUsage")
-private fun addToolchainsAsync(
-    toolchainComboBox: RsToolchainPathChoosingComboBox,
-    toolchainObtainer: () -> List<Path>
-) {
-    toolchainComboBox.setBusy(true)
-    ApplicationManager.getApplication().executeOnPooledThread {
-        var toolchains = emptyList<Path>()
-        try {
-            toolchains = toolchainObtainer()
-        } finally {
-            val executor = AppUIExecutor.onUiThread(ModalityState.any()).expireWith(toolchainComboBox)
-            executor.execute {
-                toolchainComboBox.setBusy(false)
-                val selectedPath = toolchainComboBox.selectedPath
-                toolchainComboBox.childComponent.removeAllItems()
-                toolchains.forEach(toolchainComboBox.childComponent::addItem)
-                toolchainComboBox.selectedPath = selectedPath
-            }
-        }
-    }
-}

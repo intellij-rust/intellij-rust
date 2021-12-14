@@ -66,7 +66,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         }
 
         if (context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsFromIndex(parameters, result, processedPathElements, context.expectedTy)
+            addCompletionsForOutOfScopeItems(parameters, result, processedPathElements, context.expectedTy)
         }
     }
 
@@ -162,7 +162,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         )
     }
 
-    private fun addCompletionsFromIndex(
+    private fun addCompletionsForOutOfScopeItems(
         parameters: CompletionParameters,
         result: CompletionResultSet,
         processedPathElements: MultiMap<String, RsElement>,
@@ -187,7 +187,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         if (TyPrimitive.fromPath(path) != null) return
         // TODO: implement special rules paths in meta items
         if (path.parent is RsMetaItem) return
-        Testmarks.pathCompletionFromIndex.hit()
+        Testmarks.outOfScopeItemsCompletion.hit()
 
         val project = parameters.originalFile.project
 
@@ -259,7 +259,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
     object Testmarks {
-        val pathCompletionFromIndex = Testmark("pathCompletionFromIndex")
+        val outOfScopeItemsCompletion = Testmark("outOfScopeItemsCompletion")
     }
 }
 
