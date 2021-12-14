@@ -5,7 +5,7 @@ updates:
       schedule:
           interval: "daily"
           time: "04:00" # UTC
-      open-pull-requests-limit: 1
+      open-pull-requests-limit: 0
       labels: [ ]
       assignees:
           - "vlad20012"
