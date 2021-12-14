@@ -92,6 +92,7 @@ name = "intellij-rust-native-helper"
 version = "0.1.0"
 dependencies = [
  "ra_ap_proc_macro_srv",
+ "winapi",
 ]
 
 [[package]]
