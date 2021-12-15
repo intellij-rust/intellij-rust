@@ -20,10 +20,10 @@ import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFile.Attributes
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -147,7 +147,8 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
                 paths.map { path ->
                     val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
                     val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData, path.needExternCrate)
-                    ImportCandidate2(qualifiedItem, importInfo)
+                    val isRootPathResolved = isRootPathResolved(importInfo.usePath)
+                    ImportCandidate2(qualifiedItem, importInfo, isRootPathResolved)
                 }
             }
         }
@@ -155,7 +156,6 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
         // for items which belongs to multiple namespaces (e.g. unit structs)
         .distinctBy { it.qualifiedNamedItem.item to it.info.usePath }
         .sorted()
-
 
 @Suppress("ArrayInDataClass")
 private data class ModUsePath(
@@ -371,15 +371,8 @@ private fun filterShortestPath(paths: List<ItemUsePath>): List<ItemUsePath> {
 }
 
 private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
-    if (pathInfo == null) return true
-    val path = RsCodeFragmentFactory(project).createPathInTmpMod(
-        pathInfo.parentPathText ?: return true,
-        rootMod,
-        pathInfo.pathParsingMode,
-        TYPES_N_VALUES,
-        usePath,
-        null
-    ) ?: return false
+    if (pathInfo?.rootPathText == null) return true
+    val path = createPathWithImportAdded(usePath) ?: return false
     val element = path.reference?.deepResolve() as? RsQualifiedNamedElement ?: return false
 
     // Looks like it's useless to access trait associated types directly (i.e. `Trait::Type`),
@@ -388,6 +381,20 @@ private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
     return element !is RsAbstractable
         || element.owner !is RsAbstractableOwner.Trait
         || element.canBeAccessedByTraitName
+}
+
+private fun ImportContext2.isRootPathResolved(usePath: String): Boolean {
+    if (type == ImportContext2.Type.COMPLETION) return true
+    val path = createPathWithImportAdded(usePath) ?: return false
+    return path.reference?.resolve() != null
+}
+
+private fun ImportContext2.createPathWithImportAdded(usePath: String): RsPath? {
+    val rootPathText = pathInfo?.rootPathText ?: return null
+    val rootPathParsingMode = pathInfo.rootPathParsingMode ?: return null
+    val rootPathAllowedNamespaces = pathInfo.rootPathAllowedNamespaces ?: return null
+    return RsCodeFragmentFactory(project)
+        .createPathInTmpMod(rootPathText, rootMod, rootPathParsingMode, rootPathAllowedNamespaces, usePath, null)
 }
 
 private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {

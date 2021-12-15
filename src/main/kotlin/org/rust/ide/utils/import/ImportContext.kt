@@ -82,16 +82,21 @@ class ImportContext2 private constructor(
     }
 
     class PathInfo(
-        val parentPathText: String?,
-        val pathParsingMode: RustParserUtil.PathParsingMode,
+        val rootPathText: String?,
+        val rootPathParsingMode: RustParserUtil.PathParsingMode?,
+        val rootPathAllowedNamespaces: Set<Namespace>?,
         val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
     ) {
         companion object {
-            fun from(path: RsPath, isCompletion: Boolean): PathInfo = PathInfo(
-                parentPathText = (path.parent as? RsPath)?.text,
-                pathParsingMode = path.pathParsingMode,
-                namespaceFilter = path.namespaceFilter(isCompletion),
-            )
+            fun from(path: RsPath, isCompletion: Boolean): PathInfo {
+                val rootPath = path.rootPath().takeIf { it != path }
+                return PathInfo(
+                    rootPathText = rootPath?.text,
+                    rootPathParsingMode = rootPath?.pathParsingMode,
+                    rootPathAllowedNamespaces = rootPath?.allowedNamespaces(isCompletion),
+                    namespaceFilter = path.namespaceFilter(isCompletion),
+                )
+            }
         }
     }
 }
