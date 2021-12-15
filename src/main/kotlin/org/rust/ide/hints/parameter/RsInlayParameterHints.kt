@@ -17,9 +17,6 @@ import org.rust.stdext.buildList
 
 @Suppress("UnstableApiUsage")
 object RsInlayParameterHints {
-    val enabledOption: Option = Option("SHOW_PARAMETER_HINT", { "Show argument name hints" }, true)
-    val enabled: Boolean get() = enabledOption.get()
-
     val smartOption: Option = Option("SMART_HINTS", { "Show only smart hints" }, true)
     val smart: Boolean get() = smartOption.get()
 
