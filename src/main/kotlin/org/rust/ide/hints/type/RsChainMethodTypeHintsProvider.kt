@@ -14,6 +14,7 @@ import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -36,6 +37,7 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.openapiext.escaped
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -52,7 +54,9 @@ abstract class RsChainMethodTypeHintsProviderBase : InlayHintsProvider<RsChainMe
         override val cases: List<Case>
             get() = listOf(
                 Case(RsBundle.message("settings.rust.inlay.hints.for.same.consecutive.types"), "consecutive_types", settings::showSameConsecutiveTypes),
-                Case(RsBundle.message("settings.rust.inlay.hints.for.iterators"), "iterators", settings::iteratorSpecialCase)
+                // New inlay hint settings consider case name as html, as a result `<...>` isn't rendered properly.
+                // So let's escape it if needed
+                Case(RsBundle.message("settings.rust.inlay.hints.for.iterators").escapeIfNeeded(), "iterators", settings::iteratorSpecialCase)
             )
 
         override fun createComponent(listener: ChangeListener): JComponent = JPanel()
@@ -130,6 +134,13 @@ abstract class RsChainMethodTypeHintsProviderBase : InlayHintsProvider<RsChainMe
 
     companion object {
         val KEY: SettingsKey<Settings> = SettingsKey("chain-method.hints")
+
+        private fun String.escapeIfNeeded(): String = if (isNewSettingsEnabled) escaped else this
+
+        private val isNewSettingsEnabled: Boolean
+            get() {
+                return Registry.`is`("new.inlay.settings", false)
+            }
     }
 }
 
