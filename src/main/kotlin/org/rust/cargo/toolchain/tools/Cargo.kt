@@ -218,7 +218,14 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             return null
         }
 
-        if (processOutput.exitCode != 0) return null
+        if (processOutput.exitCode != 0) {
+            if (isUnitTestMode) {
+                // If `cargo check` output contains error like "The system cannot find the path specified",
+                // maybe It's because some file path on Windows is too long (more than 256 symbols).
+                LOG.error("Can't compile build scripts. Cargo check output: '${processOutput.stdoutLines}'")
+            }
+            return null
+        }
 
         val messages = mutableMapOf<PackageId, MutableList<CompilerMessage>>()
 
