@@ -146,7 +146,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
                     val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
-                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData)
+                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData, path.needExternCrate)
                     ImportCandidate2(qualifiedItem, importInfo)
                 }
             }
@@ -163,7 +163,8 @@ private data class ModUsePath(
     /** corresponds to `path.first()` */
     val crate: Crate,
     /** corresponds to `path.last()` */
-    val mod: ModData
+    val mod: ModData,
+    val needExternCrate: Boolean,
 ) {
     override fun toString(): String = path.joinToString("::")
 }
@@ -175,7 +176,7 @@ private fun ImportContext2.getAllModPaths(): List<ModUsePath> {
     for ((crateName, defMap) in defMaps.all) {
         val filterCrate = { crate: CratePersistentId -> crate == defMap.crate || crate !in explicitCrates }
         val crate = project.crateGraph.findCrateById(defMap.crate) ?: continue
-        val rootPath = ModUsePath(arrayOf(crateName), crate, defMap.root)
+        val rootPath = ModUsePath(arrayOf(crateName), crate, defMap.root, needExternCrate = defMap.crate !in explicitCrates)
         visitVisibleModules(rootPath, filterCrate, result::add)
     }
     return result
@@ -211,7 +212,7 @@ private fun ImportContext2.findPathsToModulesInScope(path: ModUsePath): List<Mod
             it.isModOrEnum && checkVisibility(it, path.mod)
         } ?: return@mapNotNull null
         val childModData = rootDefMap.tryCastToModData(childMod) ?: return@mapNotNull null
-        ModUsePath(path.path + name, path.crate, childModData)
+        path.copy(path = path.path + name, mod = childModData)
     }
 
 private data class InitialDefMaps(
@@ -293,7 +294,8 @@ private data class ItemUsePath(
     val crate: Crate,
     /** corresponds to `path.last()` */
     val item: VisItem,
-    val namespace: Namespace
+    val namespace: Namespace,
+    val needExternCrate: Boolean,
 ) {
     fun toItemWithNamespace(): ItemWithNamespace = ItemWithNamespace(item.path, item.isModOrEnum, namespace)
 
@@ -317,7 +319,7 @@ private fun ImportContext2.getPerNsPaths(modPath: ModUsePath, perNs: PerNs, name
                 checkVisibility(it, modPath.mod)
                     && (type == ImportContext2.Type.OTHER || !hasVisibleItemInRootScope(name, namespace))
             }
-            .map { ItemUsePath(modPath.path + name, modPath.crate, it, namespace) }
+            .map { ItemUsePath(modPath.path + name, modPath.crate, it, namespace, modPath.needExternCrate) }
     }
 
 private fun ImportContext2.hasVisibleItemInRootScope(name: String, namespace: Namespace): Boolean {
@@ -331,7 +333,7 @@ private fun ImportContext2.getTraitsPathsInMod(modPath: ModUsePath, traits: Set<
         .flatMap { (name, perNs) ->
             perNs.types
                 .filter { checkVisibility(it, modPath.mod) && it.path in traits }
-                .map { ItemUsePath(modPath.path + name, modPath.crate, it, Namespace.Types) }
+                .map { ItemUsePath(modPath.path + name, modPath.crate, it, Namespace.Types, modPath.needExternCrate) }
         }
 
 
@@ -388,7 +390,7 @@ private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
         || element.canBeAccessedByTraitName
 }
 
-private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData): ImportInfo {
+private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {
     val crateName = path.first()
     return if (crateName == "crate") {
         val usePath = path.joinToString("::").let {
@@ -396,7 +398,8 @@ private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModDa
         }
         ImportInfo.LocalImportInfo(usePath)
     } else {
-        val needInsertExternCrateItem = !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
+        val needInsertExternCrateItem = needExternCrate
+            || !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
         val crateRelativePath = path.copyOfRange(1, path.size).joinToString("::")
         ImportInfo.ExternCrateImportInfo(
             crate = containingCrate,

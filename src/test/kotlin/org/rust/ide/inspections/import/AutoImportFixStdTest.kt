@@ -805,4 +805,21 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             test_main();
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test add extern crate for alloc (with no_std)`() = checkAutoImportFixByTextWithoutHighlighting("""
+        #![no_std]
+        fn main() {
+            Vec/*caret*/::new();
+        }
+    """, """
+        #![no_std]
+        extern crate alloc;
+
+        use alloc::vec::Vec;
+
+        fn main() {
+            Vec::new();
+        }
+    """)
 }
