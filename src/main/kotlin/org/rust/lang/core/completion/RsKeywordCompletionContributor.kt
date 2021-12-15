@@ -87,6 +87,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         })
     }
 
+    override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        super.fillCompletionVariants(parameters, RsCompletionContributor.withRustSorter(parameters, result))
+    }
+
     private fun conditionLookupElement(lookupString: String): LookupElementBuilder {
         return LookupElementBuilder
             .create(lookupString)

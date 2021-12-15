@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.RsPsiPattern.inherentImplDeclarationPattern
@@ -44,5 +44,17 @@ class RsCompletionContributor : CompletionContributor() {
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
         extend(type, provider.elementPattern, provider)
+    }
+
+    override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        super.fillCompletionVariants(parameters, withRustSorter(parameters, result))
+    }
+
+    companion object {
+        fun withRustSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
+            val sorter = (CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl)
+                .withoutClassifiers { it.id == "liftShorter" }
+            return result.withRelevanceSorter(sorter)
+        }
     }
 }
