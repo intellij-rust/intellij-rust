@@ -38,6 +38,7 @@ import com.intellij.ui.GuiUtils
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
@@ -70,6 +71,8 @@ import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.exhaustive
 import org.rust.stdext.mapNotNullToSet
 import org.rust.taskQueue
+import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -530,12 +533,26 @@ data class CargoProjectImpl(
     // Checks that the project is https://github.com/rust-lang/rust
     fun doesProjectLooksLikeRustc(): Boolean {
         val workspace = rawWorkspace ?: return false
+        println("CargoProjectImpl.doesProjectLooksLikeRustc: workspace=$workspace, workspace.findRootPackage()=${workspace.findRootPackage()}")
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
         val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")
         return workspace.findPackageByName(AutoInjectedCrates.STD) != null &&
             workspace.findPackageByName(AutoInjectedCrates.CORE) != null &&
             possiblePackages.any { workspace.findPackageByName(it) != null }
+    }
+
+    fun findStdlibInBazelWorkspace(): File? {
+        val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
+        val stdlibPath = stdlibPathBazel()
+        println("CargoProjectImpl.hasStdlibInBazelWorkspace: stdlibPath=$stdlibPath")
+        return if (stdlibPath != null && Files.exists(stdlibPath)) stdlibPath.toFile() else null
+    }
+
+    fun stdlibPathBazel(): Path? {
+        val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
+        val projectName = workspaceRoot.rootDirectory.fileName.toString()
+        return Path.of(workspaceRoot.rootDirectory.toString(), "bazel-$projectName/external/rust_darwin_x86_64/lib/rustlib/src/library")
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {

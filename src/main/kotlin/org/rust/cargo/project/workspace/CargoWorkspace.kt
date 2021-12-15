@@ -49,6 +49,7 @@ interface CargoWorkspace {
 
     fun findPackageById(id: PackageId): Package? = packages.find { it.id == id }
     fun findPackageByName(name: String): Package? = packages.find { it.name == name || it.normName == name }
+    fun findRootPackage(): Package? = packages.filter { it.contentRoot != null }.minByOrNull { it.contentRoot!!.path.length }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null

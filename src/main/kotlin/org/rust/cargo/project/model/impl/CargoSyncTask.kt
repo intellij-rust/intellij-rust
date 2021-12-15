@@ -388,6 +388,17 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
+        val stdlibFromBazel = cargoProject.findStdlibInBazelWorkspace()
+        stdlibFromBazel?.let {
+            println("stdlib found in bazel workspace")
+            val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
+            if (std != null) {
+                return@runWithChildProgress TaskResult.Ok(std)
+            } else {
+                println("Failed to initialise stdlib from bazel workspace!")
+            }
+        }
+
         val rustup = childContext.toolchain.rustup(workingDirectory)
         if (rustup == null) {
             val explicitPath = childContext.project.rustSettings.explicitPathToStdlib
