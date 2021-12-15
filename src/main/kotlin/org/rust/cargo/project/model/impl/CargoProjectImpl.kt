@@ -188,7 +188,7 @@ open class CargoProjectsServiceImpl(
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         file.applyWithSymlink { directoryIndex.getInfoForFile(it).also { info ->
-            if ("rust-poc/main.rs" in file.path) println("findProjectForFile: file=$file, info=$info")
+//            if ("rust-poc" in file.path && "bazel" !in file.path) println("findProjectForFile: file=$file, info=$info")
         }.takeIf { info -> info !== noProjectMarker } }
 
     override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
@@ -557,8 +557,15 @@ data class CargoProjectImpl(
         is TaskResult.Err -> copy(rustcInfoStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    override fun toString(): String =
-        "CargoProject(manifest = $manifest)"
+    override fun toString(): String {
+        var ws: CargoWorkspace? = null
+        try {
+            ws = workspace
+        } catch (e: Exception) {
+            // swallow NPE
+        }
+        return "CargoProject(manifest = $manifest, workspace = $ws)"
+    }
 }
 
 val CargoProjectsService.allPackages: Sequence<CargoWorkspace.Package>

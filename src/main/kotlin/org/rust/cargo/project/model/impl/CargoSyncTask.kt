@@ -342,6 +342,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
                     }
                 }
             }
+            println("projectDescriptionData=$projectDescriptionData")
             if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
                 childContext.warning("Build scripts evaluation failed",
                     "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")

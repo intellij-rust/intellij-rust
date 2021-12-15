@@ -65,7 +65,7 @@ object CargoMetadata {
         val workspace_root: String
     ) {
         init {
-            println("Fetched Cargo metadata: $this")
+//            println("Fetched Cargo metadata: $this")
         }
         fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Project = copy(
             packages = packages.map { it.convertPaths(converter, srcPathConverter) },
@@ -338,7 +338,7 @@ object CargoMetadata {
                 }
                 val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
                 val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-                pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
+                pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages, project.workspace_root)
             },
             project.resolve.nodes.associate { node ->
                 val dependencySet = if (node.deps != null) {
@@ -357,16 +357,28 @@ object CargoMetadata {
         )
     }
 
+    private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
+        // TODO: apply Windows fix from WslToolchainBase
+        println("CargoMetadata.bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
+        if ("/bazel-out/" !in bazelPath) return bazelPath
+        val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
+        if (relativePathStartIndex == -1) return bazelPath
+        val projectRelativePath = bazelPath.substring(relativePathStartIndex).trim('/').replace("src/lib.rs", "lib.rs").replace("src/main.rs", "main.rs")
+        val projectRoot = bazelBinPath.substring(0, bazelBinPath.length - "bazel-bin".length)
+        return Path.of(projectRoot, projectRelativePath).toString()
+    }
+
     private fun Package.clean(
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         enabledFeatures: Set<String>,
-        buildMessages: List<CompilerMessage>
+        buildMessages: List<CompilerMessage>,
+        workspaceRoot: String
     ): CargoWorkspaceData.Package {
-        val rootPath = PathUtil.getParentPath(manifest_path)
+        val rootPath = bazelPathToLocal(bazelPath = PathUtil.getParentPath(manifest_path).toString(), bazelBinPath = Path.of(workspaceRoot, "bazel-bin").toString())
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (rootPath = $rootPath, workspaceRoot = $workspaceRoot)")
 
         val features = features.toMutableMap()
 

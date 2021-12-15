@@ -150,7 +150,7 @@ allprojects {
         if (project.name in listOf("intellij-rust", "plugin")) {
             task<Exec>(compileNativeCodeTaskName) {
                 workingDir = rootDir.resolve("native-helper")
-                executable = "cargo"
+                executable = "/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/cargo"
                 // Hack to use unstable `--out-dir` option work for stable toolchain
                 // https://doc.rust-lang.org/cargo/commands/cargo-build.html#output-options
                 environment("RUSTC_BOOTSTRAP", "1")
@@ -161,7 +161,7 @@ allprojects {
                     else -> archName
                 }
                 val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/$archName"
-                args("build", "--release", "-Z", "unstable-options", "--out-dir", outDir)
+                args("build", "--verbose", "--config", "build.rustc=\"/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/rustc\"", "--release", "-Z", "unstable-options", "--out-dir", outDir)
 
                 // It may be useful to disable compilation of native code.
                 // For example, CI builds native code for each platform in separate tasks and puts it into `bin` dir manually
@@ -572,7 +572,7 @@ task("runPrettyPrintersTests") {
             isFamily(FAMILY_WINDOWS) -> "" // `python36._pth` is used below instead
             else -> error("Unsupported OS")
         }
-        val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
+        val runCommand = "/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/cargo run --config build.rustc=/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/rustc --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
         if (isFamily(FAMILY_WINDOWS)) {
             val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\x64"
             // Add path to bundled `lldb` Python module to `._pth` file (which overrides `sys.path`)
@@ -599,7 +599,7 @@ task("runPrettyPrintersTests") {
             }
             else -> error("Unsupported OS")
         }
-        "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
+        "/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/cargo run --config build.rustc=/private/var/tmp/_bazel_aw/37cb1281e68951201da5edb979920dc1/external/rust_darwin_x86_64/bin/rustc --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
     }
 }
 
