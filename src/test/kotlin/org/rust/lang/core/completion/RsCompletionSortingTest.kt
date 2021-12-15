@@ -461,6 +461,22 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo8"
     ))
 
+    fun `test expected types priority (coercable reference)`() = doTest("""
+        struct X;
+        fn foo1() -> &X {}
+        fn foo2() -> &i32 {}
+        fn foo3() -> &mut X {}
+        fn foo4() -> &&X {}
+        fn bar() -> &X {
+            foo/*caret*/
+        }
+    """, listOf(
+        RsFunction::class to "foo1", // &X
+        RsFunction::class to "foo3", // &mut X
+        RsFunction::class to "foo4", // &&X
+        RsFunction::class to "foo2", // &i32
+    ))
+
     fun `test tuple field order`() = doTest("""
         fn main() {
             let tuple = (0, "", 0.0);

@@ -24,6 +24,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
@@ -93,6 +94,9 @@ val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 
 val RsExpr.expectedType: Ty?
+    get() = expectedTypeCoercable?.ty
+
+val RsExpr.expectedTypeCoercable: ExpectedType?
     get() = inference?.getExpectedExprType(this)
 
 val RsExpr.declaration: RsElement?

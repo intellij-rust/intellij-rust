@@ -49,7 +49,7 @@ sealed class Adjustment(open val target: Ty) {
 interface RsInferenceData {
     fun getExprAdjustments(expr: RsExpr): List<Adjustment>
     fun getExprType(expr: RsExpr): Ty
-    fun getExpectedExprType(expr: RsExpr): Ty
+    fun getExpectedExprType(expr: RsExpr): ExpectedType
     fun getPatType(pat: RsPat): Ty
     fun getPatFieldType(patField: RsPatField): Ty
     fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath>
@@ -69,7 +69,7 @@ class RsInferenceResult(
     val exprTypes: Map<RsExpr, Ty>,
     val patTypes: Map<RsPat, Ty>,
     val patFieldTypes: Map<RsPatField, Ty>,
-    private val expectedExprTypes: Map<RsExpr, Ty>,
+    private val expectedExprTypes: Map<RsExpr, ExpectedType>,
     private val resolvedPaths: Map<RsPathExpr, List<ResolvedPath>>,
     private val resolvedMethods: Map<RsMethodCall, InferredMethodCallInfo>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
@@ -90,8 +90,8 @@ class RsInferenceResult(
     override fun getPatFieldType(patField: RsPatField): Ty =
         patFieldTypes[patField] ?: TyUnknown
 
-    override fun getExpectedExprType(expr: RsExpr): Ty =
-        expectedExprTypes[expr] ?: TyUnknown
+    override fun getExpectedExprType(expr: RsExpr): ExpectedType =
+        expectedExprTypes[expr] ?: ExpectedType.UNKNOWN
 
     override fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> =
         resolvedPaths[expr] ?: emptyList()
@@ -128,7 +128,7 @@ class RsInferenceContext(
     private val exprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
     private val patTypes: MutableMap<RsPat, Ty> = hashMapOf()
     private val patFieldTypes: MutableMap<RsPatField, Ty> = hashMapOf()
-    private val expectedExprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
+    private val expectedExprTypes: MutableMap<RsExpr, ExpectedType> = hashMapOf()
     private val resolvedPaths: MutableMap<RsPathExpr, List<ResolvedPath>> = hashMapOf()
     private val resolvedMethods: MutableMap<RsMethodCall, InferredMethodCallInfo> = hashMapOf()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
@@ -263,7 +263,7 @@ class RsInferenceContext(
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {
         val allTypes = exprTypes.values.asSequence() + patTypes.values.asSequence() +
-            patFieldTypes.values.asSequence() + expectedExprTypes.values.asSequence()
+            patFieldTypes.values.asSequence() + expectedExprTypes.values.asSequence().map { it.ty }
         for (ty in allTypes) {
             ty.visitInferTys { tyInfer ->
                 val rty = shallowResolve(tyInfer)
@@ -321,8 +321,8 @@ class RsInferenceContext(
         return patFieldTypes[patField] ?: TyUnknown
     }
 
-    override fun getExpectedExprType(expr: RsExpr): Ty {
-        return expectedExprTypes[expr] ?: TyUnknown
+    override fun getExpectedExprType(expr: RsExpr): ExpectedType {
+        return expectedExprTypes[expr] ?: ExpectedType.UNKNOWN
     }
 
     override fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> {
@@ -346,7 +346,11 @@ class RsInferenceContext(
     }
 
     fun writeExpectedExprTy(psi: RsExpr, ty: Ty) {
-        expectedExprTypes[psi] = ty
+        expectedExprTypes[psi] = ExpectedType(ty)
+    }
+
+    fun writeExpectedExprTyCoercable(psi: RsExpr) {
+        expectedExprTypes.computeIfPresent(psi) { _, v -> v.copy(coercable = true) }
     }
 
     fun writePath(path: RsPathExpr, resolved: List<ResolvedPath>) {
@@ -565,6 +569,51 @@ class RsInferenceContext(
             combineTypePairs(be1.subst.zipTypeValues(be2.subst)).isOk &&
             combineConstPairs(be1.subst.zipConstValues(be2.subst)).isOk &&
             combineTypePairs(zipValues(be1.assoc, be2.assoc)).isOk
+
+    fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
+        return when {
+            inferred == TyNever -> CoerceResult.Ok
+            // Coerce array to slice
+            inferred is TyReference && inferred.referenced is TyArray &&
+                expected is TyReference && expected.referenced is TySlice -> {
+                combineTypes(inferred.referenced.base, expected.referenced.elementType)
+            }
+            // Coerce reference to pointer
+            inferred is TyReference && expected is TyPointer &&
+                coerceMutability(inferred.mutability, expected.mutability) -> {
+                combineTypes(inferred.referenced, expected.referenced)
+            }
+            // Coerce mutable pointer to const pointer
+            inferred is TyPointer && inferred.mutability.isMut
+                && expected is TyPointer && !expected.mutability.isMut -> {
+                combineTypes(inferred.referenced, expected.referenced)
+            }
+            // Coerce references
+            inferred is TyReference && expected is TyReference &&
+                coerceMutability(inferred.mutability, expected.mutability) -> {
+                coerceReference(inferred, expected)
+            }
+            // TODO trait object unsizing
+            else -> combineTypes(inferred, expected)
+        }
+    }
+
+    private fun coerceMutability(from: Mutability, to: Mutability): Boolean =
+        from == to || from.isMut && !to.isMut
+
+    /**
+     * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
+     * To match `A` with `B`, autoderef will be performed
+     */
+    private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
+        for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
+            // TODO proper handling of lifetimes
+            val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
+            if (combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
+        }
+
+        return CoerceResult.TypeMismatch(inferred, expected)
+    }
 
     fun <T : TypeFoldable<T>> shallowResolve(value: T): T = value.foldWith(shallowResolver)
 
@@ -1086,6 +1135,16 @@ sealed class CoerceResult {
 }
 
 inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = if (isOk) rhs() else this
+
+data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldable<ExpectedType> {
+    override fun superFoldWith(folder: TypeFolder): ExpectedType = copy(ty.foldWith(folder))
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean = ty.visitWith(visitor)
+
+    companion object {
+        val UNKNOWN: ExpectedType = ExpectedType(TyUnknown)
+    }
+}
 
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")

@@ -10,7 +10,10 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
@@ -185,7 +188,7 @@ fun collectCompletionVariants(
         if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
 
             if (element is RsEnumItem
-                && (context.expectedTy?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
+                && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
                     val variants = collectVariantsForEnumCompletion(element, context, e.subst)
                     result.addAllElements(variants)
             }

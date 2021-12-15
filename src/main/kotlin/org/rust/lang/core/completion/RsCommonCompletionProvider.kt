@@ -32,8 +32,9 @@ import org.rust.lang.core.stubs.index.ReexportKey
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.expectedType
+import org.rust.lang.core.types.expectedTypeCoercable
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -166,7 +167,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         parameters: CompletionParameters,
         result: CompletionResultSet,
         processedPathElements: MultiMap<String, RsElement>,
-        expectedTy: Ty?
+        expectedTy: ExpectedType?
     ) {
         val path = run {
             // Not null if delegated from RsMacroCallBodyCompletionProvider
@@ -223,7 +224,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName ?: continue, item)
 
             if (item is RsEnumItem
-                && (context.expectedTy?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
+                && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
                 val variants = collectVariantsForEnumCompletion(item, context, scopeEntry.subst, candidate)
                 result.addAllElements(variants)
             }
@@ -265,7 +266,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
 data class RsCompletionContext(
     val context: RsElement? = null,
-    val expectedTy: Ty? = null,
+    val expectedTy: ExpectedType? = null,
     val isSimplePath: Boolean = false
 ) {
     val lookup: ImplLookup? = context?.implLookup
@@ -460,13 +461,13 @@ private fun addProcessedPathName(
     processor(it)
 }
 
-private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement): Ty? {
+private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement): ExpectedType? {
     for (ancestor in element.ancestors) {
         if (element.endOffset < ancestor.endOffset) continue
         if (element.endOffset > ancestor.endOffset) break
         when (ancestor) {
-            is RsPathExpr -> return ancestor.expectedType
-            is RsDotExpr -> return ancestor.expectedType
+            is RsPathExpr -> return ancestor.expectedTypeCoercable
+            is RsDotExpr -> return ancestor.expectedTypeCoercable
         }
     }
     return null
