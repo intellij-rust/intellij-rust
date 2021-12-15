@@ -18,6 +18,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsFile
@@ -41,16 +42,17 @@ import javax.swing.JPanel
 abstract class RsChainMethodTypeHintsProviderBase : InlayHintsProvider<RsChainMethodTypeHintsProviderBase.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
-    override val name: String get() = "Chain method hints"
+    override val name: String get() = RsBundle.message("settings.rust.inlay.hints.title.method.chains")
 
     override val previewText: String? = null
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
-
+        override val mainCheckboxText: String
+            get() = RsBundle.message("settings.rust.inlay.hints.for")
         override val cases: List<Case>
             get() = listOf(
-                Case("Show same consecutive types", "consecutive_types", settings::showSameConsecutiveTypes),
-                Case("Show iterators as `impl Iterator<...>`", "iterators", settings::iteratorSpecialCase)
+                Case(RsBundle.message("settings.rust.inlay.hints.for.same.consecutive.types"), "consecutive_types", settings::showSameConsecutiveTypes),
+                Case(RsBundle.message("settings.rust.inlay.hints.for.iterators"), "iterators", settings::iteratorSpecialCase)
             )
 
         override fun createComponent(listener: ChangeListener): JComponent = JPanel()

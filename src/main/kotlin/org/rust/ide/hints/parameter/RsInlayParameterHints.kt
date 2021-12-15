@@ -8,6 +8,7 @@ package org.rust.ide.hints.parameter
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.existsAfterExpansion
@@ -17,7 +18,7 @@ import org.rust.stdext.buildList
 
 @Suppress("UnstableApiUsage")
 object RsInlayParameterHints {
-    val smartOption: Option = Option("SMART_HINTS", { "Show only smart hints" }, true)
+    val smartOption: Option = Option("SMART_HINTS", RsBundle.messagePointer("settings.rust.inlay.parameter.hints.only.smart"), true)
     val smart: Boolean get() = smartOption.get()
 
     fun provideHints(elem: PsiElement): List<InlayInfo> {

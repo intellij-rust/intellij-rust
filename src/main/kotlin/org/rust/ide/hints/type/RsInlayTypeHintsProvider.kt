@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -32,7 +33,7 @@ import javax.swing.JPanel
 abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHintsProviderBase.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
-    override val name: String get() = "Type hints"
+    override val name: String get() = RsBundle.message("settings.rust.inlay.hints.title.types")
 
     override val previewText: String
         get() = """
@@ -45,13 +46,16 @@ abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHint
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
 
+        override val mainCheckboxText: String
+            get() = RsBundle.message("settings.rust.inlay.hints.for")
+
         override val cases: List<Case>
             get() = listOf(
-                Case("Show for variables", "variables", settings::showForVariables),
-                Case("Show for closures", "closures", settings::showForLambdas),
-                Case("Show for loop variables", "loop_variables", settings::showForIterators),
-                Case("Show for type placeholders", "type_placeholders", settings::showForPlaceholders),
-                Case("Show obvious types", "obvious_types", settings::showObviousTypes)
+                Case(RsBundle.message("settings.rust.inlay.hints.for.variables"), "variables", settings::showForVariables),
+                Case(RsBundle.message("settings.rust.inlay.hints.for.closures"), "closures", settings::showForLambdas),
+                Case(RsBundle.message("settings.rust.inlay.hints.for.loop.variables"), "loop_variables", settings::showForIterators),
+                Case(RsBundle.message("settings.rust.inlay.hints.for.type.placeholders"), "type_placeholders", settings::showForPlaceholders),
+                Case(RsBundle.message("settings.rust.inlay.hints.for.obvious.types"), "obvious_types", settings::showObviousTypes)
             )
 
         override fun createComponent(listener: ChangeListener): JComponent = JPanel()
