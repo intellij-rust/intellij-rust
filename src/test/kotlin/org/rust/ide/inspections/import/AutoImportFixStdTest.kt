@@ -782,4 +782,27 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             SplitInclusive/*caret*/;
         }
     """, listOf("core::slice::SplitInclusive", "core::str::SplitInclusive"))
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test item from 'test' crate (without extern crate)`() = checkAutoImportFixIsUnavailable("""
+        fn main() {
+            <error descr="Unresolved reference: `test_main`">/*caret*/test_main</error>();
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test item from 'test' crate (with extern crate)`() = checkAutoImportFixByTextWithoutHighlighting("""
+        extern crate test;
+        fn main() {
+            /*caret*/test_main();
+        }
+    """, """
+        extern crate test;
+
+        use test::test_main;
+
+        fn main() {
+            test_main();
+        }
+    """)
 }

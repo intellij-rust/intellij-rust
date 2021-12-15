@@ -225,6 +225,12 @@ private data class InitialDefMaps(
     val all: List<Pair<String, CrateDefMap>>,
 )
 
+/**
+ * Other stdlib crates such as `proc_macro`, `test`, `unwind`
+ * are available only when there is explicit `extern crate ...;`
+ */
+private val ADDITIONAL_STDLIB_DEPENDENCIES: Set<String> = setOf("core", "alloc")
+
 private fun CrateDefMap.getInitialDefMapsToSearch(crateGraph: CrateGraphService): InitialDefMaps {
     val externPreludeAdjusted = if (AutoInjectedCrates.STD in externPrelude) {
         externPrelude.filterKeys { it != AutoInjectedCrates.CORE }
@@ -239,14 +245,16 @@ private fun CrateDefMap.getInitialDefMapsToSearch(crateGraph: CrateGraphService)
             names.singleOrNull() ?: names.first { it != defMap.metaData.name }
         }
         .map { (defMap, name) -> name to defMap }
-    // e.g. `alloc` and `proc_macro` crates
-    val additionalStdlibDependencies = directDependenciesDefMaps
+    val additionalStdlibDependencies = ADDITIONAL_STDLIB_DEPENDENCIES
+        .mapNotNull { name ->
+            val defMap = directDependenciesDefMaps[name] ?: return@mapNotNull null
+            name to defMap
+        }
         .filter { (name, defMap) ->
             name !in externPreludeAdjusted
                 && crateGraph.findCrateById(defMap.crate)?.origin == PackageOrigin.STDLIB
                 && stdlibAttributes.canUseCrate(name)
         }
-        .toList()
     val explicitDefMaps = listOf("crate" to this) + dependencies
     val allDefMaps = explicitDefMaps + additionalStdlibDependencies
     return InitialDefMaps(explicitDefMaps, allDefMaps)
