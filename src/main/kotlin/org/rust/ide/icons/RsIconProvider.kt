@@ -27,7 +27,7 @@ class RsIconProvider : IconProvider() {
     }
 
     private fun isMainFile(element: RsFile) =
-        (element.name == RsConstants.MAIN_RS_FILE || element.name == RsConstants.LIB_RS_FILE)
+        (element.name == RsConstants.MAIN_RS_FILE || element.name == RsConstants.LIB_RS_FILE || element.name == "${element.parent?.name}.rs")
             && element.isCrateRoot
 
     private fun isBuildRs(element: RsFile): Boolean = // TODO containingTarget
