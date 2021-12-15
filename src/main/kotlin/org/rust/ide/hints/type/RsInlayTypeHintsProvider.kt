@@ -29,7 +29,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("UnstableApiUsage")
-class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Settings> {
+abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHintsProviderBase.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
     override val name: String get() = "Type hints"

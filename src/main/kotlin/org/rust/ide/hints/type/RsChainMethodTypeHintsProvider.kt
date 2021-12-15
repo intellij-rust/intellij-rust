@@ -38,7 +38,7 @@ import org.rust.lang.core.types.type
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHintsProvider.Settings> {
+abstract class RsChainMethodTypeHintsProviderBase : InlayHintsProvider<RsChainMethodTypeHintsProviderBase.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
     override val name: String get() = "Chain method hints"
