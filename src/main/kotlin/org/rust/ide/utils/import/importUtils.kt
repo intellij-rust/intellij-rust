@@ -70,7 +70,7 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
             // we don't add corresponding extern crate item manually for the same reason
             attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
             else -> {
-                if (needInsertExternCrateItem && !context.isAtLeastEdition2018) {
+                if (needInsertExternCrateItem) {
                     crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
                 } else {
                     if (depth != null) {
