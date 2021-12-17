@@ -14,7 +14,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.text.SemVer
 import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -22,6 +21,7 @@ import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.notifications.showBalloon
 import java.time.LocalDate
 
@@ -89,7 +89,7 @@ class CargoTestRunState(
         private fun checkShowOutputSupport(ver: RustcVersion?): Boolean {
             if (ver == null) return false
             // --show-output is supported since 1.39.0-nightly/dev with a build date later than 2019-08-27
-            val minRelease = SemVer.parseFromText("1.39.0")
+            val minRelease = "1.39.0".parseSemVer()
             val commitDate = LocalDate.of(2019, 8, 27)
             return when {
                 ver.semver > minRelease -> true
