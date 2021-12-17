@@ -327,6 +327,29 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
+    fun `test call expr with default type argument`() = checkByText("""
+        struct S<A, B = i32>(A, B);
+        fn main() {
+            S(1, 2);
+            S::<>(1, 2);
+            S::<i32>(1, 2);
+            S::<i32, i32>(1, 2);
+            <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">S::<i32, i32, i32>(1, 2)</error>;
+        }
+    """)
+
+    fun `test method call with default type argument`() = checkByText("""
+        struct S;
+        impl S { fn foo<A, B = i32>(&self, a: A, b: B) {} }
+        fn main() {
+            S.foo(1, 2);
+            S.foo::<>(1, 2);
+            S.foo::<i32>(1, 2);
+            S.foo::<i32, i32>(1, 2);
+            S.<error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">foo::<i32, i32, i32>(1, 2)</error>;
+        }
+    """)
+
     fun `test dyn trait`() = checkByText("""
         trait Trait<A> {}
         fn foo() {

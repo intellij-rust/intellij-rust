@@ -90,7 +90,7 @@ private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expe
     return when {
         actualArgs > expectedTotalParams ->
             if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams"
-        actualArgs in 1 until expectedTotalParams ->
+        actualArgs in 1 until expectedRequiredParams ->
             if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams"
         else -> null
     }
