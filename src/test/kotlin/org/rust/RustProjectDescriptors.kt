@@ -95,6 +95,39 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
 
+    protected open fun externalPackage(
+        contentRoot: String,
+        source: String?,
+        name: String,
+        targetName: String = name,
+        version: String = "0.0.1",
+        origin: PackageOrigin = PackageOrigin.DEPENDENCY,
+        libKind: LibKind = LibKind.LIB,
+        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
+    ): Package {
+        return Package(
+            id = "$name $version",
+            contentRootUrl = contentRoot,
+            name = name,
+            version = version,
+            targets = listOf(
+                // don't use `FileUtil.join` here because it uses `File.separator`
+                // which is system dependent although all other code uses `/` as separator
+                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
+                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList())
+            ),
+            source = source,
+            origin = origin,
+            edition = Edition.EDITION_2015,
+            features = emptyMap(),
+            enabledFeatures = emptySet(),
+            cfgOptions = CfgOptions.EMPTY,
+            env = emptyMap(),
+            outDirUrl = null,
+            procMacroArtifact = procMacroArtifact
+        )
+    }
+
     protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
         id = "$name 0.0.1",
         contentRootUrl = contentRoot,
@@ -292,38 +325,6 @@ open class WithCustomStdlibRustProjectDescriptor(
 }
 
 object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-    private fun externalPackage(
-        contentRoot: String,
-        source: String?,
-        name: String,
-        targetName: String = name,
-        version: String = "0.0.1",
-        origin: PackageOrigin = PackageOrigin.DEPENDENCY,
-        libKind: LibKind = LibKind.LIB,
-        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
-    ): Package {
-        return Package(
-            id = "$name $version",
-            contentRootUrl = contentRoot,
-            name = name,
-            version = version,
-            targets = listOf(
-                // don't use `FileUtil.join` here because it uses `File.separator`
-                // which is system dependent although all other code uses `/` as separator
-                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList())
-            ),
-            source = source,
-            origin = origin,
-            edition = Edition.EDITION_2015,
-            features = emptyMap(),
-            enabledFeatures = emptySet(),
-            cfgOptions = CfgOptions.EMPTY,
-            env = emptyMap(),
-            outDirUrl = null,
-            procMacroArtifact = procMacroArtifact
-        )
-    }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         val root = fixture.findFileInTempDir(".")!!
@@ -394,6 +395,26 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
 }
+
+private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val packages = listOf(
+            testCargoPackage(contentRoot),
+            externalPackage("$contentRoot/core", "lib.rs", "core"),
+            externalPackage("$contentRoot/alloc", "lib.rs", "alloc"),
+            externalPackage("$contentRoot/std", "lib.rs", "std")
+        )
+        return CargoWorkspace.deserialize(
+            Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+    }
+}
+
+/**
+ * Provides `core`, `alloc` and `std` workspace dependencies.
+ * It's supposed to be used to check how the plugin works with dependencies that have the same name as stdlib packages
+ */
+object WithStdlibAndStdlibLikeDependencyRustProjectDescriptor : WithRustup(WithStdlibLikeDependencyRustProjectDescriptor())
 
 private fun RsToolchainBase.getRustcInfo(): RustcInfo? {
     val rustc = rustc()

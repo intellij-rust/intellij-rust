@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -759,9 +760,14 @@ fun processLocalVariables(place: RsElement, originalProcessor: (RsPatBinding) ->
 /**
  * Resolves an absolute path.
  */
-fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
+fun resolveStringPath(
+    path: String,
+    workspace: CargoWorkspace,
+    project: Project,
+    isStd: ThreeState = ThreeState.UNSURE
+): Pair<RsNamedElement, CargoWorkspace.Package>? {
     val (pkgName, crateRelativePath) = splitAbsolutePath(path) ?: return null
-    val pkg = workspace.findPackageByName(pkgName) ?: run {
+    val pkg = workspace.findPackageByName(pkgName, isStd) ?: run {
         return if (isUnitTestMode) {
             // Allows to set a fake path for some item in tests via
             // lang attribute, e.g. `#[lang = "std::iter::Iterator"]`

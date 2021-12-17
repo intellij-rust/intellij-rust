@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.ThreeState
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -51,8 +52,8 @@ class KnownItems(
     fun findLangItemRaw(langAttribute: String, crateName: String) =
         lookup.findLangItem(langAttribute, crateName)
 
-    fun findItemRaw(path: String): RsNamedElement? =
-        lookup.findItem(path)
+    fun findItemRaw(path: String, isStd: Boolean): RsNamedElement? =
+        lookup.findItem(path, isStd)
 
     /**
      * Find some known item by its "lang" attribute
@@ -66,8 +67,8 @@ class KnownItems(
         crateName: String = CORE
     ): T? = findLangItemRaw(langAttribute, crateName) as? T
 
-    inline fun <reified T : RsNamedElement> findItem(path: String): T? =
-        findItemRaw(path) as? T
+    inline fun <reified T : RsNamedElement> findItem(path: String, isStd: Boolean = true): T? =
+        findItemRaw(path, isStd) as? T
 
     val Vec: RsStructOrEnumItemElement? get() = findItem("alloc::vec::Vec")
     val String: RsStructOrEnumItemElement? get() = findItem("alloc::string::String")
@@ -145,12 +146,12 @@ class KnownItems(
 
 interface KnownItemsLookup {
     fun findLangItem(langAttribute: String, crateName: String): RsNamedElement?
-    fun findItem(path: String): RsNamedElement?
+    fun findItem(path: String, isStd: Boolean): RsNamedElement?
 }
 
 private object DummyKnownItemsLookup : KnownItemsLookup {
     override fun findLangItem(langAttribute: String, crateName: String): RsNamedElement? = null
-    override fun findItem(path: String): RsNamedElement? = null
+    override fun findItem(path: String, isStd: Boolean): RsNamedElement? = null
 }
 
 private class RealKnownItemsLookup(
@@ -167,9 +168,9 @@ private class RealKnownItemsLookup(
         }.orElse(null)
     }
 
-    override fun findItem(path: String): RsNamedElement? {
+    override fun findItem(path: String, isStd: Boolean): RsNamedElement? {
         return resolvedItems.getOrPut(path) {
-            Optional.ofNullable(resolveStringPath(path, workspace, project)?.first)
+            Optional.ofNullable(resolveStringPath(path, workspace, project, ThreeState.fromBoolean(isStd))?.first)
         }.orElse(null)
     }
 }
@@ -189,11 +190,11 @@ enum class KnownDerivableTrait(
     PartialOrd(KnownItems::PartialOrd, arrayOf(PartialEq)),
     Ord(KnownItems::Ord, arrayOf(PartialOrd, Eq, PartialEq)),
 
-    Serialize({ it.findItem("serde::Serialize") }, isStd = false),
-    Deserialize({ it.findItem("serde::Deserialize") }, isStd = false),
+    Serialize({ it.findItem("serde::Serialize", isStd = false) }, isStd = false),
+    Deserialize({ it.findItem("serde::Deserialize", isStd = false) }, isStd = false),
 
     // TODO Fail also derives `Display`. Ignore it for now
-    Fail({ it.findItem("failure::Fail") }, arrayOf(Debug), isStd = false),
+    Fail({ it.findItem("failure::Fail", isStd = false) }, arrayOf(Debug), isStd = false),
     ;
 
     fun findTrait(items: KnownItems): RsTraitItem? = resolver(items)
