@@ -498,6 +498,11 @@
                          implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsNumberInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong generic arguments order"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsOrderInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Wrong lifetime parameters number"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>

@@ -191,9 +191,9 @@ class RsInferenceContext(
                 val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration
                 if (path != null && declaration != null) {
                     val constParameters = mutableListOf<RsConstParameter>()
-                    val constArguments = mutableListOf<RsExpr>()
+                    val constArguments = mutableListOf<RsElement>()
                     for ((param, value) in pathPsiSubst(path, declaration).constSubst) {
-                        if (value is RsPsiSubstitution.Value.Present && value.value is RsExpr) {
+                        if (value is RsPsiSubstitution.Value.Present) {
                             constParameters += param
                             constArguments += value.value
                         }

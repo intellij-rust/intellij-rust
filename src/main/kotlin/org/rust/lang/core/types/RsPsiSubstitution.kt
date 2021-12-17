@@ -7,7 +7,6 @@ package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.isConst
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.resolve
@@ -15,7 +14,7 @@ import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.evaluation.PathExprResolver
-import org.rust.lang.utils.evaluation.evaluate
+import org.rust.lang.utils.evaluation.toConst
 
 /** Similar to [Substitution], but maps PSI to PSI instead of [Ty] to [Ty] */
 open class RsPsiSubstitution(
@@ -78,26 +77,12 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             RsPsiSubstitution.Value.OptionalAbsent -> param
             RsPsiSubstitution.Value.RequiredAbsent -> CtUnknown
             is RsPsiSubstitution.Value.Present -> {
-                val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
-                when (val value = psiValue.value) {
-                    is RsExpr -> value.evaluate(expectedTy, resolver) // TODO check types
-                    is RsBaseType -> when (val resolved = value.path?.reference?.resolve()) {
-                        is RsConstParameter -> CtConstParameter(resolved)
-                        is RsConstant -> when {
-                            resolved.isConst -> {
-                                // TODO check types
-                                val type = resolved.typeReference?.type ?: TyUnknown
-                                resolved.expr?.evaluate(type, resolver) ?: CtUnknown
-                            }
-                            else -> CtUnknown
-                        }
-                        else -> CtUnknown
-                    }
-                    else -> CtUnknown
-                }
+                val expectedTy = psiParam.typeReference?.type ?: TyUnknown
+                psiValue.value.toConst(expectedTy, resolver)
             }
             is RsPsiSubstitution.Value.DefaultValue -> {
-                psiValue.value.evaluate(psiParam.typeReference?.type ?: TyUnknown)
+                val expectedTy = psiParam.typeReference?.type ?: TyUnknown
+                psiValue.value.toConst(expectedTy, resolver)
             }
         }
 

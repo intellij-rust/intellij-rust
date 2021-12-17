@@ -219,8 +219,8 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
             let u = &[0];
             let v = &[0];
 
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32>(u, v)</error>;
-            <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32>(u, v)</error>;
+            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32></error>(u, v);
+            <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32></error>(u, v);
             foo::<>(u, v);
             foo(u, v);
         }
@@ -235,8 +235,8 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
             let u = &[0];
             let v = &[0, 0];
 
-            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo::<1>(u, v)</error>;
-            <error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">foo::<1, 2, 3>(u, v)</error>;
+            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo::<1></error>(u, v);
+            <error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">foo::<1, 2, 3></error>(u, v);
             foo::<>(u, v);
             foo(u, v);
         }
@@ -278,7 +278,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         fn foo() {}
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">foo/*caret*/::<i32>()</error>;
+            <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">foo/*caret*/::<i32></error>();
         }
     """, """
         fn foo() {}
@@ -334,7 +334,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
             S::<>(1, 2);
             S::<i32>(1, 2);
             S::<i32, i32>(1, 2);
-            <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">S::<i32, i32, i32>(1, 2)</error>;
+            <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">S::<i32, i32, i32></error>(1, 2);
         }
     """)
 
@@ -512,7 +512,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         fn foo<S, T>() -> (S, T) { unreachable!() }
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/>()</error>;
+            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/></error>();
         }
     """, """
         fn foo<S, T>() -> (S, T) { unreachable!() }
@@ -625,6 +625,18 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
 
         struct C {
             a: B<1>
+        }
+    """)
+
+    fun `test path exprs`() = checkByText("""
+        fn foo1() {}
+        fn foo2<const T: i32>() {}
+        fn foo3<const T: i32, const U: i32>() {}
+
+        fn main() {
+            <error descr="Wrong number of const arguments: expected 0, found 1 [E0107]">foo1::<1></error>;
+            foo2::<1>;
+            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo3::<1></error>;
         }
     """)
 }

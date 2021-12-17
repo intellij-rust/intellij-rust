@@ -64,7 +64,7 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
         val trait = traitRef.resolveToBoundTrait() ?: return
 
         val insertedTypeArgumentsPtr = if (trait.element.requiredGenericParameters.isNotEmpty()) {
-            insertTypeArgumentsIfNeeded(traitRef)?.map { it.createSmartPointer() }
+            insertTypeArgumentsIfNeeded(traitRef.path)?.map { it.createSmartPointer() }
         } else {
             null
         }
