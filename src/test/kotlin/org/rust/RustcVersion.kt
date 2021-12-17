@@ -9,6 +9,7 @@ import com.intellij.findAnnotationInstance
 import com.intellij.util.text.SemVer
 import junit.framework.TestCase
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.util.parseSemVer
 import org.rust.stdext.RsResult
 
 /**
@@ -35,7 +36,7 @@ annotation class MockRustcVersion(val rustcVersion: String)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MinRustcVersion(val version: String)
 
-val MinRustcVersion.semver: SemVer get() = SemVer.parseFromText(version) ?: error("Invalid version value: $version")
+val MinRustcVersion.semver: SemVer get() = version.parseSemVer()
 
 /**
  * Specify maximum rustc version to launch test.
@@ -44,7 +45,7 @@ val MinRustcVersion.semver: SemVer get() = SemVer.parseFromText(version) ?: erro
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MaxRustcVersion(val version: String)
 
-val MaxRustcVersion.semver: SemVer get() = SemVer.parseFromText(version) ?: error("Invalid version value: $version")
+val MaxRustcVersion.semver: SemVer get() = version.parseSemVer()
 
 fun TestCase.checkRustcVersionRequirements(rustcVersionSupplier: () -> RsResult<SemVer, String?>): String? {
     val minRustVersion = findAnnotationInstance<MinRustcVersion>()

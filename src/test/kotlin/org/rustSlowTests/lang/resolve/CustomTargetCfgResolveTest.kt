@@ -5,10 +5,10 @@
 
 package org.rustSlowTests.lang.resolve
 
-import com.intellij.util.text.SemVer
 import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.psi.RsPath
 
 class CustomTargetCfgResolveTest : RsWithToolchainTestBase() {
@@ -118,7 +118,7 @@ class CustomTargetCfgResolveTest : RsWithToolchainTestBase() {
     // Checks that our integration doesn't fail for Rust below 1.52
     fun `test custom compiler target with rust below 1_52`() {
         val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion() ?: return
-        if (rustcVersion.semver > SemVer.parseFromText("1.51.0")) return
+        if (rustcVersion.semver > "1.51.0".parseSemVer()) return
         buildProject {
             toml("Cargo.toml", """
                 [package]

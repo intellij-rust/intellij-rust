@@ -33,6 +33,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.document
@@ -179,7 +180,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         val result = versionRe.matchEntire(version) ?: error("$version should match `${versionRe.pattern}` pattern")
 
         val versionText = result.groups[1]?.value ?: error("")
-        val semVer = SemVer.parseFromText(versionText) ?: error("")
+        val semVer = versionText.parseSemVer()
 
         val releaseSuffix = result.groups[2]?.value.orEmpty()
         val channel = when {

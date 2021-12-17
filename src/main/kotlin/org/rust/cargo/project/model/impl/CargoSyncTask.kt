@@ -48,6 +48,7 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.*
 import org.rust.cargo.util.DownloadResult
 import org.rust.cargo.util.UnitTestRustcCacheService
+import org.rust.cargo.util.parseSemVer
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.mapNotNullToSet
 import java.nio.file.Path
@@ -507,4 +508,4 @@ private fun CargoSyncTask.SyncContext.warning(
     syncProgress.message(title, message, MessageEvent.Kind.WARNING, null)
 }
 
-private val RUST_1_51: SemVer = SemVer.parseFromText("1.51.0")!!
+private val RUST_1_51: SemVer = "1.51.0".parseSemVer()

@@ -6,8 +6,11 @@
 package org.rust.cargo.util
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.text.SemVer
 import org.rust.stdext.isExecutable
 import java.nio.file.Path
+
+fun String.parseSemVer(): SemVer = checkNotNull(SemVer.parseFromText(this)) { "Invalid version value: $this" }
 
 fun Path.hasExecutable(toolName: String): Boolean = pathToExecutable(toolName).isExecutable()
 

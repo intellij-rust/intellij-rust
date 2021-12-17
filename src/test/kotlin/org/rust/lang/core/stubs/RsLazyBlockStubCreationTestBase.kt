@@ -18,10 +18,10 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.stubs.StubTree
 import com.intellij.util.LocalTimeCounter
-import com.intellij.util.text.SemVer
 import junit.framework.TestCase
 import org.rust.RsTestBase
 import org.rust.RustProjectDescriptorBase
+import org.rust.cargo.util.parseSemVer
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
@@ -180,6 +180,6 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
 
     companion object {
         // BACKCOMPAT: Rust 1.42
-        private val RUST_1_43 = SemVer.parseFromText("1.43.0")!!
+        private val RUST_1_43 = "1.43.0".parseSemVer()
     }
 }

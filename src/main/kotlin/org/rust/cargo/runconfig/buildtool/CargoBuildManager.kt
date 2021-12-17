@@ -43,6 +43,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.RsNotifications
 import org.rust.openapiext.isFeatureEnabled
@@ -57,7 +58,7 @@ object CargoBuildManager {
     private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
-    private val MIN_RUSTC_VERSION: SemVer = SemVer.parseFromText("1.48.0")!!
+    private val MIN_RUSTC_VERSION: SemVer = "1.48.0".parseSemVer()
 
     val RsCommandConfiguration.isBuildToolWindowEnabled: Boolean
         get() {

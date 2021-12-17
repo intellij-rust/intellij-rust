@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.text.SemVer
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
@@ -34,7 +35,7 @@ class CompilerFeature(
         state: FeatureState,
         since: String,
         cache: Boolean = true
-    ) : this(name, state, SemVer.parseFromText(since)!!, cache)
+    ) : this(name, state, since.parseSemVer(), cache)
 
     init {
         if (cache) {
