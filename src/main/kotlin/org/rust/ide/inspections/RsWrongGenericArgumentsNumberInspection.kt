@@ -68,7 +68,7 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
         val problemText = "Wrong number of $argumentName arguments: expected $errorText, found $actualArgs"
         val fixes = getFixes(declaration, element, actualArgs, expectedTotalParams)
 
-        RsDiagnostic.WrongGenericArgumentsNumber(element, problemText, fixes).addToHolder(holder)
+        RsDiagnostic.WrongNumberOfGenericArguments(element, problemText, fixes).addToHolder(holder)
     }
 }
 
