@@ -132,7 +132,7 @@ class RunConfigurationTest : RunConfigurationTestBase() {
         check("""{ "type": "test", "event": "started", "name": "tests::bar" }""" in result.stdout)
     }
 
-    fun `test redirect input`() {
+    fun `test redirect input (absolute path)`() {
         fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -165,6 +165,47 @@ class RunConfigurationTest : RunConfigurationTestBase() {
             .apply {
                 isRedirectInput = true
                 redirectInputPath = workingDirectory?.resolve("in.txt").toString()
+            }
+
+        val result = executeAndGetOutput(configuration)
+        val stdout = result.stdout
+        check("1. aaa" in stdout)
+        check("2. bbb" in stdout)
+        check("3. ccc" !in stdout)
+    }
+
+    fun `test redirect input (relative path)`() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    use std::io::{self, BufRead};
+
+                    fn main() {
+                        let stdin = io::stdin();
+                        let mut iter = stdin.lock().lines();
+                        println!("{}", iter.next().unwrap().unwrap());
+                        println!("{}", iter.next().unwrap().unwrap());                    }
+                """)
+            }
+
+            file("in.txt", """
+                1. aaa
+                2. bbb
+                3. ccc
+            """)
+        }.create()
+
+        val configuration = createConfiguration()
+            .apply {
+                isRedirectInput = true
+                redirectInputPath = "in.txt"
             }
 
         val result = executeAndGetOutput(configuration)
