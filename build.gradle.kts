@@ -1,11 +1,11 @@
 import groovy.json.JsonSlurper
 import org.apache.tools.ant.taskdefs.condition.Os.*
-import org.gradle.api.JavaVersion.VERSION_1_8
+import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.grammarkit.tasks.GenerateLexer
-import org.jetbrains.grammarkit.tasks.GenerateParser
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
+import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
@@ -99,14 +99,10 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
-    grammarKit {
-        grammarKitRelease = "2021.1.2"
-    }
-
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = "11"
                 languageVersion = "1.6"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
                 apiVersion = "1.5"
@@ -173,8 +169,8 @@ allprojects {
     }
 
     configure<JavaPluginExtension> {
-        sourceCompatibility = VERSION_1_8
-        targetCompatibility = VERSION_1_8
+        sourceCompatibility = VERSION_11
+        targetCompatibility = VERSION_11
     }
 
     sourceSets {
@@ -372,11 +368,11 @@ project(":") {
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
     }
 
-    val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
-        source = "src/main/grammars/RustLexer.flex"
-        targetDir = "src/gen/org/rust/lang/core/lexer"
-        targetClass = "_RustLexer"
-        purgeOldFiles = true
+    val generateRustLexer = task<GenerateLexerTask>("generateRustLexer") {
+        source.set("src/main/grammars/RustLexer.flex")
+        targetDir.set("src/gen/org/rust/lang/core/lexer")
+        targetClass.set("_RustLexer")
+        purgeOldFiles.set(true)
     }
 
     // Previously, we had `GenerateLexer` task that generate a lexer for rustdoc highlighting.
@@ -386,12 +382,12 @@ project(":") {
         delete("src/gen/org/rust/lang/doc")
     }
 
-    val generateRustParser = task<GenerateParser>("generateRustParser") {
-        source = "src/main/grammars/RustParser.bnf"
-        targetRoot = "src/gen"
-        pathToParser = "/org/rust/lang/core/parser/RustParser.java"
-        pathToPsiRoot = "/org/rust/lang/core/psi"
-        purgeOldFiles = true
+    val generateRustParser = task<GenerateParserTask>("generateRustParser") {
+        source.set("src/main/grammars/RustParser.bnf")
+        targetRoot.set("src/gen")
+        pathToParser.set("/org/rust/lang/core/parser/RustParser.java")
+        pathToPsiRoot.set("/org/rust/lang/core/psi")
+        purgeOldFiles.set(true)
     }
 
     tasks {
