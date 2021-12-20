@@ -876,4 +876,14 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             func();
         } //^ detached.rs
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve in detached file (in import)`() = stubOnlyResolve("""
+    //- detached.rs
+        pub use foo::func;
+                   //^ detached.rs
+        pub mod foo {
+            pub fn func() {}
+        }
+    """)
 }

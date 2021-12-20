@@ -201,9 +201,8 @@ enum class KnownDerivableTrait(
 
     /** Hardcoded trait impl vs proc macro expansion usage */
     fun shouldUseHardcodedTraitDerive(): Boolean {
-        // Use hardcoded impls for all known derives except `failure::Fail` (if proc macro expansion
-        // is enabled). We always hardcode `serde` due to performance reasons
-        return this != Fail || !ProcMacroApplicationService.isEnabled()
+        // We don't use hardcoded impls for non-std derives if proc macro expansion is enabled
+        return isStd || !ProcMacroApplicationService.isEnabled()
     }
 
     companion object {

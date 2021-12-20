@@ -5,7 +5,6 @@
 
 package org.rust
 
-import com.intellij.findAnnotationInstance
 import com.intellij.util.text.SemVer
 import junit.framework.TestCase
 import org.rust.cargo.project.model.CargoProject

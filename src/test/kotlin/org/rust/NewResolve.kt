@@ -5,7 +5,6 @@
 
 package org.rust
 
-import com.intellij.findAnnotationInstance
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import junit.framework.TestCase

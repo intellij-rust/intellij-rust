@@ -5,7 +5,6 @@
 
 package org.rust.ide.formatter
 
-import com.intellij.findAnnotationInstance
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.psi.formatter.FormatterTestCase
 import com.intellij.util.ThrowableRunnable
@@ -14,6 +13,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import org.rust.IgnoreInPlatform
 import org.rust.TestCase
+import org.rust.findAnnotationInstance
 import kotlin.reflect.KMutableProperty0
 
 @RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
