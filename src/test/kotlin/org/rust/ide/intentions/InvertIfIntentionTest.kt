@@ -337,4 +337,95 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
             };
         }
     """)
+
+    fun `test if without else return without semicolon 1`() = doAvailableTest("""
+        fn foo() {
+            /*caret*/if f {
+                return 1
+            }
+            return 2
+        }
+    """, """
+        fn foo() {
+            if !f {
+                return 2;
+            }
+            1
+        }
+    """)
+
+    fun `test if without else return without semicolon 2`() = doAvailableTest("""
+        fn foo() {
+            /*caret*/if f {
+                bar1();
+                return
+            }
+            bar2();
+            return
+        }
+    """, """
+        fn foo() {
+            if !f {
+                bar2();
+                return;
+            }
+            bar1();
+        }
+    """)
+
+    fun `test if without else continue without semicolon`() = doAvailableTest("""
+        fn foo() {
+            'outer: loop {
+                'inner: loop {
+                    /*caret*/if f {
+                        bar1();
+                        continue 'inner
+                    }
+                    bar2();
+                    continue 'outer
+                }
+            }
+        }
+    """, """
+        fn foo() {
+            'outer: loop {
+                'inner: loop {
+                    if !f {
+                        bar2();
+                        continue 'outer;
+                    }
+                    bar1();
+                    continue 'inner;
+                }
+            }
+        }
+    """)
+
+    fun `test if without else break without semicolon`() = doAvailableTest("""
+        fn foo() {
+            'outer: loop {
+                'inner: loop {
+                    /*caret*/if f {
+                        bar1();
+                        break 'inner
+                    }
+                    bar2();
+                    break 'outer
+                }
+            }
+        }
+    """, """
+        fn foo() {
+            'outer: loop {
+                'inner: loop {
+                    if !f {
+                        bar2();
+                        break 'outer;
+                    }
+                    bar1();
+                    break 'inner;
+                }
+            }
+        }
+    """)
 }
