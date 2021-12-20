@@ -279,6 +279,8 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test asm macro`() = stubOnlyResolve("""
     //- main.rs
         #![feature(asm)]
+
+        use std::arch::asm; // required since 1.59
         fn main() {
             asm!("nop");
         } //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs|...core/src/lib.rs
