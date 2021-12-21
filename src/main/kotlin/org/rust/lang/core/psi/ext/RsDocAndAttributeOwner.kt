@@ -28,7 +28,6 @@ import org.rust.openapiext.testAssert
 import org.rust.stdext.nextOrNull
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement, RsAttributeOwnerPsiOrStub<RsMetaItem> {
-    @JvmDefault
     override val rawMetaItems: Sequence<RsMetaItem>
         get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
 }
@@ -39,7 +38,6 @@ interface RsInnerAttributeOwner : RsDocAndAttributeOwner {
      * In contrast, inner attributes can be either direct
      * children or grandchildren.
      */
-    @JvmDefault
     val innerAttrList: List<RsInnerAttr>
         get() = RsInnerAttributeOwnerRegistry.innerAttrs(this)
 }
@@ -63,11 +61,9 @@ interface RsInnerAttributeOwner : RsDocAndAttributeOwner {
  * ```
  */
 interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
-    @JvmDefault
     val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
 
-    @JvmDefault
     override val rawOuterMetaItems: Sequence<RsMetaItem>
         get() = outerAttrList.asSequence().map { it.metaItem }
 }

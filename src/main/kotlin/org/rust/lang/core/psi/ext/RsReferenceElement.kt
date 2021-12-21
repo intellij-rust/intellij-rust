@@ -16,7 +16,6 @@ import org.rust.lang.core.resolve.ref.RsReference
 interface RsReferenceElementBase : RsElement {
     val referenceNameElement: PsiElement?
 
-    @JvmDefault
     val referenceName: String? get() = referenceNameElement?.unescapedText
 }
 
@@ -34,7 +33,6 @@ interface RsMandatoryReferenceElement : RsReferenceElement {
 
     override val referenceNameElement: PsiElement
 
-    @JvmDefault
     override val referenceName: String get() = referenceNameElement.unescapedText
 
     override fun getReference(): RsReference

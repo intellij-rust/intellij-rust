@@ -110,7 +110,7 @@ allprojects {
                 languageVersion = "1.6"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
                 apiVersion = "1.5"
-                freeCompilerArgs = listOf("-Xjvm-default=enable")
+                freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }
         withType<PatchPluginXmlTask> {

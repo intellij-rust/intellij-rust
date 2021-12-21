@@ -15,11 +15,9 @@ val RsFieldDecl.escapedName: String? get() = (this as? RsNamedElement)?.escapedN
 interface RsFieldDecl : RsOuterAttributeOwner, RsVisibilityOwner {
     val typeReference: RsTypeReference?
 
-    @JvmDefault
     override val visibility: RsVisibility
         get() = (owner as? RsEnumVariant)?.visibility ?: super.visibility
 
-    @JvmDefault
     override val isPublic: Boolean
         get() = (owner as? RsEnumVariant)?.isPublic ?: super.isPublic
 }
