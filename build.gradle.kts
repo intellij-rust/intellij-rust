@@ -49,8 +49,8 @@ val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
-    kotlin("jvm") version "1.5.31"
-    id("org.jetbrains.intellij") version "1.2.1"
+    kotlin("jvm") version "1.6.10"
+    id("org.jetbrains.intellij") version "1.3.0"
     id("org.jetbrains.grammarkit") version "2021.1.3"
     id("net.saliman.properties") version "1.5.1"
     id("org.gradle.test-retry") version "1.3.1"
@@ -107,8 +107,9 @@ allprojects {
         withType<KotlinCompile> {
             kotlinOptions {
                 jvmTarget = "1.8"
-                languageVersion = "1.5"
-                apiVersion = "1.4"
+                languageVersion = "1.6"
+                // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
+                apiVersion = "1.5"
                 freeCompilerArgs = listOf("-Xjvm-default=enable")
             }
         }
