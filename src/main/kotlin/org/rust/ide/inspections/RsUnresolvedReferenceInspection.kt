@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
@@ -58,7 +59,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 }
 
                 if (isPathUnresolved || context != null) {
-                    holder.registerProblem(path, context)
+                    holder.registerProblem(path, rootPathParent, context)
                 }
             }
 
@@ -67,7 +68,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 val context = AutoImportFix.findApplicableContext(holder.project, methodCall)
 
                 if (!isMethodResolved || context != null) {
-                    holder.registerProblem(methodCall, context)
+                    holder.registerProblem(methodCall, null, context)
                 }
             }
 
@@ -82,10 +83,15 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
     private fun RsProblemsHolder.registerProblem(
         element: RsReferenceElement,
+        rootPathParent: PsiElement?,
         context: AutoImportFix.Context?
     ) {
         val candidates = context?.candidates
-        if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
+
+        val shouldShowProblem = !ignoreWithoutQuickFix
+            || candidates != null && candidates.isNotEmpty()
+            || (rootPathParent is RsMetaItem || rootPathParent is RsMacroCall) && ProcMacroApplicationService.isEnabled()
+        if (!shouldShowProblem) return
 
         val referenceName = element.referenceName
         val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"

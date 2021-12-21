@@ -262,7 +262,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
 
         #[<error descr="Unresolved reference: `unresolved`">unresolved</error>]
         fn qux() { }
-    """, false)
+    """, true)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }
