@@ -119,6 +119,41 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
         }.checkReferenceIsResolved<RsMethodCall>("src/lib.rs")
     }
 
+    fun `test dev-dependency from crates_io`() = runWithProcMacrosEnabled {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "mylib"
+                version = "1.0.0"
+                edition = "2018"
+
+                [dev-dependencies]
+                proc-macro-id = "=1.0.1"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(test)]
+                    mod tests {
+                        use proc_macro_id::id;
+
+                        struct Foo;
+                        impl Foo {
+                            fn bar(&self) {}
+                        }     //X
+
+                        id! {
+                            fn foo() -> Foo { Foo }
+                        }
+
+                        fn test() {
+                            foo().bar()
+                        }       //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsMethodCall>("src/lib.rs")
+    }
+
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         if (RsPathManager.nativeHelper(rustupFixture.toolchain is RsWslToolchain) == null &&
             System.getenv("CI") == null) {
