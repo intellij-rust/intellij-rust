@@ -434,13 +434,6 @@ project(":idea") {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
     }
-    tasks {
-        test {
-            // Temporarily disable tests 2021.3 platform in CLion.
-            // They fail because of incompatibility between the latest 2021.3 IDEA and CLion snapshots
-            enabled = baseIDE != "clion" || platformVersion != 213
-        }
-    }
 }
 
 project(":clion") {
@@ -508,13 +501,6 @@ project(":copyright") {
     dependencies {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
-    }
-    tasks {
-        test {
-            // Temporarily disable tests with copyright plugin integration on 2021.3 platform in CLion.
-            // They fail because of incompatibility between the latest 2021.3 IDEA and CLion snapshots
-            enabled = baseIDE != "clion" || platformVersion != 213
-        }
     }
 }
 
