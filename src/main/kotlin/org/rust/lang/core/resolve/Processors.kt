@@ -184,20 +184,18 @@ fun collectCompletionVariants(
 ) {
     val processor = createProcessor { e ->
         val element = e.element ?: return@createProcessor false
-        if (element is RsFunction && element.isTest) return@createProcessor false
-        if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
 
-            if (element is RsEnumItem
-                && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
-                    val variants = collectVariantsForEnumCompletion(element, context, e.subst)
-                    result.addAllElements(variants)
-            }
-
-            result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context
-            ))
+        if (element is RsEnumItem
+            && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
+            val variants = collectVariantsForEnumCompletion(element, context, e.subst)
+            result.addAllElements(variants)
         }
+
+        result.addElement(createLookupElement(
+            scopeEntry = e,
+            context = context
+        ))
+
         false
     }
     f(processor)
@@ -299,6 +297,16 @@ fun processAllWithSubst(
         if (processor(BoundElement(e, subst))) return true
     }
     return false
+}
+
+fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {
+    return createProcessor(processor.name) { e ->
+        val element = e.element ?: return@createProcessor false
+        if (element is RsFunction && element.isTest) return@createProcessor false
+        if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
+
+        processor(e)
+    }
 }
 
 fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolveProcessor): RsResolveProcessor {

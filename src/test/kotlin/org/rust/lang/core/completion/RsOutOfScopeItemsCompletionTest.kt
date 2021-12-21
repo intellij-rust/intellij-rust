@@ -438,6 +438,97 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         fn func(x: foo_macro!()) {}
     """)
 
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path`() = doTestByText("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, """
+        use crate::collections::BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::new()/*caret*/
+        }
+    """)
+
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path 2`() = doTestContainsCompletion("new", """
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+        mod reexports {
+            pub use crate::collections::BTreeMap;
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """)
+
+    fun `test suggest a non-imported symbol for first segment of the path if the import option is disabled`() = doTestByText("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, """
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::new()/*caret*/
+        }
+    """, importOutOfScopeItems = false)
+
+    fun `test don't suggest a non-imported symbol for first segment of the path when the option disabled`() = doTestNoCompletion("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, suggestOutOfScopeItems = false)
+
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path (mod)`() = doTestByText("""
+        mod foo {
+            pub mod bar {
+                pub struct Baz;
+            }
+        }
+
+        fn main() {
+            let _ = bar::B/*caret*/
+        }
+    """, """
+        use crate::foo::bar;
+
+        mod foo {
+            pub mod bar {
+                pub struct Baz;
+            }
+        }
+
+        fn main() {
+            let _ = bar::Baz/*caret*/
+        }
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
@@ -466,6 +557,12 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         suggestOutOfScopeItems: Boolean = true,
         importOutOfScopeItems: Boolean = true
     ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { checkContainsCompletion(variant, code) }
+
+    private fun doTestNoCompletion(
+        @Language("Rust") code: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
+    ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { checkNoCompletion(code) }
 
     private fun withOutOfScopeSettings(
         suggestOutOfScopeItems: Boolean = true,

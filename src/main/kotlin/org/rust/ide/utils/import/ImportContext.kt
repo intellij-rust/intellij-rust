@@ -144,7 +144,7 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
     else -> { _ -> true }
 }
 
-private val RsPath.pathParsingMode: RustParserUtil.PathParsingMode
+val RsPath.pathParsingMode: RustParserUtil.PathParsingMode
     get() = when (parent) {
         is RsPathExpr,
         is RsStructLiteral,
