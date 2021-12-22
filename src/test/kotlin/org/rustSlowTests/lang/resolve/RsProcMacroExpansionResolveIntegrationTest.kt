@@ -6,13 +6,10 @@
 package org.rustSlowTests.lang.resolve
 
 import com.intellij.util.ThrowableRunnable
-import org.rust.ExpandMacros
-import org.rust.MinRustcVersion
-import org.rust.WithExperimentalFeatures
+import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
@@ -25,30 +22,7 @@ import org.rust.openapiext.pathAsPath
 class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
     fun `test 2 cargo projects (proc macro is a separate cargo project)`() {
         fileTree {
-            dir("my_proc_macro") {
-                toml("Cargo.toml", """
-                    [package]
-                    name = "my_proc_macro"
-                    version = "1.0.0"
-                    edition = "2018"
-
-                    [lib]
-                    proc-macro = true
-
-                    [dependencies]
-                """)
-                dir("src") {
-                    rust("lib.rs", """
-                        extern crate proc_macro;
-                        use proc_macro::TokenStream;
-
-                        #[proc_macro]
-                        pub fn my_macro(input: TokenStream) -> TokenStream {
-                            return input;
-                        }
-                    """)
-                }
-            }
+            localProcMacroLib()
             dir("mylib") {
                 toml("Cargo.toml", """
                     [package]
@@ -57,18 +31,18 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
                     edition = "2018"
 
                     [dependencies]
-                    my_proc_macro = { path = "../my_proc_macro" }
+                    proc-macro-id = { path = "../proc-macro-id" }
                 """)
                 dir("src") {
                     rust("lib.rs", """
-                        use my_proc_macro::my_macro;
+                        use proc_macro_id::id;
 
                         struct Foo;
                         impl Foo {
                             fn bar(&self) {}
                         }     //X
 
-                        my_macro! {
+                        id! {
                             fn foo() -> Foo { Foo }
                         }
 
@@ -81,7 +55,7 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
         }.run {
             val prj = create(project, cargoProjectDirectory)
             project.testCargoProjects.attachCargoProjects(
-                cargoProjectDirectory.pathAsPath.resolve("my_proc_macro/Cargo.toml"),
+                cargoProjectDirectory.pathAsPath.resolve("proc-macro-id/Cargo.toml"),
                 cargoProjectDirectory.pathAsPath.resolve("mylib/Cargo.toml")
             )
             prj.checkReferenceIsResolved<RsMethodCall>("mylib/src/lib.rs")
@@ -120,8 +94,9 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
         }.checkReferenceIsResolved<RsMethodCall>("src/lib.rs")
     }
 
-    fun `test dev-dependency from crates_io`() {
+    fun `test dev-dependency`() {
         buildProject {
+            localProcMacroLib()
             toml("Cargo.toml", """
                 [package]
                 name = "mylib"
@@ -129,7 +104,7 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
                 edition = "2018"
 
                 [dev-dependencies]
-                proc-macro-id = "=1.0.1"
+                proc-macro-id = { path = "proc-macro-id" }
             """)
             dir("src") {
                 rust("lib.rs", """
@@ -162,5 +137,35 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
             return
         }
         super.runTestRunnable(testRunnable)
+    }
+
+    /**
+     * Add local `proc-macro-id` crate into [dirName] directory that provides identity `id` function-like procedural macros
+     */
+    private fun FileTreeBuilder.localProcMacroLib(dirName: String = "proc-macro-id") {
+        dir(dirName) {
+            toml("Cargo.toml", """
+                [package]
+                name = "proc-macro-id"
+                version = "1.0.0"
+                edition = "2018"
+
+                [lib]
+                proc-macro = true
+
+                [dependencies]
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    extern crate proc_macro;
+                    use proc_macro::TokenStream;
+
+                    #[proc_macro]
+                    pub fn id(input: TokenStream) -> TokenStream {
+                        return input;
+                    }
+                """)
+            }
+        }
     }
 }
