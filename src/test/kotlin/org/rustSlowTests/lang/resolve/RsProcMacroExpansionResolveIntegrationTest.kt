@@ -8,6 +8,7 @@ package org.rustSlowTests.lang.resolve
 import com.intellij.util.ThrowableRunnable
 import org.rust.ExpandMacros
 import org.rust.MinRustcVersion
+import org.rust.WithExperimentalFeatures
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
@@ -17,12 +18,12 @@ import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.runWithEnabledFeatures
 
 @MinRustcVersion("1.46.0")
 @ExpandMacros(MacroExpansionScope.WORKSPACE)
+@WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
 class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
-    fun `test 2 cargo projects (proc macro is a separate cargo project)`() = runWithProcMacrosEnabled {
+    fun `test 2 cargo projects (proc macro is a separate cargo project)`() {
         fileTree {
             dir("my_proc_macro") {
                 toml("Cargo.toml", """
@@ -87,7 +88,7 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
         }
     }
 
-    fun `test from crates_io`() = runWithProcMacrosEnabled {
+    fun `test from crates_io`() {
         buildProject {
             toml("Cargo.toml", """
                 [package]
@@ -119,7 +120,7 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
         }.checkReferenceIsResolved<RsMethodCall>("src/lib.rs")
     }
 
-    fun `test dev-dependency from crates_io`() = runWithProcMacrosEnabled {
+    fun `test dev-dependency from crates_io`() {
         buildProject {
             toml("Cargo.toml", """
                 [package]
@@ -161,9 +162,5 @@ class RsProcMacroExpansionResolveIntegrationTest : RsWithToolchainTestBase() {
             return
         }
         super.runTestRunnable(testRunnable)
-    }
-
-    private fun <T> runWithProcMacrosEnabled(action: () -> T): T {
-        return runWithEnabledFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS) { action() }
     }
 }
