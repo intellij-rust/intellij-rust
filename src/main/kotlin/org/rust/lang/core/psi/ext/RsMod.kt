@@ -48,7 +48,6 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible, PsiElement {
     /**
      *  Returns directory where direct submodules should be located
      */
-    @JvmDefault
     fun getOwnedDirectory(createIfNotExists: Boolean = false): PsiDirectory? {
         if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
 

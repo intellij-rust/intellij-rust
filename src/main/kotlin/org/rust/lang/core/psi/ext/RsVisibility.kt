@@ -17,15 +17,12 @@ interface RsVisible : RsElement {
 }
 
 interface RsVisibilityOwner : RsVisible {
-    @JvmDefault
     val vis: RsVis?
         get() = PsiTreeUtil.getStubChildOfType(this, RsVis::class.java)
 
-    @JvmDefault
     override val visibility: RsVisibility
         get() = vis?.visibility ?: RsVisibility.Private
 
-    @JvmDefault
     override val isPublic: Boolean
         get() = vis != null
 }

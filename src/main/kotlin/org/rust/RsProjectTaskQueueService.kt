@@ -40,20 +40,16 @@ class RsProjectTaskQueueService : Disposable {
 val Project.taskQueue: RsProjectTaskQueueService get() = service()
 
 interface RsTask {
-    @JvmDefault
     val taskType: TaskType
         get() = INDEPENDENT
 
-    @JvmDefault
     val progressBarShowDelay: Int
         get() = 0
 
     /** If true, the task will not be run (and progress bar will not be shown) until the smart mode */
-    @JvmDefault
     val waitForSmartMode: Boolean
         get() = false
 
-    @JvmDefault
     val runSyncInUnitTests: Boolean
         get() = false
 

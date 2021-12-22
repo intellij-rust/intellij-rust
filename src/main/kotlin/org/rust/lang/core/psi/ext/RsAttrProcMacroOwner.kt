@@ -16,12 +16,10 @@ import org.rust.lang.core.stubs.common.RsAttrProcMacroOwnerPsiOrStub
  */
 interface RsAttrProcMacroOwner : RsOuterAttributeOwner, RsAttrProcMacroOwnerPsiOrStub<RsMetaItem> {
     /** @see ProcMacroAttribute */
-    @JvmDefault
     val procMacroAttribute: ProcMacroAttribute<RsMetaItem>
         get() = ProcMacroAttribute.getProcMacroAttribute(this)
 
     /** @see ProcMacroAttribute */
-    @JvmDefault
     val procMacroAttributeWithDerives: ProcMacroAttribute<RsMetaItem>
         get() = ProcMacroAttribute.getProcMacroAttribute(this, withDerives = true)
 }

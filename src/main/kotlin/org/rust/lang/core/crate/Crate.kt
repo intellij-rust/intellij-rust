@@ -65,7 +65,6 @@ interface Crate : UserDataHolderEx {
      * A cargo package can have cyclic dependencies through `[dev-dependencies]` (see [CrateGraphService] docs).
      * Cyclic dependencies are not contained in [dependencies], [flatDependencies] or [reverseDependencies].
      */
-    @JvmDefault
     val dependenciesWithCyclic: Collection<Dependency>
         get() = dependencies
 
