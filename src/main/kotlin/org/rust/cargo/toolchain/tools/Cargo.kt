@@ -137,16 +137,16 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     ): ProjectDescription {
         val rawData = fetchMetadata(owner, projectDirectory, listenerProvider(CargoCallType.METADATA))
 
-        val (buildScriptsInfo, status) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-            val info = fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
-            if (info == null) info to BUILD_SCRIPT_EVALUATION_ERROR else info to OK
+        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+            fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
         } else {
-            null to OK
+            BuildMessages.DEFAULT
         }
 
         val (rawDataAdjusted, buildScriptsInfoAdjusted) =
             replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
         val workspaceData = CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted)
+        val status = if (buildScriptsInfo.isSuccessful) OK else BUILD_SCRIPT_EVALUATION_ERROR
         return ProjectDescription(workspaceData, status)
     }
 
@@ -201,7 +201,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
-    ): BuildMessages? {
+    ): BuildMessages {
         val additionalArgs = listOf("--message-format", "json", "--workspace", "--tests")
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
@@ -216,10 +216,8 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             commandLine.execute(owner, ignoreExitCode = true, listener = listener)
         } catch (e: ExecutionException) {
             LOG.warn(e)
-            return null
+            return BuildMessages.FAILED
         }
-
-        if (processOutput.exitCode != 0) return null
 
         val messages = mutableMapOf<PackageId, MutableList<CompilerMessage>>()
 
@@ -229,7 +227,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
                 ?.convertPaths(toolchain::toLocalPath)
                 ?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
         }
-        return BuildMessages(messages)
+        return BuildMessages(messages, isSuccessful = processOutput.exitCode == 0)
     }
 
     /**
