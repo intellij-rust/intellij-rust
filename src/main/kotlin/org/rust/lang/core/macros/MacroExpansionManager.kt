@@ -54,7 +54,6 @@ import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.lang.core.resolve2.defMapService
-import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
@@ -922,7 +921,6 @@ private class MacroExpansionServiceImplInner(
 
         if (!call.isTopLevelExpansion || containingFile?.fileSystem?.isSupportedFs != true) {
             if (expansionState != null) return everChanged(Err(GetMacroExpansionError.MemExpDuringMacroExpansion))
-            if (call !is RsMacroCall) return everChanged(Err(GetMacroExpansionError.MemExpAttrMacro))
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
@@ -1077,8 +1075,8 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
     )
 }
 
-private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
-    val def = call.resolveToMacroWithoutPsi()
+private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
+    val def = call.resolveToMacroWithoutPsiWithErr()
         .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionPipelineError())) }
     val defData = def.data
     val project = call.project
@@ -1111,15 +1109,20 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
 }
 
 private fun memExpansionResult(
-    call: RsMacroCall,
+    call: RsPossibleMacroCall,
     result: RsResult<MacroExpansion, GetMacroExpansionError>
-): MacroExpansionCachedResult =
-    CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
+): MacroExpansionCachedResult {
+    return if (call is RsMacroCall) {
+        CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
+    } else {
+        CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker)
+    }
+}
 
-private val RS_EXPANSION_MACRO_CALL = Key.create<RsMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
+private val RS_EXPANSION_MACRO_CALL = Key.create<RsPossibleMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
 @VisibleForTesting
-fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
+fun RsExpandedElement.setExpandedFrom(call: RsPossibleMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
 

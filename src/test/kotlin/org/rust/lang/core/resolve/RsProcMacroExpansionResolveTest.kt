@@ -284,6 +284,26 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
+    fun `test custom derive in a doctest`() = expect<IllegalStateException> {
+    checkByCode("""
+        /// ```
+        /// use test_proc_macros::DeriveImplForFoo;
+        ///
+        /// #[derive(DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
+        /// struct Foo;
+        /// struct Bar;
+        /// impl Bar {
+        ///     fn bar(&self) {}
+        /// }    //X
+        ///
+        /// fn main() {
+        ///     Foo.foo().bar()
+        /// }           //^
+        /// ```
+        pub fn foo() {}
+    """, "lib.rs")
+    }
+
     fun `test attr legacy macro`() = checkByCode("""
         use test_proc_macros::attr_as_is;
 
