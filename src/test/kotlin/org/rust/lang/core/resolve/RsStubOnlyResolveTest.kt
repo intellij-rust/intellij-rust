@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
@@ -51,8 +49,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     fun `test mod decl 2`() = stubOnlyResolve("""
     //- foo/mod.rs
-        use bar::Bar;
-                //^ bar.rs
+        use crate::bar::Bar;
+                      //^ bar.rs
 
     //- main.rs
         mod bar;
@@ -197,9 +195,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test resolve explicit mod path mod rs 2`() = stubOnlyResolve("""
@@ -210,9 +207,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/bar/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test resolve explicit mod path mod rs windows path separator`() = stubOnlyResolve("""
@@ -223,9 +219,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/bar/mod.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-       }
+            crate::quux();
+       }         //^ main.rs
     """)
 
     fun `test module path`() = stubOnlyResolve("""
@@ -238,9 +233,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test module path 2`() = stubOnlyResolve("""
@@ -253,9 +247,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bbb/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test module path 3`() = stubOnlyResolve("""
@@ -269,9 +262,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- aaa/bbb/ccc.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test empty module path`() = stubOnlyResolve("""
@@ -285,9 +277,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- bbb.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test relative module path`() = stubOnlyResolve("""
@@ -301,9 +292,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     //- aaa/bar.rs
         fn foo() {
-            ::quux();
-            //^ main.rs
-        }
+            crate::quux();
+        }        //^ main.rs
     """)
 
     fun `test path inside inline module in crate root`() = stubOnlyResolve("""
@@ -408,8 +398,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         stubOnlyResolve("""
         //- foo.rs
             fn main() {
-                ::bar::hello();
-            }         //^ bar.rs
+                crate::bar::hello();
+            }             //^ bar.rs
 
         //- lib.rs
             mod foo;
@@ -777,7 +767,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test item reexported from 'pub(crate)' mod in dependency crate`() = stubOnlyResolve("""
     //- main.rs
         use test_package::*;
@@ -797,7 +786,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub use foo::*;
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file`() = stubOnlyResolve("""
     //- detached.rs
         macro foo() {}
@@ -807,7 +795,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (to inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -819,7 +806,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -831,7 +817,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (from inline mod)`() = stubOnlyResolve("""
     //- detached.rs
         fn func() {}
@@ -843,7 +828,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in inner mod)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner;
@@ -855,7 +839,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached/inner.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file ($crate)`() = stubOnlyResolve("""
     //- detached.rs
         mod inner {
@@ -877,7 +860,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         } //^ detached.rs
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in detached file (in import)`() = stubOnlyResolve("""
     //- detached.rs
         pub use foo::func;

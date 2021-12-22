@@ -14,6 +14,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.FeatureDep
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.lang.core.psi.rustPsiManager
@@ -59,17 +60,29 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     @TestOnly
-    fun setEdition(edition: CargoWorkspace.Edition, parentDisposable: Disposable) {
-        if (edition == CargoWorkspace.Edition.EDITION_2015) return
+    fun setEdition(edition: Edition, parentDisposable: Disposable) {
+        if (edition == DEFAULT_EDITION_FOR_TESTS) return
 
         setEditionInner(edition)
 
         Disposer.register(parentDisposable) {
-            setEditionInner(CargoWorkspace.Edition.EDITION_2015)
+            setEditionInner(DEFAULT_EDITION_FOR_TESTS)
         }
     }
 
-    private fun setEditionInner(edition: CargoWorkspace.Edition) {
+    @TestOnly
+    fun withEdition(edition: Edition, action: () -> Unit) {
+        if (edition == DEFAULT_EDITION_FOR_TESTS) return action()
+
+        setEditionInner(edition)
+        try {
+            action()
+        } finally {
+            setEditionInner(DEFAULT_EDITION_FOR_TESTS)
+        }
+    }
+
+    private fun setEditionInner(edition: Edition) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { project ->
                 val ws = project.workspace?.withEdition(edition)
@@ -132,3 +145,10 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
             ?: error("Timeout when refreshing a test Cargo project")
     }
 }
+
+@get:TestOnly
+val DEFAULT_EDITION_FOR_TESTS: Edition
+    get() {
+        val edition = System.getenv("DEFAULT_EDITION_FOR_TESTS") ?: return Edition.EDITION_2021
+        return Edition.values().single { it.presentation == edition }
+    }

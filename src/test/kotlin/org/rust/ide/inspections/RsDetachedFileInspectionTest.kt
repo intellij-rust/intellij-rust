@@ -7,8 +7,6 @@ package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.fixes.withMockModuleAttachSelector
 
 class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspection::class) {
@@ -78,7 +76,6 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- a/foo.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test attach file to a parent mod file`() = checkFixByFileTree("Attach file to a.rs", """
         //- lib.rs
             mod a;

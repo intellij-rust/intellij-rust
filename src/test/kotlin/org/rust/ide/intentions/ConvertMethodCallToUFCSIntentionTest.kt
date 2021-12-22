@@ -276,7 +276,7 @@ class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCa
             a./*caret*/bar();
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct Foo;
@@ -460,7 +460,7 @@ class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCa
             x./*caret*/foo();
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub struct Foo;

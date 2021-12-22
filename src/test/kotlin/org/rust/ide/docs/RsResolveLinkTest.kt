@@ -291,7 +291,7 @@ class RsResolveLinkTest : RsTestBase() {
                 pub struct Baz;
                           //X
             }
-            pub use foo::bar::Baz;
+            pub use crate::foo::bar::Baz;
         }
 
         struct Foo;
@@ -306,7 +306,7 @@ class RsResolveLinkTest : RsTestBase() {
                               //X
                 }
             }
-            pub use foo::bar::baz;
+            pub use crate::foo::bar::baz;
         }
 
         struct Foo;
@@ -321,7 +321,7 @@ class RsResolveLinkTest : RsTestBase() {
                               //X
                 }
             }
-            pub use foo::bar::*;
+            pub use crate::foo::bar::*;
         }
 
         struct Foo;

@@ -8,7 +8,6 @@ package org.rust.lang.core.macros.decl
 import com.intellij.psi.tree.TokenSet
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2021
 import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
@@ -139,7 +138,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { let a; let b; let Some(1 | 2); }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test pat 2018 edition`() = doTest("""
         macro_rules! foo {
             ($ i1:pat | $ i2:pat) => { fn foo() { let $ i1; let $ i2; } }

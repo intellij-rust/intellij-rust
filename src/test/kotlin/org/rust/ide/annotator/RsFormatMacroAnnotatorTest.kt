@@ -6,7 +6,7 @@
 package org.rust.ide.annotator
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -518,14 +518,14 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockEdition(Edition.EDITION_2018)
     fun `test panic with single literal`() = checkErrors("""
         fn main() {
             panic!("{}");
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2021)
+    @MockEdition(Edition.EDITION_2021)
     fun `test panic macro 2021`() = checkErrors("""
         use std::fmt;
 

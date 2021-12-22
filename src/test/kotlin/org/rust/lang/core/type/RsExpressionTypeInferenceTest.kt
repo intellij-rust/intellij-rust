@@ -8,7 +8,7 @@ package org.rust.lang.core.type
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test function call`() = testExpr("""
@@ -701,7 +701,6 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test await postfix 2018 (anon)`() = testExpr("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -712,7 +711,6 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test await postfix 2018 (adt)`() = testExpr("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -726,6 +724,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test await postfix 2015`() = testExpr("""
         struct S { await: i32 }
         fn main() {

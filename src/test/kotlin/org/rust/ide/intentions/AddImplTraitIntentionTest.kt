@@ -206,7 +206,7 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S/*caret*/;
     """, "Foo\t\t", """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub trait Foo {

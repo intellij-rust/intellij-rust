@@ -206,7 +206,6 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test postfix await 2018`() = checkHighlightingWithMacro("""
         fn main() {
             dummy.<KEYWORD>await</KEYWORD>;
@@ -221,7 +220,6 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         """)
     }
 
-    @MockEdition(Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test highlight macro in use item`() = checkByFileTree("""
     //- lib.rs

@@ -76,7 +76,7 @@ class RsIntroduceConstantTest : RsTestBase() {
         const I: i32 = 5;
 
         mod a {
-            use I;
+            use crate::I;
 
             fn foo() {
                 let x = I;
@@ -109,7 +109,7 @@ class RsIntroduceConstantTest : RsTestBase() {
 
         fn foo() {
             mod bar {
-                use I;
+                use crate::I;
 
                 fn baz() {
                     let a = I;

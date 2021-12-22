@@ -7,7 +7,6 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 
 @WithEnabledInspections(RsUnusedImportInspection::class)
@@ -644,7 +643,6 @@ class RsImportOptimizerTest: RsTestBase() {
         mod foo {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test do not remove cfg-disabled import`() = checkNotChanged("""
         mod foo {

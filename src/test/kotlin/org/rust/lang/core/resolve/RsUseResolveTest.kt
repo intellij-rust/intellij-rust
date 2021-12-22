@@ -14,9 +14,8 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path`() = checkByCode("""
         mod foo {
-            use ::bar::hello;
-                       //^
-        }
+            use crate::bar::hello;
+        }                 //^
 
         pub mod bar {
             pub fn hello() { }
@@ -29,7 +28,7 @@ class RsUseResolveTest : RsResolveTestBase() {
           //X
 
         mod inner {
-            use foo;
+            use crate::foo;
 
             fn inner() {
                 foo();
@@ -40,8 +39,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test child from parent`() = checkByCode("""
         mod foo {
-            // This visits `mod foo` twice during resolve
-            use foo::bar::baz;
+            use crate::foo::bar::baz;
 
             pub mod bar {
                 pub fn baz() {}
@@ -60,7 +58,7 @@ class RsUseResolveTest : RsResolveTestBase() {
           //X
 
         mod inner {
-            use foo as bar;
+            use crate::foo as bar;
 
             fn main() {
                 bar();
@@ -73,13 +71,13 @@ class RsUseResolveTest : RsResolveTestBase() {
         mod foo {
             pub fn a() {}
                  //X
-            pub use bar::b as c;
-            pub use bar::d as e;
+            pub use crate::bar::b as c;
+            pub use crate::bar::d as e;
         }
 
         mod bar {
-            pub use foo::a as b;
-            pub use foo::c as d;
+            pub use crate::foo::a as b;
+            pub use crate::foo::c as d;
         }
 
         fn main() {
@@ -102,9 +100,8 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path glob ident`() = checkByCode("""
         mod foo {
-            use bar::{hello as h};
-                      //^
-        }
+            use crate::bar::{hello as h};
+        }                  //^
 
         pub mod bar {
             pub fn hello() { }
@@ -114,9 +111,8 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path glob self`() = checkByCode("""
         mod foo {
-            use bar::{self};
-                     //^ 62
-        }
+            use crate::bar::{self};
+        }                  //^
 
         pub mod bar { }
                //X
@@ -138,7 +134,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod bar {
-            use foo::{hello};
+            use crate::foo::{hello};
 
             fn main() {
                 hello();
@@ -154,7 +150,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod bar {
-            use foo::{self};
+            use crate::foo::{self};
 
             fn main() {
                 foo::hello();
@@ -170,7 +166,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod bar {
-            use foo::{hello as spam};
+            use crate::foo::{hello as spam};
 
             fn main() {
                 spam();
@@ -183,14 +179,14 @@ class RsUseResolveTest : RsResolveTestBase() {
         mod foo {
             pub fn a() {}
                  //X
-            pub use bar::{b as c, d as e};
+            pub use crate::bar::{b as c, d as e};
         }
 
         mod bar {
-            pub use foo::{a as b, c as d};
+            pub use crate::foo::{a as b, c as d};
         }
 
-        use foo::e;
+        use crate::foo::e;
 
         fn main() {
             e();
@@ -200,9 +196,8 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test enum variant`() = checkByCode("""
         mod foo {
-            use bar::E::{X};
-                       //^
-        }
+            use crate::bar::E::{X};
+        }                     //^
 
         mod bar {
             pub enum E {
@@ -232,7 +227,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod b {
-            use a::*;
+            use crate::a::*;
 
             fn main() {
                 foo();
@@ -304,8 +299,8 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod c {
-            use a::*;
-            use b::*;
+            use crate::a::*;
+            use crate::b::*;
 
             fn main() {
                 bar()
@@ -321,11 +316,11 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod b {
-            pub use a::*;
+            pub use crate::a::*;
         }
 
         mod c {
-            use b::*;
+            use crate::b::*;
 
             fn main() {
                 foo()
@@ -334,6 +329,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test only braces`() = checkByCode("""
         struct Spam;
               //X
@@ -605,10 +601,10 @@ class RsUseResolveTest : RsResolveTestBase() {
             pub use crate::bar::*;
         }
         mod foo {
-            use quux1::Foo;
+            use crate::quux1::Foo;
         }
         mod bar {
-            pub use quux2::Foo;
+            pub use crate::quux2::Foo;
         }
         mod quux1 {
             pub struct Foo;
@@ -674,7 +670,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test cyclic dependent imports`() = checkByCode("""
         mod a {
-            pub use b::*;
+            pub use crate::b::*;
 
             pub mod c {
                 pub struct Foo;
@@ -684,7 +680,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }                //^
 
         mod b {
-            pub use a::*;
+            pub use crate::a::*;
             pub use self::c::*;
         }
     """)
@@ -698,7 +694,6 @@ class RsUseResolveTest : RsResolveTestBase() {
                   //^ unresolved
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test unified paths 2018 edition`() = checkByCode("""
         mod foo {
             pub fn bar() {}
@@ -739,7 +734,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test use incomplete path`() = checkByCode("""
         use foo::;
         mod foo {
@@ -754,7 +748,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complex cyclic chain with glob imports and aliases`() = checkByCode("""
         mod a {
             pub use crate::b::*;
@@ -774,7 +767,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     @UseOldResolve
-    @MockEdition(Edition.EDITION_2018)
     fun `test usual import overrides glob import`() = checkByCode("""
         mod foo1 {
             pub mod bar {
@@ -803,7 +795,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complex glob imports`() = checkByCode("""
         pub mod inner1 {
             pub mod foo {
@@ -826,7 +817,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     // based on https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
-    @MockEdition(Edition.EDITION_2018)
     fun `test import adds same name as existing 1`() = checkByCode("""
         use foo::foo;
         mod foo {
@@ -841,7 +831,6 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     // based on https://github.com/rust-lang/cargo/blob/875e0123259b0b6299903fe4aea0a12ecde9324f/src/cargo/util/mod.rs#L23
-    @MockEdition(Edition.EDITION_2018)
     fun `test import adds same name as existing 2`() = checkByCode("""
         use foo::foo;
         mod foo {
@@ -858,7 +847,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test two usual imports with same name in different namespaces`() = checkByCode("""
         mod a {
             pub mod foo {}

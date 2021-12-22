@@ -7,11 +7,9 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
@@ -531,7 +529,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (choose existing impl)`() = doTest("""
         struct S;
 
@@ -568,7 +565,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (choose existing impl with same generic parameters)`() = doTest("""
         struct S1;
         struct Foo<T> { t: T }
@@ -605,7 +601,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """,  "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (don't choose existing impl with different generic parameters)`() = doTest("""
         struct S1;
         struct S2;
@@ -647,7 +642,6 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract a function in a impl trait (don't choose existing cfg-disabled impl)`() = doTest("""
         struct S1;
         struct Foo<T> { t: T }
@@ -1124,7 +1118,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract async function with await`() = doTest("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -1145,7 +1138,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract async function with nested await`() = doTest("""
         #[lang = "core::future::future::Future"]
         trait Future { type Output; }
@@ -1180,7 +1172,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract sync function with await inside block`() = doTest("""
         async fn foo() {
             <selection>async { async { () }.await };</selection>
@@ -1195,7 +1186,6 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extract sync function with await inside closure`() = doTest("""
         #![feature(async_closure)]
         async fn foo() {
@@ -1339,7 +1329,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "foo")
 
     fun `test import parameter types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1351,7 +1341,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s;</selection>
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1369,7 +1359,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import return type`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1380,7 +1370,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct A;
@@ -1397,7 +1387,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test do not import default types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S;
@@ -1409,7 +1399,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo};
+        use crate::a::{A, foo};
 
         mod a {
             pub struct S;
@@ -1427,7 +1417,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import non default types`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S1;
@@ -1440,7 +1430,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{A, foo, S2};
+        use crate::a::{A, foo, S2};
 
         mod a {
             pub struct S1;
@@ -1459,7 +1449,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import aliased type`() = doTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct A;
@@ -1472,7 +1462,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s</selection>
         }
     """, """
-        use a::{foo, Foo};
+        use crate::a::{foo, Foo};
 
         mod a {
             pub struct A;

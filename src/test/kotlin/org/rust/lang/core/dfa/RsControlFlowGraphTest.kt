@@ -6,8 +6,10 @@
 package org.rust.lang.core.dfa
 
 import org.intellij.lang.annotations.Language
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -976,7 +978,6 @@ class RsControlFlowGraphTest : RsTestBase() {
         Termination
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test async block with infinite loop`() = testCFG("""
         fn foo() {
             1;

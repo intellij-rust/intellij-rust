@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -163,13 +162,13 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub struct Foo;
 
         mod m {
-            use F/*caret*/;
+            use crate::F/*caret*/;
         }
     """, """
         pub struct Foo;
 
         mod m {
-            use Foo/*caret*/;
+            use crate::Foo/*caret*/;
         }
     """)
 
@@ -421,9 +420,9 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub enum Spam { Quux, Eggs }
 
     //- foo/mod.rs
-        use Spam::Qu/*caret*/;
+        use crate::Spam::Qu/*caret*/;
     """, """
-        use Spam::Quux/*caret*/;
+        use crate::Spam::Quux/*caret*/;
     """)
 
     fun `test enum variant`() = doSingleCompletion("""
@@ -574,7 +573,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complete macro 3`() = checkContainsCompletion("foobar1", """
         mod inner {
             macro_rules! foobar1 { () => {} }
@@ -1090,7 +1088,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(f: FnOnce(/*caret*/)) {}
     """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
 
-    @MockEdition(Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 1`() = checkNoCompletionByFileTree("""
     //- main.rs
@@ -1103,7 +1100,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub fn func() {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 2`() = doSingleCompletionByFileTree("""
     //- main.rs
@@ -1181,18 +1177,17 @@ class RsCompletionTest : RsCompletionTestBase() {
             pub enum MyOtherEnum { Variant(i32) }
             pub fn foo(e: MyOtherEnum) {}
         }
-        use anothermod::foo;
+        use crate::anothermod::foo;
         fn main() { foo(MyOther/*caret*/) }
     """, """
         mod anothermod {
             pub enum MyOtherEnum { Variant(i32) }
             pub fn foo(e: MyOtherEnum) {}
         }
-        use anothermod::{foo, MyOtherEnum};
+        use crate::anothermod::{foo, MyOtherEnum};
         fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test do not complete non-mod items in vis restriction path`() = checkNoCompletion("""
         pub mod bar {
             pub mod foo {
@@ -1202,7 +1197,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub struct Item;
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test do not complete non-ancestor mods in vis restriction path`() = checkNoCompletion("""
         pub mod bar {
             pub mod foo {
@@ -1212,7 +1206,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub mod foo {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test complete ancestor module in vis restriction path`() = doFirstCompletion("""
         pub mod bar {
             pub mod foo {

@@ -27,8 +27,9 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.model.impl.testCargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -104,7 +105,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     }
 
     private fun setupMockEdition() {
-        val edition = findAnnotationInstance<MockEdition>()?.edition ?: CargoWorkspace.Edition.EDITION_2015
+        val edition = findAnnotationInstance<MockEdition>()?.edition ?: DEFAULT_EDITION_FOR_TESTS
         project.testCargoProjects.setEdition(edition, testRootDisposable)
     }
 
@@ -231,13 +232,15 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }
 
     private fun runTestEdition2015(testRunnable: ThrowableRunnable<Throwable>) {
-        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015, testRootDisposable)
-        super.runTestRunnable(testRunnable)
+        project.testCargoProjects.withEdition(Edition.EDITION_2015) {
+            super.runTestRunnable(testRunnable)
+        }
     }
 
     private fun runTestEdition2018(testRunnable: ThrowableRunnable<Throwable>) {
-        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018, testRootDisposable)
-        super.runTestRunnable(testRunnable)
+        project.testCargoProjects.withEdition(Edition.EDITION_2018) {
+            super.runTestRunnable(testRunnable)
+        }
     }
 
     protected val fileName: String

@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.type
 
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndStdlibLikeDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFloat
@@ -858,7 +860,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ &S<X>
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test await pin future`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::future::Future;
