@@ -259,6 +259,8 @@ class RsPsiFactory(
 
     fun tryCreateImplItem(text: String): RsImplItem? = createFromText(text)
 
+    fun tryCreateTraitItem(text: String): RsTraitItem? = createFromText(text)
+
     fun createInherentImplItem(
         name: String,
         typeParameterList: RsTypeParameterList? = null,

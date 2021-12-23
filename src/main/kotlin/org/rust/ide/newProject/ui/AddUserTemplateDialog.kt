@@ -6,12 +6,12 @@
 package org.rust.ide.newProject.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import org.rust.RsBundle
 import org.rust.ide.newProject.state.RsUserTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
+import org.rust.openapiext.addTextChangeListener
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
@@ -19,9 +19,7 @@ import javax.swing.event.DocumentEvent
 class AddUserTemplateDialog : DialogWrapper(null) {
     private val repoUrlField: JBTextField = JBTextField().apply {
         preferredSize = Dimension(400, 0)
-        document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(event: DocumentEvent) = suggestName(event)
-        })
+        addTextChangeListener(::suggestName)
     }
 
     private val nameField: JBTextField = JBTextField()
