@@ -199,6 +199,7 @@ class RsTypeInferenceWalker(
 
     private fun RsExpr.inferTypeCoercableTo(expected: Ty): Ty {
         val inferred = inferType(expected)
+        ctx.writeExpectedExprTyCoercable(this)
         return if (coerce(this, inferred, expected)) expected else inferred
     }
 
@@ -214,7 +215,7 @@ class RsTypeInferenceWalker(
         )
 
     private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean =
-        when (val result = tryCoerce(inferred, expected)) {
+        when (val result = ctx.tryCoerce(inferred, expected)) {
             CoerceResult.Ok -> true
 
             is CoerceResult.TypeMismatch -> {
@@ -249,51 +250,6 @@ class RsTypeInferenceWalker(
         if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
             ctx.reportTypeMismatch(element, expected, inferred)
         }
-    }
-
-    private fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
-        return when {
-            inferred == TyNever -> CoerceResult.Ok
-            // Coerce array to slice
-            inferred is TyReference && inferred.referenced is TyArray &&
-                expected is TyReference && expected.referenced is TySlice -> {
-                ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
-            }
-            // Coerce reference to pointer
-            inferred is TyReference && expected is TyPointer &&
-                coerceMutability(inferred.mutability, expected.mutability) -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced)
-            }
-            // Coerce mutable pointer to const pointer
-            inferred is TyPointer && inferred.mutability.isMut
-                && expected is TyPointer && !expected.mutability.isMut -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced)
-            }
-            // Coerce references
-            inferred is TyReference && expected is TyReference &&
-                coerceMutability(inferred.mutability, expected.mutability) -> {
-                coerceReference(inferred, expected)
-            }
-            // TODO trait object unsizing
-            else -> ctx.combineTypes(inferred, expected)
-        }
-    }
-
-    private fun coerceMutability(from: Mutability, to: Mutability): Boolean =
-        from == to || from.isMut && !to.isMut
-
-    /**
-     * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
-     * To match `A` with `B`, autoderef will be performed
-     */
-    private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
-        for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
-            // TODO proper handling of lifetimes
-            val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
-            if (ctx.combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
-        }
-
-        return CoerceResult.TypeMismatch(inferred, expected)
     }
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
@@ -1186,7 +1142,7 @@ class RsTypeInferenceWalker(
                 val elementTypes = vecArg.exprList.map { it.inferType(expectedElemTy) }
                 val elementType = if (elementTypes.isNotEmpty()) getMoreCompleteType(elementTypes) else TyInfer.TyVar()
 
-                if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
+                if (expectedElemTy != null && ctx.tryCoerce(elementType, expectedElemTy).isOk) {
                     expectedElemTy
                 } else {
                     elementType
@@ -1319,7 +1275,7 @@ class RsTypeInferenceWalker(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
+            val inferredTy = if (expectedElemTy != null && ctx.tryCoerce(elementType, expectedElemTy).isOk) {
                 expectedElemTy
             } else {
                 elementType

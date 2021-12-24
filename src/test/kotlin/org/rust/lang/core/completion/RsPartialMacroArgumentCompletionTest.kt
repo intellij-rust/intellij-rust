@@ -93,7 +93,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         }
     """, setOf("iii", "i32"))
 
-    fun `test no completion from index`() = doTest("""
+    fun `test no completion for out-of-scope items 1`() = doTest("""
         macro_rules! my_macro {
             ($ e:expr, foo) => (1);
             ($ e:expr, bar) => (1);
@@ -101,6 +101,21 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
 
         fn main() {
             my_macro!(Hash/*caret*/);
+        }
+
+        pub mod collections {
+            pub struct HashMap;
+        }
+    """, setOf(), setOf("HashMap"))
+
+    fun `test no completion for out-of-scope items 2`() = doTest("""
+        macro_rules! my_macro {
+            ($ e:expr, foo) => (1);
+            ($ e:expr, bar) => (1);
+        }
+
+        fn main() {
+            my_macro!(/*caret*/);
         }
 
         pub mod collections {

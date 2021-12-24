@@ -27,6 +27,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
@@ -422,9 +423,10 @@ private val RsElement.canBeExported: Boolean
         return context == null || context is RsMod
     }
 
-private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?): Boolean {
+private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: ExpectedType?): Boolean {
+    if (actualTy == null || expectedType == null) return false
+    val expectedTy = expectedType.ty
     if (
-        actualTy == null || expectedTy == null ||
         actualTy is TyUnknown || expectedTy is TyUnknown ||
         actualTy is TyTypeParameter || expectedTy is TyTypeParameter
     ) return false
@@ -438,7 +440,14 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?
         }
     }
 
-    return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder)).isOk
+    // TODO coerce
+    val ty1 = actualTy.foldWith(folder)
+    val ty2 = expectedTy.foldWith(folder)
+    return if (expectedType.coercable) {
+        lookup.ctx.tryCoerce(ty1, ty2)
+    } else {
+        lookup.ctx.combineTypesNoVars(ty1, ty2)
+    }.isOk
 }
 
 object Testmarks {

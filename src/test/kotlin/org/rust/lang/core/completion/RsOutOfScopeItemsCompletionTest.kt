@@ -11,7 +11,6 @@ import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
 
 class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
@@ -138,15 +137,19 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """, suggestOutOfScopeItems = false)
 
-    fun `test doesn't suggest non-imported symbols for empty path`() = doTest("""
-        pub mod foo {}
+    fun `test suggest non-imported symbols for empty path`() = doTestContainsCompletion("BTreeMap", """
+        mod collections {
+            pub struct BTreeMap;
+        }
         fn main() {
             let _ = /*caret*/;
         }
-    """, Testmarks.outOfScopeItemsCompletion)
+    """)
 
-    fun `test doesn't suggest non-imported symbols for empty path in macro bodies`() = doTest("""
-        pub mod foo {}
+    fun `test suggest non-imported symbols for empty path in macro bodies`() = doTestContainsCompletion("BTreeMap", """
+        mod collections {
+            pub struct BTreeMap;
+        }
         macro_rules! foo {
             ($($ i:item)*) => { $($ i)* };
         }
@@ -155,7 +158,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
                 let _ = /*caret*/
             }
         }
-    """, Testmarks.outOfScopeItemsCompletion)
+    """)
 
     fun `test enum completion`() = doTestByText("""
         mod a {
@@ -456,6 +459,13 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         importOutOfScopeItems: Boolean = true,
         check: (String, String) -> Unit
     ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { check(before, after) }
+
+    private fun doTestContainsCompletion(
+        variant: String,
+        @Language("Rust") code: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
+    ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { checkContainsCompletion(variant, code) }
 
     private fun withOutOfScopeSettings(
         suggestOutOfScopeItems: Boolean = true,
