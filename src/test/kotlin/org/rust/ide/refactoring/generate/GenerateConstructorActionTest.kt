@@ -242,4 +242,48 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test qualified path named struct`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+
+        struct System/*caret*/ {
+            s: foo::S
+        }
+    """, listOf(MemberSelection("s: foo::S", true)), """
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S
+        }
+
+        impl System {
+            pub fn new(s: foo::S) -> Self {
+                System { s }
+            }
+        }
+    """)
+
+    fun `test qualified path tuple struct`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+
+        struct System/*caret*/(foo::S);
+    """, listOf(MemberSelection("field0: foo::S", true)), """
+        mod foo {
+            pub struct S;
+        }
+
+        struct System(foo::S);
+
+        impl System {
+            pub fn new(field0: foo::S) -> Self {
+                System(field0)
+            }
+        }
+    """)
 }
