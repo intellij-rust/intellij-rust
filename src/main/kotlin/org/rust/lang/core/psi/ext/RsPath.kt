@@ -87,6 +87,7 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
     }
     is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
     is RsPatTupleStruct -> VALUES
+    is RsMacroCall -> MACROS
     is RsPathCodeFragment -> parent.ns
     else -> TYPES_N_VALUES
 }

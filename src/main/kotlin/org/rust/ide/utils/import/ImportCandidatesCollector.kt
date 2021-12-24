@@ -362,10 +362,20 @@ sealed interface ImportCandidateBase : Comparable<ImportCandidateBase> {
 
 data class ImportCandidate2(
     override val qualifiedNamedItem: QualifiedNamedItem2,
-    override val info: ImportInfo
+    override val info: ImportInfo,
+    private val isRootPathResolved: Boolean,
 ) : ImportCandidateBase {
-    override fun compareTo(other: ImportCandidateBase): Int {
-        fun Crate.originOrder(): Int = when (origin) {
+    override fun compareTo(other: ImportCandidateBase): Int =
+        COMPARATOR.compare(this, other as ImportCandidate2)
+
+    companion object {
+        private val COMPARATOR: Comparator<ImportCandidate2> = compareBy(
+            { !it.isRootPathResolved },
+            { it.qualifiedNamedItem.containingCrate.originOrder() },
+            { it.info.usePath },
+        )
+
+        private fun Crate.originOrder(): Int = when (origin) {
             PackageOrigin.WORKSPACE -> 0
             PackageOrigin.STDLIB -> when (normName) {
                 AutoInjectedCrates.STD -> 1
@@ -375,9 +385,6 @@ data class ImportCandidate2(
             PackageOrigin.DEPENDENCY -> 4
             PackageOrigin.STDLIB_DEPENDENCY -> 5
         }
-
-        other as ImportCandidate2
-        return compareValuesBy(this, other, { it.qualifiedNamedItem.containingCrate.originOrder() }, { it.info.usePath })
     }
 }
 

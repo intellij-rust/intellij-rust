@@ -695,6 +695,38 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test sort resolved paths before unresolved paths`() = checkAutoImportVariantsByText("""
+        mod mod1 {
+            pub mod inner {}
+        }
+
+        mod mod2 {
+            pub mod inner {
+                pub fn foo() {}
+            }
+        }
+
+        fn main() {
+            inner/*caret*/::foo();
+        }
+    """, listOf("crate::mod2::inner", "crate::mod1::inner"))
+
+    fun `test sort resolved paths before unresolved paths (macros)`() = checkAutoImportVariantsByText("""
+        mod mod1 {
+            pub mod inner {}
+        }
+
+        mod mod2 {
+            pub mod inner {
+                pub macro foo() {}
+            }
+        }
+
+        fn main() {
+            inner/*caret*/::foo!();
+        }
+    """, listOf("crate::mod2::inner", "crate::mod1::inner"))
+
     fun `test don't import trait assoc function if its import is useless`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
