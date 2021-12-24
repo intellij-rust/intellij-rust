@@ -71,7 +71,7 @@ private fun replaceExpr(factory: RsPsiFactory, element: RsElement, expr: RsExpr)
     val parent = element.parent
     val needsParentheses = when {
         expr is RsBinaryExpr && (parent is RsBinaryExpr || parent.requiresSingleExpr) -> true
-        (expr is RsRangeExpr || expr is RsLambdaExpr) && parent.requiresSingleExpr -> true
+        expr.isBlockLikeExpr && parent.requiresSingleExpr -> true
         expr is RsStructLiteral && (parent is RsMatchExpr || parent is RsForExpr || parent is RsCondition) -> true
         else -> false
     }
@@ -82,6 +82,12 @@ private fun replaceExpr(factory: RsPsiFactory, element: RsElement, expr: RsExpr)
     }
     element.replace(newExpr)
 }
+
+private val PsiElement.isBlockLikeExpr: Boolean
+    get() =
+        this is RsRangeExpr || this is RsLambdaExpr ||
+        this is RsMatchExpr || this is RsBlockExpr ||
+        this is RsLoopExpr || this is RsWhileExpr
 
 private val PsiElement.requiresSingleExpr: Boolean
     get() = this is RsDotExpr || this is RsTryExpr || this is RsUnaryExpr || this is RsCastExpr || this is RsCallExpr

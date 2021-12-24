@@ -5,7 +5,6 @@
 
 package org.rust.clion.debugger.runconfig
 
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
@@ -16,6 +15,7 @@ import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.BuildResult.ToolchainError.*
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.runconfig.RsDebugRunnerUtils.ERROR_MESSAGE_TITLE
+import org.rust.openapiext.showSettingsDialog
 
 object RsCLionDebugRunnerUtils {
 
@@ -75,11 +75,7 @@ object RsCLionDebugRunnerUtils {
             Messages.getErrorIcon()
         )
         if (option == Messages.OK) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(
-                project,
-                CPPToolchainsConfigurable::class.java,
-                null
-            )
+            project.showSettingsDialog<CPPToolchainsConfigurable>()
         }
     }
 }

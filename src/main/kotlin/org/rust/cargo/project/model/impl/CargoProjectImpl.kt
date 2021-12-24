@@ -112,7 +112,9 @@ open class CargoProjectsServiceImpl(
         if (isNewTrustedProjectApiAvailable) {
             @Suppress("LeakingThis")
             whenProjectTrusted(this) {
-                refreshAllProjects()
+                if (it == project) {
+                    refreshAllProjects()
+                }
             }
         }
     }

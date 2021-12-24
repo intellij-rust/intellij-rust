@@ -29,6 +29,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -444,4 +446,8 @@ class RsPluginDisposable : Disposable {
     }
 
     override fun dispose() {}
+}
+
+inline fun <reified T: Configurable> Project.showSettingsDialog() {
+    ShowSettingsUtil.getInstance().showSettingsDialog(this, T::class.java)
 }
