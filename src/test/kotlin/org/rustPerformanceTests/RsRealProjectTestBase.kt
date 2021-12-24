@@ -8,10 +8,14 @@ package org.rustPerformanceTests
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.UIUtil
+import org.rust.WithExperimentalFeatures
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.openapiext.fullyRefreshDirectory
 
+@WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
     protected fun openRealProject(info: RealProjectInfo): VirtualFile? {
         val base = openRealProject("testData/${info.path}", info.exclude)
@@ -28,6 +32,9 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
             ?: return null
 
         fun isAppropriate(file: VirtualFile): Boolean {
+            // Needed for `amethyst`
+            if (file.name == ".sentry_dsn.txt") return true
+
             val relativePath = file.path.substring(projectDir.path.length + 1)
             // 1. Ignore excluded files
             if (exclude.any { relativePath.startsWith(it) }) return false

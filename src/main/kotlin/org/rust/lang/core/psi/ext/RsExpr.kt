@@ -246,6 +246,35 @@ val RsBinaryOp.operatorType: BinaryOperator
 val RsBinaryExpr.operator: PsiElement get() = binaryOp.operator
 val RsBinaryExpr.operatorType: BinaryOperator get() = binaryOp.operatorType
 
+val RsExpr.classifyConstContext: RsConstContextKind?
+    get() {
+        for (it in contexts) {
+            when (it) {
+                is RsConstant -> return if (it.isConst) RsConstContextKind.Constant(it) else null
+                is RsFunction -> return if (it.isConst) RsConstContextKind.ConstFn(it) else null
+                is RsVariantDiscriminant -> return RsConstContextKind.EnumVariantDiscriminant(it.parent as RsEnumVariant)
+                is RsExpr -> {
+                    when (val parent = it.parent) {
+                        is RsArrayType -> if (it == parent.expr) return RsConstContextKind.ArraySize
+                        is RsArrayExpr -> if (it == parent.sizeExpr) return RsConstContextKind.ArraySize
+                        is RsTypeArgumentList -> return RsConstContextKind.ConstGenericArgument
+                    }
+                }
+                is RsItemElement -> return null
+            }
+        }
+
+        return null
+    }
+
+sealed class RsConstContextKind {
+    class Constant(val psi: RsConstant) : RsConstContextKind()
+    class ConstFn(val psi: RsFunction) : RsConstContextKind()
+    class EnumVariantDiscriminant(val psi: RsEnumVariant) : RsConstContextKind()
+    object ArraySize : RsConstContextKind()
+    object ConstGenericArgument : RsConstContextKind()
+}
+
 abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
