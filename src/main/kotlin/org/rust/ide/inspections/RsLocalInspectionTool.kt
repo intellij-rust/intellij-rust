@@ -6,11 +6,11 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -49,11 +49,14 @@ abstract class RsLocalInspectionTool : LocalInspectionTool() {
      * Other inspections should analyze only files that:
      * - belong to a workspace
      * - are included in module tree, i.e. have a crate root
+     * - are not disabled with a `cfg` attribute
      * - belong to a project with a configured and valid Rust toolchain
      */
     private fun isApplicableTo(file: RsFile): Boolean {
-        if (isUnitTestMode) return true
         if (isSyntaxOnly) return true
+        if (!file.isDeeplyEnabledByCfg) return false
+
+        if (isUnitTestMode) return true
 
         return file.cargoWorkspace != null
             && file.crateRoot != null
