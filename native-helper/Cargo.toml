@@ -3,10 +3,8 @@ name = "intellij-rust-native-helper"
 version = "0.1.0"
 edition = "2018"
 
-[dependencies.ra_ap_proc_macro_srv]
-git = "https://github.com/rust-analyzer/rust-analyzer"
-package = "proc_macro_srv"
-rev = "791722b70ad08641a48f96faedffdda6d2880366"
+[dependencies]
+ra_ap_proc_macro_srv = "=0.0.87"
 
 [target."cfg(windows)".dependencies.winapi]
 version = "*"
