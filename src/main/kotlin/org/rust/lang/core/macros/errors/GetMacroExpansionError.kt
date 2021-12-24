@@ -46,7 +46,7 @@ sealed class GetMacroExpansionError {
         OldEngineStd -> "the old macro expansion engine can't expand macros in Rust stdlib"
         MemExpDuringMacroExpansion -> "internal error: in-memory macro expansion is requested during other " +
             "macro expansion"
-        MemExpAttrMacro -> "internal error: can't do in-memory expansion of an attribute or derive macro"
+        MemExpAttrMacro -> "the old macro expansion engine can't expand an attribute or derive macro"
         is MemExpParsingError -> "can't parse `$expansionText` as `$context`"
         NextStepMacroAccess -> "internal error: the expansion from a next expansion step is accessed during " +
             "a previous expansion step"

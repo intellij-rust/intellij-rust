@@ -128,7 +128,7 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
 
 fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacro(
     def: T,
-    call: RsMacroCall,
+    call: RsPossibleMacroCall,
     factory: RsPsiFactory,
     storeRangeMap: Boolean
 ): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
