@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
-import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
@@ -49,6 +48,7 @@ import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
@@ -56,7 +56,7 @@ object CargoBuildManager {
     private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test")
 
     private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
-        FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
+        CompletableFuture.completedFuture(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
     private val MIN_RUSTC_VERSION: SemVer = "1.48.0".parseSemVer()
 
@@ -129,7 +129,7 @@ object CargoBuildManager {
     private fun execute(
         context: CargoBuildContext,
         doExecute: CargoBuildContext.() -> Unit
-    ): FutureResult<CargoBuildResult> {
+    ): CompletableFuture<CargoBuildResult> {
         context.environment.notifyProcessStartScheduled()
         val processCreationLock = Any()
 
@@ -139,11 +139,11 @@ object CargoBuildManager {
             isHeadlessEnvironment ->
                 context.indicator = EmptyProgressIndicator()
             else -> {
-                val indicatorResult = FutureResult<ProgressIndicator>()
+                val indicatorResult = CompletableFuture<ProgressIndicator>()
                 UIUtil.invokeLaterIfNeeded {
                     object : Task.Backgroundable(context.project, context.taskName, true) {
                         override fun run(indicator: ProgressIndicator) {
-                            indicatorResult.set(indicator)
+                            indicatorResult.complete(indicator)
 
                             var wasCanceled = false
                             while (!context.result.isDone) {
@@ -167,7 +167,7 @@ object CargoBuildManager {
                 try {
                     context.indicator = indicatorResult.get()
                 } catch (e: ExecutionException) {
-                    context.result.setException(e)
+                    context.result.completeExceptionally(e)
                     return context.result
                 }
             }
