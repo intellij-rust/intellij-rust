@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig.buildtool
 
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildViewManager
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -50,6 +49,7 @@ import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
 object CargoBuildManager {
