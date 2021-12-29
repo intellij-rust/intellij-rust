@@ -33,7 +33,7 @@ fun CrateDefMap.resolvePathFp(
         pathKind is PathKind.Super -> {
             val modData = containingMod.getNthParent(pathKind.level)
                 ?: return ResolvePathResult.empty(reachedFixedPoint = true)
-            if (modData == root) rootAsPerNs else modData.asPerNs()
+            if (modData.isCrateRoot) rootAsPerNs else modData.asPerNs()
         }
         // plain import or absolute path in 2015:
         // crate-relative with fallback to extern prelude
@@ -87,8 +87,7 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(
 ): MacroDefInfo? {
     if (macroPath.size == 1) {
         val name = macroPath.single()
-        containingMod.legacyMacros[name]
-            ?.getLastBefore(macroIndex)
+        containingMod.resolveMacroCallToLegacyMacroDefInfo(name, macroIndex)
             ?.let { return it }
     }
 
@@ -100,6 +99,11 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(
     )
     val defItem = perNs.resolvedDef.macros.singleOrNull() ?: return null
     return getMacroInfo(defItem)
+}
+
+private fun ModData.resolveMacroCallToLegacyMacroDefInfo(name: String, macroIndex: MacroIndex): MacroDefInfo? {
+    return legacyMacros[name]?.getLastBefore(macroIndex)
+        ?: context?.resolveMacroCallToLegacyMacroDefInfo(name, macroIndex)
 }
 
 fun List<MacroDefInfo>.getLastBefore(macroIndex: MacroIndex): MacroDefInfo? =
@@ -125,6 +129,13 @@ fun CrateDefMap.resolveExternCrateAsDefMap(name: String): CrateDefMap? =
  * - std prelude
  */
 fun CrateDefMap.resolveNameInModule(modData: ModData, name: String, withLegacyMacros: Boolean): PerNs {
+    val result = doResolveNameInModule(modData, name, withLegacyMacros)
+    val context = modData.context ?: return result
+    val resultFromContext = resolveNameInModule(context, name, withLegacyMacros)
+    return result.or(resultFromContext)
+}
+
+private fun CrateDefMap.doResolveNameInModule(modData: ModData, name: String, withLegacyMacros: Boolean): PerNs {
     val fromLegacyMacro = if (withLegacyMacros) modData.getFirstLegacyMacro(name) ?: PerNs.Empty else PerNs.Empty
     val fromScope = modData.getVisibleItem(name)
     val fromExternPrelude = resolveNameInExternPrelude(name)

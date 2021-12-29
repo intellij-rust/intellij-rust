@@ -685,16 +685,6 @@ class RsResolveTest : RsResolveTestBase() {
         }             //^
     """)
 
-    fun `test local fn`() = checkByCode("""
-        fn main() {
-            foo();
-           //^
-
-            fn foo() {}
-              //X
-        }
-    """)
-
     fun `test struct field named`() = checkByCode("""
         struct S { foo: i32 }
                   //X

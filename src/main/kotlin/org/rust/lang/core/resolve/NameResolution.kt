@@ -1064,10 +1064,10 @@ private class MacroResolver private constructor(
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement, isAttrOrDerive: Boolean): MacroResolveResult? {
         if (!project.isNewResolveEnabled) return null
         if (element !is RsElement) return null
-        val scope = element.context as? RsMod ?: return null // we are interested only in top-level elements
-        /** [processRemainedExportedMacros] processes local imports */
-        return processMacros(scope, processor, macroPath, isAttrOrDerive, ::processRemainedExportedMacros)
-            ?.toResult(usedNewResolve = true)
+        val scope = element.context as? RsItemsOwner ?: return null // we are interested only in top-level elements
+        val result = processMacros(scope, processor, macroPath, isAttrOrDerive)
+        if (scope !is RsMod && result == false) return null  // we should search in parent scopes
+        return result?.toResult(usedNewResolve = true)
     }
 
     private fun processRemainedExportedMacros(): Boolean {
@@ -1530,12 +1530,12 @@ private fun processLexicalDeclarations(
             //         ^ context.place
             // let x = 62; // not visible
             // ```
-            val visited = mutableSetOf<String>()
+            val prevScope = hashMapOf<String, Set<Namespace>>()
             if (Namespace.Values in ns) {
                 val shadowingProcessor = createProcessor(processor.name) { e ->
-                    (e.name !in visited) && processor(e).also {
+                    (e.name !in prevScope) && processor(e).also {
                         if (e.isInitialized && e.element != null) {
-                            visited += e.name
+                            prevScope[e.name] = VALUES
                         }
                     }
                 }
@@ -1559,7 +1559,9 @@ private fun processLexicalDeclarations(
                 }
             }
 
-            return processItemDeclarations(scope as RsItemsOwner, ns, processor, ItemProcessingMode.WITH_PRIVATE_IMPORTS)
+            return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+                processItemDeclarations(scope as RsItemsOwner, ns, shadowingProcessor, ItemProcessingMode.WITH_PRIVATE_IMPORTS)
+            }
         }
 
         is RsForExpr -> {

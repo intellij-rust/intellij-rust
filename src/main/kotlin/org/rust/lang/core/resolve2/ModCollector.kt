@@ -10,21 +10,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroCallBody
+import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
-import org.rust.lang.core.psi.ext.variants
+import org.rust.lang.core.psi.RsFileBase
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.processModDeclResolveVariants
 import org.rust.lang.core.resolve2.util.DollarCrateHelper
 import org.rust.lang.core.resolve2.util.DollarCrateMap
+import org.rust.lang.core.resolve2.util.buildStub
 import org.rust.lang.core.stubs.*
 import org.rust.openapiext.fileId
 import org.rust.openapiext.findFileByMaybeRelativePath
@@ -44,25 +45,28 @@ class ModCollectorContext(
      */
     val onAddItem: (ModData, String, PerNs, Visibility) -> Boolean =
         { containingMod, name, perNs, _ -> containingMod.addVisibleItem(name, perNs) }
-)
+) {
+    val isHangingMode: Boolean get() = context.isHangingMode
+}
 
 typealias LegacyMacros = Map<String, DeclMacroDefInfo>
 
-fun collectFile(
-    file: RsFile,
+fun collectScope(
+    scope: RsItemsOwner,
     modData: ModData,
     context: ModCollectorContext,
     modMacroIndex: MacroIndex = modData.macroIndex,
+    dollarCrateHelper: DollarCrateHelper? = null,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
         .takeIf { modData.isNormalCrate }
 
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null)
-    collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper)
+    collector.collectMod(scope.getOrBuildStub() ?: return emptyMap())
 
-    if (hashCalculator != null) {
+    if (hashCalculator != null && scope is RsFile) {
         val fileHash = hashCalculator.getFileHash()
-        context.defMap.addVisitedFile(file, modData, fileHash)
+        context.defMap.addVisitedFile(scope, modData, fileHash)
     }
 
     return collector.legacyMacros
@@ -107,7 +111,7 @@ private class ModCollector(
      */
     val legacyMacros: MutableMap<String, DeclMacroDefInfo> = hashMapOf()
 
-    fun collectMod(mod: StubElement<out RsMod>, propagateLegacyMacros: Boolean = false) {
+    fun collectMod(mod: StubElement<out RsItemsOwner>, propagateLegacyMacros: Boolean = false) {
         val visitor = if (hashCalculator != null) {
             val stdlibAttributes = defMap.stdlibAttributes.takeIf { modData.isNormalCrate && modData.isCrateRoot }
             val hashVisitor = hashCalculator.getVisitor(crate, modData.fileRelativePath, stdlibAttributes)
@@ -135,7 +139,7 @@ private class ModCollector(
             isPrelude = import.isPrelude
         )
 
-        if (import.isDeeplyEnabledByCfg && import.isExternCrate && import.isMacroUse) {
+        if (import.isDeeplyEnabledByCfg && import.isExternCrate && import.isMacroUse && !context.isHangingMode) {
             defMap.importExternCrateMacros(import.usePath.single())
         }
     }
@@ -254,7 +258,7 @@ private class ModCollector(
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
             }
-            is ChildMod.File -> collectFile(childMod.file, childModData, context)
+            is ChildMod.File -> collectScope(childMod.file, childModData, context)
         }
         return Pair(childModData, childModLegacyMacros)
     }
@@ -354,7 +358,7 @@ private class ModCollector(
         modData.addLegacyMacro(def.name, defInfo)
         legacyMacros[def.name] = defInfo
 
-        if (def.hasMacroExport) {
+        if (def.hasMacroExport && !context.isHangingMode) {
             val visibility = Visibility.Public
             val visItem = VisItem(macroPath, visibility)
             val perNs = PerNs.macros(visItem)
@@ -441,7 +445,7 @@ private class ModCollector(
         val virtualFiles = fileNames.mapNotNull { parentDirectory.findFileByMaybeRelativePath(it) }
         // Note: It is possible that [virtualFiles] is not empty,
         // but result is null, when e.g. file is too big (thus will be [PsiFile] and not [RsFile])
-        if (virtualFiles.isEmpty()) {
+        if (virtualFiles.isEmpty() && !context.isHangingMode) {
             for (fileName in fileNames) {
                 val path = parentDirectory.pathAsPath.resolve(fileName)
                 defMap.missedFiles.add(path)
@@ -451,7 +455,19 @@ private class ModCollector(
     }
 }
 
-fun RsFile.getOrBuildStub(): RsFileStub? {
+@Suppress("UNCHECKED_CAST")
+private fun RsItemsOwner.getOrBuildStub(): StubElement<out RsItemsOwner>? {
+    if (this is RsFileBase) return getOrBuildFileStub()
+    /**
+     * Note that [greenStub] and [buildStub] have consistent (equal) [RsPathStub.startOffset].
+     * See also [createDollarCrateHelper].
+     */
+    (this as? StubBasedPsiElement<*>)?.greenStub?.let { return it as StubElement<out RsItemsOwner> }
+    if (this is RsBlock) return buildStub()
+    return null
+}
+
+fun RsFileBase.getOrBuildFileStub(): RsFileStub? {
     val virtualFile = viewProvider.virtualFile
     val stubTree = greenStubTree ?: StubTreeLoader.getInstance().readOrBuild(project, virtualFile, this)
     val stub = stubTree?.root as? RsFileStub

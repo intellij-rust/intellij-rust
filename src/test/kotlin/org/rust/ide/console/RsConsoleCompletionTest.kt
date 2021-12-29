@@ -5,6 +5,8 @@
 
 package org.rust.ide.console
 
+import org.rust.UseOldResolve
+
 class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
 
     fun `test initial completion`() = checkContainsCompletion("""
@@ -130,6 +132,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         mod1::frobnicate()/*caret*/
     """)
 
+    @UseOldResolve
     fun `test child module with import`() = checkSingleCompletion("""
         mod mod1 { pub fn frobnicate() {} }
         use mod1::frobnicate;

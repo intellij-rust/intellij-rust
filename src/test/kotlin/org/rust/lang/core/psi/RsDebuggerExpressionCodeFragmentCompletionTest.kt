@@ -44,5 +44,5 @@ class RsDebuggerExpressionCodeFragmentCompletionTest
             use my::*;
             /*caret*/;
         }
-    """, "foo<caret>", "foobar")
+    """, "my::foo<caret>", "foobar")
 }

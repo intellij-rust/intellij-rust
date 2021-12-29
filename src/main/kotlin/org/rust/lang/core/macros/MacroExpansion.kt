@@ -127,14 +127,22 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
 }
 
 fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacro(
-    def: T,
+    def: RsMacroDataWithHash<T>,
     call: RsPossibleMacroCall,
     factory: RsPsiFactory,
-    storeRangeMap: Boolean
+    storeRangeMap: Boolean,
+    useCache: Boolean,
 ): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
     val callData = RsMacroCallData.fromPsi(call) ?: return Err(MacroCallSyntaxError)
-    val (expandedText, ranges) = expandMacroAsTextWithErr(def, callData)
-        .unwrapOrElse { return Err(ExpansionError(it)) }
+    val (expandedText, ranges) = if (useCache) {
+        val callDataWithHash = RsMacroCallDataWithHash(callData, call.bodyHash)
+        val mixHash = def.mixHash(callDataWithHash) ?: return Err(MacroCallSyntaxError)
+        MacroExpansionSharedCache.getInstance().cachedExpand(this, def.data, callData, mixHash)
+            .map { it.text to it.ranges }
+    } else {
+        expandMacroAsTextWithErr(def.data, callData)
+    }.unwrapOrElse { return Err(ExpansionError(it)) }
+
     val context = call.expansionContext
     val expansion = parseExpandedTextWithContext(context, factory, expandedText)
         ?: return Err(ParsingError(expandedText, context))
