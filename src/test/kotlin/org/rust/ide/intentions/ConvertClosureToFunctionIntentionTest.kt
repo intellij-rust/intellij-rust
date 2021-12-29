@@ -114,4 +114,20 @@ class ConvertClosureToFunctionIntentionTest : RsIntentionTestBase(ConvertClosure
             fn foo(s: S) -> S { s }/*caret*/
         }
     """)
+
+    fun `test infer generic type`() = doAvailableTest("""
+        struct Wrap<T>(T);
+
+        fn main() {
+            let /*caret*/foo = |x: Wrap<_>| x;
+            let _: Wrap<i8> = foo(Wrap(3_i8));
+        }
+    """, """
+        struct Wrap<T>(T);
+
+        fn main() {
+            fn foo(x: Wrap<i8>) -> Wrap<i8> { x }
+            let _: Wrap<i8> = foo(Wrap(3_i8));
+        }
+    """)
 }

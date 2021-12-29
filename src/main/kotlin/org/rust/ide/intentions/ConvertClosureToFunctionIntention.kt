@@ -13,10 +13,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.endOffset
-import org.rust.lang.core.psi.ext.startOffset
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
@@ -51,14 +48,19 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val useDefaultName = letBidingName == null
         val targetFunctionName = letBidingName ?: "func"
 
-        val (parametersText, parameterPlaceholders) = createParameterList(factory, ctx.lambda.valueParameters)
+        val fnType = ctx.lambda.type as? TyFunction ?: return
+        val parametersText = ctx.lambda.valueParameters.zip(fnType.paramTypes).joinToString(", ") { (pat, paramType) ->
+            val patText = pat.patText ?: "_"
+            val type = paramType.renderInsertionSafe()
+            "$patText: $type"
+        }
 
         val lambdaRetTypePsi = ctx.lambda.retType
-        val lambdaRetTy = (ctx.lambda.type as? TyFunction)?.retType
+        val lambdaRetTy = fnType.retType
 
         val returnText = if (lambdaRetTypePsi != null) {
             lambdaRetTypePsi.text
-        } else if (lambdaRetTy != null && lambdaRetTy != TyUnknown && lambdaRetTy !is TyUnit) {
+        } else if (lambdaRetTy != TyUnknown && lambdaRetTy !is TyUnit) {
             "-> ${lambdaRetTy.renderInsertionSafe()}"
         } else {
             ""
@@ -74,45 +76,26 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val function = factory.createFunction("fn $targetFunctionName($parametersText) $returnText $body")
         val replaced = ctx.letDecl.replace(function) as RsFunction
 
+        val placeholders = findPlaceholders(replaced)
+
         // in case we auto-generated a function name, we encourage the user to change it by running a template on the replacement
-        if (useDefaultName || parameterPlaceholders.isNotEmpty()) {
+        if (useDefaultName || placeholders.isNotEmpty()) {
             val placeholderElements = mutableListOf<SmartPsiElementPointer<PsiElement>>()
             if (useDefaultName) {
                 placeholderElements.add(replaced.identifier.createSmartPointer())
             }
-            replaced.valueParameterList?.valueParameterList.orEmpty().forEachIndexed { i, param ->
-                if (i in parameterPlaceholders) {
-                    param.typeReference?.let { placeholderElements += it.createSmartPointer() }
-                }
-            }
+            placeholderElements += placeholders.map { it.createSmartPointer() }
             editor.buildAndRunTemplate(replaced, placeholderElements)
         } else {
             editor.caretModel.moveToOffset(replaced.endOffset)
         }
     }
 
-    private fun createParameterList(
-        factory: RsPsiFactory,
-        valueParameters: List<RsValueParameter>
-    ): Pair<String, Set<Int>> {
-        val placeholders = mutableSetOf<Int>()
-        valueParameters.forEachIndexed { i, param ->
-            if (param.typeReference == null) {
-                val type = param.pat?.type ?: TyUnknown
-
-                val colon = param.addAfter(factory.createColon(), param.pat)
-
-                if (type != TyUnknown) {
-                    param.addAfter(factory.createType(type.renderInsertionSafe()), colon) as RsTypeReference
-                } else {
-                    param.addAfter(factory.createType("()"), colon) as RsTypeReference
-                    placeholders.add(i)
-                }
-            }
-        }
-        val newParams = valueParameters.joinToString(", ") { it.text }
-
-        return Pair(newParams, placeholders)
+    private fun findPlaceholders(replaced: RsFunction): List<PsiElement> {
+        val parameters = replaced.valueParameterList ?: return emptyList()
+        val wildcardPats = parameters.descendantsOfType<RsPatWild>()
+        val wildcardPaths = parameters.descendantsOfType<RsPath>().filter { it.path?.text == "_" }
+        return wildcardPats + wildcardPaths
     }
 
     data class Context(
