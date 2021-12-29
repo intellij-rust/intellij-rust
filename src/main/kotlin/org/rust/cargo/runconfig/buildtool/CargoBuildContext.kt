@@ -13,13 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifacts
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -60,7 +60,7 @@ class CargoBuildContext(
     private val buildSemaphore: Semaphore = project.getUserData(BUILD_SEMAPHORE_KEY)
         ?: (project as UserDataHolderEx).putUserDataIfAbsent(BUILD_SEMAPHORE_KEY, Semaphore(1))
 
-    val result: FutureResult<CargoBuildResult> = FutureResult()
+    val result: CompletableFuture<CargoBuildResult> = CompletableFuture()
 
     val started: Long = System.currentTimeMillis()
     @Volatile
@@ -126,7 +126,7 @@ class CargoBuildContext(
             }
         }
 
-        result.set(CargoBuildResult(
+        result.complete(CargoBuildResult(
             succeeded = isSuccess,
             canceled = isCanceled,
             started = started,
@@ -142,7 +142,7 @@ class CargoBuildContext(
     fun canceled() {
         finished = System.currentTimeMillis()
 
-        result.set(CargoBuildResult(
+        result.complete(CargoBuildResult(
             succeeded = false,
             canceled = true,
             started = started,
