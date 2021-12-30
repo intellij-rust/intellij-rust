@@ -352,10 +352,11 @@ private fun RsBlock.deleteContinuousChildRange(stmts: List<PsiElement>) {
 }
 
 private fun RsElement.addAllAfter(elements: List<PsiElement>, anchor: PsiElement) {
-    val anchorBefore = anchor.nextSibling
-    for (element in elements) {
-        // Can't use `addAfter` since it returns incorrect element when adding whitespace
-        addBefore(element, anchorBefore)
+    for (element in elements.asReversed()) {
+        // Note that:
+        // - return value of `addAfter` is incorrect when adding whitespace
+        // - `addBefore` doesn't work when adding whitespace after comment
+        addAfter(element, anchor)
     }
 }
 
