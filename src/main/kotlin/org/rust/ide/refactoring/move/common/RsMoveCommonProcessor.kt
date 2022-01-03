@@ -126,15 +126,55 @@ class RsMoveCommonProcessor(
         }
     }
 
+    /**
+     * - Direct reference is reference to one of [elementsToMove]:
+     * ```rust
+     * fn usages() {
+     *     item1();
+     *     ~~~~~ direct reference
+     *     item2::func();
+     *     ~~~~~ direct reference
+     * }
+     *
+     * fn item1/*caret*/() {}
+     * mod item2/*caret*/ { pub fn func() {} }
+     * ```
+     *
+     * - Indirect reference is reference to item inside moved mod:
+     *   (if we can't find direct reference using base/parent path)
+     * ```rust
+     * use inner::func;  // this import will remain in source mod!
+     * fn usages() {
+     *     func();
+     *     ~~~~ indirect reference
+     * }
+     *
+     * mod inner/*caret*/ { pub fn func() {} }
+     * ```
+     */
     fun findUsages(): Array<RsMoveUsageInfo> {
-        return elementsToMove
-            .flatMap { ReferencesSearch.search(it.element, GlobalSearchScope.projectScope(project)) }
-            .filterNotNull()
+        val referencesDirect = findDirectInsideReferences()
+        val referencesIndirect = findIndirectInsideReferences()
+        return (referencesDirect + referencesIndirect)
             .mapNotNull { createMoveUsageInfo(it) }
             // sorting is needed for stable results in tests
             .sortedWith(compareBy({ it.element.containingMod.crateRelativePath }, { it.element.startOffset }))
             .toTypedArray()
     }
+
+    private fun findDirectInsideReferences(): List<PsiReference> = elementsToMove
+        .flatMap { ReferencesSearch.search(it.element, GlobalSearchScope.projectScope(project)) }
+
+    private fun findIndirectInsideReferences(): List<PsiReference> =
+        movedElementsShallowDescendantsOfType<RsPath>(elementsToMove, processInlineModules = false)
+            .filter { path ->
+                if (path.ancestorStrict<RsUseGroup>() != null || path.path != null) return@filter false
+                val target = path.reference?.resolve() ?: return@filter false
+                // these are direct references
+                if (elementsToMove.any { it is ItemToMove && it.item == target }) return@filter false
+                target.isInsideMovedElements(elementsToMove)
+            }
+            .mapNotNull { it.reference }
 
     private fun createMoveUsageInfo(reference: PsiReference): RsMoveUsageInfo? {
         val element = reference.element
@@ -162,6 +202,7 @@ class RsMoveCommonProcessor(
                 runReadAction {
                     // TODO: two threads
                     outsideReferences = collectOutsideReferences()
+                    /** Also contains self-references */
                     val insideReferences = preprocessInsideReferences(usages)
                     traitMethodsProcessor.preprocessOutsideReferences(conflicts, elementsToMove)
                     traitMethodsProcessor.preprocessInsideReferences(conflicts, elementsToMove)
@@ -277,6 +318,7 @@ class RsMoveCommonProcessor(
         return RsMoveReferenceInfo(path, pathOriginal, pathNewAccessible, pathNewFallback, target)
     }
 
+    /** Also processes self references */
     private fun preprocessInsideReferences(usages: Array<UsageInfo>): List<RsMoveReferenceInfo> {
         val pathUsages = usages.filterIsInstance<RsPathUsageInfo>()
         for (usage in pathUsages) {
@@ -299,13 +341,19 @@ class RsMoveCommonProcessor(
         val path = convertFromPathOriginal(pathOriginal, codeFragmentFactory)
 
         val isSelfReference = pathOriginal.isInsideMovedElements(elementsToMove)
-        if (isSelfReference) {
-            // after move path will be in `targetMod`
-            // so we can refer to moved item just with its name
-            check(target.containingModStrict == sourceMod)  // any inside reference is reference to moved item
-            if (path.containingMod == sourceMod) {
+        if (isSelfReference && path.containingMod == sourceMod) {
+            if (target.containingModStrict == sourceMod) {  // inside reference to moved item
+                // after move path will be in `targetMod`, so we can refer to moved item just with its name
                 val pathNew = target.name?.toRsPath(codeFragmentFactory, targetMod)
                 if (pathNew != null) return RsMoveReferenceInfo(path, pathOriginal, pathNew, pathNew, target)
+            } else run {
+                val pathOldAbsolute = RsImportHelper.findPath(path, target) ?: return@run
+                val sourceModPrefix = "crate${sourceMod.crateRelativePath}::"
+                if (pathOldAbsolute.startsWith(sourceModPrefix)) {
+                    val pathRelativeToSourceMod = pathOldAbsolute.removePrefix(sourceModPrefix)
+                    val pathNew = pathRelativeToSourceMod.toRsPath(codeFragmentFactory, targetMod)
+                    return RsMoveReferenceInfo(path, pathOriginal, pathNew, pathNew, target)
+                }
             }
         }
 

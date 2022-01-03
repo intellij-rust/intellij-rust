@@ -1783,7 +1783,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
-    fun `test self references to inner mod`() = doTest("""
+    fun `test self references to inner mod (absolute path)`() = doTest("""
     //- lib.rs
         mod mod1 {
             mod foo1/*caret*/ {
@@ -1801,6 +1801,30 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
             }
 
             fn foo2() { foo1::func(); }
+        }
+    """)
+
+    fun `test self references to inner mod (using import)`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use foo1::func;
+            mod foo1/*caret*/ {
+                pub fn func() {}
+            }
+            fn foo2/*caret*/() { func(); }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            use foo1::func;
+
+            pub mod foo1 {
+                pub fn func() {}
+            }
+
+            fn foo2() { func(); }
         }
     """)
 
