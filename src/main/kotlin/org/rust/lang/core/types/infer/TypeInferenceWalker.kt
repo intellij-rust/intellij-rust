@@ -1380,14 +1380,18 @@ class RsTypeInferenceWalker(
     }
 }
 
-private val RsSelfParameter.typeOfValue: Ty
+val RsFunction.selfType: Ty?
     get() {
-        val selfType = when (val owner = parentFunction.owner) {
+        return when (val owner = owner) {
             is RsAbstractableOwner.Impl -> owner.impl.selfType
             is RsAbstractableOwner.Trait -> owner.trait.selfType
-            else -> return TyUnknown
+            else -> null
         }
+    }
 
+val RsSelfParameter.typeOfValue: Ty
+    get() {
+        val selfType = parentFunction.selfType ?: TyUnknown
         return typeOfValue(selfType)
     }
 
