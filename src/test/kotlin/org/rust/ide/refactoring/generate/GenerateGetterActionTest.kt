@@ -454,4 +454,28 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test field with qualified path`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S/*caret*/
+        }
+    """, listOf(MemberSelection("s: foo::S", true)), """
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S
+        }
+
+        impl System {
+            pub fn s(&self) -> &foo::S {
+                &self.s
+            }
+        }
+    """)
 }

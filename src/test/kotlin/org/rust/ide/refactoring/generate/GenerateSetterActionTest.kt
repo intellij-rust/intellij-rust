@@ -244,4 +244,28 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test field with qualified path`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S/*caret*/
+        }
+    """, listOf(MemberSelection("s: foo::S", true)), """
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S
+        }
+
+        impl System {
+            pub fn set_s(&mut self, s: foo::S) {
+                self.s = s;
+            }
+        }
+    """)
 }
