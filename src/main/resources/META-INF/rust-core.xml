@@ -202,6 +202,8 @@
 
         <highlightingPassFactory implementation="org.rust.ide.annotator.RsHighlightingPassFactoryRegistrar"/>
 
+        <problemFileHighlightFilter implementation="org.rust.ide.annotator.RsProblemFileHighlightFilter"/>
+
         <!-- Line Marker Providers -->
 
         <codeInsight.lineMarkerProvider language="Rust"
