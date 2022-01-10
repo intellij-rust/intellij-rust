@@ -165,7 +165,9 @@ fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
         PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
         object : AnyPsiChangeListener {
             override fun beforePsiChanged(isPhysical: Boolean) {
-                Disposer.dispose(disposable)
+                if (isPhysical) {
+                    Disposer.dispose(disposable)
+                }
             }
         }
     )
