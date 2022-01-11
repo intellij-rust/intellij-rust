@@ -463,7 +463,7 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     if (scope.isLocal) return CantUseNewResolve("local mod")
     val crate = when (val crate = scope.containingCrate) {
         is CargoBasedCrate -> crate
-        is DoctestCrate -> return CantUseNewResolve("Doctest crate")
+        is DoctestCrate -> return project.getDoctestModInfo(scope, crate)
         null -> return project.getDetachedModInfo(scope)
         else -> error("unreachable")
     }

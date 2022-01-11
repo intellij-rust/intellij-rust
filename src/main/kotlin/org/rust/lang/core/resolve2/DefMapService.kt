@@ -310,8 +310,8 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     companion object {
-        private val detachedCrateNextId: AtomicInteger = AtomicInteger(-1)
-        fun getDetachedCrateNextId(): Int = detachedCrateNextId.decrementAndGet()
+        private val nextNonCargoCrateId: AtomicInteger = AtomicInteger(-1)
+        fun getNextNonCargoCrateId(): Int = nextNonCargoCrateId.decrementAndGet()
     }
 }
 
