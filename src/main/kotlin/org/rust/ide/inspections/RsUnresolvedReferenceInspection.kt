@@ -88,6 +88,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         val candidates = context?.candidates
         if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
 
+        if (element.containingCrate?.hasCyclicDevDependencies == true && element.isUnderCfgTest) {
+            return
+        }
+
         val referenceName = element.referenceName
         val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
         val fixes = createQuickFixes(candidates, element, context)

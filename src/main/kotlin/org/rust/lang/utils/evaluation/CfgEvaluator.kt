@@ -173,14 +173,21 @@ class CfgEvaluator(
                 PackageOrigin.WORKSPACE -> Unknown
             }
 
-            return CfgEvaluator(
+            return forCrate(crate, crate.evaluateUnknownCfgToFalse, cfgTest)
+        }
+
+        fun forCrate(
+            crate: Crate,
+            evaluateUnknownCfgToFalse: Boolean,
+            cfgTestValue: ThreeValuedLogic
+        ): CfgEvaluator =
+            CfgEvaluator(
                 crate.cfgOptions,
                 crate.features,
                 crate.origin,
-                crate.evaluateUnknownCfgToFalse,
-                cfgTest
+                evaluateUnknownCfgToFalse,
+                cfgTestValue
             )
-        }
     }
 }
 

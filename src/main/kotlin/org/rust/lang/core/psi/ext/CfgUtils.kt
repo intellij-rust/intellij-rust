@@ -7,8 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.psi.ProcMacroAttribute
-import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.stdext.withPrevious
@@ -77,6 +76,45 @@ fun PsiElement.getCodeStatus(crate: Crate?): RsCodeStatus {
 
     return RsCodeStatus.CODE
 }
+
+/**
+ * `#[cfg(test)]` or `#[test]`
+ */
+val PsiElement.isUnderCfgTest: Boolean
+    get() = ancestorOrSelf<RsElement>()?.isUnderCfgTest == true
+
+private val RsElement.isUnderCfgTest: Boolean
+    get() {
+        val crate = containingCrate ?: return false
+        val trueEvaluator = LazyCfgEvaluator.NonLazy(CfgEvaluator.forCrate(crate, true, ThreeValuedLogic.True))
+        val falseEvaluator = LazyCfgEvaluator.NonLazy(CfgEvaluator.forCrate(crate, true, ThreeValuedLogic.False))
+
+        fun isUnderCfgTestSelf(element: RsDocAndAttributeOwner): Boolean {
+            val trueValue = element.evaluateCfg(trueEvaluator)
+            val falseValue = element.evaluateCfg(falseEvaluator)
+            return trueValue == ThreeValuedLogic.True && falseValue == ThreeValuedLogic.False
+        }
+
+        for (ancestor in contexts) {
+            if (ancestor is RsFunction && ancestor.isTest) return true
+            if (ancestor is RsMod) {
+                return ancestor.superMods.any {
+                    when (it) {
+                        is RsModItem -> isUnderCfgTestSelf(it)
+                        is RsFile -> isUnderCfgTestSelf(it) || it.declaration?.let { isUnderCfgTestSelf(it) } == true
+                        else -> false
+                    }
+                }
+            }
+            if (ancestor is RsDocAndAttributeOwner) {
+                if (isUnderCfgTestSelf(ancestor)) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
 
 /**
  * See tests in `RsCodeStatusTest`
