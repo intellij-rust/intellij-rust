@@ -342,6 +342,32 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
         } //^ lib.rs
     """)
 
+    fun `test macro expanded to $crate macro call`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen {
+            ($ t:tt) => {
+                $ crate::as_is! {
+                    $ t
+                }
+            };
+        }
+
+        #[macro_export]
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+    //- main.rs
+        struct Foo;
+        impl Foo {
+            fn func(&self) {}
+        }    //X
+
+        fn main() {
+            use test_package::gen;
+            let foo = gen! { Foo };
+            foo.func();
+        }     //^ main.rs
+    """)
+
     fun `test macro expanded to $crate import inside block`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]

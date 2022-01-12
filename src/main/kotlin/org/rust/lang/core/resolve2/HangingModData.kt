@@ -57,6 +57,13 @@ fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
     return RsModInfo(project, defMap, hangingModData, contextInfo.crate, dataPsiHelper)
 }
 
+fun getNearestAncestorModInfo(scope: RsItemsOwner): RsModInfoBase {
+    if (scope !is RsBlock) return getModInfo(scope)
+
+    return getHangingModInfo(scope) as? RsModInfo
+        ?: scope.getContextModInfo()
+}
+
 private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): ModData {
     val (project, defMap, contextData, crate) = contextInfo
 

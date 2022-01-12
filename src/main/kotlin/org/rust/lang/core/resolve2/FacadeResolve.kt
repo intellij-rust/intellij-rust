@@ -247,13 +247,8 @@ private fun <T> RsPossibleMacroCall.resolveToMacroAndThen(
     withoutNewResolve: () -> T?,
     withNewResolve: (MacroDefInfo, RsModInfo) -> T?
 ): T? {
-    val path = path ?: return null
-    val info = when {
-        !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
-        isTopLevelExpansion || path.qualifier != null -> getModInfo(containingMod)
-        else -> CantUseNewResolve("not top level")
-    }
-    return when (info) {
+    val scope = contextStrict<RsItemsOwner>() ?: return null
+    return when (val info = getNearestAncestorModInfo(scope)) {
         is CantUseNewResolve -> withoutNewResolve()
         InfoNotFound -> null
         is RsModInfo -> {
@@ -326,25 +321,27 @@ fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroInde
             return ownerIndex.append(deriveIndex)
         }
     }
-    val itemAndCallExpandedFrom = element.stubAncestors
-        .filterIsInstance<RsExpandedElement>()
-        .mapNotNull { it to (it.expandedOrIncludedFrom ?: return@mapNotNull null) }
-        .firstOrNull()
-    if (itemAndCallExpandedFrom == null) {
-        if (element.containingFile is RsCodeFragment) return MacroIndex(intArrayOf(Int.MAX_VALUE))
-        val (item, parent) = element.ancestorPairs.first { (_, parent) -> parent is RsMod }
-        val modData = getModData(parent as RsMod, elementCrate.id ?: return null) ?: return null
-        val indexInParent = getMacroIndexInParent(item, parent, elementCrate)
-        return modData.macroIndex.append(indexInParent)
-    } else {
-        val (item, callExpandedFrom) = itemAndCallExpandedFrom
-        val parent = item.parent
-        // TODO: Possible optimization - store macro index in [resolveToMacroDefInfo] cache
-        val parentIndex = getMacroIndex(callExpandedFrom, elementCrate) ?: return null
-        if (parent !is RsMod) return parentIndex  // not top level expansion
-        val indexInParent = getMacroIndexInParent(item, parent, elementCrate)
+
+    for ((current, parent) in element.ancestorPairs) {
+        // TODO: Optimization: find [expandedOrIncludedFrom] using [parent] when it is [RsFile]
+        val expandedOrIncludedFrom = (current as? RsExpandedElement)?.expandedOrIncludedFrom
+        val parentIndex = when {
+            expandedOrIncludedFrom != null -> getMacroIndex(expandedOrIncludedFrom, elementCrate)
+            parent is RsCodeFragment -> MacroIndex(intArrayOf(Int.MAX_VALUE))
+            parent is RsBlock -> {
+                val parentData = dataPsiHelper?.psiToData(parent) ?: continue
+                parentData.macroIndex
+            }
+            parent is RsMod -> run {
+                val modData = getModData(parent, elementCrate.id ?: return null)
+                modData?.macroIndex
+            }
+            else -> continue
+        } ?: return null
+        val indexInParent = getMacroIndexInParent(current, parent, elementCrate)
         return parentIndex.append(indexInParent)
     }
+    return null
 }
 
 private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement, crate: Crate): Int {
@@ -456,6 +453,7 @@ interface DataPsiHelper {
     fun findModData(path: ModPath): ModData? = null
 }
 
+/** See also [getNearestAncestorModInfo] */
 fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     val scope = scope0.originalElement as? RsItemsOwner ?: scope0
     if (scope !is RsMod) return getHangingModInfo(scope)
