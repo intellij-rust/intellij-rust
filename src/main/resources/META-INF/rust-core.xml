@@ -1247,6 +1247,8 @@
     <projectListeners>
         <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"
                   topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
+        <listener class="org.rust.ide.status.RsExternalLinterWidgetUpdater"
+                  topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener"/>
     </projectListeners>
 
     <actions>
