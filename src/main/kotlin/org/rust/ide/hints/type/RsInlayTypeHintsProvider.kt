@@ -49,6 +49,13 @@ abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHint
         override val mainCheckboxText: String
             get() = RsBundle.message("settings.rust.inlay.hints.for")
 
+        /**
+         * Each case may have:
+         *  * Description provided by [InlayHintsProvider.getProperty].
+         *  Property key has `inlay.%[InlayHintsProvider.key].id%.%case.id%` structure
+         *
+         *  * Preview taken from `resource/inlayProviders/%[InlayHintsProvider.key].id%/%case.id%.rs` file
+         */
         override val cases: List<Case>
             get() = listOf(
                 Case(RsBundle.message("settings.rust.inlay.hints.for.variables"), "variables", settings::showForVariables),
