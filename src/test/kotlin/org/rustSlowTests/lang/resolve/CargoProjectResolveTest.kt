@@ -17,7 +17,6 @@ import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
-import org.rust.cargo.project.settings.toolchain
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
@@ -711,16 +710,16 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 edition = "2018"
 
                 [features]
-                foo_feature = ["bar_renamed/bar_feature"]
+                foo_feature = ["bar-renamed/bar_feature"]
 
-                [dependencies.bar_renamed]
+                [dependencies.bar-renamed]
                 package = "bar"
                 path = "../bar"
                 optional = true
             """)
             dir("src") {
                 rust("lib.rs", """
-                    #[cfg(feature="bar_renamed")]
+                    #[cfg(feature="bar-renamed")]
                     pub use bar_renamed::bar;
                 """)
             }
@@ -743,7 +742,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.run {
         project.cargoProjects.singlePackage("foo").checkFeatureEnabled("foo_feature")
-        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("bar_renamed")
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("bar-renamed")
         project.cargoProjects.singlePackage("bar").checkFeatureEnabled("bar_feature")
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
