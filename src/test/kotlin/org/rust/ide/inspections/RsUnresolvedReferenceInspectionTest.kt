@@ -289,6 +289,18 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         fn foo(a: <error descr="Unresolved reference: `MyStruct`">MyStruct</error>) {}/*caret*/
     """, false)
 
+    fun `test no unresolved reference if path qualifier is multiresolved`() = checkByText("""
+        mod foo {
+            fn foo() {}
+        }
+        mod foo {
+            fn bar() {}
+        }
+        fn main () {
+            foo::bar();
+        }
+    """, false)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }
     }
