@@ -443,6 +443,12 @@ private fun processQualifiedPathResolveVariants1(
     processor: RsResolveProcessor
 ): Boolean {
     val (base, subst) = resolvedQualifier
+
+    if (parent is RsUseSpeck && path.path == null) {
+        selfInGroup.hit()
+        if (processor("self", base)) return true
+    }
+
     if (base is RsMod) {
         val result = processor.lazy("super") {
             // `super` is allowed only after `self` and `super`
@@ -473,11 +479,6 @@ private fun processQualifiedPathResolveVariants1(
         if (resolveBetweenDifferentTargets && baseModContainingCrate?.kind?.isProcMacro == true) {
             return false
         }
-    }
-
-    if (parent is RsUseSpeck && path.path == null) {
-        selfInGroup.hit()
-        if (processor("self", base)) return true
     }
 
     val prevScope = hashMapOf<String, Set<Namespace>>()
