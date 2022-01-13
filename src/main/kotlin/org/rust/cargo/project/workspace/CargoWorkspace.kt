@@ -648,7 +648,8 @@ private fun PackageImpl.addDependencies(workspaceData: CargoWorkspaceData, packa
             dep.depKinds,
             rawDeps.any { it.optional },
             rawDeps.any { it.uses_default_features },
-            rawDeps.flatMap { it.features }.toSet()
+            rawDeps.flatMap { it.features }.toSet(),
+            rawDeps.firstOrNull()?.rename ?: dependencyPackage.name
         )
     }
 }
@@ -678,13 +679,20 @@ private class DependencyImpl(
     override val depKinds: List<CargoWorkspace.DepKindInfo>,
     val isOptional: Boolean = false,
     val areDefaultFeaturesEnabled: Boolean = true,
-    override val requiredFeatures: Set<String> = emptySet()
+    override val requiredFeatures: Set<String> = emptySet(),
+    override val cargoFeatureDependencyPackageName: String = if (name == pkg.libTarget?.normName) pkg.name else name
 ) : CargoWorkspace.Dependency {
-    override val cargoFeatureDependencyPackageName: String
-        get() = if (name == pkg.libTarget?.normName) pkg.name else name
 
     fun withPackage(newPkg: PackageImpl): DependencyImpl =
-        DependencyImpl(newPkg, name, depKinds, isOptional, areDefaultFeaturesEnabled, requiredFeatures)
+        DependencyImpl(
+            newPkg,
+            name,
+            depKinds,
+            isOptional,
+            areDefaultFeaturesEnabled,
+            requiredFeatures,
+            cargoFeatureDependencyPackageName
+        )
 
     override fun toString(): String = name
 }
