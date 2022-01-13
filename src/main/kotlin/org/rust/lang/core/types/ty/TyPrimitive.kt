@@ -36,7 +36,7 @@ sealed class TyPrimitive : Ty() {
     }
 
     companion object {
-        fun fromPath(path: RsPath): TyPrimitive? {
+        fun fromPath(path: RsPath, checkResolve: Boolean = true): TyPrimitive? {
             val name = path.referenceName ?: return null
 
             val result = fromName(name) ?: return null
@@ -47,10 +47,12 @@ sealed class TyPrimitive : Ty() {
 
             // struct u8;
             // let a: u8; // this is a struct "u8", not a primitive type "u8"
-            val pathReference = path.reference ?: return null
-            val resolvedTo = pathReference.multiResolve()
-            if (parent is RsBaseType && resolvedTo.any { it !is RsMod }) return null
-            if (parent is RsPath && resolvedTo.isNotEmpty()) return null
+            if (checkResolve) {
+                val pathReference = path.reference ?: return null
+                val resolvedTo = pathReference.multiResolve()
+                if (parent is RsBaseType && resolvedTo.any { it !is RsMod }) return null
+                if (parent is RsPath && resolvedTo.isNotEmpty()) return null
+            }
 
             return result
         }

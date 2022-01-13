@@ -389,13 +389,60 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val (base, subst) = qualifier.reference?.advancedResolve() ?: run {
-        val primitiveType = TyPrimitive.fromPath(qualifier)
-        if (primitiveType != null) {
-            if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType)) return true
+    val resolvedQualifier = qualifier.reference?.advancedResolve()
+    val primitiveType = TyPrimitive.fromPath(qualifier, checkResolve = false)
+
+    val prevScope = hashMapOf<String, Set<Namespace>>()
+
+    if (resolvedQualifier != null) {
+        val shadowingProcessor = if (primitiveType != null) {
+            createProcessor(processor.name) { e ->
+                val result = processor(e)
+                if (e.isInitialized) {
+                    val element = e.element
+                    if (element is RsNamedElement) {
+                        prevScope[e.name] = element.namespaces
+                    }
+                }
+                result
+            }
+        } else {
+            processor
         }
-        return false
+
+        val result = processQualifiedPathResolveVariants1(
+            lookup,
+            isCompletion,
+            ns,
+            qualifier,
+            resolvedQualifier,
+            path,
+            parent,
+            shadowingProcessor
+        )
+        if (result) return true
     }
+
+    if (primitiveType != null) {
+        val result = processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+            processTypeQualifiedPathResolveVariants(lookup, path, shadowingProcessor, ns, primitiveType)
+        }
+        if (result) return true
+    }
+    return false
+}
+
+private fun processQualifiedPathResolveVariants1(
+    lookup: ImplLookup?,
+    isCompletion: Boolean,
+    ns: Set<Namespace>,
+    qualifier: RsPath,
+    resolvedQualifier: BoundElement<RsElement>,
+    path: RsPath,
+    parent: PsiElement?,
+    processor: RsResolveProcessor
+): Boolean {
+    val (base, subst) = resolvedQualifier
     if (base is RsMod) {
         val result = processor.lazy("super") {
             // `super` is allowed only after `self` and `super`
