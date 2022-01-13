@@ -1,0 +1,26 @@
+name: docteam notifier
+
+on:
+    pull_request_target:
+        types: [ labeled, closed ]
+
+jobs:
+    notify-docteam:
+        if: |
+            github.event.action == 'closed' && github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'to be documented') ||
+            github.event.label.name == 'to be documented' && github.event.pull_request.merged
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo content
+              uses: actions/checkout@v2
+
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.9
+
+            - name: Install python packages
+              run: pip install -r scripts/requirements.txt
+
+            - name: Write comment
+              run: python scripts/notify_docteam.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --pull_request ${{ github.event.pull_request.number }}

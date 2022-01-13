@@ -2,7 +2,7 @@ import json
 from datetime import datetime, date, timedelta
 
 from common import env
-from github import get_current_milestone
+from github_connect import get_current_milestone
 
 if __name__ == '__main__':
     repo = env("GITHUB_REPOSITORY")

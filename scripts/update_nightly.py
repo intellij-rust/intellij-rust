@@ -4,7 +4,7 @@ import argparse
 
 from common import execute_command, env
 from git import git_command, has_git_changes
-from github import add_assignee, get_branch, create_pull_request
+from github_connect import add_assignee, get_branch, create_pull_request
 
 CHECK_WORKFLOW_PATH = ".github/workflows/check.yml"
 RUSTC_VERSION_RE = re.compile(r".* \(\w*\s*(\d{4}-\d{2}-\d{2})\)")

@@ -5,7 +5,7 @@ from typing import Dict
 
 from common import env, get_patch_version, execute_command
 from git import git_command
-from github import get_current_milestone, create_pull_request, get_all_branches, add_assignee
+from github_connect import get_current_milestone, create_pull_request, get_all_branches, add_assignee
 
 
 def changelog_branch_name(patch_version: int) -> str:

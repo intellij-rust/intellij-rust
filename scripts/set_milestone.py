@@ -2,7 +2,7 @@ import argparse
 from urllib.request import urlopen
 
 from common import env, get_patch_version_from_text
-from github import get_current_milestone, set_milestone
+from github_connect import get_current_milestone, set_milestone
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
