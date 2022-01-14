@@ -13,9 +13,12 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ClickListener
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.configurable.RsExternalLinterConfigurable
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.*
 import org.rust.cargo.project.settings.rustSettings
@@ -34,6 +37,13 @@ class RsExternalLinterWidgetFactory : StatusBarWidgetFactory {
     override fun createWidget(project: Project): StatusBarWidget = RsExternalLinterWidget(project)
     override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
+}
+
+class RsExternalLinterWidgetUpdater(private val project: Project) : CargoProjectsService.CargoProjectsListener {
+    override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
+        val manager = project.service<StatusBarWidgetsManager>()
+        manager.updateWidget(RsExternalLinterWidgetFactory::class.java)
+    }
 }
 
 class RsExternalLinterWidget(private val project: Project) : TextPanel.WithIconAndArrows(), CustomStatusBarWidget {
