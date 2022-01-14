@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.StubBasedPsiElement
@@ -210,7 +211,7 @@ private class ModCollector(
             legacyMacros += childModLegacyMacros
         }
         if (childModData.isRsFile && childModData.hasPathAttributeRelativeToParentFile && childModData.fileId != null) {
-            modData.recordChildFileInUnusualLocation(childModData.fileId)
+            recordChildFileInUnusualLocation(modData, childModData.fileId)
         }
         return childModData
     }
@@ -537,4 +538,16 @@ private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String
     // Don't use `FileUtil#getNameWithoutExtension` to correctly process relative paths like `./foo`
     val directoryPath = FileUtil.toSystemIndependentName(path).removeSuffix(".${RsFileType.defaultExtension}")
     return parentDirectory.findFileByMaybeRelativePath(directoryPath)
+}
+
+fun recordChildFileInUnusualLocation(parent: ModData, childFileId: FileId) {
+    val persistentFS = PersistentFS.getInstance()
+    val childFile = persistentFS.findFileById(childFileId) ?: return
+    val childDirectory = childFile.parent ?: return
+    for (modData in parent.parents) {
+        val containedDirectory = persistentFS.findFileById(modData.directoryContainedAllChildFiles ?: continue) ?: continue
+        if (VfsUtil.isAncestor(containedDirectory, childDirectory, false)) return
+        val commonAncestor = VfsUtil.getCommonAncestor(containedDirectory, childDirectory) ?: continue
+        modData.directoryContainedAllChildFiles = commonAncestor.fileId
+    }
 }

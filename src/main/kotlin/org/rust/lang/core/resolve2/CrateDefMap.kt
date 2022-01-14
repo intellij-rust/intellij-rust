@@ -7,10 +7,8 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
@@ -383,18 +381,6 @@ class ModData(
         visitor(this)
         for (childMod in childModules.values) {
             childMod.visitDescendants(visitor)
-        }
-    }
-
-    fun recordChildFileInUnusualLocation(childFileId: FileId) {
-        val persistentFS = PersistentFS.getInstance()
-        val childFile = persistentFS.findFileById(childFileId) ?: return
-        val childDirectory = childFile.parent ?: return
-        val containedDirectory = persistentFS.findFileById(directoryContainedAllChildFiles ?: return) ?: return
-        if (!VfsUtil.isAncestor(containedDirectory, childDirectory, false)) {
-            VfsUtil.getCommonAncestor(containedDirectory, childDirectory)?.let {
-                directoryContainedAllChildFiles = it.fileId
-            }
         }
     }
 

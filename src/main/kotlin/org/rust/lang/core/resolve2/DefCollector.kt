@@ -390,7 +390,7 @@ class DefCollector(
             defMap.missedFiles.add(filePath)
         }
         if (includingFile != null) {
-            modData.recordChildFileInUnusualLocation(includingFile.fileId)
+            recordChildFileInUnusualLocation(modData, includingFile.fileId)
         }
     }
 
