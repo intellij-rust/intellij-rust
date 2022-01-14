@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timedelta
 
 from common import env, get_patch_version
-from github import get_latest_milestones, create_milestone
+from github_connect import get_latest_milestones, create_milestone
 
 RELEASE_MANAGER_RE = re.compile("Release manager: @(\\w+)")
 
