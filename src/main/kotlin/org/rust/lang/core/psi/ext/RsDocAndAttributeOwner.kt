@@ -458,18 +458,22 @@ fun RsAttributeOwnerStub.isEnabledByCfgSelf(crate: Crate): Boolean {
 
 /** [crateOrNull] is passed to avoid trigger resolve */
 fun RsAttributeOwnerPsiOrStub<*>.evaluateCfg(crateOrNull: Crate? = null): ThreeValuedLogic {
+    val lazyEvaluator = if (crateOrNull != null) LazyCfgEvaluator.LazyForCrate(crateOrNull) else LazyCfgEvaluator.Lazy
+    return evaluateCfg(lazyEvaluator)
+}
+
+fun RsAttributeOwnerPsiOrStub<*>.evaluateCfg(lazyEvaluator: LazyCfgEvaluator): ThreeValuedLogic {
     if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return ThreeValuedLogic.True
 
     // We return true because otherwise we have recursion cycle:
     // [RsFile.crate] -> [RsFile.cachedData] -> [RsFile.declaration] ->
     //  -> [RsModDeclItem.resolve] -> [RsFile.isEnabledByCfg] -> [RsFile.crate]
-    if (crateOrNull == null && this is RsFile) return ThreeValuedLogic.True
+    if (lazyEvaluator is LazyCfgEvaluator.Lazy && this is RsFile) return ThreeValuedLogic.True
 
     val attributeStub = if (this is RsDocAndAttributeOwner) attributeStub else this as RsAttributeOwnerStub
     if (attributeStub?.mayHaveCfg == false) return ThreeValuedLogic.True
 
-    val crate = crateOrNull ?: containingCrate ?: return ThreeValuedLogic.True // TODO: maybe unknown?
-    val evaluator = CfgEvaluator.forCrate(crate)
+    val evaluator = lazyEvaluator.createEvaluator(this) ?: return ThreeValuedLogic.True // TODO: maybe unknown?
 
     val rawMetaItems = attributeStub?.rawMetaItems ?: rawMetaItems
 
@@ -482,6 +486,29 @@ fun RsAttributeOwnerPsiOrStub<*>.evaluateCfg(crateOrNull: Crate? = null): ThreeV
     ).cfgAttributes
 
     return evaluator.evaluate(cfgAttributes)
+}
+
+sealed class LazyCfgEvaluator {
+    abstract fun createEvaluator(element: RsAttributeOwnerPsiOrStub<*>): CfgEvaluator?
+
+    object Lazy: LazyCfgEvaluator() {
+        override fun createEvaluator(element: RsAttributeOwnerPsiOrStub<*>): CfgEvaluator? {
+            val crate = element.containingCrate ?: return null
+            return CfgEvaluator.forCrate(crate)
+        }
+    }
+
+    class LazyForCrate(private val crate: Crate): LazyCfgEvaluator() {
+        override fun createEvaluator(element: RsAttributeOwnerPsiOrStub<*>): CfgEvaluator {
+            return CfgEvaluator.forCrate(crate)
+        }
+    }
+
+    class NonLazy(private val evaluator: CfgEvaluator): LazyCfgEvaluator() {
+        override fun createEvaluator(element: RsAttributeOwnerPsiOrStub<*>): CfgEvaluator {
+            return evaluator
+        }
+    }
 }
 
 private val CFG_ATTRIBUTES_ENABLED_KEY = Registry.get("org.rust.lang.cfg.attributes")

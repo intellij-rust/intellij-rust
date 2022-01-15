@@ -60,6 +60,8 @@ class CargoBasedCrate(
     override val env: Map<String, String> get() = cargoTarget.pkg.env
     override val outDir: VirtualFile? get() = cargoTarget.pkg.outDir
 
+    override val hasCyclicDevDependencies: Boolean get() = cyclicDevDeps.isNotEmpty()
+
     override val rootMod: RsFile? get() = rootModFile?.toPsiFile(project)?.rustFile
     override val project: Project get() = cargoProject.project
 

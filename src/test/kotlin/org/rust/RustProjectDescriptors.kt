@@ -23,14 +23,11 @@ import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
-import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
-import org.rust.cargo.project.workspace.CargoWorkspaceData
-import org.rust.cargo.project.workspace.CargoWorkspaceData.*
+import org.rust.cargo.project.workspace.*
+import org.rust.cargo.project.workspace.CargoWorkspace.*
+import org.rust.cargo.project.workspace.CargoWorkspaceData.Dependency
+import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargo
@@ -354,6 +351,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             version = "0.0.2"
         )
         val depLib2 = externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2")
+        val depLibWithCyclicDep = externalPackage("$contentRoot/dep-lib-with-cyclic-dep", "lib.rs", "dep-lib-with-cyclic-dep")
         val depLibToBeRenamed = externalPackage(
             "$contentRoot/dep-lib-to-be-renamed", "lib.rs", "dep-lib-to-be-renamed",
             "dep-lib-to-be-renamed-target"
@@ -369,35 +367,46 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         )
         val depProcMacro2 = externalPackage("$contentRoot/dep-proc-macro-2", "lib.rs", "dep-proc-macro-2", libKind = LibKind.PROC_MACRO,
             procMacroArtifact = testProcMacroArtifact2)
+        val cyclicDepLibDevDep = externalPackage("$contentRoot/cyclic-dep-lib-dev-dep", "lib.rs", "cyclic-dep-lib-dev-dep")
 
         val packages = listOf(
-            testPackage, depLib, depLibNew, depLib2, depLibToBeRenamed,
-            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2
+            testPackage, depLib, depLibNew, depLib2, depLibWithCyclicDep, depLibToBeRenamed,
+            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2,
+            cyclicDepLibDevDep
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
             testPackage.id to setOf(
-                Dependency(depLib.id),
-                Dependency(depLib2.id),
-                Dependency(depLibToBeRenamed.id, "dep_lib_renamed"),
-                Dependency(noSrcLib.id),
-                Dependency(noSourceLib.id),
-                Dependency(depProcMacro.id),
-                Dependency(depProcMacro2.id),
+                dep(depLib.id),
+                dep(depLib2.id),
+                dep(depLibToBeRenamed.id, "dep_lib_renamed"),
+                dep(noSrcLib.id),
+                dep(noSourceLib.id),
+                dep(depProcMacro.id),
+                dep(depProcMacro2.id),
             ),
             depLib.id to setOf(
-                Dependency(transLib.id),
-                Dependency(depLibNew.id),
-                Dependency(transCommonLib.id),
+                dep(transLib.id),
+                dep(depLibNew.id),
+                dep(transCommonLib.id),
             ),
             depLib2.id to setOf(
-                Dependency(transCommonLib.id),
+                dep(transCommonLib.id),
+            ),
+            depLibWithCyclicDep.id to setOf(
+                dep(cyclicDepLibDevDep.id, depKind = DepKind.Development),
             ),
             transLib.id to setOf(
-                Dependency(transLib2.id),
+                dep(transLib2.id),
+            ),
+            cyclicDepLibDevDep.id to setOf(
+                dep(depLibWithCyclicDep.id),
             )
         ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
+
+    private fun dep(id: PackageId, name: String? = null, depKind: DepKind = DepKind.Normal): Dependency =
+        Dependency(id, name, listOf(DepKindInfo(depKind)))
 }
 
 private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescriptorBase() {

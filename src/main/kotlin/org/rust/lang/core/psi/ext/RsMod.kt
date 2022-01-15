@@ -7,7 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsFile
@@ -15,7 +14,7 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.openapiext.findFileByMaybeRelativePath
 
-interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible, PsiElement {
+interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible, RsDocAndAttributeOwner {
     /**
      *  Returns a parent module (`super::` in paths).
      *

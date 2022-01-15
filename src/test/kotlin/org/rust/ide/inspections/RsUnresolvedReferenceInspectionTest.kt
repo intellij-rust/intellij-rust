@@ -301,6 +301,42 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no errors in cfg-test mod when there are cyclic dev-dependencies in the package`() = checkByFileTree("""
+    //- cyclic-dep-lib-dev-dep/lib.rs
+        pub fn foo() {}
+    //- dep-lib-with-cyclic-dep/lib.rs
+        #[cfg(test)]
+        mod tests {
+            use cyclic_dep_lib_dev_dep::foo;/*caret*/
+            use cyclic_dep_lib_dev_dep::bar;
+        }
+    """, false)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no errors in test fn when there are cyclic dev-dependencies in the package`() = checkByFileTree("""
+    //- cyclic-dep-lib-dev-dep/lib.rs
+        pub fn foo() {}
+    //- dep-lib-with-cyclic-dep/lib.rs
+        #[test]
+        fn test() {
+            use cyclic_dep_lib_dev_dep::foo;/*caret*/
+            use cyclic_dep_lib_dev_dep::bar;
+        }
+    """, false)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test there are in cfg-test mod when there aren't cyclic dev-dependencies in the package`() = checkByFileTree("""
+    //- trans-lib/lib.rs
+        pub fn foo() {}
+    //- dep-lib/lib.rs
+        #[cfg(test)]
+        mod tests {
+            use trans_lib::foo;/*caret*/
+            use trans_lib::<error descr="Unresolved reference: `bar`">bar</error>;
+        }
+    """, false)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }
     }
