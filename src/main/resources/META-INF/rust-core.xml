@@ -37,6 +37,7 @@
         <!-- Sources -->
 
         <generatedSourcesFilter implementation="org.rust.cargo.project.model.RsGeneratedSourcesFilter"/>
+        <testSourcesFilter implementation="org.rust.cargo.project.model.RsTestSourcesFilter"/>
         <writingAccessProvider implementation="org.rust.cargo.project.model.RsGeneratedSourcesWritingAccessProvider"/>
 
         <!-- PSI managing -->
