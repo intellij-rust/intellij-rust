@@ -990,22 +990,18 @@
         <!-- Cargo -->
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RsProjectConfigurable"
-                             displayName="Rust"
                              groupId="language"
                              id="language.rust"/>
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.CargoConfigurable"
-                             displayName="Cargo"
                              parentId="language.rust"
                              id="language.rust.cargo"/>
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RsExternalLinterConfigurable"
-                             displayName="External Linters"
                              parentId="language.rust"
                              id="language.rust.cargo.check"/>
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RustfmtConfigurable"
-                             displayName="Rustfmt"
                              parentId="language.rust"
                              id="language.rust.rustfmt"/>
 

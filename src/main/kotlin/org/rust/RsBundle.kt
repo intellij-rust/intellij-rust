@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-private const val BUNDLE = "messages.RsBundle"
+const val BUNDLE = "messages.RsBundle"
 
 object RsBundle : DynamicBundle(BUNDLE) {
     @Nls
