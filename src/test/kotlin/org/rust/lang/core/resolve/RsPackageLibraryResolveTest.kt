@@ -969,4 +969,12 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
             pub use crate::header::HeaderMap;
         }
     """)
+
+    fun `test resolve custom derive proc macro from macro call through macro_use with rename`() = stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+
+        //- lib.rs
+            use dep_proc_macro::{self};
+                               //^ dep-proc-macro/lib.rs
+    """)
 }

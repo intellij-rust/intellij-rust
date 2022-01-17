@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.impl.CargoBasedCrate
+import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.crate.impl.FakeDetachedCrate
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModItem
@@ -21,12 +23,15 @@ import java.lang.ref.SoftReference
 
 fun Project.getDetachedModInfo(scope: RsMod): RsModInfoBase {
     val rootMod = scope.containingFile as? RsFile ?: return RsModInfoBase.InfoNotFound
-    val crate = FakeDetachedCrate(rootMod, DefMapService.getDetachedCrateNextId(), dependencies = emptyList())
+    val crate = FakeDetachedCrate(rootMod, DefMapService.getNextNonCargoCrateId(), dependencies = emptyList())
     return getModInfoInDetachedCrate(scope, crate)
 }
 
+fun Project.getDoctestModInfo(scope: RsMod, crate: DoctestCrate): RsModInfoBase =
+    getModInfoInDetachedCrate(scope, crate)
+
 private fun Project.getModInfoInDetachedCrate(scope: RsMod, crate: Crate): RsModInfoBase {
-    val defMap = defMapService.getDetachedDefMap(crate) ?: return RsModInfoBase.InfoNotFound
+    val defMap = defMapService.cachedGetDefMapForNonCargoCrate(crate) ?: return RsModInfoBase.InfoNotFound
     val dataPsiHelper = DetachedFileDataPsiHelper(crate.rootMod ?: return RsModInfoBase.InfoNotFound, defMap)
     val modData = dataPsiHelper.psiToData(scope) ?: return RsModInfoBase.InfoNotFound
     return RsModInfoBase.RsModInfo(this, defMap, modData, crate, dataPsiHelper)
@@ -62,8 +67,9 @@ private class DetachedFileDataPsiHelper(
     }
 }
 
-private fun DefMapService.getDetachedDefMap(crate: Crate): CrateDefMap? {
+private fun DefMapService.cachedGetDefMapForNonCargoCrate(crate: Crate): CrateDefMap? {
     check(crate.id != null)
+    check(crate !is CargoBasedCrate)
     val crateRoot = crate.rootMod ?: return null
 
     val allDependenciesDefMaps = crate.getAllDependenciesDefMaps()

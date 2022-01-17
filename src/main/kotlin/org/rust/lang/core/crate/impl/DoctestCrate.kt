@@ -18,6 +18,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.resolve2.DefMapService
 
 class DoctestCrate(
     private val parentCrate: Crate,
@@ -28,7 +29,7 @@ class DoctestCrate(
 
     override val reverseDependencies: List<Crate> get() = emptyList()
 
-    override val id: CratePersistentId? get() = null
+    override val id: CratePersistentId = DefMapService.getNextNonCargoCrateId()
     override val cargoProject: CargoProject? get() = parentCrate.cargoProject
     override val cargoTarget: CargoWorkspace.Target? get() = null
     override val cargoWorkspace: CargoWorkspace? get() = parentCrate.cargoWorkspace
