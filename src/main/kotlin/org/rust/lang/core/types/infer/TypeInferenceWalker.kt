@@ -873,6 +873,8 @@ class RsTypeInferenceWalker(
         return when (expr.operatorType) {
             UnaryOperator.REF -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE)
             UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE)
+            UnaryOperator.RAW_REF_CONST -> inferRawRefType(innerExpr, expected, Mutability.IMMUTABLE)
+            UnaryOperator.RAW_REF_MUT -> inferRawRefType(innerExpr, expected, Mutability.MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
                 val base = resolveTypeVarsWithObligations(innerExpr.inferType())
@@ -893,6 +895,9 @@ class RsTypeInferenceWalker(
 
     private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
         TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
+
+    private fun inferRawRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
+        TyPointer(expr.inferType((expected as? TyPointer)?.referenced), mutable)
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.inferTypes()

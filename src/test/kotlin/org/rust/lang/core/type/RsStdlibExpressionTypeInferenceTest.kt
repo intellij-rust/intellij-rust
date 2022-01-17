@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.type
 
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndStdlibLikeDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFloat
@@ -896,5 +893,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             foo(num2);
             num2;
         } //^ i32
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/8405
+    @MinRustcVersion("1.51.0")
+    fun `test addr_of_mut!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::ptr::addr_of_mut;
+        fn main() {
+            let mut a = 123;
+            let b = addr_of_mut!(a);
+            b;
+          //^ *mut i32
+        }
     """)
 }

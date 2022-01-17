@@ -20,7 +20,9 @@ enum class UnaryOperator {
     DEREF, // `*a`
     MINUS, // `-a`
     NOT, // `!a`
-    BOX, // `box a`
+    BOX, // `box a`,
+    RAW_REF_CONST, // &raw const
+    RAW_REF_MUT // &raw mut
 }
 
 val RsUnaryExpr.operatorType: UnaryOperator
@@ -28,6 +30,11 @@ val RsUnaryExpr.operatorType: UnaryOperator
         val stub = greenStub as? RsUnaryExprStub
         if (stub != null) return stub.operatorType
         return when {
+            raw != null -> when {
+                const != null -> UnaryOperator.RAW_REF_CONST
+                mut != null -> UnaryOperator.RAW_REF_MUT
+                else -> error("Unknown unary operator type: `$text`")
+            }
             mut != null -> UnaryOperator.REF_MUT
             and != null -> UnaryOperator.REF
             mul != null -> UnaryOperator.DEREF

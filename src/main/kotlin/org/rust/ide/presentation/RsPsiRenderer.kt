@@ -529,6 +529,8 @@ open class RsPsiRenderer(
             UnaryOperator.MINUS -> "-"
             UnaryOperator.NOT -> "!"
             UnaryOperator.BOX -> "box "
+            UnaryOperator.RAW_REF_CONST -> "&raw const "
+            UnaryOperator.RAW_REF_MUT -> "&raw mut "
         }
         sb.append(sign)
         val innerExpr = expr.expr

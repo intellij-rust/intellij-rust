@@ -1658,4 +1658,22 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ <unknown>
     """)
+
+    fun `test &raw const expr`() = testExpr("""
+        fn main() {
+            let a = 123;
+            let b = &raw const a;
+            b;
+          //^ *const i32
+        }
+    """)
+
+    fun `test &raw mut expr`() = testExpr("""
+        fn main() {
+            let mut a = 123;
+            let b = &raw mut a;
+            b;
+          //^ *mut i32
+        }
+    """)
 }
