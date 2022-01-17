@@ -19,7 +19,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.project.RsToolchainPathChoosingComboBox
-import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
@@ -96,7 +96,14 @@ class RustProjectSettingsPanel(
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
-            toolchain = ProjectManager.getInstance().defaultProject.toolchain ?: RsToolchainBase.suggest(cargoProjectDir),
+            toolchain = ProjectManager.getInstance().defaultProject
+                // Don't use `Project.toolchain` or `Project.rustSettings` here because
+                // `getService` can return `null` for default project after dynamic plugin loading.
+                // As a result, you can get `java.lang.IllegalStateException`
+                // So let's handle it manually
+                .getService(RustProjectSettingsService::class.java)
+                ?.toolchain
+                ?: RsToolchainBase.suggest(cargoProjectDir),
             explicitPathToStdlib = null
         )
 
