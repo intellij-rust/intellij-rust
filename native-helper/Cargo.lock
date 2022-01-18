@@ -244,21 +244,21 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_la-arena"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09164bc26a4aa78120e381db23f18b5acb46295bf23a5101245b2e25872d4866"
+checksum = "d34f5a2ac3070893557160b4b58ac5dc2373e5637253a1ed75cea92b71341d9f"
 
 [[package]]
 name = "ra_ap_limit"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5cd0410942ac000a6f990f715a7fc678935ee02fc3d6f6e6fe3c8a1686b6ab0"
+checksum = "d159e3c2b65bfb15774718ffcb29f5a74803f023b408146e8f5ab2c76a192d59"
 
 [[package]]
 name = "ra_ap_mbe"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02fe3a5309ab62323d7c941373d009ff6937cdd8f6d4c12ec5de9d6b700436de"
+checksum = "a5405b0a3305bd09d75428faafa63024cf2559eea31c29c24465f181afff7639"
 dependencies = [
  "cov-mark",
  "ra_ap_parser",
@@ -272,9 +272,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_parser"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9f133a50f5168f694677d0ee7401d6e208078eb06a01a6acf1f1c8b02b7d644"
+checksum = "a00038f43bcb8ad84d34d97b9df0969f1235e6cd5460a3330ec106c468c9facf"
 dependencies = [
  "drop_bomb",
  "ra_ap_limit",
@@ -283,15 +283,15 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_paths"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ba15572032d94d3254f653651ea667acace0c75a7eb362b9a6952463babef40"
+checksum = "f7a7f1a1ba17a783025256d174e8951bb749210b8d454559abba8622a236177a"
 
 [[package]]
 name = "ra_ap_proc_macro_api"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad041b698d7a130bf0bb0566b482a051a4e67f1f969cc061434ac650c89eb350"
+checksum = "15f3c7a4546f0ff863cc05c3cf78cda8629b2c97e2c2f988cb8fc1d9136b186f"
 dependencies = [
  "memmap2",
  "object",
@@ -307,9 +307,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_proc_macro_srv"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19044f33be55377638544b6ac1626df0b5ab273514ab76f387d83d9328f863e8"
+checksum = "7c9f113209e37d48a8c26eaa0df59837cf45ea260d54c6e914943f5ce4af0a7d"
 dependencies = [
  "libloading",
  "memmap2",
@@ -322,9 +322,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_profile"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14e2db08f8bb425e326794a900f88b4578e6103f58ab034d4d2ef00086416596"
+checksum = "9bd2b7a1001263a937cc5113c69e4b2cb639ccfa331831793a795e3a03cdb8e6"
 dependencies = [
  "cfg-if",
  "countme",
@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_stdx"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9dbf51352406ff2dd6755d0fab3f5fd34ae661e885bf5e22e4fcc3899fbdf54"
+checksum = "6b2db6ebe3d52684388d7b76d4233bb24d5b673d22b53d67fc4df72f253a0ecf"
 dependencies = [
  "always-assert",
  "libc",
@@ -349,9 +349,9 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_syntax"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a9ddfb4ef02cf75e696bdf407778ab3037d5444fcec07713c5380c2f3b6b70c"
+checksum = "fdb8b4fb94bfab1187718b16c09409eca85a63d1e18ceac7bcc5cee21ebd5771"
 dependencies = [
  "cov-mark",
  "indexmap",
@@ -369,18 +369,18 @@ dependencies = [
 
 [[package]]
 name = "ra_ap_text_edit"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87bbd2958049cc13fd5b2db83bacd88491f29517f3c3e78bcfbf646fe171e840"
+checksum = "c76a50c0a0dcac06a2284b7ec92564eff45150d5bec359794708ed7fc81352fe"
 dependencies = [
  "text-size",
 ]
 
 [[package]]
 name = "ra_ap_tt"
-version = "0.0.87"
+version = "0.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e361a5a231bef46e0c777ff151f66b6bdfae4c9f44e463a0ebce1839527af8f2"
+checksum = "f052bfcb9a7af4605cfc87f4fa119cf361b6362327d6f34a0708e181450231f1"
 dependencies = [
  "ra_ap_stdx",
  "smol_str",
