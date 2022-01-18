@@ -460,7 +460,7 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     val project = scope.project
     if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
-    if (scope.isLocal) return CantUseNewResolve("local mod")
+    if (scope.isLocal) return getLocalModInfo(scope)
     val crate = when (val crate = scope.containingCrate) {
         is CargoBasedCrate -> crate
         is DoctestCrate -> return project.getDoctestModInfo(scope, crate)

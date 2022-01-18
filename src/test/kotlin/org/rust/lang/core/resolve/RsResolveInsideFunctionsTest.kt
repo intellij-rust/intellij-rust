@@ -252,6 +252,16 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
         } //^
     """)
 
+    fun `test resolve inside local mod`() = checkByCode("""
+        fn main() {
+            mod inner {
+                macro foo() {}
+                    //X
+                foo!();
+            } //^
+        }
+    """)
+
     fun `test local macro`() = checkByCode("""
         fn main() {
             macro_rules! foo { () => {} }

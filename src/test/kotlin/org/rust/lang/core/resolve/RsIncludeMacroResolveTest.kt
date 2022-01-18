@@ -99,7 +99,8 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                   //^ lib.rs
     """)
 
-    fun `test include in function local module`() = checkResolve("""
+    fun `test include in function local module`() = expect<IllegalStateException> {
+    checkResolve("""
     //- lib.rs
         fn foo() {
             mod foo {
@@ -111,6 +112,7 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     //- bar.rs
         struct Foo;
     """)
+    }
 
     fun `test include file in included file 1`() = checkResolve("""
     //- lib.rs
