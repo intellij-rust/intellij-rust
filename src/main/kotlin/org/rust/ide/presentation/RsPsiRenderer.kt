@@ -5,7 +5,9 @@
 
 package org.rust.ide.presentation
 
-import org.rust.ide.utils.import.*
+import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.utils.import.ImportCandidatesCollector2
+import org.rust.ide.utils.import.ImportContext2
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -681,8 +683,7 @@ class ImportingPsiRenderer(
     private val context: RsElement
 ) : PsiSubstitutingPsiRenderer(options, substitutions) {
 
-    private val importContext = ImportContext.from(context.project, context)
-    private val importContext2 = ImportContext2.from(context, ImportContext2.Type.OTHER)
+    private val importContext = ImportContext2.from(context, ImportContext2.Type.OTHER)
 
     private val visibleNames: Pair<MutableMap<Pair<String, Namespace>, RsElement>, MutableMap<RsElement, String>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
@@ -722,10 +723,8 @@ class ImportingPsiRenderer(
                 if (visibleElementName != null) {
                     sb.append(visibleElementName)
                 } else {
-                    val importCandidate = if (path.useAutoImportWithNewResolve && importContext2 != null) {
-                        ImportCandidatesCollector2.findImportCandidate(importContext2, resolved)
-                    } else {
-                        ImportCandidatesCollector.findImportCandidate(importContext, resolved)
+                    val importCandidate = importContext?.let {
+                        ImportCandidatesCollector2.findImportCandidate(it, resolved)
                     }
                     if (importCandidate == null) {
                         val resolvedCrate = resolved.containingCrate

@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
@@ -27,9 +26,6 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
-import org.rust.lang.core.stubs.index.ReexportKey
-import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.expectedTypeCoercable
 import org.rust.lang.core.types.implLookup
@@ -192,32 +188,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         Testmarks.outOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
-        val candidates = if (path.useAutoImportWithNewResolve) run {
-            val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return@run emptyList()
-            ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
-        } else {
-            val project = path.project
-            val keys = hashSetOf<String>().apply {
-                val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
-                val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project).mapNotNull {
-                    (it as? ReexportKey.ProducedNameKey)?.name
-                }
-
-                addAll(explicitNames)
-                addAll(reexportedNames)
-
-                // Filters out path names that have already been added to `result`
-                removeAll(processedPathElements.keySet())
-            }
-
-            val importContext = ImportContext.from(project, path, true)
-            result.prefixMatcher.sortMatching(keys)
-                .flatMap { elementName ->
-                    ImportCandidatesCollector.getImportCandidates(importContext, elementName, elementName) {
-                        !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
-                    }
-                }
-        }
+        val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return
+        val candidates = ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
         for (candidate in candidates) {
             val item = candidate.qualifiedNamedItem.item
@@ -489,11 +461,7 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
-    val candidates = if (scope.useAutoImportWithNewResolve) {
-        ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
-    } else {
-        ImportCandidatesCollector.getImportCandidates(methodOrField.project, scope, listOf(resolveVariant))
-    }
+    val candidates = ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
     return candidates.orEmpty().singleOrNull()
 }
 

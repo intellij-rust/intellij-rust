@@ -6,13 +6,9 @@
 package org.rust.ide.utils.import
 
 import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.util.containers.MultiMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
@@ -31,10 +27,6 @@ import org.rust.lang.core.resolve2.*
 import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
-
-private val AUTO_IMPORT_USING_NEW_RESOLVE: RegistryValue = Registry.get("org.rust.auto.import.using.new.resolve")
-private val Project.useAutoImportWithNewResolve: Boolean get() = isNewResolveEnabled && AUTO_IMPORT_USING_NEW_RESOLVE.asBoolean()
-val RsElement.useAutoImportWithNewResolve: Boolean get() = project.useAutoImportWithNewResolve && !isDoctestInjection
 
 /**
  * ## High-level description
