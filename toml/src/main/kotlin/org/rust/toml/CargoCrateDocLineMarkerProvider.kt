@@ -33,16 +33,21 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
                 val table = keyValue.parent as? TomlTable ?: continue@loop
                 if (!table.header.isDependencyListHeader) continue@loop
                 if (parent.firstChild?.nextSibling != null) continue@loop
-                val pkgName = keyValue.crateName
+
                 val pkgVersion = keyValue.version ?: continue@loop
+                val pkgName = keyValue.crateName ?: continue@loop
+
                 result += genLineMarkerInfo(element, pkgName, pkgVersion)
             } else if (element.elementType == TomlElementTypes.L_BRACKET) {
                 val header = parent as? TomlTableHeader ?: continue@loop
                 val names = header.key?.segments.orEmpty()
                 if (names.getOrNull(names.size - 2)?.isDependencyKey != true) continue@loop
+
                 val table = parent.parent as? TomlTable ?: continue@loop
-                val version = table.entries.find { it.name == "version" }?.value?.stringValue ?: continue@loop
-                result += genLineMarkerInfo(element, names.last().text, version)
+                val pkgVersion = table.entries.find { it.name == "version" }?.value?.stringValue ?: continue@loop
+                val pkgName = names.lastOrNull()?.name ?: continue@loop
+
+                result += genLineMarkerInfo(element, pkgName, pkgVersion)
             }
         }
     }
@@ -65,12 +70,12 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 }
 
 private val TomlKeyValue.name get() = key.text
-private val TomlKeyValue.crateName: String
+private val TomlKeyValue.crateName: String?
     get() {
         return when (val rootValue = value) {
             is TomlInlineTable -> (rootValue.entries.find { it.name == "package" }?.value?.stringValue)
-                ?: key.text
-            else -> key.text
+                ?: key.segments.singleOrNull()?.name
+            else -> key.segments.singleOrNull()?.name
         }
     }
 private val TomlKeyValue.version: String?
