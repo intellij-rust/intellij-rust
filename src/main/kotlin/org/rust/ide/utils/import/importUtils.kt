@@ -22,14 +22,15 @@ import org.rust.stdext.isSortedWith
  * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
  * This action requires write access.
  */
-fun ImportCandidateBase.import(context: RsElement) {
+fun ImportCandidateBase.import(context: RsElement) = info.import(context)
+
+fun ImportInfo.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 
     // depth of `mod` relative to module with `extern crate` item
     // we use this info to create correct relative use item path if needed
-    val relativeDepth = info.insertExternCrateIfNeeded(context)
-    val prefix = when (relativeDepth) {
+    val prefix = when (val relativeDepth = insertExternCrateIfNeeded(context)) {
         null -> ""
         0 -> "self::"
         else -> "super::".repeat(relativeDepth)
@@ -50,7 +51,7 @@ fun ImportCandidateBase.import(context: RsElement) {
         containingFile is RsFile && RsIncludeMacroIndex.getIncludedFrom(containingFile) != null -> containingFile
         else -> null
     } ?: context.containingMod
-    insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
+    insertionScope.insertUseItem(psiFactory, "$prefix$usePath")
 }
 
 /**
