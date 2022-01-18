@@ -248,7 +248,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
     private fun createLookupElementWithImportCandidate(
         scopeEntry: ScopeEntry,
         context: RsCompletionContext,
-        candidate: ImportCandidateBase
+        candidate: ImportCandidate
     ): RsImportLookupElement {
         return createLookupElement(
             scopeEntry = scopeEntry,
@@ -456,7 +456,7 @@ private fun methodAndFieldCompletionProcessor(
     false
 }
 
-private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidateBase? {
+private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
     if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
@@ -488,7 +488,7 @@ private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement
     return null
 }
 
-private fun LookupElement.withImportCandidate(candidate: ImportCandidateBase): RsImportLookupElement {
+private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
     return RsImportLookupElement(this, candidate)
 }
 
@@ -501,7 +501,7 @@ private fun LookupElement.withImportCandidate(candidate: ImportCandidateBase): R
  */
 private class RsImportLookupElement(
     delegate: LookupElement,
-    private val candidate: ImportCandidateBase
+    private val candidate: ImportCandidate
 ) : LookupElementDecorator<LookupElement>(delegate) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -526,7 +526,7 @@ fun collectVariantsForEnumCompletion(
     element: RsEnumItem,
     context: RsCompletionContext,
     substitution: Substitution,
-    candidate: ImportCandidateBase? = null
+    candidate: ImportCandidate? = null
 ): List<LookupElement> {
     val enumName = element.name ?: return emptyList()
 

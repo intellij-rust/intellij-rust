@@ -10,6 +10,11 @@ import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.infer.type
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.type
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 
@@ -74,3 +79,30 @@ fun RsAbstractable.searchForImplementations(): Query<RsAbstractable> {
     }
     return query.filterQuery { it != null }
 }
+
+/**
+ * If function or constant is defined in a trait
+ * ```rust
+ * trait Trait {
+ *     fn foo() {}
+ * }
+ * ```
+ * it potentially can be accessed by the trait name `Trait::foo` only if there are `self` parameter or
+ * `Self` type in the signature
+ */
+val RsAbstractable.canBeAccessedByTraitName: Boolean
+    get() {
+        check(owner is RsAbstractableOwner.Trait)
+        val type = when (this) {
+            is RsFunction -> {
+                if (selfParameter != null) return true
+                type
+            }
+            is RsConstant -> typeReference?.type ?: return false
+            else -> return false
+        }
+        return type.visitWith(object : TypeVisitor {
+            override fun visitTy(ty: Ty): Boolean =
+                if (ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self) true else ty.superVisitWith(this)
+        })
+    }

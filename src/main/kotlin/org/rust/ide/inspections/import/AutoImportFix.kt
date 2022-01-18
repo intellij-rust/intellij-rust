@@ -61,7 +61,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     private fun chooseItemAndImport(
         project: Project,
         dataContext: DataContext,
-        items: List<ImportCandidateBase>,
+        items: List<ImportCandidate>,
         context: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
@@ -161,7 +161,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     data class Context(
         val type: Type,
-        val candidates: List<ImportCandidateBase>
+        val candidates: List<ImportCandidate>
     )
 
     enum class Type {

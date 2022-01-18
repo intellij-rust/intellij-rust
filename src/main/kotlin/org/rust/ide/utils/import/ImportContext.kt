@@ -6,8 +6,6 @@
 package org.rust.ide.utils.import
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -17,39 +15,6 @@ import org.rust.lang.core.resolve2.CrateDefMap
 import org.rust.lang.core.resolve2.ModData
 import org.rust.lang.core.resolve2.RsModInfoBase
 import org.rust.lang.core.resolve2.getModInfo
-
-@Suppress("DataClassPrivateConstructor")
-data class ImportContext private constructor(
-    val project: Project,
-    val mod: RsMod,
-    val superMods: LinkedHashSet<RsMod>,
-    val scope: GlobalSearchScope,
-    val pathParsingMode: RustParserUtil.PathParsingMode,
-    val attributes: RsFile.Attributes,
-    val namespaceFilter: (RsQualifiedNamedElement) -> Boolean
-) {
-    companion object {
-        fun from(project: Project, path: RsPath, isCompletion: Boolean): ImportContext = ImportContext(
-            project = project,
-            mod = path.containingMod,
-            superMods = LinkedHashSet(path.containingMod.superMods),
-            scope = RsWithMacrosProjectScope(project),
-            pathParsingMode = path.pathParsingMode,
-            attributes = path.stdlibAttributes,
-            namespaceFilter = path.namespaceFilter(isCompletion)
-        )
-
-        fun from(project: Project, element: RsElement): ImportContext = ImportContext(
-            project = project,
-            mod = element.containingMod,
-            superMods = LinkedHashSet(element.containingMod.superMods),
-            scope = RsWithMacrosProjectScope(project),
-            pathParsingMode = RustParserUtil.PathParsingMode.TYPE,
-            attributes = element.stdlibAttributes,
-            namespaceFilter = { true }
-        )
-    }
-}
 
 class ImportContext2 private constructor(
     /** Info of mod in which auto-import or completion is called */

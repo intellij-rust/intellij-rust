@@ -5,7 +5,7 @@
 
 package org.rust.ide.presentation
 
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector2
 import org.rust.ide.utils.import.ImportContext2
 import org.rust.lang.core.parser.RustParserUtil
@@ -703,8 +703,8 @@ class ImportingPsiRenderer(
     private val visibleNameToElement: MutableMap<Pair<String, Namespace>, RsElement> get() = visibleNames.first
     private val visibleElementToName: MutableMap<RsElement, String> get() = visibleNames.second
 
-    private val itemsToImportMut: MutableSet<ImportCandidateBase> = mutableSetOf()
-    val itemsToImport: Set<ImportCandidateBase> get() = itemsToImportMut
+    private val itemsToImportMut: MutableSet<ImportCandidate> = mutableSetOf()
+    val itemsToImport: Set<ImportCandidate> get() = itemsToImportMut
 
     override fun appendPathWithoutArgs(sb: StringBuilder, path: RsPath) {
         val pathReferenceName = path.referenceName

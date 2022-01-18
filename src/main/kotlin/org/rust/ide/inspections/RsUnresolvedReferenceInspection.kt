@@ -11,7 +11,8 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -109,7 +110,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 }
 
 private fun createQuickFixes(
-    candidates: List<ImportCandidateBase>?,
+    candidates: List<ImportCandidate>?,
     element: RsReferenceElement,
     context: AutoImportFix.Context?
 ): List<LocalQuickFix> {
