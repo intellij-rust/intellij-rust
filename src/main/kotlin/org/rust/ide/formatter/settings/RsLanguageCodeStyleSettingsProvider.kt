@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 
 class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
@@ -31,6 +32,8 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                 RsCodeStyleMainPanel(currentSettings, settings)
         }
     }
+
+    override fun getConfigurableDisplayName(): String = RsBundle.message("settings.rust.code.style.name")
 
     override fun getCodeSample(settingsType: SettingsType): String =
         when (settingsType) {
@@ -51,14 +54,14 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
-                    "Between declarations:",
+                    RsBundle.message("settings.rust.code.style.between.declarations"),
                     CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES)
             }
 
             SPACING_SETTINGS -> {
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "SPACE_AROUND_ASSOC_TYPE_BINDING",
-                    "Around associated type bindings",
+                    RsBundle.message("settings.rust.code.style.around.associated.type.bindings"),
                     CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS)
             }
 
@@ -72,47 +75,38 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALLOW_ONE_LINE_MATCH",
-                    "Match expressions in one line",
+                    RsBundle.message("settings.rust.code.style.match.expressions.in.one.line"),
                     CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "PRESERVE_PUNCTUATION",
-                    "Punctuation",
+                    RsBundle.message("settings.rust.code.style.punctuation"),
                     CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE",
-                    "Align return type to function parameters",
+                    RsBundle.message("settings.rust.code.style.align.return.type"),
                     CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_CLAUSE",
-                    "Align where clause to function parameters",
+                    RsBundle.message("settings.rust.code.style.align.where.clause"),
                     CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_TYPE_PARAMS",
                     ApplicationBundle.message("wrapping.align.when.multiline"),
-                    "Type parameters")
+                    CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "INDENT_WHERE_CLAUSE",
-                    "Indent where clause",
-                    "Type parameters")
+                    RsBundle.message("settings.rust.code.style.indent.where.clause"),
+                    CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_BOUNDS",
-                    "Align where clause bounds",
-                    "Type parameters")
-            }
-
-            LANGUAGE_SPECIFIC -> {
-                consumer.showStandardOptions()
-                consumer.showCustomOption(RsCodeStyleSettings::class.java,
-                    "NORMALIZE_COMMAS",
-                    "Normalize trailing commas",
-                    "Other")
-
+                    RsBundle.message("settings.rust.code.style.align.where.clause.bounds"),
+                    CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS)
             }
 
             COMMENTER_SETTINGS -> {
