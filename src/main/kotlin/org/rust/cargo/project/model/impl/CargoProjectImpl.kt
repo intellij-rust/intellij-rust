@@ -90,6 +90,7 @@ open class CargoProjectsServiceImpl(
         with(project.messageBus.connect()) {
             if (!isUnitTestMode) {
                 subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(this@CargoProjectsServiceImpl, fun() {
+                    println("CargoProjectsServiceImpl: VirtualFileManager.VFS_CHANGES callback")
                     if (!project.rustSettings.autoUpdateEnabled) return
                     refreshAllProjects()
                 }))
@@ -227,7 +228,7 @@ open class CargoProjectsServiceImpl(
     }
 
     override fun refreshAllProjects(): CompletableFuture<out List<CargoProject>> =
-        modifyProjects { doRefresh(project, it) }
+        modifyProjects { doRefresh(project, it).also { println("refreshAllProjects") } }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
         println("discoverAndRefresh: entered")
@@ -533,7 +534,7 @@ data class CargoProjectImpl(
     // Checks that the project is https://github.com/rust-lang/rust
     fun doesProjectLooksLikeRustc(): Boolean {
         val workspace = rawWorkspace ?: return false
-        println("CargoProjectImpl.doesProjectLooksLikeRustc: workspace=$workspace, workspace.findRootPackage()=${workspace.findRootPackage()}")
+//        println("CargoProjectImpl.doesProjectLooksLikeRustc: workspace=$workspace, workspace.findRootPackage()=${workspace.findRootPackage()}")
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
         val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")

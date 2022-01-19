@@ -238,7 +238,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
     private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
         // TODO: apply Windows fix from WslToolchainBase
-        println("bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
+//        println("bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
         if ("/bazel-out/" !in bazelPath) return bazelPath
         val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (relativePathStartIndex == -1) return bazelPath

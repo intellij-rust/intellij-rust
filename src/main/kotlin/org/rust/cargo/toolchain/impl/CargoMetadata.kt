@@ -359,7 +359,7 @@ object CargoMetadata {
 
     private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
         // TODO: apply Windows fix from WslToolchainBase
-        println("CargoMetadata.bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
+//        println("CargoMetadata.bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
         if ("/bazel-out/" !in bazelPath) return bazelPath
         val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (relativePathStartIndex == -1) return bazelPath
