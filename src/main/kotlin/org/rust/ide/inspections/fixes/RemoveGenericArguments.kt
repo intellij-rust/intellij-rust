@@ -13,13 +13,13 @@ import org.rust.lang.core.psi.RsTypeArgumentList
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.deleteWithSurroundingComma
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.startOffset
 
-class RemoveTypeArguments(
+class RemoveGenericArguments(
     private val startIndex: Int,
     private val endIndex: Int
 ) : LocalQuickFix {
-
-    override fun getFamilyName() = "Remove redundant type arguments"
+    override fun getFamilyName() = "Remove redundant generic arguments"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? RsElement ?: return
@@ -28,10 +28,10 @@ class RemoveTypeArguments(
     }
 
     private fun RsTypeArgumentList.removeTypeParameters() {
-        val count = endIndex - startIndex
-        for (i in 0 until count) {
-            typeReferenceList[startIndex].deleteWithSurroundingComma()
-        }
+        (typeReferenceList + exprList)
+            .sortedBy { it.startOffset }
+            .subList(startIndex, endIndex)
+            .forEach { it.deleteWithSurroundingComma() }
         // If the type argument list is empty, delete it
         if (lt.getNextNonCommentSibling() == gt) {
             delete()

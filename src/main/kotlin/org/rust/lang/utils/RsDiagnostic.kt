@@ -1051,7 +1051,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class WrongNumberOfTypeArguments(
+    class WrongNumberOfGenericArguments(
         element: PsiElement,
         private val errorText: String,
         private val fixes: List<LocalQuickFix>
@@ -1064,6 +1064,19 @@ sealed class RsDiagnostic(
                 fixes = fixes
             )
         }
+    }
+
+    class WrongOrderOfGenericArguments(
+        element: PsiElement,
+        private val errorText: String,
+        private val fixes: List<LocalQuickFix>
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0747,
+            errorText,
+            fixes = fixes
+        )
     }
 
     class ImplForNonAdtError(
@@ -1183,19 +1196,6 @@ sealed class RsDiagnostic(
             ERROR,
             E0741,
             "$typeName doesn't derive both `PartialEq` and `Eq`"
-        )
-    }
-
-    class WrongGenericArgumentsNumber(
-        element: PsiElement,
-        private val errorText: String,
-        private val fixes: List<LocalQuickFix>
-    ) : RsDiagnostic(element) {
-        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
-            ERROR,
-            E0747,
-            errorText,
-            fixes = fixes
         )
     }
 

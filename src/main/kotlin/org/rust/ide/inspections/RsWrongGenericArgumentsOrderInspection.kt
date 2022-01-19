@@ -55,7 +55,7 @@ class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
             } else {
                 emptyList()
             }
-            RsDiagnostic.WrongGenericArgumentsNumber(arg, text, fixes).addToHolder(holder)
+            RsDiagnostic.WrongOrderOfGenericArguments(arg, text, fixes).addToHolder(holder)
         }
     }
 }

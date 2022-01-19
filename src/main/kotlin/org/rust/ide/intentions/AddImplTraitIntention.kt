@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import org.rust.ide.inspections.fixes.insertTypeArgumentsIfNeeded
+import org.rust.ide.inspections.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
@@ -63,33 +63,33 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToBoundTrait() ?: return
 
-        val insertedTypeArgumentsPtr = if (trait.element.requiredGenericParameters.isNotEmpty()) {
-            insertTypeArgumentsIfNeeded(traitRef.path)?.map { it.createSmartPointer() }
+        val insertedGenericArgumentsPtr = if (trait.element.requiredGenericParameters.isNotEmpty()) {
+            insertGenericArgumentsIfNeeded(traitRef.path)?.map { it.createSmartPointer() }
         } else {
             null
         }
 
         generateMissingTraitMembers(impl)
 
-        showTypeArgumentsTemplate(
+        showGenericArgumentsTemplate(
             editor,
             CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(impl) ?: return,
-            insertedTypeArgumentsPtr
+            insertedGenericArgumentsPtr
         )
     }
 
-    private fun showTypeArgumentsTemplate(
+    private fun showGenericArgumentsTemplate(
         editor: Editor,
         impl: RsImplItem,
-        insertedTypeArgumentsPtr: List<SmartPsiElementPointer<RsTypeReference>>?
+        insertedGenericArgumentsPtr: List<SmartPsiElementPointer<RsElement>>?
     ) {
-        val insertedTypeArguments = insertedTypeArgumentsPtr?.mapNotNull { it.element }?.filterIsInstance<RsBaseType>()
-        if (insertedTypeArguments != null && insertedTypeArguments.isNotEmpty()) {
+        val insertedGenericArguments = insertedGenericArgumentsPtr?.mapNotNull { it.element }?.filterIsInstance<RsBaseType>()
+        if (insertedGenericArguments != null && insertedGenericArguments.isNotEmpty()) {
             val members = impl.members ?: return
             val baseTypes = members.descendantsOfType<RsPath>()
-                .filter { it.parent is RsBaseType && !it.hasColonColon && it.path == null && it.typeQual == null }
+                .filter { (it.parent is RsBaseType || it.parent is RsPathExpr) && !it.hasColonColon && it.path == null && it.typeQual == null }
                 .groupBy { it.referenceName }
-            val typeToUsage = insertedTypeArguments.associateWith { ty ->
+            val typeToUsage = insertedGenericArguments.associateWith { ty ->
                 ty.path?.referenceName?.let { baseTypes[it] } ?: emptyList()
             }
             val tmp = editor.newTemplateBuilder(impl) ?: return

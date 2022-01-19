@@ -137,21 +137,41 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
         }
     """)
 
-    fun `test trait with method and 2 type parameters`() = doAvailableTestWithLiveTemplate("""
-        trait Foo<A, B> {
-            fn foo(&self) -> (A, B);
+    fun `test trait with 1 const parameter`() = doAvailableTestWithLiveTemplate("""
+        trait Foo<const N: usize> {
+            fn foo(&self) -> [i32; N];
         }
 
         struct S/*caret*/;
-    """, "Foo\t\ti32\tu8\t", """
-        trait Foo<A, B> {
-            fn foo(&self) -> (A, B);
+    """, "Foo\t\t1\t", """
+        trait Foo<const N: usize> {
+            fn foo(&self) -> [i32; N];
         }
 
         struct S;
 
-        impl Foo<i32, u8/*caret*/> for S {
-            fn foo(&self) -> (i32, u8) {
+        impl Foo<1/*caret*/> for S {
+            fn foo(&self) -> [i32; 1] {
+                todo!()
+            }
+        }
+    """)
+
+    fun `test trait with method and 2 generic parameters`() = doAvailableTestWithLiveTemplate("""
+        trait Foo<A, const N: usize> {
+            fn foo(&self) -> [A; N];
+        }
+
+        struct S/*caret*/;
+    """, "Foo\t\ti32\t1\t", """
+        trait Foo<A, const N: usize> {
+            fn foo(&self) -> [A; N];
+        }
+
+        struct S;
+
+        impl Foo<i32, 1/*caret*/> for S {
+            fn foo(&self) -> [i32; 1] {
                 todo!()
             }
         }
