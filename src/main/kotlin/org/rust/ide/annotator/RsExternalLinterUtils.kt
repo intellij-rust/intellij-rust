@@ -197,8 +197,8 @@ fun AnnotationHolder.createAnnotationsForFile(
             .needsUpdateOnTyping(true)
 
         message.quickFixes
-            .filter { it.applicability <= minApplicability }
-            .forEach { f -> annotationBuilder.withFix(f) }
+            .singleOrNull { it.applicability <= minApplicability }
+            ?.let { f -> annotationBuilder.withFix(f) }
 
         annotationBuilder.create()
     }

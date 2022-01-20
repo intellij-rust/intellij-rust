@@ -5,7 +5,9 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.intellij.lang.annotations.Language
+import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.ExternalLinter
@@ -79,11 +81,30 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         }
     """, externalLinter = ExternalLinter.CLIPPY)
 
+    @MinRustcVersion("1.50.0")
+    fun `test multi-fix suggestion`() = checkFixIsUnavailable("""
+        #[deny(clippy::unnecessary_wraps)]
+        <error>fn foo() -> Option<i32> { Some(1) }</error>
+    """, externalLinter = ExternalLinter.CLIPPY)
+
     private fun checkFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
+        val action = getQuickFixes(before, externalLinter).singleOrNull() ?: return // BACKCOMPAT: Rust ???
+        myFixture.launchAction(action)
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+    }
+
+    private fun checkFixIsUnavailable(
+        @Language("Rust") text: String,
+        externalLinter: ExternalLinter = ExternalLinter.DEFAULT
+    ) {
+        assertEmpty(getQuickFixes(text, externalLinter))
+    }
+
+    private fun getQuickFixes(@Language("Rust") text: String, externalLinter: ExternalLinter): List<IntentionAction> {
         project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
         fileTree {
             toml("Cargo.toml", """
@@ -94,16 +115,12 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
             """)
 
             dir("src") {
-                file("lib.rs", before)
+                file("lib.rs", text)
             }
         }.create()
         val filePath = "src/lib.rs"
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath(filePath)!!)
         myFixture.checkHighlighting()
-        val action = myFixture.getAllQuickFixes(filePath)
-            .singleOrNull { it.text.startsWith("External Linter: ") }
-            ?: return // BACKCOMPAT: Rust ???
-        myFixture.launchAction(action)
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+        return myFixture.getAllQuickFixes(filePath).filter { it.text.startsWith("External Linter: ") }
     }
 }
