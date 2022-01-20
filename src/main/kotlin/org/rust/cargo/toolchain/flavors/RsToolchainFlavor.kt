@@ -24,10 +24,14 @@ abstract class RsToolchainFlavor {
     protected abstract fun getHomePathCandidates(): Sequence<Path>
 
     protected fun getProjectPathCandidates(projectPath: Path): Sequence<Path> {
-        // TODO: this depends on OS, as well as project name, sandbox type and stuff
-        val paths = listOf(projectPath.resolve("bazel-rust-poc/external/rust_darwin_x86_64/bin"))
-        println("getProjectPathCandidates RETURNED $paths for project root $projectPath")
-        return paths.asSequence()
+        if (projectPath.getFileName().toString() == ".ijwb") { // Bazel project root
+            val sourcesRoot = projectPath.parent
+            val projectName = sourcesRoot.getFileName()
+            // TODO: this depends on OS
+            return listOf(sourcesRoot.resolve("bazel-$projectName/external/rust_darwin_x86_64/bin")).asSequence()
+        } else {
+            return emptySequence()
+        }
     }
 
     /**
