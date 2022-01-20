@@ -152,8 +152,8 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
     @Suppress("UnstableApiUsage")
     private fun doTest(@Language("Rust") code: String, showSameConsecutiveTypes: Boolean = true) {
         val service = InlayHintsSettings.instance()
-        val key = RsChainMethodTypeHintsProvider.KEY
-        val settings = RsChainMethodTypeHintsProvider.Settings(showSameConsecutiveTypes = showSameConsecutiveTypes)
+        val key = RsChainMethodTypeHintsProviderBase.KEY
+        val settings = RsChainMethodTypeHintsProviderBase.Settings(showSameConsecutiveTypes = showSameConsecutiveTypes)
         val originalSettings = service.findSettings(key, RsLanguage) { settings }
         try {
             service.storeSettings(key, RsLanguage, settings)

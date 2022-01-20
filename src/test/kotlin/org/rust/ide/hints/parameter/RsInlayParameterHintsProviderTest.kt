@@ -234,7 +234,6 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     private fun checkByText(@Language("Rust") code: String, smart: Boolean = true) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
 
-        RsInlayParameterHints.enabledOption.set(true)
         RsInlayParameterHints.smartOption.set(smart)
 
         myFixture.testInlays({ (it.renderer as HintRenderer).text }) { it.renderer is HintRenderer }
