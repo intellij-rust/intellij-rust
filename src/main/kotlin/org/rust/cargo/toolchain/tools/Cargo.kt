@@ -157,6 +157,14 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         listener: ProcessListener? = null
     ): CargoMetadata.Project {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
+        // in environments where access to packages is restricted, packages for target other than the host's
+        // may not be available at all, which breaks IntelliJ's Rust integration completely; so, if we can
+        // retrieve the target triple from the toolchain, just use it (requires calling rustc)
+        toolchain.rustc().queryVersion()?.host?.let {
+            additionalArgs.add("--filter-platform")
+            additionalArgs.add(it)
+        }
+
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
