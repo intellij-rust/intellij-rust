@@ -178,8 +178,8 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
             pub use self::inner::inner;
         }
 
-        mod bar { pub use foo::inner; }
-        use bar::inner;
+        mod bar { pub use crate::foo::inner; }
+        use crate::bar::inner;
 
         fn f() { inner(); }
                  //^

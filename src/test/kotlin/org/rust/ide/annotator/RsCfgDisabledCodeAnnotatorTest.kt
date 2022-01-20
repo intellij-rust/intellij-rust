@@ -6,8 +6,6 @@
 package org.rust.ide.annotator
 
 import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 
 class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class) {
@@ -43,7 +41,6 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test disabled async function 2018 edition`() = checkHighlighting("""
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]
         async fn foo() {
@@ -52,7 +49,6 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test disabled try expr 2018 edition`() = checkHighlighting("""
         fn foo() {
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]try {

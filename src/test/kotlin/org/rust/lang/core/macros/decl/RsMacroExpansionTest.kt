@@ -6,11 +6,10 @@
 package org.rust.lang.core.macros.decl
 
 import com.intellij.psi.tree.TokenSet
-import com.intellij.util.text.SemVer
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2021
+import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE
@@ -139,7 +138,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { let a; let b; let Some(1 | 2); }
     """)
 
-    @MockEdition(EDITION_2018)
     fun `test pat 2018 edition`() = doTest("""
         macro_rules! foo {
             ($ i1:pat | $ i2:pat) => { fn foo() { let $ i1; let $ i2; } }
@@ -841,7 +839,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     fun `test standard "vec!"`() {
         val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver
         // BACKCOMPAT: Rust 1.50
-        val expansion = if (rustcVersion != null && rustcVersion < SemVer.parseFromText("1.51.0")!!) {
+        val expansion = if (rustcVersion != null && rustcVersion < "1.51.0".parseSemVer()) {
             // language=Rust
             "<[_]>::into_vec(box [1, 2, 3])"
         } else {

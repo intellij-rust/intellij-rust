@@ -20,10 +20,10 @@ import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFile.Attributes
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -146,8 +146,9 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
                     val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
-                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData)
-                    ImportCandidate2(qualifiedItem, importInfo)
+                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData, path.needExternCrate)
+                    val isRootPathResolved = isRootPathResolved(importInfo.usePath)
+                    ImportCandidate2(qualifiedItem, importInfo, isRootPathResolved)
                 }
             }
         }
@@ -156,14 +157,14 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
         .distinctBy { it.qualifiedNamedItem.item to it.info.usePath }
         .sorted()
 
-
 @Suppress("ArrayInDataClass")
 private data class ModUsePath(
     val path: Array<String>,
     /** corresponds to `path.first()` */
     val crate: Crate,
     /** corresponds to `path.last()` */
-    val mod: ModData
+    val mod: ModData,
+    val needExternCrate: Boolean,
 ) {
     override fun toString(): String = path.joinToString("::")
 }
@@ -175,7 +176,7 @@ private fun ImportContext2.getAllModPaths(): List<ModUsePath> {
     for ((crateName, defMap) in defMaps.all) {
         val filterCrate = { crate: CratePersistentId -> crate == defMap.crate || crate !in explicitCrates }
         val crate = project.crateGraph.findCrateById(defMap.crate) ?: continue
-        val rootPath = ModUsePath(arrayOf(crateName), crate, defMap.root)
+        val rootPath = ModUsePath(arrayOf(crateName), crate, defMap.root, needExternCrate = defMap.crate !in explicitCrates)
         visitVisibleModules(rootPath, filterCrate, result::add)
     }
     return result
@@ -211,7 +212,7 @@ private fun ImportContext2.findPathsToModulesInScope(path: ModUsePath): List<Mod
             it.isModOrEnum && checkVisibility(it, path.mod)
         } ?: return@mapNotNull null
         val childModData = rootDefMap.tryCastToModData(childMod) ?: return@mapNotNull null
-        ModUsePath(path.path + name, path.crate, childModData)
+        path.copy(path = path.path + name, mod = childModData)
     }
 
 private data class InitialDefMaps(
@@ -224,6 +225,12 @@ private data class InitialDefMaps(
     /** All crates which we can import from */
     val all: List<Pair<String, CrateDefMap>>,
 )
+
+/**
+ * Other stdlib crates such as `proc_macro`, `test`, `unwind`
+ * are available only when there is explicit `extern crate ...;`
+ */
+private val ADDITIONAL_STDLIB_DEPENDENCIES: Set<String> = setOf("core", "alloc")
 
 private fun CrateDefMap.getInitialDefMapsToSearch(crateGraph: CrateGraphService): InitialDefMaps {
     val externPreludeAdjusted = if (AutoInjectedCrates.STD in externPrelude) {
@@ -239,14 +246,16 @@ private fun CrateDefMap.getInitialDefMapsToSearch(crateGraph: CrateGraphService)
             names.singleOrNull() ?: names.first { it != defMap.metaData.name }
         }
         .map { (defMap, name) -> name to defMap }
-    // e.g. `alloc` and `proc_macro` crates
-    val additionalStdlibDependencies = directDependenciesDefMaps
+    val additionalStdlibDependencies = ADDITIONAL_STDLIB_DEPENDENCIES
+        .mapNotNull { name ->
+            val defMap = directDependenciesDefMaps[name] ?: return@mapNotNull null
+            name to defMap
+        }
         .filter { (name, defMap) ->
             name !in externPreludeAdjusted
                 && crateGraph.findCrateById(defMap.crate)?.origin == PackageOrigin.STDLIB
                 && stdlibAttributes.canUseCrate(name)
         }
-        .toList()
     val explicitDefMaps = listOf("crate" to this) + dependencies
     val allDefMaps = explicitDefMaps + additionalStdlibDependencies
     return InitialDefMaps(explicitDefMaps, allDefMaps)
@@ -285,7 +294,8 @@ private data class ItemUsePath(
     val crate: Crate,
     /** corresponds to `path.last()` */
     val item: VisItem,
-    val namespace: Namespace
+    val namespace: Namespace,
+    val needExternCrate: Boolean,
 ) {
     fun toItemWithNamespace(): ItemWithNamespace = ItemWithNamespace(item.path, item.isModOrEnum, namespace)
 
@@ -309,7 +319,7 @@ private fun ImportContext2.getPerNsPaths(modPath: ModUsePath, perNs: PerNs, name
                 checkVisibility(it, modPath.mod)
                     && (type == ImportContext2.Type.OTHER || !hasVisibleItemInRootScope(name, namespace))
             }
-            .map { ItemUsePath(modPath.path + name, modPath.crate, it, namespace) }
+            .map { ItemUsePath(modPath.path + name, modPath.crate, it, namespace, modPath.needExternCrate) }
     }
 
 private fun ImportContext2.hasVisibleItemInRootScope(name: String, namespace: Namespace): Boolean {
@@ -323,7 +333,7 @@ private fun ImportContext2.getTraitsPathsInMod(modPath: ModUsePath, traits: Set<
         .flatMap { (name, perNs) ->
             perNs.types
                 .filter { checkVisibility(it, modPath.mod) && it.path in traits }
-                .map { ItemUsePath(modPath.path + name, modPath.crate, it, Namespace.Types) }
+                .map { ItemUsePath(modPath.path + name, modPath.crate, it, Namespace.Types, modPath.needExternCrate) }
         }
 
 
@@ -361,15 +371,8 @@ private fun filterShortestPath(paths: List<ItemUsePath>): List<ItemUsePath> {
 }
 
 private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
-    if (pathInfo == null) return true
-    val path = RsCodeFragmentFactory(project).createPathInTmpMod(
-        pathInfo.parentPathText ?: return true,
-        rootMod,
-        pathInfo.pathParsingMode,
-        TYPES_N_VALUES,
-        usePath,
-        null
-    ) ?: return false
+    if (pathInfo?.rootPathText == null) return true
+    val path = createPathWithImportAdded(usePath) ?: return false
     val element = path.reference?.deepResolve() as? RsQualifiedNamedElement ?: return false
 
     // Looks like it's useless to access trait associated types directly (i.e. `Trait::Type`),
@@ -380,7 +383,21 @@ private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
         || element.canBeAccessedByTraitName
 }
 
-private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData): ImportInfo {
+private fun ImportContext2.isRootPathResolved(usePath: String): Boolean {
+    if (type == ImportContext2.Type.COMPLETION) return true
+    val path = createPathWithImportAdded(usePath) ?: return false
+    return path.reference?.resolve() != null
+}
+
+private fun ImportContext2.createPathWithImportAdded(usePath: String): RsPath? {
+    val rootPathText = pathInfo?.rootPathText ?: return null
+    val rootPathParsingMode = pathInfo.rootPathParsingMode ?: return null
+    val rootPathAllowedNamespaces = pathInfo.rootPathAllowedNamespaces ?: return null
+    return RsCodeFragmentFactory(project)
+        .createPathInTmpMod(rootPathText, rootMod, rootPathParsingMode, rootPathAllowedNamespaces, usePath, null)
+}
+
+private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {
     val crateName = path.first()
     return if (crateName == "crate") {
         val usePath = path.joinToString("::").let {
@@ -388,7 +405,8 @@ private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModDa
         }
         ImportInfo.LocalImportInfo(usePath)
     } else {
-        val needInsertExternCrateItem = !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
+        val needInsertExternCrateItem = needExternCrate
+            || !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
         val crateRelativePath = path.copyOfRange(1, path.size).joinToString("::")
         ImportInfo.ExternCrateImportInfo(
             crate = containingCrate,

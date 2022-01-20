@@ -27,7 +27,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
@@ -52,7 +52,6 @@ private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 interface CompletionEntity {
     val ty: Ty?
-    val implLookup: ImplLookup
     fun getBasePriority(context: RsCompletionContext): Double
     fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
 }
@@ -62,7 +61,6 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
     private val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
 
     override val ty: Ty? get() = element.asTy
-    override val implLookup: ImplLookup get() = element.implLookup
 
     override fun getBasePriority(context: RsCompletionContext): Double {
         var priority = when {
@@ -140,7 +138,8 @@ fun createLookupElement(
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
     var priority = completionEntity.getBasePriority(context)
 
-    if (isCompatibleTypes(completionEntity.implLookup, completionEntity.ty, context.expectedTy)) {
+    val implLookup = context.lookup
+    if (implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)) {
         priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 
@@ -424,9 +423,10 @@ private val RsElement.canBeExported: Boolean
         return context == null || context is RsMod
     }
 
-private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?): Boolean {
+private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: ExpectedType?): Boolean {
+    if (actualTy == null || expectedType == null) return false
+    val expectedTy = expectedType.ty
     if (
-        actualTy == null || expectedTy == null ||
         actualTy is TyUnknown || expectedTy is TyUnknown ||
         actualTy is TyTypeParameter || expectedTy is TyTypeParameter
     ) return false
@@ -440,7 +440,14 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?
         }
     }
 
-    return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder)).isOk
+    // TODO coerce
+    val ty1 = actualTy.foldWith(folder)
+    val ty2 = expectedTy.foldWith(folder)
+    return if (expectedType.coercable) {
+        lookup.ctx.tryCoerce(ty1, ty2)
+    } else {
+        lookup.ctx.combineTypesNoVars(ty1, ty2)
+    }.isOk
 }
 
 object Testmarks {

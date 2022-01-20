@@ -8,9 +8,7 @@ package org.rust.ide.refactoring
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
-import org.rust.MockEdition
 import org.rust.RsTestBase
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.changeSignature.Parameter
 import org.rust.ide.refactoring.changeSignature.ParameterProperty
 import org.rust.ide.refactoring.changeSignature.RsChangeFunctionSignatureConfig
@@ -580,7 +578,7 @@ Cannot change signature of function with cfg-disabled parameters""")
             foo::bar(0);
         }
     """, """
-        use foo::S;
+        use crate::foo::S;
 
         mod foo {
             pub struct S(u32);
@@ -612,7 +610,7 @@ Cannot change signature of function with cfg-disabled parameters""")
             foo::bar(0);
         }
     """, """
-        use foo::{Option, S1, S2};
+        use crate::foo::{Option, S1, S2};
 
         mod foo {
             pub enum Option<T> {
@@ -922,7 +920,6 @@ Cannot change signature of function with cfg-disabled parameters""")
         visibility = createVisibility("pub")
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import return type in different module`() = doTest("""
         mod foo {
             pub struct S;
@@ -945,7 +942,6 @@ Cannot change signature of function with cfg-disabled parameters""")
         returnTypeDisplay = referToType("S", findElementInEditor<RsStructItem>())
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import new parameter type in different module`() = doTest("""
         mod foo {
             pub struct S;
@@ -968,7 +964,6 @@ Cannot change signature of function with cfg-disabled parameters""")
         parameters.add(parameter("s", referToType("S", findElementInEditor<RsStructItem>())))
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import changed parameter type in different module`() = doTest("""
         mod foo {
             pub struct S;
@@ -1212,7 +1207,7 @@ Cannot change signature of function with cfg-disabled parameters""")
 
         fn bar/*caret*/() {}
     """, """
-        use foo::Vec;
+        use crate::foo::Vec;
 
         mod foo {
             pub struct S;
@@ -1240,7 +1235,7 @@ Cannot change signature of function with cfg-disabled parameters""")
 
         fn bar/*caret*/() {}
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo {
             pub struct S;

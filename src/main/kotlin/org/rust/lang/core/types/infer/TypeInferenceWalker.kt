@@ -199,6 +199,7 @@ class RsTypeInferenceWalker(
 
     private fun RsExpr.inferTypeCoercableTo(expected: Ty): Ty {
         val inferred = inferType(expected)
+        ctx.writeExpectedExprTyCoercable(this)
         return if (coerce(this, inferred, expected)) expected else inferred
     }
 
@@ -214,7 +215,7 @@ class RsTypeInferenceWalker(
         )
 
     private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean =
-        when (val result = tryCoerce(inferred, expected)) {
+        when (val result = ctx.tryCoerce(inferred, expected)) {
             CoerceResult.Ok -> true
 
             is CoerceResult.TypeMismatch -> {
@@ -249,51 +250,6 @@ class RsTypeInferenceWalker(
         if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
             ctx.reportTypeMismatch(element, expected, inferred)
         }
-    }
-
-    private fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
-        return when {
-            inferred == TyNever -> CoerceResult.Ok
-            // Coerce array to slice
-            inferred is TyReference && inferred.referenced is TyArray &&
-                expected is TyReference && expected.referenced is TySlice -> {
-                ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
-            }
-            // Coerce reference to pointer
-            inferred is TyReference && expected is TyPointer &&
-                coerceMutability(inferred.mutability, expected.mutability) -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced)
-            }
-            // Coerce mutable pointer to const pointer
-            inferred is TyPointer && inferred.mutability.isMut
-                && expected is TyPointer && !expected.mutability.isMut -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced)
-            }
-            // Coerce references
-            inferred is TyReference && expected is TyReference &&
-                coerceMutability(inferred.mutability, expected.mutability) -> {
-                coerceReference(inferred, expected)
-            }
-            // TODO trait object unsizing
-            else -> ctx.combineTypes(inferred, expected)
-        }
-    }
-
-    private fun coerceMutability(from: Mutability, to: Mutability): Boolean =
-        from == to || from.isMut && !to.isMut
-
-    /**
-     * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
-     * To match `A` with `B`, autoderef will be performed
-     */
-    private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
-        for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
-            // TODO proper handling of lifetimes
-            val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
-            if (ctx.combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
-        }
-
-        return CoerceResult.TypeMismatch(inferred, expected)
     }
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
@@ -654,11 +610,11 @@ class RsTypeInferenceWalker(
 
         val constParameters = callee.element.constParameters.map { CtConstParameter(it) }
         val resolver = PathExprResolver.fromContext(ctx)
-        val constArguments = methodCall.constArguments.withIndex().map { (i, expr) ->
-            val expectedTy = constParameters.getOrNull(i)?.parameter?.typeReference?.type ?: TyUnknown
-            expr.evaluate(expectedTy, resolver)
+        val constSubst = constParameters.zip(methodCall.constArguments).associate { (param, psiValue) ->
+            val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
+            val value = psiValue.toConst(expectedTy, resolver)
+            param to value
         }
-        val constSubst = constParameters.zip(constArguments).toMap()
 
         val fnSubst = Substitution(typeSubst = typeSubst, constSubst = constSubst)
         unifySubst(fnSubst, newSubst)
@@ -790,8 +746,23 @@ class RsTypeInferenceWalker(
         }
     }
 
-    fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsExpr>) {
-        inferArgumentTypes(constParameters.map { it.typeReference?.type ?: TyUnknown }, constArguments)
+    fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsElement>) {
+        val argDefs = constParameters.asSequence()
+            .map { it.typeReference?.type ?: TyUnknown }
+            .infiniteWithTyUnknown()
+        for ((type, expr) in argDefs.zip(constArguments.asSequence())) {
+            when (expr) {
+                is RsExpr -> expr.inferTypeCoercableTo(type)
+                is RsBaseType -> {
+                    val typeReference = when (val def = expr.path?.reference?.resolve()) {
+                        is RsConstant -> def.typeReference?.takeIf { def.isConst }
+                        is RsConstParameter -> def.typeReference
+                        else -> null
+                    }
+                    coerce(expr, typeReference?.type ?: TyUnknown, type)
+                }
+            }
+        }
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
@@ -902,6 +873,8 @@ class RsTypeInferenceWalker(
         return when (expr.operatorType) {
             UnaryOperator.REF -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE)
             UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE)
+            UnaryOperator.RAW_REF_CONST -> inferRawRefType(innerExpr, expected, Mutability.IMMUTABLE)
+            UnaryOperator.RAW_REF_MUT -> inferRawRefType(innerExpr, expected, Mutability.MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
                 val base = resolveTypeVarsWithObligations(innerExpr.inferType())
@@ -922,6 +895,9 @@ class RsTypeInferenceWalker(
 
     private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
         TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
+
+    private fun inferRawRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
+        TyPointer(expr.inferType((expected as? TyPointer)?.referenced), mutable)
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.inferTypes()
@@ -1171,7 +1147,7 @@ class RsTypeInferenceWalker(
                 val elementTypes = vecArg.exprList.map { it.inferType(expectedElemTy) }
                 val elementType = if (elementTypes.isNotEmpty()) getMoreCompleteType(elementTypes) else TyInfer.TyVar()
 
-                if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
+                if (expectedElemTy != null && ctx.tryCoerce(elementType, expectedElemTy).isOk) {
                     expectedElemTy
                 } else {
                     elementType
@@ -1304,7 +1280,7 @@ class RsTypeInferenceWalker(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
+            val inferredTy = if (expectedElemTy != null && ctx.tryCoerce(elementType, expectedElemTy).isOk) {
                 expectedElemTy
             } else {
                 elementType

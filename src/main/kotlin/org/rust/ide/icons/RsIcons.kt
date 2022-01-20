@@ -7,10 +7,15 @@ package org.rust.ide.icons
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.IconUtil
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.geom.AffineTransform
 import java.awt.image.RGBImageFilter
 import javax.swing.Icon
 
@@ -102,6 +107,12 @@ object RsIcons {
     val CARGO_GENERATE = load("/icons/cargo-generate.svg")
     val WASM_PACK = load("/icons/wasm-pack.svg")
 
+    // Progress
+
+    val GEAR = load("/icons/gear.svg")
+    val GEAR_OFF = load("/icons/gear-off.svg")
+    val GEAR_ANIMATED = AnimatedIcon(AnimatedIcon.Default.DELAY, GEAR, GEAR.rotated(-45.0), GEAR.rotated(90.0), GEAR.rotated(45.0))
+
     private fun load(path: String): Icon = IconLoader.getIcon(path, RsIcons::class.java)
 }
 
@@ -127,3 +138,21 @@ fun Icon.grayed(): Icon =
             }
         }
     }, null)
+
+fun Icon.rotated(angle: Double): Icon {
+    val q = this
+    return object : Icon by this {
+        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+            val g2d = g.create() as Graphics2D
+            try {
+                val transform = AffineTransform.getTranslateInstance(x.toDouble(), y.toDouble())
+                transform.concatenate(AffineTransform.getRotateInstance(Math.toRadians(angle), iconWidth / 2.0, iconHeight / 2.0))
+                transform.preConcatenate(g2d.transform)
+                g2d.transform = transform
+                q.paintIcon(c, g2d, 0, 0)
+            } finally {
+                g2d.dispose()
+            }
+        }
+    }
+}

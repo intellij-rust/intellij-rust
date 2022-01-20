@@ -5,8 +5,7 @@
 
 package org.rust.ide.console
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.UseOldResolve
 
 class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
 
@@ -133,7 +132,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         mod1::frobnicate()/*caret*/
     """)
 
-    @MockEdition(Edition.EDITION_2018)
+    @UseOldResolve
     fun `test child module with import`() = checkSingleCompletion("""
         mod mod1 { pub fn frobnicate() {} }
         use mod1::frobnicate;
@@ -152,7 +151,6 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         "BTreeSet"
     ))
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test imports 2`() = checkContainsCompletion("""
         use std::collections;
     """, """

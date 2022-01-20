@@ -5,7 +5,6 @@
 
 package org.rust.cargo
 
-import com.intellij.findAnnotationInstance
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager

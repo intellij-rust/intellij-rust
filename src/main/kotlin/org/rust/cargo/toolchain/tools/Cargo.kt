@@ -50,6 +50,7 @@ import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.BUILD_SCRIPT_EVAL
 import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.OK
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
@@ -136,16 +137,16 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
     ): ProjectDescription {
         val rawData = fetchMetadata(owner, projectDirectory, true, listenerProvider(CargoCallType.METADATA))
 
-        val (buildScriptsInfo, status) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-            val info = fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
-            if (info == null) info to BUILD_SCRIPT_EVALUATION_ERROR else info to OK
+        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+            fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
         } else {
-            null to OK
+            BuildMessages.DEFAULT
         }
 
         val (rawDataAdjusted, buildScriptsInfoAdjusted) =
             replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
         val workspaceData = CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted)
+        val status = if (buildScriptsInfo.isSuccessful) OK else BUILD_SCRIPT_EVALUATION_ERROR
         return ProjectDescription(workspaceData, status)
     }
 
@@ -202,8 +203,11 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
-    ): BuildMessages? {
-        val additionalArgs = listOf("--message-format", "json", "--workspace")
+    ): BuildMessages {
+        // `--tests` is needed here to compile dev dependencies during build script evaluation.
+        // `--all-targets` also can help to build dev dependencies,
+        // but it may force unnecessary compilation of examples, benches and other targets
+        val additionalArgs = listOf("--message-format", "json", "--workspace", "--tests")
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
@@ -217,10 +221,8 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             commandLine.execute(owner, ignoreExitCode = true, listener = listener)
         } catch (e: ExecutionException) {
             LOG.warn(e)
-            return null
+            return BuildMessages.FAILED
         }
-
-        if (processOutput.exitCode != 0) return null
 
         val messages = mutableMapOf<PackageId, MutableList<CompilerMessage>>()
 
@@ -230,7 +232,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
                 ?.convertPaths(toolchain::toLocalPath)
                 ?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
         }
-        return BuildMessages(messages)
+        return BuildMessages(messages, isSuccessful = processOutput.exitCode == 0)
     }
 
     private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
@@ -429,7 +431,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
     fun checkNeedInstallCargoGenerate(): Boolean {
         val crateName = "cargo-generate"
-        val minVersion = SemVer("v0.9.0", 0, 9, 0)
+        val minVersion = "0.9.0".parseSemVer()
         return checkBinaryCrateIsNotInstalled(crateName, minVersion)
     }
 
@@ -515,7 +517,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallGrcov(project: Project): Boolean {
             val crateName = "grcov"
-            val minVersion = SemVer("v0.4.3", 0, 4, 3)
+            val minVersion = "0.7.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -527,7 +529,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
             val crateName = "cargo-expand"
-            val minVersion = SemVer("v1.0.0", 1, 0, 0)
+            val minVersion = "1.0.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -539,7 +541,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallEvcxr(project: Project): Boolean {
             val crateName = "evcxr_repl"
-            val minVersion = SemVer("v0.10.0", 0, 10, 0)
+            val minVersion = "0.10.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
@@ -551,7 +553,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
 
         fun checkNeedInstallWasmPack(project: Project): Boolean {
             val crateName = "wasm-pack"
-            val minVersion = SemVer("v0.9.1", 0, 9, 1)
+            val minVersion = "0.9.1".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,

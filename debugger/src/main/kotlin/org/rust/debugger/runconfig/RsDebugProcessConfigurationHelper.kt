@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.text.SemVer
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
@@ -22,6 +21,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
+import org.rust.cargo.util.parseSemVer
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon
@@ -192,7 +192,7 @@ class RsDebugProcessConfigurationHelper(
         private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
 
         // BACKCOMPAT: Rust 1.45. Drop this property
-        private val RUST_1_46 = SemVer.parseFromText("1.46.0")!!
+        private val RUST_1_46 = "1.46.0".parseSemVer()
 
         /**
          * Should be synchronized with `rust_types.py`

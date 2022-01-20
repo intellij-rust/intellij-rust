@@ -5,11 +5,7 @@
 
 package org.rust.lang.core.type
 
-import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.*
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFloat
@@ -118,6 +114,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test vec!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let x = vec!(1, 2u16, 4, 8);
+            x;
+          //^ Vec<u16> | Vec<u16, Global>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibAndStdlibLikeDependencyRustProjectDescriptor::class)
+    fun `test vec! with stdlib-like dependencies`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
@@ -851,7 +857,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ &S<X>
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test await pin future`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::future::Future;
@@ -888,5 +893,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             foo(num2);
             num2;
         } //^ i32
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/8405
+    @MinRustcVersion("1.51.0")
+    fun `test addr_of_mut!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::ptr::addr_of_mut;
+        fn main() {
+            let mut a = 123;
+            let b = addr_of_mut!(a);
+            b;
+          //^ *mut i32
+        }
     """)
 }

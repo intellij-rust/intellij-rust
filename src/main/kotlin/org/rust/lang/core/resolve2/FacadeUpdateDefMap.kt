@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve2
 
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -22,7 +23,10 @@ import org.rust.lang.core.macros.MacroExpansionSharedCache
 import org.rust.openapiext.*
 import org.rust.stdext.getWithRethrow
 import org.rust.stdext.withLockAndCheckingCancelled
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.withLock
 import kotlin.system.measureTimeMillis
@@ -155,24 +159,13 @@ private class DefMapUpdater(
         checkReadAccessAllowed()
         val time = measureTimeMillis {
             executeUnderProgress(indicator) {
-                runWithStrongReferencesToDefMapHolders()
+                doRun()
             }
         }
         if (numberUpdatedCrates > 0) {
             val cratesCount = if (numberUpdatedCrates == topSortedCrates.size) "all" else numberUpdatedCrates.toString()
             RESOLVE_LOG.info("Updated $cratesCount DefMaps in $time ms")
         }
-    }
-
-    private fun runWithStrongReferencesToDefMapHolders() {
-        /**
-         * Strong references to all [DefMapHolder]s we need,
-         * so they will not be garbage collected ([DefMapService.defMaps] stores values as soft references)
-         */
-        val holders = crates.mapNotNull { defMapService.getDefMapHolder(it.id ?: return@mapNotNull null) }
-        doRun()
-        /** Pretend we are using `crateHolders`, so it will not be optimized out */
-        check(holders.size <= crates.size)
     }
 
     private fun doRun() {
@@ -267,21 +260,21 @@ private fun Set<Crate>.topSort(topSortedCrates: List<Crate>): List<Crate> =
 /** Does not persist order of elements */
 private fun <T> Collection<T>.filterAsync(pool: Executor, predicate: (T) -> Boolean): List<T> {
     val result = ConcurrentLinkedQueue<T>()
-    val future = CompletableFuture<Unit>()
+    val future = SettableFuture.create<Unit>()
     val remainingCount = AtomicInteger(size)
 
     for (element in this) {
         pool.execute {
-            if (future.isCompletedExceptionally) return@execute
+            if (future.isDone) return@execute
             try {
                 if (predicate(element)) {
                     result += element
                 }
                 if (remainingCount.decrementAndGet() == 0) {
-                    future.complete(Unit)
+                    future.set(Unit)
                 }
             } catch (e: Throwable) {
-                future.completeExceptionally(e)
+                future.setException(e)
             }
         }
     }

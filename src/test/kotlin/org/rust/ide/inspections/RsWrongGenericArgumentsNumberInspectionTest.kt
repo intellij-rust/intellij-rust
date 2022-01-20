@@ -219,8 +219,8 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
             let u = &[0];
             let v = &[0];
 
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32>(u, v)</error>;
-            <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32>(u, v)</error>;
+            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32></error>(u, v);
+            <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32></error>(u, v);
             foo::<>(u, v);
             foo(u, v);
         }
@@ -235,14 +235,14 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
             let u = &[0];
             let v = &[0, 0];
 
-            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo::<1>(u, v)</error>;
-            <error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">foo::<1, 2, 3>(u, v)</error>;
+            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo::<1></error>(u, v);
+            <error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">foo::<1, 2, 3></error>(u, v);
             foo::<>(u, v);
             foo(u, v);
         }
     """)
 
-    fun `test fix no type arguments struct`() = checkFixByText("Remove redundant type arguments", """
+    fun `test fix no type arguments struct`() = checkFixByText("Remove redundant generic arguments", """
         struct Foo0;
         impl <error>Foo0/*caret*/<u8></error> {}
     """, """
@@ -250,7 +250,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         impl Foo0 {}
     """)
 
-    fun `test fix no type arguments method`() = checkFixByText("Remove redundant type arguments", """
+    fun `test fix no type arguments method`() = checkFixByText("Remove redundant generic arguments", """
         struct Test;
 
         impl Test {
@@ -274,11 +274,11 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test fix no type function call`() = checkFixByText("Remove redundant type arguments", """
+    fun `test fix no type function call`() = checkFixByText("Remove redundant generic arguments", """
         fn foo() {}
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">foo/*caret*/::<i32>()</error>;
+            <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">foo/*caret*/::<i32></error>();
         }
     """, """
         fn foo() {}
@@ -303,7 +303,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test fix struct with multiple type arguments`() = checkFixByText("Remove redundant type arguments", """
+    fun `test fix struct with multiple type arguments`() = checkFixByText("Remove redundant generic arguments", """
         struct Foo<T, U> { t: T, u: U }
         struct Err {
             err1: <error descr="Wrong number of type arguments: expected 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
@@ -315,7 +315,19 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test fix struct with default type arguments`() = checkFixByText("Remove redundant type arguments", """
+    fun `test fix struct with multiple const arguments`() = checkFixByText("Remove redundant generic arguments", """
+        struct Foo<const N: i32, const M: i32>(i32);
+        struct Err {
+            err1: <error descr="Wrong number of const arguments: expected 2, found 4 [E0107]">Foo<1, 2, 3, 4/*caret*/></error>,
+        }
+    """, """
+        struct Foo<const N: i32, const M: i32>(i32);
+        struct Err {
+            err1: Foo<1, 2>,
+        }
+    """)
+
+    fun `test fix struct with default type arguments`() = checkFixByText("Remove redundant generic arguments", """
         struct Foo<T, U = i32> { t: T, u: U }
         struct Err {
             err1: <error descr="Wrong number of type arguments: expected at most 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
@@ -324,6 +336,41 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         struct Foo<T, U = i32> { t: T, u: U }
         struct Err {
             err1: Foo<u32, i32>,
+        }
+    """)
+
+    fun `test call expr with default type argument`() = checkByText("""
+        struct S<A, B = i32>(A, B);
+        fn main() {
+            S(1, 2);
+            S::<>(1, 2);
+            S::<i32>(1, 2);
+            S::<i32, i32>(1, 2);
+            <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">S::<i32, i32, i32></error>(1, 2);
+        }
+    """)
+
+    fun `test method call with default type argument`() = checkByText("""
+        struct S;
+        impl S { fn foo<A, B = i32>(&self, a: A, b: B) {} }
+        fn main() {
+            S.foo(1, 2);
+            S.foo::<>(1, 2);
+            S.foo::<i32>(1, 2);
+            S.foo::<i32, i32>(1, 2);
+            S.<error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">foo::<i32, i32, i32>(1, 2)</error>;
+        }
+    """)
+
+    fun `test fix struct with default const arguments`() = checkFixByText("Remove redundant generic arguments", """
+        struct Foo<const N: i32, const M: i32 = 1>(i32);
+        struct Err {
+            err1: <error descr="Wrong number of const arguments: expected at most 2, found 4 [E0107]">Foo<0, 1, 2, 3/*caret*/></error>,
+        }
+    """, """
+        struct Foo<const N: i32, const M: i32 = 1>(i32);
+        struct Err {
+            err1: Foo<0, 1>,
         }
     """)
 
@@ -427,10 +474,10 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test add arguments keep const generics`() = checkFixByText("Add missing type arguments", """
+    fun `test add arguments keep const generics`() = checkFixByText("Add missing generic arguments", """
         #![feature(const_generics)]
 
-        trait S<A, B, const N: usize> {
+        trait S<A, const N: usize, B> {
         }
 
         fn main() {
@@ -439,11 +486,11 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
     """, """
         #![feature(const_generics)]
 
-        trait S<A, B, const N: usize> {
+        trait S<A, const N: usize, B> {
         }
 
         fn main() {
-            let x: S<u32, B, 0>;
+            let x: S<u32, 0, B>;
         }
     """)
 
@@ -452,6 +499,14 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
 
         fn main() {
             let x: S<u32, u32>;
+        }
+    """)
+
+    fun `test add arguments ignore const parameters with a default`() = checkFixIsUnavailable("Add missing const arguments", """
+        struct S<const A: i32, const B: i32 = 1, const C: i32 = 2>(i32);
+
+        fn main() {
+            let x: S<0, 1>;
         }
     """)
 
@@ -489,7 +544,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         fn foo<S, T>() -> (S, T) { unreachable!() }
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/>()</error>;
+            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/></error>();
         }
     """, """
         fn foo<S, T>() -> (S, T) { unreachable!() }
@@ -541,7 +596,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test remove type arguments with lifetime 1`() = checkFixByText("Remove redundant type arguments", """
+    fun `test remove type arguments with lifetime 1`() = checkFixByText("Remove redundant generic arguments", """
         struct B<'a, T>(&'a T);
 
         struct C<'a> {
@@ -555,7 +610,7 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test remove type arguments with lifetime 2`() = checkFixByText("Remove redundant type arguments", """
+    fun `test remove type arguments with lifetime 2`() = checkFixByText("Remove redundant generic arguments", """
         struct B<'a>(&'a u32);
 
         struct C<'a> {
@@ -569,13 +624,13 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test remove type arguments with const argument 1`() = checkFixByText("Remove redundant type arguments", """
+    fun `test remove type arguments with const argument 1`() = checkFixByText("Remove redundant generic arguments", """
         #![feature(const_generics)]
 
         struct B<T, const N: i32>(T);
 
         struct C {
-            a: <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">B<u32, i32, 1>/*caret*/</error>
+            a: <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">B<u32, 1, i32>/*caret*/</error>
         }
     """, """
         #![feature(const_generics)]
@@ -587,13 +642,13 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
         }
     """)
 
-    fun `test remove type arguments with const argument 2`() = checkFixByText("Remove redundant type arguments", """
+    fun `test remove type arguments with const argument 2`() = checkFixByText("Remove redundant generic arguments", """
         #![feature(const_generics)]
 
         struct B<const N: i32>;
 
         struct C {
-            a: <error descr="Wrong number of generic arguments: expected 1, found 2 [E0107]">B<i32, 1>/*caret*/</error>
+            a: <error descr="Wrong number of generic arguments: expected 1, found 2 [E0107]">B<1, i32>/*caret*/</error>
         }
     """, """
         #![feature(const_generics)]
@@ -602,6 +657,18 @@ class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWron
 
         struct C {
             a: B<1>
+        }
+    """)
+
+    fun `test path exprs`() = checkByText("""
+        fn foo1() {}
+        fn foo2<const T: i32>() {}
+        fn foo3<const T: i32, const U: i32>() {}
+
+        fn main() {
+            <error descr="Wrong number of const arguments: expected 0, found 1 [E0107]">foo1::<1></error>;
+            foo2::<1>;
+            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo3::<1></error>;
         }
     """)
 }

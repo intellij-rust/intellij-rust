@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
 class RsMacroResolveTest : RsResolveTestBase() {
@@ -162,7 +160,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve macro in lexical order 4`() = checkByCode("""
         mod a {
             macro_rules! foo { () => {} }
@@ -174,7 +171,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve macro in lexical order 5`() = checkByCode("""
         mod a {
             macro_rules! foo { () => {} }
@@ -186,7 +182,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test expand macro in lexical order 6`() = checkByCode("""
         mod a {
             struct Foo1;
@@ -200,7 +195,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve macro in lexical order 7`() = checkByCode("""
         mod a {
             struct Foo1;
@@ -280,7 +274,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
     """)
 
     // TODO
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in nested mod (reexport)`() = expect<IllegalStateException> {
         checkByCode("""
             mod inner {
@@ -295,7 +288,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in nested mod (import)`() = checkByCode("""
         mod inner {
             #[macro_export]
@@ -311,7 +303,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in nested mod (macro call)`() = checkByCode("""
         mod inner {
             #[macro_export]
@@ -326,7 +317,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
              //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in crate root (reexport)`() = checkByCode("""
         #[macro_export]
         macro_rules! foo_ {
@@ -337,7 +327,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
               //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in crate root (import)`() = checkByCode("""
         #[macro_export]
         macro_rules! foo_ {
@@ -351,7 +340,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in crate root (macro call fqn)`() = checkByCode("""
         #[macro_export]
         macro_rules! foo_ {
@@ -364,7 +352,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
              //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test legacy textual macro reexported as macro 2 in crate root (macro call)`() = checkByCode("""
         #[macro_export]
         macro_rules! foo_ {
@@ -377,7 +364,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
         //^
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test propagate expanded macro def`() = checkByCode("""
         mod outer {
             #[macro_use]
@@ -399,7 +385,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
     """)
 
     // From https://github.com/seed-rs/seed/blob/d9935ee25148c151931160d188d5f0e67c746cba/src/shortcuts.rs#L9-L45
-    @MockEdition(Edition.EDITION_2018)
     fun `test generate two macro defs with same name`() = checkByCode("""
         mod outer {
             macro_rules! with_dollar_sign {

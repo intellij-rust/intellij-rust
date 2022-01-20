@@ -5,11 +5,9 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -67,6 +65,19 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test macro 2`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// use test_package::foo;
+        /// fn main() {
+        ///     foo!();
+        ///   //^ lib.rs
+        /// }
+        /// ```
+        pub macro foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test extra extern crate`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
@@ -80,7 +91,6 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         pub fn foo() {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test qualified macro call inside function`() = stubOnlyResolve("""
     //- lib.rs
@@ -96,7 +106,6 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
                    //X
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve to inline mod`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
@@ -111,7 +120,6 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         fn foo() {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve in inline mod`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
@@ -125,7 +133,6 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         fn foo() {}
     """)
 
-    @MockEdition(Edition.EDITION_2018)
     fun `test resolve to super mod`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
@@ -135,6 +142,40 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         ///         super::func();
         ///     }        //^ ...lib.rs
         /// }
+        /// ```
+        fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test resolve to transitive dependency`() = stubOnlyResolve("""
+    //- trans-lib/lib.rs
+        pub fn func() {}
+    //- dep-lib/lib.rs
+        pub use trans_lib::func;
+    //- lib.rs
+        /// ```
+        /// use dep_lib_target::func;
+        /// fn main() {
+        ///     func();
+        /// } //^ ...trans-lib/lib.rs
+        /// ```
+        fn foo() {}
+    """)
+
+    @MinRustcVersion("1.46.0")
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attribute proc macros`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// use test_proc_macros::attr_replace_with_attr;
+        ///
+        /// #[attr_replace_with_attr(struct X{})]
+        /// foo! {}                       //X
+        /// fn main() {
+        ///     let _: X;
+        /// }        //^ ...lib.rs
         /// ```
         fn foo() {}
     """)

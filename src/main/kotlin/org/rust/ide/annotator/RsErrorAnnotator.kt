@@ -99,6 +99,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitArrayExpr(o: RsArrayExpr) = checkArrayExpr(rsHolder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(rsHolder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(rsHolder, o)
+            override fun visitTildeConst(o: RsTildeConst) = checkTildeConst(rsHolder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(rsHolder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(rsHolder, o)
             override fun visitBlockExpr(o: RsBlockExpr) = checkBlockExpr(rsHolder, o)
@@ -493,6 +494,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: RsAnnotationHolder) {
+        // Do not annotate usages of private items in debugger
+        if (o.containingFile is RsDebuggerExpressionCodeFragment) {
+            return
+        }
         val reference = ref.reference ?: return
         val highlightedElement = ref.referenceNameElement ?: return
         val referenceName = ref.referenceName ?: return
@@ -818,8 +823,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val traitRef = impl.traitRef ?: return
         val typeRef = impl.typeReference ?: return
         val type = typeRef.type
+        // If type is not fully known, the plugin should produce some another error, like E0412
+        if (type.containsTyOfClass(TyUnknown::class.java)) return
         val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
-        val lookup = typeRef.implLookup
+        val lookup = impl.implLookup
 
         val selfSubst = mapOf(TyTypeParameter.self() to type).toTypeSubst()
         val substitution = (impl.implementedTrait?.subst ?: emptySubstitution).substituteInValues(selfSubst) + selfSubst
@@ -1250,6 +1257,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    private fun checkTildeConst(holder: RsAnnotationHolder, o: RsTildeConst) {
+        CONST_TRAIT_IMPL.check(holder, o, "const trait impls")
+        CONST_FN_TRAIT_BOUND.check(holder, o, "const fn trait bound")
+    }
+
     private fun checkBlockExpr(holder: RsAnnotationHolder, expr: RsBlockExpr) {
         val label = expr.labelDecl
         if (label != null) {
@@ -1642,8 +1654,9 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     if (arguments.isEmpty() && retType == null) return
 
     val owner = fn.owner
+    val lookup = ImplLookup.relativeTo(fn)
 
-    fun isError(ty: Ty): Boolean = !ty.isSized() &&
+    fun isError(ty: Ty): Boolean = !lookup.isSized(ty) &&
         // '?Sized' type parameter types in abstract trait method is not an error
         !(owner is RsAbstractableOwner.Trait && fn.isAbstract)
 

@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -54,7 +54,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             if (currentRustcVersion != null) {
                 val edition = runReadAction {
                     val psiFile = file.toPsiFile(cargoProject.project)
-                    psiFile?.edition ?: CargoWorkspace.Edition.EDITION_2018
+                    psiFile?.edition ?: Edition.DEFAULT
                 }
                 add("--edition=${edition.presentation}")
             }

@@ -6,16 +6,14 @@
 package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.render
-import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.infer.substitute
 import org.rust.stdext.dequeOf
 import java.util.*
 
@@ -83,43 +81,8 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.typeParameterByName(name)
 }
 
-/**
- * See `org.rust.lang.core.type.RsImplicitTraitsTest`
- */
-fun Ty.isSized(): Boolean {
-    val ancestors = mutableSetOf(this)
-
-    fun Ty.isSizedInner(): Boolean {
-        return when (this) {
-            is TyNumeric,
-            is TyBool,
-            is TyChar,
-            is TyUnit,
-            is TyNever,
-            is TyReference,
-            is TyPointer,
-            is TyArray,
-            is TyFunction -> true
-
-            is TyStr, is TySlice, is TyTraitObject -> false
-
-            is TyTypeParameter -> isSized
-
-            is TyAdt -> {
-                val item = item as? RsStructItem ?: return true
-                val typeRef = item.fields.lastOrNull()?.typeReference
-                val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
-                if (!ancestors.add(type)) return true
-                type.isSizedInner()
-            }
-
-            is TyTuple -> types.last().isSizedInner()
-
-            else -> true
-        }
-    }
-
-    return isSizedInner()
+fun Ty.getConstParameter(name: String): CtConstParameter? {
+    return typeParameterValues.constParameterByName(name)
 }
 
 val Ty.isSelf: Boolean

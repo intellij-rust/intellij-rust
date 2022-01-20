@@ -23,7 +23,6 @@ interface RsMetaItemPsiOrStub {
     val path: RsPathPsiOrStub?
     val metaItemArgs: RsMetaItemArgsPsiOrStub?
 
-    @JvmDefault
     val metaItemArgsList: List<RsMetaItemPsiOrStub>
         get() = metaItemArgs?.metaItemList.orEmpty()
 
@@ -39,11 +38,9 @@ interface RsMetaItemArgsPsiOrStub {
 interface RsAttributeOwnerPsiOrStub<T : RsMetaItemPsiOrStub> {
     val rawMetaItems: Sequence<T>
 
-    @JvmDefault
     val rawOuterMetaItems: Sequence<T>
         get() = emptySequence()
 
-    @JvmDefault
     val containingCrate: Crate?
         get() = when (this) {
             is PsiElement -> (this as RsElement).containingCrate

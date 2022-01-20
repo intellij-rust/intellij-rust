@@ -5,10 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
-
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     fun `test reexport of public item from accessible module`() = checkErrors("""
         mod foo {

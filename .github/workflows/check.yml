@@ -67,7 +67,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                rust-version: [ 1.56.1 ]
+                rust-version: [ 1.58.0 ]
                 config:
                     - name: linux
                       arch: x86-64
@@ -132,11 +132,12 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.56.1, nightly-2021-09-11 ]
+                rust-version: [ 1.58.0, nightly-2021-12-18 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 212, 213 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
+                default-edition-for-tests: [ 2021 ]
                 include:
                     - os: ubuntu-18.04
                       # Don't forget to update condition in `Set up additional env variables` step
@@ -144,6 +145,8 @@ jobs:
                       base-ide: idea
                       platform-version: 212
                       verify-plugin: true
+                      # BACKCOMPAT: 2021 edition needs at least 1.56
+                      default-edition-for-tests: 2018
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
@@ -151,6 +154,7 @@ jobs:
             ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
+            DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
 
         steps:
             - uses: actions/checkout@v2
@@ -197,7 +201,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: evcxr_repl
+                  args: evcxr_repl --locked
 
             - name: Install cargo-generate
               # BACKCOMPAT: zeroize dependency requires Rust 1.51.0 or newer
@@ -205,7 +209,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: cargo-generate
+                  args: cargo-generate --locked
 
             - name: Check environment
               run: |

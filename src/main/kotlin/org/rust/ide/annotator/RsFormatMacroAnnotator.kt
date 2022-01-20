@@ -522,7 +522,7 @@ private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormat
         // panic macro handles any literal (even with `{}`) if it's single argument in 2015 and 2018 editions,
         // but starting with edition 2021 the first string literal is always format string
         "panic" -> {
-            val edition = formatMacro.containingCrate?.edition ?: Edition.EDITION_2018
+            val edition = formatMacro.containingCrate?.edition ?: Edition.DEFAULT
             if (formatMacroArgs.size < 2 && edition < Edition.EDITION_2021) null else 0
         }
         "write",

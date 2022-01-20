@@ -739,6 +739,47 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/bar.rs")
     }
 
+    fun `test panic in workspace build script`() {
+        buildProject {
+            dir("local_dep") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "local_dep"
+                    version = "0.1.0"
+                    authors = []
+                """)
+                rust("build.rs", BUILD_RS)
+                dir("src") {
+                    rust("lib.rs", """
+                        include!(concat!(env!("OUT_DIR"), "/hello.rs"));
+                    """)
+                }
+            }
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                # Build dependency is used here to commit compilation order
+                # and make cargo compile `local_dep` strictly before `build.rs`
+                [build-dependencies]
+                local_dep = { path = "local_dep" }
+            """)
+            rust("build.rs", """
+                fn main() {
+                    panic!("Build script panic {}", local_dep::message());
+                                                              //^
+                }
+            """)
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {}
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("build.rs", toFile = ".../hello.rs")
+    }
+
     fun `test custom target directory location`() {
         val customTargetDir = tempDirFixture.getFile(".")!!.path
         buildProject {

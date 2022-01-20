@@ -65,9 +65,12 @@ interface Crate : UserDataHolderEx {
      * A cargo package can have cyclic dependencies through `[dev-dependencies]` (see [CrateGraphService] docs).
      * Cyclic dependencies are not contained in [dependencies], [flatDependencies] or [reverseDependencies].
      */
-    @JvmDefault
     val dependenciesWithCyclic: Collection<Dependency>
         get() = dependencies
+
+    /** A cargo package can have cyclic dependencies through `[dev-dependencies]` (see [CrateGraphService] docs) */
+    val hasCyclicDevDependencies: Boolean
+        get() = false
 
     /**
      * A root module of the crate, also known as "crate root". Usually it's `main.rs` or `lib.rs`.

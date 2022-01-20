@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.move
+package org.rust.ide.refactoring
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.refactoring.classMembers.MemberInfoBase
@@ -16,7 +16,6 @@ import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.RsItemElement
 import javax.swing.Icon
 
-@Suppress("unused")  // could be used in other refactorings
 class RsMemberSelectionPanel(
     title: String,
     memberInfo: List<RsMemberInfo>

@@ -5,6 +5,7 @@
 
 package org.rust.coverage
 
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.rust.stdext.buildList
 import java.io.File
@@ -18,7 +19,7 @@ class LcovCoverageReport {
         val file = File(filePath).let {
             if (it.isAbsolute || basePath == null) it else File(basePath, filePath)
         }
-        val normalizedFilePath = getNormalizedPath(file)
+        val normalizedFilePath = file.systemIndependentPath
         val oldReport = info[normalizedFilePath]
         val result = normalizeLineHitsList(report).let {
             if (oldReport == null) it else doMerge(oldReport, report)
@@ -103,17 +104,6 @@ class LcovCoverageReport {
     }
 
     companion object {
-        private const val UNIX_SEPARATOR: String = "/"
-
-        fun getNormalizedPath(file: File): String {
-            val uri = file.toURI()
-            val normalizedUri = uri.normalize()
-            var normalizedPath = normalizedUri.path
-            if (normalizedPath.startsWith(UNIX_SEPARATOR) && File.separator != UNIX_SEPARATOR) {
-                normalizedPath = normalizedPath.substring(1)
-            }
-            return normalizedPath
-        }
 
         private fun normalizeLineHitsList(lineHits: List<LineHits>): List<LineHits> =
             lineHits.sortedBy { it.lineNumber }.distinctBy { it.lineNumber }

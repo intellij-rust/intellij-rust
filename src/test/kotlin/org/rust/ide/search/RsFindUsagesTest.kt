@@ -282,6 +282,22 @@ class RsFindUsagesTest : RsTestBase() {
         fn func(_: Foo) {} // - type reference
     """)
 
+    fun `test usage in child mod in unusual location 1`() = doTestByFileTree("""
+    //- main.rs
+        mod mod1;
+    //- mod1/mod.rs
+        mod mod2;
+        fn func() {}
+         //^
+    //- mod1/mod2/mod.rs
+        #[path = "../../foo.rs"]
+        mod mod3;
+    //- foo.rs
+        fn main() {
+            crate::mod1::func(); // - function call
+        }
+    """)
+
     private fun doTestByText(@Language("Rust") code: String) = doTestByFileTree("//- main.rs\n$code")
 
     private fun doTestByFileTree(@Language("Rust") code: String) {

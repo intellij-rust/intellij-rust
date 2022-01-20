@@ -175,7 +175,7 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             Foo/*caret*/ { a: bar::S };
         }
     """, """
-        use bar::S;
+        use crate::bar::S;
 
         mod bar {
             pub struct S;

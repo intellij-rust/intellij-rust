@@ -5,8 +5,9 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.stdext.BothEditions
 
 @ExpandMacros
@@ -679,7 +680,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
                  //^ main.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test mod declared with macro inside inline expanded mod`() = stubOnlyResolve("""
     //- main.rs
         macro_rules! gen_mod_decl_item {
@@ -699,7 +699,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
                  //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test mod with path attribute declared with macro`() = stubOnlyResolve("""
     //- main.rs
         macro_rules! foo {
@@ -882,7 +881,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     """)
 
     // we only test that there are no exception with new resolve
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test local_inner_macros expanded to extern crate`() = stubOnlyResolve("""
     //- main.rs
@@ -899,7 +897,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test expand macro with incomplete path`() = stubOnlyResolve("""
     //- main.rs
         macro_rules! gen_func {
@@ -931,7 +928,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro call expanded to macro def and macro call 1`() = checkByCode("""
         macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
         as_is! {
@@ -943,7 +939,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
 
     // when resolving macro call expanded from other macro call,
     // firstly left sibling expanded elements should be processed
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro call expanded to macro def and macro call 2`() = checkByCode("""
         macro_rules! foo {
             (1) => {
@@ -965,7 +960,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test propagate expanded macro def to grandparent mod`() = checkByCode("""
         mod inner {
             #[macro_use]

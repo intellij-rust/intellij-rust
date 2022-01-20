@@ -263,6 +263,68 @@ class RsInlineValueTest : RsTestBase() {
         }
     """)
 
+    fun `test parenthesize match expression inline into cast`() = doTest("""
+        fn foo() -> u64 {
+            let x/*caret*/ = match true {
+                true => 0,
+                false => 1
+            };
+            x as u64
+        }
+    """, """
+        fn foo() -> u64 {
+            (match true {
+                true => 0,
+                false => 1
+            }) as u64
+        }
+    """)
+
+    fun `test parenthesize block expression inline into cast`() = doTest("""
+        fn foo() -> u64 {
+            let x/*caret*/ = {
+                0
+            };
+            x as u64
+        }
+    """, """
+        fn foo() -> u64 {
+            ({
+                0
+            }) as u64
+        }
+    """)
+
+    fun `test parenthesize loop expression inline into cast`() = doTest("""
+        fn foo() -> u64 {
+            let x/*caret*/ = loop {
+                break 0
+            };
+            x as u64
+        }
+    """, """
+        fn foo() -> u64 {
+            (loop {
+                break 0
+            }) as u64
+        }
+    """)
+
+    fun `test parenthesize while expression inline into cast`() = doTest("""
+        fn foo() {
+            let x/*caret*/ = while true {
+                break;
+            };
+            x as ();
+        }
+    """, """
+        fn foo() {
+            (while true {
+                break;
+            }) as ();
+        }
+    """)
+
     fun `test struct literal inlined into match`() = doTest("""
         struct S {
             a: u32

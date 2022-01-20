@@ -23,6 +23,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
+import org.rust.lang.core.resolve2.util.DollarCrateMap
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
@@ -79,7 +80,9 @@ class DefCollector(
             resolveImports()
             val changed = expandMacros()
         } while (changed)
-        defMap.afterBuilt()
+        if (!context.isHangingMode) {
+            defMap.afterBuilt()
+        }
     }
 
     /**
@@ -182,8 +185,10 @@ class DefCollector(
                 val items = targetMod.getVisibleItems { it.isVisibleFromMod(containingMod) }
                 val changed = update(containingMod, items, import.visibility, GLOB)
 
-                /** See [CrateDefMap.hasTransitiveGlobImport] */
-                defMap.globImportGraph.recordGlobImport(containingMod, targetMod, import.visibility)
+                if (!context.isHangingMode) {
+                    /** See [CrateDefMap.hasTransitiveGlobImport] */
+                    defMap.globImportGraph.recordGlobImport(containingMod, targetMod, import.visibility)
+                }
 
                 // record the glob import in case we add further items
                 val globImports = globImports.computeIfAbsent(targetMod) { hashMapOf() }
@@ -207,7 +212,7 @@ class DefCollector(
 
         // extern crates in the crate root are special-cased to insert entries into the extern prelude
         // https://github.com/rust-lang/rust/pull/54658
-        if (import.isExternCrate && containingMod.isCrateRoot && name != "_") {
+        if (import.isExternCrate && containingMod.isCrateRoot && name != "_" && !context.isHangingMode) {
             val types = def.types.singleOrNull() ?: error("null PerNs.types for extern crate import")
             val externCrateDefMap = defMap.getDefMap(types.path.crate)
             externCrateDefMap?.let {
@@ -379,13 +384,13 @@ class DefCollector(
         val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
         if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectFile(includingRsFile, call.containingMod, context, call.macroIndex)
-        } else {
+            collectScope(includingRsFile, call.containingMod, context, call.macroIndex)
+        } else if (!context.isHangingMode) {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
         }
         if (includingFile != null) {
-            modData.recordChildFileInUnusualLocation(includingFile.fileId)
+            recordChildFileInUnusualLocation(modData, includingFile.fileId)
         }
     }
 
@@ -503,7 +508,7 @@ class MacroCallInfo(
      * `srcOffset` - [CratePersistentId]
      * `dstOffset` - index of [MACRO_DOLLAR_CRATE_IDENTIFIER] in [body]
      */
-    val dollarCrateMap: RangeMap = RangeMap.EMPTY,
+    val dollarCrateMap: DollarCrateMap = DollarCrateMap.EMPTY,
 
     /**
      * Non-null in the case of attribute procedural macro if we can fall back that item
@@ -527,6 +532,7 @@ private fun removeInvalidImportsAndMacroCalls(defMap: CrateDefMap, context: Coll
         }
     }
 
+    if (context.isHangingMode) return
     val allMods = hashSetOf<ModData>()
     collectChildMods(defMap.root, allMods)
     context.imports.removeIf { it.containingMod !in allMods }

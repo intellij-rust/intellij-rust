@@ -184,6 +184,7 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
   "->"                            { return ARROW; }
   "=>"                            { return FAT_ARROW; }
   "?"                             { return Q; }
+  "~"                             { return T; }
   "@"                             { return AT; }
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }

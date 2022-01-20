@@ -19,6 +19,10 @@ fn for_lifetime_bound<F>(f: F) where F: for<'a> Fn(&'a i32) {}
 
 fn parenthesized_for_lifetime_bound<F>(f: F) where F: (for<'a> Fn(&'a i32)) {}
 
+fn const_trait_bound<T: ~const Bar>() {}
+
+fn parenthesized_const_trait_bound<T: (~const Bar)>() {}
+
 fn impl_bound() -> impl Bar {}
 
 fn parenthesized_impl_bound() -> impl (Bar) {}

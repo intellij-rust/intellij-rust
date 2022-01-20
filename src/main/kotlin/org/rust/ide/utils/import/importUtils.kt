@@ -13,6 +13,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.stdext.isSortedWith
@@ -21,14 +22,15 @@ import org.rust.stdext.isSortedWith
  * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
  * This action requires write access.
  */
-fun ImportCandidateBase.import(context: RsElement) {
+fun ImportCandidateBase.import(context: RsElement) = info.import(context)
+
+fun ImportInfo.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 
     // depth of `mod` relative to module with `extern crate` item
     // we use this info to create correct relative use item path if needed
-    val relativeDepth = info.insertExternCrateIfNeeded(context)
-    val prefix = when (relativeDepth) {
+    val prefix = when (val relativeDepth = insertExternCrateIfNeeded(context)) {
         null -> ""
         0 -> "self::"
         else -> "super::".repeat(relativeDepth)
@@ -46,9 +48,10 @@ fun ImportCandidateBase.import(context: RsElement) {
             ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
         }
         containingFile is RsCodeFragment -> containingFile.importTarget
+        containingFile is RsFile && RsIncludeMacroIndex.getIncludedFrom(containingFile) != null -> containingFile
         else -> null
     } ?: context.containingMod
-    insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
+    insertionScope.insertUseItem(psiFactory, "$prefix$usePath")
 }
 
 /**
@@ -68,7 +71,7 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
             // we don't add corresponding extern crate item manually for the same reason
             attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
             else -> {
-                if (needInsertExternCrateItem && !context.isAtLeastEdition2018) {
+                if (needInsertExternCrateItem) {
                     crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
                 } else {
                     if (depth != null) {

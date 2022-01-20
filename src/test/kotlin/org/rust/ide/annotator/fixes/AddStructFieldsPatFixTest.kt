@@ -283,7 +283,7 @@ class AddStructFieldsPatFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     )
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test 123`() = checkFixByText("Add missing fields", """
+    fun `test field with cfg attribute`() = checkFixByText("Add missing fields", """
         struct Foo {
             a: i32,
             #[cfg(intellij_rust)]
@@ -303,4 +303,52 @@ class AddStructFieldsPatFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         """
     )
+
+    fun `test raw field name 1`() = checkFixByText("Add missing fields", """
+        struct S {
+            r#enum: i32,
+            r#type: u8
+        }
+
+        fn match_something(s: S) {
+            match s {
+                <error>S { }/*caret*/</error> => {}
+            }
+        }
+    """, """
+        struct S {
+            r#enum: i32,
+            r#type: u8
+        }
+
+        fn match_something(s: S) {
+            match s {
+                S { r#enum, r#type }/*caret*/ => {}
+            }
+        }
+    """)
+
+    fun `test raw field name 2`() = checkFixByText("Add missing fields", """
+        struct S {
+            r#enum: i32,
+            r#type: u8
+        }
+
+        fn match_something(s: S) {
+            match s {
+                <error>S { r#enum }/*caret*/</error> => {}
+            }
+        }
+    """, """
+        struct S {
+            r#enum: i32,
+            r#type: u8
+        }
+
+        fn match_something(s: S) {
+            match s {
+                S { r#enum, r#type }/*caret*/ => {}
+            }
+        }
+    """)
 }

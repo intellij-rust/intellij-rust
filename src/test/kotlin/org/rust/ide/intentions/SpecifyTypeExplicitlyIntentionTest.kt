@@ -101,14 +101,14 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     """)
 
     fun `test import unresolved type`() = doAvailableTest("""
-            use a::foo;
+            use crate::a::foo;
             mod a {
                 pub struct S;
                 pub fn foo() -> S { S }
             }
             fn main() { let var/*caret*/ = foo(); }
     """, """
-            use a::{foo, S};
+            use crate::a::{foo, S};
             mod a {
                 pub struct S;
                 pub fn foo() -> S { S }
@@ -133,7 +133,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     """)
 
     fun `test import type parameter`() = doAvailableTest("""
-            use a::foo;
+            use crate::a::foo;
             mod a {
                 pub struct S<T>(T);
                 pub struct P;
@@ -141,7 +141,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             }
             fn main() { let var/*caret*/ = foo(); }
     """, """
-            use a::{foo, P, S};
+            use crate::a::{foo, P, S};
             mod a {
                 pub struct S<T>(T);
                 pub struct P;
@@ -151,7 +151,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     """)
 
     fun `test import type alias`() = doAvailableTest("""
-            use a::{foo, A};
+            use crate::a::{foo, A};
             mod a {
                 pub struct S;
                 pub type A = S;
@@ -160,7 +160,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             }
             fn main() { let var/*caret*/ = foo(); }
     """, """
-            use a::{foo, A, B};
+            use crate::a::{foo, A, B};
             mod a {
                 pub struct S;
                 pub type A = S;
@@ -171,7 +171,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     """)
 
     fun `test import skip default type argument`() = doAvailableTest("""
-            use a::foo;
+            use crate::a::foo;
             mod a {
                 pub struct R;
                 pub struct S<T = R>(T);
@@ -179,7 +179,7 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             }
             fn main() { let var/*caret*/ = foo(); }
     """, """
-            use a::{foo, S};
+            use crate::a::{foo, S};
             mod a {
                 pub struct R;
                 pub struct S<T = R>(T);

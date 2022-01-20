@@ -6,13 +6,11 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 
 @MinRustcVersion("1.46.0")
-@MockEdition(EDITION_2018)
 @ExpandMacros(MacroExpansionScope.WORKSPACE)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
@@ -114,6 +112,22 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             Foo.foo().bar()
         }           //^ unresolved
+    """)
+
+    fun `test incorrect spans`() = checkByCode("""
+        use test_proc_macros::function_like_reverse_spans;
+
+        mod foo {
+            pub fn bar() {}
+        }        //X
+
+        function_like_reverse_spans! {
+            use foo:: bar;
+        }// 1   2  34 5  6
+
+        fn main() {
+            bar();
+        } //^
     """)
 
     fun `test custom derive expands to a struct`() = checkByCode("""
@@ -267,6 +281,26 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
             Foo.bar().baz()
         }           //^
     """)
+
+    fun `test custom derive in a doctest`() = expect<IllegalStateException> {
+    checkByCode("""
+        /// ```
+        /// use test_proc_macros::DeriveImplForFoo;
+        ///
+        /// #[derive(DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
+        /// struct Foo;
+        /// struct Bar;
+        /// impl Bar {
+        ///     fn bar(&self) {}
+        /// }    //X
+        ///
+        /// fn main() {
+        ///     Foo.foo().bar()
+        /// }           //^
+        /// ```
+        pub fn foo() {}
+    """, "lib.rs")
+    }
 
     fun `test attr legacy macro`() = checkByCode("""
         use test_proc_macros::attr_as_is;

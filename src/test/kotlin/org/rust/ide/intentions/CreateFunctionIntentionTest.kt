@@ -5,10 +5,8 @@
 
 package org.rust.ide.intentions
 
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.intentions.createFromUsage.CreateFunctionIntention
 
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
@@ -754,7 +752,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function call type to create async function`() = doAvailableTest("""
         async fn foo() {
             /*caret*/bar().await;
@@ -769,7 +766,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function call type create async function in blocks`() = doAvailableTest("""
         fn foo() {
             async {
@@ -788,7 +784,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function call type create async function in nested blocks`() = doAvailableTest("""
         fn foo() {
             async {
@@ -811,7 +806,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function call type create async function in nested function`() = doAvailableTest("""
         fn main() {
             async fn foo() {
@@ -829,7 +823,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type to create async function`() = doAvailableTest("""
         struct S;
 
@@ -851,7 +844,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type create async function in blocks`() = doAvailableTest("""
         struct S;
 
@@ -877,7 +869,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type create async function in nested blocks`() = doAvailableTest("""
         struct S;
 
@@ -907,7 +898,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type create async function in nested function`() = doAvailableTest("""
         struct S;
 
@@ -936,7 +926,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test function call type create in the async function call`() = doAvailableTest("""
         async fn foo() {
             baz(/*caret*/bar()).await;
@@ -954,7 +943,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         async fn baz(a: u32) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test method call type create in the async function call`() = doAvailableTest("""
         struct S;
 
@@ -1006,7 +994,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             baz/*caret*/(bar::get_s())
         }
     """, """
-        use bar::{S, T};
+        use crate::bar::{S, T};
 
         mod bar {
             pub struct S;

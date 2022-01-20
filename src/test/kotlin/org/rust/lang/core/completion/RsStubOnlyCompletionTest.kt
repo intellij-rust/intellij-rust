@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsStubOnlyCompletionTest : RsCompletionTestBase() {
     fun `test function`() = doSingleCompletionByFileTree("""
@@ -57,16 +55,13 @@ class RsStubOnlyCompletionTest : RsCompletionTestBase() {
         fn bar(s: foo::S) { s.field/*caret*/ }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test complete all in extern crate in 'use' in crate root`() = doSingleCompletionByFileTree("""
     //- lib.rs
         pub fn foo() {}
     //- main.rs
-        extern crate test_package;
         use test_package::/*caret*/;
     """, """
-        extern crate test_package;
         use test_package::foo/*caret*/;
     """)
 }

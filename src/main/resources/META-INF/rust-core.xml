@@ -3,6 +3,7 @@
 
     <depends>com.intellij.modules.lang</depends>
 
+    <xi:include href="/META-INF/platform-rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -36,6 +37,7 @@
         <!-- Sources -->
 
         <generatedSourcesFilter implementation="org.rust.cargo.project.model.RsGeneratedSourcesFilter"/>
+        <testSourcesFilter implementation="org.rust.cargo.project.model.RsTestSourcesFilter"/>
         <writingAccessProvider implementation="org.rust.cargo.project.model.RsGeneratedSourcesWritingAccessProvider"/>
 
         <!-- PSI managing -->
@@ -498,6 +500,11 @@
                          implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsNumberInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong generic arguments order"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsOrderInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Wrong lifetime parameters number"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
@@ -561,6 +568,11 @@
                          displayName="Cast to bool"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsCastToBoolInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Constant refers to statics"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsConstReferStaticInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Attribute without parentheses"
@@ -988,6 +1000,11 @@
                              parentId="language.rust"
                              id="language.rust.cargo"/>
 
+        <projectConfigurable instance="org.rust.cargo.project.configurable.RsExternalLinterConfigurable"
+                             displayName="External Linters"
+                             parentId="language.rust"
+                             id="language.rust.cargo.check"/>
+
         <projectConfigurable instance="org.rust.cargo.project.configurable.RustfmtConfigurable"
                              displayName="Rustfmt"
                              parentId="language.rust"
@@ -1006,6 +1023,10 @@
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
                     icon="/icons/tool-window.svg"/>
+
+        <statusBarWidgetFactory id="rustExternalLinterWidget"
+                                implementation="org.rust.ide.status.RsExternalLinterWidgetFactory"
+                                order="first"/>
 
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
@@ -1042,7 +1063,6 @@
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
-        <editorNotificationProvider implementation="org.rust.ide.notifications.RsUntrustedNotificationProvider"/>
 
         <notificationGroup id="Rust Plugin" displayType="BALLOON"/>
         <notificationGroup id="Rust Build Log" displayType="NONE"/>
@@ -1143,10 +1163,12 @@
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
         <registryKey key="org.rust.resolve.new.engine" defaultValue="true" restartRequired="true"
                      description="Enables new name resolution engine"/>
-        <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="false" restartRequired="false"
+        <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="true" restartRequired="false"
                      description="Expand macros in parallel"/>
         <registryKey key="org.rust.auto.import.using.new.resolve" defaultValue="true" restartRequired="false"
                      description="Use new name resolution engine for auto import"/>
+        <registryKey key="org.rust.external.linter.max.duration" defaultValue="3000" restartRequired="false"
+                     description="Show notification warning if the external linter is running longer than the set value (ms)"/>
 
         <!-- Move refactoring -->
 
@@ -1226,8 +1248,8 @@
     <projectListeners>
         <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"
                   topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
-        <listener class="org.rust.ide.security.RsTrustChangeNotifier"
-                  topic="com.intellij.ide.impl.TrustChangeNotifier"/>
+        <listener class="org.rust.ide.status.RsExternalLinterWidgetUpdater"
+                  topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener"/>
     </projectListeners>
 
     <actions>
@@ -1278,6 +1300,11 @@
         <action id="Rust.RsExtractStructFields"
                 class="org.rust.ide.refactoring.extractStructFields.RsExtractStructFieldsAction">
             <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="Rust.RsExtractEnumVariant"/>
+        </action>
+
+        <action id="Rust.RsExtractTrait"
+                class="org.rust.ide.refactoring.extractTrait.RsExtractTraitAction">
+            <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="ExtractInterface"/>
         </action>
 
         <action id="Rust.ShowSingleStepMacroExpansionAction"

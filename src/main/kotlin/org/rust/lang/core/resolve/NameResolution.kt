@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -388,13 +389,66 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val (base, subst) = qualifier.reference?.advancedResolve() ?: run {
-        val primitiveType = TyPrimitive.fromPath(qualifier)
-        if (primitiveType != null) {
-            if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType)) return true
+    val resolvedQualifier = qualifier.reference?.advancedResolve()
+    val primitiveType = TyPrimitive.fromPath(qualifier, checkResolve = false)
+
+    val prevScope = hashMapOf<String, Set<Namespace>>()
+
+    if (resolvedQualifier != null) {
+        val shadowingProcessor = if (primitiveType != null) {
+            createProcessor(processor.name) { e ->
+                val result = processor(e)
+                if (e.isInitialized) {
+                    val element = e.element
+                    if (element is RsNamedElement) {
+                        prevScope[e.name] = element.namespaces
+                    }
+                }
+                result
+            }
+        } else {
+            processor
         }
-        return false
+
+        val result = processQualifiedPathResolveVariants1(
+            lookup,
+            isCompletion,
+            ns,
+            qualifier,
+            resolvedQualifier,
+            path,
+            parent,
+            shadowingProcessor
+        )
+        if (result) return true
     }
+
+    if (primitiveType != null) {
+        val result = processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+            processTypeQualifiedPathResolveVariants(lookup, path, shadowingProcessor, ns, primitiveType)
+        }
+        if (result) return true
+    }
+    return false
+}
+
+private fun processQualifiedPathResolveVariants1(
+    lookup: ImplLookup?,
+    isCompletion: Boolean,
+    ns: Set<Namespace>,
+    qualifier: RsPath,
+    resolvedQualifier: BoundElement<RsElement>,
+    path: RsPath,
+    parent: PsiElement?,
+    processor: RsResolveProcessor
+): Boolean {
+    val (base, subst) = resolvedQualifier
+
+    if (parent is RsUseSpeck && path.path == null) {
+        selfInGroup.hit()
+        if (processor("self", base)) return true
+    }
+
     if (base is RsMod) {
         val result = processor.lazy("super") {
             // `super` is allowed only after `self` and `super`
@@ -425,11 +479,6 @@ private fun processQualifiedPathResolveVariants(
         if (resolveBetweenDifferentTargets && baseModContainingCrate?.kind?.isProcMacro == true) {
             return false
         }
-    }
-
-    if (parent is RsUseSpeck && path.path == null) {
-        selfInGroup.hit()
-        if (processor("self", base)) return true
     }
 
     val prevScope = hashMapOf<String, Set<Namespace>>()
@@ -759,9 +808,14 @@ fun processLocalVariables(place: RsElement, originalProcessor: (RsPatBinding) ->
 /**
  * Resolves an absolute path.
  */
-fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
+fun resolveStringPath(
+    path: String,
+    workspace: CargoWorkspace,
+    project: Project,
+    isStd: ThreeState = ThreeState.UNSURE
+): Pair<RsNamedElement, CargoWorkspace.Package>? {
     val (pkgName, crateRelativePath) = splitAbsolutePath(path) ?: return null
-    val pkg = workspace.findPackageByName(pkgName) ?: run {
+    val pkg = workspace.findPackageByName(pkgName, isStd) ?: run {
         return if (isUnitTestMode) {
             // Allows to set a fake path for some item in tests via
             // lang attribute, e.g. `#[lang = "std::iter::Iterator"]`
@@ -1058,10 +1112,10 @@ private class MacroResolver private constructor(
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement, isAttrOrDerive: Boolean): MacroResolveResult? {
         if (!project.isNewResolveEnabled) return null
         if (element !is RsElement) return null
-        val scope = element.context as? RsMod ?: return null // we are interested only in top-level elements
-        /** [processRemainedExportedMacros] processes local imports */
-        return processMacros(scope, processor, macroPath, isAttrOrDerive, ::processRemainedExportedMacros)
-            ?.toResult(usedNewResolve = true)
+        val scope = element.context as? RsItemsOwner ?: return null // we are interested only in top-level elements
+        val result = processMacros(scope, processor, macroPath, isAttrOrDerive)
+        if (scope !is RsMod && result == false) return null  // we should search in parent scopes
+        return result?.toResult(usedNewResolve = true)
     }
 
     private fun processRemainedExportedMacros(): Boolean {
@@ -1524,12 +1578,12 @@ private fun processLexicalDeclarations(
             //         ^ context.place
             // let x = 62; // not visible
             // ```
-            val visited = mutableSetOf<String>()
+            val prevScope = hashMapOf<String, Set<Namespace>>()
             if (Namespace.Values in ns) {
                 val shadowingProcessor = createProcessor(processor.name) { e ->
-                    (e.name !in visited) && processor(e).also {
+                    (e.name !in prevScope) && processor(e).also {
                         if (e.isInitialized && e.element != null) {
-                            visited += e.name
+                            prevScope[e.name] = VALUES
                         }
                     }
                 }
@@ -1553,7 +1607,9 @@ private fun processLexicalDeclarations(
                 }
             }
 
-            return processItemDeclarations(scope as RsItemsOwner, ns, processor, ItemProcessingMode.WITH_PRIVATE_IMPORTS)
+            return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+                processItemDeclarations(scope as RsItemsOwner, ns, shadowingProcessor, ItemProcessingMode.WITH_PRIVATE_IMPORTS)
+            }
         }
 
         is RsForExpr -> {

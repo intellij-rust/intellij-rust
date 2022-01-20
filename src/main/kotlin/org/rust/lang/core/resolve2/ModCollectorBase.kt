@@ -327,7 +327,7 @@ class ModCollectorBase private constructor(
         get() = HAS_PRELUDE_IMPORT_PROP.getByStub(this, crate)
 
     companion object {
-        fun collectMod(mod: StubElement<out RsMod>, isDeeplyEnabledByCfg: Boolean, visitor: ModVisitor, crate: Crate) {
+        fun collectMod(mod: StubElement<out RsItemsOwner>, isDeeplyEnabledByCfg: Boolean, visitor: ModVisitor, crate: Crate) {
             val collector = ModCollectorBase(visitor, crate, isDeeplyEnabledByCfg)
             collector.collectElements(mod)
             collector.visitor.afterCollectMod()

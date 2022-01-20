@@ -46,7 +46,7 @@ class RustParserDefinition : ParserDefinition {
             injectionListener.evalDebugContext(injectionHost, contextResult)
             val context = contextResult.element ?: return default()
 
-            val fragment = RsExpressionCodeFragment(viewProvider, context)
+            val fragment = RsDebuggerExpressionCodeFragment(viewProvider, context)
             injectionListener.didInject(injectionHost)
 
             return fragment
@@ -99,7 +99,7 @@ class RustParserDefinition : ParserDefinition {
         /**
          * Should be increased after any change of lexer rules
          */
-        const val LEXER_VERSION: Int = 3
+        const val LEXER_VERSION: Int = 4
 
         /**
          * Should be increased after any change of parser rules

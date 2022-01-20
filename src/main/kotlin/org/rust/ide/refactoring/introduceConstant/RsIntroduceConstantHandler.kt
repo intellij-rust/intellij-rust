@@ -18,7 +18,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.getAllVisibleBindings
+import org.rust.lang.core.psi.ext.getLocalVariableVisibleBindings
+import org.rust.lang.core.psi.ext.isConst
 import org.rust.openapiext.nonBlocking
 import org.rust.openapiext.runWriteCommandAction
 
@@ -28,7 +31,7 @@ class RsIntroduceConstantHandler : RefactoringActionHandler {
         val exprs = findCandidateExpressionsToExtract(editor, file)
 
         // isExtractable uses resolve, so we must not call it from EDT
-        nonBlocking(project, {
+        project.nonBlocking({
             exprs.filter { it.isExtractable() }
         }) {
             if (!editor.isDisposed) {
@@ -127,7 +130,7 @@ private fun extractExpression(editor: Editor, expr: RsExpr) {
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
         showInsertionChooser(editor, expr) { candidate ->
             val project = editor.project ?: return@showInsertionChooser
-            nonBlocking(project, {
+            project.nonBlocking({
                 findExistingBindings(candidate, occurrences)
             }) { bindings ->
                 replaceWithConstant(expr, occurrencesToReplace, candidate, bindings, editor)

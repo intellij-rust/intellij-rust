@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
-import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.concurrency.*
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
@@ -70,7 +69,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
 
         val resultPromise = AsyncPromise<Result>()
 
-        val waitingIndicator = FutureResult<ProgressIndicator>()
+        val waitingIndicator = CompletableFuture<ProgressIndicator>()
         val queuedTask = BackgroundableProjectTaskRunner(
             project,
             tasks,
@@ -174,7 +173,7 @@ private class BackgroundableProjectTaskRunner(
     private val totalPromise: AsyncPromise<ProjectTaskRunner.Result>,
     private val waitingIndicator: Future<ProgressIndicator>
 ) : Task.Backgroundable(project, "Building...", true) {
-    val executionStarted: FutureResult<Boolean> = FutureResult()
+    val executionStarted: CompletableFuture<Boolean> = CompletableFuture()
 
     override fun run(indicator: ProgressIndicator) {
         if (!waitForStart()) {
@@ -223,7 +222,7 @@ private class BackgroundableProjectTaskRunner(
             // Check if this build wasn't cancelled while it was in queue through waiting indicator
             val cancelled = waitingIndicator.get().isCanceled
             // Notify waiting background task that this build started and there is no more need for this indicator
-            executionStarted.set(true)
+            executionStarted.complete(true)
             return !cancelled
         } catch (e: InterruptedException) {
             totalPromise.setResult(TaskRunnerResults.ABORTED)
@@ -248,13 +247,13 @@ private class BackgroundableProjectTaskRunner(
 
 private class WaitingTask(
     project: Project,
-    val waitingIndicator: FutureResult<ProgressIndicator>,
+    val waitingIndicator: CompletableFuture<ProgressIndicator>,
     val executionStarted: Future<Boolean>
 ) : Task.Backgroundable(project, "Waiting for the current build to finish...", true) {
     override fun run(indicator: ProgressIndicator) {
         // Wait until queued task will start executing.
         // Needed so that user can cancel build tasks from queue.
-        waitingIndicator.set(indicator)
+        waitingIndicator.complete(indicator)
         try {
             while (true) {
                 indicator.checkCanceled()

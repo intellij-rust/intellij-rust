@@ -5,10 +5,6 @@
 
 package org.rust.ide.inspections
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
-
-@MockEdition(Edition.EDITION_2018)
 class RsConstantConditionIfInspectionTest : RsInspectionsTestBase(RsConstantConditionIfInspection::class) {
 
     fun `test always true, empty branches`() = checkFixByText("Simplify expression", """

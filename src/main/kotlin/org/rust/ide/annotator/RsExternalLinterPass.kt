@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -32,6 +33,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
+import org.rust.ide.notifications.RsExternalLinterSlowRunNotifier
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.openapiext.isUnitTestMode
@@ -56,16 +58,15 @@ class RsExternalLinterPass(
         val cargoTarget = file.containingCargoTarget ?: return
         if (cargoTarget.pkg.origin != PackageOrigin.WORKSPACE) return
 
-        val project = file.project
-        val args = CargoCheckArgs.forTarget(project, cargoTarget)
 
-        val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: project
-        disposable = project.messageBus.createDisposableOnAnyPsiChange()
+        val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: myProject
+        disposable = myProject.messageBus.createDisposableOnAnyPsiChange()
             .also { Disposer.register(moduleOrProject, it) }
 
+        val args = CargoCheckArgs.forTarget(myProject, cargoTarget)
         annotationInfo = RsExternalLinterUtils.checkLazily(
-            project.toolchain ?: return,
-            project,
+            myProject.toolchain ?: return,
+            myProject,
             disposable,
             cargoTarget.pkg.workspace.contentRoot,
             args
@@ -90,6 +91,7 @@ class RsExternalLinterPass(
             override fun run() {
                 BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Runnable {
                     val annotationResult = annotationResult ?: return@Runnable
+                    myProject.service<RsExternalLinterSlowRunNotifier>().reportDuration(annotationResult.executionTime)
                     runReadAction {
                         ProgressManager.checkCanceled()
                         doApply(annotationResult)
@@ -142,7 +144,7 @@ class RsExternalLinterPass(
         get() = annotationHolder.map(HighlightInfo::fromAnnotation)
 
     private val isAnnotationPassEnabled: Boolean
-        get() = file.project.rustSettings.runExternalLinterOnTheFly
+        get() = myProject.rustSettings.runExternalLinterOnTheFly
 
     companion object {
         private val LOG: Logger = logger<RsExternalLinterPass>()

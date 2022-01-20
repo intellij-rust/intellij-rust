@@ -278,17 +278,47 @@ class RsBuildActionTest : CargoBuildTest() {
         assertFalse(actualCommandLine.withSudo)
     }
 
+    fun `test build does not use redirect input`() {
+        val testProject = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("main.rs", """
+                fn main() {/*caret*/}
+            """)
+            }
+        }.create()
+
+        setUpSelectedConfigurationFromContext(testProject.fileWithCaret, redirectInputFrom = "dummy.txt")
+        performBuildAction()
+        testBuildViewManager.waitFinished()
+
+        val actualCommandLine = lastBuildCommandLine!!
+        assertNull(actualCommandLine.redirectInputFrom)
+    }
+
     private fun performBuildAction() {
         val action = ActionManager.getInstance().getAction("Rust.Build") as RsBuildAction
         action.performForContext(TestDataProvider(project))
     }
 
-    private fun setUpSelectedConfigurationFromContext(fileWithCaret: String, withSudo: Boolean = false) {
+    private fun setUpSelectedConfigurationFromContext(
+        fileWithCaret: String,
+        withSudo: Boolean = false,
+        redirectInputFrom: String? = null
+    ) {
         val runManager = RunManager.getInstance(project) as RunManagerImpl
         myFixture.configureFromTempProjectFile(fileWithCaret)
         val producer = CompositeCargoRunConfigurationProducer()
         val settings = createRunnerAndConfigurationSettingsFromContext(producer, null).apply {
-            (configuration as? CargoCommandConfiguration)?.withSudo = withSudo
+            val configuration = configuration as? CargoCommandConfiguration
+            configuration?.withSudo = withSudo
+            configuration?.isRedirectInput = redirectInputFrom != null
+            configuration?.redirectInputPath = redirectInputFrom
         }
         runManager.addConfiguration(settings)
         runManager.selectedConfiguration = settings

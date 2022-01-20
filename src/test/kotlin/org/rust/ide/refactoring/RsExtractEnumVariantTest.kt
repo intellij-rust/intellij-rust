@@ -452,7 +452,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """)
 
     fun `test import generated struct if needed`() = doAvailableTest("""
-        use a::E;
+        use crate::a::E;
 
         mod a {
             pub enum E {
@@ -465,7 +465,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
             let _ = E::V1 { x: 0, y: 1 };
         }
     """, """
-        use a::{E, V1};
+        use crate::a::{E, V1};
 
         mod a {
             pub struct /*caret*/V1 {
@@ -485,7 +485,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """)
 
     fun `test import generated tuple if needed`() = doAvailableTest("""
-        use a::E;
+        use crate::a::E;
 
         mod a {
             pub enum E {
@@ -498,7 +498,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
             let _ = E::V1(0, 1);
         }
     """, """
-        use a::{E, V1};
+        use crate::a::{E, V1};
 
         mod a {
             pub struct /*caret*/V1(pub i32, pub i32);
@@ -605,7 +605,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
             let f = ctr2(0, 1);
         }
     """, """
-        use foo::Bar;
+        use crate::foo::Bar;
 
         mod foo {
             pub struct Bar(pub i32, pub u32);

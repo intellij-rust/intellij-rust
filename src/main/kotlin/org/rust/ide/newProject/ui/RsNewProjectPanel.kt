@@ -13,7 +13,6 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ColoredListCellRenderer
@@ -31,6 +30,7 @@ import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate
 import org.rust.ide.newProject.RsProjectTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
+import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.UiDebouncer
 import javax.swing.DefaultListModel
 import javax.swing.JList
@@ -115,13 +115,7 @@ class RsNewProjectPanel(
 
             override fun onSuccess() {
                 if (exitCode != 0) {
-                    PopupUtil.showBalloonForComponent(
-                        templateList,
-                        "Failed to install cargo-generate",
-                        MessageType.ERROR,
-                        true,
-                        this@RsNewProjectPanel
-                    )
+                    templateList.showBalloon("Failed to install cargo-generate", MessageType.ERROR, this@RsNewProjectPanel)
                 }
 
                 update()

@@ -23,7 +23,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar.fo/*caret*/
@@ -41,7 +41,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.foo()/*caret*/
@@ -61,7 +61,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar.fo/*caret*/()
@@ -79,7 +79,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.foo(/*caret*/)
@@ -99,7 +99,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar./*caret*/
@@ -117,7 +117,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.foo()/*caret*/
@@ -137,7 +137,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar.fo/*caret*/
@@ -157,7 +157,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.foo()/*caret*/
@@ -179,7 +179,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.fo/*caret*/
@@ -197,7 +197,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::{Bar, Foo};
+        use crate::baz::{Bar, Foo};
 
         fn main() {
             Bar.foo()/*caret*/
@@ -217,7 +217,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar.fo/*caret*/()
@@ -235,7 +235,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             }
         }
 
-        use baz::Bar;
+        use crate::baz::Bar;
 
         fn main() {
             Bar.foo(/*caret*/)

@@ -67,6 +67,8 @@ class RsMoveReferenceInfo(
 ) {
     val pathNew: RsPath? get() = pathNewAccessible ?: pathNewFallback
     val isInsideUseDirective: Boolean get() = pathOldOriginal.ancestorStrict<RsUseItem>() != null
+
+    override fun toString(): String = "'${pathOld.text}' → '${target.qualifiedName}'"
 }
 
 /**

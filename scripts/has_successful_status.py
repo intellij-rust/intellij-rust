@@ -2,7 +2,7 @@ import argparse
 import json
 
 from common import env
-from github import get_check_statuses
+from github_connect import get_check_statuses
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

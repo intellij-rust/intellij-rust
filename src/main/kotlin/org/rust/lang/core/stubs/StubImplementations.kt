@@ -70,7 +70,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 221
+        private const val STUB_VERSION = 223
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1178,9 +1178,6 @@ class RsTypeParameterStub(
 ) : RsAttributeOwnerStubBase<RsTypeParameter>(parent, elementType),
     RsNamedStub {
 
-    val isSized: Boolean
-        get() = BitUtil.isSet(flags, IS_SIZED_MASK)
-
     object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeParameterStub(
@@ -1200,14 +1197,8 @@ class RsTypeParameterStub(
             RsTypeParameterImpl(stub, this)
 
         override fun createStub(psi: RsTypeParameter, parentStub: StubElement<*>?): RsTypeParameterStub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, IS_SIZED_MASK, psi.isSized)
-            return RsTypeParameterStub(parentStub, this, psi.name, flags)
+            return RsTypeParameterStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
         }
-    }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
-        private val IS_SIZED_MASK: Int = nextBitMask()
     }
 }
 
@@ -2114,7 +2105,8 @@ class RsAssocTypeBindingStub(
 
 class RsPolyboundStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val hasQ: Boolean
+    val hasQ: Boolean,
+    val hasConst: Boolean
 ) : StubBase<RsPolybound>(parent, elementType) {
 
     object Type : RsStubElementType<RsPolyboundStub, RsPolybound>("POLYBOUND") {
@@ -2123,19 +2115,21 @@ class RsPolyboundStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPolyboundStub(
                 parentStub, this,
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
         override fun serialize(stub: RsPolyboundStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeBoolean(stub.hasQ)
+                writeBoolean(stub.hasConst)
             }
 
         override fun createPsi(stub: RsPolyboundStub): RsPolybound =
             RsPolyboundImpl(stub, this)
 
         override fun createStub(psi: RsPolybound, parentStub: StubElement<*>?) =
-            RsPolyboundStub(parentStub, this, psi.hasQ)
+            RsPolyboundStub(parentStub, this, psi.hasQ, psi.hasConst)
     }
 }
 

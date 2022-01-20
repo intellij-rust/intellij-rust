@@ -6,7 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
@@ -48,7 +48,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo_bar { () => {} }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro rules with underscore alias`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
@@ -226,7 +225,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 1`() = stubOnlyResolve("""
     //- main.rs
         use test_package::foo;
@@ -236,7 +234,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo { () => {} }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 2`() = stubOnlyResolve("""
     //- main.rs
         use test_package::foo;
@@ -248,7 +245,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 3`() = stubOnlyResolve("""
     //- main.rs
         mod inner {
@@ -260,7 +256,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo { () => {} }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro inside import 4`() = stubOnlyResolve("""
     //- main.rs
         mod inner1 {
@@ -354,7 +349,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro with absolute path`() = stubOnlyResolve("""
     //- main.rs
         mod test_package {}
@@ -409,7 +403,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import wins extern crate import`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
@@ -426,7 +419,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo { () => {}; }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test import wins macro from prelude`() = stubOnlyResolve("""
     //- main.rs
@@ -439,7 +431,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! assert_eq { () => {}; }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro from import inside function wins over macro from crate root`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]
@@ -538,7 +529,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro reexported as macro 2`() = stubOnlyResolve("""
     //- lib.rs
         fn bar() {
@@ -550,7 +540,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub use foo_ as foo;
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (same mod)`() = stubOnlyResolve("""
     //- lib.rs
         mod inner {
@@ -560,7 +549,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }           //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (different mod same crate)`() = stubOnlyResolve("""
     //- lib.rs
         inner::foo!();
@@ -570,7 +558,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }           //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (different crate)`() = stubOnlyResolve("""
     //- main.rs
         test_package::foo!();
@@ -580,19 +567,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test macro 2 (inside function body)`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
-        //- lib.rs
-            fn main() {
-                foo!();
-                //^ lib.rs
-                pub macro foo() {}
-            }           //X
-        """)
-    }
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (import)`() = stubOnlyResolve("""
     //- main.rs
         use test_package::foo;
@@ -604,7 +578,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2 (unresolved in textual scope)`() = stubOnlyResolve("""
     //- lib.rs
         pub macro foo() {}
@@ -624,8 +597,8 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         mod baz;
     //- baz.rs
-        use bar::S;
-               //^ lib.rs
+        use crate::bar::S;
+                      //^ lib.rs
     """)
 
     fun `test transitive dependency on the same crate`() = stubOnlyResolve("""
@@ -642,7 +615,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                             //^ dep-lib-new/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve reference without extern crate item 1 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -651,7 +623,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve reference without extern crate item 2 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -660,7 +631,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve reference without extern crate item 1 (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -669,7 +640,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //^ unresolved
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve reference without extern crate item 2 (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -678,7 +649,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve module instead of crate (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -690,7 +660,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test resolve module instead of crate (edition 2015)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -702,7 +672,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve module instead of crate in nested mod (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -716,7 +685,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve module instead of crate in use item in nested mod (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -730,7 +698,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve crate instead of module in absolute use item (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -742,7 +709,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                             //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate item (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -753,7 +719,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate item alias 1 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -764,7 +729,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                             //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate item alias 2 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -775,7 +739,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate item alias with same name (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -786,7 +749,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate in super chain (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -798,7 +760,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate alias`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -811,7 +772,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate alias shadows implicit extern crate names`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -826,7 +786,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test local item shadows extern crate alias`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -843,7 +802,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     @UseOldResolve
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test ambiguity of extern crate alias and other item with the same name`() {
         stubOnlyResolve("""
         //- dep-lib/lib.rs
@@ -859,7 +817,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test ambiguity of extern crate alias and prelude item`() = expect<IllegalStateException> {
         stubOnlyResolve("""
@@ -876,7 +833,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     }
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3846
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extra use of crate name 1`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -886,7 +842,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                           //^ dep-lib/lib.rs
     """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test "extra use of crate name 1" with alias`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -896,7 +851,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                  //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extra use of crate name 2`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -906,7 +860,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                           //^ dep-lib/lib.rs
     """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import the same name as a crate name`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
@@ -917,7 +870,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                            //^ dep-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import the same name as a crate name 2`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         mod dep_lib_target;
@@ -929,7 +881,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3912
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test star import of item with the same name as extern crate`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         mod dep_lib_target {}
@@ -952,7 +903,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                               //^ trans-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test complex circular dependent star imports`() = stubOnlyResolve("""
     //- foo.rs
         pub struct S1;
@@ -974,7 +924,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }      //^ foo.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test re-exported crate via use item without "extern crate" 2018 edition`() = stubOnlyResolve("""
     //- trans-lib/lib.rs
         pub struct Foo;
@@ -987,7 +936,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                //^ trans-lib/lib.rs
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate double renaming`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub fn func() {}
@@ -1002,7 +950,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/7215
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test usual import override glob-import`() = stubOnlyResolve("""
     //- lib.rs
         pub mod header {
@@ -1021,5 +968,13 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub mod http {
             pub use crate::header::HeaderMap;
         }
+    """)
+
+    fun `test resolve custom derive proc macro from macro call through macro_use with rename`() = stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+
+        //- lib.rs
+            use dep_proc_macro::{self};
+                               //^ dep-proc-macro/lib.rs
     """)
 }

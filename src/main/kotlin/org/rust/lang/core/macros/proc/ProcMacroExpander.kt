@@ -106,6 +106,6 @@ class ProcMacroExpander(
     }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 3
+        const val EXPANDER_VERSION: Int = 4
     }
 }

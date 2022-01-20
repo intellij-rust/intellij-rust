@@ -6,7 +6,6 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.text.SemVer
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,6 +13,7 @@ import org.junit.runners.Parameterized
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.util.parseSemVer
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
@@ -31,7 +31,7 @@ class CargoTestRunStatePatchArgsTest(
         CargoTestRunState.patchArgs(
             CargoCommandLine("run", wd, ParametersListUtil.parse(input)),
             RustcVersion(
-                SemVer.parseFromText("1.38.0")!!,
+                "1.38.0".parseSemVer(),
                 "x86_64-unknown-linux-gnu",
                 RustChannel.STABLE
             )
@@ -44,7 +44,7 @@ class CargoTestRunStatePatchArgsTest(
         CargoTestRunState.patchArgs(
             CargoCommandLine("run", wd, ParametersListUtil.parse(input)),
             RustcVersion(
-                SemVer.parseFromText("1.39.0")!!,
+                "1.39.0".parseSemVer(),
                 "x86_64-unknown-linux-gnu",
                 RustChannel.STABLE
             )
@@ -74,7 +74,7 @@ class CargoTestRunStatePatchArgsShowOutputEnableTest {
     private fun patchArgs(version: String, channel: RustChannel, date: LocalDate) = CargoTestRunState.patchArgs(
         CargoCommandLine("run", Paths.get("/my-crate"), ParametersListUtil.parse("")),
         RustcVersion(
-            SemVer.parseFromText(version)!!,
+            version.parseSemVer(),
             "x86_64-unknown-linux-gnu",
             channel,
             null,

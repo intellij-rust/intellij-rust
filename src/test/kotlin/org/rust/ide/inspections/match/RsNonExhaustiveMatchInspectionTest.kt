@@ -443,8 +443,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
     """)
 
     fun `test import unresolved type`() = checkFixByText("Add remaining patterns", """
-        use a::E::A;
-        use a::foo;
+        use crate::a::E::A;
+        use crate::a::foo;
 
         mod a {
             pub enum E { A, B }
@@ -457,8 +457,8 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             };
         }
     """, """
-        use a::E::A;
-        use a::{E, foo};
+        use crate::a::E::A;
+        use crate::a::{E, foo};
 
         mod a {
             pub enum E { A, B }
@@ -728,6 +728,27 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test do not offer add remaining arms fix for non-exhaustive enum match in different crate`() = checkFixIsUnavailableByFileTree("Add remaining", """
+        //- dep-lib/lib.rs
+        #[non_exhaustive]
+        pub enum Error {
+            Variant
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::Error;
+
+        fn main() {
+            let error = Error::Variant;
+
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> error {
+                Error::Variant => println!("Variant")
+            }
+        }
+    """)
+
     fun `test empty match simple enum variants`() = checkFixByText("Add remaining patterns", """
         enum FooBar { Foo, Bar }
 
@@ -887,7 +908,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
     """)
 
     fun `test empty match import unresolved type`() = checkFixByText("Add remaining patterns", """
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub enum FooBar { Foo, Bar }
@@ -898,7 +919,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> foo() {};
         }
     """, """
-        use a::{foo, FooBar};
+        use crate::a::{foo, FooBar};
 
         mod a {
             pub enum FooBar { Foo, Bar }

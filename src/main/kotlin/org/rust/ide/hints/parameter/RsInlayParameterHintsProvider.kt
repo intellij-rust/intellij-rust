@@ -22,8 +22,7 @@ import org.rust.lang.core.psi.ext.valueParameters
 
 @Suppress("UnstableApiUsage")
 class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
-    override fun getSupportedOptions(): List<Option> =
-        listOf(RsInlayParameterHints.enabledOption, RsInlayParameterHints.smartOption)
+    override fun getSupportedOptions(): List<Option> = listOf(RsInlayParameterHints.smartOption)
 
     override fun getDefaultBlackList(): Set<String> = emptySet()
 
@@ -35,12 +34,7 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
         }
     }
 
-    override fun getParameterHints(element: PsiElement): List<InlayInfo> {
-        if (RsInlayParameterHints.enabled) {
-            return RsInlayParameterHints.provideHints(element)
-        }
-        return emptyList()
-    }
+    override fun getParameterHints(element: PsiElement): List<InlayInfo> = RsInlayParameterHints.provideHints(element)
 
     override fun getInlayPresentation(inlayText: String): String = inlayText
 

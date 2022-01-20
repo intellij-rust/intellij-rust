@@ -152,7 +152,7 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
             }
         }
     """, """
-        use foo::Alias;
+        use crate::foo::Alias;
 
         mod foo {
             pub enum Enum {

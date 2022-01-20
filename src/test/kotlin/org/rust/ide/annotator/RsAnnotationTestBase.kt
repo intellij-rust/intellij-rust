@@ -5,10 +5,14 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.openapi.project.Project
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.psi.RsCodeFragment
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
@@ -119,5 +123,20 @@ abstract class RsAnnotationTestBase : RsTestBase() {
 
         myFixture.configureFromTempProjectFile(testFilePath)
         myFixture.testHighlighting(false, checkInfo, false)
+    }
+
+    protected fun checkByCodeFragment(
+        @Language("Rust") context: String,
+        fragment: String,
+        fragmentConstructor: (Project, String, RsElement) -> RsCodeFragment,
+        checkWarn: Boolean = true,
+        checkInfo: Boolean = false,
+        checkWeakWarn: Boolean = false
+    ) {
+        InlineFile(context).withCaret()
+        val contextElement = myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<RsElement>()!!
+        val codeFragment = fragmentConstructor(project, fragment, contextElement)
+        myFixture.configureFromExistingVirtualFile(codeFragment.virtualFile)
+        myFixture.testHighlighting(checkWarn, checkInfo, checkWeakWarn)
     }
 }

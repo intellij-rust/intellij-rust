@@ -20,16 +20,14 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.*
 import org.rust.cargo.project.workspace.CargoWorkspace.*
-import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Dependency
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargo
@@ -95,34 +93,70 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
 
+    protected open fun externalPackage(
+        contentRoot: String,
+        source: String?,
+        name: String,
+        targetName: String = name,
+        version: String = "0.0.1",
+        origin: PackageOrigin = PackageOrigin.DEPENDENCY,
+        libKind: LibKind = LibKind.LIB,
+        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
+    ): Package {
+        return Package(
+            id = "$name $version",
+            contentRootUrl = contentRoot,
+            name = name,
+            version = version,
+            targets = listOf(
+                // don't use `FileUtil.join` here because it uses `File.separator`
+                // which is system dependent although all other code uses `/` as separator
+                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
+                    TargetKind.Lib(libKind), DEFAULT_EDITION_FOR_TESTS, doctest = true, requiredFeatures = emptyList())
+            ),
+            source = source,
+            origin = origin,
+            edition = DEFAULT_EDITION_FOR_TESTS,
+            features = emptyMap(),
+            enabledFeatures = emptySet(),
+            cfgOptions = CfgOptions.EMPTY,
+            env = emptyMap(),
+            outDirUrl = null,
+            procMacroArtifact = procMacroArtifact
+        )
+    }
+
     protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
         id = "$name 0.0.1",
         contentRootUrl = contentRoot,
         name = name,
         version = "0.0.1",
         targets = listOf(
-            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bin/a.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bin/a/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/tests/a.rs", name, TargetKind.Test, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/tests/a/main.rs", name, TargetKind.Test, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bench/a.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/bench/a/main.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example/a.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example/a/main.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB)), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
-            Target("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, edition = Edition.EDITION_2015, doctest = false, requiredFeatures = emptyList())
+            testTarget("$contentRoot/main.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB)),
+            testTarget("$contentRoot/bin/a.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/bin/a/main.rs", name, TargetKind.Bin),
+            testTarget("$contentRoot/tests/a.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/tests/a/main.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/bench/a.rs", name, TargetKind.Bench),
+            testTarget("$contentRoot/bench/a/main.rs", name, TargetKind.Bench),
+            testTarget("$contentRoot/example/a.rs", name, TargetKind.ExampleBin),
+            testTarget("$contentRoot/example/a/main.rs", name, TargetKind.ExampleBin),
+            testTarget("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB))),
+            testTarget("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, doctest = false),
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
-        edition = Edition.EDITION_2015,
+        edition = DEFAULT_EDITION_FOR_TESTS,
         features = emptyMap(),
         enabledFeatures = emptySet(),
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
     )
+
+    private fun testTarget(crateRootUrl: String, name: String, kind: TargetKind, doctest: Boolean = true): Target =
+        Target(crateRootUrl, name, kind, DEFAULT_EDITION_FOR_TESTS, doctest, requiredFeatures = emptyList())
 }
 
 open class WithRustup(
@@ -292,38 +326,6 @@ open class WithCustomStdlibRustProjectDescriptor(
 }
 
 object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-    private fun externalPackage(
-        contentRoot: String,
-        source: String?,
-        name: String,
-        targetName: String = name,
-        version: String = "0.0.1",
-        origin: PackageOrigin = PackageOrigin.DEPENDENCY,
-        libKind: LibKind = LibKind.LIB,
-        procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null,
-    ): Package {
-        return Package(
-            id = "$name $version",
-            contentRootUrl = contentRoot,
-            name = name,
-            version = version,
-            targets = listOf(
-                // don't use `FileUtil.join` here because it uses `File.separator`
-                // which is system dependent although all other code uses `/` as separator
-                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList())
-            ),
-            source = source,
-            origin = origin,
-            edition = Edition.EDITION_2015,
-            features = emptyMap(),
-            enabledFeatures = emptySet(),
-            cfgOptions = CfgOptions.EMPTY,
-            env = emptyMap(),
-            outDirUrl = null,
-            procMacroArtifact = procMacroArtifact
-        )
-    }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         val root = fixture.findFileInTempDir(".")!!
@@ -349,6 +351,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             version = "0.0.2"
         )
         val depLib2 = externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2")
+        val depLibWithCyclicDep = externalPackage("$contentRoot/dep-lib-with-cyclic-dep", "lib.rs", "dep-lib-with-cyclic-dep")
         val depLibToBeRenamed = externalPackage(
             "$contentRoot/dep-lib-to-be-renamed", "lib.rs", "dep-lib-to-be-renamed",
             "dep-lib-to-be-renamed-target"
@@ -364,36 +367,67 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         )
         val depProcMacro2 = externalPackage("$contentRoot/dep-proc-macro-2", "lib.rs", "dep-proc-macro-2", libKind = LibKind.PROC_MACRO,
             procMacroArtifact = testProcMacroArtifact2)
+        val cyclicDepLibDevDep = externalPackage("$contentRoot/cyclic-dep-lib-dev-dep", "lib.rs", "cyclic-dep-lib-dev-dep")
 
         val packages = listOf(
-            testPackage, depLib, depLibNew, depLib2, depLibToBeRenamed,
-            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2
+            testPackage, depLib, depLibNew, depLib2, depLibWithCyclicDep, depLibToBeRenamed,
+            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2,
+            cyclicDepLibDevDep
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
             testPackage.id to setOf(
-                Dependency(depLib.id),
-                Dependency(depLib2.id),
-                Dependency(depLibToBeRenamed.id, "dep_lib_renamed"),
-                Dependency(noSrcLib.id),
-                Dependency(noSourceLib.id),
-                Dependency(depProcMacro.id),
-                Dependency(depProcMacro2.id),
+                dep(depLib.id),
+                dep(depLib2.id),
+                dep(depLibToBeRenamed.id, "dep_lib_renamed"),
+                dep(noSrcLib.id),
+                dep(noSourceLib.id),
+                dep(depProcMacro.id),
+                dep(depProcMacro2.id),
             ),
             depLib.id to setOf(
-                Dependency(transLib.id),
-                Dependency(depLibNew.id),
-                Dependency(transCommonLib.id),
+                dep(transLib.id),
+                dep(depLibNew.id),
+                dep(transCommonLib.id),
             ),
             depLib2.id to setOf(
-                Dependency(transCommonLib.id),
+                dep(transCommonLib.id),
+            ),
+            depLibWithCyclicDep.id to setOf(
+                dep(cyclicDepLibDevDep.id, depKind = DepKind.Development),
             ),
             transLib.id to setOf(
-                Dependency(transLib2.id),
+                dep(transLib2.id),
+            ),
+            cyclicDepLibDevDep.id to setOf(
+                dep(depLibWithCyclicDep.id),
             )
         ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
     }
+
+    private fun dep(id: PackageId, name: String? = null, depKind: DepKind = DepKind.Normal): Dependency =
+        Dependency(id, name, listOf(DepKindInfo(depKind)))
 }
+
+private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val packages = listOf(
+            testCargoPackage(contentRoot),
+            externalPackage("$contentRoot/core", "lib.rs", "core"),
+            externalPackage("$contentRoot/alloc", "lib.rs", "alloc"),
+            externalPackage("$contentRoot/std", "lib.rs", "std")
+        )
+        return CargoWorkspace.deserialize(
+            Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+    }
+}
+
+/**
+ * Provides `core`, `alloc` and `std` workspace dependencies.
+ * It's supposed to be used to check how the plugin works with dependencies that have the same name as stdlib packages
+ */
+object WithStdlibAndStdlibLikeDependencyRustProjectDescriptor : WithRustup(WithStdlibLikeDependencyRustProjectDescriptor())
 
 private fun RsToolchainBase.getRustcInfo(): RustcInfo? {
     val rustc = rustc()

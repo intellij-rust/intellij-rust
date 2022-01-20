@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsPreciseTraitMatchingTest : RsResolveTestBase() {
@@ -133,7 +131,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }
     """, TypeInferenceMarks.methodPickCheckBounds)
 
-    fun `test trait bound satisfied for trait`() = checkByCode("""
+    fun `test trait bound satisfied for dyn trait`() = checkByCode("""
         #[lang = "sized"]
         trait Sized {}
         trait Tr1 { fn some_fn(&self) {} }
@@ -145,7 +143,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         struct S<T: ?Sized> { value: T }
         impl<T: Bound1 + ?Sized> Tr1 for S<T> { }
         impl<T: Bound2 + ?Sized> Tr2 for S<T> { }
-        fn f(v: &S<ChildOfBound2>) {
+        fn f(v: &S<dyn ChildOfBound2>) {
             v.some_fn();
             //^
         }
@@ -167,6 +165,22 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
                 t.some_fn();
                 //^
             }
+        }
+    """, TypeInferenceMarks.methodPickCheckBounds)
+
+    fun `test Sized trait bound satisfied`() = checkByCode("""
+        #[lang = "sized"] trait Sized {}
+        trait Tr1 { fn some_fn(&self) {} }
+        trait Tr2 { fn some_fn(&self) {} }
+                     //X
+        trait Bound1 {}
+        struct S<T: ?Sized> { value: T }
+        impl<T> Tr1 for S<T> { }
+        impl<T: ?Sized> Tr2 for S<T> { }
+        trait Dyn {}
+        fn f(v: &S<dyn Dyn>) {
+            v.some_fn();
+            //^
         }
     """, TypeInferenceMarks.methodPickCheckBounds)
 
@@ -349,11 +363,11 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
                 fn do_x(&self);
             }
 
-            impl X for ::Foo {
+            impl X for crate::Foo {
                 fn do_x(&self) {}
             }
 
-            impl X for ::Bar {
+            impl X for crate::Bar {
                 fn do_x(&self) {}
                    //X
             }
@@ -532,7 +546,6 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }   //^
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test cycle using glob-imports (and underscore trait re-export)`() = checkByCode("""
         mod a {
             pub use crate::b::*;

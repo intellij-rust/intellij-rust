@@ -126,7 +126,14 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         def: RsDeclMacroData
     ): RsResult<MacroExpansion, MacroExpansionAndParsingError<DeclMacroExpansionError>> {
         val expander = DeclMacroExpander(project)
-        return expander.expandMacro(def, call, RsPsiFactory(project, markGenerated = false), true).map {
+        val expansionResult = expander.expandMacro(
+            RsMacroDataWithHash(def, null),
+            call,
+            RsPsiFactory(project, markGenerated = false),
+            storeRangeMap = true,
+            useCache = false
+        )
+        return expansionResult.map {
             it.elements.forEach { el ->
                 el.setContext(call.context as RsElement)
                 el.setExpandedFrom(call)

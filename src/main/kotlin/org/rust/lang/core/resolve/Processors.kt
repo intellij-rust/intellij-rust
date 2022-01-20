@@ -10,6 +10,7 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
+import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath
@@ -183,20 +184,18 @@ fun collectCompletionVariants(
 ) {
     val processor = createProcessor { e ->
         val element = e.element ?: return@createProcessor false
-        if (element is RsFunction && element.isTest) return@createProcessor false
-        if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
 
-            if (element is RsEnumItem
-                && (context.expectedTy?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
-                    val variants = collectVariantsForEnumCompletion(element, context, e.subst)
-                    result.addAllElements(variants)
-            }
-
-            result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context
-            ))
+        if (element is RsEnumItem
+            && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
+            val variants = collectVariantsForEnumCompletion(element, context, e.subst)
+            result.addAllElements(variants)
         }
+
+        result.addElement(createLookupElement(
+            scopeEntry = e,
+            context = context
+        ))
+
         false
     }
     f(processor)
@@ -300,7 +299,21 @@ fun processAllWithSubst(
     return false
 }
 
+fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {
+    return createProcessor(processor.name) { e ->
+        val element = e.element ?: return@createProcessor false
+        if (element is RsFunction && element.isTest) return@createProcessor false
+        if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
+
+        processor(e)
+    }
+}
+
 fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolveProcessor): RsResolveProcessor {
+    // Do not filter out private items in debugger
+    if (context.containingFile is RsDebuggerExpressionCodeFragment) {
+        return processor
+    }
     val mod = context.containingMod
     return createProcessor(processor.name) {
         val element = it.element

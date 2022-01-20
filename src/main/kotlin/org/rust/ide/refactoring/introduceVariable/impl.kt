@@ -16,6 +16,7 @@ import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
 
@@ -40,7 +41,7 @@ private class ExpressionReplacer(
     fun replaceElementForAllExpr(exprs: List<PsiElement>, postfixLet: Boolean) {
         val anchor = findAnchor(exprs, chosenExpr) ?: return
         val sortedExprs = exprs.sortedBy { it.startOffset }
-        val firstExpr = sortedExprs.first()
+        val firstExpr = sortedExprs.firstOrNull() ?: chosenExpr
 
         // `inlinableExprStmt` is the element that should be replaced with the new let binding.
         // This can be either the statement surrounding the entire expression if it already had
@@ -70,9 +71,14 @@ private class ExpressionReplacer(
                 binding
             } else {
                 val parentLambda = chosenExpr.ancestorStrict<RsLambdaExpr>()
+                val lambdaMayBeAnchor = parentLambda != null && sortedExprs.all { parentLambda.isAncestorOf(it) }
                 val binding = introduceLet(anchor, let)
                 sortedExprs.forEach { it.replace(name) }
-                binding?.moveIntoLambdaBlockIfNeeded(parentLambda)
+                if (lambdaMayBeAnchor) {
+                    binding.moveIntoLambdaBlockIfNeeded(parentLambda)
+                } else {
+                    binding
+                }
             }
 
             val nameElem = moveEditorToNameElement(editor, letBinding)
@@ -95,7 +101,7 @@ private class ExpressionReplacer(
         return psiFactory.createLetDeclaration(name, chosenExpr, mutable)
     }
 
-    private fun introduceLet(anchor: PsiElement, let: RsLetDecl): PsiElement? {
+    private fun introduceLet(anchor: PsiElement, let: RsLetDecl): PsiElement {
         val context = anchor.parent
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 

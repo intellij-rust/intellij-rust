@@ -61,6 +61,7 @@
         FAT_ARROW   =  '=>'
         ARROW       =  '->'
         Q           =  '?'
+        T           =  '~'
         AT          =  '@'
         UNDERSCORE  =  '_'
         DOLLAR      =  '$'
@@ -473,7 +474,7 @@ Polybound ::= '(' PolyboundInner ')' | PolyboundInner {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private PolyboundInner ::= [ ForLifetimes | '?' ] Bound
+private PolyboundInner ::= [ ForLifetimes | '?' | TildeConst ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -492,6 +493,10 @@ ForLifetimes ::= for '<' LifetimesParams '>' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+TildeConst ::= '~' const {
+  pin = 1
 }
 
 ExternAbi ::= extern LitExpr?
@@ -522,7 +527,8 @@ upper Function ::= async? const? unsafe? ExternAbi?
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
-                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
+                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

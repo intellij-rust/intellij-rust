@@ -832,4 +832,32 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             X.foo();
         }   //^
     """)
+
+    fun `test primitive vs mod`() = checkByCode("""
+        mod impls {
+            #[lang = "str"]
+            impl str {
+                pub fn trim() {}
+            }
+        }
+        mod str {
+            pub fn trim() {}
+        }        //X
+        fn main() {
+            str::trim();
+        }      //^
+    """)
+
+    fun `test primitive vs mod 2`() = checkByCode("""
+        mod impls {
+            #[lang = "str"]
+            impl str {
+                pub fn trim() {}
+            }        //X
+        }
+        mod str {}
+        fn main() {
+            str::trim();
+        }      //^
+    """)
 }

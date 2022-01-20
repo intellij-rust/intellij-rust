@@ -8,7 +8,6 @@ package org.rust.ide.annotator
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.findAnnotationInstance
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ExtensionTestUtil
@@ -16,6 +15,7 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
+import org.rust.findAnnotationInstance
 import org.rust.openapiext.Testmark
 import kotlin.reflect.KClass
 

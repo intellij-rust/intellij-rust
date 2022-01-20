@@ -6,10 +6,9 @@
 package org.rust.ide.inspections.lints
 
 import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-@MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObjectsInspection::class) {
 
     fun `test simple trait object`() = checkFixByText("Add 'dyn' keyword to trait object", """
@@ -68,7 +67,7 @@ class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObject
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test simple trait object in edition 2015`() = checkByText("""
         trait Trait {}
         fn main(){

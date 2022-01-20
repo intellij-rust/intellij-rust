@@ -57,4 +57,40 @@ class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspect
     fun `test module not support case`() = checkByText("""
         mod 模块名 {}
     """)
+
+    fun `test mod decl 1`() = checkFixByFileTreeWithoutHighlighting("Rename to `foo`", """
+    //- main.rs
+        fn main() {
+            Foo::func();
+        }
+        mod Foo/*caret*/;
+    //- Foo.rs
+        pub fn func() {}
+    """, """
+    //- main.rs
+        fn main() {
+            foo::func();
+        }
+        mod foo/*caret*/;
+    //- foo.rs
+        pub fn func() {}
+    """)
+
+    fun `test mod decl 2`() = checkFixByFileTreeWithoutHighlighting("Rename to `foo`", """
+    //- main.rs
+        fn main() {
+            Foo::func();
+        }
+        mod Foo/*caret*/;
+    //- Foo/mod.rs
+        pub fn func() {}
+    """, """
+    //- main.rs
+        fn main() {
+            foo::func();
+        }
+        mod foo/*caret*/;
+    //- foo/mod.rs
+        pub fn func() {}
+    """)
 }

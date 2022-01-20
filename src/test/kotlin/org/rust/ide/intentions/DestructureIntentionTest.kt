@@ -322,7 +322,7 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
     """)
 
     fun `test import unresolved type`() = doAvailableTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S;
@@ -333,7 +333,7 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
             let /*caret*/x = foo();
         }
     """, """
-        use a::{foo, S};
+        use crate::a::{foo, S};
 
         mod a {
             pub struct S;
@@ -346,7 +346,7 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
     """)
 
     fun `test import unresolved type alias`() = doAvailableTest("""
-        use a::foo;
+        use crate::a::foo;
 
         mod a {
             pub struct S;
@@ -358,7 +358,7 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
             let /*caret*/x = foo();
         }
     """, """
-        use a::{foo, R};
+        use crate::a::{foo, R};
 
         mod a {
             pub struct S;

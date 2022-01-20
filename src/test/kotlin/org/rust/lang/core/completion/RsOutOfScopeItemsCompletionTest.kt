@@ -7,18 +7,15 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
 
-class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
+class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
 
-    fun `test suggest an non-imported symbol from index and add proper import`() = doTestByText("""
+    fun `test suggest an non-imported symbol and add proper import`() = doTestByText("""
         mod collections {
             pub struct BTreeMap;
         }
@@ -27,7 +24,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             let _ = BTreeM/*caret*/
         }
     """, """
-        use collections::BTreeMap;
+        use crate::collections::BTreeMap;
 
         mod collections {
             pub struct BTreeMap;
@@ -82,7 +79,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test suggest a symbol with same name as in scope but in different namespace`() = doTestByText("""
         fn foo() {}
         mod inner {
@@ -99,7 +95,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         fn test(x: foo/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test same item as in scope but with different name`() = doTestByText("""
         use crate::mod1::foo as bar;
         mod mod1 {
@@ -118,7 +113,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test doesn't suggest an non-imported symbol from index when setting disabled`() = doTestByText("""
+    fun `test doesn't suggest an non-imported symbol when setting disabled`() = doTestByText("""
         struct BTreeMap;
 
         mod collections {
@@ -142,15 +137,19 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """, suggestOutOfScopeItems = false)
 
-    fun `test doesn't suggest symbols from index for empty path`() = doTest("""
-        pub mod foo {}
+    fun `test suggest non-imported symbols for empty path`() = doTestContainsCompletion("BTreeMap", """
+        mod collections {
+            pub struct BTreeMap;
+        }
         fn main() {
             let _ = /*caret*/;
         }
-    """, Testmarks.pathCompletionFromIndex)
+    """)
 
-    fun `test doesn't suggest symbols from index for empty path in macro bodies`() = doTest("""
-        pub mod foo {}
+    fun `test suggest non-imported symbols for empty path in macro bodies`() = doTestContainsCompletion("BTreeMap", """
+        mod collections {
+            pub struct BTreeMap;
+        }
         macro_rules! foo {
             ($($ i:item)*) => { $($ i)* };
         }
@@ -159,7 +158,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
                 let _ = /*caret*/
             }
         }
-    """, Testmarks.pathCompletionFromIndex)
+    """)
 
     fun `test enum completion`() = doTestByText("""
         mod a {
@@ -172,7 +171,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             let a = Enu/*caret*/
         }
     """, """
-        use a::Enum;
+        use crate::a::Enum;
 
         mod a {
             pub enum Enum {
@@ -192,7 +191,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             let a = V/*caret*/
         }
     """, """
-        use Enum::V1;
+        use crate::Enum::V1;
 
         enum Enum { V1 }
 
@@ -213,7 +212,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             pub struct Bar;
         }
         mod baz {
-            use foo::Bar;
+            use crate::foo::Bar;
 
             fn x(x: Bar/*caret*/) {}
         }
@@ -231,7 +230,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             pub struct Bar;
         }
         pub mod baz {
-            use foo::Bar;
+            use crate::foo::Bar;
 
             fn x(x: Bar/*caret*/) {}
         }
@@ -246,7 +245,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             ba/*caret*/
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub fn bar(x: i32) {}
@@ -268,7 +267,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             ba/*caret*/
         }
     """, """
-        use foo::bar;
+        use crate::foo::bar;
 
         mod foo {
             pub fn bar(x: i32) {}
@@ -310,7 +309,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             }
         }
     """, """
-        use foo::Foo;
+        use crate::foo::Foo;
 
         mod foo { pub struct Foo; }
         macro_rules! foo {
@@ -355,7 +354,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test show all re-exports of single item`() {
         withOutOfScopeSettings {
@@ -380,7 +378,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
@@ -397,7 +394,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro 2`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
@@ -416,7 +412,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 
     // TODO parse top-level identifier as RsPath
     // e.g. `lazy_static`
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro with same name as dependency`() = expect<IllegalStateException> {
         doTestByFileTree("""
     //- lib.rs
@@ -431,7 +426,6 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
     """)
     }
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro as type reference`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
@@ -442,6 +436,97 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         use test_package::foo_macro;
 
         fn func(x: foo_macro!()) {}
+    """)
+
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path`() = doTestByText("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, """
+        use crate::collections::BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::new()/*caret*/
+        }
+    """)
+
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path 2`() = doTestContainsCompletion("new", """
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+        mod reexports {
+            pub use crate::collections::BTreeMap;
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """)
+
+    fun `test suggest a non-imported symbol for first segment of the path if the import option is disabled`() = doTestByText("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, """
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::new()/*caret*/
+        }
+    """, importOutOfScopeItems = false)
+
+    fun `test don't suggest a non-imported symbol for first segment of the path when the option disabled`() = doTestNoCompletion("""
+        mod collections {
+            pub struct BTreeMap;
+            impl BTreeMap { pub fn new() -> BTreeMap { todo!() } }
+        }
+
+        fn main() {
+            let _ = BTreeMap::n/*caret*/
+        }
+    """, suggestOutOfScopeItems = false)
+
+    fun `test suggest a non-imported symbol and add proper import for first segment of the path (mod)`() = doTestByText("""
+        mod foo {
+            pub mod bar {
+                pub struct Baz;
+            }
+        }
+
+        fn main() {
+            let _ = bar::B/*caret*/
+        }
+    """, """
+        use crate::foo::bar;
+
+        mod foo {
+            pub mod bar {
+                pub struct Baz;
+            }
+        }
+
+        fn main() {
+            let _ = bar::Baz/*caret*/
+        }
     """)
 
     private fun doTestByText(
@@ -465,6 +550,19 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         importOutOfScopeItems: Boolean = true,
         check: (String, String) -> Unit
     ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { check(before, after) }
+
+    private fun doTestContainsCompletion(
+        variant: String,
+        @Language("Rust") code: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
+    ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { checkContainsCompletion(variant, code) }
+
+    private fun doTestNoCompletion(
+        @Language("Rust") code: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
+    ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { checkNoCompletion(code) }
 
     private fun withOutOfScopeSettings(
         suggestOutOfScopeItems: Boolean = true,

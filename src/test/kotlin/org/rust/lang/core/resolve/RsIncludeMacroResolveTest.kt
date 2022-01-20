@@ -7,8 +7,6 @@ package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsIncludeMacroResolveTest : RsResolveTestBase() {
 
@@ -188,7 +186,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     """)
 
     @ExpandMacros
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro call in included file 1`() = checkResolve("""
     //- main.rs
         macro_rules! foo {
@@ -201,7 +198,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     """)
 
     @ExpandMacros
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test macro call in included file 2`() = checkResolve("""
     //- main.rs
         macro_rules! gen_use {

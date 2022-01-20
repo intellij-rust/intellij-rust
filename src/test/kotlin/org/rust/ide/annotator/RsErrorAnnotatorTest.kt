@@ -6,9 +6,11 @@
 package org.rust.ide.annotator
 
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
+import org.rust.lang.core.psi.RsExpressionCodeFragment
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -959,7 +961,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no duplicates with import E0252 textual-scoped macros`() = checkDontTouchAstInOtherFiles("""
     //- main.rs
         use test_package::foo;
@@ -969,7 +970,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         macro_rules! foo { () => {} }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test no duplicates with import E0252 private item`() = checkErrors("""
         mod mod1 {
             fn foo() {}
@@ -1428,7 +1428,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         mod bar {
             mod baz {
-                use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
+                use crate::foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
             }
         }
     """)
@@ -1444,7 +1444,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         //- bar/mod.rs
             mod baz;
         //- bar/baz.rs
-            use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
+            use crate::foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
     """, filePath = "bar/baz.rs")
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -1515,13 +1515,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
     """)
 
     fun `test function return type should implement Sized trait E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         fn foo1() -> <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error> { unimplemented!() }
         fn foo2() -> i32 { unimplemented!() }
+    """)
+
+    fun `test type parameter with Sized bound on member function is Sized E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
+        struct Foo<T>(T);
+        impl<T: ?Sized> Foo<T> {
+            fn foo() -> T where T: Sized { unimplemented!() }
+        }
+        impl<T: ?Sized> Foo<T> {
+            fn foo() -> T where T: Sized { unimplemented!() }
+        }
     """)
 
     fun `test trait method without body can have arg with '?Sized' type E0277`() = checkErrors("""
@@ -1546,10 +1559,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Bar where Self: Sized {
             fn foo() -> (Self, Self) { unimplemented!() }
         }
-        // TODO
-//        trait Baz {
-//            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
-//        }
+        trait Baz {
+            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
+        }
     """)
 
     fun `test supertrait is not implemented E0277 simple trait`() = checkErrors("""
@@ -1658,6 +1670,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<T> Baz for T {}
     """)
 
+    fun `test no E0277 for unknown type`() = checkErrors("""
+        trait Foo {}
+        trait Bar: Foo {}
+
+        impl Bar for S {}
+    """)
+
+    fun `test no E0277 for not fully known type`() = checkErrors("""
+        trait Foo {}
+        trait Bar: Foo {}
+        struct S<T>(T);
+        impl <T: Foo> Foo for S<T> {}
+        impl Bar for S<Q> {}
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
@@ -1714,16 +1741,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate keyword not at the beginning E0433`() = checkErrors("""
         use crate::foo::<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo;
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate keyword not at the beginning in use group E0433`() = checkErrors("""
         use crate::foo::{<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo};
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.28.0")
     fun `test crate in path feature E0658`() = checkErrors("""
         mod foo {
@@ -1733,6 +1759,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.29.0-nightly")
     fun `test crate in path feature E0658 2`() = checkErrors("""
         mod foo {
@@ -1742,7 +1769,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test crate in path feature E0658 3`() = checkErrors("""
         mod foo {
             pub struct Foo;
@@ -2929,6 +2955,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait T {}
         impl const S {} // TODO: inherent impls cannot be `const`
         impl const T for S {}
+    """)
+
+    @MockRustcVersion("1.53.0")
+    fun `test const fn trait bound E0658 1`() = checkErrors("""
+        trait T {}
+        const fn foo<A: <error descr="const trait impls is experimental [E0658]"><error descr="const fn trait bound is experimental [E0658]">~const</error></error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 2`() = checkErrors("""
+        #![feature(const_trait_impl)]
+        trait T {}
+        const fn foo<A: <error descr="const fn trait bound is experimental [E0658]">~const</error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 3`() = checkErrors("""
+        #![feature(const_fn_trait_bound)]
+        trait T {}
+        const fn foo<A: <error descr="const trait impls is experimental [E0658]">~const</error> T>() {}
+    """)
+
+    @MockRustcVersion("1.53.0-nightly")
+    fun `test const fn trait bound E0658 4`() = checkErrors("""
+        #![feature(const_trait_impl)]
+        #![feature(const_fn_trait_bound)]
+        trait T {}
+        const fn foo<A: ~const T>() {}
     """)
 
     @MockRustcVersion("1.56.0")
@@ -4191,7 +4245,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo() -> impl FooBar {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test E0116 inherent impls should be in same crate`() = checkByFileTree("""
     //- lib.rs
         pub struct ForeignStruct {}
@@ -4214,7 +4267,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0117 trait impls orphan rules`() = checkByFileTree("""
     //- lib.rs
@@ -4415,13 +4467,13 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test edition 2018 keyword as lifetime name`() = checkErrors("""
         struct Me<<error descr="Lifetimes cannot use keyword names">'async</error>> {
             name: &<error descr="Lifetimes cannot use keyword names">'async</error> str,
         }
     """)
 
+    @MockEdition(Edition.EDITION_2015)
     fun `test use edition 2018 keyword as lifetime name in the edition 2015`() = checkErrors("""
         struct Me<'async>  {
             name: &'async str,
@@ -4533,4 +4585,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item = S; }
         extern { pub type ItemForeign; }
     """)
+
+    fun `test do not annotate usage of private field in debugger code fragment`() = checkByCodeFragment("""
+        mod my {
+            pub struct Foo { inner: i32 }
+        }
+        fn bar(foo: my::Foo) {
+            /*caret*/;
+        }
+    """, """foo.inner""", ::RsDebuggerExpressionCodeFragment)
+
+    fun `test annotate usage of private field in expr code fragment`() = checkByCodeFragment("""
+        mod my {
+            pub struct Foo { inner: i32 }
+        }
+        fn bar(foo: my::Foo) {
+            /*caret*/;
+        }
+    """, """foo.<error descr="Field `inner` of struct `my::Foo` is private [E0616]">inner</error>""", ::RsExpressionCodeFragment)
 }

@@ -138,6 +138,7 @@ class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpress
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test need unsafe asm macro call`() = checkErrors("""
+       use std::arch::asm; // required since 1.59
        fn main() {
             <error descr="use of `asm!()` is unsafe and requires unsafe function or block [E0133]">asm!("nop")</error>;
        }
@@ -145,6 +146,7 @@ class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpress
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test need unsafe asm macro expr`() = checkErrors("""
+       use std::arch::asm; // required since 1.59
        fn main() {
             <error descr="use of `asm!()` is unsafe and requires unsafe function or block [E0133]">asm!("nop")</error>
        }

@@ -47,6 +47,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                         // There is not sense to highlight path as unresolved
                         // if qualifier cannot be resolved as well
                         if (qualifier.resolveStatus != PathResolveStatus.RESOLVED) return
+                        if (qualifier.reference?.multiResolve()?.let { it.size > 1 } == true) return
                         null
                     }
                     // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
@@ -86,6 +87,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     ) {
         val candidates = context?.candidates
         if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
+
+        if (element.containingCrate?.hasCyclicDevDependencies == true && element.isUnderCfgTest) {
+            return
+        }
 
         val referenceName = element.referenceName
         val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
