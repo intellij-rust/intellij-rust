@@ -63,6 +63,5 @@ object AutoInjectedCrates {
  */
 val Module.cargoProjectRoot: VirtualFile?
     get() = ModuleRootManager.getInstance(this).contentRoots.firstOrNull {
-        println("RustCrateUtil: Module.cargoProjectRoot.get")
         it.findChild(CargoConstants.MANIFEST_FILE) != null
     }

@@ -90,7 +90,6 @@ open class CargoProjectsServiceImpl(
         with(project.messageBus.connect()) {
             if (!isUnitTestMode) {
                 subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(this@CargoProjectsServiceImpl, fun() {
-                    println("CargoProjectsServiceImpl: VirtualFileManager.VFS_CHANGES callback")
                     if (!project.rustSettings.autoUpdateEnabled) return
                     refreshAllProjects()
                 }))
@@ -131,7 +130,7 @@ open class CargoProjectsServiceImpl(
 
 
     @Suppress("LeakingThis")
-    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this).also { println("noProjectMarker: $it") }
+    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
 
     /**
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
@@ -191,9 +190,7 @@ open class CargoProjectsServiceImpl(
     private var isLegacyRustNotificationShowed: Boolean = false
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        file.applyWithSymlink { directoryIndex.getInfoForFile(it).also { info ->
-//            if ("rust-poc" in file.path && "bazel" !in file.path) println("findProjectForFile: file=$file, info=$info")
-        }.takeIf { info -> info !== noProjectMarker } }
+        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { info -> info !== noProjectMarker } }
 
     override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
         file.applyWithSymlink(packageIndex::findPackageForFile)
@@ -204,7 +201,7 @@ open class CargoProjectsServiceImpl(
             if (isExistingProject(projects, manifest))
                 CompletableFuture.completedFuture(projects)
             else
-                doRefresh(project, projects + CargoProjectImpl(manifest, this).also { println("attachCargoProject: $it") })
+                doRefresh(project, projects + CargoProjectImpl(manifest, this))
         }
         return true
     }
@@ -217,7 +214,7 @@ open class CargoProjectsServiceImpl(
             if (newManifests3.isEmpty())
                 CompletableFuture.completedFuture(projects)
             else
-                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this).also { println("attachCargoProjects: $it") } })
+                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this))
         }
     }
 
@@ -228,16 +225,15 @@ open class CargoProjectsServiceImpl(
     }
 
     override fun refreshAllProjects(): CompletableFuture<out List<CargoProject>> =
-        modifyProjects { doRefresh(project, it).also { println("refreshAllProjects") } }
+        modifyProjects { doRefresh(project, it) }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
-        println("discoverAndRefresh: entered")
         val guessManifest = suggestManifests().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
             if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
-            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this).also { println("discoverAndRefresh: $it") }))
+            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
         }
     }
 
@@ -441,7 +437,7 @@ open class CargoProjectsServiceImpl(
             val file = cargoProject.getAttributeValue("FILE")
             val manifest = Paths.get(file)
             val userDisabledFeatures = userDisabledFeaturesMap[manifest] ?: UserDisabledFeatures.EMPTY
-            val newProject = CargoProjectImpl(manifest, this, userDisabledFeatures).also { println("loadState: $it") }
+            val newProject = CargoProjectImpl(manifest, this, userDisabledFeatures)
             loaded.add(newProject)
         }
 
@@ -494,9 +490,6 @@ data class CargoProjectImpl(
     override val stdlibStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
-    init {
-        println(this)
-    }
     override val project get() = projectService.project
 
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -534,7 +527,6 @@ data class CargoProjectImpl(
     // Checks that the project is https://github.com/rust-lang/rust
     fun doesProjectLooksLikeRustc(): Boolean {
         val workspace = rawWorkspace ?: return false
-//        println("CargoProjectImpl.doesProjectLooksLikeRustc: workspace=$workspace, workspace.findRootPackage()=${workspace.findRootPackage()}")
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
         val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")
@@ -546,13 +538,13 @@ data class CargoProjectImpl(
     fun findStdlibInBazelWorkspace(): File? {
         val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
         val stdlibPath = stdlibPathBazel()
-        println("CargoProjectImpl.hasStdlibInBazelWorkspace: stdlibPath=$stdlibPath")
         return if (stdlibPath != null && Files.exists(stdlibPath)) stdlibPath.toFile() else null
     }
 
     fun stdlibPathBazel(): Path? {
         val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
         val projectName = workspaceRoot.rootDirectory.fileName.toString()
+        // TODO: fragile + OS dependent
         return Path.of(workspaceRoot.rootDirectory.toString(), "bazel-$projectName/external/rust_darwin_x86_64/lib/rustlib/src/library")
     }
 
@@ -575,15 +567,8 @@ data class CargoProjectImpl(
         is TaskResult.Err -> copy(rustcInfoStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    override fun toString(): String {
-        var ws: CargoWorkspace? = null
-        try {
-            ws = workspace
-        } catch (e: Exception) {
-            // swallow NPE
-        }
-        return "CargoProject(manifest = $manifest, workspace = $ws)"
-    }
+    override fun toString(): String =
+        "CargoProject(manifest = $manifest)"
 }
 
 val CargoProjectsService.allPackages: Sequence<CargoWorkspace.Package>

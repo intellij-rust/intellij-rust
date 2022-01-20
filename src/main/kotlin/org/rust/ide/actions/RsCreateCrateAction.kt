@@ -56,7 +56,6 @@ class RsCreateCrateAction : RunCargoCommandActionBase() {
         }
         cargo.init(project, project, targetDir, name, binary, "none")
 
-        throw Exception("RsCreateCrateAction.createProject: banana")
         val manifest = targetDir.findChild(CargoConstants.MANIFEST_FILE)
         manifest?.let {
             project.cargoProjects.attachCargoProject(it.pathAsPath)

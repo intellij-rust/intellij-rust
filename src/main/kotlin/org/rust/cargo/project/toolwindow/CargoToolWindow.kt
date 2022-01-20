@@ -45,7 +45,6 @@ class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-        println("CargoToolWindow.isApplicable")
         if (CargoToolWindow.isRegistered(project)) return false
 
         val cargoProjects = project.cargoProjects

@@ -17,9 +17,7 @@
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-    <DebugAllEnabled>false</DebugAllEnabled>
+    <GradleScriptDebugEnabled>false</GradleScriptDebugEnabled>
     <method v="2" />
   </configuration>
 </component>

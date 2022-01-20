@@ -64,9 +64,6 @@ object CargoMetadata {
          */
         val workspace_root: String
     ) {
-        init {
-//            println("Fetched Cargo metadata: $this")
-        }
         fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Project = copy(
             packages = packages.map { it.convertPaths(converter, srcPathConverter) },
             workspace_root = srcPathConverter(workspace_root)
@@ -359,7 +356,6 @@ object CargoMetadata {
 
     private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
         // TODO: apply Windows fix from WslToolchainBase
-//        println("CargoMetadata.bazelPathToLocal: bazelPath=$bazelPath, bazelBinPath=$bazelBinPath")
         if ("/bazel-out/" !in bazelPath) return bazelPath
         val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (relativePathStartIndex == -1) return bazelPath
@@ -378,7 +374,7 @@ object CargoMetadata {
         val rootPath = bazelPathToLocal(bazelPath = PathUtil.getParentPath(manifest_path).toString(), bazelBinPath = Path.of(workspaceRoot, "bazel-bin").toString())
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (rootPath = $rootPath, workspaceRoot = $workspaceRoot)")
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
 
         val features = features.toMutableMap()
 

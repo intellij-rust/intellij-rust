@@ -48,7 +48,6 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
         val cargoProjects = project.cargoProjects
         if (!cargoProjects.initialized) return null
         if (!cargoProjects.hasAtLeastOneValidProject) {
-            println("createNotificationPanel: No Cargo projects found")
             return createNoCargoProjectsPanel(file)
         }
 

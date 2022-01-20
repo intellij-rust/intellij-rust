@@ -67,7 +67,6 @@ class CargoSyncTask(
         get() = true
 
     override fun run(indicator: ProgressIndicator) {
-        println("CargoSyncTask started")
         LOG.info("CargoSyncTask started")
         indicator.isIndeterminate = true
 
@@ -343,7 +342,6 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
                     }
                 }
             }
-//            println("projectDescriptionData=$projectDescriptionData")
             if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
                 childContext.warning("Build scripts evaluation failed",
                     "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
@@ -389,14 +387,12 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
-        val stdlibFromBazel = cargoProject.findStdlibInBazelWorkspace()
-        stdlibFromBazel?.let {
-            println("stdlib found in bazel workspace")
+        cargoProject.findStdlibInBazelWorkspace()?.let {
             val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
             if (std != null) {
                 return@runWithChildProgress TaskResult.Ok(std)
             } else {
-                println("Failed to initialise stdlib from bazel workspace!")
+                LOG.warn("Failed to initialise stdlib from bazel workspace!")
             }
         }
 

@@ -86,10 +86,8 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
     }
 
     private fun VirtualFile.findCargoToml(project: Project): VirtualFile? {
-        println("AttachCargoProjectAction.findCargoToml")
         return if (isDirectory) {
             ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots()[0]
-//            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
                 .findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE)
         } else takeIf { it.isCargoToml }
     }
@@ -128,8 +126,6 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
     }
 
     override fun isFileSelectable(file: VirtualFile?): Boolean {
-        // TODO (AW)
-        println("CargoProjectChooserDescriptor: isFileSelectable")
         return super.isFileSelectable(file) && file != null && (!file.isDirectory || file.findChild(CargoConstants.MANIFEST_FILE) != null)
     }
 }
