@@ -238,7 +238,7 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
         if ("/bazel-out/" !in bazelPath) return bazelPath
         val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (relativePathStartIndex == -1) return bazelPath
-        val projectRelativePath = bazelPath.substring(relativePathStartIndex).trim('/').replace("src/lib.rs", "lib.rs").replace("src/main.rs", "main.rs")
+        val projectRelativePath = bazelPath.substring(relativePathStartIndex).trim('/')
         val projectRoot = bazelBinPath.substring(0, bazelBinPath.length - "bazel-bin".length)
         return Path.of(projectRoot, projectRelativePath).toString()
     }
