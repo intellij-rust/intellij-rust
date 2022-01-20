@@ -31,6 +31,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.impl.Applicability
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.ide.annotator.RsExternalLinterResult
 import org.rust.ide.annotator.RsExternalLinterUtils
@@ -203,7 +204,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
                 val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
                 @Suppress("UnstableApiUsage")
                 annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                    holder.createAnnotationsForFile(file, annotationResult)
+                    holder.createAnnotationsForFile(file, annotationResult, Applicability.MACHINE_APPLICABLE)
                 }
                 addAll(convertToProblemDescriptors(annotationHolder, file))
             }
