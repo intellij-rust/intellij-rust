@@ -389,10 +389,9 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
 
         cargoProject.findStdlibInBazelWorkspace()?.let {
             val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
-            if (std != null) {
-                return@runWithChildProgress TaskResult.Ok(std)
-            } else {
-                LOG.warn("Failed to initialise stdlib from bazel workspace!")
+            return@runWithChildProgress when (std) {
+                null -> TaskResult.Err("invalid standard library: ${it.path}")
+                else -> TaskResult.Ok(std)
             }
         }
 

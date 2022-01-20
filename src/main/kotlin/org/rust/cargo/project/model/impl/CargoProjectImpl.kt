@@ -214,7 +214,7 @@ open class CargoProjectsServiceImpl(
             if (newManifests3.isEmpty())
                 CompletableFuture.completedFuture(projects)
             else
-                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this))
+                doRefresh(project, projects + newManifests3.map { CargoProjectImpl(it, this) })
         }
     }
 
