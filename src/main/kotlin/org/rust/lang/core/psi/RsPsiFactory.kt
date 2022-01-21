@@ -340,6 +340,13 @@ class RsPsiFactory(
         return createFromText("type T = a$text") ?: error("Failed to create type argument from text: `$text`")
     }
 
+    fun createTypeParamBounds(bounds: String): RsTypeParamBounds =
+        createFromText<RsTraitItem>("trait T : $bounds {}")?.childOfType()
+            ?: error("Failed to create type bounds from text: `$bounds`")
+
+    fun createPolybound(bound: String): RsPolybound =
+        createTypeParamBounds(bound).polyboundList.single()
+
     fun createOuterAttr(text: String): RsOuterAttr =
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
@@ -386,6 +393,9 @@ class RsPsiFactory(
 
     fun createEq(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.eq!!
+
+    fun createPlus(): PsiElement =
+        (createFromText<RsConstant>("const C = 1 + 1;")!!.expr as RsBinaryExpr).binaryOp.plus!!
 
     fun createIn(): PsiElement =
         createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in`

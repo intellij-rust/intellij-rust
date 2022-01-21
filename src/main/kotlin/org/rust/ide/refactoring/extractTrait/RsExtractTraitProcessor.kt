@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.extractTrait
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -16,98 +17,187 @@ import org.rust.ide.utils.GenericConstraints
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.stdext.mapNotNullToSet
 
+/**
+ * This refactoring can be applied to either inherent impl or trait.
+ *
+ * ## `impl Struct`
+ * - Create `trait NewTrait` and `impl NewTrait for Struct`
+ * - Move members from `impl Struct` to `impl NewTrait for Struct`
+ * - Find references to moved members and add trait imports
+ *
+ * `impl Struct { ... }`
+ * ⇒
+ * ```
+ * trait NewTrait { ... }
+ * impl NewTrait for Struct { ... }
+ * ```
+ *
+ *
+ * ## `trait Trait`
+ * - Create `trait NewTrait`, add super `: NewTrait`
+ * - For each `impl Trait for Struct`:
+ *     - Create `impl NewTrait for Struct`
+ *     - Move members from `impl Trait for Struct` to `impl NewTrait for Struct`
+ *     - Find references to moved members and add trait imports
+ *
+ * ```
+ * trait OldTrait { ... }
+ * impl OldTrait for StructN { ... }
+ * ```
+ * ⇒
+ * ```
+ * trait NewTrait { ... }
+ * impl NewTrait for StructN { ... }
+ * ```
+ */
 class RsExtractTraitProcessor(
-    private val impl: RsImplItem,
+    private val traitOrImpl: RsTraitOrImpl,
     private val traitName: String,
     private val members: List<RsItemElement>,
-) : BaseRefactoringProcessor(impl.project) {
+) : BaseRefactoringProcessor(traitOrImpl.project) {
 
-    private val psiFactory = RsPsiFactory(impl.project)
+    private val psiFactory = RsPsiFactory(traitOrImpl.project)
 
     override fun getCommandName(): String = "Extract Trait"
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
-        BaseUsageViewDescriptor(impl)
+        BaseUsageViewDescriptor(traitOrImpl, *usages.mapNotNull { it.element }.toTypedArray())
+
+    private class MemberUsage(reference: PsiReference) : UsageInfo(reference)
+    private class ImplUsage(val impl: RsImplItem) : UsageInfo(impl)
 
     override fun findUsages(): Array<UsageInfo> {
-        return members.flatMap { member ->
+        val implUsages = run {
+            if (traitOrImpl !is RsTraitItem) return@run emptyList()
+            traitOrImpl.searchForImplementations().map { ImplUsage(it) }
+        }
+        val membersNames = members.mapNotNullToSet { it.name }
+        val membersInImpls = implUsages.flatMap {
+            it.impl.getMembersWithNames(membersNames)
+        }
+
+        val membersAll = members + membersInImpls
+        val memberUsages = membersAll.flatMap { member ->
             val references = ReferencesSearch.search(member, member.useScope)
-            references.map { UsageInfo(it) }
-        }.toTypedArray()
+            references.map { MemberUsage(it) }
+        }
+
+        return (implUsages + memberUsages).toTypedArray()
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        val (traitImpl, trait) = createImpls() ?: return
-        copyAttributesTo(traitImpl)
-        copyAttributesTo(trait)
-        moveMembersToCorrectImpls(traitImpl, trait)
-        val insertedTrait = insertImpls(traitImpl, trait)
-        addTraitImports(usages, insertedTrait)
+        val newTraitConstraints = createNewTraitConstraints()
+        val newTrait = createNewTrait(newTraitConstraints) ?: return
+        if (traitOrImpl is RsTraitItem) {
+            addDerivedBound(traitOrImpl)
+        }
+
+        addTraitImports(usages, newTrait)
+
+        val impls = usages.filterIsInstance<ImplUsage>().map { it.impl } +
+            listOfNotNull(traitOrImpl as? RsImplItem)
+        for (impl in impls) {
+            val newImpl = createNewImpl(impl, newTraitConstraints) ?: continue
+            if (newImpl.containingMod != newTrait.containingMod) {
+                RsImportHelper.importElement(newImpl, newTrait)
+            }
+
+            if (impl.traitRef == null && impl.members?.childrenOfType<RsItemElement>()?.isEmpty() == true) {
+                impl.delete()
+            }
+        }
     }
 
-    private fun createImpls(): Pair<RsImplItem, RsTraitItem>? {
-        val typeText = impl.typeReference?.text ?: return null
+    private fun createNewTraitConstraints(): GenericConstraints {
         val typesInsideMembers = members
             .filterIsInstance<RsFunction>()
             .flatMap { function ->
                 listOfNotNull(function.retType, function.valueParameterList)
                     .flatMap { it.descendantsOfType<RsTypeReference>() }
             }
-        val constraints = GenericConstraints.create(impl).filterByTypeReferences(typesInsideMembers)
-        val genericsStruct = impl.typeParameterList?.text.orEmpty()
-        val whereClauseStruct = impl.whereClause?.text.orEmpty()
-        val genericsTrait = constraints.buildTypeParameters()
-        val whereClauseTrait = constraints.buildWhereClause()
-
-        val traitImpl = psiFactory.tryCreateImplItem(
-            "impl $genericsStruct $traitName $genericsTrait for $typeText $whereClauseStruct { }"
-        ) ?: return null
-        val trait = psiFactory.tryCreateTraitItem(
-            "trait $traitName $genericsTrait $whereClauseTrait { }"
-        ) ?: return null
-        return traitImpl to trait
+        return GenericConstraints.create(traitOrImpl).filterByTypeReferences(typesInsideMembers)
     }
 
-    private fun copyAttributesTo(target: RsTraitOrImpl) {
-        for (attr in impl.outerAttrList) {
+    private fun createNewTrait(constraints: GenericConstraints): RsTraitItem? {
+        val typeParameters = constraints.buildTypeParameters()
+        val whereClause = constraints.buildWhereClause()
+
+        val members = when (traitOrImpl) {
+            is RsImplItem -> members.map { it.copy().makeAbstract(psiFactory) }
+            is RsTraitItem -> members.map { member -> member.copy().also { member.delete() } }
+            else -> return null
+        }
+        val traitBody = members.joinToString(separator = "\n") { it.text }
+
+        val trait = psiFactory.tryCreateTraitItem(
+            "trait $traitName $typeParameters $whereClause {\n$traitBody\n}"
+        ) ?: return null
+
+        copyAttributes(traitOrImpl, trait)
+        return traitOrImpl.parent.addAfter(trait, traitOrImpl) as? RsTraitItem
+    }
+
+    /** [impl] - either an inherent impl or impl of existing derived trait. */
+    private fun createNewImpl(impl: RsImplItem, traitConstraints: GenericConstraints): RsImplItem? {
+        val typeText = impl.typeReference?.text ?: return null
+        val typeParametersStruct = impl.typeParameterList?.text.orEmpty()
+        val whereClauseStruct = impl.whereClause?.text.orEmpty()
+        val typeArgumentsTrait = traitConstraints.buildTypeArguments()
+
+        val newImplBody = extractMembersFromOldImpl(impl)
+        val newImpl = psiFactory.tryCreateImplItem(
+            "impl $typeParametersStruct $traitName $typeArgumentsTrait for $typeText $whereClauseStruct {\n$newImplBody\n}"
+        ) ?: return null
+
+        copyAttributes(traitOrImpl, newImpl)
+        return impl.parent.addAfter(newImpl, impl) as? RsImplItem
+    }
+
+    private fun extractMembersFromOldImpl(impl: RsImplItem): String {
+        val membersNames = members.mapNotNullToSet { it.name }
+        val membersToMove = impl.getMembersWithNames(membersNames)
+        membersToMove.forEach {
+            (it as? RsVisibilityOwner)?.vis?.delete()
+            (it.prevSibling as? PsiWhiteSpace)?.delete()
+            it.delete()
+        }
+        return membersToMove.joinToString("\n") { it.text }
+    }
+
+    private fun copyAttributes(source: RsTraitOrImpl, target: RsTraitOrImpl) {
+        for (attr in source.outerAttrList) {
             if (attr.metaItem.name == "doc") continue
             val inserted = target.addAfter(attr, null)
             target.addAfter(psiFactory.createNewline(), inserted)
         }
 
         val members = target.members ?: return
-        for (attr in impl.innerAttrList) {
+        for (attr in source.innerAttrList) {
             if (attr.metaItem.name == "doc") continue
             members.addAfter(attr, members.lbrace)
             members.addAfter(psiFactory.createNewline(), members.lbrace)
         }
     }
 
-    private fun moveMembersToCorrectImpls(traitImpl: RsImplItem, trait: RsTraitItem) {
-        members.forEach { (it as? RsVisibilityOwner)?.vis?.delete() }
-        trait.members?.addMembers(members.map { it.copy().makeAbstract(psiFactory) }, psiFactory)
-
-        traitImpl.members?.addMembers(members, psiFactory)
-        members.forEach {
-            (it.prevSibling as? PsiWhiteSpace)?.delete()
-            it.delete()
+    private fun addDerivedBound(trait: RsTraitItem) {
+        val typeParamBounds = trait.typeParamBounds
+        if (typeParamBounds == null) {
+            val anchor = trait.identifier ?: trait.typeParameterList
+            trait.addAfter(psiFactory.createTypeParamBounds(traitName), anchor)
+        } else {
+            typeParamBounds.addAfter(psiFactory.createPlus(), typeParamBounds.colon)
+            typeParamBounds.addAfter(psiFactory.createPolybound(traitName), typeParamBounds.colon)
         }
-    }
-
-    private fun insertImpls(traitImpl: RsImplItem, trait: RsTraitItem): RsTraitItem {
-        val insertedTrait = impl.parent.addAfter(trait, impl) as RsTraitItem
-        impl.parent.addAfter(traitImpl, impl)
-        if (impl.members?.childrenOfType<RsItemElement>()?.isEmpty() == true) {
-            impl.delete()
-        }
-        return insertedTrait
     }
 
     private fun addTraitImports(usages: Array<out UsageInfo>, trait: RsTraitItem) {
-        val mods = usages.mapNotNullTo(hashSetOf()) {
-            (it.element as? RsElement)?.containingMod
-        }
+        val mods = usages
+            .filterIsInstance<MemberUsage>()
+            .mapNotNullTo(hashSetOf()) {
+                (it.element as? RsElement)?.containingMod
+            }
         for (mod in mods) {
             val context = mod.childOfType<RsElement>() ?: continue
             RsImportHelper.importElement(context, trait)
@@ -115,7 +205,16 @@ class RsExtractTraitProcessor(
     }
 }
 
+private fun RsImplItem.getMembersWithNames(names: Set<String>): List<RsItemElement> {
+    val implMembers = members?.childrenOfType<RsItemElement>() ?: return emptyList()
+    return implMembers.filter {
+        val name = it.name ?: return@filter false
+        name in names
+    }
+}
+
 private fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
+    if (this is RsVisibilityOwner) vis?.delete()
     when (this) {
         is RsFunction -> {
             block?.delete()
@@ -131,13 +230,4 @@ private fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
         }
     }
     return this
-}
-
-private fun RsMembers.addMembers(members: List<PsiElement>, psiFactory: RsPsiFactory) {
-    val rbrace = rbrace ?: return
-    addBefore(psiFactory.createNewline(), rbrace)
-    for (member in members) {
-        addBefore(member, rbrace)
-        addBefore(psiFactory.createNewline(), rbrace)
-    }
 }
