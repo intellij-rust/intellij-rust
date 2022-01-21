@@ -557,7 +557,7 @@ private SimplePat ::= PatWild
 OrPat ::= '|'? SimplePat ('|' SimplePat)*
 left OrPatLeft ::= ('|' SimplePat)+ { elementType = OrPat }
 
-private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|'
+private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|' | const
 
 PatBox ::= box SimplePat
 
@@ -579,7 +579,7 @@ private PatField_with_recover ::= !('}' | '..') PatField (',' | & '}') {
 }
 private PatField_recover ::= !('}' | '..' | ref | mut | box | identifier | INTEGER_LITERAL)
 
-PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
+PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr | &const BlockExpr
 PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
 PatTup ::= '(' PatParenListElem_with_recover* ')'
@@ -1089,7 +1089,7 @@ StmtModeExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.ON' Expr>> {
 
 private RestrictedConstExpr ::= <<withRestrictedConstExprMode 'RestrictedConstExprMode.ON' AnyExpr>> | never AnyExpr
 
-BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
+BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try | const) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

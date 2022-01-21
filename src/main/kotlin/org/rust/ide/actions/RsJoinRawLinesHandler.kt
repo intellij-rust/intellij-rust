@@ -66,7 +66,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         when (val parent = block.parent) {
             is RsBlockExpr -> {
                 return when {
-                    parent.isUnsafe || parent.isAsync || parent.isTry -> CANNOT_JOIN
+                    parent.isUnsafe || parent.isAsync || parent.isTry || parent.isConst -> CANNOT_JOIN
                     else -> {
                         val grandpa = parent.parent
                         val newExpr = parent.replace(expr)

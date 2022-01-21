@@ -4603,4 +4603,50 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             /*caret*/;
         }
     """, """foo.<error descr="Field `inner` of struct `my::Foo` is private [E0616]">inner</error>""", ::RsExpressionCodeFragment)
+
+    @MockRustcVersion("1.49.0")
+    fun `test inline const E0658 1`() = checkErrors("""
+        fn foo(a: i32, b: i32) {}
+        fn main() {
+            <error descr="inline const is experimental [E0658]">const</error> { 0 };
+            let x = <error descr="inline const is experimental [E0658]">const</error> { 1 };
+            foo(<error descr="inline const is experimental [E0658]">const</error> { 2 }, <error descr="inline const is experimental [E0658]">const</error> { 3 });
+        }
+    """)
+
+    @MockRustcVersion("1.49.0-nightly")
+    fun `test inline const E0658 2`() = checkErrors("""
+        #![feature(inline_const)]
+        fn foo(a: i32, b: i32) {}
+        fn main() {
+            const { 0 };
+            let x = const { 2 };
+            foo(const { 3 }, const { 4 });
+        }
+    """)
+
+    @MockRustcVersion("1.58.0")
+    fun `test inline const pat E0658 1`() = checkErrors("""
+        fn main() {
+            match 0 {
+                <error descr="inline const pat is experimental [E0658]">const</error> { 0 } => 0,
+                <error descr="inline const pat is experimental [E0658]">const</error> { 1 } => 1,
+                <error descr="inline const pat is experimental [E0658]">const</error> { 2 }..=<error descr="inline const pat is experimental [E0658]">const</error> { 3 } => 2,
+                _ => unreachable!(),
+            };
+        }
+    """)
+
+    @MockRustcVersion("1.58.0-nightly")
+    fun `test inline const pat E0658 2`() = checkErrors("""
+        #![feature(inline_const_pat)]
+        fn main() {
+            match 0 {
+                const { 0 } => 0,
+                const { 1 } => 1,
+                const { 2 }..=const { 3 } => 2,
+                _ => unreachable!(),
+            };
+        }
+    """)
 }

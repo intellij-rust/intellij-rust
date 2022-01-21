@@ -1267,6 +1267,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (label != null) {
             LABEL_BREAK_VALUE.check(holder, label, "label on block")
         }
+
+        val const = expr.const
+        if (const != null) {
+            if (expr.parent is RsPat) {
+                INLINE_CONST_PAT.check(holder, const, "inline const pat")
+            } else {
+                INLINE_CONST.check(holder, const, "inline const")
+            }
+        }
     }
 
     // E0586: inclusive range with no end

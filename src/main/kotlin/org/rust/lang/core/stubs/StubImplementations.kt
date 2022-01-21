@@ -1943,6 +1943,7 @@ class RsBlockExprStub(
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
     val isTry: Boolean get() = BitUtil.isSet(flags, TRY_MASK)
+    val isConst: Boolean get() = BitUtil.isSet(flags, CONST_MASK)
 
     object Type : RsStubElementType<RsBlockExprStub, RsBlockExpr>("BLOCK_EXPR") {
 
@@ -1960,6 +1961,7 @@ class RsBlockExprStub(
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, TRY_MASK, psi.isTry)
+            flags = BitUtil.set(flags, TRY_MASK, psi.isConst)
             return RsBlockExprStub(parentStub, this, flags)
         }
 
@@ -1970,6 +1972,7 @@ class RsBlockExprStub(
         private val UNSAFE_MASK: Int = nextBitMask()
         private val ASYNC_MASK: Int = nextBitMask()
         private val TRY_MASK: Int = nextBitMask()
+        private val CONST_MASK: Int = nextBitMask()
     }
 }
 
