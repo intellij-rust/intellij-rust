@@ -15,4 +15,4 @@ if __name__ == '__main__':
     week = timedelta(7)
 
     # Should be synchronized with .github/workflows/release-branch.yml
-    print(json.dumps({"create_release_branch": delta < week}))
+    print(json.dumps({"create_release_branch": delta <= week}))
