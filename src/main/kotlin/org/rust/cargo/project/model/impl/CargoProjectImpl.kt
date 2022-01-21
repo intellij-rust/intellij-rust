@@ -240,12 +240,10 @@ open class CargoProjectsServiceImpl(
     }
 
     override fun suggestManifests(): Sequence<VirtualFile> {
-        println("CargoProjectImpl.suggestManifests")
         return project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { val manifest = it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE); println("suggestManifests RETURNED $manifest for content root $it"); manifest }
-//            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
+            .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
     }
 
     /**
