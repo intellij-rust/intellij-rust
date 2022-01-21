@@ -20,7 +20,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprI
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val blockExpr = element.ancestorStrict<RsBlockExpr>() ?: return null
-        if (blockExpr.isUnsafe || blockExpr.isAsync || blockExpr.isTry) return null
+        if (blockExpr.isUnsafe || blockExpr.isAsync || blockExpr.isTry || blockExpr.isConst) return null
         val block = blockExpr.block
 
         val singleStatement = block.expandedStmtsAndTailExpr.first.singleOrNull()

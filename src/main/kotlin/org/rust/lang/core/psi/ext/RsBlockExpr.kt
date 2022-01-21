@@ -17,3 +17,6 @@ val RsBlockExpr.isAsync: Boolean
 
 val RsBlockExpr.isTry: Boolean
     get() = (greenStub as? RsBlockExprStub)?.isTry ?: (node.findChildByType(RsElementTypes.TRY) != null)
+
+val RsBlockExpr.isConst: Boolean
+    get() = (greenStub as? RsBlockExprStub)?.isConst ?: (node.findChildByType(RsElementTypes.CONST) != null)
