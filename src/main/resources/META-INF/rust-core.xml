@@ -510,6 +510,11 @@
                          implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong type or const parameters number"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericParametersNumberInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Re-assign immutable variable"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection"/>
