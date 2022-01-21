@@ -316,6 +316,69 @@ class RsExtractTraitTest : RsTestBase() {
         }
     """)
 
+    fun `test add trait imports`() = doTest("""
+        struct Foo {}
+        impl Foo {
+            /*caret*/const ASSOC_CONST: i32 = 7;
+            /*caret*/fn foo() {}
+            /*caret*/fn bar(&self) {}
+        }
+
+        mod mod1 {
+            fn func(foo: crate::Foo) {
+                foo.bar();
+                foo.bar();
+            }
+        }
+        mod mod2 {
+            fn func() {
+                crate::Foo::foo();
+            }
+        }
+        mod mod3 {
+            fn func() {
+                crate::Foo::ASSOC_CONST;
+            }
+        }
+    """, """
+        struct Foo {}
+
+        impl Trait for Foo {
+            const ASSOC_CONST: i32 = 7;
+            fn foo() {}
+            fn bar(&self) {}
+        }
+
+        trait Trait {
+            const ASSOC_CONST: i32;
+            fn foo();
+            fn bar(&self);
+        }
+
+        mod mod1 {
+            use crate::Trait;
+
+            fn func(foo: crate::Foo) {
+                foo.bar();
+                foo.bar();
+            }
+        }
+        mod mod2 {
+            use crate::Trait;
+
+            fn func() {
+                crate::Foo::foo();
+            }
+        }
+        mod mod3 {
+            use crate::Trait;
+
+            fn func() {
+                crate::Foo::ASSOC_CONST;
+            }
+        }
+    """)
+
     private fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String

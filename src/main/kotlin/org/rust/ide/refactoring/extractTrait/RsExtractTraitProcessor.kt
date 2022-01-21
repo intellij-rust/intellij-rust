@@ -7,11 +7,13 @@ package org.rust.ide.refactoring.extractTrait
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -28,14 +30,20 @@ class RsExtractTraitProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
         BaseUsageViewDescriptor(impl)
 
-    override fun findUsages(): Array<UsageInfo> = emptyArray()
+    override fun findUsages(): Array<UsageInfo> {
+        return members.flatMap { member ->
+            val references = ReferencesSearch.search(member, member.useScope)
+            references.map { UsageInfo(it) }
+        }.toTypedArray()
+    }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val (traitImpl, trait) = createImpls() ?: return
         copyAttributesTo(traitImpl)
         copyAttributesTo(trait)
         moveMembersToCorrectImpls(traitImpl, trait)
-        insertImpls(traitImpl, trait)
+        val insertedTrait = insertImpls(traitImpl, trait)
+        addTraitImports(usages, insertedTrait)
     }
 
     private fun createImpls(): Pair<RsImplItem, RsTraitItem>? {
@@ -87,11 +95,22 @@ class RsExtractTraitProcessor(
         }
     }
 
-    private fun insertImpls(traitImpl: RsImplItem, trait: RsTraitItem) {
-        impl.parent.addAfter(trait, impl)
+    private fun insertImpls(traitImpl: RsImplItem, trait: RsTraitItem): RsTraitItem {
+        val insertedTrait = impl.parent.addAfter(trait, impl) as RsTraitItem
         impl.parent.addAfter(traitImpl, impl)
         if (impl.members?.childrenOfType<RsItemElement>()?.isEmpty() == true) {
             impl.delete()
+        }
+        return insertedTrait
+    }
+
+    private fun addTraitImports(usages: Array<out UsageInfo>, trait: RsTraitItem) {
+        val mods = usages.mapNotNullTo(hashSetOf()) {
+            (it.element as? RsElement)?.containingMod
+        }
+        for (mod in mods) {
+            val context = mod.childOfType<RsElement>() ?: continue
+            RsImportHelper.importElement(context, trait)
         }
     }
 }
