@@ -412,7 +412,9 @@ project(":") {
         doLast {
             rootProject.allprojects
                 .map { it.configurations }
-                .flatMap { it.filter { c -> c.isCanBeResolved } }
+                // Don't resolve `bomConfiguration` because it cannot be resolved.
+                // See https://github.com/JetBrains/gradle-grammar-kit-plugin/issues/69
+                .flatMap { it.filter { c -> c.isCanBeResolved && c.name != "bomConfiguration" } }
                 .forEach { it.resolve() }
         }
     }
