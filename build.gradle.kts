@@ -365,7 +365,7 @@ project(":") {
             exclude(module = "kotlin-stdlib-common")
         }
         api("com.vdurmont:semver4j:3.1.0")
-        testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
     }
 
     val generateRustLexer = task<GenerateLexerTask>("generateRustLexer") {
