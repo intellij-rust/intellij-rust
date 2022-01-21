@@ -239,8 +239,8 @@ open class CargoProjectsServiceImpl(
         }
     }
 
-    override fun suggestManifests(): Sequence<VirtualFile> {
-        return project.modules
+    override fun suggestManifests(): Sequence<VirtualFile> =
+        project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
             .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
