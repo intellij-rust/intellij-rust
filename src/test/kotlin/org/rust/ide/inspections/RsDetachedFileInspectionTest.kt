@@ -284,6 +284,19 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- foo.rs
     """)
 
+    fun `test attach file with keywork-like name`() = checkFixByFileTree("Attach file to main.rs", """
+        //- main.rs
+            fn main() {}
+        //- macro.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- main.rs
+            mod r#macro;
+
+            fn main() {}
+        //- macro.rs
+    """)
+
     private fun checkFixWithMultipleModules(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

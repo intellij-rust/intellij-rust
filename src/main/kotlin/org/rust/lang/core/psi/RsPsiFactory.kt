@@ -225,7 +225,7 @@ class RsPsiFactory(
         tryCreateModDeclItem(modName) ?: error("Failed to create mod decl with name: `$modName`")
 
     fun tryCreateModDeclItem(modName: String): RsModDeclItem? =
-        createFromText("mod $modName;")
+        createFromText("mod ${modName.escapeIdentifierIfNeeded()};")
 
     fun createUseItem(text: String, visibility: String = "", alias: String? = null): RsUseItem {
         val aliasText = if (!alias.isNullOrEmpty()) " as $alias" else ""
