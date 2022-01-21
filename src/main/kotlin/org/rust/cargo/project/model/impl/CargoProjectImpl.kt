@@ -244,7 +244,6 @@ open class CargoProjectsServiceImpl(
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
             .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
-    }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
@@ -536,7 +535,6 @@ data class CargoProjectImpl(
     }
 
     fun findStdlibInBazelWorkspace(): File? {
-        val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
         val stdlibPath = stdlibPathBazel()
         return if (stdlibPath != null && Files.exists(stdlibPath)) stdlibPath.toFile() else null
     }
