@@ -1,0 +1,1 @@
+fn foo(a: <spot>str</spot>.refm) {}
