@@ -38,33 +38,55 @@ class AssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfix
 class DebugAssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfixTemplateBase("debug_assert", provider)
 
 /**
- * Base class for postfix templates that just add prefix/suffix to expression text.
+ * Base class for postfix templates that just add prefix/suffix to some element text.
  *
- * Note, `example` param should contain `expr` substring
+ * Note, `example` param should contain `placeholder` substring.
  */
+abstract class SimplePostfixTemplate(
+    name: String,
+    example: String,
+    provider: RsPostfixTemplateProvider,
+    selector: PostfixTemplateExpressionSelector,
+    private val placeholder: String = "expr"
+) : StringBasedPostfixTemplate(name, example, selector, provider) {
+
+    init {
+        require(placeholder in example) {
+            "Template example should contain `${placeholder}`"
+        }
+    }
+
+    override fun getTemplateString(element: PsiElement): String = example.replace(placeholder, element.text)
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 abstract class SimpleExprPostfixTemplate(
     name: String,
     example: String,
     provider: RsPostfixTemplateProvider,
-    selector: PostfixTemplateExpressionSelector = RsExprParentsSelector()
-) : StringBasedPostfixTemplate(name, example, selector, provider) {
+    selector: PostfixTemplateExpressionSelector = RsExprParentsSelector(),
+) : SimplePostfixTemplate(name, example, provider, selector, placeholder = "expr")
 
-    init {
-        require("expr" in example) {
-            "Template example should contain `expr`"
-        }
-    }
-
-    override fun getTemplateString(element: PsiElement): String = example.replace("expr", element.text)
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
+abstract class SimpleTypePostfixTemplate(
+    name: String,
+    example: String,
+    provider: RsPostfixTemplateProvider,
+    selector: PostfixTemplateExpressionSelector = RsTypeParentsSelector(),
+) : SimplePostfixTemplate(name, example, provider, selector, placeholder = "type")
 
 class LambdaPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("lambda", "|| expr", provider)
 
 class NotPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("not", "!expr", provider)
 
-class RefPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ref", "&expr", provider)
-class RefmPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("refm", "&mut expr", provider)
+class RefExprPostfixTemplate(provider: RsPostfixTemplateProvider)
+    : SimpleExprPostfixTemplate("ref", "&expr", provider)
+class RefmExprPostfixTemplate(provider: RsPostfixTemplateProvider)
+    : SimpleExprPostfixTemplate("refm", "&mut expr", provider)
+
+class RefTypePostfixTemplate(provider: RsPostfixTemplateProvider)
+    : SimpleTypePostfixTemplate("ref", "&type", provider)
+class RefmTypePostfixTemplate(provider: RsPostfixTemplateProvider)
+    : SimpleTypePostfixTemplate("refm", "&mut type", provider)
 
 class DerefPostfixTemplate(provider: RsPostfixTemplateProvider) :
     SimpleExprPostfixTemplate(
