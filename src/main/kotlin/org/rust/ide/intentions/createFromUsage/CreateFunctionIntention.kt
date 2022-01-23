@@ -141,7 +141,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                 toBeReplaced += listOfNotNull(inserted.retType?.typeReference)
             }
 
-            toBeReplaced += listOfNotNull(inserted.block?.expr)
+            toBeReplaced += listOfNotNull(inserted.block?.syntaxTailStmt)
             editor.buildAndRunTemplate(inserted, toBeReplaced.map { it.createSmartPointer() })
         } else {
             // template builder cannot be used for a different file

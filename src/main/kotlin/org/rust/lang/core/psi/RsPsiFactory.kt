@@ -97,8 +97,11 @@ class RsPsiFactory(
     fun tryCreateExpression(text: CharSequence): RsExpr? =
         createFromText("fn main() { let _ = $text; }")
 
-    fun tryCreateExprStmt(text: CharSequence): RsExprStmt? =
-        createFromText("fn main() { $text; }")
+    fun tryCreateExprStmtWithSemicolon(text: CharSequence): RsExprStmt? =
+        createFromText<RsExprStmt>("fn main() { $text; }")?.takeIf { it.textLength == text.length + 1 }
+
+    fun tryCreateExprStmtWithoutSemicolon(text: CharSequence): RsExprStmt? =
+        createFromText<RsExprStmt>("fn main() { $text }")?.takeIf { it.textLength == text.length }
 
     fun createTryExpression(expr: RsExpr): RsTryExpr {
         val newElement = createExpressionOfType<RsTryExpr>("a?")
@@ -112,7 +115,7 @@ class RsPsiFactory(
         if (thenBranch is RsBlockExpr) {
             block.replace(thenBranch.block)
         } else {
-            block.expr!!.replace(thenBranch)
+            block.syntaxTailStmt!!.expr.replace(thenBranch)
         }
         return result
     }
@@ -128,8 +131,11 @@ class RsPsiFactory(
     fun createBlockExpr(body: CharSequence): RsBlockExpr =
         createExpressionOfType("{ $body }")
 
-    fun createUnsafeBlockExpr(body: String): RsBlockExpr =
-        createExpressionOfType("unsafe { $body }")
+    fun createUnsafeBlockExprOrStmt(body: PsiElement): RsElement = when (body) {
+        is RsExpr -> createExpressionOfType<RsBlockExpr>("unsafe { ${body.text} }")
+        is RsStmt -> createFromText<RsExprStmt>("fn f() { unsafe { ${body.text} } }")!!
+        else -> error("Unsupported element type: $body")
+    }
 
     fun createRetExpr(expr: String): RsRetExpr =
         createExpressionOfType("return $expr")

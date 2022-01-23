@@ -15,5 +15,5 @@ abstract class RsBreakMixin : RsExprImpl, RsBreakExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val operator = `break`
+    override val operator get() = `break`
 }

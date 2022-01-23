@@ -15,12 +15,13 @@ FILE
           RsBlockImpl(BLOCK)
             PsiElement({)('{')
             PsiWhiteSpace(' ')
-            RsLitExprImpl(LIT_EXPR)
-              PsiElement(BOOL_LITERAL)('true')
+            RsExprStmtImpl(EXPR_STMT)
+              RsLitExprImpl(LIT_EXPR)
+                PsiElement(BOOL_LITERAL)('true')
             PsiWhiteSpace(' ')
             PsiElement(})('}')
       PsiWhiteSpace(' ')
-      PsiErrorElement:';' or <operator> expected, got 'as'
+      PsiErrorElement:';', <operator> or '}' expected, got 'as'
         PsiElement(as)('as')
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)

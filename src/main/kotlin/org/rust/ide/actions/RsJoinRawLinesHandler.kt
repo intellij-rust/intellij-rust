@@ -56,8 +56,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
 
         val block = lbrace.parent as? RsBlock ?: return CANNOT_JOIN
 
-        val expr = block.expr ?: return CANNOT_JOIN
-        if (expr.getPrevNonCommentSibling() != lbrace) return CANNOT_JOIN
+        val tailStmt = block.singleTailStmt() ?: return CANNOT_JOIN
         if (block.node.getChildren(RS_COMMENTS).isNotEmpty()) {
             return CANNOT_JOIN
         }
@@ -69,7 +68,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
                     parent.isUnsafe || parent.isAsync || parent.isTry || parent.isConst -> CANNOT_JOIN
                     else -> {
                         val grandpa = parent.parent
-                        val newExpr = parent.replace(expr)
+                        val newExpr = parent.replace(tailStmt.expr)
                         if (grandpa is RsMatchArm && grandpa.lastChild?.elementType != COMMA) {
                             grandpa.add(psiFactory.createComma())
                         }
@@ -80,7 +79,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
             }
 
             is RsIfExpr, is RsElseBranch -> {
-                val newBlock = psiFactory.createBlockExpr(expr.text).block
+                val newBlock = psiFactory.createBlockExpr(tailStmt.expr.text).block
                 return block.replace(newBlock).startOffset
             }
         }

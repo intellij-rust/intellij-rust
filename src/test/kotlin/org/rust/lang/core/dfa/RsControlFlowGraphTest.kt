@@ -890,6 +890,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x
         y
         x + y
+        x + y;
         BLOCK
         Exit
         Termination
@@ -1043,10 +1044,8 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         1
         1;
-        #[cfg(intellij_rust)] 2
+        2
         #[cfg(intellij_rust)] 2;
-        #[cfg(not(intellij_rust))] unreachable;
-        #[cfg(not(intellij_rust))] return;
         S { #[cfg(not(intellij_rust))] x: unreachable() }
         s
         s
@@ -1056,13 +1055,11 @@ class RsControlFlowGraphTest : RsTestBase() {
         foo(#[cfg(not(intellij_rust))] unreachable);
         "{}"
         a
-        #[cfg(intellij_rust)] println!("{}", a)
+        println!("{}", a)
         #[cfg(intellij_rust)] println!("{}", a);
-        #[cfg(not(intellij_rust))] println!("{}", unreachable);
-        #[cfg(not(intellij_rust))] panic!();
         4
         4;
-        #[cfg(intellij_rust)] panic!()
+        panic!()
         Termination
     """)
 

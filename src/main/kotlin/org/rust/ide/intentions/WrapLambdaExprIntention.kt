@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.syntaxTailStmt
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Add braces to lambda expression"
@@ -30,7 +31,7 @@ class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
         val bodyStr = "\n${ctx.text}\n"
         val blockExpr = RsPsiFactory(project).createBlockExpr(bodyStr)
 
-        val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block.expr?.textOffset ?: return
+        val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block.syntaxTailStmt?.textOffset ?: return
         editor.caretModel.moveToOffset(offset + relativeCaretPosition)
     }
 }

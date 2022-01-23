@@ -82,7 +82,7 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiErrorElement:'#', <expr>, <item>, <macro call>, <macro> or <stmt> expected, got '+'
+      PsiErrorElement:'#', <item> or <statement> expected, got '+'
         PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
@@ -128,9 +128,10 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace(' ')
-      RsUnitExprImpl(UNIT_EXPR)
-        PsiElement(()('(')
-        PsiElement())(')')
+      RsExprStmtImpl(EXPR_STMT)
+        RsUnitExprImpl(UNIT_EXPR)
+          PsiElement(()('(')
+          PsiElement())(')')
       PsiWhiteSpace(' ')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')

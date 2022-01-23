@@ -104,11 +104,7 @@ class RsTypeInferenceWalker(
         var isDiverging = false
         val (expandedStmts, tailExpr) = expandedStmtsAndTailExpr
         for (stmt in expandedStmts) {
-            val result = when (stmt) {
-                is RsStmt -> processStatement(stmt)
-                is RsExpr -> stmt.inferType() == TyNever
-                else -> false
-            }
+            val result = processStatement(stmt)
             isDiverging = result || isDiverging
         }
         val type = (if (coerce) tailExpr?.inferTypeCoercableTo(expected!!) else tailExpr?.inferType(expected)) ?: TyUnit.INSTANCE
@@ -116,13 +112,11 @@ class RsTypeInferenceWalker(
     }
 
     fun inferReplCodeFragment(element: RsReplCodeFragment) {
-        val (expandedStmts, tailExpr) = element.expandedStmtsAndTailExpr
-        for (stmt in expandedStmts) {
+        for (stmt in element.stmtList) {
             if (stmt is RsStmt) {
                 processStatement(stmt)
             }
         }
-        tailExpr?.inferType()
     }
 
     // returns true if expr is always diverging
@@ -812,27 +806,10 @@ class RsTypeInferenceWalker(
         val returningTypes = mutableListOf(baseType)
         val label = expr.takeIf { it.block?.stub == null }?.labelDecl?.name
 
-        fun collectReturningTypes(element: PsiElement, matchOnlyByLabel: Boolean) {
-            element.forEachChild { child ->
-                when (child) {
-                    is RsBreakExpr -> {
-                        collectReturningTypes(child, matchOnlyByLabel)
-                        if (!matchOnlyByLabel && child.label == null || child.label?.referenceName == label) {
-                            returningTypes += child.expr?.let(ctx::getExprType) ?: TyUnit.INSTANCE
-                        }
-                    }
-                    is RsLooplikeExpr -> {
-                        if (label != null) {
-                            collectReturningTypes(child, true)
-                        }
-                    }
-                    else -> collectReturningTypes(child, matchOnlyByLabel)
-                }
-            }
-        }
-
         if (label != null || !matchOnlyByLabel) {
-            collectReturningTypes(expr, matchOnlyByLabel)
+            expr.processBreakExprs(label, matchOnlyByLabel) { breakExpr ->
+                returningTypes += breakExpr.expr?.let(ctx::getExprType) ?: TyUnit.INSTANCE
+            }
         }
         return getMoreCompleteType(returningTypes)
     }

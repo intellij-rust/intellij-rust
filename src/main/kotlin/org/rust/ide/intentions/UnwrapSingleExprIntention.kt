@@ -23,14 +23,13 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprI
         if (blockExpr.isUnsafe || blockExpr.isAsync || blockExpr.isTry || blockExpr.isConst) return null
         val block = blockExpr.block
 
-        val singleStatement = block.expandedStmtsAndTailExpr.first.singleOrNull()
-        val expr = block.expr
+        val singleStatement = block.singleStmt() as? RsExprStmt ?: return null
         return when {
-            expr != null && block.lbrace.getNextNonCommentSibling() == expr -> {
+            singleStatement.isTailStmt -> {
                 text = "Remove braces from single expression"
-                Context(blockExpr, expr)
+                Context(blockExpr, singleStatement.expr)
             }
-            expr == null && singleStatement is RsExprStmt && singleStatement.expr.type is TyUnit -> {
+            singleStatement.expr.type is TyUnit -> {
                 text = "Remove braces from single expression statement"
                 Context(blockExpr, singleStatement.expr)
             }

@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.LogicOp
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.singleTailStmt
 
 class MergeIfsIntention : RsElementBaseIntentionAction<MergeIfsIntention.Context>() {
 
@@ -33,8 +34,7 @@ class MergeIfsIntention : RsElementBaseIntentionAction<MergeIfsIntention.Context
         if (element != ifExpr.`if`) return null
 
         val block = ifExpr.block ?: return null
-        if (block.stmtList.isNotEmpty()) return null
-        val nestedIfExpr = block.expr as? RsIfExpr ?: return null
+        val nestedIfExpr = block.singleTailStmt()?.expr as? RsIfExpr ?: return null
 
         val ifCondition = ifExpr.condition ?: return null
         val nestedIfCondition = nestedIfExpr.condition ?: return null

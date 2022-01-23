@@ -59,11 +59,27 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         }
     """)
 
-    fun `test recurse into complex expressions`() = checkFixByText("Remove semicolon", """
+    fun `test recurse into block expression`() = checkFixByText("Remove semicolon", """
+        fn foo() -> i32 {
+            let x = 92;
+            {
+                <warning descr="Function returns () instead of i32">x;/*caret*/</warning>
+            }
+        }
+    """, """
+        fn foo() -> i32 {
+            let x = 92;
+            {
+                x/*caret*/
+            }
+        }
+    """)
+
+    fun `test recurse into if expression 1`() = checkFixByText("Remove semicolon", """
         fn foo() -> i32 {
             let x = 92;
             if true {
-                <warning descr="Function returns () instead of i32">x;<caret></warning>
+                <warning descr="Function returns () instead of i32">x;/*caret*/</warning>
             } else {
                 x
             }
@@ -72,9 +88,29 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         fn foo() -> i32 {
             let x = 92;
             if true {
-                x<caret>
+                x/*caret*/
             } else {
                 x
+            }
+        }
+    """)
+
+    fun `test recurse into if expression 2`() = checkFixByText("Remove semicolon", """
+        fn foo() -> i32 {
+            let x = 92;
+            if true {
+                x
+            } else {
+                <warning descr="Function returns () instead of i32">x;/*caret*/</warning>
+            }
+        }
+    """, """
+        fn foo() -> i32 {
+            let x = 92;
+            if true {
+                x
+            } else {
+                x/*caret*/
             }
         }
     """)

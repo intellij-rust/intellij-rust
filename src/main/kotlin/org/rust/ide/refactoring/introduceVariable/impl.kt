@@ -14,10 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isAncestorOf
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWriteCommandAction
 
 
@@ -38,23 +35,18 @@ private class ExpressionReplacer(
     private val psiFactory = RsPsiFactory(project)
     private val suggestedNames = chosenExpr.suggestedNames()
 
-    fun replaceElementForAllExpr(exprs: List<PsiElement>, postfixLet: Boolean) {
+    fun replaceElementForAllExpr(exprs: List<RsExpr>, postfixLet: Boolean) {
         val anchor = findAnchor(exprs, chosenExpr) ?: return
         val sortedExprs = exprs.sortedBy { it.startOffset }
         val firstExpr = sortedExprs.firstOrNull() ?: chosenExpr
 
         // `inlinableExprStmt` is the element that should be replaced with the new let binding.
-        // This can be either the statement surrounding the entire expression if it already had
-        // a semicolon, or the expression itself if it had no semicolon at the end.
+        // This is the statement surrounding the entire expression, either with or without a semicolon.
         // In the latter case we replace the expression with a `let` binding only if the expression
         // isn't returned from a block, or if were explicitly told to replace it via a postfix template.
         // Value is null if the binding should not be inlined, otherwise equal to the expression into
         // which we inline the binding.
-        val inlinableExprStmt = firstExpr.parent.takeIf { it as? RsExprStmt == anchor }
-            ?: run {
-                val isReturnedExpr = firstExpr == firstExpr.ancestorStrict<RsBlock>()?.expr
-                firstExpr.takeIf { it == anchor && (postfixLet || !isReturnedExpr) }
-            }
+        val inlinableExprStmt = (firstExpr.parent as? RsExprStmt?)?.takeIf { it == anchor && (!it.isTailStmt || postfixLet)}
 
         val let = createLet(suggestedNames.default)
         val name = psiFactory.createExpression(suggestedNames.default)
@@ -115,7 +107,7 @@ private class ExpressionReplacer(
         if (body is RsBlockExpr) return this
         val blockExpr = body.replace(psiFactory.createBlockExpr("\n${body.text}\n")) as RsBlockExpr
         val block = blockExpr.block
-        return block.addBefore(this, block.expr).also { this.delete() }
+        return block.addBefore(this, block.syntaxTailStmt).also { this.delete() }
     }
 }
 
