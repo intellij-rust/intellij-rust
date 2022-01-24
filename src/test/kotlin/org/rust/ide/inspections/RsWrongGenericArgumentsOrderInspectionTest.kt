@@ -50,4 +50,10 @@ class RsWrongGenericArgumentsOrderInspectionTest : RsInspectionsTestBase(RsWrong
             foo::<<error descr="Constant provided when a type was expected [E0747]">C1</error>, <error descr="Type provided when a constant was expected [E0747]">S</error>>;
         }
     """)
+
+    fun `test func as const argrument`() = checkByText("""
+        struct S<T, const C: usize>;
+        fn foo() {}
+        fn main() { S::<<error descr="Constant provided when a type was expected [E0747]">foo</error>, foo>; }
+    """)
 }
