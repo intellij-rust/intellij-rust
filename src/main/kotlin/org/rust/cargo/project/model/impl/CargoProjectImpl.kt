@@ -56,8 +56,6 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.security.isNewTrustedProjectApiAvailable
-import org.rust.ide.security.whenProjectTrusted
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.TaskResult
@@ -106,16 +104,6 @@ open class CargoProjectsServiceImpl(
                     }, ModalityState.NON_MODAL)
                 }
             })
-        }
-        // BACKCOMPAT: 2021.3. Just declare `com.intellij.ide.impl.TrustStateListener`
-        //  instead of `org.rust.ide.security.RsTrustChangeNotifier`
-        if (isNewTrustedProjectApiAvailable) {
-            @Suppress("LeakingThis")
-            whenProjectTrusted(this) {
-                if (it == project) {
-                    refreshAllProjects()
-                }
-            }
         }
     }
 
