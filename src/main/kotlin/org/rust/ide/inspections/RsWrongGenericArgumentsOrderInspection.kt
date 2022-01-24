@@ -32,15 +32,34 @@ class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
         if (actualArguments == null) return
         val parameterList = declaration.typeParameterList ?: return
 
-        val params = parameterList.stubChildrenOfType<RsGenericParameter>().filterNot { it is RsLifetimeParameter }
-        val args = actualArguments.stubChildrenOfType<RsElement>().filter { it is RsTypeReference || it is RsExpr }
+        val explicitLifetimes = actualArguments.lifetimeArguments.isNotEmpty()
+
+        val params = parameterList.stubChildrenOfType<RsGenericParameter>().filter { param ->
+            when (param) {
+                is RsTypeParameter -> true
+                is RsConstParameter -> true
+                is RsLifetimeParameter -> explicitLifetimes
+                else -> false
+            }
+        }
+
+        val args = actualArguments.stubChildrenOfType<RsElement>().filter { arg ->
+            when (arg) {
+                is RsTypeReference -> true
+                is RsExpr -> true
+                is RsLifetime -> explicitLifetimes
+                else -> false
+            }
+        }
 
         val typeArguments = actualArguments.typeArguments
         val constArguments = actualArguments.constArguments
+        val lifetimeArguments = actualArguments.lifetimeArguments
 
         fun kindName(arg: RsElement): String = when (arg) {
             in typeArguments -> "Type"
             in constArguments -> "Constant"
+            in lifetimeArguments -> "Lifetime"
             else -> error("impossible")
         }
 
@@ -48,6 +67,7 @@ class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
             val text = when {
                 param is RsTypeParameter && arg !in typeArguments -> "${kindName(arg)} provided when a type was expected"
                 param is RsConstParameter && arg !in constArguments -> "${kindName(arg)} provided when a constant was expected"
+                param is RsLifetimeParameter && arg !in lifetimeArguments -> "${kindName(arg)} provided when a lifetime was expected"
                 else -> continue
             }
             val fixes = if (param is RsConstParameter && arg is RsTypeReference) {
