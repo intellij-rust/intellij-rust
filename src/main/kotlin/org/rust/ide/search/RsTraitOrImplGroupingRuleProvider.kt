@@ -46,7 +46,7 @@ class RsTraitOrImplGroupingRuleProvider : FileStructureGroupRuleProvider {
                 }
             }
 
-            override fun getText(view: UsageView?): String = name ?: super.getText(view)
+            override fun getPresentableGroupText(): String = name ?: super.getPresentableGroupText()
             override fun getPresentableName(): String = name ?: super.getPresentableName()
         }
     }

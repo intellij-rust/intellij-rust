@@ -41,7 +41,7 @@ class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
     }
 
     override fun doEvaluate(driver: DebuggerDriver, position: XSourcePosition?, expr: XExpression): CidrEvaluatedValue {
-        val v = driver.evaluate(myFrame.threadId, myFrame.frameIndex, expr.expression)
+        val v = driver.evaluate(myFrame.thread, myFrame.frame, expr.expression)
         return CidrEvaluatedValue(v, myFrame.process, position, myFrame, expr.expression)
     }
 }

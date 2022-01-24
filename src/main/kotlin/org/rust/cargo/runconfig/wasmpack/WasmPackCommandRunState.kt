@@ -6,7 +6,7 @@
 package org.rust.cargo.runconfig.wasmpack
 
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.psi.search.ExecutionSearchScopes
 import org.rust.cargo.runconfig.console.CargoConsoleBuilder
 import org.rust.cargo.toolchain.tools.WasmPack
 import java.io.File
@@ -18,7 +18,7 @@ class WasmPackCommandRunState(
     workingDirectory: File
 ): WasmPackCommandRunStateBase(environment, runConfiguration, wasmPack, workingDirectory) {
     init {
-        val scope = GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
+        val scope = ExecutionSearchScopes.executionScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
     }
 }

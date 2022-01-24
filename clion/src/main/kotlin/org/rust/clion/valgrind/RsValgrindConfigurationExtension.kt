@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.StatusText
 import com.jetbrains.cidr.cpp.CLionProfilingBundle
@@ -106,7 +106,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         val console = state.consoleBuilder.console
         state.consoleBuilder = object : TextConsoleBuilderImpl(
             project,
-            GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
+            ExecutionSearchScopes.executionScope(environment.project, environment.runProfile)
         ) {
             override fun getConsole(): ConsoleView {
                 val icon = ValgrindExecutor.getExecutorInstance().icon

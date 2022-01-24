@@ -18,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import org.rust.cargo.RsWithToolchainTestBase
@@ -72,7 +73,7 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
             ConfigurationContext.createEmptyContextForLocation(location)
         } else {
             val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
-            ConfigurationContext.getFromContext(dataContext)
+            ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN)
         }
         return producer.createConfigurationFromContext(context)
             ?.configurationSettings

@@ -63,7 +63,7 @@ abstract class RsInlineDialog(
         myInvokedOnReference = refElement != null
 
         setPreviewResults(true)
-        setDoNotAskOption(object : DoNotAskOption {
+        setDoNotAskOption(object : com.intellij.openapi.ui.DoNotAskOption {
             override fun isToBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
             override fun setToBeShown(value: Boolean, exitCode: Int) {
                 EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog = value

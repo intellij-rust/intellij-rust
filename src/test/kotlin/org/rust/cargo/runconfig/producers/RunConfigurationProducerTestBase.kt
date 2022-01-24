@@ -10,6 +10,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -61,7 +62,7 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
         }, testRootDisposable)
 
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
-        val configurationContext = ConfigurationContext.getFromContext(dataContext)
+        val configurationContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN)
         check(configurationContext)
     }
 
