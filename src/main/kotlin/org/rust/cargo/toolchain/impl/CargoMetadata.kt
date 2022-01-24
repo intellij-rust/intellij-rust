@@ -358,7 +358,6 @@ object CargoMetadata {
     fun isBazelPath(path: String) = "/bazel-out/" in path
 
     fun bazelPathToProjectPath(bazelPath: String, projectRoot: String): String {
-        // TODO: apply Windows fix from WslToolchainBase
         val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (projectRelativePathStartIndex == -1) return bazelPath
         val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
