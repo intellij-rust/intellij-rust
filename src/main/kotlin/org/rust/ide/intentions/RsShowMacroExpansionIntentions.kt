@@ -34,7 +34,6 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
         val isValidContext = when (val kind = macroCall.kind) {
             is MacroCall -> kind.call.path.isAncestorOf(element) || element == kind.call.excl
             is MetaItem -> true
-            else -> error("unreachable")
         }
         if (!isValidContext) return null
         return macroCall

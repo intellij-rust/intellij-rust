@@ -414,6 +414,7 @@ class RsTypeInferenceWalker(
                             is TraitImplSource.Trait, is TraitImplSource.Collapsed -> {
                                 ctx.registerPathRefinement(pathExpr, traitRef)
                             }
+                            else -> Unit
                         }
                         typeParameters to selfTy
                     }

@@ -136,7 +136,7 @@ abstract class MacroExpansionTaskBase(
     }
 
     private fun calcProgress(step: Int, progress: Double): Double =
-        (1 until step).sumByDouble { stepProgress(it) } + stepProgress(step) * progress
+        (1 until step).sumOf { stepProgress(it) } + stepProgress(step) * progress
 
     // It's impossible to know total quantity of macros, so we guess these values
     // (obtained empirically on some large projects)

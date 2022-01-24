@@ -121,6 +121,7 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     CommenterOption.LINE_COMMENT_ADD_SPACE.name,
                     CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name)
             }
+            else -> Unit
         }
     }
 

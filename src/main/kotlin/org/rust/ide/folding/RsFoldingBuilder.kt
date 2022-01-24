@@ -238,5 +238,5 @@ private fun PsiElement.getOffsetInLine(doc: Document): Int {
     val blockLine = doc.getLineNumber(startOffset)
     return leftLeaves
         .takeWhile { doc.getLineNumber(it.endOffset) == blockLine }
-        .sumBy { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
+        .sumOf { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
 }

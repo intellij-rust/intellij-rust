@@ -673,7 +673,7 @@ data class Macro2DefLight(
 private fun DataOutput.writePath(path: Array<String>) {
     for (segment in path) {
         IOUtil.writeUTF(this, segment)
-        writeChar(':'.toInt())
+        writeChar(':'.code)
     }
 }
 
