@@ -355,14 +355,16 @@ object CargoMetadata {
         )
     }
 
-    private fun bazelPathToLocal(bazelPath: String, bazelBinPath: String): String {
+    private fun Package.isInBazelSandbox() = "/bazel-out/" in manifest_path
+
+    private fun bazelPathToWorkspacePath(bazelPath: String, workspaceRoot: String): String {
         // TODO: apply Windows fix from WslToolchainBase
-        if ("/bazel-out/" !in bazelPath) return bazelPath
-        val relativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
-        if (relativePathStartIndex == -1) return bazelPath
-        val projectRelativePath = bazelPath.substring(relativePathStartIndex).trim('/')
-        val projectRoot = bazelBinPath.substring(0, bazelBinPath.length - "bazel-bin".length)
-        return Path.of(projectRoot, projectRelativePath).toString()
+        val workspaceRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
+        if (workspaceRelativePathStartIndex == -1) return bazelPath
+        val workspaceRelativePath = bazelPath.substring(workspaceRelativePathStartIndex).trim('/')
+        println("bazelPathToWorkspacePath: bazelPath = $bazelPath, workspaceRoot = $workspaceRoot, RETURNED = ${Path.of(workspaceRoot, workspaceRelativePath)}")
+        // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $workspaceRoot/lib1
+        return Path.of(workspaceRoot, workspaceRelativePath).toString()
     }
 
     private fun Package.clean(
@@ -372,7 +374,9 @@ object CargoMetadata {
         buildMessages: List<CompilerMessage>,
         workspaceRoot: String
     ): CargoWorkspaceData.Package {
-        val rootPath = bazelPathToLocal(bazelPath = PathUtil.getParentPath(manifest_path).toString(), bazelBinPath = Path.of(workspaceRoot, "bazel-bin").toString())
+        val rootPath = if (isInBazelSandbox()) {
+            bazelPathToWorkspacePath(PathUtil.getParentPath(manifest_path), workspaceRoot)
+        } else PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
             ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
