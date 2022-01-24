@@ -63,8 +63,8 @@ private class FixAddExpect(anchor: PsiElement) : LocalQuickFixAndIntentionAction
         val dotExpr = RsPsiFactory(project).createExpression("${startElement.text}.expect(\"\")")
         val newDotExpr = startElement.replace(dotExpr) as RsDotExpr
         val expectArgs = newDotExpr.methodCall?.valueArgumentList?.exprList
-        val template = editor?.newTemplateBuilder(newDotExpr) ?: return
         val stringLiteralPointer = (expectArgs?.singleOrNull() as RsLitExpr).createSmartPointer()
+        val template = editor?.newTemplateBuilder(newDotExpr) ?: return
         val stringLiteral = stringLiteralPointer.element ?: return
         val rangeWithoutQuotes = TextRange(1, stringLiteral.textRange.length - 1)
         template.replaceElement(stringLiteral, rangeWithoutQuotes, "TODO: panic message")
