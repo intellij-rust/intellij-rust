@@ -17,7 +17,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -38,7 +37,6 @@ import com.intellij.ui.GuiUtils
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
