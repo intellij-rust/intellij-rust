@@ -355,16 +355,16 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.isInBazelSandbox() = "/bazel-out/" in manifest_path
+    fun isBazelPath(path: String) = "/bazel-out/" in path
 
-    private fun bazelPathToWorkspacePath(bazelPath: String, workspaceRoot: String): String {
+    fun bazelPathToProjectPath(bazelPath: String, projectRoot: String): String {
         // TODO: apply Windows fix from WslToolchainBase
-        val workspaceRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
-        if (workspaceRelativePathStartIndex == -1) return bazelPath
-        val workspaceRelativePath = bazelPath.substring(workspaceRelativePathStartIndex).trim('/')
-        println("bazelPathToWorkspacePath: bazelPath = $bazelPath, workspaceRoot = $workspaceRoot, RETURNED = ${Path.of(workspaceRoot, workspaceRelativePath)}")
-        // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $workspaceRoot/lib1
-        return Path.of(workspaceRoot, workspaceRelativePath).toString()
+        val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
+        if (projectRelativePathStartIndex == -1) return bazelPath
+        val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
+        println("bazelPathToProjectPath: bazelPath = $bazelPath, projectRoot = $projectRoot, RETURNED = ${Path.of(projectRoot, projectRelativePath)}")
+        // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
+        return Path.of(projectRoot, projectRelativePath).toString()
     }
 
     private fun Package.clean(
@@ -374,8 +374,8 @@ object CargoMetadata {
         buildMessages: List<CompilerMessage>,
         workspaceRoot: String
     ): CargoWorkspaceData.Package {
-        val rootPath = if (isInBazelSandbox()) {
-            bazelPathToWorkspacePath(PathUtil.getParentPath(manifest_path), workspaceRoot)
+        val rootPath = if (isBazelPath(manifest_path)) {
+            bazelPathToProjectPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
         } else PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
