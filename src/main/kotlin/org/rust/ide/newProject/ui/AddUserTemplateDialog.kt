@@ -44,9 +44,9 @@ class AddUserTemplateDialog : DialogWrapper(null) {
     override fun doOKAction() {
         // TODO: Find a better way to handle dialog form validation
         if (nameField.text.isBlank()) return
-        if (RsUserTemplatesState.instance.templates.any { it.name == nameField.text }) return
+        if (RsUserTemplatesState.getInstance().templates.any { it.name == nameField.text }) return
 
-        RsUserTemplatesState.instance.templates.add(
+        RsUserTemplatesState.getInstance().templates.add(
             RsUserTemplate(nameField.text, repoUrlField.text)
         )
 

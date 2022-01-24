@@ -6,7 +6,7 @@
 package org.rust.coverage
 
 import com.intellij.coverage.SimpleCoverageAnnotator
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.io.File
 
@@ -29,7 +29,6 @@ class RsCoverageAnnotator(project: Project) : SimpleCoverageAnnotator(project) {
         }
 
     companion object {
-        fun getInstance(project: Project): RsCoverageAnnotator =
-            ServiceManager.getService(project, RsCoverageAnnotator::class.java)
+        fun getInstance(project: Project): RsCoverageAnnotator = project.service()
     }
 }

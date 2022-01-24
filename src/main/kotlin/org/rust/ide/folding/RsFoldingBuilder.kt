@@ -207,7 +207,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun isCustomFoldingRoot(node: ASTNode) = node.elementType == BLOCK
 
     override fun isRegionCollapsedByDefault(node: ASTNode): Boolean =
-        (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
+        (RsCodeFoldingSettings.getInstance().collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
             || CodeFoldingSettings.getInstance().isDefaultCollapsedNode(node)
 
     private companion object {

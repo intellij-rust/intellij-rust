@@ -55,7 +55,7 @@ class RsNewProjectPanel(
     )
 
     private val userTemplates: List<RsCustomTemplate>
-        get() = RsUserTemplatesState.instance.templates.map {
+        get() = RsUserTemplatesState.getInstance().templates.map {
             RsCustomTemplate(it.name, it.url)
         }
 
@@ -98,7 +98,7 @@ class RsNewProjectPanel(
         }
         .setRemoveAction {
             val customTemplate = selectedTemplate as? RsCustomTemplate ?: return@setRemoveAction
-            RsUserTemplatesState.instance.templates
+            RsUserTemplatesState.getInstance().templates
                 .removeIf { it.name == customTemplate.name }
             updateTemplatesList()
         }
