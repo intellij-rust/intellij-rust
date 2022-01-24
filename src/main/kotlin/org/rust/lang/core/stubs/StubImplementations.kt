@@ -70,7 +70,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 223
+        private const val STUB_VERSION = 224
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1961,7 +1961,7 @@ class RsBlockExprStub(
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, TRY_MASK, psi.isTry)
-            flags = BitUtil.set(flags, TRY_MASK, psi.isConst)
+            flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             return RsBlockExprStub(parentStub, this, flags)
         }
 
