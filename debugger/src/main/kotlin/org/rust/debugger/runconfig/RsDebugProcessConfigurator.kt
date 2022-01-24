@@ -8,6 +8,7 @@ package org.rust.debugger.runconfig
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcessConfigurator
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.runconfig.command.workingDirectory
 
 class RsDebugProcessConfigurator : CidrDebugProcessConfigurator {
     override fun configure(process: CidrDebugProcess) {
@@ -27,6 +28,6 @@ class RsDebugProcessConfigurator : CidrDebugProcessConfigurator {
                 return
             }
         }
-        RsDebugProcessConfigurationHelper(process, cargoProject, isCrossLanguage = true).configure()
+        RsDebugProcessConfigurationHelper(process, cargoProject?.workingDirectory, isCrossLanguage = true).configure()
     }
 }
