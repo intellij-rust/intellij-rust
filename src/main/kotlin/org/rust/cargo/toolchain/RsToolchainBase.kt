@@ -139,11 +139,6 @@ abstract class RsToolchainBase(val location: Path) {
                 ?.firstOrNull()
             if (toolchain != null) return toolchain
 
-            println(
-                "RsToolchainBase.suggest RETURNED " + RsToolchainFlavor.getApplicableFlavors()
-                    .asSequence().flatMap { it.suggestProjectPaths(projectDir) + it.suggestHomePaths() }.toList()
-            )
-
             return RsToolchainFlavor.getApplicableFlavors()
                 .asSequence()
                 .flatMap { it.suggestProjectPaths(projectDir) + it.suggestHomePaths() }

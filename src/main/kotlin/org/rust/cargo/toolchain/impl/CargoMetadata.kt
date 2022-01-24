@@ -362,7 +362,6 @@ object CargoMetadata {
         val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (projectRelativePathStartIndex == -1) return bazelPath
         val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
-        println("bazelPathToProjectPath: bazelPath = $bazelPath, projectRoot = $projectRoot, RETURNED = ${Path.of(projectRoot, projectRelativePath)}")
         // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
         return Path.of(projectRoot, projectRelativePath).toString()
     }
