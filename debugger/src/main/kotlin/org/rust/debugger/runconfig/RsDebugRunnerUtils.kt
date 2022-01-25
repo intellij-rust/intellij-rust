@@ -76,6 +76,7 @@ object RsDebugRunnerUtils {
             RsDebuggerToolchainService.LLDBStatus.Unavailable -> return false
             RsDebuggerToolchainService.LLDBStatus.NeedToDownload -> "Debugger is not loaded yet" to "Download"
             RsDebuggerToolchainService.LLDBStatus.NeedToUpdate -> "Debugger is outdated" to "Update"
+            RsDebuggerToolchainService.LLDBStatus.Bundled,
             is RsDebuggerToolchainService.LLDBStatus.Binaries -> return true
         }
 

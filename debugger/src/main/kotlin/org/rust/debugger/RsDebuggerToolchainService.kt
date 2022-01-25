@@ -25,6 +25,7 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.io.exists
 import com.intellij.util.system.CpuArch
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBBinUrlProvider
+import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.RsPathManager
 import java.io.File
@@ -38,15 +39,8 @@ import java.util.*
 class RsDebuggerToolchainService {
 
     fun getLLDBStatus(): LLDBStatus {
-        val status = getBundledLLDBStatus()
-        if (status is LLDBStatus.Binaries) return status
-
+        if (LLDBDriverConfiguration.hasBundledLLDB()) return LLDBStatus.Bundled
         return getLLDBStatus(RsDebuggerSettings.getInstance().lldbPath)
-    }
-
-    fun getBundledLLDBStatus(): LLDBStatus {
-        val bundledPath = bundledLLDBDirPath()?.toString()
-        return getLLDBStatus(bundledPath, checkVersions = false)
     }
 
     fun getLLDBStatus(lldbPath: String?, checkVersions: Boolean = true): LLDBStatus {
@@ -209,19 +203,6 @@ class RsDebuggerToolchainService {
         private fun downloadPath(): Path = Paths.get(PathManager.getTempPath())
         private fun lldbPath(): Path = RsPathManager.pluginDirInSystem().resolve("lldb")
 
-        // Rider provides bundled lldb binaries inside Native Debugging Support plugin directory
-        private fun bundledLLDBDirPath(): Path? {
-            val pluginPath = nativeDebuggingSupportPlugin()?.pluginPath ?: return null
-            val osSpecificPart = when {
-                SystemInfo.isMac -> "mac"
-                SystemInfo.isLinux -> "linux"
-                SystemInfo.isWindows -> if (CpuArch.isIntel64()) "win/x64" else "win/x86"
-                else -> return null
-            }
-
-            return pluginPath.resolve("bin/lldb/$osSpecificPart").takeIf { it.exists() }
-        }
-
         fun getInstance(): RsDebuggerToolchainService = service()
     }
 
@@ -259,6 +240,7 @@ class RsDebuggerToolchainService {
         object Unavailable : LLDBStatus()
         object NeedToDownload : LLDBStatus()
         object NeedToUpdate : LLDBStatus()
+        object Bundled: LLDBStatus()
         data class Binaries(val frameworkFile: File, val frontendFile: File) : LLDBStatus()
     }
 }
