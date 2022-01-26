@@ -41,12 +41,15 @@ import org.rust.openapiext.escaped
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-abstract class RsChainMethodTypeHintsProviderBase : InlayHintsProvider<RsChainMethodTypeHintsProviderBase.Settings> {
+class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHintsProvider.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
     override val name: String get() = RsBundle.message("settings.rust.inlay.hints.title.method.chains")
 
     override val previewText: String? = null
+
+    override val group: InlayGroup
+        get() = InlayGroup.METHOD_CHAINS_GROUP
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
         override val mainCheckboxText: String
