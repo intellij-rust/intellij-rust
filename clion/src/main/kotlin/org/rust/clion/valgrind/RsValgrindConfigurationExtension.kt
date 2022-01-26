@@ -64,15 +64,17 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         val toolchain = configuration.clean().ok?.toolchain ?: return
 
         val programPath = toolchain.toLocalPath(cmdLine.exePath)
-        val valgrindPath = ValgrindSettings.getInstance().valgrindPath
         if (!File(programPath).exists()) {
             throw ExecutionException("File not found: $programPath")
         }
+
         val project = configuration.project
+        val valgrindPath = toolchain.toLocalPath(ValgrindSettings.getInstance().valgrindPath)
         if (StringUtil.isEmpty(valgrindPath) || !File(valgrindPath).exists()) {
             project.showSettingsDialog<ValgrindConfigurable>()
             return
         }
+
         try {
             val outputFile = FileUtil.createTempFile("valgrind", null, true)
             val outputFilePath = toolchain.toRemotePath(outputFile.absolutePath)
