@@ -7,7 +7,7 @@ package org.rustPerformanceTests
 
 import org.rust.lang.core.resolve2.forceRebuildDefMapForAllCrates
 
-class RsProfileBuildDefMapTest : RsPerformanceTestBase() {
+class RsProfileBuildDefMapTest : RsPerfTestBase() {
 
     fun `test rustc`() = doTest(RUSTC)
 

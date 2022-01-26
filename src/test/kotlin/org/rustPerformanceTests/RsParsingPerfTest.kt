@@ -22,8 +22,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.doc.psi.RsDocComment
 import org.rust.stdext.repeatBenchmark
 
-class RsParsingPerformanceTest : RsTestBase() {
-    override fun isPerformanceTest(): Boolean = false
+class RsParsingPerfTest : RsTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test stdlib source`() {

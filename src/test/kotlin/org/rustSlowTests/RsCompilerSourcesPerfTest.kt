@@ -19,7 +19,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
 import kotlin.system.measureTimeMillis
 
-class RsCompilerSourcesPerformance : RsTestBase() {
+class RsCompilerSourcesPerfTest : RsTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
 
