@@ -84,7 +84,7 @@ fun CharSequence.escapeRust(out: StringBuilder, escapeNonPrintable: Boolean = tr
             c == '\"' -> out.append("\\\"")
             escapeNonPrintable && !StringUtil.isPrintableUnicode(c) -> {
                 out.append("\\u{")
-                out.append(c.toInt())
+                out.append(c.code)
                 out.append("}")
             }
             else -> out.append(c)

@@ -5,7 +5,7 @@
 
 package org.rust.ide.folding
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 
 
 abstract class RsCodeFoldingSettings {
@@ -13,7 +13,7 @@ abstract class RsCodeFoldingSettings {
     abstract var collapsibleOneLineMethods: Boolean
 
     companion object {
-        val instance: RsCodeFoldingSettings get() = ServiceManager.getService(RsCodeFoldingSettings::class.java)
+        fun getInstance(): RsCodeFoldingSettings = service()
     }
 }
 

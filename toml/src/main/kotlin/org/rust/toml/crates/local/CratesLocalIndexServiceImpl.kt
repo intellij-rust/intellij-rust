@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.psi.impl.source.tree.injected.changesHandler.debug
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
@@ -109,7 +108,7 @@ class CratesLocalIndexServiceImpl : CratesLocalIndexService, Disposable {
             val newState = action(oldState)
             innerState = newState
             if (newState != oldState) {
-                LOG.debug { "CratesLocalIndexService state transition $oldState -> $newState" }
+                LOG.debug("CratesLocalIndexService state transition $oldState -> $newState")
                 newState
             } else {
                 null

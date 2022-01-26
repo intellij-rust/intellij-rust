@@ -20,7 +20,6 @@ class RsConsoleOptions : PersistentStateComponent<RsConsoleOptions> {
     }
 
     companion object {
-        fun getInstance(project: Project): RsConsoleOptions =
-            ServiceManager.getService(project, RsConsoleOptions::class.java)
+        fun getInstance(project: Project): RsConsoleOptions = project.service()
     }
 }

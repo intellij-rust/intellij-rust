@@ -101,6 +101,7 @@ private fun renameFunctionUsage(
             path.referenceNameElement?.replace(identifier)
         }
         is RsFunctionUsage.MethodCall -> usage.call.identifier.replace(identifier)
+        else -> Unit
     }
 }
 

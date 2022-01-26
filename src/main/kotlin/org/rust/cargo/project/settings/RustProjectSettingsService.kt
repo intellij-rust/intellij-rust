@@ -6,7 +6,6 @@
 package org.rust.cargo.project.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
@@ -159,7 +158,7 @@ interface RustProjectSettingsService {
 }
 
 val Project.rustSettings: RustProjectSettingsService
-    get() = ServiceManager.getService(this, RustProjectSettingsService::class.java)
+    get() = getService(RustProjectSettingsService::class.java)
         ?: error("Failed to get RustProjectSettingsService for $this")
 
 val Project.toolchain: RsToolchainBase?

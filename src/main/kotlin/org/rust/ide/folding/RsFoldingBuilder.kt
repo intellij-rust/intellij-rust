@@ -207,7 +207,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun isCustomFoldingRoot(node: ASTNode) = node.elementType == BLOCK
 
     override fun isRegionCollapsedByDefault(node: ASTNode): Boolean =
-        (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
+        (RsCodeFoldingSettings.getInstance().collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
             || CodeFoldingSettings.getInstance().isDefaultCollapsedNode(node)
 
     private companion object {
@@ -238,5 +238,5 @@ private fun PsiElement.getOffsetInLine(doc: Document): Int {
     val blockLine = doc.getLineNumber(startOffset)
     return leftLeaves
         .takeWhile { doc.getLineNumber(it.endOffset) == blockLine }
-        .sumBy { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
+        .sumOf { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
 }

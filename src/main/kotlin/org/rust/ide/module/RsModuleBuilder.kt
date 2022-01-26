@@ -62,7 +62,7 @@ class RsModuleBuilder : ModuleBuilder() {
                     root,
                     name,
                     template
-                ) ?: return
+                )
 
                 project.makeDefaultRunConfiguration(template)
                 project.openFiles(generatedFiles)

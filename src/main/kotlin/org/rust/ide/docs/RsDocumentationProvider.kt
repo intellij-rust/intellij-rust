@@ -225,6 +225,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                                 owner.impl.traitRef?.resolveToTrait()?.hasExternalDocumentation == true
                             }
                         }
+                        else -> Unit
                     }
                 } else {
                     if (visibility != RsVisibility.Public) return false

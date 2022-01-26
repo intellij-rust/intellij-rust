@@ -126,6 +126,7 @@ class RsBackgroundTaskQueue {
                     return
                 }
                 is State.Running -> error("Trying to re-run already running task")
+                else -> Unit
             }
 
             if (task is RsTask && task.waitForSmartMode && DumbService.isDumb(task.project)) {

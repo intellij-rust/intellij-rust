@@ -176,6 +176,6 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
 
         override val cursorOffset: Int = "use ".length +
             (if (visibility != null) visibility.length + 1 else 0) +
-            (attrs.sumBy { it.textLength })
+            (attrs.sumOf { it.textLength })
     }
 }

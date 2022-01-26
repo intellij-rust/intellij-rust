@@ -55,7 +55,7 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
             val info = ImplsGutterIconBuilder(RsIcons.IMPLEMENTED)
                 .setTargets(targets)
                 .setTooltipText("Has implementations")
-                .setCellRenderer(RsGoToImplRenderer())
+                .setCellRenderer { RsGoToImplRenderer() }
                 .createLineMarkerInfo(el)
 
             result.add(info)

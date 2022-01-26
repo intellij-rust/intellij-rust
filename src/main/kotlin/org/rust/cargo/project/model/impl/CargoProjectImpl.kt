@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -99,9 +99,9 @@ open class CargoProjectsServiceImpl(
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 StartupManager.getInstance(project).runAfterOpened {
-                    GuiUtils.invokeLaterIfNeeded({
+                    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                         initializeToolWindow(project)
-                    }, ModalityState.NON_MODAL)
+                    }
                 }
             })
         }

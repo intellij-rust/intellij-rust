@@ -131,6 +131,6 @@ private fun secondLine(params: List<RsGenericParameter>): HintLine? {
 }
 
 private fun List<String>.calculateRange(index: Int): TextRange {
-    val start = this.take(index).sumBy { it.length + 2 } // plus ", "
+    val start = this.take(index).sumOf { it.length + 2 } // plus ", "
     return TextRange(start, start + this[index].length)
 }
