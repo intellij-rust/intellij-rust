@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.AssocItemScopeEntryBase
@@ -33,10 +34,12 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
+import org.rust.stdext.exhaustive
 
 const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
 const val FRAGMENT_SPECIFIER_PRIORITY = KEYWORD_PRIORITY
+
 const val VARIABLE_PRIORITY = 5.0
 const val ENUM_VARIANT_PRIORITY = 4.0
 const val FIELD_DECL_PRIORITY = 3.0
@@ -52,7 +55,7 @@ private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 interface CompletionEntity {
     val ty: Ty?
-    fun getBasePriority(context: RsCompletionContext): Double
+    fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties
     fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
 }
 
@@ -62,30 +65,33 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
     override val ty: Ty? get() = element.asTy
 
-    override fun getBasePriority(context: RsCompletionContext): Double {
-        var priority = when {
-            element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
-            element is RsMacro -> MACRO_PRIORITY
-            element is RsPatBinding -> VARIABLE_PRIORITY
-            element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
-            element is RsFieldDecl -> FIELD_DECL_PRIORITY
-            element is RsFunction && element.isAssocFn -> ASSOC_FN_PRIORITY
-            else -> DEFAULT_PRIORITY
+    override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties {
+        val isMethodSelfTypeIncompatible = element is RsFunction && element.isMethod
+            && isMutableMethodOnConstReference(element, context.context)
+
+        // It's visible and can't be exported = it's local
+        val isLocal = context.isSimplePath && !element.canBeExported
+
+        val elementKind = when {
+            element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> {
+                RsLookupElementProperties.ElementKind.DEPRECATED
+            }
+            element is RsMacro -> RsLookupElementProperties.ElementKind.MACRO
+            element is RsPatBinding -> RsLookupElementProperties.ElementKind.VARIABLE
+            element is RsEnumVariant -> RsLookupElementProperties.ElementKind.ENUM_VARIANT
+            element is RsFieldDecl -> RsLookupElementProperties.ElementKind.FIELD_DECL
+            element is RsFunction && element.isAssocFn -> RsLookupElementProperties.ElementKind.ASSOC_FN
+            else -> RsLookupElementProperties.ElementKind.DEFAULT
         }
 
-        if (element is RsAbstractable && element.owner.isInherentImpl) {
-            priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
-        }
-        if (element is RsFunction && element.isMethod && isMutableMethodOnConstReference(element, context.context)) {
-            priority += MUT_METHOD_PRIORITY_OFFSET
-        }
+        val isInherentImplMember = element is RsAbstractable && element.owner.isInherentImpl
 
-        if (context.isSimplePath && !element.canBeExported) {
-            // It's visible and can't be exported = it's local
-            priority += LOCAL_PRIORITY_OFFSET
-        }
-
-        return priority
+        return RsLookupElementProperties(
+            isSelfTypeCompatible = !isMethodSelfTypeIncompatible,
+            isLocal = isLocal,
+            elementKind = elementKind,
+            isInherentImplMember = isInherentImplMember,
+        )
     }
 
     override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
@@ -136,14 +142,64 @@ fun createLookupElement(
     val lookup = completionEntity.createBaseLookupElement(context)
         .withInsertHandler(insertHandler)
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
-    var priority = completionEntity.getBasePriority(context)
 
     val implLookup = context.lookup
-    if (implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)) {
+    val isCompatibleTypes = implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)
+
+    val properties = completionEntity.getBaseLookupElementProperties(context)
+        .copy(isReturnTypeConformsToExpectedType = isCompatibleTypes)
+
+    return lookup.toRsLookupElement(properties)
+}
+
+// BACKCOMPAT: 2021.3 we have to maintain priorities for ML-assisted completion
+private fun RsLookupElementProperties.calculateBackCompatPriority(): Double {
+    if (isImplMemberFullLineCompletion) {
+        return KEYWORD_PRIORITY + 1
+    }
+
+    when (keywordKind) {
+        KeywordKind.PUB -> return KEYWORD_PRIORITY + 3
+        KeywordKind.PUB_CRATE -> return KEYWORD_PRIORITY + 2
+        KeywordKind.PUB_PARENS -> return KEYWORD_PRIORITY + 1
+        KeywordKind.LAMBDA_EXPR -> return KEYWORD_PRIORITY * 1.01
+        KeywordKind.ELSE_BRANCH -> return KEYWORD_PRIORITY * 1.0001
+        KeywordKind.AWAIT -> return KEYWORD_PRIORITY * 1.0001
+        KeywordKind.KEYWORD -> return KEYWORD_PRIORITY
+        KeywordKind.NOT_A_KEYWORD -> Unit
+    }.exhaustive
+
+    var priority = when (elementKind) {
+        RsLookupElementProperties.ElementKind.DERIVE_GROUP -> 5.1
+        RsLookupElementProperties.ElementKind.DERIVE -> 5.0
+        RsLookupElementProperties.ElementKind.LINT -> 5.0
+        RsLookupElementProperties.ElementKind.LINT_GROUP -> 4.0
+        RsLookupElementProperties.ElementKind.VARIABLE -> VARIABLE_PRIORITY
+        RsLookupElementProperties.ElementKind.ENUM_VARIANT -> ENUM_VARIANT_PRIORITY
+        RsLookupElementProperties.ElementKind.FIELD_DECL -> FIELD_DECL_PRIORITY
+        RsLookupElementProperties.ElementKind.ASSOC_FN -> ASSOC_FN_PRIORITY
+        RsLookupElementProperties.ElementKind.DEFAULT -> DEFAULT_PRIORITY
+        RsLookupElementProperties.ElementKind.MACRO -> MACRO_PRIORITY
+        RsLookupElementProperties.ElementKind.DEPRECATED -> DEPRECATED_PRIORITY
+    }
+
+    if (!isSelfTypeCompatible) {
+        priority += MUT_METHOD_PRIORITY_OFFSET
+    }
+
+    if (isLocal) {
+        priority += LOCAL_PRIORITY_OFFSET
+    }
+
+    if (isInherentImplMember) {
+        priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
+    }
+
+    if (isReturnTypeConformsToExpectedType) {
         priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 
-    return lookup.withPriority(priority)
+    return priority
 }
 
 private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
@@ -172,6 +228,18 @@ private val RsElement.asTy: Ty?
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
+
+fun LookupElementBuilder.toRsLookupElement(properties: RsLookupElementProperties): LookupElement {
+    return if (RsCompletionContributor.isAtLeast221Platform) {
+        RsLookupElement(this, properties)
+    } else {
+        // BACKCOMPAT: 2021.3
+        this.withPriority(properties.calculateBackCompatPriority())
+    }
+}
+
+fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind.KEYWORD): LookupElement =
+    toRsLookupElement(RsLookupElementProperties(keywordKind = keywordKind))
 
 private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
