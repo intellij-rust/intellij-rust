@@ -33,7 +33,7 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val tomlPlugin = "org.toml.lang:${prop("tomlPluginVersion")}"
+val tomlPlugin = if (platformVersion >= 221 && baseIDE == "idea") "org.toml.lang" else "org.toml.lang:${prop("tomlPluginVersion")}"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
