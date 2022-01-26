@@ -49,7 +49,7 @@ object RsVisRestrictionCompletionProvider : RsCompletionProvider() {
                     .create(name)
                     .withIcon(RsIcons.MODULE)
                     .bold()
-                    .withPriority(KEYWORD_PRIORITY)
+                    .toKeywordElement()
             )
         }
         result.addElement(LookupElementBuilder.create("in ").withPresentableText("in"))

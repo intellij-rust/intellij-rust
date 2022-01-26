@@ -496,12 +496,12 @@ class RsCompletionSortingTest : RsTestBase() {
         }
         for ((actual, e) in elements.zip(expected)) {
             val lookupObject = actual.psiElement ?: actual.`object`
-            val (klass, name) = e
+            val (klass, expectedName) = e
+            val actualName = actual.lookupString
+            assertEquals(expectedName, actualName)
             check(klass.isInstance(lookupObject)) {
                 "Expected a ${klass.java.name}, found ${lookupObject.javaClass}"
             }
-            val actualName = actual.lookupString
-            assertEquals(name, actualName)
         }
     }
 }

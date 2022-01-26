@@ -82,7 +82,7 @@ object RsImplTraitMemberCompletionProvider : RsCompletionProvider() {
         for (item in parentItems) {
             val lookup = getCompletion(item, implBlock, subst, memberGenerator, keyword?.first)
             result.addElement(
-                lookup.withPriority(KEYWORD_PRIORITY + 1)
+                lookup.toRsLookupElement(RsLookupElementProperties(isImplMemberFullLineCompletion = true))
             )
         }
     }

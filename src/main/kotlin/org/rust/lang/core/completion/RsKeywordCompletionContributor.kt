@@ -24,6 +24,7 @@ import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseTraitOrImplDeclaration
 import org.rust.lang.core.RsPsiPattern.declarationPattern
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -66,25 +67,29 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 val elseBuilder = elseLookupElement()
                 val elseIfBuilder = conditionLookupElement("else if")
                 // `else` is more common than `else if`
-                result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
-                result.addElement(elseIfBuilder.withPriority(KEYWORD_PRIORITY))
+                result.addElement(elseBuilder.toKeywordElement(KeywordKind.ELSE_BRANCH))
+                result.addElement(elseIfBuilder.toKeywordElement())
             }
         })
 
         extend(CompletionType.BASIC, letElsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                 val elseBuilder = elseLookupElement()
-                result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY))
+                result.addElement(elseBuilder.toKeywordElement())
             }
         })
 
         extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                 for (keyword in CONDITION_KEYWORDS) {
-                    result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
+                    result.addElement(conditionLookupElement(keyword).toKeywordElement())
                 }
             }
         })
+    }
+
+    override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        super.fillCompletionVariants(parameters, RsCompletionContributor.withRustSorter(parameters, result))
     }
 
     private fun conditionLookupElement(lookupString: String): LookupElementBuilder {

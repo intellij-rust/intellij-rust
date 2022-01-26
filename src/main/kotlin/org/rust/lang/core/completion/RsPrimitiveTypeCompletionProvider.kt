@@ -35,7 +35,7 @@ object RsPrimitiveTypeCompletionProvider : RsCompletionProvider() {
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         primitives.forEach {
-            result.addElement(LookupElementBuilder.create(it).bold().withPriority(PRIMITIVE_TYPE_PRIORITY))
+            result.addElement(LookupElementBuilder.create(it).bold().toKeywordElement())
         }
     }
 }

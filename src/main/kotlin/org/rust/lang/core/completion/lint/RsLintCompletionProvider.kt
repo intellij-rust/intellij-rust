@@ -18,7 +18,9 @@ import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.completion.RsCompletionProvider
-import org.rust.lang.core.completion.withPriority
+import org.rust.lang.core.completion.RsLookupElementProperties
+import org.rust.lang.core.completion.RsLookupElementProperties.ElementKind
+import org.rust.lang.core.completion.toRsLookupElement
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.qualifier
@@ -52,7 +54,7 @@ abstract class RsLintCompletionProvider : RsCompletionProvider() {
         val element = LookupElementBuilder.create(text)
             .withPresentableText(lint.name)
             .withIcon(getIcon(lint))
-            .withPriority(getPriority(lint))
+            .toRsLookupElement(RsLookupElementProperties(elementKind = getElementKind(lint)))
         result.addElement(element)
     }
 
@@ -72,10 +74,10 @@ abstract class RsLintCompletionProvider : RsCompletionProvider() {
         RsIcons.ATTRIBUTE
     }
 
-    private fun getPriority(lint: Lint): Double = if (lint.isGroup) {
-        GROUP_PRIORITY
+    private fun getElementKind(lint: Lint) = if (lint.isGroup) {
+        ElementKind.LINT_GROUP
     } else {
-        LINT_PRIORITY
+        ElementKind.LINT
     }
 
     protected fun getPathPrefix(path: RsPath): String {
@@ -84,9 +86,6 @@ abstract class RsLintCompletionProvider : RsCompletionProvider() {
     }
 
     companion object {
-        private const val LINT_PRIORITY = 5.0
-        private const val GROUP_PRIORITY = 4.0
-
         private val GROUP_ICON = RsIcons.ATTRIBUTE.multiple()
     }
 }
