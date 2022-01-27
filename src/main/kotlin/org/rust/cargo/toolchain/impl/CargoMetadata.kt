@@ -65,9 +65,9 @@ object CargoMetadata {
          */
         val workspace_root: String
     ) {
-        fun convertPaths(converter: PathConverter): Project = copy(
-            packages = packages.map { it.convertPaths(converter) },
-            workspace_root = converter(workspace_root)
+        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Project = copy(
+            packages = packages.map { it.convertPaths(converter, srcPathConverter) },
+            workspace_root = srcPathConverter(workspace_root)
         )
     }
 
@@ -134,9 +134,9 @@ object CargoMetadata {
          */
         val dependencies: List<RawDependency>
     ) {
-        fun convertPaths(converter: PathConverter): Package = copy(
+        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Package = copy(
             manifest_path = converter(manifest_path),
-            targets = targets.map { it.convertPaths(converter) }
+            targets = targets.map { it.convertPaths(srcPathConverter) }
         )
     }
 
@@ -336,7 +336,7 @@ object CargoMetadata {
                 }
                 val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
                 val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-                pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
+                pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages, project.workspace_root)
             },
             project.resolve.nodes.associate { node ->
                 val dependencySet = if (node.deps != null) {
@@ -355,13 +355,26 @@ object CargoMetadata {
         )
     }
 
+    fun isBazelPath(path: String) = "/bazel-out/" in path
+
+    fun bazelPathToProjectPath(bazelPath: String, projectRoot: String): String {
+        val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
+        if (projectRelativePathStartIndex == -1) return bazelPath
+        val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
+        // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
+        return Path.of(projectRoot, projectRelativePath).toString()
+    }
+
     private fun Package.clean(
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         enabledFeatures: Set<String>,
-        buildMessages: List<CompilerMessage>
+        buildMessages: List<CompilerMessage>,
+        workspaceRoot: String
     ): CargoWorkspaceData.Package {
-        val rootPath = PathUtil.getParentPath(manifest_path)
+        val rootPath = if (isBazelPath(manifest_path)) {
+            bazelPathToProjectPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
+        } else PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
             ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")

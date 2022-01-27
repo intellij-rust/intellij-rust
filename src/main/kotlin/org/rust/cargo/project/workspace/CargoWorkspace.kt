@@ -57,6 +57,7 @@ interface CargoWorkspace {
             ThreeState.UNSURE -> true
         }
     }
+    fun findRootPackage(): Package? = packages.filter { it.contentRoot != null }.minByOrNull { it.contentRoot!!.path.length }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null

@@ -17,7 +17,22 @@ abstract class RsToolchainFlavor {
 
     fun suggestHomePaths(): Sequence<Path> = getHomePathCandidates().filter { isValidToolchainPath(it) }
 
+    fun suggestProjectPaths(projectPath: Path?): Sequence<Path> {
+        return if (projectPath == null) emptySequence() else getProjectPathCandidates(projectPath).filter { isValidToolchainPath(it) }
+    }
+
     protected abstract fun getHomePathCandidates(): Sequence<Path>
+
+    protected fun getProjectPathCandidates(projectPath: Path): Sequence<Path> {
+        if (projectPath.getFileName().toString() == ".ijwb") { // Bazel project root
+            val sourcesRoot = projectPath.parent
+            val projectName = sourcesRoot.getFileName()
+            // TODO: this depends on OS
+            return listOf(sourcesRoot.resolve("bazel-$projectName/external/rust_darwin_x86_64/bin")).asSequence()
+        } else {
+            return emptySequence()
+        }
+    }
 
     /**
      * Flavor is added to result in [getApplicableFlavors] if this method returns true.

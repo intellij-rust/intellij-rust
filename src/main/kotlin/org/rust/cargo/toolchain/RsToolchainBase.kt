@@ -141,9 +141,9 @@ abstract class RsToolchainBase(val location: Path) {
 
             return RsToolchainFlavor.getApplicableFlavors()
                 .asSequence()
-                .flatMap { it.suggestHomePaths() }
+                .flatMap { it.suggestProjectPaths(projectDir) + it.suggestHomePaths() }
                 .mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
-                .firstOrNull()
+                .let { toolchains -> toolchains.firstOrNull { "bazel" in it.presentableLocation } ?: toolchains.firstOrNull() }
         }
     }
 }

@@ -85,6 +85,7 @@ class CargoTomlWatcher(
                     }
                 }
                 event is VFileContentChangeEvent -> false
+                event.pathEndsWith("bazel-bin") -> true
                 !event.pathEndsWith(".rs") -> false
                 event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME -> false
                 IMPLICIT_TARGET_FILES.any { event.pathEndsWith(it) } -> true

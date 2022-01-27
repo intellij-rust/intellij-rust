@@ -69,6 +69,8 @@ import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.exhaustive
 import org.rust.stdext.mapNotNullToSet
 import org.rust.taskQueue
+import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -239,7 +241,7 @@ open class CargoProjectsServiceImpl(
         project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
+            .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
@@ -528,6 +530,18 @@ data class CargoProjectImpl(
         return workspace.findPackageByName(AutoInjectedCrates.STD) != null &&
             workspace.findPackageByName(AutoInjectedCrates.CORE) != null &&
             possiblePackages.any { workspace.findPackageByName(it) != null }
+    }
+
+    fun findStdlibInBazelWorkspace(): File? {
+        val stdlibPath = stdlibPathBazel()
+        return if (stdlibPath != null && Files.exists(stdlibPath)) stdlibPath.toFile() else null
+    }
+
+    fun stdlibPathBazel(): Path? {
+        val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
+        val projectName = workspaceRoot.rootDirectory.fileName.toString()
+        // TODO: fragile + OS dependent
+        return Path.of(workspaceRoot.rootDirectory.toString(), "bazel-$projectName/external/rust_darwin_x86_64/lib/rustlib/src/library")
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {

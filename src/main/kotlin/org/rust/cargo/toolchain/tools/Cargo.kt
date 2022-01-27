@@ -44,6 +44,8 @@ import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoMetadata.bazelPathToProjectPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.isBazelPath
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
 import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR
@@ -162,8 +164,12 @@ class Cargo(toolchain: RsToolchainBase, useWrapper: Boolean = false)
             .stdout
             .dropWhile { it != '{' }
         try {
+            val srcPathConverter: (String) -> String = { path ->
+                if (isBazelPath(path)) { bazelPathToProjectPath(path, projectDirectory.parent.toString()) }
+                else toolchain.toLocalPath(path)
+            }
             return Gson().fromJson(json, CargoMetadata.Project::class.java)
-                .convertPaths(toolchain::toLocalPath)
+                .convertPaths(toolchain::toLocalPath, srcPathConverter)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
