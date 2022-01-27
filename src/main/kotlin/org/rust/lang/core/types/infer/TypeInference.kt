@@ -102,9 +102,6 @@ class RsInferenceResult(
     fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
         resolvedMethods[call]?.type
 
-    fun getResolvedMethodSubst(call: RsMethodCall): Substitution? =
-        resolvedMethods[call]?.subst
-
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
 
@@ -404,7 +401,7 @@ class RsInferenceContext(
         return probe { combineTypes(ty1, ty2).isOk }
     }
 
-    fun combineTypesIfOk(ty1: Ty, ty2: Ty): Boolean {
+    private fun combineTypesIfOk(ty1: Ty, ty2: Ty): Boolean {
         return combineTypesIfOkResolved(shallowResolve(ty1), shallowResolve(ty2))
     }
 
@@ -723,22 +720,6 @@ class RsInferenceContext(
             val normTy = normalizeProjectionType(it, recursionDepth)
             obligations += normTy.obligations
             normTy.value
-        }
-
-        return TyWithObligations(normTy, obligations)
-    }
-
-    /** 123 */
-    fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn123(ty: T, recursionDepth: Int = 0): TyWithObligations<T> {
-        val obligations = mutableListOf<Obligation>()
-        val normTy = ty.foldTyProjectionWith {
-            val normTy = optNormalizeProjectionType(it, recursionDepth)
-            if (normTy != null) {
-                obligations += normTy.obligations
-                normTy.value
-            } else {
-                it
-            }
         }
 
         return TyWithObligations(normTy, obligations)
@@ -1137,7 +1118,7 @@ sealed class CoerceResult {
 inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = if (isOk) rhs() else this
 
 data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldable<ExpectedType> {
-    override fun superFoldWith(folder: TypeFolder): ExpectedType = copy(ty.foldWith(folder))
+    override fun superFoldWith(folder: TypeFolder): ExpectedType = copy(ty = ty.foldWith(folder))
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean = ty.visitWith(visitor)
 

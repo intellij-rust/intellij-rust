@@ -35,7 +35,7 @@ fun parseRustcVersion(lines: List<String>): RustcVersion? {
     val hostRe = "host: (.*)".toRegex()
     val commitHashRe = "commit-hash: ([A-Fa-f0-9]{40})".toRegex()
     val commitDateRe = """commit-date: (\d{4}-\d{2}-\d{2})""".toRegex()
-    val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
+    val find = { re: Regex -> lines.firstNotNullOfOrNull { re.matchEntire(it) } }
 
     val releaseMatch = find(releaseRe) ?: return null
     val hostText = find(hostRe)?.groups?.get(1)?.value ?: return null

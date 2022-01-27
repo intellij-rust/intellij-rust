@@ -55,7 +55,7 @@ abstract class RsJacksonSerializer<T>(t: Class<T>) : StdSerializer<T>(t) {
         writeArray(list, writeElement)
     }
 
-    protected fun JsonGenerator.writeArray(list: TIntArrayList, writeElement: JsonGenerator.(Int) -> Unit) {
+    private fun JsonGenerator.writeArray(list: TIntArrayList, writeElement: JsonGenerator.(Int) -> Unit) {
         writeStartArray()
         list.forEach {
             writeElement(it)

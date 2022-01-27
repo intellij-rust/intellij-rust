@@ -90,16 +90,6 @@ fun <T> TypeFoldable<T>.foldTyInferWith(folder: (TyInfer) -> Ty): T =
         }
     })
 
-/** Deeply replace any [TyTypeParameter] with the function [folder] */
-fun <T> TypeFoldable<T>.foldTyTypeParameterWith(folder: (TyTypeParameter) -> Ty): T =
-    foldWith(object : TypeFolder {
-        override fun foldTy(ty: Ty): Ty = when {
-            ty is TyTypeParameter -> folder(ty)
-            ty.hasTyTypeParameters -> ty.superFoldWith(this)
-            else -> ty
-        }
-    })
-
 /** Deeply replace any [CtInferVar] with the function [folder] */
 fun <T : TypeFoldable<T>> TypeFoldable<T>.foldCtInferWith(folder: (CtInferVar) -> Const): T =
     foldWith(object : TypeFolder {

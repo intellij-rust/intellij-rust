@@ -678,6 +678,7 @@ private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
             val features = mutableListOf<String>()
             val featuresSize = inp.readInt()
             repeat(featuresSize) {
+                @Suppress("BlockingMethodInNonBlockingContext")
                 features.add(inp.readUTF())
             }
             versions.add(CargoRegistryCrateVersion(version, yanked, features))

@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.ide.utils.import.isStd
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.containingCrate
 import kotlin.reflect.KClass
 
 @Suppress("UnstableApiUsage")

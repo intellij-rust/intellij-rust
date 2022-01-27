@@ -55,9 +55,6 @@ open class Substitution(
     fun typeParameterByName(name: String): TyTypeParameter? =
         typeSubst.keys.find { it.toString() == name }
 
-    fun constParameterByName(name: String): CtConstParameter? =
-        constSubst.keys.find { it.toString() == name }
-
     fun substituteInValues(map: Substitution): Substitution =
         Substitution(
             typeSubst.mapValues { (_, value) -> value.substitute(map) },

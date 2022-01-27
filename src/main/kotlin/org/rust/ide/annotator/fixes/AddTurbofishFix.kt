@@ -67,7 +67,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         val called = rightBoundary(nodes) ?: return null
         val typeListEndIndex = binary.textLength - called.textLength
 
-        val turbofishOffset = nodes.takeWhile { it != called }.mapNotNull {
+        val turbofishOffset = nodes.takeWhile { it != called }.firstNotNullOfOrNull {
             val offset = innerOffset(binary, it)!! + it.textLength
             val typeListCandidate = binary.text.substring(offset, typeListEndIndex)
             if (isTypeArgumentList(project, typeListCandidate)) {
@@ -75,7 +75,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
             } else {
                 null
             }
-        }.firstOrNull() ?: return null
+        } ?: return null
         return Context(binary, turbofishOffset)
     }
 
