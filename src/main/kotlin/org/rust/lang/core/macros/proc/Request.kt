@@ -20,7 +20,8 @@ sealed class Request {
         val macroName: String,
         val attributes: FlatTree?,
         val lib: String,
-        val env: List<List<String>>
+        val env: List<List<String>>,
+        val currentDir: String?,
     ) : Request()
 }
 
@@ -38,6 +39,7 @@ class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) 
                     writeArrayField("env", request.env) { list ->
                         writeArray(list) { writeString(it) }
                     }
+                    writeStringField("current_dir", request.currentDir)
                 }
             }
         }.exhaustive
