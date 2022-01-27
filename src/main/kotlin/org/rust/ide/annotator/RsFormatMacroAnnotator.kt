@@ -158,8 +158,6 @@ private data class FormatContext(
     }.toSet()
 
     val namedArguments: Map<String, RsFormatMacroArg> = arguments.mapNotNull { it.name()?.to(it) }.toMap()
-
-    val knownItems: KnownItems = macro.knownItems
 }
 
 private data class ParsedParameter(

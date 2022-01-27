@@ -8,19 +8,15 @@ package org.rust.lang.utils
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
@@ -43,7 +39,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
-import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
@@ -846,16 +841,6 @@ sealed class RsDiagnostic(
         }
     }
 
-    class AssociatedTypeInInherentImplError(
-        element: PsiElement
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0202,
-            "Associated types are not allowed in inherent impls"
-        )
-    }
-
     class ImplSizedError(
         element: PsiElement
     ) : RsDiagnostic(element) {
@@ -1485,7 +1470,7 @@ sealed class RsDiagnostic(
 enum class RsErrorCode {
     E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
-    E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
+    E0200, E0201, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0562, E0569, E0583, E0586, E0594,
@@ -1620,23 +1605,6 @@ private fun getConflictingNames(element: PsiElement, vararg tys: Ty): Set<RsQual
         getTypeReferencesInfoFromTys(context, *tys).toQualify
     } else {
         emptySet()
-    }
-}
-
-private fun createAddOrReplaceFeatureFix(element: RsElement, newFix: CompilerFeature, oldFix: CompilerFeature): LocalQuickFix {
-    val project = element.project
-    val crateRoot = element.crateRoot
-    val oldAttr = RsFeatureIndex.getFeatureAttributes(project, oldFix.name)
-        .find { it.crateRoot == crateRoot }
-        ?: return AddFeatureAttributeFix(newFix.name, element)
-    return object : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-        override fun getFamilyName(): String = "Replace feature attribute"
-        override fun getText(): String = "Replace `${oldFix.name}` feature with `${newFix.name}` feature"
-        override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-            val psiFactory = RsPsiFactory(project)
-            val attr = psiFactory.createInnerAttr("feature(${newFix.name})")
-            oldAttr.replace(attr)
-        }
     }
 }
 

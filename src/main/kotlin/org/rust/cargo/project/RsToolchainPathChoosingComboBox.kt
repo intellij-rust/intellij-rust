@@ -59,7 +59,7 @@ class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {}) : Componen
         pathTextField.addTextChangeListener { onTextChanged() }
     }
 
-    fun setBusy(busy: Boolean) {
+    private fun setBusy(busy: Boolean) {
         if (busy) {
             pathTextField.addExtension(busyIconExtension)
         } else {

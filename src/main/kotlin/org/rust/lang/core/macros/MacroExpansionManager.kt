@@ -45,6 +45,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.indexing.RsIndexableSetContributor
 import org.rust.lang.core.macros.errors.ExpansionPipelineError
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError

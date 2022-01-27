@@ -98,10 +98,10 @@ private val RsElement.isUnderCfgTest: Boolean
         for (ancestor in contexts) {
             if (ancestor is RsFunction && ancestor.isTest) return true
             if (ancestor is RsMod) {
-                return ancestor.superMods.any {
-                    when (it) {
-                        is RsModItem -> isUnderCfgTestSelf(it)
-                        is RsFile -> isUnderCfgTestSelf(it) || it.declaration?.let { isUnderCfgTestSelf(it) } == true
+                return ancestor.superMods.any { mod ->
+                    when (mod) {
+                        is RsModItem -> isUnderCfgTestSelf(mod)
+                        is RsFile -> isUnderCfgTestSelf(mod) || mod.declaration?.let { isUnderCfgTestSelf(it) } == true
                         else -> false
                     }
                 }

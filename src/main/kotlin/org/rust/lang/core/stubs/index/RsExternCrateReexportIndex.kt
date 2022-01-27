@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 import org.rust.lang.core.stubs.RsFileStub

@@ -665,13 +665,13 @@ open class PsiSubstitutingPsiRenderer(
     }
 
     private fun regionSubst(lifetime: RsLifetimeParameter?): RsPsiSubstitution.Value<RsLifetime, Nothing>? {
-        return substitutions.mapNotNull { it.regionSubst[lifetime] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.regionSubst[lifetime] }
     }
     private fun constSubst(const: RsConstParameter?): RsPsiSubstitution.Value<RsElement, RsExpr>? {
-        return substitutions.mapNotNull { it.constSubst[const] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.constSubst[const] }
     }
     private fun typeSubst(type: RsTypeParameter?): RsPsiSubstitution.Value<RsPsiSubstitution.TypeValue, RsPsiSubstitution.TypeDefault>? {
-        return substitutions.mapNotNull { it.typeSubst[type] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.typeSubst[type] }
     }
 }
 

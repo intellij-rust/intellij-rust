@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.RowBuilder
@@ -28,7 +27,6 @@ import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsElement
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
-import kotlin.reflect.KProperty
 
 class UiDebouncer(
     private val parentDisposable: Disposable,
@@ -105,16 +103,6 @@ fun JTextField.addTextChangeListener(listener: (DocumentEvent) -> Unit) {
             }
         }
     )
-}
-
-class CheckboxDelegate(private val checkbox: JBCheckBox) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
-        return checkbox.isSelected
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-        checkbox.isSelected = value
-    }
 }
 
 fun RowBuilder.row(

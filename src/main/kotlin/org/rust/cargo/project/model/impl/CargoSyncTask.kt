@@ -208,7 +208,7 @@ private class CargoProjectWithStdlib(
 )
 
 private class CargoProjectWithExistingStdlib(
-    val cargoProject: CargoProjectImpl,
+    @Suppress("unused") val cargoProject: CargoProjectImpl,
     val rustcVersion: RustcVersion,
     val stdlib: StandardLibrary
 )

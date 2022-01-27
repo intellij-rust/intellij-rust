@@ -158,7 +158,7 @@ class RsDebugProcessConfigurationHelper(
 
         // BACKCOMPAT: Rust 1.45. Remove `GDB_LOOKUP` local variable
         @Suppress("LocalVariableName")
-        val GDB_LOOKUP = if (rustcVersion != null && rustcVersion < Companion.RUST_1_46) {
+        val GDB_LOOKUP = if (rustcVersion != null && rustcVersion < RUST_1_46) {
             "gdb_rust_pretty_printing"
         } else {
             GDB_LOOKUP

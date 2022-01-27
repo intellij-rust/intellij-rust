@@ -86,8 +86,8 @@ class RsConsoleRunner(project: Project) :
         val mainPanel = JPanel(BorderLayout()).apply {
             add(actionsPanel, BorderLayout.WEST)
             add(consoleView.component, BorderLayout.CENTER)
-            runToolbar.setTargetComponent(this)
-            outputToolbar.setTargetComponent(this)
+            runToolbar.targetComponent = this
+            outputToolbar.targetComponent = this
         }
 
         val title = constructConsoleTitle(consoleTitle)

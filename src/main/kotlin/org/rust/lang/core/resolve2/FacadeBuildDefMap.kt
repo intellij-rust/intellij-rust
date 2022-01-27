@@ -80,7 +80,7 @@ private fun buildDefMapContainingExplicitItems(
     val dependenciesInfo = getDependenciesDefMaps(crate, allDependenciesDefMaps, stdlibAttributes)
 
     val crateDescription = crate.toString()
-    val rootModMacroIndex = allDependenciesDefMaps.values.map { it.rootModMacroIndex + 1 }.maxOrNull() ?: 0
+    val rootModMacroIndex = allDependenciesDefMaps.values.maxOfOrNull { it.rootModMacroIndex + 1 } ?: 0
     val rootVirtualFile = if (isNormalCrate) crateRoot.virtualFile else null
     val crateRootData = ModData(
         parent = null,

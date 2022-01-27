@@ -70,7 +70,7 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
 
     init {
         toolbar = cargoTab.toolbar.component
-        cargoTab.toolbar.setTargetComponent(this)
+        cargoTab.toolbar.targetComponent = this
         setContent(cargoTab.content)
     }
 
