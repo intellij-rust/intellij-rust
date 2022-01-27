@@ -15,7 +15,6 @@ import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.progress.BuildProgress
 import com.intellij.build.progress.BuildProgressDescriptor
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.icons.AllIcons
@@ -50,7 +49,9 @@ import org.rust.cargo.util.DownloadResult
 import org.rust.cargo.util.UnitTestRustcCacheService
 import org.rust.cargo.util.parseSemVer
 import org.rust.openapiext.TaskResult
+import org.rust.stdext.RsResult
 import org.rust.stdext.mapNotNullToSet
+import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -320,54 +321,54 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         }
         val projectDirectory = childContext.oldCargoProject.workingDirectory
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
-        try {
-            CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
-            val (projectDescriptionData, status) = cargo.fullProjectDescription(
-                childContext.project,
-                projectDirectory,
-            ) {
-                when (it) {
-                    CargoCallType.METADATA -> SyncProcessAdapter(childContext)
-                    CargoCallType.BUILD_SCRIPT_CHECK ->  {
-                        val childProgress = childContext.syncProgress.startChildProgress("Build scripts evaluation")
-                        val syncContext = childContext.copy(syncProgress = childProgress)
 
-                        val buildContext = SyncCargoBuildContext(
-                            childContext.oldCargoProject,
-                            buildId = syncContext.buildId,
-                            parentId = syncContext.id,
-                            progressIndicator = syncContext.progress
-                        )
+        CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
+        val (projectDescriptionData, status) = cargo.fullProjectDescription(
+            childContext.project,
+            projectDirectory,
+        ) {
+            when (it) {
+                CargoCallType.METADATA -> SyncProcessAdapter(childContext)
+                CargoCallType.BUILD_SCRIPT_CHECK ->  {
+                    val childProgress = childContext.syncProgress.startChildProgress("Build scripts evaluation")
+                    val syncContext = childContext.copy(syncProgress = childProgress)
 
-                        SyncCargoBuildAdapter(syncContext, buildContext)
-                    }
+                    val buildContext = SyncCargoBuildContext(
+                        childContext.oldCargoProject,
+                        buildId = syncContext.buildId,
+                        parentId = syncContext.id,
+                        progressIndicator = syncContext.progress
+                    )
+
+                    SyncCargoBuildAdapter(syncContext, buildContext)
                 }
             }
-            if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
-                childContext.warning("Build scripts evaluation failed",
-                    "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
-            }
+        }.unwrapOrElse { return@runWithChildProgress TaskResult.Err("Failed to run Cargo", it.message) }
+        if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
+            childContext.warning("Build scripts evaluation failed",
+                "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
+        }
 
-            val manifestPath = projectDirectory.resolve("Cargo.toml")
+        val manifestPath = projectDirectory.resolve("Cargo.toml")
 
-            val cfgOptions = try {
-                 UnitTestRustcCacheService.cached(rustcInfo?.version, cacheIf = { !projectDirectory.resolve(".cargo").exists() }) {
-                     cargo.getCfgOption(childContext.project, projectDirectory)
-                 }
-            } catch (e: ExecutionException) {
+        val result = UnitTestRustcCacheService.cached(rustcInfo?.version, cacheIf = { !projectDirectory.resolve(".cargo").exists() }) {
+            cargo.getCfgOption(childContext.project, projectDirectory)
+        }
+        val cfgOptions = when (result) {
+            is RsResult.Ok -> result.ok
+            is RsResult.Err -> {
                 val rustcVersion = rustcInfo?.version?.semver
                 if (rustcVersion == null || rustcVersion > RUST_1_51) {
-                    val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n${e.message.orEmpty()}"
+                    val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n" +
+                        result.err.message.orEmpty()
                     childContext.warning("Fetching target specific `cfg` options", message)
                 }
                 toolchain.rustc().getCfgOptions(projectDirectory)
             }
-
-            val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
-            TaskResult.Ok(ws)
-        } catch (e: ExecutionException) {
-            TaskResult.Err("Failed to run Cargo", e.message)
         }
+
+        val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
+        TaskResult.Ok(ws)
     }
 }
 

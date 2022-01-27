@@ -92,7 +92,7 @@ class CargoProjectGenerationTest : RsWithToolchainTestBase() {
             myFixture.baseDir,
             "foo",
             template
-        )
+        ).unwrap()
 
         fileTree.assertContains(myFixture.baseDir)
     }

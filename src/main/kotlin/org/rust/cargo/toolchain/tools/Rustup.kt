@@ -5,8 +5,8 @@
 
 package org.rust.cargo.toolchain.tools
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -20,9 +20,9 @@ import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.actions.InstallTargetAction
 import org.rust.ide.notifications.showBalloon
-import org.rust.openapiext.execute
-import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.isSuccess
+import org.rust.openapiext.*
+import org.rust.stdext.RsResult
+import org.rust.stdext.unwrapOrThrow
 import java.nio.file.Path
 
 private val LOG: Logger = logger<Rustup>()
@@ -79,7 +79,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
             val downloadProcessOutput = if (owner == null) {
                 commandLine.execute(null)
             } else {
-                commandLine.execute(owner, listener = listener)
+                commandLine.execute(owner, listener = listener).ignoreExitCode().unwrapOrThrow()
             }
 
             if (downloadProcessOutput?.isSuccess != true) {
@@ -97,29 +97,25 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
     }
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
-        try {
-            createBaseCommandLine(
-                "component", "add", componentName,
-                workingDirectory = projectDirectory
-            ).execute(owner, false)
-            DownloadResult.Ok(Unit)
-        } catch (e: ExecutionException) {
-            val message = "rustup failed: `${e.message}`"
-            LOG.warn(message)
-            DownloadResult.Err(message)
-        }
+        createBaseCommandLine(
+            "component", "add", componentName,
+            workingDirectory = projectDirectory
+        ).execute(owner).convertResult()
 
     fun downloadTarget(owner: Disposable, targetName: String): DownloadResult<Unit> =
-        try {
-            createBaseCommandLine(
-                "target", "add", targetName,
-                workingDirectory = projectDirectory
-            ).execute(owner, false)
-            DownloadResult.Ok(Unit)
-        } catch (e: ExecutionException) {
-            val message = "rustup failed: ${e.message}"
-            LOG.warn(message)
-            DownloadResult.Err(message)
+        createBaseCommandLine(
+            "target", "add", targetName,
+            workingDirectory = projectDirectory
+        ).execute(owner).convertResult()
+
+    private fun RsProcessResult<ProcessOutput>.convertResult() =
+        when (this) {
+            is RsResult.Ok -> DownloadResult.Ok(Unit)
+            is RsResult.Err -> {
+                val message = "rustup failed: `${err.message}`"
+                LOG.warn(message)
+                DownloadResult.Err(message)
+            }
         }
 
     private fun needInstallComponent(componentName: String): Boolean {

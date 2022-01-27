@@ -41,6 +41,7 @@ import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.openapiext.saveAllDocuments
+import org.rust.stdext.unwrapOrThrow
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -165,9 +166,9 @@ abstract class RsAsyncRunner(
                             result = checkToolchainSupported(project, host)
                             if (result != null) return
 
-                            val processForJson = RsCapturingProcessHandler(
+                            val processForJson = RsCapturingProcessHandler.startProcess(
                                 cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
-                            )
+                            ).unwrapOrThrow()
                             processForJson.setHasPty(toolchain is RsWslToolchain)
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {
