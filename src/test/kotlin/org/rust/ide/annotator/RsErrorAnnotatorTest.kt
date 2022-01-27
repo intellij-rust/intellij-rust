@@ -1537,7 +1537,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test trait method without body can have arg with '?Sized' type E0277`() = checkErrors("""
+    fun `test trait method without body can have arg with 'qSized' type E0277`() = checkErrors("""
         #[lang = "sized"] trait Sized {}
         trait Foo {
             fn foo(x: Self);
@@ -2099,7 +2099,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     @MockRustcVersion("1.38.0-nightly")
-    fun `test leading | in or patterns 1`() = checkErrors("""
+    fun `test leading vertical bar in or patterns 1`() = checkErrors("""
         #![feature(or_patterns)]
         enum V { V1(i32), V2(i32) }
         fn foo(y: V, z: V) {
@@ -2111,7 +2111,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     @MockRustcVersion("1.38.0-nightly")
-    fun `test leading | in or patterns 2`() = checkFixByText("Remove `|`", """
+    fun `test leading vertical bar in or patterns 2`() = checkFixByText("Remove `|`", """
         #![feature(or_patterns)]
         enum Option<T> { None, Some(T) }
         enum V { V1(i32), V2(i32) }

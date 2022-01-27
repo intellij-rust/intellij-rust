@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -473,7 +472,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path)
                 ?: return null
 
-            return StreamUtil.readText(stream, Charsets.UTF_8)
+            return stream.bufferedReader().use { it.readText() }
         }
     }
 

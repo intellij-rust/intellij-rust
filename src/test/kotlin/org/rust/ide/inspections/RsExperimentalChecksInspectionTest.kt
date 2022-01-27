@@ -12,7 +12,7 @@ class RsExperimentalChecksInspectionTest : RsInspectionsTestBase(RsExperimentalC
         }
     """)
 
-    fun `test no "E0614 type cannot be dereferenced" when trying to dereference unknown type`() = checkByText("""
+    fun `test no 'E0614 type cannot be dereferenced' when trying to dereference unknown type`() = checkByText("""
         fn main() {
             let a = SomeUnknownType;
             let _ = *a;

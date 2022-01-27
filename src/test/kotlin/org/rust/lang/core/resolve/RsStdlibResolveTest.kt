@@ -520,7 +520,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test ? operator with result`() = checkByCode("""
+    fun `test question mark operator with result`() = checkByCode("""
         struct S { field: u32 }
                     //X
         fn foo() -> Result<S, ()> { unimplemented!() }

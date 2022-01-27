@@ -124,7 +124,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
-    fun `test ? operator`() = checkHighlightingWithMacro("""
+    fun `test question mark operator`() = checkHighlightingWithMacro("""
         fn <FUNCTION>foo</FUNCTION>() -> Result<<PRIMITIVE_TYPE>i32</PRIMITIVE_TYPE>, ()>{
             Ok(Ok(1)<Q_OPERATOR>?</Q_OPERATOR> * 2)
         }
