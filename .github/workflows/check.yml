@@ -67,7 +67,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                rust-version: [ 1.58.0 ]
+                rust-version: [ 1.58.1 ]
                 config:
                     - name: linux
                       arch: x86-64
@@ -132,7 +132,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-18.04, windows-latest ]
-                rust-version: [ 1.58.0, nightly-2021-12-26 ]
+                rust-version: [ 1.58.1, nightly-2021-12-26 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 213 ]
                 # it's enough to verify plugin structure only once per platform version
