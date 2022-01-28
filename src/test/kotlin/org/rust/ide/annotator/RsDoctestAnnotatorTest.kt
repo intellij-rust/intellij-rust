@@ -45,42 +45,42 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
         |fn foo() {}
         |""")
 
-    fun `test acceptable "lang" string`() = doTest("""
+    fun `test acceptable 'lang' string`() = doTest("""
         |/// ```rust, allow_fail, should_panic, no_run, test_harness, edition2018, edition2015
         |///<info> <inject>let a = 0;
         |</inject></info>/// ```
         |fn foo() {}
         |""")
 
-    fun `test no injection with unacceptable "lang" string`() = doTest("""
+    fun `test no injection with unacceptable 'lang' string`() = doTest("""
         |/// ```foobar
         |///let a = 0;
         |/// ```
         |fn foo() {}
         |""")
 
-    fun `test no injection with unacceptable "lang" string contain acceptable parts`() = doTest("""
+    fun `test no injection with unacceptable 'lang' string contain acceptable parts`() = doTest("""
         |/// ```rust, foobar
         |///let a = 0;
         |/// ```
         |fn foo() {}
         |""")
 
-    fun `test "# " escape`() = doTest("""
+    fun `test '# ' escape`() = doTest("""
         |/// ```
         |///<info> # <inject>extern crate foobar;
         |</inject></info>/// ```
         |fn foo() {}
         |""")
 
-    fun `test "##" escape`() = doTest("""
+    fun `test '##' escape`() = doTest("""
         |/// ```
         |///<info> #<inject>#![allow(deprecated)]
         |</inject></info>/// ```
         |fn foo() {}
         |""")
 
-    fun `test "#" escape`() = doTest("""
+    fun `test '#' escape`() = doTest("""
         |/// ```
         |///<info> #<inject>
         |</inject></info>/// ```

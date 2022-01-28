@@ -48,7 +48,7 @@ class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
         }
     """)
 
-    fun `test simple ||`() = doAvailableTest("""
+    fun `test simple OR`() = doAvailableTest("""
         fn main() {
             if true |/*caret*/| false {
                 42
@@ -84,7 +84,7 @@ class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
         }
     """)
 
-    fun `test simple || without else`() = doAvailableTest("""
+    fun `test simple OR without else`() = doAvailableTest("""
         fn main() {
             if true |/*caret*/| false {
                 42
@@ -144,7 +144,7 @@ class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
         }
     """)
 
-    fun `test multy || 1`() = doAvailableTest("""
+    fun `test multiple OR 1`() = doAvailableTest("""
         fn main() {
             if true |/*caret*/| false || 1 == 1 {
                 42
@@ -164,7 +164,7 @@ class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
         }
     """)
 
-    fun `test multy || 2`() = doAvailableTest("""
+    fun `test multiple OR 2`() = doAvailableTest("""
         fn main() {
             if true || false |/*caret*/| 1 == 1 {
                 42

@@ -369,12 +369,12 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                             //^ &Struct<'_, Struct<'_, &'a str>>
     """, WITH_LIFETIMES)
 
-    fun `test no infinite recursion on "impl Self 1"`() = testType("""
+    fun `test no infinite recursion on 'impl Self' 1`() = testType("""
         impl Self {}
            //^ <unknown>
     """)
 
-    fun `test no infinite recursion on "impl Self 2"`() = testType("""
+    fun `test no infinite recursion on 'impl Self' 2`() = testType("""
         struct S<T>(T);
         impl S<Self> {}
            //^ S<<unknown>>

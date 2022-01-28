@@ -291,7 +291,7 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test ? expression in closure with different error types`() = checkByText("""
+    fun `test question mark expression in closure with different error types`() = checkByText("""
         struct ErrorTo;
         struct ErrorFrom;
         impl From<ErrorFrom> for ErrorTo {

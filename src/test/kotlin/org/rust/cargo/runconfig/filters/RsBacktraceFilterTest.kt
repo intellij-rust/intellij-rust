@@ -108,7 +108,7 @@ stack backtrace:
     }
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test crate with "-" in name`() =
+    fun `test crate with a hyphen in name`() =
         checkHighlights(filter,
             """
                 //- dep-lib/lib.rs

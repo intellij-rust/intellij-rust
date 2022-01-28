@@ -788,7 +788,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
-    fun `test iterate "for" complex pattern in complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    fun `test iterate 'for' complex pattern in complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             for (a, _) in [(Some(42), false)].iter().map(|(n, f)| (n, f)) {
@@ -798,7 +798,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
-    fun `test iterate "while let" complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    fun `test iterate 'while let' complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             while let Some((a, _)) = [(Some(42), false)].iter().map(|(n, f)| (n, f)).next() {
@@ -808,7 +808,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
-    fun `test "if let" complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    fun `test 'if let' complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             if let Some((a, _)) = [(Some(42), false)].iter().map(|(n, f)| (n, f)).next() {
@@ -818,7 +818,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
-    fun `test "try expr" on a complex type = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    fun `test 'try expr' on a complex type = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
             let a = vec![Some(42)].into_iter().next()??;

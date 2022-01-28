@@ -842,7 +842,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                           //^ dep-lib/lib.rs
     """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 
-    fun `test "extra use of crate name 1" with alias`() = stubOnlyResolve("""
+    fun `test 'extra use of crate name 1' with alias`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
     //- lib.rs
@@ -924,7 +924,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }      //^ foo.rs
     """)
 
-    fun `test re-exported crate via use item without "extern crate" 2018 edition`() = stubOnlyResolve("""
+    fun `test re-exported crate via use item without 'extern crate' 2018 edition`() = stubOnlyResolve("""
     //- trans-lib/lib.rs
         pub struct Foo;
     //- dep-lib/lib.rs

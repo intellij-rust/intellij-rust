@@ -562,7 +562,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test exported macro with cfg on "extern crate" 1`() = stubOnlyResolve("""
+    fun `test exported macro with cfg on 'extern crate' 1`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]
         macro_rules! foo { () -> {} }
@@ -583,7 +583,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test exported macro with cfg on "extern crate" 2`() = stubOnlyResolve("""
+    fun `test exported macro with cfg on 'extern crate' 2`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]
         macro_rules! foo { () -> {} }

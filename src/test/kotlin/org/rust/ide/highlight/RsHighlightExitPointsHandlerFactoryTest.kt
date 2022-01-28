@@ -120,7 +120,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return", "s.diverge()")
 
-    fun `test highlight ? operator as return`() = doTest("""
+    fun `test highlight question mark operator as return`() = doTest("""
         fn main() {
             if true {
                 Err(())?
@@ -129,7 +129,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "?", "return 0")
 
-    fun `test highlight ? operator as return with caret at ?`() = doTest("""
+    fun `test highlight question mark operator as return with caret at question mark`() = doTest("""
         fn main() {
             if true {
                 Err(())?/*caret*/
@@ -304,7 +304,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "2", "3", "4", "5")
 
-    fun `test no highlight for ? in try `() = doTest("""
+    fun `test no highlight for question mark in try`() = doTest("""
         fn main(){
             let a = try {
                 Err(())?;
@@ -314,7 +314,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 0", "return 1")
 
-    fun `test highlight nothing on ? in try `() = doTest("""
+    fun `test highlight nothing on question mark in try`() = doTest("""
         fn main(){
             let a = try {
                 Err(())?/*caret*/;
@@ -355,7 +355,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     """, "?", "return 0")
 
 
-    fun `test ? in macro`() = doTest("""
+    fun `test question mark in macro`() = doTest("""
         fn main(){
             macrocall![ ?/*caret*/ ];
             return 0;

@@ -1016,7 +1016,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }             //^ unresolved
     """)
 
-    fun `test method in "impl for generic type" at type parameter with bound`() = checkByCode("""
+    fun `test method in 'impl for generic type' at type parameter with bound`() = checkByCode("""
         trait Bound {}
         trait Tr {
             fn foo(&self) {}
@@ -1027,7 +1027,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
-    fun `test "impl for generic type" is NOT used for associated type resolve`() = checkByCode("""
+    fun `test 'impl for generic type' is NOT used for associated type resolve`() = checkByCode("""
         trait Bound {}
         trait Tr { type Item; }
         impl<A: Bound> Tr for A { type Item = (); }
@@ -1036,7 +1036,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }           //^ unresolved
     """, NameResolutionTestmarks.skipAssocTypeFromImpl)
 
-    fun `test "impl for generic type" is USED for associated type resolve UFCS 1`() = checkByCode("""
+    fun `test 'impl for generic type' is USED for associated type resolve UFCS 1`() = checkByCode("""
         trait Bound {}
         trait Tr { type Item; }
         impl<A: Bound> Tr for A { type Item = (); }
@@ -1045,7 +1045,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }                   //^
     """)
 
-    fun `test "impl for generic type" is USED for associated type resolve UFCS 2`() = checkByCode("""
+    fun `test 'impl for generic type' is USED for associated type resolve UFCS 2`() = checkByCode("""
         trait Bound { type Item; }
         impl<A: Bound> Bound for &A { type Item = (); }
                                           //X
