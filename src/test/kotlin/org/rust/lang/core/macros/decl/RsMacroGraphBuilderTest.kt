@@ -45,7 +45,7 @@ class RsMacroGraphBuilderTest : RsTestBase() {
         END
     """)
 
-    fun `test one rule ?`() = check("""
+    fun `test one rule option repetition`() = check("""
         macro_rules! my_macro {
             ($ ($ id:ident $ e:expr)? ) => (1);
         }
@@ -60,7 +60,7 @@ class RsMacroGraphBuilderTest : RsTestBase() {
         END
     """)
 
-    fun `test one rule repetition *`() = check("""
+    fun `test one rule zero-or-more repetition`() = check("""
         macro_rules! my_macro {
             ($ ($ id:ident),* ) => (1);
         }
