@@ -5,14 +5,19 @@
 
 package org.rust.ide.inspections.import
 
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
+import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -22,7 +27,8 @@ import org.rust.lang.core.types.inference
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
 
-class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixOnPsiElement(element), PriorityAction {
+class AutoImportFix(element: RsElement, private val context: Context) :
+    LocalQuickFixOnPsiElement(element), PriorityAction, HintAction {
 
     private var isConsumed: Boolean = false
 
@@ -37,14 +43,9 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         invoke(project)
     }
 
-    fun invoke(project: Project) {
+    private fun invoke(project: Project) {
         val element = startElement as? RsElement ?: return
-        val (_, candidates) = when (type) {
-            GENERAL_PATH -> findApplicableContext(project, element as RsPath)
-            ASSOC_ITEM_PATH -> findApplicableContextForAssocItemPath(project, element as RsPath)
-            METHOD -> findApplicableContext(project, element as RsMethodCall)
-        } ?: return
-
+        val candidates = context.candidates
         if (candidates.size == 1) {
             project.runWriteCommandAction {
                 candidates.first().import(element)
@@ -68,6 +69,37 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 selectedValue.import(context)
             }
         }
+    }
+
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = isAvailable
+
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = invoke(project)
+
+    override fun startInWriteAction(): Boolean = true
+
+    override fun showHint(editor: Editor): Boolean {
+        if (!RsCodeInsightSettings.getInstance().showImportPopup) return false
+        if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
+
+        val candidates = context.candidates
+        val hint = candidates[0].info.usePath
+        val multiple = candidates.size > 1
+        val message = ShowAutoImportPass.getMessage(multiple, hint)
+        val element = startElement
+        HintManager.getInstance().showQuestionHint(editor, message, element.textOffset, element.endOffset) {
+            invoke(element.project)
+            true
+        }
+        return true
+    }
+
+    override fun fixSilently(editor: Editor): Boolean {
+        if (!RsCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) return false
+        val candidates = context.candidates
+        if (candidates.size != 1) return false
+        val project = editor.project ?: return false
+        invoke(project)
+        return true
     }
 
     companion object {

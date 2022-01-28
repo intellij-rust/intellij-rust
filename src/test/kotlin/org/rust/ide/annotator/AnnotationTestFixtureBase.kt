@@ -185,7 +185,7 @@ abstract class AnnotationTestFixtureBase(
         testmark?.checkHit(action) ?: action()
     }
 
-    private fun checkByText(text: String) {
+    fun checkByText(text: String) {
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
