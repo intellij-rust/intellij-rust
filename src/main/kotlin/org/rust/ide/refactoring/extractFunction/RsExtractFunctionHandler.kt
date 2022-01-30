@@ -138,12 +138,12 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     }
 
     private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, psiFactory: RsPsiFactory) {
-        var stmt = ""
+        val stmt = StringBuilder()
         if (config.returnValue?.exprText != null) {
-            stmt += "let ${config.returnValue.exprText} = "
+            stmt.append("let ${config.returnValue.exprText} = ")
         }
         val firstParameter = config.parameters.firstOrNull()
-        stmt += if (firstParameter != null && firstParameter.isSelf) {
+        stmt.append(if (firstParameter != null && firstParameter.isSelf) {
             "self.${config.name}(${config.argumentsText})"
         } else {
             val type = when (config.function.owner) {
@@ -152,19 +152,26 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 else -> null
             }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
-        }
+        })
         if (config.isAsync) {
-            stmt += ".await"
-        }
-        val element = if (config.returnValue == null || config.returnValue.exprText != null) {
-            stmt += ";"
-            psiFactory.createStatement(stmt)
-        } else {
-            psiFactory.createExpression(stmt)
+            stmt.append(".await")
         }
         config.elements.forEachIndexed { index, psiElement ->
-            if (index == 0) {
-                psiElement.replace(element)
+            if (index == config.elements.lastIndex) {
+                when (psiElement) {
+                    is RsExpr -> psiElement.replace(psiFactory.createExpression(stmt.toString()))
+                    is RsExprStmt -> {
+                        val needsSemicolon = config.returnValue == null || config.returnValue.exprText != null
+                        if (needsSemicolon) {
+                            stmt.append(";")
+                        }
+                        psiElement.replace(psiFactory.createStatement(stmt.toString()))
+                    }
+                    is RsStmt -> {
+                        stmt.append(";")
+                        psiElement.replace(psiFactory.createStatement(stmt.toString()))
+                    }
+                }
             } else {
                 psiElement.delete()
             }

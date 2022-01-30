@@ -9,6 +9,7 @@ import com.intellij.lang.*
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.impl.source.tree.LazyParseableElement
@@ -33,6 +34,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
 import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
+import org.rust.lang.core.stubs.RsEmptyStmtType.shouldCreateStub
 import org.rust.lang.core.stubs.common.RsMetaItemArgsPsiOrStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.lang.core.stubs.common.RsPathPsiOrStub
@@ -297,6 +299,10 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "BLOCK" -> RsBlockStubType
 
     "BINARY_OP" -> RsBinaryOpStub.Type
+
+    "EXPR_STMT" -> RsExprStmtStub.Type
+    "LET_DECL" -> RsLetDeclStub.Type
+    "EMPTY_STMT" -> RsEmptyStmtType
 
     "ARRAY_EXPR" -> RsExprStubType("ARRAY_EXPR", ::RsArrayExprImpl)
     "BINARY_EXPR" -> RsExprStubType("BINARY_EXPR", ::RsBinaryExprImpl)
@@ -1857,7 +1863,7 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
     /** Note: must return `false` if [StubBuilder.skipChildProcessingWhenBuildingStubs] returns `true` for the [node] */
     override fun shouldCreateStub(node: ASTNode): Boolean {
         return if (node.treeParent.elementType == FUNCTION) {
-            node.findChildByType(Holder.RS_ITEMS_AND_INNER_ATTR) != null || BlockVisitor.blockContainsItems(node)
+            node.findChildByType(Holder.RS_ITEMS_AND_INNER_ATTR) != null || ItemSeekingVisitor.containsItems(node)
         } else {
             createStubIfParentIsStub(node) || node.findChildByType(RS_ITEMS) != null
         }
@@ -1902,31 +1908,94 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
     // Avoid double lexing
     override fun reuseCollapsedTokens(): Boolean = true
 
-    private class BlockVisitor private constructor() : RecursiveTreeElementWalkingVisitor() {
-        private var hasItemsOrAttrs = false
-
-        override fun visitNode(element: TreeElement) {
-            val elementType = element.elementType
-            if (elementType in RS_ITEMS || elementType == MACRO) {
-                hasItemsOrAttrs = true
-                stopWalking()
-            } else {
-                super.visitNode(element)
-            }
-        }
-
-        companion object {
-            fun blockContainsItems(node: ASTNode): Boolean {
-                val visitor = BlockVisitor()
-                (node as TreeElement).acceptTree(visitor)
-                return visitor.hasItemsOrAttrs
-            }
-        }
-    }
-
     private object Holder {
         val RS_ITEMS_AND_INNER_ATTR = TokenSet.orSet(RS_ITEMS, tokenSetOf(MACRO, INNER_ATTR))
     }
+}
+
+private class ItemSeekingVisitor private constructor() : RecursiveTreeElementWalkingVisitor() {
+    private var hasItemsOrAttrs = false
+
+    override fun visitNode(element: TreeElement) {
+        val elementType = element.elementType
+        if (elementType in RS_ITEMS || elementType == MACRO) {
+            hasItemsOrAttrs = true
+            stopWalking()
+        } else {
+            super.visitNode(element)
+        }
+    }
+
+    companion object {
+        fun containsItems(node: ASTNode): Boolean {
+            val visitor = ItemSeekingVisitor()
+            (node as TreeElement).acceptTree(visitor)
+            return visitor.hasItemsOrAttrs
+        }
+    }
+}
+
+class RsExprStmtStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val hasSemicolon: Boolean
+) : StubBase<RsExprStmt>(parent, elementType) {
+    object Type : RsStubElementType<RsExprStmtStub, RsExprStmt>("EXPR_STMT") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateStmtStub(node)
+
+        override fun serialize(stub: RsExprStmtStub, dataStream: StubOutputStream) {
+            dataStream.writeBoolean(stub.hasSemicolon)
+        }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsExprStmtStub =
+            RsExprStmtStub(parentStub, this, dataStream.readBoolean())
+
+        override fun createStub(psi: RsExprStmt, parentStub: StubElement<*>?): RsExprStmtStub =
+            RsExprStmtStub(parentStub, this, psi.hasSemicolon)
+
+        override fun createPsi(stub: RsExprStmtStub): RsExprStmt = RsExprStmtImpl(stub, this)
+    }
+}
+
+class RsLetDeclStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+) : StubBase<RsLetDecl>(parent, elementType) {
+    object Type : RsStubElementType<RsLetDeclStub, RsLetDecl>("LET_DECL") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateStmtStub(node)
+
+        override fun serialize(stub: RsLetDeclStub, dataStream: StubOutputStream) {}
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsLetDeclStub =
+            RsLetDeclStub(parentStub, this)
+
+        override fun createStub(psi: RsLetDecl, parentStub: StubElement<*>?): RsLetDeclStub =
+            RsLetDeclStub(parentStub, this)
+
+        override fun createPsi(stub: RsLetDeclStub): RsLetDecl = RsLetDeclImpl(stub, this)
+    }
+}
+
+/**
+ * This is a fake stub type. The actual stub does not exist and can't be created because [shouldCreateStub]
+ * always returns `false`. This fake stub is needed in order to conform [RsStmt] signature
+ */
+object RsEmptyStmtType : RsStubElementType<RsPlaceholderStub, RsEmptyStmt>("EMPTY_STMT") {
+
+    override fun shouldCreateStub(node: ASTNode): Boolean = false
+
+    override fun serialize(stub: RsPlaceholderStub, dataStream: StubOutputStream) {
+        error("EmptyStmtType stub must never be created")
+    }
+
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsPlaceholderStub =
+        error("EmptyStmtType stub must never be created")
+
+    override fun createStub(psi: RsEmptyStmt, parentStub: StubElement<out PsiElement>?): RsPlaceholderStub =
+        error("EmptyStmtType stub must never be created")
+
+    override fun createPsi(stub: RsPlaceholderStub): RsEmptyStmt =
+        error("EmptyStmtType stub must never be created")
 }
 
 class RsExprStubType<PsiT : RsElement>(
@@ -2004,6 +2073,11 @@ private fun shouldCreateExprStub(node: ASTNode): Boolean {
         parent?.elementType in RS_ITEMS || parent is FileASTNode
     }
     return element != null && !element.isFunctionBody() && createStubIfParentIsStub(node)
+}
+
+private fun shouldCreateStmtStub(node: ASTNode): Boolean {
+    return shouldCreateExprStub(node)
+        || node.findChildByType(OUTER_ATTR) != null && ItemSeekingVisitor.containsItems(node)
 }
 
 private fun ASTNode.isFunctionBody() = this.elementType == BLOCK && treeParent?.elementType == FUNCTION

@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.prevLeaf
 import com.intellij.util.SmartList
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.*
@@ -278,7 +279,7 @@ fun PsiElement.rangeWithPrevSpace(prev: PsiElement?): TextRange =
     }
 
 val PsiElement.rangeWithPrevSpace: TextRange
-    get() = rangeWithPrevSpace(prevSibling)
+    get() = rangeWithPrevSpace(prevLeaf())
 
 private fun PsiElement.getLineCount(): Int {
     val doc = containingFile?.document

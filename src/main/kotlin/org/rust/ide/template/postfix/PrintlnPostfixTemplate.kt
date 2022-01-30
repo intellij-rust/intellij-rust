@@ -61,8 +61,8 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
             return macroExpression
         }
 
-        fun replaceWithMacro(expression: PsiElement): PsiElement {
-            return expression.replace(createMacro(expression.text, expression.parent is RsBlock))
+        fun replaceWithMacro(expression: RsExpr): PsiElement {
+            return expression.replace(createMacro(expression.text, expression.isTailExpr))
         }
     }
 

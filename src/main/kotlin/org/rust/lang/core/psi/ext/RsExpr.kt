@@ -300,3 +300,9 @@ tailrec fun unwrapParenExprs(expr: RsExpr): RsExpr {
 
 val RsExpr.isAssignBinaryExpr: Boolean
     get() = this is RsBinaryExpr && this.operatorType is AssignmentOp
+
+val RsExpr.isTailExpr: Boolean
+    get() {
+        val parent = parent
+        return parent is RsExprStmt && parent.isTailStmt
+    }

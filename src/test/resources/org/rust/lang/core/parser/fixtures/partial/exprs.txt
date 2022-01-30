@@ -13,7 +13,7 @@ FILE
       RsExprStmtImpl(EXPR_STMT)
         RsLitExprImpl(LIT_EXPR)
           PsiElement(INTEGER_LITERAL)('2')
-        PsiErrorElement:'(', ';', <operator> or '[' expected, got 'let'
+        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)
@@ -240,17 +240,18 @@ FILE
           RsBlockImpl(BLOCK)
             PsiElement({)('{')
             PsiWhiteSpace(' ')
-            RsCallExprImpl(CALL_EXPR)
-              RsPathExprImpl(PATH_EXPR)
-                RsPathImpl(PATH)
-                  PsiElement(identifier)('foo8')
-              RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
-                PsiElement(()('(')
-                RsLitExprImpl(LIT_EXPR)
-                  PsiElement(INTEGER_LITERAL)('1')
-                PsiElement(,)(',')
-                PsiErrorElement:<expr> expected, got '}'
-                  <empty list>
+            RsExprStmtImpl(EXPR_STMT)
+              RsCallExprImpl(CALL_EXPR)
+                RsPathExprImpl(PATH_EXPR)
+                  RsPathImpl(PATH)
+                    PsiElement(identifier)('foo8')
+                RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
+                  PsiElement(()('(')
+                  RsLitExprImpl(LIT_EXPR)
+                    PsiElement(INTEGER_LITERAL)('1')
+                  PsiElement(,)(',')
+                  PsiErrorElement:<expr> expected, got '}'
+                    <empty list>
             PsiWhiteSpace(' ')
             PsiElement(})('}')
         PsiElement(;)(';')
@@ -260,14 +261,15 @@ FILE
           RsBlockImpl(BLOCK)
             PsiElement({)('{')
             PsiWhiteSpace(' ')
-            RsCallExprImpl(CALL_EXPR)
-              RsPathExprImpl(PATH_EXPR)
-                RsPathImpl(PATH)
-                  PsiElement(identifier)('foo9')
-              RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
-                PsiElement(()('(')
-                PsiErrorElement:<expr> expected, got '}'
-                  <empty list>
+            RsExprStmtImpl(EXPR_STMT)
+              RsCallExprImpl(CALL_EXPR)
+                RsPathExprImpl(PATH_EXPR)
+                  RsPathImpl(PATH)
+                    PsiElement(identifier)('foo9')
+                RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
+                  PsiElement(()('(')
+                  PsiErrorElement:<expr> expected, got '}'
+                    <empty list>
             PsiWhiteSpace(' ')
             PsiElement(})('}')
         PsiElement(;)(';')

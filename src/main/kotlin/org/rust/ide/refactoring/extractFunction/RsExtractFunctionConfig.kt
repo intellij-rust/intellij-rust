@@ -268,7 +268,11 @@ class RsExtractFunctionConfig private constructor(
                 }
 
             val returnValue = when (innerBindings.size) {
-                0 -> if (last is RsExpr) ReturnValue.direct(last) else null
+                0 -> when {
+                    last is RsExpr -> ReturnValue.direct(last)
+                    last is RsExprStmt && last.isTailStmt -> ReturnValue.direct(last.expr)
+                    else -> null
+                }
                 1 -> ReturnValue.namedValue(innerBindings[0])
                 else -> ReturnValue.tupleNamedValue(innerBindings)
             }

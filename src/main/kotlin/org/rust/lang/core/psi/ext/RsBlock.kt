@@ -10,17 +10,23 @@ import org.rust.lang.core.macros.expandedFromSequence
 import org.rust.lang.core.psi.*
 
 /**
- * Can contain [RsStmt]s and [RsExpr]s (which are equivalent to RsExprStmt(RsExpr))
+ * Returns a statement list and a tail expression (if exists) of the block *after* expansion
+ * of macros and `cfg` attributes
+ *
+ * @see syntaxTailStmt
  */
-val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsExpandedElement>, RsExpr?>
+val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsStmt>, RsExpr?>
     get() {
-        val stmts = mutableListOf<RsExpandedElement>()
+        val stmts = mutableListOf<RsStmt>()
         processExpandedStmtsInternal { stmt ->
-            stmts.add(stmt)
+            if (stmt is RsStmt && (stmt !is RsDocAndAttributeOwner || stmt.existsAfterExpansionSelf)) {
+                stmts.add(stmt)
+            }
             false
         }
-        val tailExpr = stmts.lastOrNull()
-            ?.let { it as? RsExpr }
+        val tailStmt = stmts.lastOrNull()
+            ?.let { it as? RsExprStmt }
+            ?.takeIf { !it.hasSemicolon }
             ?.takeIf { e ->
                 // If tail expr is expanded from a macro, we should check that this macro doesn't have
                 // semicolon (`foo!();`), otherwise it's not a tail expr but a regular statement
@@ -29,11 +35,70 @@ val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsExpandedElement>, RsExpr?>
                     !bracesKind.needsSemicolon || it.semicolon == null
                 }
             }
-        return when (tailExpr) {
+
+        return when (tailStmt) {
             null -> stmts
             else -> stmts.subList(0, stmts.size - 1)
-        } to tailExpr
+        } to tailStmt?.expr
     }
+
+val RsBlock.expandedTailExpr: RsExpr?
+    get() = expandedStmtsAndTailExpr.second
+
+/**
+ * Returns the last [RsExprStmt] without a semicolon (![RsExprStmt.hasSemicolon]) in a block *before* expansion
+ * of macros and `cfg` attributes
+ * ```
+ * // Returns `foo`:
+ * {
+ *     let foo = 0;
+ *     foo
+ * }
+ * // Returns `{ foo }`:
+ * {
+ *     let foo = 0;
+ *     { foo }
+ * }
+ * // Returns `null`:
+ * {
+ *     let foo = 0;
+ *     let bar = 0;
+ *     #[cfg(unix)]
+ *     { foo }
+ *     #[cfg(windows)]
+ *     { bar }
+ * }
+ * // Returns `null`:
+ * {
+ *     foo! {}
+ * }
+ * ```
+ *
+ * @see expandedTailExpr
+ */
+val RsBlock.syntaxTailStmt: RsExprStmt?
+    get() {
+        val lastStmt = rbrace?.getPrevNonCommentSibling() as? RsExprStmt ?: return null
+        return lastStmt.takeIf { !lastStmt.hasSemicolon && !lastStmt.queryAttributes.hasCfgAttr() }
+    }
+
+/** For a block like `{ 0 }` returns `0` */
+fun RsBlock.singleTailStmt(): RsExprStmt? {
+    val tailStmt = syntaxTailStmt ?: return null
+    if (tailStmt.getPrevNonCommentSibling() == lbrace) {
+        return tailStmt
+    }
+    return null
+}
+
+/** For a block like `{ 0; }` returns `0;`, for a block like `{ 0 }` returns `0` */
+fun RsBlock.singleStmt(): RsStmt? {
+    val firstStmt = lbrace.getNextNonCommentSibling() as? RsStmt ?: return null
+    if (firstStmt.getNextNonCommentSibling() == rbrace) {
+        return firstStmt
+    }
+    return null
+}
 
 private val RsBlock.stmtsAndMacros: Sequence<RsElement>
     get() {

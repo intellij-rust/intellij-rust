@@ -157,7 +157,7 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
             .swapBranches()
             .removeImplicitReturnOrContinue(ctx.block)
             .removeNestedReturnOrContinueIfNoNextStmts(ctx.block)
-            .convertReturnToTailExpr(ctx.block)
+            .convertReturnToTailExpr(ctx.block, factory)
             .copyPsi()
 
         ctx.ifCondition.replace(negatedCondition)
@@ -211,9 +211,10 @@ private fun IfStmts.addSemicolonToControlFlowExprs(factory: RsPsiFactory): IfStm
     )
 
 private fun List<PsiElement>.addSemicolonToControlFlowExpr(factory: RsPsiFactory): List<PsiElement> {
-    val expr = filterIsInstance<RsExpr>().lastOrNull() ?: return this
+    val tailStmt = filterIsInstance<RsExprStmt>().lastOrNull()?.takeIf { it.isTailStmt } ?: return this
+    val expr = tailStmt.expr
     return if (expr is RsRetExpr || expr is RsContExpr || expr is RsBreakExpr) {
-        replace(expr, expr.wrapInStmt(factory))
+        replace(tailStmt, expr.wrapInStmt(factory))
     } else {
         this
     }
@@ -222,20 +223,21 @@ private fun List<PsiElement>.addSemicolonToControlFlowExpr(factory: RsPsiFactory
 /** `fn foo() { 1 }` => `fn foo() { return 1; } */
 private fun IfStmts.convertTailExprToReturn(block: RsBlock, factory: RsPsiFactory): IfStmts {
     if (block.parent !is RsFunctionOrLambda) return this
-    val expr = nextStmts.filterIsInstance<RsExpr>().lastOrNull() ?: return this
-    if (expr.type is TyUnit) return this
+    val tailStmt = nextStmts.findLast { it is RsExprStmt && it.isTailStmt } as? RsExprStmt ?: return this
+    if (tailStmt.expr.type is TyUnit) return this
 
-    val retStmt = factory.createStatement("return ${expr.text};")
-    return copy(nextStmts = nextStmts.replace(expr, retStmt))
+    val retStmt = factory.createStatement("return ${tailStmt.text};")
+    return copy(nextStmts = nextStmts.replace(tailStmt, retStmt))
 }
 
-private fun IfStmts.convertReturnToTailExpr(block: RsBlock): IfStmts {
+private fun IfStmts.convertReturnToTailExpr(block: RsBlock, factory: RsPsiFactory): IfStmts {
     if (block.parent !is RsFunctionOrLambda) return this
     val lastStmt = nextStmts.filterIsInstance<RsExprStmt>().lastOrNull() ?: return this
     val lastExpr = lastStmt.expr
     if (lastExpr !is RsRetExpr) return this
     val expr = lastExpr.expr ?: return this
-    return copy(nextStmts = nextStmts.replace(lastStmt, expr))
+    val tailStmt = factory.tryCreateExprStmtWithoutSemicolon(expr.text) ?: return this
+    return copy(nextStmts = nextStmts.replace(lastStmt, tailStmt))
 }
 
 /**
@@ -243,12 +245,14 @@ private fun IfStmts.convertReturnToTailExpr(block: RsBlock): IfStmts {
  * `loop { ...; }` => `loop { ...; continue; }`
  */
 private fun IfStmts.addImplicitReturnOrContinue(block: RsBlock, factory: RsPsiFactory): IfStmts {
-    val expr = nextStmts.filterIsInstance<RsExpr>().lastOrNull()
+    val tailStmt = nextStmts.findLast { it is RsExprStmt && it.isTailStmt } as? RsExprStmt
+    val expr = tailStmt?.expr
     check(expr == null || expr.type is TyUnit)
     return when {
-        expr != null && expr.canBeStmtWithoutSemicolon() ->
+        expr != null && expr.canBeStmtWithoutSemicolon() -> {
             copy(nextStmts = nextStmts.replace(expr, expr.wrapInStmt(factory)))
                 .addImplicitReturnOrContinue(block, factory)
+        }
         expr == null -> {
             val lastStmt = nextStmts.filterIsInstance<RsExprStmt>().lastOrNull()?.expr
             if (lastStmt is RsMacroCall) return this
@@ -343,7 +347,7 @@ private fun RsExpr.canBeStmtWithoutSemicolon(): Boolean =
         || this is RsIfExpr || this is RsMatchExpr || this is RsBlockExpr
 
 private fun RsExpr.wrapInStmt(factory: RsPsiFactory): RsExprStmt =
-    factory.tryCreateExprStmt(text)!!
+    factory.tryCreateExprStmtWithSemicolon(text)!!
 
 private fun RsBlock.deleteContinuousChildRange(stmts: List<PsiElement>) {
     if (stmts.isNotEmpty()) {

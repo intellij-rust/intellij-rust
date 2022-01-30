@@ -205,7 +205,6 @@ private class RegionResolutionVisitor(contextOwner: RsInferenceContextOwner) : R
             }
             stmt.accept(this)
         }
-        block.expr?.let { visitExpr(it) }
 
         ctx = prevCtx
     }

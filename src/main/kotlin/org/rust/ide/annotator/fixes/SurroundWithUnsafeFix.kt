@@ -10,26 +10,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
-import org.rust.ide.utils.getTopmostParentInside
-import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class SurroundWithUnsafeFix(expr: RsExpr) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
     override fun getFamilyName() = text
     override fun getText() = "Surround with unsafe block"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, expr: PsiElement, endElement: PsiElement) {
-        val target = getTopLevelStmtOrExpr(expr) ?: expr.parentOfType<RsExprStmt>() ?: expr
-        val unsafe = RsPsiFactory(project).createUnsafeBlockExpr(target.text)
-        target.replace(unsafe)
+        val target = expr.ancestorStrict<RsExprStmt>() ?: expr
+        val unsafeBlockExpr = RsPsiFactory(project).createUnsafeBlockExprOrStmt(target)
+        target.replace(unsafeBlockExpr)
     }
-}
-
-private fun getTopLevelStmtOrExpr(expr: PsiElement): PsiElement? {
-    val block = expr.parentOfType<RsBlock>() ?: return null
-    return expr.getTopmostParentInside(block)
-        .takeIf { it is RsExprStmt || it == block.expr }
 }

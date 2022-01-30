@@ -501,7 +501,7 @@ open class RsPsiRenderer(
         val isUnsafe = expr.isUnsafe
         val isAsync = expr.isAsync
         val isConst = expr.isConst
-        val tailExpr = expr.block.expr
+        val tailExpr = expr.block.expandedTailExpr
 
         if (isTry) {
             sb.append("try ")

@@ -36,7 +36,7 @@ private fun deleteVariable(pat: RsPatIdent) {
     if (expr != null && expr.hasSideEffects) {
         val factory = RsPsiFactory(expr.project)
         val newExpr = if (decl.semicolon != null) {
-            factory.tryCreateExprStmt(expr.text) ?: expr
+            factory.tryCreateExprStmtWithSemicolon(expr.text) ?: expr
         } else {
             expr
         }

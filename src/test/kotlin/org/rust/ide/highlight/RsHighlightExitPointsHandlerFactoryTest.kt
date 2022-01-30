@@ -7,6 +7,7 @@ package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
@@ -69,6 +70,28 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
             return 0;
         }
     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test highlight correct cfg block with an arrow`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(intellij_rust)]
+            { 0 }
+            #[cfg(not(intellij_rust))]
+            { 1 }
+        }
+        fn main() {}
+    """, "0")
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test highlight correct cfg block with an arrow reverse order`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(not(intellij_rust))]
+            { 0 }
+            #[cfg(intellij_rust)]
+            { 1 }
+        }
+        fn main() {}
+    """, "1")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test highlight try macro as return`() = doTest("""
@@ -303,6 +326,21 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
             }
         }
     """, "return 1", "2", "3", "4", "5")
+
+    fun `test highlight tail stmt block with break as return`() = doTest("""
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            'foo: {
+                if true {
+                    break 'foo 2;
+                }
+
+                3
+            }
+        }
+    """, "break 'foo 2", "return 1", "3")
 
     fun `test no highlight for question mark in try`() = doTest("""
         fn main(){

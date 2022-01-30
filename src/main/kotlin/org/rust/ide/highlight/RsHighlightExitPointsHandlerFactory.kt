@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
 import org.rust.lang.core.dfa.ExitPoint
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -54,12 +55,15 @@ private class RsHighlightExitPointsHandler(
     override fun computeUsages(targets: List<PsiElement>) {
         val usages = mutableListOf<PsiElement>()
         val sink: (ExitPoint) -> Unit = { exitPoint ->
-            when (exitPoint) {
-                is ExitPoint.Return -> usages.add(exitPoint.e)
-                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) usages.add(exitPoint.e.q) else usages.add(exitPoint.e)
-                is ExitPoint.DivergingExpr -> usages.add(exitPoint.e)
-                is ExitPoint.TailExpr -> usages.add(exitPoint.e)
-                is ExitPoint.TailStatement -> Unit
+            val element = when (exitPoint) {
+                is ExitPoint.Return -> exitPoint.e
+                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) exitPoint.e.q else exitPoint.e
+                is ExitPoint.DivergingExpr -> exitPoint.e
+                is ExitPoint.TailExpr -> exitPoint.e
+                is ExitPoint.InvalidTailStatement -> null
+            }
+            if (element != null && !element.isExpandedFromMacro) {
+                usages += element
             }
         }
 
@@ -70,16 +74,17 @@ private class RsHighlightExitPointsHandler(
                 ExitPoint.process(ancestor.block, sink)
                 break
             } else if (ancestor is RsFunction) {
-                ExitPoint.process(ancestor.block, sink)
+                ExitPoint.process(ancestor, sink)
                 break
             } else if (ancestor is RsLambdaExpr) {
-                ExitPoint.process(ancestor.expr, sink)
+                ExitPoint.process(ancestor, sink)
                 break
             }
         }
 
         // highlight only if target inside exit point
-        if (usages.any { target.ancestors.contains(it) } || target.elementType == FN || target.elementType == ARROW) {
+        val targetAncestors = target.ancestors.toSet()
+        if (usages.any { it in targetAncestors } || target.elementType == FN || target.elementType == ARROW) {
             usages.forEach(this::addOccurrence)
         }
     }

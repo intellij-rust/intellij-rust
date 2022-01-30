@@ -1393,7 +1393,7 @@ upper Macro ::= "macro_rules" '!' identifier ShallowMacroBody <<macroSemicolon>>
 }
 
 BlockElementMacro ::= AttrsAndVis Macro {
-  name = "macro"
+  name = "statement"
   elementType = ToBeUpped
 }
 
@@ -1470,7 +1470,7 @@ upper ItemLikeMacroCall ::= <<parseMacroCall 'MacroCallParsingMode.ITEM'>> {
 BlockElementMacroCall ::= <<parseMacroCall 'MacroCallParsingMode.BLOCK'>> {
   elementType = MacroCall
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  name = "macro call"
+  name = "statement"
 }
 
 // Parses macro calls in expr/pat/type context, which do not require a semicolon
@@ -1574,7 +1574,7 @@ PatMacro ::= ExprLikeMacroCall
 // Statements
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
+fake Block ::= '{' InnerAttr* (Item | Stmt)* '}' {
   pin = 1
   implements = "org.rust.lang.core.psi.ext.RsItemsOwner"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -1594,47 +1594,59 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
 
 private ShallowBlock ::= <<parseCodeBlockLazy>>
 
-private BlockElement ::= !'}' (BlockElementMacro | BlockElementMacroCall | ExprStmtOrLastExpr | Stmt | Item) {
+private BlockElement ::= !'}' (BlockElementMacro | BlockElementMacroCall | ExprStmtImpl | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
 }
 private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
 Stmt ::= LetDecl | EmptyStmt | never ';' {
+  name = "statement"
   implements = "org.rust.lang.core.macros.RsExpandedElement"
   mixin = "org.rust.lang.core.psi.ext.RsStmtMixin"
+  stubClass = "com.intellij.psi.stubs.StubBase"
 }
 
-ExprStmtOrLastExpr ::= StmtModeExpr (&'}' | ExprStmtUpper) {
-  elementType = Expr
+ExprStmtImpl ::= OuterAttr* StmtModeExpr (&'}' | ExprStmtSemicolon) {
+  elementType = ExprStmt
+  name = "statement"
 }
 
-upper ExprStmtUpper ::= () (';' | <<isBlock>>) { pin = 1 elementType = ExprStmt }
+private ExprStmtSemicolon ::= () (';' | <<isBlock>>) { pin = 1 }
 
-fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
-
-LetDecl ::= OuterAttr* let TopPat TypeAscription? [ '=' AnyExpr LetElseBranch? ] ';' {
+fake ExprStmt ::= OuterAttr* AnyExpr ';'? {
   extends = Stmt
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+LetDecl ::= OuterAttr* let TopPat TypeAscription? [ '=' AnyExpr LetElseBranch? ] ';' {
   pin = "let"
+  name = "statement"
+  extends = Stmt
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 LetElseBranch ::= else SimpleBlock
 
-EmptyStmt ::= ';' { extends = Stmt }
+EmptyStmt ::= ';' {
+  extends = Stmt
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // REPL
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // copy of BlockElement without '}'
-private ReplBlockElement ::= (BlockElementMacro | BlockElementMacroCall | ReplExprStmtOrLastExpr | Stmt | Item) {
+private ReplBlockElement ::= (BlockElementMacro | BlockElementMacroCall | ReplExprStmt | Stmt | Item) {
   pin = 1
   recoverWhile = ReplBlockElement_recover
 }
 private ReplBlockElement_recover ::= !(Item_first | Expr_first | let | ';')
 
-ReplExprStmtOrLastExpr ::= StmtModeExpr (&<<eof>> | ExprStmtUpper) {
-  elementType = Expr
+ReplExprStmt ::= StmtModeExpr (&<<eof>> | ExprStmtSemicolon) {
+  elementType = ExprStmt
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
