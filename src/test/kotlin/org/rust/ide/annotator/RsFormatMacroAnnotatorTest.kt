@@ -580,4 +580,22 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             }
         }
     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test no highlighting in cfg-disabled code`() = checkErrors("""
+        $implDisplayI32
+
+        #[cfg(not(intellij_rust))]
+        fn foo() {
+            println!("{}");
+            println!("{0}{1}", 1);
+            println!("{0}{1}{3}", 1, 1);
+            println!("Hello {:1${'$'}}", 1);
+        }
+
+        fn bar() {
+            #[cfg(not(intellij_rust))]
+            println!("{}");
+        }
+    """)
 }
