@@ -81,6 +81,16 @@ class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase(
         base64 = "=0.8.0"  # - Open documentation for `base64@=0.8.0`
     """, "https://docs.rs/base64/%3D0.8.0")
 
+    fun `test quoted crate name`() = doTest("""
+        [dependencies]
+        "foo" = "1" # - Open documentation for `foo@^1`
+    """, "https://docs.rs/foo/%5E1")
+
+    fun `test invalid crate name`() = doTest("""
+        [dependencies]
+        a.b = "1"
+    """)
+
     private fun doTest(@Language("Toml") source: String, vararg expectedUrls: String) {
         doTestByText(source)
 
