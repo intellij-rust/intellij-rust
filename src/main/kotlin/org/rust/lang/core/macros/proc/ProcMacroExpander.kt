@@ -76,13 +76,14 @@ class ProcMacroExpander(
     ): RsResult<TokenTree.Subtree, ProcMacroExpansionError> {
         val remoteLib = toolchain?.toRemotePath(lib) ?: lib
         val server = server ?: return Err(if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled)
-        val envList = env.map { listOf(it.key, toolchain?.toRemotePath(it.value) ?: it.value) }
+        val envMapped = env.mapValues { (_, v) -> toolchain?.toRemotePath(v) ?: v }
         val request = Request.ExpandMacro(
             FlatTree.fromSubtree(macroCallBody),
             macroName,
             attributes?.let { FlatTree.fromSubtree(it) },
             remoteLib,
-            envList
+            envMapped.map { listOf(it.key, it.value) },
+            envMapped["CARGO_MANIFEST_DIR"],
         )
         val response = try {
             server.send(request, timeout)

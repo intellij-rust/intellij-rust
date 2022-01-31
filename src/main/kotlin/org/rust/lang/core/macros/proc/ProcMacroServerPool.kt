@@ -323,13 +323,16 @@ private class ProcMacroServerProcess private constructor(
         fun createAndRun(toolchain: RsToolchainBase, expanderExecutable: Path): ProcMacroServerProcess {
             MACRO_LOG.debug { "Starting proc macro expander process $expanderExecutable" }
 
+            val env = mapOf(
+                "INTELLIJ_RUST" to "1", // Let a proc macro know that it is run from intellij-rust
+                "RA_DONT_COPY_PROC_MACRO_DLL" to "1",
+            )
             val commandLine = toolchain.createGeneralCommandLine(
                 expanderExecutable,
                 workingDir,
                 null,
                 BacktraceMode.NO,
-                // Let a proc macro know that it is ran from intellij-rust
-                EnvironmentVariablesData.create(mapOf("INTELLIJ_RUST" to "1"), true),
+                EnvironmentVariablesData.create(env, true),
                 emptyList(),
                 emulateTerminal = false,
                 withSudo = false,
