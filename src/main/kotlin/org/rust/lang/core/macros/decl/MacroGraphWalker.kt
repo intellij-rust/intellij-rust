@@ -117,6 +117,7 @@ class MacroGraphWalker(
                     Status.Dead
                 }
             }
+            else -> Unit
         }
         if (status == Status.Active && builder.eof()) {
             status = Status.Finished

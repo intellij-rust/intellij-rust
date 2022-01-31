@@ -41,7 +41,10 @@ fun Project.showBalloon(
     action: AnAction? = null,
     listener: NotificationListener? = null
 ) {
-    val notification = RsNotifications.pluginNotifications().createNotification(title, content, type, listener)
+    val notification = RsNotifications.pluginNotifications().createNotification(title, content, type)
+    if (listener != null) {
+        notification.setListener(listener)
+    }
     if (action != null) {
         notification.addAction(action)
     }

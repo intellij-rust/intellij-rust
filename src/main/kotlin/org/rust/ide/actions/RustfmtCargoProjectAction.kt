@@ -5,7 +5,6 @@
 
 package org.rust.ide.actions
 
-import com.intellij.execution.ExecutionException
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtil
@@ -18,6 +17,7 @@ import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocumentsAsTheyAre
+import org.rust.stdext.unwrapOrElse
 
 class RustfmtCargoProjectAction : DumbAwareAction() {
 
@@ -29,16 +29,15 @@ class RustfmtCargoProjectAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (cargoProject, rustfmt) = getContext(e) ?: return
         saveAllDocumentsAsTheyAre(reformatLater = false)
-        try {
-            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
-            rustfmt.reformatCargoProject(cargoProject)
-            val rootDir = cargoProject.rootDir ?: return
-            // We want to refresh file synchronously only in unit test to get new text right after `reformat` call
-            VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, rootDir)
-        } catch (e: ExecutionException) {
+        if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
+        rustfmt.reformatCargoProject(cargoProject).unwrapOrElse {
             // Just easy way to know that something wrong happened
-            if (isUnitTestMode) throw e
+            if (isUnitTestMode) throw it
+            return
         }
+        val rootDir = cargoProject.rootDir ?: return
+        // We want to refresh file synchronously only in unit test to get new text right after `reformat` call
+        VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, rootDir)
     }
 
     private fun getContext(e: AnActionEvent): Pair<CargoProject, Rustfmt>? {

@@ -86,7 +86,7 @@ class RsExtractStructFieldsProcessor(
 
         for (occurrence in occurrences) {
             if (occurrence.reference?.resolve() == null) {
-                RsImportHelper.importElements(occurrence, setOf(inserted))
+                RsImportHelper.importElement(occurrence, inserted)
             }
         }
 

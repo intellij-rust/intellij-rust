@@ -36,6 +36,8 @@ import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
 
 val IS_NEW_RESOLVE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.resolve.new.engine")
+
+@Suppress("unused")
 val Project.isNewResolveEnabled: Boolean
     get() = IS_NEW_RESOLVE_ENABLED_KEY.asBoolean()
 

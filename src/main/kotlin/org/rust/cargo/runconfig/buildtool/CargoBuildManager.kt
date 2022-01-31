@@ -15,10 +15,11 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -110,7 +111,7 @@ object CargoBuildManager {
             buildId = buildId,
             parentId = buildId
         )) {
-            val buildProgressListener = ServiceManager.getService(project, BuildViewManager::class.java)
+            val buildProgressListener = project.service<BuildViewManager>()
             if (!isHeadlessEnvironment) {
                 @Suppress("UsePropertyAccessSyntax")
                 val buildToolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow()
@@ -287,7 +288,7 @@ object CargoBuildManager {
 
     private fun buildNotificationMessage(message: String, details: String?, time: Long): String {
         var notificationContent = message + if (details == null) "" else " with $details"
-        if (time > 0) notificationContent += " in " + StringUtil.formatDuration(time, " ")
+        if (time > 0) notificationContent += " in " + NlsMessages.formatDuration(time)
         return notificationContent
     }
 

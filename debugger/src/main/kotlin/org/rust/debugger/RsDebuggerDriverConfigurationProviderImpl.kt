@@ -17,19 +17,25 @@ class RsDebuggerDriverConfigurationProviderImpl : RsDebuggerDriverConfigurationP
         @Suppress("MoveVariableDeclarationIntoWhen")
         val lldbStatus = RsDebuggerToolchainService.getInstance().getLLDBStatus()
         return when (lldbStatus) {
-            is LLDBStatus.Binaries -> RsLLDBDriverConfiguration(lldbStatus, isElevated)
+            LLDBStatus.Bundled -> RsLLDBDriverConfiguration(isElevated)
+            is LLDBStatus.Binaries -> RsCustomBinariesLLDBDriverConfiguration(lldbStatus, isElevated)
             else -> null
         }
     }
 }
 
-private class RsLLDBDriverConfiguration(
-    private val binaries: LLDBStatus.Binaries,
+private open class RsLLDBDriverConfiguration(
     private val isElevated: Boolean
 ) : LLDBDriverConfiguration() {
+    override fun isElevated(): Boolean = isElevated
+}
+
+private class RsCustomBinariesLLDBDriverConfiguration(
+    private val binaries: LLDBStatus.Binaries,
+    isElevated: Boolean
+) : RsLLDBDriverConfiguration(isElevated) {
     override fun getDriverName(): String = "Rust LLDB"
     override fun useSTLRenderers(): Boolean = false
     override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile
     override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile
-    override fun isElevated(): Boolean = isElevated
 }

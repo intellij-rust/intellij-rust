@@ -19,6 +19,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.stdext.unwrapOrThrow
 import java.io.File
 import javax.swing.Icon
 
@@ -45,7 +46,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
 
         val name = project.name.replace(' ', '_')
         val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
-            cargo.makeProject(project, module, baseDir, name, template)
+            cargo.makeProject(project, module, baseDir, name, template).unwrapOrThrow() // TODO throw? really??
         }
 
         project.rustSettings.modify {

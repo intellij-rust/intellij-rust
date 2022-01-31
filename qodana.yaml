@@ -5,3 +5,5 @@ exclude:
     - name: UnstableApiUsage
     - name: UnstableTypeUsedInSignature
     - name: IncompleteDestructuring
+    - name: KDocUnresolvedReference
+    - name: DialogTitleCapitalization

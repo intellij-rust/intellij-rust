@@ -99,7 +99,7 @@ object RsAddFmtStringArgumentPopup {
     }
 }
 
-abstract class RsAddFmtStringArgumentEditorTextFieldBase(
+class RsAddFmtStringArgumentEditorTextField(
     project: Project,
     document: Document
 ) : EditorTextField(document, project, RsFileType, false, true) {
@@ -115,16 +115,17 @@ abstract class RsAddFmtStringArgumentEditorTextFieldBase(
         return editor
     }
 
-    @Synchronized
-    override fun removeKeyListener(l: KeyListener?) {
-        super.removeKeyListener(l)
-        editor?.contentComponent?.removeKeyListener(l)
-    }
-
-    protected fun setUpEditorComponent(editor: Editor) {
+    override fun onEditorAdded(editor: Editor) {
+        super.onEditorAdded(editor)
         for (listener in keyListeners) {
             editor.contentComponent.addKeyListener(listener)
         }
         editor.contentComponent.focusTraversalKeysEnabled = false
+    }
+
+    @Synchronized
+    override fun removeKeyListener(l: KeyListener?) {
+        super.removeKeyListener(l)
+        editor?.contentComponent?.removeKeyListener(l)
     }
 }

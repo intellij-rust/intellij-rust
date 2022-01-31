@@ -106,7 +106,7 @@ class ChangeReturnTypeFix(
             }
 
             val retExpr = when (owner) {
-                is RsFunction -> owner.block?.expr
+                is RsFunction -> owner.block?.expandedTailExpr
                 is RsLambdaExpr -> owner.expr
                 else -> return null
             }

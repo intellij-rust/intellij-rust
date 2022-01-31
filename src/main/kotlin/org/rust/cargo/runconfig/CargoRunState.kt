@@ -6,7 +6,7 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.psi.search.ExecutionSearchScopes
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoConsoleBuilder
 
@@ -16,7 +16,7 @@ class CargoRunState(
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CargoRunStateBase(environment, runConfiguration, config) {
     init {
-        val scope = GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
+        val scope = ExecutionSearchScopes.executionScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }

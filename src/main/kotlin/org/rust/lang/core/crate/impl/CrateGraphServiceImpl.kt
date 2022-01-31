@@ -44,7 +44,7 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
     }
 
     private val crateGraph: CrateGraph by CachedValueDelegate {
-        val result = buildCrateGraph(project, project.cargoProjects.allProjects)
+        val result = buildCrateGraph(project.cargoProjects.allProjects)
         CachedValueProvider.Result(result, cargoProjectsModTracker, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
     }
 
@@ -73,8 +73,8 @@ private data class CrateGraph(
 
 private val LOG: Logger = logger<CrateGraphServiceImpl>()
 
-private fun buildCrateGraph(project: Project, cargoProjects: Collection<CargoProject>): CrateGraph {
-    val builder = CrateGraphBuilder(project)
+private fun buildCrateGraph(cargoProjects: Collection<CargoProject>): CrateGraph {
+    val builder = CrateGraphBuilder()
     for (cargoProject in cargoProjects) {
         val workspace = cargoProject.workspace ?: continue
         for (pkg in workspace.packages) {
@@ -89,7 +89,7 @@ private fun buildCrateGraph(project: Project, cargoProjects: Collection<CargoPro
     return builder.build()
 }
 
-private class CrateGraphBuilder(val project: Project) {
+private class CrateGraphBuilder {
     private val states = hashMapOf<Path, NodeState>()
     private val topSortedCrates = mutableListOf<CargoBasedCrate>()
 

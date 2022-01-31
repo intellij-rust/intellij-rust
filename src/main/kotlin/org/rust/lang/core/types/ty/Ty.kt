@@ -10,7 +10,6 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -79,10 +78,6 @@ enum class Mutability {
 
 fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.typeParameterByName(name)
-}
-
-fun Ty.getConstParameter(name: String): CtConstParameter? {
-    return typeParameterValues.constParameterByName(name)
 }
 
 val Ty.isSelf: Boolean

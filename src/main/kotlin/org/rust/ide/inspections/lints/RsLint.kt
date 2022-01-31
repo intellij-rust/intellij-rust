@@ -46,13 +46,11 @@ enum class RsLint(
         .filterIsInstance<RsDocAndAttributeOwner>()
         .flatMap { it.queryAttributes.metaItems.toList().asReversed().asSequence() }
         .filter { it.metaItemArgs?.metaItemList.orEmpty().any { item -> item.id == id || item.id in groupIds } }
-        .mapNotNull { it.name?.let { name -> RsLintLevel.valueForId(name) } }
-        .firstOrNull()
+        .firstNotNullOfOrNull { it.name?.let { name -> RsLintLevel.valueForId(name) } }
 
     private fun superModsLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsMod>()
         .lastOrNull()
         ?.superMods
-        ?.mapNotNull { explicitLevel(it) }
-        ?.firstOrNull()
+        ?.firstNotNullOfOrNull { explicitLevel(it) }
 }

@@ -683,7 +683,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         impl<T> Foo<T> for Bar where /*caret*/
     """)
 
-    fun `test if|match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
             /*caret*/
         }
@@ -693,7 +693,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test if|match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/
         }
@@ -703,7 +703,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test if|match in let statement with semicolon`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement with semicolon`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/;
         }
@@ -713,7 +713,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test if|match in expression`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in expression`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
             let x = 1 + /*caret*/
         }
@@ -723,7 +723,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test no if|match after path segment`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
+    fun `test no if or match after path segment`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
         struct Foo;
 
         fn foo() {
@@ -731,7 +731,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test no if|match out of function`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
+    fun `test no if or match out of function`() = checkNotContainsCompletion(CONDITION_KEYWORDS, """
         const FOO: &str = /*caret*/
     """)
 

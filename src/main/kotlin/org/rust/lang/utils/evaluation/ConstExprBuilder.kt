@@ -52,7 +52,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
         return when (expr) {
             is RsLitExpr -> makeLeafValue(expr)
             is RsParenExpr -> build(expr.expr, depth + 1)
-            is RsBlockExpr -> build(expr.block.expr, depth + 1)
+            is RsBlockExpr -> build(expr.block.expandedTailExpr, depth + 1)
             is RsPathExpr -> {
                 val element = resolver?.invoke(expr)
 

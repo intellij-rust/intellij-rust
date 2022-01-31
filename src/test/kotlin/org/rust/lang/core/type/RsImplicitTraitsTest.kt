@@ -102,12 +102,12 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                             //^ Sized
     """)
 
-    fun `test type parameter with ?Sized bound is not Sized`() = doTest("""
+    fun `test type parameter with qSized bound is not Sized`() = doTest("""
         fn foo<T: ?Sized>() -> Box<T> { unimplemented!() }
                                  //^ !Sized
     """)
 
-    fun `test type parameter with ?Sized bound is not Sized 2`() = doTest("""
+    fun `test type parameter with qSized bound is not Sized 2`() = doTest("""
         fn foo<T>() -> Box<T> where T: ?Sized { unimplemented!() }
                          //^ !Sized
     """)
@@ -124,7 +124,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }             //^ Sized
     """)
 
-    fun `test Self is ?Sized by default`() = doTest("""
+    fun `test Self is qSized by default`() = doTest("""
         trait Foo {
             fn foo(self: Self);
                         //^ !Sized

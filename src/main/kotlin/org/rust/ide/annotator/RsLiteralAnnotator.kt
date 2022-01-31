@@ -35,9 +35,7 @@ class RsLiteralAnnotator : AnnotatorBase() {
                     holder.newAnnotation(HighlightSeverity.ERROR, message).create()
                 }
             }
-
-            is RsLiteralKind.Boolean -> {
-            }
+            else -> Unit
         }
 
         // Check char literal length

@@ -134,7 +134,7 @@ private class FlatTreeBuilder {
                 is TokenTree.Leaf.Punct -> {
                     val idx = this.punct.size() / 3
                     this.punct.add(child.id)
-                    this.punct.add(child.char[0].toInt())
+                    this.punct.add(child.char[0].code)
                     this.punct.add(when (child.spacing) {
                         Spacing.Alone -> 0
                         Spacing.Joint -> 1

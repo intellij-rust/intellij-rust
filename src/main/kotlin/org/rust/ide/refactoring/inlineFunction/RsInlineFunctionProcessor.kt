@@ -153,9 +153,9 @@ class RsInlineFunctionProcessor(
 
         fun checkIfLoopCondition(fn: RsFunction, element: PsiElement): Boolean {
             val block = fn.block!!
-            val statements = block.stmtList
+            val (statements, tailExpr) = block.expandedStmtsAndTailExpr
 
-            val hasStatements = when (block.expr) {
+            val hasStatements = when (tailExpr) {
                 null -> statements.size > 1 ||
                     statements.size == 1 && statements[0].descendantsOfType<RsRetExpr>().isEmpty()
                 else -> statements.size > 0
@@ -429,7 +429,7 @@ class RsInlineFunctionProcessor(
     }
 
     private fun replaceLastExprToStatement(body: RsBlock) {
-        val expr = body.expr ?: return
+        val expr = body.expandedTailExpr ?: return
         val text = buildString {
             if (expr !is RsRetExpr) append("return ")
             append(expr.text)
@@ -437,7 +437,7 @@ class RsInlineFunctionProcessor(
         }
 
         val stmt = factory.createStatement(text)
-        expr.replace(stmt)
+        expr.parent.replace(stmt)
     }
 
     private fun PsiElement.addLeftSibling(element: PsiElement) {

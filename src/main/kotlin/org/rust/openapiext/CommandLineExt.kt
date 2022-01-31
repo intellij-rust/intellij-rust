@@ -5,7 +5,6 @@
 
 package org.rust.openapiext
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ElevationService
@@ -19,6 +18,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
 import org.rust.cargo.runconfig.RsCapturingProcessHandler
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 
 private val LOG: Logger = Logger.getInstance("org.rust.openapiext.CommandLineExt")
@@ -36,32 +38,29 @@ fun GeneralCommandLine(path: Path, withSudo: Boolean = false, vararg args: Strin
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int?): ProcessOutput? {
-    val output = try {
-        val handler = RsCapturingProcessHandler(this)
-        LOG.info("Executing `$commandLineString`")
-        handler.runProcessWithGlobalProgress(timeoutInMilliseconds)
-    } catch (e: ExecutionException) {
-        LOG.warn("Failed to run executable", e)
+    LOG.info("Executing `$commandLineString`")
+    val handler = RsCapturingProcessHandler.startProcess(this).unwrapOrElse {
+        LOG.warn("Failed to run executable", it)
         return null
     }
+    val output = handler.runProcessWithGlobalProgress(timeoutInMilliseconds)
 
     if (!output.isSuccess) {
-        LOG.warn(errorMessage(this, output))
+        LOG.warn(RsProcessExecutionException.errorMessage(commandLineString, output))
     }
 
     return output
 }
 
-@Throws(ExecutionException::class)
 fun GeneralCommandLine.execute(
     owner: Disposable,
-    ignoreExitCode: Boolean = true,
     stdIn: ByteArray? = null,
-    runner: CapturingProcessHandler.() -> ProcessOutput = { runProcessWithGlobalProgress(null) },
+    runner: CapturingProcessHandler.() -> ProcessOutput = { runProcessWithGlobalProgress(timeoutInMilliseconds = null) },
     listener: ProcessListener? = null
-): ProcessOutput {
+): RsProcessResult<ProcessOutput> {
 
-    val handler = RsCapturingProcessHandler(this) // The OS process is started here
+    val handler = RsCapturingProcessHandler.startProcess(this) // The OS process is started here
+        .unwrapOrElse { return Err(RsProcessExecutionException.Start(commandLineString, it)) }
 
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
@@ -87,36 +86,29 @@ fun GeneralCommandLine.execute(
         // On the one hand, this seems fishy,
         // on the other hand, this is isomorphic
         // to the scenario where cargoKiller triggers.
-        if (ignoreExitCode) {
-            return ProcessOutput().apply { setCancelled() }
-        } else {
-            throw ExecutionException("Command failed to start")
-        }
+        val output = ProcessOutput().apply { setCancelled() }
+        return Err(RsProcessExecutionException.Canceled(commandLineString, output, "Command failed to start"))
     }
 
     listener?.let { handler.addProcessListener(it) }
 
-    if (stdIn != null) {
-        handler.processInput.use { it.write(stdIn) }
-    }
-
     val output = try {
+        if (stdIn != null) {
+            handler.processInput.use { it.write(stdIn) }
+        }
+
         handler.runner()
     } finally {
         Disposer.dispose(cargoKiller)
     }
-    if (!ignoreExitCode && output.exitCode != 0) {
-        throw ExecutionException(errorMessage(this, output))
-    }
-    return output
-}
 
-private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String = """
-        |Execution failed (exit code ${output.exitCode}).
-        |${commandLine.commandLineString}
-        |stdout : ${output.stdout}
-        |stderr : ${output.stderr}
-    """.trimMargin()
+    return when {
+        output.isCancelled -> Err(RsProcessExecutionException.Canceled(commandLineString, output))
+        output.isTimeout -> Err(RsProcessExecutionException.Timeout(commandLineString, output))
+        output.exitCode != 0 -> Err(RsProcessExecutionException.ProcessAborted(commandLineString, output))
+        else -> Ok(output)
+    }
+}
 
 private fun CapturingProcessHandler.runProcessWithGlobalProgress(timeoutInMilliseconds: Int? = null): ProcessOutput {
     return runProcess(ProgressManager.getGlobalProgressIndicator(), timeoutInMilliseconds)

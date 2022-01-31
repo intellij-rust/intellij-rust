@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.dfa
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ScopeTree
@@ -56,7 +55,7 @@ sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
             is RsForExpr -> "FOR"
             is RsMatchExpr -> "MATCH"
             is RsLambdaExpr -> "CLOSURE"
-            is RsExprStmt -> expr.cfgText() + ";"
+            is RsExprStmt -> outerAttrList.joinToString(postfix = " ") { it.text } + expr.cfgText() + ";"
             else -> this.text
         }
 }
@@ -121,7 +120,7 @@ class ControlFlowGraph private constructor(
             val unexecutedTailExprs = unexecutedElements
                 .filterIsInstance<RsBlock>()
                 .mapNotNull { block ->
-                    block.expr?.takeIf { expr ->
+                    block.expandedTailExpr?.takeIf { expr ->
                         when (expr) {
                             is RsMacroExpr -> expr.macroCall in unexecutedElements
                             else -> expr in unexecutedElements
@@ -154,7 +153,7 @@ class ControlFlowGraph private constructor(
                 // we should check if it is really unreachable or just not fully executed
                 val parentBlock = unexecuted.ancestorStrict<RsBlock>() ?: return false
                 val blockStmts = parentBlock.stmtList.takeIf { it.isNotEmpty() } ?: return false
-                val blockTailExpr = parentBlock.expr
+                val blockTailExpr = parentBlock.expandedTailExpr
                 val index = blockStmts.indexOf(unexecuted)
                 return when {
                     index >= 1 -> {
@@ -228,23 +227,97 @@ sealed class ExitPoint {
     class TryExpr(val e: RsExpr) : ExitPoint() // `?` or `try!`
     class DivergingExpr(val e: RsExpr) : ExitPoint()
     class TailExpr(val e: RsExpr) : ExitPoint()
-    class TailStatement(val stmt: RsExprStmt) : ExitPoint()
+
+    /**
+     * ```
+     * fn foo() -> i32 {
+     *     0; // invalid tail statement
+     * }
+     * ```
+     *
+     * This is not a real exit point. Used in [org.rust.ide.inspections.RsExtraSemicolonInspection]
+     */
+    class InvalidTailStatement(val stmt: RsExprStmt) : ExitPoint()
 
     companion object {
-        fun process(fn: PsiElement?, sink: (ExitPoint) -> Unit) {
-            fn?.acceptChildren(ExitPointVisitor(sink))
+        fun process(fn: RsFunctionOrLambda, sink: (ExitPoint) -> Unit) {
+            when (fn) {
+                is RsFunction -> process(fn.block ?: return, sink)
+                is RsLambdaExpr -> when (val expr = fn.expr ?: return) {
+                    is RsBlockExpr -> process(expr.block, sink)
+                    else -> processTailExpr(expr, sink)
+                }
+            }
+        }
+
+        fun process(block: RsBlock, sink: (ExitPoint) -> Unit) {
+            block.acceptChildren(ExitPointVisitor(sink))
+            processBlockTailExprs(block, sink)
+        }
+
+        private fun processBlockTailExprs(block: RsBlock, sink: (ExitPoint) -> Unit) {
+            val (stmts, tailExpr) = block.expandedStmtsAndTailExpr
+            if (tailExpr != null) {
+                processTailExpr(tailExpr, sink)
+            } else {
+                val lastStmt = stmts.lastOrNull()
+                if (lastStmt is RsExprStmt && lastStmt.hasSemicolon && lastStmt.expr.type != TyNever) {
+                    sink(InvalidTailStatement(lastStmt))
+                }
+            }
+        }
+
+        private fun processTailExpr(expr: RsExpr, sink: (ExitPoint) -> Unit) {
+            when (expr) {
+                is RsBlockExpr -> {
+                    if (expr.isTry || expr.isAsync) {
+                        sink(TailExpr(expr))
+                        return
+                    }
+                    val label = expr.labelDecl?.name
+                    if (label != null) {
+                        expr.processBreakExprs(label, true) {
+                            sink(TailExpr(it))
+                        }
+                    }
+                    processBlockTailExprs(expr.block, sink)
+                }
+                is RsIfExpr -> {
+                    val ifBlock = expr.block
+                    if (ifBlock != null) {
+                        processBlockTailExprs(ifBlock, sink)
+                    }
+                    val elseBranch = expr.elseBranch ?: return
+                    val elseBranchBlock = elseBranch.block
+                    if (elseBranchBlock != null) {
+                        processBlockTailExprs(elseBranchBlock, sink)
+                    }
+                    val elseIf = elseBranch.ifExpr
+                    if (elseIf != null) {
+                        processTailExpr(elseIf, sink)
+                    }
+                }
+                is RsMatchExpr -> {
+                    for (arm in expr.matchBody?.matchArmList.orEmpty()) {
+                        val armExpr = arm.expr ?: continue
+                        processTailExpr(armExpr, sink)
+                    }
+                }
+                is RsLoopExpr -> {
+                    expr.processBreakExprs(expr.labelDecl?.name, false) {
+                        sink(TailExpr(it))
+                    }
+                }
+                else -> sink(TailExpr(expr))
+            }
         }
     }
 }
 
 private class ExitPointVisitor(
     private val sink: (ExitPoint) -> Unit
-) : RsVisitor() {
+) : RsRecursiveVisitor() {
     var inTry = 0
-    var inEndLoop = 0
-    var outerLoopLabel: String? = null
-
-    override fun visitElement(element: RsElement) = element.acceptChildren(this)
 
     override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) = Unit
     override fun visitFunction(function: RsFunction) = Unit
@@ -286,71 +359,6 @@ private class ExitPointVisitor(
         super.visitDotExpr(dotExpr)
         dotExpr.markNeverTypeAsExit(sink)
     }
-
-    override fun visitBreakExpr(breakExpr: RsBreakExpr) {
-        when (inEndLoop) {
-            0 -> return
-            1 -> sink(ExitPoint.TailExpr(breakExpr))
-            else -> {
-                val label = breakExpr.label ?: return
-                if (label.referenceName == outerLoopLabel) {
-                    sink(ExitPoint.TailExpr(breakExpr))
-                }
-            }
-        }
-    }
-
-    override fun visitExpr(expr: RsExpr) {
-        when (expr) {
-            is RsIfExpr,
-            is RsBlockExpr,
-            is RsMatchExpr -> expr.acceptChildren(this)
-            is RsLoopExpr ->
-                if (expr.isInTailPosition || inEndLoop >= 1) {
-                    if (inEndLoop == 0) outerLoopLabel = expr.labelDecl?.name
-                    inEndLoop += 1
-                    expr.acceptChildren(this)
-                    inEndLoop -= 1
-                    if (inEndLoop == 0) outerLoopLabel = null
-                } else {
-                    expr.acceptChildren(this)
-                }
-            else -> {
-                if (expr.isInTailPosition) sink(ExitPoint.TailExpr(expr)) else expr.acceptChildren(this)
-            }
-        }
-    }
-
-    override fun visitExprStmt(exprStmt: RsExprStmt) {
-        exprStmt.acceptChildren(this)
-        val block = exprStmt.parent as? RsBlock ?: return
-        if (block.expr != null) return
-        if (block.stmtList.lastOrNull() != exprStmt) return
-
-        val parent = block.parent
-        if (isTailStatement(parent, exprStmt) && inEndLoop == 0) {
-            sink(ExitPoint.TailStatement(exprStmt))
-        }
-    }
-
-    private fun isTailStatement(parent: PsiElement?, exprStmt: RsExprStmt) =
-        (parent is RsFunction || parent is RsExpr && parent.isInTailPosition) && exprStmt.expr.type != TyNever
-
-    private val RsExpr.isInTailPosition: Boolean
-        get() {
-            for (ancestor in ancestors) {
-                when (ancestor) {
-                    is RsFunction, is RsLambdaExpr -> return true
-                    is RsStmt, is RsCondition, is RsMatchArmGuard, is RsPat, is RsMacroArgument -> return false
-                    else -> {
-                        val parent = ancestor.parent
-                        if ((ancestor is RsExpr && parent is RsMatchExpr) || parent is RsLoopExpr)
-                            return false
-                    }
-                }
-            }
-            return false
-        }
 }
 
 private fun RsExpr.markNeverTypeAsExit(sink: (ExitPoint) -> Unit) {

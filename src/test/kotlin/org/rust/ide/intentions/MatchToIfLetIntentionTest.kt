@@ -573,7 +573,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """)
 
-    fun `test multiple if let pattern with leading |`() = doAvailableTest("""
+    fun `test multiple if let pattern with a leading vertical bar`() = doAvailableTest("""
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
             /*caret*/match v {

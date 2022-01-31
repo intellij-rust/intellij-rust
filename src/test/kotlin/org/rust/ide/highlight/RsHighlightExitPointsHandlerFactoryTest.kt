@@ -7,6 +7,7 @@ package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
@@ -70,6 +71,28 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test highlight correct cfg block with an arrow`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(intellij_rust)]
+            { 0 }
+            #[cfg(not(intellij_rust))]
+            { 1 }
+        }
+        fn main() {}
+    """, "0")
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test highlight correct cfg block with an arrow reverse order`() = doTest("""
+        fn foo() /*caret*/-> u8 {
+            #[cfg(not(intellij_rust))]
+            { 0 }
+            #[cfg(intellij_rust)]
+            { 1 }
+        }
+        fn main() {}
+    """, "1")
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test highlight try macro as return`() = doTest("""
         fn main() {
@@ -120,7 +143,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return", "s.diverge()")
 
-    fun `test highlight ? operator as return`() = doTest("""
+    fun `test highlight question mark operator as return`() = doTest("""
         fn main() {
             if true {
                 Err(())?
@@ -129,7 +152,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "?", "return 0")
 
-    fun `test highlight ? operator as return with caret at ?`() = doTest("""
+    fun `test highlight question mark operator as return with caret at question mark`() = doTest("""
         fn main() {
             if true {
                 Err(())?/*caret*/
@@ -304,7 +327,22 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "2", "3", "4", "5")
 
-    fun `test no highlight for ? in try `() = doTest("""
+    fun `test highlight tail stmt block with break as return`() = doTest("""
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            'foo: {
+                if true {
+                    break 'foo 2;
+                }
+
+                3
+            }
+        }
+    """, "break 'foo 2", "return 1", "3")
+
+    fun `test no highlight for question mark in try`() = doTest("""
         fn main(){
             let a = try {
                 Err(())?;
@@ -314,7 +352,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 0", "return 1")
 
-    fun `test highlight nothing on ? in try `() = doTest("""
+    fun `test highlight nothing on question mark in try`() = doTest("""
         fn main(){
             let a = try {
                 Err(())?/*caret*/;
@@ -355,7 +393,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     """, "?", "return 0")
 
 
-    fun `test ? in macro`() = doTest("""
+    fun `test question mark in macro`() = doTest("""
         fn main(){
             macrocall![ ?/*caret*/ ];
             return 0;

@@ -9,10 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.skipParens
+import org.rust.lang.core.psi.ext.*
 
 class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
@@ -65,7 +62,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     private object RsBlockExprHandler : RsElementHandler<RsBlockExpr> {
         override fun accepts(e: PsiElement): Boolean =
-            e is RsBlockExpr && (e.parent is RsBlock || e.parent is RsLetDecl)
+            e is RsBlockExpr && (e.isTailExpr || e.parent is RsLetDecl)
 
         override fun elementInfo(e: RsBlockExpr): String {
             return buildString {

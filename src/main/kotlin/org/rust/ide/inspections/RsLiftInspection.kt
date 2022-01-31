@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.arms
+import org.rust.lang.core.psi.ext.hasSemicolon
 import org.rust.openapiext.Testmark
 
 class RsLiftInspection : RsLocalInspectionTool() {
@@ -57,7 +58,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
             val foldableReturns = expr.getFoldableReturns() ?: return
             val factory = RsPsiFactory(project)
             for (foldableReturn in foldableReturns) {
-                foldableReturn.elementToReplace.replace(factory.createExpression(foldableReturn.expr.text))
+                foldableReturn.elementToReplace.replaceWithTailExpr(factory.createExpression(foldableReturn.expr.text))
             }
             val parent = expr.parent
             if (parent !is RsRetExpr) {
@@ -82,6 +83,17 @@ class RsLiftInspection : RsLocalInspectionTool() {
     }
 }
 
+private fun RsElement.replaceWithTailExpr(expr: RsExpr) {
+    when (this) {
+        is RsExpr -> replace(expr)
+        is RsStmt -> {
+            val newStmt = RsPsiFactory(project).tryCreateExprStmtWithoutSemicolon("()")!!
+            newStmt.expr.replace(expr)
+            replace(newStmt)
+        }
+    }
+}
+
 private data class FoldableElement(val expr: RsExpr, val elementToReplace: RsElement)
 
 private val RsExpr.hasFoldableReturns: Boolean get() = getFoldableReturns() != null
@@ -96,9 +108,13 @@ private fun RsExpr.getFoldableReturns(): List<FoldableElement>? {
                 result += FoldableElement(expr, this)
             }
             is RsExprStmt -> {
-                val retExpr = expr as? RsRetExpr ?: return false
-                val expr = retExpr.expr ?: return false
-                result += FoldableElement(expr, this)
+                if (hasSemicolon) {
+                    val retExpr = expr as? RsRetExpr ?: return false
+                    val expr = retExpr.expr ?: return false
+                    result += FoldableElement(expr, this)
+                } else {
+                    if (!expr.collectFoldableReturns()) return false
+                }
             }
             is RsBlock -> {
                 val lastChild = children.lastOrNull() as? RsElement ?: return false

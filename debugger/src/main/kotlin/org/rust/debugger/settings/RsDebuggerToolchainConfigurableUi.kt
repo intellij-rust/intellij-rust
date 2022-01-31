@@ -64,7 +64,8 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
         @Suppress("MoveVariableDeclarationIntoWhen")
         val status = RsDebuggerToolchainService.getInstance().getLLDBStatus(lldbPathField.text)
         val (text, isVisible) = when (status) {
-            LLDBStatus.Unavailable -> error("Unreachable")
+            LLDBStatus.Unavailable,
+            LLDBStatus.Bundled -> error("Unreachable")
             LLDBStatus.NeedToDownload -> "Download" to true
             LLDBStatus.NeedToUpdate -> "Update" to true
             is LLDBStatus.Binaries -> "" to false

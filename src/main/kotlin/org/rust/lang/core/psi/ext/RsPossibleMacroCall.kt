@@ -278,13 +278,17 @@ private fun createAttributeHolderPsi(project: Project, text: String, endOfAttrsO
 }
 
 private fun MutableMappedText.appendAttrOrDocComment(attrOrDoc: PsiElement) {
-    if (attrOrDoc is RsDocComment) {
-        appendMapped(attrOrDoc)
-        appendUnmapped("\n")
-    } else if (attrOrDoc is RsMetaItem) {
-        appendAttr(attrOrDoc)
-    } else {
-        error("Unsupported element: $attrOrDoc")
+    when (attrOrDoc) {
+        is RsDocComment -> {
+            appendMapped(attrOrDoc)
+            appendUnmapped("\n")
+        }
+        is RsMetaItem -> {
+            appendAttr(attrOrDoc)
+        }
+        else -> {
+            error("Unsupported element: $attrOrDoc")
+        }
     }
 }
 

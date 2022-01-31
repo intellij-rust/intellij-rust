@@ -136,7 +136,7 @@ private fun insertNewTraitMembers(
 
         if (needToSelect == null) {
             needToSelect = when (addedMember) {
-                is RsFunction -> addedMember.block?.expr
+                is RsFunction -> addedMember.block?.syntaxTailStmt
                 is RsTypeAlias -> addedMember.typeReference
                 is RsConstant -> addedMember.expr
                 else -> error("unreachable")
@@ -167,7 +167,7 @@ private fun simplifyConstExprs(insertedMembers: List<RsAbstractable>) {
                 .mapNotNull { it.expr }
         for (expr in constExprs) {
             if (expr is RsBlockExpr) {
-                val wrappingExpr = expr.block.expr
+                val wrappingExpr = expr.block.singleTailStmt()?.expr
                 if (wrappingExpr != null && (wrappingExpr !is RsPathExpr || expr.parent is RsArrayType)) {
                     expr.replace(wrappingExpr)
                 }

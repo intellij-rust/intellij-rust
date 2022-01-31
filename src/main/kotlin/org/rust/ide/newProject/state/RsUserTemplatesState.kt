@@ -6,9 +6,9 @@
 package org.rust.ide.newProject.state
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "RsUserTemplatesState", storages = [Storage("rust.usertemplates.xml")])
@@ -21,8 +21,7 @@ class RsUserTemplatesState : PersistentStateComponent<RsUserTemplatesState> {
     override fun loadState(state: RsUserTemplatesState) = XmlSerializerUtil.copyBean(state, this)
 
     companion object {
-        val instance: RsUserTemplatesState
-            get() = ServiceManager.getService(RsUserTemplatesState::class.java)
+        fun getInstance(): RsUserTemplatesState = service()
     }
 }
 

@@ -110,7 +110,7 @@ private fun replaceWithConstant(
             val created = factory.createExpression(name)
             val element = it.replace(created) as RsPathExpr
             if (element.path.reference?.resolve() == null) {
-                RsImportHelper.importElements(element, setOf(insertedConstant))
+                RsImportHelper.importElement(element, insertedConstant)
             }
             element
         }

@@ -57,6 +57,9 @@ object RsImportHelper {
         importTypeReferencesFromTys(context, listOf(ty), useAliases, skipUnchangedDefaultTypeArguments)
     }
 
+    fun importElement(context: RsElement, element: RsQualifiedNamedElement) =
+        importElements(context, setOf(element))
+
     fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {
         if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return
         val importContext = ImportContext.from(context.project, context)

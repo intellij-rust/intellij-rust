@@ -171,7 +171,7 @@ private fun completeFunction(
             }
             val reformatted = reformat(element) ?: return@withInsertHandler
 
-            val body = reformatted.block?.expr ?: return@withInsertHandler
+            val body = reformatted.block?.syntaxTailStmt ?: return@withInsertHandler
             runTemplate(body, context.editor)
         }
         .withPresentableText("$shortSignature { ... }")

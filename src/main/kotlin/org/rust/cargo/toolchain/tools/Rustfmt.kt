@@ -5,7 +5,6 @@
 
 package org.rust.cargo.toolchain.tools
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
@@ -20,7 +19,9 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
+import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.buildList
+import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 
 fun RsToolchainBase.rustfmt(): Rustfmt = Rustfmt(this)
@@ -28,13 +29,10 @@ fun RsToolchainBase.rustfmt(): Rustfmt = Rustfmt(this)
 class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
-        return try {
-            createCommandLine(cargoProject, document)
-                ?.execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
-                ?.stdout
-        } catch (e: ExecutionException) {
-            if (isUnitTestMode) throw e else null
-        }
+        return createCommandLine(cargoProject, document)
+            ?.execute(cargoProject.project, stdIn = document.text.toByteArray())
+            ?.unwrapOrElse { if (isUnitTestMode) throw it else return null }
+            ?.stdout
     }
 
     fun createCommandLine(cargoProject: CargoProject, document: Document): GeneralCommandLine? {
@@ -63,17 +61,18 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         return createBaseCommandLine(arguments, cargoProject.workingDirectory)
     }
 
-    @Throws(ExecutionException::class)
     fun reformatCargoProject(
         cargoProject: CargoProject,
         owner: Disposable = cargoProject.project
-    ) {
+    ): RsProcessResult<Unit> {
         val project = cargoProject.project
-        project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
+        return project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
             project.toolchain
                 ?.cargoOrWrapper(cargoProject.workingDirectory)
                 ?.toGeneralCommandLine(project, CargoCommandLine.forProject(cargoProject, "fmt", listOf("--all")))
-                ?.execute(owner, false)
+                ?.execute(owner)
+                ?.map { }
+                ?: Ok(Unit)
         }
     }
 

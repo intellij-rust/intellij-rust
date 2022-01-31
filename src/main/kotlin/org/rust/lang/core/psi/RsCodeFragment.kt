@@ -174,20 +174,12 @@ class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var contex
     : RsCodeFragment(fileViewProvider, RsCodeFragmentElementType.REPL, context, false),
       RsInferenceContextOwner, RsItemsOwner {
 
-    val expandedStmtsAndTailExpr: Pair<List<RsExpandedElement>, RsExpr?>
-        get() {
-            val expandedElements = childrenOfType<RsExpandedElement>()
-            val tailExpr = expandedElements.lastOrNull()?.let { it as? RsExpr }
-            val stmts = when (tailExpr) {
-                null -> expandedElements
-                else -> expandedElements.subList(0, expandedElements.size - 1)
-            }
-            return stmts to tailExpr
-        }
+    val stmtList: List<RsExpandedElement>
+        get() = childrenOfType()
 
     // if multiple elements have same name, then we keep only last among them
     val namedElementsUnique: Map<String, RsNamedElement>
-        get() = expandedStmtsAndTailExpr.first
+        get() = stmtList
             .filterIsInstance<RsNamedElement>()
             .filter { it.name != null }
             .associateBy { it.name!! }

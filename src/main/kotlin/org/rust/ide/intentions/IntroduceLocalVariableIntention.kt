@@ -27,7 +27,6 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
                 val parent = it.parent
                 parent is RsRetExpr
                     || parent is RsExprStmt
-                    || parent is RsBlock && it == parent.expr
                     || parent is RsMatchArm && it == parent.expr
                     || parent is RsLambdaExpr && it == parent.expr
             } as? RsExpr

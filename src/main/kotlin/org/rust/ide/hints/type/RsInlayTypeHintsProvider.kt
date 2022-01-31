@@ -30,7 +30,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("UnstableApiUsage")
-abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHintsProviderBase.Settings> {
+class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
     override val name: String get() = RsBundle.message("settings.rust.inlay.hints.title.types")
@@ -43,6 +43,9 @@ abstract class RsInlayTypeHintsProviderBase : InlayHintsProvider<RsInlayTypeHint
                 let foo = Foo { x: 1, y: "abc", z: true };
             }
             """.trimIndent()
+
+    override val group: InlayGroup
+        get() = InlayGroup.TYPES_GROUP
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
 

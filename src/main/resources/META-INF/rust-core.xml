@@ -3,7 +3,6 @@
 
     <depends>com.intellij.modules.lang</depends>
 
-    <xi:include href="/META-INF/platform-rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -140,6 +139,7 @@
         <!-- Imports -->
 
         <lang.importOptimizer language="Rust" implementationClass="org.rust.ide.refactoring.RsImportOptimizer"/>
+        <referenceImporter implementation="org.rust.ide.inspections.import.RsReferenceImporter"/>
         <autoImportOptionsProvider instance="org.rust.ide.settings.RsAutoImportOptions"/>
 
         <!-- Navigation -->
@@ -1239,6 +1239,8 @@
     </extensionPoints>
 
     <applicationListeners>
+        <listener class="org.rust.ide.security.RsTrustStateListener"
+                  topic="com.intellij.ide.impl.TrustStateListener"/>
         <listener class="org.rust.ide.navigation.goto.RsGoToDeclarationRunningService$Listener"
                   topic="com.intellij.openapi.actionSystem.ex.AnActionListener" />
         <listener class="org.rust.ide.dynamic.RsDynamicPluginListener"

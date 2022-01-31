@@ -552,7 +552,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Bar;
     """ to MacroExpansionMarks.failMatchPatternByExtraInput)
 
-    fun `test match * vs + group pattern`() = doTest("""
+    fun `test match 'asterisk' vs 'plus' group pattern`() = doTest("""
         macro_rules! foo {
             ($ ($ i:ident)+) => (
                 mod plus_matched {}
@@ -570,7 +570,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """ to null)
 
     // TODO should work only on 2018 edition
-    fun `test match * vs ? group pattern`() = doTest(MacroExpansionMarks.questionMarkGroupEnd, """
+    fun `test match 'asterisk' vs 'q' group pattern`() = doTest(MacroExpansionMarks.questionMarkGroupEnd, """
         macro_rules! foo {
             ($ ($ i:ident)?) => (
                 mod question_matched {}
@@ -720,7 +720,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn foo() {}
     """)
 
-    fun `test distinguish between ',)+' and '),*' groups`() = doTest("""
+    fun `test distinguish between comma-ending groups`() = doTest("""
         macro_rules! foo {
             ($($ e:expr,)+) => { fn foo() { $( $ e; )+ } };
             ($($ e:expr),*) => { fn bar() { $( $ e; )* } };
@@ -817,7 +817,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
 
     // There was a problem with "debug" macro related to the fact that we parse macro call
     // with such name as a specific syntax construction
-    fun `test macro with name "debug"`() = doTest("""
+    fun `test macro with name 'debug'`() = doTest("""
         macro_rules! debug {
             ($ t:ty) => { fn foo() -> $ t {} }
         }
@@ -826,7 +826,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() -> i32 {}
     """)
 
-    fun `test macro with name "vec"`() = doTest("""
+    fun `test macro with name 'vec'`() = doTest("""
        macro_rules! vec {
            ($ t:ty) => { fn foo() -> $ t {} }
        }
@@ -836,7 +836,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test standard "vec!"`() {
+    fun `test standard 'vec!'`() {
         val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver
         // BACKCOMPAT: Rust 1.50
         val expansion = if (rustcVersion != null && rustcVersion < "1.51.0".parseSemVer()) {
@@ -914,7 +914,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
 
-    fun `test incorrect "vis" group does not cause OOM`() = doErrorTest("""
+    fun `test incorrect 'vis' group does not cause OOM`() = doErrorTest("""
         // error: repetition matches empty token tree
         macro_rules! foo {
             ($($ p:vis)*) => {}

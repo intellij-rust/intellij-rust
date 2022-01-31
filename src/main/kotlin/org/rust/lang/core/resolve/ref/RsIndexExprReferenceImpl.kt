@@ -11,8 +11,6 @@ import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsIndexExpr
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.invoke
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.implLookupAndKnownItems
 import org.rust.lang.core.types.type

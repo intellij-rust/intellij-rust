@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -56,8 +56,6 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.security.isNewTrustedProjectApiAvailable
-import org.rust.ide.security.whenProjectTrusted
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.TaskResult
@@ -103,21 +101,11 @@ open class CargoProjectsServiceImpl(
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 StartupManager.getInstance(project).runAfterOpened {
-                    GuiUtils.invokeLaterIfNeeded({
+                    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                         initializeToolWindow(project)
-                    }, ModalityState.NON_MODAL)
+                    }
                 }
             })
-        }
-        // BACKCOMPAT: 2021.3. Just declare `com.intellij.ide.impl.TrustStateListener`
-        //  instead of `org.rust.ide.security.RsTrustChangeNotifier`
-        if (isNewTrustedProjectApiAvailable) {
-            @Suppress("LeakingThis")
-            whenProjectTrusted(this) {
-                if (it == project) {
-                    refreshAllProjects()
-                }
-            }
         }
     }
 

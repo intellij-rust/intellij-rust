@@ -3,6 +3,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.prevLeaf
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
@@ -20,12 +21,12 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
                 val conditionValue = condition.expr?.evaluate()?.asBool() ?: return
 
                 val isUsedAsExpression = ifExpr.isUsedAsExpression()
-                val isInsideCascadeIf = ifExpr.parent is RsElseBranch
                 val fix = if (!conditionValue && ifExpr.elseBranch == null) {
+                    val isInsideCascadeIf = ifExpr.isInsideCascadeIf
                     if (isUsedAsExpression && !isInsideCascadeIf) return
                     createDeleteElseBranchFix(ifExpr, isInsideCascadeIf)
                 } else {
-                    SimplifyFix(conditionValue, isUsedAsExpression, isInsideCascadeIf)
+                    SimplifyFix(conditionValue)
                 }
 
                 holder.registerProblem(condition, "Condition is always ''$conditionValue''", fix)
@@ -51,15 +52,12 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
 
 private class SimplifyFix(
     private val conditionValue: Boolean,
-    private val isUsedAsExpression: Boolean,
-    private val isInsideCascadeIf: Boolean,
 ) : LocalQuickFix {
     override fun getFamilyName(): String = name
 
     override fun getName(): String = "Simplify expression"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val factory = RsPsiFactory(project)
         val ifExpr = descriptor.psiElement.ancestorStrict<RsIfExpr>() ?: return
 
         // `if false {} else if ... {} else ...`
@@ -70,44 +68,46 @@ private class SimplifyFix(
             }
         }
 
-        // fn main() {
-        //     if true { 1 } else { 0 }`
-        //     func();
-        // }
-        if (!isUsedAsExpression && ifExpr.parent is RsExprStmt) run {
-            val tailExpr = ifExpr.block?.expr ?: return@run
-            val tailStmt = factory.tryCreateExprStmt(tailExpr.text) ?: return@run
-            tailExpr.replace(tailStmt)
-        }
-
         val branch = (if (conditionValue) ifExpr.block else ifExpr.elseBranch?.block) ?: return
-        val branchFirst = branch.lbrace.getNextNonWhitespaceSibling()!!
-        val branchLast = branch.rbrace.getPrevNonWhitespaceSibling()!!
-        if (isUsedAsExpression) {
-            val canUnwrapBlock = branchFirst == branchLast && !isInsideCascadeIf
-            val replaceWith = when {
-                canUnwrapBlock -> branchFirst
-                isInsideCascadeIf -> branch
-                else -> branch.wrapAsBlockExpr(factory)
-            }
-            val replaced = ifExpr.replace(replaceWith)
+        val replaced = ifExpr.replaceWithBlockContent(branch)
+        if (replaced != null) {
             descriptor.findExistingEditor()?.caretModel?.moveToOffset(replaced.startOffset)
-        } else {
-            val ifStmt = ifExpr.parent as? RsExprStmt ?: ifExpr
-            if (branchFirst != branch.rbrace) {
-                ifStmt.parent.addRangeAfter(branchFirst, branchLast, ifStmt)
-            }
-            ifStmt.delete()
         }
     }
 }
 
-private fun RsIfExpr.isUsedAsExpression(): Boolean =
-    when (val parent = parent) {
-        is RsExprStmt -> false
-        is RsBlock -> this != parent.expr
-        else -> true
+private fun RsIfExpr.isUsedAsExpression(): Boolean = parent !is RsExprStmt
+
+private fun RsIfExpr.replaceWithBlockContent(branch: RsBlock): PsiElement? {
+    val parent = parent
+    val firstStmt = branch.lbrace.getNextNonWhitespaceSibling()!!
+    val lastStmt = branch.rbrace.getPrevNonWhitespaceSibling()!!
+    return if (parent is RsExprStmt) {
+        if (!parent.isTailStmt) {
+            // fn main() {
+            //     if true { 1 } else { 0 }
+            //     func();
+            // }
+            block?.syntaxTailStmt?.addSemicolon()
+        }
+
+        val ifStmt = parent as? RsExprStmt ?: this as RsElement
+        if (firstStmt != branch.rbrace) {
+            ifStmt.parent.addRangeAfter(firstStmt, lastStmt, ifStmt)
+        }
+        ifStmt.delete()
+        return null
+    } else {
+        val replaceWith = when {
+            isInsideCascadeIf -> branch
+            firstStmt == lastStmt && firstStmt is RsExprStmt && !firstStmt.hasSemicolon -> firstStmt.expr
+            else -> branch.wrapAsBlockExpr(RsPsiFactory(project))
+        }
+        replace(replaceWith)
     }
+}
+
+private val RsIfExpr.isInsideCascadeIf get() = parent is RsElseBranch
 
 private fun RsBlock.wrapAsBlockExpr(factory: RsPsiFactory): RsBlockExpr {
     val blockExpr = factory.createBlockExpr("")

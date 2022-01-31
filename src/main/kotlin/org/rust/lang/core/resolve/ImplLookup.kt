@@ -221,6 +221,7 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
                         is RsAbstractableOwner.Impl -> {
                             addAll(owner.impl.bounds)
                         }
+                        else -> Unit
                     }
                 }
             }

@@ -9,9 +9,13 @@ fn main() {
         3
     };
 
+    let const_block = const {
+        123
+    };
+
     match 123 {
         1 => {},
         2 => 'b: { break 'b; },
-        _ => {}
+        _ => const {}
     }
 }

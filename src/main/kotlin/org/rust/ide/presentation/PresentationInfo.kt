@@ -148,4 +148,4 @@ private fun createDeclarationInfo(
 }
 
 private fun PsiElement.offsetIn(owner: PsiElement): Int =
-    ancestors.takeWhile { it != owner }.sumBy { it.startOffsetInParent }
+    ancestors.takeWhile { it != owner }.sumOf { it.startOffsetInParent }

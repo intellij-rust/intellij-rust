@@ -500,7 +500,8 @@ open class RsPsiRenderer(
         val isTry = expr.isTry
         val isUnsafe = expr.isUnsafe
         val isAsync = expr.isAsync
-        val tailExpr = expr.block.expr
+        val isConst = expr.isConst
+        val tailExpr = expr.block.expandedTailExpr
 
         if (isTry) {
             sb.append("try ")
@@ -510,6 +511,9 @@ open class RsPsiRenderer(
         }
         if (isAsync) {
             sb.append("async ")
+        }
+        if (isConst) {
+            sb.append("const ")
         }
 
         if (tailExpr == null) {
@@ -661,13 +665,13 @@ open class PsiSubstitutingPsiRenderer(
     }
 
     private fun regionSubst(lifetime: RsLifetimeParameter?): RsPsiSubstitution.Value<RsLifetime, Nothing>? {
-        return substitutions.mapNotNull { it.regionSubst[lifetime] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.regionSubst[lifetime] }
     }
     private fun constSubst(const: RsConstParameter?): RsPsiSubstitution.Value<RsElement, RsExpr>? {
-        return substitutions.mapNotNull { it.constSubst[const] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.constSubst[const] }
     }
     private fun typeSubst(type: RsTypeParameter?): RsPsiSubstitution.Value<RsPsiSubstitution.TypeValue, RsPsiSubstitution.TypeDefault>? {
-        return substitutions.mapNotNull { it.typeSubst[type] }.firstOrNull()
+        return substitutions.firstNotNullOfOrNull { it.typeSubst[type] }
     }
 }
 

@@ -96,6 +96,7 @@ class RsMacroExpansionHighlightingPass(
         val annotators = createAnnotators()
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
+            @Suppress("DEPRECATION")
             val holder = AnnotationHolderImpl(AnnotationSession(macro.expansion.file), false)
 
             for (element in macro.elementsForHighlighting) {

@@ -5,8 +5,8 @@
 
 package org.rust.ide.template.postfix
 
-class RefmPostfixTemplateTest : RsPostfixTemplateTest(RefmPostfixTemplate(RsPostfixTemplateProvider())) {
-    fun `test simple`() = doTest("""
+class RefmExprPostfixTemplateTest : RsPostfixTemplateTest(RefmExprPostfixTemplate(RsPostfixTemplateProvider())) {
+    fun `test expression`() = doTest("""
         fn main() {
             let mut v = vec![1, 2, 3];
             foo(v.refm/*caret*/);
@@ -20,5 +20,11 @@ class RefmPostfixTemplateTest : RsPostfixTemplateTest(RefmPostfixTemplate(RsPost
         }
 
         fn foo(v: &mut Vec<i32>) {}
+    """)
+
+    fun `test type reference`() = doTest("""
+        fn foo(a: str.refm/*caret*/) {}
+    """, """
+        fn foo(a: &mut str/*caret*/) {}
     """)
 }

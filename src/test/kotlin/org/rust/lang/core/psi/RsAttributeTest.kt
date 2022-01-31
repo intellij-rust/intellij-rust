@@ -222,8 +222,7 @@ class RsAttributeTest : RsTestBase() {
         }
     """, Outer)
 
-    fun `test fn call expr as statement`() = expect<IllegalStateException> {
-        doTest2<RsStmt>("""
+    fun `test fn call expr as statement`() = doTest2<RsStmt>("""
         fn a() {
         }
         fn main() {
@@ -231,10 +230,9 @@ class RsAttributeTest : RsTestBase() {
             a();
           //^
         }
-        """, Outer)
-    }
+    """, Outer)
 
-    fun `test literal expr as statement`() = doTest("""
+    fun `test literal expr as statement`() = doTest2<RsStmt>("""
         fn main() {
             #[outer]
             "Hello Rust!";

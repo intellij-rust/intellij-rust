@@ -288,7 +288,7 @@ private class ProcMacroServerProcess private constructor(
             mark(1)
             val char = read()
             if (char == -1) throw EOFException()
-            if (char == '{'.toInt()) {
+            if (char == '{'.code) {
                 reset()
                 break
             }

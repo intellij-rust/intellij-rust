@@ -36,7 +36,7 @@ private fun inspect(holder: RsProblemsHolder, fn: RsFunction) {
     val retType = fn.retType?.typeReference ?: return
     if (retType.type is TyUnit) return
     ExitPoint.process(fn) { exitPoint ->
-        if (exitPoint is ExitPoint.TailStatement) {
+        if (exitPoint is ExitPoint.InvalidTailStatement) {
             holder.registerProblem(
                 exitPoint.stmt,
                 "Function returns () instead of ${retType.text}",
@@ -47,7 +47,7 @@ private fun inspect(holder: RsProblemsHolder, fn: RsFunction) {
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                         val statement = (descriptor.psiElement as RsExprStmt)
-                        statement.replace(statement.expr)
+                        statement.semicolon?.delete()
                     }
                 }
             )

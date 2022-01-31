@@ -15,6 +15,6 @@ abstract class RsContMixin : RsExprImpl, RsContExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val operator = `continue`
+    override val operator get() = `continue`
 }
 

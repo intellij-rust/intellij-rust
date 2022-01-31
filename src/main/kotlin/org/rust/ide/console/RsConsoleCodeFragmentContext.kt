@@ -13,6 +13,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.expandedTailExpr
 import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.findPrelude
@@ -107,7 +108,7 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
 
             val functionBlock = rsFile.childOfType<RsFunction>()!!.block!!
             val blocks = generateSequence(functionBlock) {
-                (it.expr as? RsBlockExpr)?.block
+                (it.expandedTailExpr as? RsBlockExpr)?.block
             }
             return blocks.drop(commands.size - 1).first()
         }
@@ -126,7 +127,7 @@ class RsConsoleOneCommandContext(codeFragment: RsReplCodeFragment) {
     val containsUseDirective: Boolean
 
     init {
-        val elements = codeFragment.expandedStmtsAndTailExpr.first
+        val elements = codeFragment.stmtList
         command = elements.joinToString("\n") { it.text }
         containsUseDirective = elements.any { it is RsUseItem }
     }

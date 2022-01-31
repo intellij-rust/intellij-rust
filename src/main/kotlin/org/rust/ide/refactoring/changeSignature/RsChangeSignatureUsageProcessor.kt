@@ -89,7 +89,7 @@ class RsChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun registerConflictResolvers(
-        snapshots: ResolveSnapshots,
+        snapshots: MutableList<in ResolveSnapshotProvider.ResolveSnapshot>,
         resolveSnapshotProvider: ResolveSnapshotProvider,
         usages: Array<out UsageInfo>,
         changeInfo: ChangeInfo?

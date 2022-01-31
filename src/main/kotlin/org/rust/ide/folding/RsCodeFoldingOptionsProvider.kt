@@ -9,7 +9,7 @@ import com.intellij.application.options.editor.CodeFoldingOptionsProvider
 import com.intellij.openapi.options.BeanConfigurable
 
 class RsCodeFoldingOptionsProvider :
-    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.instance, "Rust"),
+    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.getInstance(), "Rust"),
     CodeFoldingOptionsProvider {
 
     init {

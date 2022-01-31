@@ -351,7 +351,7 @@ class CFGBuilder(
         if (labelDeclaration != null) {
             withBlockScope(BlockScope(blockExpr, exprExit)) {
                 val stmtsExit = blockExpr.block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
-                val blockExprExit = process(blockExpr.block.expr, stmtsExit)
+                val blockExprExit = process(blockExpr.block.expandedTailExpr, stmtsExit)
                 addContainedEdge(blockExprExit, exprExit)
             }
         } else {

@@ -112,6 +112,33 @@ class RsStubTest : RsTestBase() {
               LIT_EXPR:RsLitExprStub
     """)
 
+    fun `test statements are stubbed inside const body`() = doTest("""
+        const C: i32 = {
+            let a = 1;
+            ;
+            let b = a + 1;
+            b
+        };
+    """, """
+        RsFileStub
+          CONSTANT:RsConstantStub
+            BASE_TYPE:RsBaseTypeStub
+              PATH:RsPathStub
+            BLOCK_EXPR:RsBlockExprStub
+              BLOCK:RsPlaceholderStub
+                LET_DECL:RsLetDeclStub
+                  LIT_EXPR:RsLitExprStub
+                LET_DECL:RsLetDeclStub
+                  BINARY_EXPR:RsPlaceholderStub
+                    PATH_EXPR:RsPlaceholderStub
+                      PATH:RsPathStub
+                    BINARY_OP:RsBinaryOpStub
+                    LIT_EXPR:RsLitExprStub
+                EXPR_STMT:RsExprStmtStub
+                  PATH_EXPR:RsPlaceholderStub
+                    PATH:RsPathStub
+    """)
+
     fun `test literal is stubbed inside array type`() = doTest("""
         type T = [u8; 1];
     """, """
@@ -191,6 +218,98 @@ class RsStubTest : RsTestBase() {
             BLOCK:RsPlaceholderStub
               BLOCK:RsPlaceholderStub
                 STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test intermediate block is not stubbed even if nested block contains items`() = doTest("""
+        fn foo() {
+            let a = {
+                if true {
+                    struct S;
+                } else {
+                    foobar();
+                }
+            };
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              BLOCK:RsPlaceholderStub
+                STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test statements with attributes are not stubbed if has no nested items`() = doTest("""
+        fn foo() {
+            #[cfg(unix)]
+            let a = 1;
+            #[cfg(unix)]
+            let b = { 2 };
+            #[cfg(unix)]
+            {
+                let c = 3;
+            };
+            #[cfg(unix)]
+            { 4 }
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+    """)
+
+    fun `test intermediate statement is stubbed if has attributes and nested block contains items 1`() = doTest("""
+        fn foo() {
+            #[cfg(unix)]
+            let a = {
+                if true {
+                    struct S;
+                } else {
+                    foobar();
+                }
+            };
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              LET_DECL:RsLetDeclStub
+                OUTER_ATTR:RsPlaceholderStub
+                  META_ITEM:RsMetaItemStub
+                    PATH:RsPathStub
+                    META_ITEM_ARGS:RsMetaItemArgsStub
+                      META_ITEM:RsMetaItemStub
+                        PATH:RsPathStub
+                BLOCK:RsPlaceholderStub
+                  STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test intermediate statement is stubbed if has attributes and nested block contains items 2`() = doTest("""
+        fn foo() {
+            #[cfg(unix)]
+            {
+                if true {
+                    struct S;
+                } else {
+                    foobar();
+                }
+            }
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              EXPR_STMT:RsExprStmtStub
+                OUTER_ATTR:RsPlaceholderStub
+                  META_ITEM:RsMetaItemStub
+                    PATH:RsPathStub
+                    META_ITEM_ARGS:RsMetaItemArgsStub
+                      META_ITEM:RsMetaItemStub
+                        PATH:RsPathStub
+                BLOCK:RsPlaceholderStub
+                  STRUCT_ITEM:RsStructItemStub
     """)
 
     fun `test literal is not stubbed inside nested block tail expr`() = doTest("""

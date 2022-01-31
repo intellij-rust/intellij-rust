@@ -67,6 +67,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID
 
     private fun isSupportedPlatform(): Boolean {
+        @Suppress("DEPRECATION", "UnstableApiUsage")
         return when {
             isIdeaUltimate() || isRubyMine() || isGoIde() || isPyCharmPro() -> true
             else -> false

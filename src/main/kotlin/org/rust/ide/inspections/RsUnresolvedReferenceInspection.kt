@@ -11,8 +11,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.inspections.import.AutoImportHintFix
-import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidateBase
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
@@ -119,12 +117,7 @@ private fun createQuickFixes(
 
     val fixes = mutableListOf<LocalQuickFix>()
     if (candidates != null && candidates.isNotEmpty()) {
-        val importFix = if (RsCodeInsightSettings.getInstance().showImportPopup) {
-            AutoImportHintFix(element, context.type, candidates[0].info.usePath, candidates.size > 1)
-        } else {
-            AutoImportFix(element, context.type)
-        }
-        fixes.add(importFix)
+        fixes.add(AutoImportFix(element, context))
 
         if (element is RsPath && context.type == AutoImportFix.Type.GENERAL_PATH && candidates.size == 1) {
             fixes.add(QualifyPathFix(element, candidates[0].info))
