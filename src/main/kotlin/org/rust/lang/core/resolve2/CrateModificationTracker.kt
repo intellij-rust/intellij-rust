@@ -115,10 +115,10 @@ fun isCrateChanged(crate: Crate, defMap: CrateDefMap): Boolean {
         { "isCrateChanged should not be called for crates which are not indexed" }
     )
 
-    return defMap.metaData != CrateMetaData(crate) || defMap.hasAnyMissedFileCreated()
+    return defMap.metaData != CrateMetaData(crate) || defMap.hasAnyMissedFileCreated(crate.project)
 }
 
-private fun CrateDefMap.hasAnyMissedFileCreated(): Boolean {
+private fun CrateDefMap.hasAnyMissedFileCreated(project: Project): Boolean {
     val fileManager = VirtualFileManager.getInstance()
-    return missedFiles.any { fileManager.findFileByNioPath(it) != null }
+    return missedFiles.any { fileManager.findFileByNioPath(it)?.toPsiFile(project)?.rustFile != null }
 }
