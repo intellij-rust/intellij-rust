@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ide.colors.RsColor
 
 class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnnotator::class) {
@@ -216,6 +217,17 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
     fun `test emphasis and strong emphasis`() = checkHighlightingStrict("""
         /// <DOC_EMPHASIS>*emphasis*</DOC_EMPHASIS>, and <DOC_EMPHASIS>_also emphasis_</DOC_EMPHASIS>
         /// <DOC_STRONG>**strong emphasis**</DOC_STRONG>, and <DOC_STRONG>__also strong emphasis__</DOC_STRONG>
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test no highlighting in cfg-disabled code`() = checkHighlightingStrict("""
+        /// # Heading
+        /// *emphasis*, and _also emphasis_
+        /// **strong emphasis**, and __also strong emphasis__
+        /// [link](/uri "title")
+        /// `code`
+        #[cfg(not(intellij_rust))]
+        fn foo() {}
     """)
 
     private fun checkHighlightingStrict(@Language("Rust") text: String) =
