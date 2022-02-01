@@ -34,12 +34,17 @@ interface RsModificationTrackerOwner : RsElement {
 }
 
 fun PsiElement.findModificationTrackerOwner(strict: Boolean): RsModificationTrackerOwner? {
-    return findContextOfTypeWithoutIndexAccess(
+    val possibleOwner = findContextOfTypeWithoutIndexAccess(
         strict,
         RsItemElement::class,
         RsMacroCall::class,
         RsMacro::class
-    ) as? RsModificationTrackerOwner
+    ) ?: return null
+    return if (possibleOwner is RsModificationTrackerOwner) {
+        possibleOwner
+    } else {
+        possibleOwner.findModificationTrackerOwner(strict = true)
+    }
 }
 
 // We have to process contexts without index access because accessing indices during PSI event processing is slow.

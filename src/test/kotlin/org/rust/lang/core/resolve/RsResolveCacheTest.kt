@@ -229,6 +229,20 @@ class RsResolveCacheTest : RsTestBase() {
         }        //^
     """, "\b2")
 
+    fun `test edit import of macro inside function`() = checkResolvedToXY("""
+        mod inner1 {
+            pub macro gen() {}
+        }           //X
+        mod inner2 {
+            pub macro gen() {}
+        }           //Y
+
+        fn main() {
+            use inner1/*caret*/::gen;
+            gen!();
+        } //^
+    """, "\b2")
+
     override val followMacroExpansions: Boolean
         get() = true
 
