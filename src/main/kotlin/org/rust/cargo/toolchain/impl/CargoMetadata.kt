@@ -5,7 +5,7 @@
 
 package org.rust.cargo.toolchain.impl
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -202,7 +202,7 @@ object CargoMetadata {
          * See [docs](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#the-required-features-field)
          */
         @Suppress("KDocUnresolvedReference")
-        @SerializedName("required-features")
+        @JsonProperty("required-features")
         val required_features: List<String>?
     ) {
         val cleanKind: TargetKind

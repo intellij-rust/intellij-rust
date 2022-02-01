@@ -11,7 +11,7 @@ import com.fasterxml.jackson.core.io.JsonEOFException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -269,13 +269,13 @@ private class ProcMacroServerProcess private constructor(
 
     @Throws(IOException::class)
     private fun writeAndRead(request: Request): Response {
-        ProcMacroJsonParser.jackson.writeValue(stdin, request)
+        ProcMacroJsonParser.JSON_MAPPER.writeValue(stdin, request)
         stdin.write("\n")
         stdin.flush()
 
         stdout.skipUntilJsonObject()
 
-        return ProcMacroJsonParser.jackson.readValue(stdout, Response::class.java)
+        return ProcMacroJsonParser.JSON_MAPPER.readValue(stdout, Response::class.java)
     }
 
     /**
@@ -356,13 +356,13 @@ private class ProcMacroServerProcess private constructor(
 
 @VisibleForTesting
 object ProcMacroJsonParser {
-    val jackson: ObjectMapper = ObjectMapper()
+    val JSON_MAPPER: ObjectMapper = ObjectMapper()
         .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
         .configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
         .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
         .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .registerModule(KotlinModule())
+        .registerKotlinModule()
         .registerModule(
             SimpleModule()
                 .addSerializer(Request::class.java, RequestJsonSerializer())
