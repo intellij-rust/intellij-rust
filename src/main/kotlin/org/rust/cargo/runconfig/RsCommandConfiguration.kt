@@ -24,7 +24,11 @@ abstract class RsCommandConfiguration(
     RunConfigurationWithSuppressedDefaultDebugAction {
     abstract var command: String
 
-    var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
+    var workingDirectory: Path? = if (!project.isDefault) {
+        project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
+    } else {
+        null
+    }
 
     override fun suggestedName(): String = command.substringBefore(' ').capitalize()
 

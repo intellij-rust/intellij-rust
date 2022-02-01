@@ -33,8 +33,9 @@ import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
@@ -62,7 +63,8 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             return rejectedPromise(RsBundle.message("untrusted.project.notification.execution.error"))
         }
 
-        if (!project.isBuildToolWindowEnabled) {
+        val configuration = context.runConfiguration as? CargoCommandConfiguration
+        if (configuration?.hasRemoteTarget == true || !project.isBuildToolWindowAvailable) {
             invokeLater { project.buildProject() }
             return rejectedPromise()
         }

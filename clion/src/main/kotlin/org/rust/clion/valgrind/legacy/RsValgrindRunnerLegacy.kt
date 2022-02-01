@@ -8,13 +8,13 @@ package org.rust.clion.valgrind.legacy
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.util.SystemInfo
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run Valgrind"
 
 /**
- * This runner is used if [isBuildToolWindowEnabled] is false.
+ * This runner is used if [isBuildToolWindowAvailable] is false.
  */
 class RsValgrindRunnerLegacy : RsAsyncRunner(ValgrindExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID

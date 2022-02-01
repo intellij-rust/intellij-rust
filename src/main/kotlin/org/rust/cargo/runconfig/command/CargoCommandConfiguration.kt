@@ -10,6 +10,9 @@ import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.util.ProgramParametersUtil
@@ -28,6 +31,9 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.*
+import org.rust.cargo.runconfig.target.BuildTarget
+import org.rust.cargo.runconfig.target.RsLanguageRuntimeConfiguration
+import org.rust.cargo.runconfig.target.RsLanguageRuntimeType
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
@@ -42,23 +48,29 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
+val CargoCommandConfiguration.hasRemoteTarget: Boolean
+    get() = defaultTargetName != null
+
 /**
  * This class describes a Run Configuration.
  * It is basically a bunch of values which are persisted to .xml files inside .idea,
  * or displayed in the GUI form. It has to be mutable to satisfy various IDE's APIs.
  */
-open class CargoCommandConfiguration(
+class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
 ) : RsCommandConfiguration(project, name, factory),
-    InputRedirectAware.InputRedirectOptions, ConsolePropertiesProvider {
+    InputRedirectAware.InputRedirectOptions,
+    ConsolePropertiesProvider,
+    TargetEnvironmentAwareRunProfile {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
     var withSudo: Boolean = false
+    var buildTarget: BuildTarget = BuildTarget.REMOTE
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
@@ -88,6 +100,22 @@ open class CargoCommandConfiguration(
         redirectInputPath = value
     }
 
+    override fun canRunOn(target: TargetEnvironmentConfiguration): Boolean {
+        return target.runtimes.findByType(RsLanguageRuntimeConfiguration::class.java) != null
+    }
+
+    override fun getDefaultLanguageRuntimeType(): LanguageRuntimeType<*>? {
+        return LanguageRuntimeType.EXTENSION_NAME.findExtension(RsLanguageRuntimeType::class.java)
+    }
+
+    override fun getDefaultTargetName(): String? {
+        return options.remoteTarget
+    }
+
+    override fun setDefaultTargetName(targetName: String?) {
+        options.remoteTarget = targetName
+    }
+
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         element.writeEnum("channel", channel)
@@ -95,6 +123,7 @@ open class CargoCommandConfiguration(
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
         element.writeBool("withSudo", withSudo)
+        element.writeEnum("buildTarget", buildTarget)
         element.writeEnum("backtrace", backtrace)
         env.writeExternal(element)
         element.writeBool("isRedirectInput", isRedirectInput)
@@ -112,6 +141,7 @@ open class CargoCommandConfiguration(
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readBool("withSudo")?.let { withSudo = it }
+        element.readEnum<BuildTarget>("buildTarget")?.let { buildTarget = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         env = EnvironmentVariablesData.readExternal(element)
         element.readBool("isRedirectInput")?.let { isRedirectInput = it }
@@ -173,12 +203,13 @@ open class CargoCommandConfiguration(
         }
     }
 
-    private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean =
-        commandLine.command == "test" &&
-            isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
-            !Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() &&
-            "--nocapture" !in commandLine.additionalArguments
-
+    private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean = when {
+        !isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) -> false
+        commandLine.command != "test" -> false
+        "--nocapture" in commandLine.additionalArguments -> false
+        Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() -> false
+        else -> !hasRemoteTarget
+    }
 
     override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties? {
         val config = clean().ok ?: return null

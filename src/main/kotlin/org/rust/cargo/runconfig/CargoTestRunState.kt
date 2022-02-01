@@ -30,7 +30,6 @@ class CargoTestRunState(
     runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CargoRunStateBase(environment, runConfiguration, config) {
-
     private val cargoTestPatch: CargoPatch = { commandLine ->
         val rustcVer = cargoProject?.rustcInfo?.version
         // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
@@ -41,7 +40,7 @@ class CargoTestRunState(
             } else {
                 RsBundle.message("notification.run.tests.as.root.unix")
             }
-            environment.project.showBalloon(message, NotificationType.WARNING)
+            project.showBalloon(message, NotificationType.WARNING)
         }
         commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), withSudo = false)
     }

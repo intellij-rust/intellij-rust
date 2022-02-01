@@ -16,8 +16,8 @@ class CargoRunState(
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CargoRunStateBase(environment, runConfiguration, config) {
     init {
-        val scope = ExecutionSearchScopes.executionScope(environment.project, environment.runProfile)
-        consoleBuilder = CargoConsoleBuilder(environment.project, scope)
+        val scope = ExecutionSearchScopes.executionScope(project, environment.runProfile)
+        consoleBuilder = CargoConsoleBuilder(project, scope)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }
 }
