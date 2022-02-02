@@ -268,4 +268,25 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test reuse impl block`() = doTest("""
+        struct System {
+            s: u32/*caret*/
+        }
+
+        impl System {
+            fn foo(&self) {}
+        }
+    """, listOf(MemberSelection("s: u32", true)), """
+        struct System {
+            s: u32
+        }
+
+        impl System {
+            fn foo(&self) {}
+            pub fn set_s(&mut self, s: u32) {
+                self.s = s;
+            }
+        }
+    """)
 }

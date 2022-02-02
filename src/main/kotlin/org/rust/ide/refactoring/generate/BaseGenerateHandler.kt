@@ -18,10 +18,8 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.skipParens
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.type
@@ -96,6 +94,9 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         struct: RsStructItem
     ): RsImplItem {
         return if (implBlock == null) {
+            val sibling = findSiblingImplItem(struct)
+            if (sibling != null) return sibling
+
             val impl = psiFactory.createInherentImplItem(structName, struct.typeParameterList, struct.whereClause)
             struct.parent.addAfter(impl, struct) as RsImplItem
         } else {
@@ -117,4 +118,20 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
     )
 
     protected abstract val dialogTitle: @Suppress("UnstableApiUsage") @DialogTitle String
+}
+
+/**
+ * Try to find an impl item that is a sibling of the given `struct`.
+ * Works on a best effort basis, if the impl block has any generics, it will not be considered.
+ */
+private fun findSiblingImplItem(struct: RsStructItem): RsImplItem? {
+    return (struct.contextStrict<RsItemsOwner>())
+        ?.childrenOfType<RsImplItem>()
+        ?.firstOrNull { impl ->
+            val cachedImpl = RsCachedImplItem.forImpl(impl)
+            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@firstOrNull false
+            cachedImpl.isInherent && cachedImpl.isValid
+                && generics.isEmpty() && constGenerics.isEmpty()  // TODO: Support generics
+                && type.isEquivalentTo(struct.declaredType)
+        }
 }
