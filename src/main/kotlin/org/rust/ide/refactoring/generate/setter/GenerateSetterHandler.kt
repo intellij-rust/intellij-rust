@@ -37,8 +37,7 @@ class GenerateSetterHandler : GenerateAccessorHandler() {
 
         return chosenFields.mapNotNull {
             val fieldName = it.argumentIdentifier
-            val typeRef = it.field.typeReference ?: return@mapNotNull null
-            val typeStr = typeRef.substAndGetText(substitution)
+            val typeStr = it.typeReferenceText
 
             val fnSignature = "pub fn ${methodName(it)}(&mut self, $fieldName: $typeStr)"
             val fnBody = "self.$fieldName = $fieldName;"
