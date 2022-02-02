@@ -5,8 +5,10 @@
 
 package org.rust.cargo.toolchain.tools
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.JacksonException
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
@@ -167,11 +169,11 @@ class Cargo(
             .stdout
             .dropWhile { it != '{' }
         return try {
-            val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
+            val project = JSON_MAPPER.readValue(json, CargoMetadata.Project::class.java)
                 .convertPaths(toolchain::toLocalPath)
             Ok(project)
-        } catch (e: JsonSyntaxException) {
-            Err(JsonDeserializationException(e))
+        } catch (e: JacksonException) {
+            Err(RsDeserializationException(e))
         }
     }
 
@@ -447,6 +449,10 @@ class Cargo(
 
     companion object {
         private val LOG: Logger = logger<Cargo>()
+
+        private val JSON_MAPPER: ObjectMapper = ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .registerKotlinModule()
 
         @JvmStatic
         val TEST_NOCAPTURE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.cargo.test.nocapture")

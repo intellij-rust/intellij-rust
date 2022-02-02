@@ -126,7 +126,7 @@ class TokenTreeJsonTest : RsTestBase() {
     fun doTest(code: String, @Language("Json") expectedJson: String) {
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
 
-        val jackson = ProcMacroJsonParser.jackson
+        val jackson = ProcMacroJsonParser.JSON_MAPPER
         val actualJson = jackson
             .writer()
             .with(DefaultPrettyPrinter(TestPrettyPrinter()))
