@@ -124,7 +124,7 @@ private fun findNameConflicts(
         is RsAbstractableOwner.Impl -> owner.impl to owner.impl.expandedMembers
         is RsAbstractableOwner.Trait -> owner.trait to owner.trait.expandedMembers
         else -> {
-            val parent = function.parent as RsItemsOwner
+            val parent = function.contextStrict<RsItemsOwner>() ?: return
             val items = parent.expandedItemsCached.named[config.name] ?: return
             parent to items
         }

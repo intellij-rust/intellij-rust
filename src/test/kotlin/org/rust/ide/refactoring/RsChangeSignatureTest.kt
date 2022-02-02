@@ -1014,6 +1014,15 @@ Cannot change signature of function with cfg-disabled parameters""")
         name = "bar"
     }
 
+    fun `test name conflict extern`() = checkConflicts("""
+        extern "C" {
+            fn foo/*caret*/();
+            fn bar();
+        }
+    """, setOf("The name bar conflicts with an existing item in main.rs (in test_package)")) {
+        name = "bar"
+    }
+
     fun `test visibility conflict function call`() = checkConflicts("""
         mod foo {
             pub fn bar/*caret*/() {}
