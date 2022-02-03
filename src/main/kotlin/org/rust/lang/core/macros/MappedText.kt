@@ -26,20 +26,32 @@ data class MappedText(val text: String, val ranges: RangeMap) {
 
 class MutableMappedText private constructor(
     private val sb: StringBuilder,
+    private val initialSrcOffset: Int = 0,
     private val ranges: MutableList<MappedTextRange> = mutableListOf()
-) {
+): MappedAppendable {
     constructor(capacity: Int) : this(StringBuilder(capacity))
 
-    fun appendUnmapped(text: CharSequence) {
+    override fun appendUnmapped(text: CharSequence) {
         sb.append(text)
     }
 
-    fun appendMapped(text: CharSequence, srcOffset: Int) {
+    override fun appendUnmapped(i: Int) {
+        sb.append(i)
+    }
+
+    override fun appendMapped(text: CharSequence, srcOffset: Int) {
         if (text.isNotEmpty()) {
-            ranges += MappedTextRange(srcOffset, sb.length, text.length)
+            ranges.mergeAdd(MappedTextRange(initialSrcOffset + srcOffset, sb.length, text.length))
             sb.append(text)
         }
     }
+
+    override fun appendMapped(c: Char, srcOffset: Int) {
+        ranges.mergeAdd(MappedTextRange(initialSrcOffset + srcOffset, sb.length, 1))
+        sb.append(c)
+    }
+
+    fun withSrcOffset(srcOffset: Int): MutableMappedText = MutableMappedText(sb, srcOffset, ranges)
 
     fun toMappedText(): MappedText = MappedText(sb.toString(), RangeMap.from(SmartList(ranges)))
 

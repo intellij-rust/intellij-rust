@@ -10,6 +10,8 @@ import com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN
 import org.rust.lang.core.lexer.RsEscapesLexer
 import org.rust.lang.core.lexer.parseStringCharacters
 import org.rust.lang.core.lexer.tokenize
+import org.rust.lang.core.macros.MappedAppendable
+import org.rust.lang.core.macros.MappedAppendableToStringBuilder
 
 /**
  * Unescape string escaped using Rust escaping rules.
@@ -74,20 +76,26 @@ fun CharSequence.escapeRust(escapeNonPrintable: Boolean = true): String {
 }
 
 fun CharSequence.escapeRust(out: StringBuilder, escapeNonPrintable: Boolean = true) {
-    for (c in this) {
+    escapeRust(MappedAppendableToStringBuilder(out), escapeNonPrintable)
+}
+
+fun CharSequence.escapeRust(out: MappedAppendable, escapeNonPrintable: Boolean = true) {
+    for (i in this.indices) {
+        val c = this[i]
         when {
-            c == '\n' -> out.append("\\n")
-            c == '\r' -> out.append("\\r")
-            c == '\t' -> out.append("\\t")
-            c == '\u0000' -> out.append("\\0")
-            c == '\'' -> out.append("\\'")
-            c == '\"' -> out.append("\\\"")
+            c == '\n' -> out.appendUnmapped("\\n")
+            c == '\r' -> out.appendUnmapped("\\r")
+            c == '\t' -> out.appendUnmapped("\\t")
+            c == '\u0000' -> out.appendUnmapped("\\0")
+            c == '\'' -> out.appendUnmapped("\\'")
+            c == '\"' -> out.appendUnmapped("\\\"")
             escapeNonPrintable && !StringUtil.isPrintableUnicode(c) -> {
-                out.append("\\u{")
-                out.append(c.code)
-                out.append("}")
+                out.appendUnmapped("\\u{")
+                out.appendUnmapped(c.code)
+                out.appendUnmapped("}")
             }
-            else -> out.append(c)
+            else -> out.appendMapped(c, i)
         }
     }
 }
+

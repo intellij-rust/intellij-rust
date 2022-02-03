@@ -19,12 +19,12 @@ import org.rust.lang.utils.escapeRust
 
 fun PsiBuilder.lowerDocCommentsToAdaptedPsiBuilder(project: Project): Pair<PsiBuilder, RangeMap> {
     val lowered = lowerDocComments() ?: return this to defaultRangeMap()
-    return project.createAdaptedRustPsiBuilder(lowered.first) to lowered.second
+    return project.createAdaptedRustPsiBuilder(lowered.text) to lowered.ranges
 }
 
 fun PsiBuilder.lowerDocCommentsToPsiBuilder(project: Project): Pair<PsiBuilder, RangeMap> {
     val lowered = lowerDocComments() ?: return this to defaultRangeMap()
-    return project.createRustPsiBuilder(lowered.first) to lowered.second
+    return project.createRustPsiBuilder(lowered.text) to lowered.ranges
 }
 
 private fun PsiBuilder.defaultRangeMap(): RangeMap= if (originalText.isNotEmpty()) {
@@ -35,15 +35,14 @@ private fun PsiBuilder.defaultRangeMap(): RangeMap= if (originalText.isNotEmpty(
 
 /** Rustc replaces doc comments like `/// foo` to attributes `#[doc = "foo"]` before macro expansion */
 @VisibleForTesting
-fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
+fun PsiBuilder.lowerDocComments(): MappedText? {
     if (!hasDocComments()) {
         return null
     }
 
     MacroExpansionMarks.docsLowering.hit()
 
-    val sb = StringBuilder((originalText.length * 1.1).toInt())
-    val ranges = SmartList<MappedTextRange>()
+    val result = MutableMappedText((originalText.length * 1.1).toInt())
 
     var i = 0
     while (true) {
@@ -60,25 +59,34 @@ fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
                 "#"
             }
             if (kind.isBlock) {
-                sb.append(attrPrefix)
-                sb.append("[doc=\"")
-                text.removePrefix(kind.prefix).removeSuffix(kind.suffix).escapeRust(sb)
-                sb.append("\"]\n")
+                result.appendUnmapped(attrPrefix)
+                result.appendUnmapped("[doc=\"")
+                text.removePrefix(kind.prefix)
+                    .removeSuffix(kind.suffix)
+                    .escapeRust(result.withSrcOffset(start + kind.prefix.length))
+                result.appendUnmapped("\"]\n")
             } else {
+                var startOfLine = start
                 for (comment in text.splitToSequence("\n")) {
-                    sb.append(attrPrefix)
-                    sb.append("[doc=\"")
-                    comment.trimStart().removePrefix(kind.prefix).escapeRust(sb)
-                    sb.append("\"]\n")
+                    result.appendUnmapped(attrPrefix)
+                    result.appendUnmapped("[doc=\"")
+
+                    val commentTrimmed = comment.trimStart()
+                    val indentLength = comment.length - commentTrimmed.length
+                    commentTrimmed
+                        .removePrefix(kind.prefix)
+                        .escapeRust(result.withSrcOffset(startOfLine + indentLength + kind.prefix.length))
+                    startOfLine += comment.length + 1
+
+                    result.appendUnmapped("\"]\n")
                 }
             }
         } else {
-            ranges.mergeAdd(MappedTextRange(start, sb.length, text.length))
-            sb.append(text)
+            result.appendMapped(text, start)
         }
     }
 
-    return sb to RangeMap.from(ranges)
+    return result.toMappedText()
 }
 
 private fun PsiBuilder.hasDocComments(): Boolean {

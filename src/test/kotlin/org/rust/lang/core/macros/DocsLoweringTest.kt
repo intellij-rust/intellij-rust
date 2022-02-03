@@ -176,8 +176,12 @@ class DocsLoweringTest : RsTestBase() {
         @Language("Rust") code: String,
         @Language("Rust", suffix = "fn foo() {}") expected: String
     ) {
-        val (expanded, _) = project.createRustPsiBuilder(code.trimIndent()).lowerDocComments()
+        val source = code.trimIndent()
+        val (expanded, ranges) = project.createRustPsiBuilder(source).lowerDocComments()
             ?: error("No doc comments in the source")
-        assertEquals(expected.trimIndent() + "\n", expanded.toString())
+        assertEquals(expected.trimIndent() + "\n", expanded)
+        for (range in ranges.ranges) {
+            assertEquals(range.srcRange.substring(source), range.dstRange.substring(expanded))
+        }
     }
 }

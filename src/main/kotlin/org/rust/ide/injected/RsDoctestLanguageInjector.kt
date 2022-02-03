@@ -22,6 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.parser.probe
 import org.rust.lang.core.psi.RsElementTypes
@@ -193,6 +194,15 @@ class DoctestInfo private constructor(
         fun fromCodeFence(codeFence: RsDocCodeFence): DoctestInfo? {
             if (!codeFence.project.rustSettings.doctestInjectionEnabled) return null
             if (codeFence.containingCrate?.areDoctestsEnabled != true) return null
+            val codeFenceStartInMacroExpansion = codeFence.start.findExpansionElements()
+            if (codeFenceStartInMacroExpansion != null) {
+                codeFenceStartInMacroExpansion.any {
+                    it.ancestorStrict<RsAttr>() != null
+                }
+            } else {
+                codeFence.start.containingDoc.owner
+            }
+            codeFenceStartInMacroExpansion?.firstOrNull() ?: codeFence.start.containingDoc.owner
 
             val lang = codeFence.lang?.text ?: ""
             val parts = lang.split(LANG_SPLIT_REGEX).filter { it.isNotBlank() }
