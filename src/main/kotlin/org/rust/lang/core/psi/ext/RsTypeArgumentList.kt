@@ -13,7 +13,7 @@ val RsTypeArgumentList.typeArguments: List<RsTypeReference>
     get() = typeReferenceList.filter { ref ->
         val type = ref as? RsBaseType
         val element = type?.path?.reference?.resolve()
-        element !is RsConstant && element !is RsConstParameter
+        element !is RsConstant && element !is RsFunction && element !is RsConstParameter
     }
 
 val RsTypeArgumentList.constArguments: List<RsElement>
