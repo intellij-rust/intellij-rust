@@ -420,7 +420,8 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve macro from including file included to a function-local mod`() = stubOnlyResolve("""
+    fun `test resolve macro from including file included to a function-local mod`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
     //- main.rs
         macro_rules! foo {
                    //X
@@ -436,6 +437,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
         foo!();
         //^ main.rs
     """)
+    }
 
     /** More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest] */
 }

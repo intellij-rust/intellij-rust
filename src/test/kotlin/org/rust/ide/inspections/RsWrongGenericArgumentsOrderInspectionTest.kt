@@ -8,20 +8,42 @@ package org.rust.ide.inspections
 class RsWrongGenericArgumentsOrderInspectionTest : RsInspectionsTestBase(RsWrongGenericArgumentsOrderInspection::class) {
 
     fun `test mismatch (expr)`() = checkByText("""
-        struct Foo<T>(T);
-        struct Bar<const N: i32>;
+        struct SFoo<T>(T);
+        struct SBar<const N: i32>;
+        struct SBaz<'a>(&'a str);
+
+        trait TFoo<T> {}
+        trait TBar<const N: i32> {}
+        trait TBaz<'a> {}
+
         fn foo<T>() {}
         fn bar<const N: i32>() {}
-        fn baz<'a, T, const N: i32>(
-            p1: Foo<T>,
-            p2: Foo<<error descr="Constant provided when a type was expected [E0747]">N</error>>,
-            p3: Bar<<error descr="Type provided when a constant was expected [E0747]">T</error>>,
-            p4: Bar<N>
-        ) {
+        fn baz<'a>() {}
+
+        impl<T> TFoo<T> for SFoo<T> {}
+        impl<const N: i32> TFoo<<error descr="Constant provided when a type was expected [E0747]">N</error>> for SFoo<<error descr="Constant provided when a type was expected [E0747]">N</error>> {}
+        impl<'a> TFoo<<error descr="Lifetime provided when a type was expected [E0747]">'a</error>> for SFoo<<error descr="Lifetime provided when a type was expected [E0747]">'a</error>> {}
+
+        impl<T> TBar<<error descr="Type provided when a constant was expected [E0747]">T</error>> for SBar<<error descr="Type provided when a constant was expected [E0747]">T</error>> {}
+        impl<const N: i32> TBar<N> for SBar<N> {}
+        impl<'a> TBar<<error descr="Lifetime provided when a constant was expected [E0747]">'a</error>> for SBar<<error descr="Lifetime provided when a constant was expected [E0747]">'a</error>> {}
+
+        impl<T> TBaz<T> for SBaz<T> {}
+        impl<const N: i32> TBaz<N> for SBaz<N> {}
+        impl<'a> TBaz<'a> for SBaz<'a> {}
+
+        fn test<'a, T, const N: i32>() {
             foo::<T>();
             foo::<<error descr="Constant provided when a type was expected [E0747]">N</error>>();
+            foo::<<error descr="Lifetime provided when a type was expected [E0747]">'a</error>>();
+
             bar::<<error descr="Type provided when a constant was expected [E0747]">T</error>>();
             bar::<N>();
+            bar::<<error descr="Lifetime provided when a constant was expected [E0747]">'a</error>>();
+
+            baz::<T>();
+            baz::<N>();
+            baz::<'a>();
         }
     """)
 
