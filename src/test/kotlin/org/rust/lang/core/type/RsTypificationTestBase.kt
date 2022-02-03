@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Severity
-import org.rust.openapiext.Testmark
 
 abstract class RsTypificationTestBase : RsTestBase() {
     protected fun testExpr(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
@@ -28,13 +27,6 @@ abstract class RsTypificationTestBase : RsTestBase() {
         if (!allowErrors) checkNoInferenceErrors()
         checkAllExpressionsTypified()
     }
-
-    protected fun testExpr(
-        @Language("Rust") code: String,
-        mark: Testmark,
-        description: String = "",
-        allowErrors: Boolean = false
-    ) = mark.checkHit { testExpr(code, description, allowErrors) }
 
     protected fun stubOnlyTypeInfer(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
         val testProject = fileTreeFromText(code)

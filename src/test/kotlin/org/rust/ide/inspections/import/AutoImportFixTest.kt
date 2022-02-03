@@ -442,6 +442,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(Testmarks.IgnorePrivateImportInParentMod::class)
     fun `test don't try to import private reexport from parent mod 1`() = checkAutoImportFixByText("""
         mod a1 {
             use crate::b1::b2::Foo;
@@ -474,8 +475,9 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                 pub struct Foo;
             }
         }
-    """, Testmarks.ignorePrivateImportInParentMod)
+    """)
 
+    @CheckTestmarkHit(Testmarks.IgnorePrivateImportInParentMod::class)
     fun `test don't try to import private reexport from parent mod 2`() = checkAutoImportFixByText("""
         mod a1 {
             use crate::b1::b2::b3;
@@ -512,7 +514,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                 }
             }
         }
-    """, Testmarks.ignorePrivateImportInParentMod)
+    """)
 
     fun `test complex module structure`() = checkAutoImportFixByText("""
         mod aaa {
@@ -1002,13 +1004,14 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(AutoImportFix.Testmarks.PathInUseItem::class)
     fun `test do not import path in use item`() = checkAutoImportFixIsUnavailable("""
         mod bar {
             pub struct Bar;
         }
 
         use <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
-    """, AutoImportFix.Testmarks.pathInUseItem)
+    """)
 
     fun `test multiple import`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
@@ -2481,6 +2484,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoctestInjectionImport::class)
     fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
@@ -2494,9 +2498,10 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// foo();
         /// ```
         pub fn foo() {}
-    """, Testmarks.doctestInjectionImport)
+    """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoctestInjectionImport::class)
     fun `test import outer item in doctest injection with tildes`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ~~~
@@ -2510,9 +2515,10 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// foo();
         /// ~~~
         pub fn foo() {}
-    """, Testmarks.doctestInjectionImport)
+    """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoctestInjectionImport::class)
     fun `test import outer item in doctest injection in star comment`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /**
@@ -2530,9 +2536,10 @@ class AutoImportFixTest : AutoImportFixTestBase() {
          * ```
          */
         pub fn foo() {}
-    """,  Testmarks.doctestInjectionImport)
+    """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoctestInjectionImport::class)
     fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
@@ -2551,7 +2558,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// ```
         pub fn foo() {}
         pub fn bar() {}
-    """, Testmarks.doctestInjectionImport)
+    """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import second outer item without grouping in doctest injection`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
@@ -2576,6 +2583,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoctestInjectionImport::class)
     fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- lib.rs
         /// ```
@@ -2597,7 +2605,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// }
         /// ```
         pub fn foo() {}
-    """, Testmarks.doctestInjectionImport)
+    """)
 
     @ExpandMacros
     fun `test import struct from macro`() = checkAutoImportFixByText("""

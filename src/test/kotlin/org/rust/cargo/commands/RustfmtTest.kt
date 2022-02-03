@@ -330,7 +330,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
 
     private fun reformatRange(file: PsiFile, textRange: TextRange = file.textRange, shouldHitTestmark: Boolean = true) {
         project.rustSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
-        val testmark = RustfmtTestmarks.rustfmtUsed
+        val testmark = RustfmtTestmarks.RustfmtUsed
         val checkMark: (() -> Unit) -> Unit = if (shouldHitTestmark) testmark::checkHit else testmark::checkNotHit
         checkMark {
             WriteCommandAction.runWriteCommandAction(project, ReformatCodeProcessor.getCommandName(), null, {

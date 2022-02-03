@@ -9,7 +9,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.openapiext.Testmark
 
 abstract class RsDocumentationProviderTest : RsTestBase() {
 
@@ -59,16 +58,15 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         }
     }
 
-    protected fun doUrlTestByText(@Language("Rust") text: String, expectedUrl: String?, testmark: Testmark? = null) =
-        doUrlTest(text, expectedUrl, testmark, this::configureByText)
+    protected fun doUrlTestByText(@Language("Rust") text: String, expectedUrl: String?) =
+        doUrlTest(text, expectedUrl, this::configureByText)
 
-    protected fun doUrlTestByFileTree(@Language("Rust") text: String, expectedUrl: String?, testmark: Testmark? = null) =
-        doUrlTest(text, expectedUrl, testmark) { configureByFileTree(it) }
+    protected fun doUrlTestByFileTree(@Language("Rust") text: String, expectedUrl: String?) =
+        doUrlTest(text, expectedUrl) { configureByFileTree(it) }
 
     private fun doUrlTest(
         @Language("Rust") text: String,
         expectedUrl: String?,
-        testmark: Testmark?,
         configure: (String) -> Unit
     ) {
         configure(text)
@@ -77,11 +75,8 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         val element = DocumentationManager.getInstance(project)
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 
-        val action: () -> Unit = {
-            val actualUrls = RsDocumentationProvider().getUrlFor(element, originalElement)
-            assertEquals(listOfNotNull(expectedUrl), actualUrls)
-        }
-        testmark?.checkHit(action) ?: action()
+        val actualUrls = RsDocumentationProvider().getUrlFor(element, originalElement)
+        assertEquals(listOfNotNull(expectedUrl), actualUrls)
     }
 
     protected fun String.hideSpecificStyles(): String = replace(STYLE_REGEX, """style="..."""")

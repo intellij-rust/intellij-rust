@@ -65,7 +65,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
                 (parent as? RsMatchArm)?.addCommaIfNeeded(factory)
                 expr.replace(factory.createRetExpr(expr.text))
             } else {
-                Testmarks.insideRetExpr.hit()
+                Testmarks.InsideRetExpr.hit()
             }
         }
 
@@ -79,7 +79,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
     }
 
     object Testmarks {
-        val insideRetExpr = Testmark("insideRetExpr")
+        object InsideRetExpr : Testmark()
     }
 }
 

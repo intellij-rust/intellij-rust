@@ -33,7 +33,7 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
         decl = ctx.parent?.addBefore(decl, ctx) as? RsModDeclItem ?: return
 
         if (ctx.firstChild != ctx.mod) {
-            Testmarks.copyAttrs.hit()
+            Testmarks.CopyAttrs.hit()
             decl.addRangeBefore(ctx.firstChild, ctx.mod.prevSibling, decl.mod)
         }
 
@@ -48,6 +48,6 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     }
 
     object Testmarks {
-        val copyAttrs = Testmark("copyAttrs")
+        object CopyAttrs : Testmark()
     }
 }

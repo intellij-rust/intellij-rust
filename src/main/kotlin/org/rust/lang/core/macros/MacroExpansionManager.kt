@@ -308,12 +308,12 @@ class MacroExpansionManagerImpl(
     }
 
     object Testmarks {
-        val stubBasedRefMatch = Testmark("stubBasedRefMatch")
-        val stubBasedLookup = Testmark("stubBasedLookup")
-        val refsRecover = Testmark("refsRecover")
-        val refsRecoverExactHit = Testmark("refsRecoverExactHit")
-        val refsRecoverCallHit = Testmark("refsRecoverCallHit")
-        val refsRecoverNotHit = Testmark("refsRecoverNotHit")
+        object StubBasedRefMatch : Testmark()
+        object StubBasedLookup : Testmark()
+        object RefsRecover : Testmark()
+        object RefsRecoverExactHit : Testmark()
+        object RefsRecoverCallHit : Testmark()
+        object RefsRecoverNotHit : Testmark()
     }
 }
 

@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.CheckTestmarkHit
+
 class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
 
     fun `test lift return in if 1`() = checkFixByText("Lift return out of 'if'", """
@@ -56,6 +58,7 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
         }
     """, checkWeakWarn = true)
 
+    @CheckTestmarkHit(RsLiftInspection.Testmarks.InsideRetExpr::class)
     fun `test lift return in if with return`() = checkFixByText("Lift return out of 'if'", """
         fn foo(x: bool) -> i32 {
             return /*weak_warning descr="Return can be lifted out of 'if'"*/if/*caret*//*weak_warning**/ x {
@@ -72,7 +75,7 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
                 0
             };
         }
-    """, checkWeakWarn = true, testmark = RsLiftInspection.Testmarks.insideRetExpr)
+    """, checkWeakWarn = true)
 
     fun `test lift return in else if`() = checkFixIsUnavailable("Lift return out of 'if'", """
         fn get_char(n: u32) -> char {

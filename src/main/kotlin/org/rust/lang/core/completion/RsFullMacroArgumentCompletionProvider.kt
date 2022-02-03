@@ -32,7 +32,7 @@ object RsFullMacroArgumentCompletionProvider : RsCompletionProvider() {
         val position = parameters.position
         val dstElement = position.findExpansionElements()?.firstOrNull() ?: return
         val dstOffset = dstElement.startOffset + (parameters.offset - position.startOffset)
-        Testmarks.touched.hit()
+        Testmarks.Touched.hit()
         rerunCompletion(parameters.withPosition(dstElement, dstOffset), result)
     }
 
@@ -42,6 +42,6 @@ object RsFullMacroArgumentCompletionProvider : RsCompletionProvider() {
             .inside(psiElement(MACRO_ARGUMENT))
 
     object Testmarks {
-        val touched = Testmark("RsFullMacroArgumentCompletionProvider.touched")
+        object Touched : Testmark()
     }
 }

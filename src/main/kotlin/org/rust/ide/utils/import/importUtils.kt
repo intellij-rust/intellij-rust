@@ -42,7 +42,7 @@ fun ImportInfo.import(context: RsElement) {
             // In doctest injections all our code is located inside one invisible (main) function.
             // If we try to change PSI outside of that function, we'll take a crash.
             // So here we limit the module search with the last function (and never inert to an RsFile)
-            Testmarks.doctestInjectionImport.hit()
+            Testmarks.DoctestInjectionImport.hit()
             val scope = context.ancestors.find { it is RsMod && it !is RsFile }
                 ?: context.ancestors.findLast { it is RsFunction }
             ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
@@ -66,16 +66,16 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
             // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
             // we don't add corresponding extern crate item manually
             // because it will be done by compiler implicitly
-            attributes == RsFile.Attributes.NONE && crate.isStd -> Testmarks.autoInjectedStdCrate.hit()
+            attributes == RsFile.Attributes.NONE && crate.isStd -> Testmarks.AutoInjectedStdCrate.hit()
             // if crate of imported element is `core` and there is `#![no_std]`
             // we don't add corresponding extern crate item manually for the same reason
-            attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.autoInjectedCoreCrate.hit()
+            attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.AutoInjectedCoreCrate.hit()
             else -> {
                 if (needInsertExternCrateItem) {
                     crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
                 } else {
                     if (depth != null) {
-                        Testmarks.externCrateItemInNotCrateRoot.hit()
+                        Testmarks.ExternCrateItemInNotCrateRoot.hit()
                         return depth
                     }
                 }
@@ -206,11 +206,11 @@ val Crate.isCore: Boolean
     get() = origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.CORE
 
 object Testmarks {
-    val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
-    val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
-    val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
-    val doctestInjectionImport = Testmark("doctestInjectionImport")
-    val ignorePrivateImportInParentMod = Testmark("ignorePrivateImportInParentMod")
+    object AutoInjectedStdCrate : Testmark()
+    object AutoInjectedCoreCrate : Testmark()
+    object ExternCrateItemInNotCrateRoot : Testmark()
+    object DoctestInjectionImport : Testmark()
+    object IgnorePrivateImportInParentMod : Testmark()
 }
 
 /**

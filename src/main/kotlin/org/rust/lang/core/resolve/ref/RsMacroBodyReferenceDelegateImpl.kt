@@ -18,7 +18,7 @@ class RsMacroBodyReferenceDelegateImpl(
 
     private val delegates: List<RsReference>
         get() {
-            Testmarks.touched.hit()
+            Testmarks.Touched.hit()
             return element.findExpansionElements()?.mapNotNull { delegated ->
                 delegated.ancestors
                     .mapNotNull { it.reference }
@@ -34,6 +34,6 @@ class RsMacroBodyReferenceDelegateImpl(
         delegates.flatMap { it.multiResolve() }.distinct()
 
     object Testmarks {
-        val touched = Testmark("touched")
+        object Touched : Testmark()
     }
 }

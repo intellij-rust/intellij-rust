@@ -37,7 +37,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
         private fun sortedImplItems(implItems: List<RsAbstractable>, traitItems: List<RsAbstractable>): List<RsAbstractable>? {
             val traitItemMap = traitItems.withIndex().associate { it.value.key() to it.index }
             if (implItems.any { it.key() !in traitItemMap }) {
-                Testmarks.implMemberNotInTrait.hit()
+                Testmarks.ImplMemberNotInTrait.hit()
                 return null
             }
             val sortedImplItems = implItems.sortedBy { traitItemMap[it.key()] }
@@ -65,7 +65,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     }
 
     object Testmarks {
-        val implMemberNotInTrait = Testmark("implMemberNotInTrait")
+        object ImplMemberNotInTrait : Testmark()
     }
 }
 

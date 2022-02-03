@@ -104,7 +104,7 @@ private val uselessNames = listOf("new", "default")
 private fun LinkedHashSet<String>.addName(name: String?) {
     if (name == null || name in uselessNames || !isValidRustVariableIdentifier(name)) return
     NameUtil.getSuggestionsByName(name, "", "", false, false, false)
-        .filter { it !in uselessNames && IntroduceVariableTestmarks.invalidNamePart.hitOnFalse(isValidRustVariableIdentifier(it)) }
+        .filter { it !in uselessNames && IntroduceVariableTestmarks.InvalidNamePart.hitOnFalse(isValidRustVariableIdentifier(it)) }
         .mapTo(this) { it.toSnakeCase(false) }
 }
 

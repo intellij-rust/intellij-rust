@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.type
 
+import org.rust.CheckTestmarkHit
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.types.infer.PatternMatchingTestMarks
@@ -290,6 +291,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(PatternMatchingTestMarks.NegativeRestSize::class)
     fun `test let array too few elements for rest pat`() = testExpr("""
         struct S;
         fn main() {
@@ -297,8 +299,9 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             (x1, x2, x3, x4, xs);
           //^ (S, S, S, S, [S; <unknown>])
         }
-    """, PatternMatchingTestMarks.negativeRestSize)
+    """)
 
+    @CheckTestmarkHit(PatternMatchingTestMarks.MultipleRestPats::class)
     fun `test let array multiple rest pats`() = testExpr("""
         struct S;
         fn main() {
@@ -306,7 +309,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             (x1, xs1, x2, xs2, x3);
           //^ (S, [S; <unknown>], S, [S; <unknown>], S)
         }
-    """, PatternMatchingTestMarks.multipleRestPats)
+    """)
 
     fun `test let or pattern 1`() = testExpr("""
         enum E { L(i32), M(i32), R(i32) }

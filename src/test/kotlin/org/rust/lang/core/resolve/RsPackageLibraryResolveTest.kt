@@ -110,7 +110,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     //- lib.rs
         #[macro_export]
         macro_rules! foo_bar { () => {} }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
+    """)
 
     fun `test macro rules in mod 1`() = stubOnlyResolve("""
     //- main.rs
@@ -281,7 +281,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
+    """)
 
     fun `test import macro by use item wildcard`() = stubOnlyResolve("""
     //- lib.rs
@@ -295,7 +295,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
+    """)
 
     fun `test import macro by use item without extern crate`() = stubOnlyResolve("""
     //- lib.rs
@@ -840,7 +840,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target;
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
+    """)
 
     fun `test 'extra use of crate name 1' with alias`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
@@ -858,7 +858,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target::{self};
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
+    """)
 
     fun `test import the same name as a crate name`() = stubOnlyResolve("""
     //- dep-lib/lib.rs

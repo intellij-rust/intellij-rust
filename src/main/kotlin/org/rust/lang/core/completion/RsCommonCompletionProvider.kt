@@ -189,7 +189,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         if (TyPrimitive.fromPath(path) != null) return
         // TODO: implement special rules paths in meta items
         if (path.parent is RsMetaItem) return
-        Testmarks.outOfScopeItemsCompletion.hit()
+        Testmarks.OutOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
         val candidates = if (path.useAutoImportWithNewResolve) run {
@@ -307,7 +307,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
     object Testmarks {
-        val outOfScopeItemsCompletion = Testmark("outOfScopeItemsCompletion")
+        object OutOfScopeItemsCompletion : Testmark()
     }
 }
 

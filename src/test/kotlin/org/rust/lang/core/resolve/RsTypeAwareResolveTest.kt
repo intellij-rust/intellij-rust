@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.CheckTestmarkHit
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsTypeAwareResolveTest : RsResolveTestBase() {
@@ -760,6 +761,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of current impl`() = checkByCode("""
         struct S;
         trait Trait {
@@ -772,8 +774,9 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                 //X
             fn foo() -> Self::Item { unreachable!() }
         }                    //^
-    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+    """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is not resolved to assoc type of another trait`() = checkByCode("""
         struct S;
         trait Trait1 { type Item; }
@@ -786,8 +789,9 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         impl Trait2 for S {
             fn foo() -> Self::Item { unreachable!() }
         }                    //^ unresolved
-    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+    """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait`() = checkByCode("""
         struct S;
         trait Trait1 { type Item; }
@@ -800,7 +804,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         impl Trait2 for S {
             fn foo() -> Self::Item { unreachable!() }
         }                    //^
-    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+    """)
 
     fun `test explicit UFCS-like type-qualified path`() = checkByCode("""
         struct S;

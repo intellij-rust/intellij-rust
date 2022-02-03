@@ -52,7 +52,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             struct /*caret*/S;
             impl T for S {}
         """)
-        ImplementMembersMarks.noImplInHandler.checkHit {
+        ImplementMembersMarks.NoImplInHandler.checkHit {
             val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
             check(!presentation.isEnabled)
         }

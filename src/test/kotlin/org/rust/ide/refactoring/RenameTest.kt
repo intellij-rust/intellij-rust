@@ -269,7 +269,7 @@ class RenameTest : RsTestBase() {
     @ProjectDescriptor(EmptyDescriptor::class)
     fun `test do not invoke rename refactoring for directory outside of cargo project`() {
         val dir = myFixture.tempDirFixture.findOrCreateDir("dir").toPsiDirectory(project)!!
-        RsDirectoryRenameProcessor.Testmarks.rustDirRenameHandler.checkNotHit {
+        RsDirectoryRenameProcessor.Testmarks.RustDirRenameHandler.checkNotHit {
             myFixture.renameElement(dir, "dir2")
         }
     }

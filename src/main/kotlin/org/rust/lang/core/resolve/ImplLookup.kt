@@ -603,7 +603,7 @@ class ImplLookup(
                         filtered.singleOrNull {
                             it !is SelectionCandidate.Impl || it.formalSelfTy !is TyTypeParameter
                         }?.let {
-                            TypeInferenceMarks.traitSelectionSpecialization.hit()
+                            TypeInferenceMarks.TraitSelectionSpecialization.hit()
                             SelectionResult.Ok(it)
                         } ?: SelectionResult.Ambiguous
                     }

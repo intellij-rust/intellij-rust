@@ -52,7 +52,7 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
         val graph = macro.graph ?: return
         val offsetInArgument = parameters.offset - bodyTextRange.startOffset
 
-        Testmarks.touched.hit()
+        Testmarks.Touched.hit()
 
         val walker = MacroGraphWalker(project, graph, macroCallBody, offsetInArgument)
         val fragmentDescriptors = walker.run().takeIf { it.isNotEmpty() } ?: return
@@ -79,6 +79,6 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
             .inside(psiElement<RsMacroArgument>())
 
     object Testmarks {
-        val touched = Testmark("RsPartialMacroArgumentCompletionProvider.touched")
+        object Touched : Testmark()
     }
 }

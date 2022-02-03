@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
 import org.rust.ExpandMacros
 import org.rust.TestProject
 import org.rust.fileTreeFromText
@@ -98,13 +99,6 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         }
     }
 
-    private fun checkReExpandedTree(
-        action: (p: TestProject) -> Unit,
-        @Language("Rust") code: String,
-        names: List<String>,
-        mark: Testmark
-    ) = mark.checkHit { checkReExpandedTree(action, code, names) }
-
     private fun checkExpansionAfterAction(
         action: () -> Unit,
         @Language("Rust") code: String,
@@ -117,21 +111,21 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         checkAllMacroExpansionsInFile(myFixture.file, expectedExpansions.map { Pair<String, Testmark?>(it, null) }.toTypedArray())
     }
 
-    fun `test edit call`() = Testmarks.refsRecover.not().checkReExpanded(type(), """
+    fun `test edit call`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a/*caret*/);
         bar!(a);
     """, "foo")
 
-    fun `test edit def 1`() = Testmarks.refsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 1`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a);
         bar!(a);
     """, "foo")
 
-    fun `test edit def 2`() = Testmarks.refsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 2`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         macro_rules! if_std { ($ i:item) => { $ i } }
@@ -146,27 +140,29 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         bar!();
     """, "bar", "foo")
 
-    fun `test edit def 4`() = Testmarks.refsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 4`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
         macro_rules! foo { () => { mod a/*caret*/ {} } }
         macro_rules! bar { () => { foo!(); } }
         bar!();
     """, "foo")
 
+    @CheckTestmarkHit(Testmarks.RefsRecover::class)
     fun `test stub call 1`() = checkReExpandedTree(replaceInFile("main.rs", "aaa", "aab"), """
     //- main.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(aaa);
         bar!(bbb);
-    """, listOf("foo"), Testmarks.refsRecover)
+    """, listOf("foo"))
 
+    @CheckTestmarkHit(Testmarks.RefsRecoverNotHit::class)
     fun `test stub call 2`() = checkReExpandedTree(replaceInFile("main.rs", "//", ""), """
     //- main.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(aaa);
         //bar!(bbb);
-    """, listOf("bar"), Testmarks.refsRecoverNotHit)
+    """, listOf("bar"))
 
     fun `test add a call`() = checkExpansionAfterAction(type("\b\b\b"), """
         macro_rules! foo {
@@ -215,7 +211,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test edit-save-reload document`() = checkExpansionAfterAction({
-        Testmarks.refsRecover.checkNotHit {
+        Testmarks.RefsRecover.checkNotHit {
             myFixture.type("\b\b\b")
             PsiDocumentManager.getInstance(project).commitAllDocuments()
 
@@ -223,7 +219,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
             FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.file))
         }
 
-        Testmarks.stubBasedLookup.checkHit {
+        Testmarks.StubBasedLookup.checkHit {
             myFixture.file.childrenOfType<RsMacroCall>()
                 .forEach { it.expansion }
         }

@@ -146,13 +146,13 @@ private fun inferSlicePatsTypes(
 
         val patRestCount = patList.count { it.isRest }
         if (patRestCount != 1) {
-            PatternMatchingTestMarks.multipleRestPats.hit()
+            PatternMatchingTestMarks.MultipleRestPats.hit()
             return CtUnknown
         }
 
         val restSize = arraySize - patList.size.toLong() + 1
         if (restSize < 0) {
-            PatternMatchingTestMarks.negativeRestSize.hit()
+            PatternMatchingTestMarks.NegativeRestSize.hit()
             return CtUnknown
         }
 
@@ -228,6 +228,6 @@ private fun Ty.stripReferences(defBm: RsBindingModeKind): Pair<Ty, RsBindingMode
 }
 
 object PatternMatchingTestMarks {
-    val multipleRestPats = Testmark("multipleRestPats")
-    val negativeRestSize = Testmark("negativeRestSize")
+    object MultipleRestPats : Testmark()
+    object NegativeRestSize : Testmark()
 }

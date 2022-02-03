@@ -41,7 +41,7 @@ class RsStatementUpDownMover : RsLineMover() {
             isMovingOutOfMatchArmBlock(sibling, down) ||
             isMovingOutOfBlockExprInsideArgList(sibling, down)
         ) {
-            UpDownMoverTestMarks.moveOutOfBody.hit()
+            UpDownMoverTestMarks.MoveOutOfBody.hit()
             return null
         }
         val block = getClosestBlock(sibling, down) ?: return sibling

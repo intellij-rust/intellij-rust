@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
-import org.rust.openapiext.Testmark
 import kotlin.reflect.KMutableProperty0
 
 class RsCommenterTest : RsTestBase() {
@@ -280,9 +279,8 @@ class RsCommenterTest : RsTestBase() {
         after: String,
         actionId: String,
         trimIndent: Boolean,
-        testmark: Testmark?
     ) {
-        super.checkEditorAction(before, after, actionId, trimIndent, testmark)
+        super.checkEditorAction(before, after, actionId, trimIndent)
         resetActionManagerState()
     }
 

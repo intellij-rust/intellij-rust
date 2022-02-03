@@ -107,6 +107,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
+    @CheckTestmarkHit(AutoImportFix.Testmarks.NameInScope::class)
     fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
         use foo::Foo;
 
@@ -117,7 +118,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         fn main() {
             Foo
         }
-    """, testmark = AutoImportFix.Testmarks.nameInScope)
+    """)
 
     fun `test do not highlight unresolved method of trait bound if multiple defs (invalid code)`() = checkByText("""
         mod foo {

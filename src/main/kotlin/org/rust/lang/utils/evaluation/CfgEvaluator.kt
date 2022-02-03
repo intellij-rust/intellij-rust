@@ -81,8 +81,8 @@ class CfgEvaluator(
         val result = evaluatePredicate(cfgPredicate)
 
         when (result) {
-            True -> CfgTestmarks.evaluatesTrue.hit()
-            False -> CfgTestmarks.evaluatesFalse.hit()
+            True -> CfgTestmarks.EvaluatesTrue.hit()
+            False -> CfgTestmarks.EvaluatesFalse.hit()
             Unknown -> Unit
         }
 
@@ -243,6 +243,6 @@ private sealed class CfgPredicate {
 }
 
 object CfgTestmarks {
-    val evaluatesTrue = Testmark("evaluatesTrue")
-    val evaluatesFalse = Testmark("evaluatesFalse")
+    object EvaluatesTrue : Testmark()
+    object EvaluatesFalse : Testmark()
 }

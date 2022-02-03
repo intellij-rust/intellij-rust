@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.intellij.lang.annotations.Language
 import org.rust.hasCaretMarker
-import org.rust.openapiext.Testmark
 import org.rust.replaceCaretMarker
 
 abstract class RsCompletionTestFixtureBase<IN>(
@@ -57,21 +56,13 @@ abstract class RsCompletionTestFixtureBase<IN>(
         before: IN,
         @Language("Rust") after: String,
         completionChar: Char,
-        testmark: Testmark?
     ) {
-        val action = {
-            checkByText(before, after.trimIndent()) {
-                val items = myFixture.completeBasic()
-                    ?: return@checkByText // single completion was inserted
-                val lookupItem = items.find { it.lookupString == lookupString } ?: error("Lookup string $lookupString not found")
-                myFixture.lookup.currentItem = lookupItem
-                myFixture.type(completionChar)
-            }
-        }
-        if (testmark != null) {
-            testmark.checkHit(action)
-        } else {
-            action()
+        checkByText(before, after.trimIndent()) {
+            val items = myFixture.completeBasic()
+                ?: return@checkByText // single completion was inserted
+            val lookupItem = items.find { it.lookupString == lookupString } ?: error("Lookup string $lookupString not found")
+            myFixture.lookup.currentItem = lookupItem
+            myFixture.type(completionChar)
         }
     }
 
