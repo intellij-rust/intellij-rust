@@ -103,6 +103,15 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         fn foo<'a, 'b>(p1: &'a i32, p2: &'b i32) -> &'<selection>_</selection> i32 { p2 }
     """)
 
+    // TODO: support nested types
+    fun `test nested adt`() = doAvailableTest("""
+        struct S<'a, T>(&'a T);
+        fn /*caret*/foo(s: S<S<i32>>) -> S<S<i32>> { s }
+    """, """
+        struct S<'a, T>(&'a T);
+        fn /*caret*/foo<'a>(s: S<'a, S<i32>>) -> S<'a, S<i32>> { s }
+    """)
+
     fun `test method decl`() = doAvailableTest("""
         trait Foo {
             fn /*caret*/bar(&self, x: &i32, y: &i32, z: i32) -> &i32;

@@ -163,7 +163,7 @@ private fun addLifetimeParameter(ref: PotentialLifetimeRef, names: List<String>)
             }
 
             val baseTypeName = elem.name
-            val types = factory.createTypeParameterList(typeList)
+            val types = factory.createTypeArgumentList(typeList)
             val replacement = factory.createType("$baseTypeName${types.text}")
             elem.replace(replacement)
         }
