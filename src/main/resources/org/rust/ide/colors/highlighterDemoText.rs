@@ -89,3 +89,8 @@ fn <FUNCTION>test</FUNCTION>() {
         <UNSAFE_CODE>a_function</UNSAFE_CODE>(1);
     }
 }
+
+fn <FUNCTION>implicit_copy</FUNCTION>() {
+    let x = 0;
+    let y = <IMPLICIT_COPY>x</IMPLICIT_COPY>;
+}

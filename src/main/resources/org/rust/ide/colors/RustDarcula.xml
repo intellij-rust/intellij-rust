@@ -68,4 +68,9 @@
             <option name="FOREGROUND" value="848504" />
         </value>
     </option>
+    <option name="org.rust.IMPLICIT_COPY">
+        <value>
+            <option name="BACKGROUND" value="3C3F41" />
+        </value>
+    </option>
 </list>
