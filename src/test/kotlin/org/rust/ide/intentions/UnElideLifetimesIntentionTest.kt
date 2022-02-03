@@ -42,6 +42,12 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         fn foo<'a>(p: &/*caret*/'a i32) -> &'a i32 { p }
     """)
 
+    fun `test all generics`() = doAvailableTest("""
+        fn foo<T, const N: usize, U>(p: &/*caret*/ i32) -> & i32 { p }
+    """, """
+        fn foo<'a, T, const N: usize, U>(p: &/*caret*/'a i32) -> &'a i32 { p }
+    """)
+
     fun `test mut ref`() = doAvailableTest("""
         fn foo(p: &/*caret*/mut i32) -> & i32 { p }
     """, """

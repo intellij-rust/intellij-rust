@@ -15,6 +15,19 @@ import org.rust.lang.core.resolve.ref.RsMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
 @Suppress("unused")
+fun RsMethodCall.getGenericArguments(
+    includeLifetimes: Boolean = true,
+    includeTypes: Boolean = true,
+    includeConsts: Boolean = true,
+    includeAssocBindings: Boolean = true
+): List<RsElement> = typeArgumentList?.getGenericArguments(
+    includeLifetimes,
+    includeTypes,
+    includeConsts,
+    includeAssocBindings
+).orEmpty()
+
+@Suppress("unused")
 val RsMethodCall.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeArguments.orEmpty()
 
 val RsMethodCall.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeArguments.orEmpty()

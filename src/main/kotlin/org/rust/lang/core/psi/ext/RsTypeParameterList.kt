@@ -5,8 +5,20 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RsConstParameter
+import org.rust.lang.core.psi.RsLifetimeParameter
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.RsTypeParameterList
 
-val RsTypeParameterList.genericParameterList: List<RsGenericParameter>
-    get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsGenericParameter::class.java)
+fun RsTypeParameterList.getGenericParameters(
+    includeLifetimes: Boolean = true,
+    includeTypes: Boolean = true,
+    includeConsts: Boolean = true
+): List<RsGenericParameter> = stubChildrenOfType<RsGenericParameter>().filter {
+    when (it) {
+        is RsLifetimeParameter -> includeLifetimes
+        is RsTypeParameter -> includeTypes
+        is RsConstParameter -> includeConsts
+        else -> false
+    }
+}

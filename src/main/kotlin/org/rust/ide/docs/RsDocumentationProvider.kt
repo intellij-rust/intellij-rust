@@ -438,7 +438,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
         }
         is RsTypeArgumentList -> (lifetimeList + typeReferenceList + assocTypeBindingList)
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
-        is RsTypeParameterList -> genericParameterList
+        is RsTypeParameterList -> getGenericParameters()
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
         is RsValueParameterList -> (listOfNotNull(selfParameter) + valueParameterList + listOfNotNull(variadic))
             .joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }

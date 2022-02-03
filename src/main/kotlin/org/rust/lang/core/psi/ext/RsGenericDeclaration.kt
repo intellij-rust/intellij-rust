@@ -12,8 +12,15 @@ interface RsGenericDeclaration : RsElement {
     val whereClause: RsWhereClause?
 }
 
-val RsGenericDeclaration.genericParameters: List<RsGenericParameter>
-    get() = typeParameterList?.genericParameterList.orEmpty()
+fun RsGenericDeclaration.getGenericParameters(
+    includeLifetimes: Boolean = true,
+    includeTypes: Boolean = true,
+    includeConsts: Boolean = true
+): List<RsGenericParameter> = typeParameterList?.getGenericParameters(
+    includeLifetimes,
+    includeTypes,
+    includeConsts
+).orEmpty()
 
 val RsGenericDeclaration.typeParameters: List<RsTypeParameter>
     get() = typeParameterList?.typeParameterList.orEmpty()
@@ -25,7 +32,7 @@ val RsGenericDeclaration.constParameters: List<RsConstParameter>
     get() = typeParameterList?.constParameterList.orEmpty()
 
 val RsGenericDeclaration.requiredGenericParameters: List<RsGenericParameter>
-    get() = genericParameters.filter {
+    get() = getGenericParameters().filter {
         when (it) {
             is RsTypeParameter -> it.typeReference == null
             is RsConstParameter -> it.expr == null

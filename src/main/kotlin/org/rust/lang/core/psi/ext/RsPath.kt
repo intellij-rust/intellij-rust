@@ -106,6 +106,18 @@ enum class PathResolveStatus {
     RESOLVED, UNRESOLVED, NO_REFERENCE
 }
 
+fun RsPath.getGenericArguments(
+    includeLifetimes: Boolean = true,
+    includeTypes: Boolean = true,
+    includeConsts: Boolean = true,
+    includeAssocBindings: Boolean = true
+): List<RsElement> = typeArgumentList?.getGenericArguments(
+    includeLifetimes,
+    includeTypes,
+    includeConsts,
+    includeAssocBindings
+).orEmpty()
+
 val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeArguments.orEmpty()
 
 val RsPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeArguments.orEmpty()

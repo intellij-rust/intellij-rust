@@ -12,10 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsLifetime
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
-import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.*
 
 class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixAndIntentionActionOnPsiElement(lifetime) {
 
@@ -34,8 +31,7 @@ class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixA
             val parameters = mutableListOf<RsElement>()
             parameters.addAll(originalParams.lifetimeParameterList)
             parameters.add(startElement)
-            parameters.addAll(originalParams.typeParameterList)
-            parameters.addAll(originalParams.constParameterList)
+            parameters.addAll(originalParams.getGenericParameters(includeLifetimes = false))
             val parameterList = factory.createTypeParameterList(parameters.joinToString(", ") { it.text })
             originalParams.replace(parameterList)
         } else {

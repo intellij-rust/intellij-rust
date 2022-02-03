@@ -270,7 +270,7 @@ private data class TypeRenderer(
     ): List<String> {
         val renderedList = mutableListOf<String>()
         var nonDefaultParamFound = false
-        for (parameter in declaration.genericParameters.asReversed()) {
+        for (parameter in declaration.getGenericParameters().asReversed()) {
             if (skipUnchangedDefaultTypeArguments && !nonDefaultParamFound) {
                 if (parameter is RsTypeParameter &&
                     parameter.typeReference != null &&
