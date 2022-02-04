@@ -43,10 +43,15 @@ val RsFunction.isConst: Boolean
         return stub?.isConst ?: (const != null)
     }
 
+/** Returns `true` if the function has `extern` modifier or located inside a certain `extern {}` block */
+val RsFunction.isActuallyExtern: Boolean
+    get() = isExtern || stubParent is RsForeignModItem
+
+/** Returns `true` if the function has `extern` modifier */
 val RsFunction.isExtern: Boolean
     get() {
         val stub = greenStub
-        return stub?.isExtern ?: (abi != null)
+        return stub?.isExtern ?: (externAbi != null)
     }
 
 val RsFunction.isVariadic: Boolean

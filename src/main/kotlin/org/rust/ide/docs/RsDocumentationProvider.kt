@@ -367,7 +367,7 @@ private val RsItemElement.declarationModifiers: List<String>
                 if (isUnsafe) {
                     modifiers += "unsafe"
                 }
-                if (isExtern) {
+                if (isActuallyExtern) {
                     modifiers += "extern"
                     abiName?.let { modifiers += "\"$it\"" }
                 }
