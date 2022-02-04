@@ -21,10 +21,7 @@ import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.AssocItemScopeEntryBase
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.ScopeEntry
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -35,6 +32,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.stdext.exhaustive
+import org.rust.stdext.mapToSet
 
 const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
@@ -86,17 +84,38 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
         val isInherentImplMember = element is RsAbstractable && element.owner.isInherentImpl
 
+        val isOperatorMethod = element is RsFunction
+            && scopeEntry is AssocItemScopeEntryBase<*>
+            && scopeEntry.source.implementedTrait?.element?.langAttribute in OPERATOR_TRAIT_LANG_ITEMS
+
+        val isBlanketImplMember = if (scopeEntry is AssocItemScopeEntryBase<*>) {
+            val source = scopeEntry.source
+            source is TraitImplSource.ExplicitImpl && source.type is TyTypeParameter
+        } else {
+            false
+        }
+
         return RsLookupElementProperties(
             isSelfTypeCompatible = !isMethodSelfTypeIncompatible,
             isLocal = isLocal,
             elementKind = elementKind,
             isInherentImplMember = isInherentImplMember,
+            isOperatorMethod = isOperatorMethod,
+            isBlanketImplMember = isBlanketImplMember,
+            isUnsafeFn = element is RsFunction && element.isActuallyUnsafe,
+            isAsyncFn = element is RsFunction && element.isAsync,
+            isConstFnOrConst = element is RsFunction && element.isConst || element is RsConstant && element.isConst,
+            isExternFn = element is RsFunction && element.isExtern,
         )
     }
 
     override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
         val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
         return element.getLookupElementBuilder(scopeEntry.name, subst)
+    }
+
+    companion object {
+        private val OPERATOR_TRAIT_LANG_ITEMS = OverloadableBinaryOperator.values().mapToSet { it.itemName }
     }
 }
 

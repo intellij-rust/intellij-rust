@@ -83,7 +83,7 @@ open class RsPsiRenderer(
         if (fn.isUnsafe) {
             sb.append("unsafe ")
         }
-        if (fn.isExtern) {
+        if (fn.isActuallyExtern) {
             sb.append("extern ")
             val abiName = fn.abiName
             if (abiName != null) {

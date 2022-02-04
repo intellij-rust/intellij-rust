@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.util.RelevanceUtil.asRelevanceMaps
 import com.intellij.testFramework.UsefulTestCase
 import org.intellij.lang.annotations.Language
+import org.rust.IgnoreInPlatform
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
@@ -99,6 +100,187 @@ class RsElementFeatureProviderTest : RsTestBase() {
         }
         UsefulTestCase.assertSameElements(kindsKeywords, actualKeywords)
     }
+
+    @IgnoreInPlatform(213)
+    fun `test is_operator_method feature for a method call`() = doTest("ml_rust_is_operator_method", """
+        #[lang = "add"]
+        pub trait Add<Rhs = Self> {
+            type Output;
+            fn add(self, rhs: Rhs) -> Self::Output;
+        }
+        pub trait AsRef<T: ?Sized> {
+            fn as_ref(&self) -> &T;
+        }
+        struct S(i32);
+        impl Add for S {
+            type Output = S;
+            fn add(self, rhs: Self) -> S {
+                S(self.0 + rhs.0)
+            }
+        }
+        impl AsRef<i32> for S {
+            fn as_ref(&self) -> &i32 { &self.0 }
+        }
+        fn main() {
+            let a = S(0);
+            a.a/*caret*/
+        }
+    """, mapOf(
+        "add" to 1,
+        "as_ref" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_operator_method feature for a UFCS path`() = doTest("ml_rust_is_operator_method", """
+        #[lang = "add"]
+        pub trait Add<Rhs = Self> {
+            type Output;
+            fn add(self, rhs: Rhs) -> Self::Output;
+        }
+        pub trait AsRef<T: ?Sized> {
+            fn as_ref(&self) -> &T;
+        }
+        struct S(i32);
+        impl Add for S {
+            type Output = S;
+            fn add(self, rhs: Self) -> S {
+                S(self.0 + rhs.0)
+            }
+        }
+        impl AsRef<i32> for S {
+            fn as_ref(&self) -> &i32 { &self.0 }
+        }
+        fn main() {
+            S::a/*caret*/
+        }
+    """, mapOf(
+        "add" to 1,
+        "as_ref" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_blanket_impl_member feature for a method call`() = doTest("ml_rust_is_blanket_impl_member", """
+        trait Trait1 {
+            fn foo(&self);
+        }
+        impl<T> Trait1 for T {
+            fn foo(&self) {}
+        }
+        trait Trait2 {
+            fn bar(&self);
+        }
+        impl Trait2 for S {
+            fn bar(&self) {}
+        }
+        impl S {
+            fn baz(&self) {}
+        }
+        struct S;
+        fn main() {
+            S./*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "bar" to 0,
+        "baz" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_blanket_impl_member feature for a UFCS path`() = doTest("ml_rust_is_blanket_impl_member", """
+        trait Trait1 {
+            fn foo(&self);
+            fn bar();
+            const BAZ: i32;
+        }
+        impl<T> Trait1 for T {
+            fn foo(&self) {}
+            fn bar() {}
+            const BAZ: i32 = 1;
+        }
+        trait Trait2 {
+            fn qux(&self);
+            fn spam();
+            const EGGS: i32;
+        }
+        impl Trait2 for S {
+            fn qux(&self) {}
+            fn spam() {}
+            const EGGS: i32 = 1;
+        }
+        struct S;
+        fn main() {
+            S::/*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "bar" to 1,
+        "BAZ" to 1,
+        "qux" to 0,
+        "spam" to 0,
+        "EGGS" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_unsafe_fn feature`() = doTest("ml_rust_is_unsafe_fn", """
+        unsafe fn foo() {}
+        extern "C" {
+            fn bar();
+        }
+        fn baz() {}
+        extern "C" fn qux() {}
+        fn main() {
+            /*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "bar" to 1,
+        "baz" to 0,
+        "qux" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_async_fn feature`() = doTest("ml_rust_is_async_fn", """
+        async fn foo() {}
+        fn bar() {}
+        fn main() {
+            /*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "bar" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_const_fn_or_const feature`() = doTest("ml_rust_is_const_fn_or_const", """
+        const fn foo() {}
+        const C: i32 = 1;
+        fn bar() {}
+        static S: i32 = 1;
+        fn main() {
+            /*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "C" to 1,
+        "bar" to 0,
+        "S" to 0,
+    ))
+
+    @IgnoreInPlatform(213)
+    fun `test is_extern_fn feature`() = doTest("ml_rust_is_extern_fn", """
+        extern "C" fn foo() {}
+        fn bar() {}
+        extern "C" {
+            fn baz();
+        }
+        fn main() {
+            /*caret*/
+        }
+    """, mapOf(
+        "foo" to 1,
+        "bar" to 0,
+        "baz" to 0,
+    ))
 
 
     private fun doTest(feature: String, @Language("Rust") code: String, values: Map<String, Any>) {

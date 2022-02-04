@@ -119,6 +119,97 @@ data class RsLookupElementProperties(
      * Some classification of an element
      */
     val elementKind: ElementKind = ElementKind.DEFAULT,
+
+    /**
+     * `true` if the lookup element is a method that implements an overloaded operator like `add`,
+     * `eq`, `partial_cmp`, etc.
+     *
+     * ```
+     * use std::ops::Add;
+     * use std::convert::AsRef;
+     *
+     * struct S(i32);
+     *
+     * impl Add for S {
+     *     type Output = S;
+     *     fn add(self, rhs: Self) -> S {       // isOperatorMethod = true
+     *         S(self.0 + rhs.0)
+     *     }
+     * }
+     * impl AsRef<i32> for S {
+     *     fn as_ref(&self) -> &i32 { &self.0 } // isOperatorMethod = false
+     * }
+     *
+     * fn main() {
+     *     let a = S(0);
+     *     a.  // <-- complete here
+     *     S:: // <-- complete here
+     * }
+     * ```
+     */
+    val isOperatorMethod: Boolean = false,
+
+    /**
+     * `true` if the lookup element is a member of a blanket impl, i.e. an impl for a type parameter.
+     *
+     * ```
+     * impl<T: Bound> Trait for T {
+     *     fn foo(&self) {}    // isBlanketImplMember = true
+     *     fn bar() {}         // isBlanketImplMember = true
+     *     const BAZ: i32 = 1; // isBlanketImplMember = true
+     * }
+     */
+    val isBlanketImplMember: Boolean = false,
+
+    /**
+     * `true` if the lookup element is a function that requires an `unsafe` block to be called.
+     *
+     * ```
+     * unsafe fn foo() {}     // isUnsafeFn = true
+     * extern "C" {
+     *     fn bar();          // isUnsafeFn = true
+     * }
+     * fn baz() {}            // isUnsafeFn = false
+     * extern "C" fn qux() {} // isUnsafeFn = false
+     * ```
+     */
+    val isUnsafeFn: Boolean = false,
+
+    /**
+     * `true` if the lookup element is a function with `async` modifier.
+     *
+     * ```
+     * async fn foo() {} // isAsyncFn = true
+     * fn bar() {}       // isAsyncFn = false
+     * ```
+     */
+    val isAsyncFn: Boolean = false,
+
+    /**
+     * `true` if the lookup element is a function with `const` modifier or a `const`.
+     *
+     * ```
+     * const fn foo() {}  // isConstFnOrConst = true
+     * const C: i32 = 1;  // isConstFnOrConst = true
+     * fn bar() {}        // isConstFnOrConst = false
+     * static S: i32 = 1; // isConstFnOrConst = false
+     * ```
+     */
+    val isConstFnOrConst: Boolean = false,
+
+    /**
+     * `true` if the lookup element is a function with `extern` keyword.
+     * Don't confuse with a function inside an `extern` block.
+     *
+     * ```
+     * extern "C" fn foo() {} // isExternFn = true
+     * fn bar() {}            // isExternFn = false
+     * extern "C" {
+     *     fn baz();          // isExternFn = false
+     * }
+     * ```
+     */
+    val isExternFn: Boolean = false,
 ) {
     enum class KeywordKind {
         // Top Priority

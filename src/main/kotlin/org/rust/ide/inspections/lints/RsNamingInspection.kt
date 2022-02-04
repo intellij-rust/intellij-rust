@@ -229,7 +229,7 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
         if (super.isSuppressedFor(element)) return true
 
         val function = element.parent as? RsFunction ?: return false
-        return function.isExtern && function.findOuterAttr("no_mangle") != null
+        return function.isActuallyExtern && function.findOuterAttr("no_mangle") != null
     }
 }
 

@@ -11,6 +11,8 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.ide.utils.import.isStd
+import org.rust.lang.core.completion.RsCompletionContributor
+import org.rust.lang.core.completion.RsLookupElement
 import org.rust.lang.core.completion.sort.RS_COMPLETION_WEIGHERS
 import org.rust.lang.core.completion.sort.RsCompletionWeigher
 import org.rust.lang.core.psi.*
@@ -23,7 +25,9 @@ import kotlin.reflect.KClass
  * so there is no sense to add it again in [calculateFeatures].
  *
  * Also note that there is a common feature provider for all languages:
- * [com.intellij.completion.ml.common.CommonElementLocationFeatures]
+ * [com.intellij.completion.ml.common.CommonElementLocationFeatures].
+ *
+ * @see RsContextFeatureProvider
  */
 @Suppress("UnstableApiUsage")
 class RsElementFeatureProvider : ElementFeatureProvider {
@@ -59,12 +63,31 @@ class RsElementFeatureProvider : ElementFeatureProvider {
             result[IS_FROM_STDLIB] = MLFeatureValue.binary(containingCrate.isStd)
         }
 
+        // BACKCOMPAT: 2021.3
+        if (RsCompletionContributor.isAtLeast221Platform) {
+            val rsElement = element.`as`(RsLookupElement::class.java)
+            if (rsElement != null) {
+                result[IS_OPERATOR_METHOD] = MLFeatureValue.binary(rsElement.props.isOperatorMethod)
+                result[IS_BLANKET_IMPL_MEMBER] = MLFeatureValue.binary(rsElement.props.isBlanketImplMember)
+                result[IS_UNSAFE_FN] = MLFeatureValue.binary(rsElement.props.isUnsafeFn)
+                result[IS_ASYNC_FN] = MLFeatureValue.binary(rsElement.props.isAsyncFn)
+                result[IS_CONST_FN_OR_CONST] = MLFeatureValue.binary(rsElement.props.isConstFnOrConst)
+                result[IS_EXTERN_FN] = MLFeatureValue.binary(rsElement.props.isExternFn)
+            }
+        }
+
         return result
     }
 
     companion object {
         private const val KIND: String = "kind"
         private const val IS_FROM_STDLIB: String = "is_from_stdlib"
+        private const val IS_OPERATOR_METHOD: String = "is_operator_method"
+        private const val IS_BLANKET_IMPL_MEMBER: String = "is_blanket_impl_member"
+        private const val IS_UNSAFE_FN: String = "is_unsafe_fn"
+        private const val IS_ASYNC_FN: String = "is_async_fn"
+        private const val IS_CONST_FN_OR_CONST: String = "is_const_fn_or_const"
+        private const val IS_EXTERN_FN: String = "is_extern_fn"
     }
 }
 

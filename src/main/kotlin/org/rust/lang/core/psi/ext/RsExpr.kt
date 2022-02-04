@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsPlaceholderStub
 import org.rust.lang.core.stubs.RsUnaryExprStub
+import org.rust.stdext.buildList
 
 enum class UnaryOperator {
     REF, // `&a`
@@ -58,6 +59,15 @@ interface OverloadableBinaryOperator {
 
     fun findTrait(items: KnownItems): RsTraitItem? =
         items.findLangItem(itemName)
+
+    companion object {
+        fun values(): List<OverloadableBinaryOperator> = buildList {
+            addAll(ArithmeticOp.values())
+            addAll(EqualityOp.values())
+            addAll(ComparisonOp.values())
+            addAll(ArithmeticAssignmentOp.values())
+        }
+    }
 }
 
 sealed class BinaryOperator
@@ -119,7 +129,7 @@ sealed class ComparisonOp(
     object GTEQ : ComparisonOp(">=") // `a >= b`
 
     override val traitName: String = "PartialOrd"
-    override val itemName: String = "ord"
+    override val itemName: String = "partial_ord"
     override val fnName: String = "partial_cmp"
 
     override fun findTrait(items: KnownItems): RsTraitItem? = items.PartialOrd
