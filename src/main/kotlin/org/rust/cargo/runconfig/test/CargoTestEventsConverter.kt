@@ -247,6 +247,16 @@ class CargoTestEventsConverter(
         suitesStack.add(suite)
     }
 
+    private val splitter: CargoTestOutputEventSplitter = object: CargoTestOutputEventSplitter() {
+        override fun onTextAvailable(text: String, outputType: Key<*>) {
+            processConsistentText(text, outputType)
+        }
+    }
+
+    override fun flushBufferOnProcessTermination(exitCode: Int) = splitter.flush()
+
+    override fun process(text: String, outputType: Key<*>) = splitter.process(text, outputType)
+
     companion object {
         private const val TARGET_PATH_PART: String = "/target/"
 

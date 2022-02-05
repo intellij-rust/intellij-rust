@@ -33,7 +33,7 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val tomlPlugin = "org.toml.lang:${prop("tomlPluginVersion")}"
+val tomlPlugin = if (platformVersion >= 221 && baseIDE == "idea") "org.toml.lang" else "org.toml.lang:${prop("tomlPluginVersion")}"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -547,6 +547,8 @@ project(":ml-completion") {
 
 task("runPrettyPrintersTests") {
     doLast {
+        // https://github.com/intellij-rust/intellij-rust/issues/8482
+        if (platformVersion >= 221) return@doLast
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"

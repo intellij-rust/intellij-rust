@@ -95,12 +95,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
         val project = configuration.project
         val treeDataModel = MemoryProfileTreeDataModel("Valgrind", project)
-        val outputPanel = MemoryProfileOutputPanel(
-            treeDataModel,
-            ValgrindUtil.EDIT_SETTINGS_ACTION_ID,
-            ValgrindUtil.TREE_POPUP_ID,
-            project
-        )
+        val outputPanel = createMemoryProfileOutputPanel(treeDataModel, project)
         putUserData(DATA_MODEL_KEY, treeDataModel, configuration, context)
         putUserData(OUTPUT_PANEL_KEY, outputPanel, configuration, context)
         val console = state.consoleBuilder.console

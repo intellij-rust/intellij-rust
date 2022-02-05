@@ -11,9 +11,12 @@ import com.intellij.build.BuildDescriptor
 import com.intellij.build.BuildViewManager
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.*
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.replaceService
+import com.intellij.util.ThrowableRunnable
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.buildtool.MockProgressIndicator
@@ -38,6 +41,12 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         mockProgressIndicator = null
     }
 
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        if (ApplicationInfo.getInstance().build < BUILD_221) {
+            super.runTestRunnable(testRunnable)
+        }
+    }
+
     protected fun checkEvents(
         build: EventTreeBuilder.() -> Unit
     ) {
@@ -49,6 +58,8 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
     }
 
     companion object {
+
+        private val BUILD_221 = BuildNumber.fromString("221")!!
 
         @JvmStatic
         protected fun checkResult(

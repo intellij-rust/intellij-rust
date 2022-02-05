@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.rustPsiManager
 
-class RsProfileResolveTest : RsPerformanceTestBase() {
+class RsProfileResolveTest : RsPerfTestBase() {
 
     fun `test Cargo`() = profileResolve(CARGO, "src/cargo/core/resolver/mod.rs")
     fun `test mysql_async`() = profileResolve(MYSQL_ASYNC, "src/conn/mod.rs")

@@ -12,8 +12,7 @@ import org.rust.lang.core.completion.RsCompletionTestBase
 import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
 
-class RsCompletionPerformanceTest : RsCompletionTestBase() {
-    override fun isPerformanceTest(): Boolean = false
+class RsCompletionPerfTest : RsCompletionTestBase() {
 
     fun `test completion`() = repeatTest { timings ->
         myFixture.configureByText("main.rs", text)

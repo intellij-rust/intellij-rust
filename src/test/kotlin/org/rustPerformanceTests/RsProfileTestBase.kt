@@ -10,10 +10,7 @@ import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import kotlin.system.measureTimeMillis
 
-abstract class RsPerformanceTestBase : RsRealProjectTestBase() {
-
-    // It is a performance test, but we don't want to waste time measuring CPU performance
-    override fun isPerformanceTest(): Boolean = false
+abstract class RsPerfTestBase : RsRealProjectTestBase() {
 
     protected fun openProject(info: RealProjectInfo) {
         project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)

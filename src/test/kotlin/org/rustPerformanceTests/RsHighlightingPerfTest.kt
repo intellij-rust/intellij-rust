@@ -19,10 +19,7 @@ import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
 
 
-class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
-    // It is a performance test, but we don't want to waste time
-    // measuring CPU performance
-    override fun isPerformanceTest(): Boolean = false
+class RsHighlightingPerfTest : RsRealProjectTestBase() {
 
     fun `test highlighting Cargo`() =
         repeatTest { highlightProjectFile(CARGO, "src/cargo/core/resolver/mod.rs", it) }
@@ -103,7 +100,7 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
 
     override val disableMissedCacheAssertions: Boolean get() = false
-    private val lastDisposable = Disposer.newDisposable("RsHighlightingPerformanceTest last")
+    private val lastDisposable = Disposer.newDisposable("RsHighlightingPerfTest last")
 
     override fun setUp() {
         super.setUp()
