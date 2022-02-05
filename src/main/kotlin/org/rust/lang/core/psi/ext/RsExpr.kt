@@ -263,6 +263,9 @@ val RsBinaryOp.operatorType: BinaryOperator
 val RsBinaryExpr.operator: PsiElement get() = binaryOp.operator
 val RsBinaryExpr.operatorType: BinaryOperator get() = binaryOp.operatorType
 
+val RsExpr.isInConstContext: Boolean
+    get() = classifyConstContext != null
+
 val RsExpr.classifyConstContext: RsConstContextKind?
     get() {
         for (it in contexts) {
@@ -291,6 +294,32 @@ sealed class RsConstContextKind {
     object ArraySize : RsConstContextKind()
     object ConstGenericArgument : RsConstContextKind()
 }
+
+val RsExpr.isInUnsafeContext: Boolean
+    get() {
+        val parent = contexts.find {
+            when (it) {
+                is RsBlockExpr -> it.isUnsafe
+                is RsFunction -> true
+                else -> false
+            }
+        } ?: return false
+
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isActuallyUnsafe)
+    }
+
+val RsExpr.isInAsyncContext: Boolean
+    get() {
+        val parent = contexts.find {
+            when (it) {
+                is RsBlockExpr -> it.isAsync
+                is RsFunction -> true
+                else -> false
+            }
+        } ?: return false
+
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isAsync)
+    }
 
 abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
     constructor(node: ASTNode) : super(node)
