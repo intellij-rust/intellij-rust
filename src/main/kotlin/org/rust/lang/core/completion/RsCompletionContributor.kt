@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.application.ApplicationInfo
@@ -67,7 +68,8 @@ class RsCompletionContributor : CompletionContributor() {
          */
         fun withRustSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
             return if (isAtLeast221Platform) {
-                var sorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
+                var sorter = (CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl)
+                    .withoutClassifiers { it.id == "liftShorter" }
                 for (weigherGroups in RS_COMPLETION_WEIGHERS_GROUPED) {
                     sorter = sorter.weighAfter(weigherGroups.anchor, *weigherGroups.weighers)
                 }
