@@ -19,7 +19,6 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.openapiext.pathAsPath
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
@@ -92,9 +91,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 }
             }
         }
-        NameResolutionTestmarks.shadowingStdCrates.ignoreInNewResolve(project).checkHit {
-            testProject.checkReferenceIsResolved<RsPath>("foo/src/lib.rs")
-        }
+        testProject.checkReferenceIsResolved<RsPath>("foo/src/lib.rs")
     }
 
     fun `test resolve local package`() = buildProject {
@@ -930,7 +927,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.run {
-        CrateGraphTestmarks.cyclicDevDependency.checkHit {
+        CrateGraphTestmarks.CyclicDevDependency.checkHit {
             checkReferenceIsResolved<RsPath>("tests/main.rs")
             checkReferenceIsResolved<RsPath>("src/lib.rs")
         }

@@ -630,7 +630,7 @@ class RsTypeInferenceWalker(
         val containingMod = context.containingMod
         return variants.singleOrLet { list ->
             // 1. filter traits that are not imported
-            TypeInferenceMarks.methodPickTraitScope.hit()
+            TypeInferenceMarks.MethodPickTraitScope.hit()
             val traitToCallee = hashMapOf<RsTraitItem, MutableList<T>>()
             val filtered = mutableListOf<T>()
             for (callee in list) {
@@ -645,7 +645,7 @@ class RsTypeInferenceWalker(
                 filtered += traitToCallee.getValue(it)
             }
             filtered.ifEmpty {
-                TypeInferenceMarks.methodPickTraitsOutOfScope.hit()
+                TypeInferenceMarks.MethodPickTraitsOutOfScope.hit()
                 list
             }
         }.singleOrFilter { callee ->
@@ -655,7 +655,7 @@ class RsTypeInferenceWalker(
                 || callee.element.isVisibleFrom(containingMod)
         }.singleOrFilter { callee ->
             // 3. Filter methods by trait bounds (try to select all obligations for each impl)
-            TypeInferenceMarks.methodPickCheckBounds.hit()
+            TypeInferenceMarks.MethodPickCheckBounds.hit()
             ctx.canEvaluateBounds(callee.source, callee.selfTy)
         }
     }
@@ -667,7 +667,7 @@ class RsTypeInferenceWalker(
     ): MethodResolveVariant? {
         val filtered = filterAssocItems(variants, methodCall).singleOrLet { list ->
             // 4. Pick results matching receiver type
-            TypeInferenceMarks.methodPickDerefOrder.hit()
+            TypeInferenceMarks.MethodPickDerefOrder.hit()
 
             fun pick(ty: Ty): List<MethodResolveVariant> =
                 list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
@@ -697,7 +697,7 @@ class RsTypeInferenceWalker(
                 // Specific impl will be selected later according to the method parameter type.
                 val first = filtered.first()
                 collapseToTrait(filtered.map { it.element })?.let { fn ->
-                    TypeInferenceMarks.methodPickCollapseTraits.hit()
+                    TypeInferenceMarks.MethodPickCollapseTraits.hit()
                     MethodResolveVariant(
                         first.name,
                         fn,
@@ -1012,7 +1012,7 @@ class RsTypeInferenceWalker(
             val okType = tryItem.findAssociatedType("Ok") ?: return TyUnknown
             return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(base, BoundElement(tryItem), okType)).value
         }
-        TypeInferenceMarks.questionOperator.hit()
+        TypeInferenceMarks.QuestionOperator.hit()
         return base.typeArguments.getOrElse(0) { TyUnknown }
     }
 
@@ -1086,7 +1086,7 @@ class RsTypeInferenceWalker(
 
     private fun inferMacroExprType(macroExpr: RsMacroExpr, expected: Ty?): Ty {
         if (macroExprDepth > DEFAULT_RECURSION_LIMIT) {
-            TypeInferenceMarks.macroExprDepthLimitReached.hit()
+            TypeInferenceMarks.MacroExprDepthLimitReached.hit()
             return TyUnknown
         }
         macroExprDepth++

@@ -25,20 +25,12 @@ import org.rust.stdext.unwrapOrElse
 import kotlin.math.min
 
 abstract class RsMacroExpansionTestBase : RsTestBase() {
-    fun doTest(@Language("Rust") code: String, @Language("Rust") vararg expectedExpansions: Pair<String, Testmark?>) {
+    protected fun doTest(@Language("Rust") code: String, @Language("Rust") vararg expectedExpansions: Pair<String, Testmark?>) {
         InlineFile(code)
         checkAllMacroExpansionsInFile(myFixture.file, expectedExpansions)
     }
 
-    fun doTest(
-        mark: Testmark,
-        @Language("Rust") code: String,
-        @Language("Rust") vararg expectedExpansions: String
-    ) {
-        mark.checkHit { doTest(code, *expectedExpansions) }
-    }
-
-    fun doTest(
+    protected fun doTest(
         @Language("Rust") code: String,
         @Language("Rust") vararg expectedExpansions: String
     ) {
@@ -64,25 +56,23 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
             }
     }
 
-    fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
+    protected fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         InlineFile(code)
         val call = findElementInEditor<RsMacroCall>("^")
         checkMacroExpansion(call, expectedExpansion, "Macro comparison failed")
     }
 
-    fun checkSingleMacroByTree(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
+    protected fun checkSingleMacroByTree(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         val call = findElementInEditor<RsMacroCall>("^")
         checkMacroExpansion(call, expectedExpansion, "Macro comparison failed")
     }
 
-    fun doErrorTest(@Language("Rust") code: String, mark: Testmark) {
+    protected fun doErrorTest(@Language("Rust") code: String) {
         InlineFile(code)
-        mark.checkHit {
-            val call = findElementInEditor<RsMacroCall>("^")
-            val def = call.resolveToMacro() ?: error("Failed to resolve macro ${call.path.text}")
-            check(expandMacroAsTextWithErr(call, RsDeclMacroData(def)).isErr)
-        }
+        val call = findElementInEditor<RsMacroCall>("^")
+        val def = call.resolveToMacro() ?: error("Failed to resolve macro ${call.path.text}")
+        check(expandMacroAsTextWithErr(call, RsDeclMacroData(def)).isErr)
     }
 
     private fun checkMacroExpansion(

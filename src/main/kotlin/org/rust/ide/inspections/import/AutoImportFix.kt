@@ -114,7 +114,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
-                Testmarks.pathInUseItem.hit()
+                Testmarks.PathInUseItem.hit()
                 return null
             }
 
@@ -125,7 +125,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
                 // It's possible for incorrect or incomplete code like "let map = HashMap"
-                Testmarks.nameInScope.hit()
+                Testmarks.NameInScope.hit()
                 return null
             }
 
@@ -190,7 +190,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     }
 
     object Testmarks {
-        val pathInUseItem = Testmark("pathInUseItem")
-        val nameInScope = Testmark("nameInScope")
+        object PathInUseItem : Testmark()
+        object NameInScope : Testmark()
     }
 }

@@ -1047,6 +1047,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(f: &FnOnce(/*caret*/)) {}
     """)
 
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 1`() = checkCompletion("foo", """
         fn foo() {}
         fn foo2() {}
@@ -1059,8 +1060,9 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             foo()/*caret*/
         }
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 2`() = checkCompletion("V1", """
         enum E {
             V1(i32),
@@ -1077,16 +1079,17 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             E::V1(/*caret*/)
         }
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 3`() = checkCompletion("FnOnce", """
         struct FnOnceStruct;
         fn foo(f: FnOnce/*caret*/) {}
     """, """
         struct FnOnceStruct;
         fn foo(f: FnOnce(/*caret*/)) {}
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 1`() = checkNoCompletionByFileTree("""

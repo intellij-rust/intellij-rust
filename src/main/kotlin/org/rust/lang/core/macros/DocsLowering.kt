@@ -40,7 +40,7 @@ fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
         return null
     }
 
-    MacroExpansionMarks.docsLowering.hit()
+    MacroExpansionMarks.DocsLowering.hit()
 
     val sb = StringBuilder((originalText.length * 1.1).toInt())
     val ranges = SmartList<MappedTextRange>()

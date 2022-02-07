@@ -459,7 +459,7 @@ class SourceFile(
             }
             RefKind.STRONG -> error("unreachable") // handled above
             RefKind.STUB -> {
-                Testmarks.stubBasedRefMatch.hit()
+                Testmarks.StubBasedRefMatch.hit()
                 // Transition to any state from `STUB` is forbidden in the read action
                 matcher.stub(psi, _infos)
             }
@@ -571,7 +571,7 @@ class SourceFile(
      */
     private fun recoverRefs(prefetchedCalls: List<RsPossibleMacroCall>?) {
         checkReadAccessAllowed()
-        Testmarks.refsRecover.hit()
+        Testmarks.RefsRecover.hit()
 
         val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsPossibleMacroCall>()
@@ -582,7 +582,7 @@ class SourceFile(
         for (call in calls) {
             val info = unboundInfos.find { it.isUpToDate(call, call.resolveToMacroWithoutPsi()) }
             if (info != null) {
-                Testmarks.refsRecoverExactHit.hit()
+                Testmarks.RefsRecoverExactHit.hit()
                 unboundInfos.remove(info)
                 bindList += Pair(info, call.calcStubIndex())
             } else {
@@ -595,11 +595,11 @@ class SourceFile(
         for (call in orphans) {
             val info = unboundInfos.find { it.callHash == call.bodyHash }
             if (info != null) {
-                Testmarks.refsRecoverCallHit.hit()
+                Testmarks.RefsRecoverCallHit.hit()
                 unboundInfos.remove(info)
                 bindList += Pair(info, call.calcStubIndex())
             } else {
-                Testmarks.refsRecoverNotHit.hit()
+                Testmarks.RefsRecoverNotHit.hit()
                 infosToAdd += ExpandedMacroInfoImpl.newStubLinked(this, call)
             }
         }
@@ -637,7 +637,7 @@ class SourceFile(
                 infos.find { it.macroCallStrongRef == seekingCall }
 
             override fun stub(psi: RsFile, infos: List<ExpandedMacroInfoImpl>): ExpandedMacroInfoImpl? {
-                Testmarks.stubBasedLookup.hit()
+                Testmarks.StubBasedLookup.hit()
                 val seekingStubIndex = seekingCall.calcStubIndex()
                 return infos.find { it.macroCallStubIndex == seekingStubIndex }
             }

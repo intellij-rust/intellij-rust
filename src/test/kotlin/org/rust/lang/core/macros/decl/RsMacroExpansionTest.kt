@@ -294,7 +294,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """)
 
-    fun `test empty group`() = doTest(MacroExpansionMarks.groupInputEnd1, """
+    @CheckTestmarkHit(MacroExpansionMarks.GroupInputEnd1::class)
+    fun `test empty group`() = doTest("""
         macro_rules! foo {
             ($ ($ i:item)*) => ($ ( $ i )*)
         }
@@ -313,7 +314,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """)
 
-    fun `test group with $crate usage`() = doTest(MacroExpansionMarks.groupInputEnd1, """
+    @CheckTestmarkHit(MacroExpansionMarks.GroupInputEnd1::class)
+    fun `test group with $crate usage`() = doTest("""
         macro_rules! foo {
             ($ ($ i:item)*; $ ($ j:item)*) => ($ ( use $ crate::$ i; )* $ ( use $ crate::$ i; )*)
         }
@@ -376,7 +378,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
-    fun `test match pattern by first token`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByToken::class)
+    fun `test match pattern by first token`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -399,7 +402,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by last token`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByToken::class)
+    fun `test match pattern by last token`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -422,7 +426,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by word token 1`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByToken::class)
+    fun `test match pattern by word token 1`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -445,7 +450,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by word token 2`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByToken::class)
+    fun `test match pattern by word token 2`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -468,7 +474,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by word token 3`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByToken::class)
+    fun `test match pattern by word token 3`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -491,7 +498,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by binding type 1`() = doTest(MacroExpansionMarks.failMatchPatternByExtraInput, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByExtraInput::class)
+    fun `test match pattern by binding type 1`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 fn $ i() {}
@@ -508,7 +516,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Bar { field: Baz<u8> }
     """)
 
-    fun `test match pattern by binding type 2`() = doTest(MacroExpansionMarks.failMatchPatternByBindingType, """
+    @CheckTestmarkHit(MacroExpansionMarks.FailMatchPatternByBindingType::class)
+    fun `test match pattern by binding type 2`() = doTest("""
         macro_rules! foo {
             ($ i:item) => (
                 $ i
@@ -547,10 +556,10 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """ to null, """
         fn foo() {}
         fn bar() {}
-    """ to MacroExpansionMarks.failMatchGroupBySeparator, """
+    """ to MacroExpansionMarks.FailMatchGroupBySeparator, """
         struct Foo;
         struct Bar;
-    """ to MacroExpansionMarks.failMatchPatternByExtraInput)
+    """ to MacroExpansionMarks.FailMatchPatternByExtraInput)
 
     fun `test match 'asterisk' vs 'plus' group pattern`() = doTest("""
         macro_rules! foo {
@@ -565,12 +574,13 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo! { foo }
     """, """
         mod asterisk_matched {}
-    """ to MacroExpansionMarks.failMatchGroupTooFewElements, """
+    """ to MacroExpansionMarks.FailMatchGroupTooFewElements, """
         mod plus_matched {}
     """ to null)
 
     // TODO should work only on 2018 edition
-    fun `test match 'asterisk' vs 'q' group pattern`() = doTest(MacroExpansionMarks.questionMarkGroupEnd, """
+    @CheckTestmarkHit(MacroExpansionMarks.QuestionMarkGroupEnd::class)
+    fun `test match 'asterisk' vs 'q' group pattern`() = doTest("""
         macro_rules! foo {
             ($ ($ i:ident)?) => (
                 mod question_matched {}
@@ -629,10 +639,10 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         mod foo {}
         mod bar {}
-    """ to MacroExpansionMarks.groupInputEnd3, """
+    """ to MacroExpansionMarks.GroupInputEnd3, """
         struct Foo;
         struct Bar;
-    """ to MacroExpansionMarks.failMatchPatternByExtraInput)
+    """ to MacroExpansionMarks.FailMatchPatternByExtraInput)
 
     fun `test multiple groups with reversed variables order`() = doTest("""
         macro_rules! foo {
@@ -692,7 +702,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn foo() { 2; }
     """)
 
-    fun `test group with the separator the same as the next token 1`() = doTest(MacroExpansionMarks.groupInputEnd1, """
+    @CheckTestmarkHit(MacroExpansionMarks.GroupInputEnd1::class)
+    fun `test group with the separator the same as the next token 1`() = doTest("""
         macro_rules! foo {
             ($($ i:item)=* =) => {
                 $($ i)*
@@ -706,7 +717,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn foo() {}
     """)
 
-    fun `test group with the separator the same as the next token 2`() = doTest(MacroExpansionMarks.groupInputEnd2, """
+    @CheckTestmarkHit(MacroExpansionMarks.GroupInputEnd2::class)
+    fun `test group with the separator the same as the next token 2`() = doTest("""
         macro_rules! foo {
             ($($ i:item)=* = #) => {
                 $($ i)*
@@ -888,7 +900,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         macro_rules! bar { ($ b:item) => { $ b }; }
         fn foo() {}
-    """ to MacroExpansionMarks.substMetaVarNotFound)
+    """ to MacroExpansionMarks.SubstMetaVarNotFound)
 
     fun `test expand macro defined in function`() = doTest("""
         fn main() {
@@ -912,8 +924,9 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo!();
     """, """
         fn foo() {}
-    """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
+    """ to NameResolutionTestmarks.DollarCrateMagicIdentifier)
 
+    @CheckTestmarkHit(MacroExpansionMarks.GroupMatchedEmptyTT::class)
     fun `test incorrect 'vis' group does not cause OOM`() = doErrorTest("""
         // error: repetition matches empty token tree
         macro_rules! foo {
@@ -921,7 +934,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo!(a);
         //^
-    """, MacroExpansionMarks.groupMatchedEmptyTT)
+    """)
 
     fun `test two sequential groups starting with the same token`() = doTest("""
         macro_rules! foobar {
@@ -1065,7 +1078,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         #[doc = " Some docs"]
         fn foo() {}
-    """ to MacroExpansionMarks.docsLowering)
+    """ to MacroExpansionMarks.DocsLowering)
 
     fun `test docs lowering`() = doTest("""
         macro_rules! foo {
@@ -1080,7 +1093,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         #[doc = " Some docs"]
         fn foo() {}
-    """ to MacroExpansionMarks.docsLowering)
+    """ to MacroExpansionMarks.DocsLowering)
 
     fun `test comment in macro definition`() = doTest("""
         macro_rules! foobar {

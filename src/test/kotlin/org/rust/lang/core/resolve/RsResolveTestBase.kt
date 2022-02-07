@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
 import org.rust.lang.core.psi.ext.contextualFile
-import org.rust.openapiext.TestmarkPred
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) =
@@ -59,15 +58,6 @@ abstract class RsResolveTestBase : RsTestBase() {
             "$refElement `${refElement.text}` should resolve to $target (${target.text}), was $resolved (${resolved.text}) instead"
         }
     }
-
-    protected fun checkByCode(@Language("Rust") code: String, mark: TestmarkPred) =
-        mark.checkHit { checkByCode(code) }
-
-    protected fun stubOnlyResolve(
-        @Language("Rust") code: String,
-        mark: TestmarkPred,
-        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
-    ) = mark.checkHit { stubOnlyResolve(code, resolveFileProducer) }
 
     protected fun stubOnlyResolve(
         @Language("Rust") code: String,

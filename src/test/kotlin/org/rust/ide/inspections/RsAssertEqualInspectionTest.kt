@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.CheckTestmarkHit
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
@@ -102,6 +103,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @CheckTestmarkHit(RsAssertEqualInspection.Testmarks.DebugTraitIsNotImplemented::class)
     fun `test fix unavailable when arguments do not implement Debug`() = checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(PartialEq)]
         struct Number(u32);
@@ -111,8 +113,9 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
             let y = Number(10);
             assert!(x == y/*caret*/);
         }
-    """, checkWeakWarn = true, testmark = RsAssertEqualInspection.Testmarks.debugTraitIsNotImplemented)
+    """, checkWeakWarn = true)
 
+    @CheckTestmarkHit(RsAssertEqualInspection.Testmarks.PartialEqTraitIsNotImplemented::class)
     fun `test fix unavailable when arguments do not implement PartialEq`() = checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(Debug)]
         struct Number(u32);
@@ -122,7 +125,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
             let y = Number(10);
             assert!(x == y/*caret*/);
         }
-    """, checkWeakWarn = true, testmark = RsAssertEqualInspection.Testmarks.partialEqTraitIsNotImplemented)
+    """, checkWeakWarn = true)
 
     fun `test fix available when arguments derive PartialEq & Debug`() = checkFixByText("Convert to assert_ne!", """
         #[derive(Debug, PartialEq)]

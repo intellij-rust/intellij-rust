@@ -16,7 +16,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
 import org.rust.findAnnotationInstance
-import org.rust.openapiext.Testmark
 import kotlin.reflect.KClass
 
 abstract class AnnotationTestFixtureBase(
@@ -85,14 +84,14 @@ abstract class AnnotationTestFixtureBase(
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null
-    ) = check(text,
+    ) = check(
+        text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByText,
-        testmark = testmark)
+    )
 
     fun checkFixByText(
         fixName: String,
@@ -101,12 +100,14 @@ abstract class AnnotationTestFixtureBase(
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
-        testmark: Testmark? = null
-    ) = checkFix(fixName, before, after,
+    ) = checkFix(
+        fixName,
+        before,
+        after,
         configure = this::configureByText,
         checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
         checkAfter = this::checkByText,
-        testmark = testmark)
+    )
 
     fun checkFixIsUnavailable(
         fixName: String,
@@ -115,14 +116,15 @@ abstract class AnnotationTestFixtureBase(
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null
-    ) = checkFixIsUnavailable(fixName, text,
+    ) = checkFixIsUnavailable(
+        fixName,
+        text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByText,
-        testmark = testmark)
+    )
 
     protected fun checkFixIsUnavailable(
         fixName: String,
@@ -132,9 +134,8 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean,
         ignoreExtraHighlighting: Boolean,
         configure: (String) -> Unit,
-        testmark: Testmark? = null
     ) {
-        check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure, testmark)
+        check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure)
         check(codeInsightFixture.filterAvailableIntentions(fixName).isEmpty()) {
             "Fix $fixName should not be possible to apply."
         }
@@ -144,12 +145,14 @@ abstract class AnnotationTestFixtureBase(
         fixName: String,
         before: String,
         after: String,
-        testmark: Testmark? = null
-    ) = checkFix(fixName, before, after,
+    ) = checkFix(
+        fixName,
+        before,
+        after,
         configure = this::configureByText,
         checkBefore = {},
         checkAfter = this::checkByText,
-        testmark = testmark)
+    )
 
     protected open fun <T> check(
         content: T,
@@ -158,13 +161,9 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean,
         ignoreExtraHighlighting: Boolean,
         configure: (T) -> Unit,
-        testmark: Testmark? = null
     ) {
-        val action: () -> Unit = {
-            configure(content)
-            codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
-        }
-        testmark?.checkHit(action) ?: action()
+        configure(content)
+        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
     }
 
     protected open fun checkFix(
@@ -174,15 +173,11 @@ abstract class AnnotationTestFixtureBase(
         configure: (String) -> Unit,
         checkBefore: () -> Unit,
         checkAfter: (String) -> Unit,
-        testmark: Testmark? = null
     ) {
-        val action: () -> Unit = {
-            configure(before)
-            checkBefore()
-            applyQuickFix(fixName)
-            checkAfter(after)
-        }
-        testmark?.checkHit(action) ?: action()
+        configure(before)
+        checkBefore()
+        applyQuickFix(fixName)
+        checkAfter(after)
     }
 
     fun checkByText(text: String) {

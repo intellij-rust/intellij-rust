@@ -173,13 +173,13 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                 val pkg = (element as? RsElement)?.containingCargoPackage ?: return emptyList()
                 // Packages without source don't have documentation at docs.rs
                 if (pkg.source == null) {
-                    Testmarks.pkgWithoutSource.hit()
+                    Testmarks.PkgWithoutSource.hit()
                     return emptyList()
                 }
                 "$DOCS_RS_HOST/${pkg.name}/${pkg.version}"
             }
             else -> {
-                Testmarks.nonDependency.hit()
+                Testmarks.NonDependency.hit()
                 return emptyList()
             }
         }
@@ -209,7 +209,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         get() {
             // items with #[doc(hidden)] attribute don't have external documentation
             if (queryAttributes.isDocHidden) {
-                Testmarks.docHidden.hit()
+                Testmarks.DocHidden.hit()
                 return false
             }
 
@@ -234,7 +234,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
             // macros without #[macro_export] are not public and don't have external documentation
             if (this is RsMacro) {
-                return Testmarks.notExportedMacro.hitOnFalse(hasMacroExport)
+                return Testmarks.NotExportedMacro.hitOnFalse(hasMacroExport)
             }
             // TODO: we should take into account real path of item for user, i.e. take into account reexports
             // instead of already resolved item path
@@ -256,10 +256,10 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     object Testmarks {
-        val docHidden = Testmark("docHidden")
-        val notExportedMacro = Testmark("notExportedMacro")
-        val pkgWithoutSource = Testmark("pkgWithoutSource")
-        val nonDependency = Testmark("nonDependency")
+        object DocHidden : Testmark()
+        object NotExportedMacro : Testmark()
+        object PkgWithoutSource : Testmark()
+        object NonDependency : Testmark()
     }
 }
 

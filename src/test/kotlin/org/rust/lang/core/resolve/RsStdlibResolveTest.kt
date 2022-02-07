@@ -532,6 +532,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.QuestionOperator::class)
     fun `test try operator with option`() = checkByCode("""
         struct S { field: u32 }
                     //X
@@ -542,7 +543,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             s.field;
             //^
         }
-    """, TypeInferenceMarks.questionOperator)
+    """)
 
     fun `test try! macro with aliased Result`() = checkByCode("""
         mod io {
@@ -563,6 +564,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.MethodPickTraitScope::class)
     fun `test method defined in out of scope trait from prelude`() = stubOnlyResolve("""
     //- a.rs
         use super::S;
@@ -578,7 +580,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let _: u8 = S.into();
         }               //^ a.rs
-    """, TypeInferenceMarks.methodPickTraitScope)
+    """)
 
     fun `test &str into String`() = stubOnlyResolve("""
     //- main.rs

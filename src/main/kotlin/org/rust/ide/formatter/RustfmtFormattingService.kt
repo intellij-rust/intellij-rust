@@ -49,7 +49,7 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
             private val indicator: ProgressIndicatorBase = ProgressIndicatorBase()
 
             override fun run() {
-                RustfmtTestmarks.rustfmtUsed.hit()
+                RustfmtTestmarks.RustfmtUsed.hit()
 
                 if (checkNeedInstallRustfmt(project, cargoProject.workingDirectory)) {
                     request.onTextReady(request.documentText)

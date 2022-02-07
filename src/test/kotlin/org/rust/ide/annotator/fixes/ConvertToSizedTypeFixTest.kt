@@ -51,7 +51,6 @@ class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             checkWarn = true,
             checkInfo = false,
             checkWeakWarn = false,
-            testmark = null
         )
     }
 }

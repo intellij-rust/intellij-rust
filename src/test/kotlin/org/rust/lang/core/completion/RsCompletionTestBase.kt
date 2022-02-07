@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.openapiext.Testmark
 
 abstract class RsCompletionTestBase(private val defaultFileName: String = "main.rs") : RsTestBase() {
 
@@ -96,9 +95,8 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         lookupString: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-        completionChar: Char = '\n',
-        testmark: Testmark? = null
-    ) = completionFixture.checkCompletion(lookupString, before, after, completionChar, testmark)
+        completionChar: Char = '\n'
+    ) = completionFixture.checkCompletion(lookupString, before, after, completionChar)
 
     protected fun checkNotContainsCompletion(
         variant: String,

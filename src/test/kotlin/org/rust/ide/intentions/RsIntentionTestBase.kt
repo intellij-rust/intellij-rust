@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.openapiext.Testmark
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.reflect.KClass
@@ -95,12 +94,6 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         UIUtil.dispatchAllInvocationEvents()
         myFixture.launchAction(intention)
     }
-
-    protected fun doAvailableTest(
-        @Language("Rust") before: String,
-        @Language("Rust") after: String,
-        testmark: Testmark
-    ) = testmark.checkHit { doAvailableTest(before, after) }
 
     protected fun doUnavailableTest(@Language("Rust") before: String, fileName: String = "main.rs") {
         InlineFile(before, fileName).withCaret()

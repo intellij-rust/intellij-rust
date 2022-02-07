@@ -5,6 +5,8 @@
 
 package org.rust.ide.actions.mover
 
+import org.rust.CheckTestmarkHit
+
 class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test straightline down`() = moveDown("""
         fn main() {
@@ -34,21 +36,23 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test straightline down out of body`() = moveDown("""
         fn main() {
             1;
             2;
             3/*caret*/;
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test straightline up out of body`() = moveUp("""
         fn main() {
             1/*caret*/;
             2;
             3;
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
     fun `test up into if block`() = moveUp("""
         fn main() {
@@ -585,6 +589,7 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test move up first statement in match arm body`() = moveUp("""
         fn main() {
              match x {
@@ -601,8 +606,9 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                  }
              };
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test move down last statement in match arm body`() = moveDown("""
         fn main() {
              match x {
@@ -619,7 +625,7 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                  }
              };
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/7376
     fun `test move down in block inside argument list`() = moveDown("""
@@ -644,6 +650,7 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test move up first statement of block expr inside argument list`() = moveUp("""
         fn foo(a: u32) {}
 
@@ -654,8 +661,9 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 1
             });
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test move up first statement of lambda inside argument list`() = moveUp("""
         fn foo<F: Fn() -> ()>(f: F) -> u32 { 0 }
 
@@ -674,8 +682,9 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 })
             };
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBody::class)
     fun `test move up first statement of lambda ref inside argument list`() = moveUp("""
         fn foo<F: Fn() -> ()>(f: &mut F) -> u32 { 0 }
 
@@ -694,5 +703,5 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 })
             };
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+    """)
 }

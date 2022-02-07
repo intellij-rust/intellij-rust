@@ -5,7 +5,8 @@
 
 package org.rust.ide.intentions
 
-import org.rust.ide.intentions.ImplTraitToTypeParamIntention.Companion.outerImplTestMark
+import org.rust.CheckTestmarkHit
+import org.rust.ide.intentions.ImplTraitToTypeParamIntention.Companion.OuterImplTestMark
 
 class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypeParamIntention::class) {
     fun `test simple`() = doAvailableTest("""
@@ -64,13 +65,14 @@ class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypePar
         fn test<X: Trait<u32>, T: Trait<X>, const N: usize>(arg: T) {}
     """)
 
+    @CheckTestmarkHit(OuterImplTestMark::class)
     fun `test nested outer`() = doAvailableTest("""
         trait Trait<T>{}
         fn test(arg: impl/*caret*/ Trait<impl Trait>) {}
     """, """
         trait Trait<T>{}
         fn test(arg: impl Trait<impl Trait>) {}
-    """, outerImplTestMark)
+    """)
 
     fun `test with lifetime`() = doAvailableTest("""
         trait Trait{}

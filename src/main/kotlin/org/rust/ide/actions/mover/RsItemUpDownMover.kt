@@ -33,7 +33,7 @@ class RsItemUpDownMover : RsLineMover() {
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfBraceBlock(sibling, down) && sibling.parent is RsMembers) {
-            UpDownMoverTestMarks.moveOutOfImpl.hit()
+            UpDownMoverTestMarks.MoveOutOfImpl.hit()
             return null
         }
         return sibling

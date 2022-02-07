@@ -22,5 +22,5 @@ fun Iterable<Crate.Dependency>.flattenTopSortedDeps(): LinkedHashSet<Crate> {
 }
 
 object CrateGraphTestmarks {
-    val cyclicDevDependency = Testmark("cyclicDevDependency")
+    object CyclicDevDependency : Testmark()
 }

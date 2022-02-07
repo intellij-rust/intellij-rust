@@ -5,6 +5,7 @@
 
 package org.rust.ide.docs
 
+import org.rust.CheckTestmarkHit
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.docs.RsDocumentationProvider.Testmarks
@@ -98,12 +99,13 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html#method.foo")
 
+    @CheckTestmarkHit(Testmarks.DocHidden::class)
     fun `test doc hidden`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         #[doc(hidden)]
         pub fn foo() {}
                //^
-    """, null, Testmarks.docHidden)
+    """, null)
 
     fun `test macro`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -125,13 +127,14 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
 
+    @CheckTestmarkHit(Testmarks.NotExportedMacro::class)
     fun `test not exported macro`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         macro_rules! foo {
                     //^
             () => { unimplemented!() };
         }
-    """, null, Testmarks.notExportedMacro)
+    """, null)
 
     fun `test macro 2`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -147,15 +150,17 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
 
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/foo/macro.bar.html")
 
+    @CheckTestmarkHit(Testmarks.NonDependency::class)
     fun `test not external url for workspace package`() = doUrlTestByFileTree("""
         //- lib.rs
         pub enum Foo { FOO, BAR }
                 //^
-    """, null, Testmarks.nonDependency)
+    """, null)
 
+    @CheckTestmarkHit(Testmarks.PkgWithoutSource::class)
     fun `test not external url for dependency package without source`() = doUrlTestByFileTree("""
         //- no-source-lib/lib.rs
         pub enum Foo { FOO, BAR }
                 //^
-    """, null, Testmarks.pkgWithoutSource)
+    """, null)
 }

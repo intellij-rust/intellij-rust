@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.type
 
+import org.rust.CheckTestmarkHit
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsMacroTypeInferenceTest : RsTypificationTestBase() {
@@ -127,13 +128,14 @@ class RsMacroTypeInferenceTest : RsTypificationTestBase() {
         } //^ <unknown>
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.MacroExprDepthLimitReached::class)
     fun `test infinite recursion`() = testExpr("""
         macro_rules! foo { () => { foo!(); }; }
         fn main() {
             let a = foo!();
             a;
         } //^ <unknown>
-    """, TypeInferenceMarks.macroExprDepthLimitReached)
+    """)
 
     fun `test custom log-like macro`() = testExpr("""
         enum Data {

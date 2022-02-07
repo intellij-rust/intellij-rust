@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.type
 
+import org.rust.CheckTestmarkHit
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
@@ -1223,6 +1224,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }                       //^ u8
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.MethodPickCollapseTraits::class)
     fun `test infer method arg with multiple impls of the same trait`() = testExpr("""
         pub trait Tr<T> { fn foo(&self, _: T); }
         struct S; struct S1;
@@ -1231,7 +1233,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             S.foo(0)
         }       //^ u8
-    """, TypeInferenceMarks.methodPickCollapseTraits)
+    """)
 
     fun `test infer method arg with multiple impls of the same trait UFCS`() = testExpr("""
         pub trait Tr<T> { fn foo(&self, _: T); }
@@ -1244,6 +1246,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }             //^ u8
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.MethodPickCollapseTraits::class)
     fun `test infer method arg with multiple impls of the same trait on multiple deref levels`() = testExpr("""
         #[lang = "deref"]
         trait Deref { type Target; }
@@ -1263,7 +1266,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = A.foo(0u16);
             a;
         } //^ i16
-    """, TypeInferenceMarks.methodPickCollapseTraits)
+    """)
 
     fun `test infer type by reference coercion`() = testExpr("""
         #[lang = "deref"]

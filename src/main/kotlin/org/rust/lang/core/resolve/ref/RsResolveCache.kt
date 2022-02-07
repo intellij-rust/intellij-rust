@@ -168,7 +168,7 @@ class RsResolveCache(project: Project) : Disposable {
     }
 
     private fun onRustStructureChanged(file: PsiFile?) {
-        Testmarks.rustStructureDependentCacheCleared.hit()
+        Testmarks.RustStructureDependentCacheCleared.hit()
         _rustStructureDependentCache.set(null)
         if (file != null && _macroCache.get() != null) {
             val viFile = file.virtualFile
@@ -195,7 +195,7 @@ class RsResolveCache(project: Project) : Disposable {
         val referenceElement = element.parent as? RsReferenceElement ?: return
         val referenceNameElement = referenceElement.referenceNameElement ?: return
         if (referenceNameElement == element) {
-            Testmarks.removeChangedElement.hit()
+            Testmarks.RemoveChangedElement.hit()
             referenceElement.ancestors.filter { it is RsReferenceElement }.forEach {
                 rustStructureDependentCache.remove(it)
             }
@@ -212,8 +212,8 @@ class RsResolveCache(project: Project) : Disposable {
     }
 
     object Testmarks {
-        val rustStructureDependentCacheCleared = Testmark("cacheCleared")
-        val removeChangedElement = Testmark("removeChangedElement")
+        object RustStructureDependentCacheCleared : Testmark()
+        object RemoveChangedElement : Testmark()
     }
 }
 

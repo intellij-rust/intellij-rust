@@ -372,7 +372,7 @@ private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Do
 private fun InsertionContext.doNotAddOpenParenCompletionChar() {
     if (completionChar == '(') {
         setAddCompletionChar(false)
-        Testmarks.doNotAddOpenParenCompletionChar.hit()
+        Testmarks.DoNotAddOpenParenCompletionChar.hit()
     }
 }
 
@@ -451,5 +451,5 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: E
 }
 
 object Testmarks {
-    val doNotAddOpenParenCompletionChar = Testmark("doNotAddOpenParenCompletionChar")
+    object DoNotAddOpenParenCompletionChar : Testmark()
 }

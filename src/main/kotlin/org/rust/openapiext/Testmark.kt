@@ -20,29 +20,30 @@ import org.jetbrains.annotations.TestOnly
  * To use a testmark, first define a static [Testmark] value
  *
  * ```
- * val emptyFrobnicator = Testmark("emptyFrobnicator")
+ * object EmptyFrobnicator : Testmark()
  * ```
  *
  * Then, use [hit] function in the "production" code
  *
  * ```
  * if (myFrobnicator.isEmpty()) {
- *     emptyFrobnicator.hit()
+ *     EmptyFrobnicator.hit()
  *     handleEmptyFrobnicator()
  * }
  * ```
  *
- * Finally, in the test case use [checkHit] function:
+ * Finally, in the test case use [org.rust.CheckTestmarkHit] annotation:
  *
  * ```
- * fun `test don't blow up on empty frobnicator`() = emptyFrobnicator.checkHit {
+ * @CheckTestmarkHit(EmptyFrobnicator::class)
+ * fun `test don't blow up on empty frobnicator`() {
  *    arrange()
  *    act()
  *    assert()
  * }
  * ```
  *
- * You can `Cltr+B` on `emptyFrobnicator` to navigate
+ * You can `Ctrl+B` on `EmptyFrobnicator` to navigate
  * between code and tests. If after refactoring the
  * test fails to hit the testmark, you'll be notified
  * that the test might not work as it used to.
@@ -51,7 +52,10 @@ import org.jetbrains.annotations.TestOnly
  * not in "test" code, it's useless, but we can't
  * provide a runtime assertion for this case.
  */
-class Testmark(val name: String): TestmarkPred {
+abstract class Testmark: TestmarkPred {
+    val name: String
+        get() = javaClass.canonicalName ?: javaClass.name
+
     @Volatile
     private var state = TestmarkState.NEW
     @Volatile
@@ -111,4 +115,9 @@ interface TestmarkPred {
 operator fun Testmark.not(): TestmarkPred = object : TestmarkPred {
     override fun <T> checkHit(f: () -> T): T = this@not.checkNotHit(f)
     override fun <T> checkNotHit(f: () -> T): T = this@not.checkHit(f)
+}
+
+object EmptyTestmark : TestmarkPred {
+    override fun <T> checkHit(f: () -> T): T = f()
+    override fun <T> checkNotHit(f: () -> T): T = f()
 }

@@ -5,22 +5,20 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.MinRustcVersion
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.utils.import.Testmarks
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
+    @CheckTestmarkHit(Testmarks.AutoInjectedStdCrate::class)
     fun `test import item from std crate`() = checkAutoImportFixByText("""
         fn foo<T: <error descr="Unresolved reference: `error`">error/*caret*/</error>::Error>(_: T) {}
     """, """
         use std::error;
 
         fn foo<T: error/*caret*/::Error>(_: T) {}
-    """, Testmarks.autoInjectedStdCrate)
+    """)
 
     fun `test import item from not std crate`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
@@ -96,6 +94,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
+    @CheckTestmarkHit(Testmarks.AutoInjectedStdCrate::class)
     fun `test import reexported item from stdlib`() = checkAutoImportFixByText("""
         fn main() {
             let mutex = <error descr="Unresolved reference: `Mutex`">Mutex/*caret*/</error>::new(Vec::new());
@@ -106,7 +105,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
-    """, Testmarks.autoInjectedStdCrate)
+    """)
 
     fun `test module reexport`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
@@ -133,14 +132,16 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(Testmarks.AutoInjectedStdCrate::class)
     fun `test module reexport in stdlib`() = checkAutoImportFixByText("""
         fn foo<T: <error descr="Unresolved reference: `Hash`">Hash/*caret*/</error>>(t: T) {}
     """, """
         use std::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, Testmarks.autoInjectedStdCrate)
+    """)
 
+    @CheckTestmarkHit(Testmarks.AutoInjectedCoreCrate::class)
     fun `test import without std crate 1`() = checkAutoImportFixByText("""
         #![no_std]
 
@@ -151,7 +152,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use core::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, Testmarks.autoInjectedCoreCrate)
+    """)
 
     fun `test import without std crate 2`() = checkAutoImportFixByText("""
         #![no_std]

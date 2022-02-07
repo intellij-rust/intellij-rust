@@ -74,7 +74,9 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
             return
         }
 
-        super.runTestRunnable(testRunnable)
+        val testmark = collectTestmarksFromAnnotations()
+
+        testmark.checkHit { super.runTestRunnable(testRunnable) }
     }
 
     override fun setUp() {

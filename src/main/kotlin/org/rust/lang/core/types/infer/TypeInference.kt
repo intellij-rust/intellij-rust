@@ -446,7 +446,7 @@ class RsInferenceContext(
                 })
                 if (isTy2ContainsTy1) {
                     // "E0308 cyclic type of infinite size"
-                    TypeInferenceMarks.cyclicType.hit()
+                    TypeInferenceMarks.CyclicType.hit()
                     varUnificationTable.unifyVarValue(ty1r, TyUnknown)
                 } else {
                     varUnificationTable.unifyVarValue(ty1r, ty2)
@@ -1128,13 +1128,13 @@ data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldab
 }
 
 object TypeInferenceMarks {
-    val cyclicType = Testmark("cyclicType")
-    val questionOperator = Testmark("questionOperator")
-    val methodPickTraitScope = Testmark("methodPickTraitScope")
-    val methodPickTraitsOutOfScope = Testmark("methodPickTraitsOutOfScope")
-    val methodPickCheckBounds = Testmark("methodPickCheckBounds")
-    val methodPickDerefOrder = Testmark("methodPickDerefOrder")
-    val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
-    val traitSelectionSpecialization = Testmark("traitSelectionSpecialization")
-    val macroExprDepthLimitReached = Testmark("reachMacroExprDepthLimit")
+    object CyclicType : Testmark()
+    object QuestionOperator : Testmark()
+    object MethodPickTraitScope : Testmark()
+    object MethodPickTraitsOutOfScope : Testmark()
+    object MethodPickCheckBounds : Testmark()
+    object MethodPickDerefOrder : Testmark()
+    object MethodPickCollapseTraits : Testmark()
+    object TraitSelectionSpecialization : Testmark()
+    object MacroExprDepthLimitReached : Testmark()
 }
