@@ -54,7 +54,7 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
         structItem: RsStructItem,
         selectedFields: List<StructMember>,
         psiFactory: RsPsiFactory,
-        substitution: Substitution
+        substitution: Substitution,
     ): RsFunction {
         val arguments = selectedFields.joinToString(prefix = "(", postfix = ")", separator = ",") {
             "${it.argumentIdentifier}: ${it.typeReferenceText}"
@@ -67,14 +67,14 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
     private fun generateBody(
         structItem: RsStructItem,
         selectedFields: List<StructMember>,
-        substitution: Substitution
+        substitution: Substitution,
     ): String {
         val prefix = if (structItem.isTupleStruct) "(" else "{"
         val postfix = if (structItem.isTupleStruct) ")" else "}"
         val arguments = StructMember.fromStruct(structItem, substitution).joinToString(prefix = prefix, postfix = postfix, separator = ",") {
             if (it !in selectedFields) it.fieldIdentifier else it.argumentIdentifier
         }
-        return structItem.nameIdentifier?.text + arguments
+        return "Self$arguments"
     }
 }
 
