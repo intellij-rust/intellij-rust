@@ -11,10 +11,20 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.ide.utils.import.isStd
+import org.rust.lang.core.completion.sort.RS_COMPLETION_WEIGHERS
+import org.rust.lang.core.completion.sort.RsCompletionWeigher
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import kotlin.reflect.KClass
 
+/**
+ * Note that any (Boolean, Number or Enum) value returned from [RsCompletionWeigher] (see [RS_COMPLETION_WEIGHERS])
+ * is automatically added as an "element feature" ([RsCompletionWeigher.id] is used as a key),
+ * so there is no sense to add it again in [calculateFeatures].
+ *
+ * Also note that there is a common feature provider for all languages:
+ * [com.intellij.completion.ml.common.CommonElementLocationFeatures]
+ */
 @Suppress("UnstableApiUsage")
 class RsElementFeatureProvider : ElementFeatureProvider {
     override fun getName(): String = "rust"

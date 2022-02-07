@@ -14,6 +14,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.ext.findAssociatedType
@@ -55,7 +56,7 @@ object RsAwaitCompletionProvider : RsCompletionProvider() {
             .create("await")
             .bold()
             .withTypeText(awaitTy.toString())
-        result.addElement(awaitBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
+        result.addElement(awaitBuilder.toKeywordElement(KeywordKind.AWAIT))
     }
 
     private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {

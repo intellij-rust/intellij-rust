@@ -24,7 +24,7 @@ object RsBoolCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         if (parameters.position.safeGetOriginalOrSelf().ancestorOrSelf<RsPathExpr>()?.expectedType is TyBool) {
             for (value in listOf("true", "false")) {
-                result.addElement(LookupElementBuilder.create(value).bold().withPriority(KEYWORD_PRIORITY))
+                result.addElement(LookupElementBuilder.create(value).bold().toKeywordElement())
             }
         }
     }

@@ -17,6 +17,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.rust.ide.refactoring.suggestedNames
 import org.rust.ide.utils.template.newTemplateBuilder
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.OR
 import org.rust.lang.core.psi.ext.elementType
@@ -59,7 +60,7 @@ object RsLambdaExprCompletionProvider : RsCompletionProvider() {
                 .bold()
                 .withPresentableText("|| {}")
                 .withInsertHandler { ctx, _ -> handleInsert(ctx) }
-                .withPriority(KEYWORD_PRIORITY * 1.01)
+                .toKeywordElement(KeywordKind.LAMBDA_EXPR)
         )
     }
 }

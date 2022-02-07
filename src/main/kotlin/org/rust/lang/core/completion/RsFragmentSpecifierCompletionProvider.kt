@@ -25,7 +25,7 @@ object RsFragmentSpecifierCompletionProvider : RsCompletionProvider() {
         result: CompletionResultSet
     ) {
         FragmentKind.kinds.forEach {
-            result.addElement(LookupElementBuilder.create(it).bold().withPriority(FRAGMENT_SPECIFIER_PRIORITY))
+            result.addElement(LookupElementBuilder.create(it).bold().toKeywordElement())
         }
     }
 }

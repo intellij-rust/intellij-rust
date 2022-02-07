@@ -52,7 +52,7 @@ object RsReprCompletionProvider : RsCompletionProvider() {
                     }
                 } else this
             }
-            result.addElement(element.withPriority(DEFAULT_PRIORITY))
+            result.addElement(element)
         }
 
         // Layouts common to struct, enum and union
