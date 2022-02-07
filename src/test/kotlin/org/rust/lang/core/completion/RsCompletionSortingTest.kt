@@ -240,50 +240,49 @@ class RsCompletionSortingTest : RsTestBase() {
     ))
 
     fun `test expected types priority (let binding)`() = doTest("""
-        struct foo1<T>(T);
-        struct foo2<T>(T);
+        struct foo01<T>(T);
+        struct foo02<T>(T);
 
-        const foo3: foo1<i32> = foo1(1);
-        const foo4: foo1<f32> = foo1(1.0);
-        const foo5: foo2<i32> = foo2(2);
+        const foo03: foo01<i32> = foo01(1);
+        const foo04: foo01<f32> = foo01(1.0);
+        const foo05: foo02<i32> = foo02(2);
 
-        fn foo6(x: foo1<i32>) -> foo1<i32> {}
-        fn foo7(x: foo1<f32>) -> foo1<f32> {}
-        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+        fn foo06(x: foo01<i32>) -> foo01<i32> {}
+        fn foo07(x: foo01<f32>) -> foo01<f32> {}
+        fn foo08(x: foo02<i32>) -> foo02<i32> {}
 
-        macro_rules! foo9 {}
+        macro_rules! foo09 {}
 
         enum E { foo10 }
         use E::foo10;
 
-        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
-            let foo14 = foo1(1);
-            let foo15 = foo1(1.0);
-            let foo16 = foo2(2);
+        fn bar(foo11: foo01<i32>, foo12: foo01<f32>, foo13: foo02<i32>) -> foo01<i32> {
+            let foo14 = foo01(1);
+            let foo15 = foo01(1.0);
+            let foo16 = foo02(2);
 
             struct foo17;
 
-            const foo18: foo1<i32> = foo1(1);
-            const foo19: foo1<f32> = foo1(1.0);
-            const foo20: foo2<i32> = foo2(2);
+            const foo18: foo01<i32> = foo01(1);
+            const foo19: foo01<f32> = foo01(1.0);
+            const foo20: foo02<i32> = foo02(2);
 
-            fn foo21() -> foo1<i32> {}
-            fn foo22() -> foo1<f32> {}
-            fn foo23() -> foo2<i32> {}
+            fn foo21() -> foo01<i32> {}
+            fn foo22() -> foo01<f32> {}
+            fn foo23() -> foo02<i32> {}
 
             macro_rules! foo24 {}
 
-            let x: foo1<i32> = foo/*caret*/;
+            let x: foo01<i32> = foo/*caret*/;
         }
     """, listOf(
         RsPatBinding::class to "foo11",
-        RsStructItem::class to "foo1",
         RsPatBinding::class to "foo14",
         RsConstant::class to "foo18",
         RsFunction::class to "foo21",
-        RsStructItem::class to "foo2",
-        RsConstant::class to "foo3",
-        RsFunction::class to "foo6",
+        RsStructItem::class to "foo01",
+        RsConstant::class to "foo03",
+        RsFunction::class to "foo06",
         RsPatBinding::class to "foo12",
         RsPatBinding::class to "foo13",
         RsPatBinding::class to "foo15",
@@ -295,58 +294,58 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo23",
         RsMacro::class to "foo24",
         RsEnumVariant::class to "foo10",
-        RsConstant::class to "foo4",
-        RsConstant::class to "foo5",
-        RsFunction::class to "foo7",
-        RsFunction::class to "foo8",
-        RsMacro::class to "foo9"
+        RsStructItem::class to "foo02",
+        RsConstant::class to "foo04",
+        RsConstant::class to "foo05",
+        RsFunction::class to "foo07",
+        RsFunction::class to "foo08",
+        RsMacro::class to "foo09"
     ))
 
     fun `test expected types priority (fn arg)`() = doTest("""
-        struct foo1<T>(T);
-        struct foo2<T>(T);
+        struct foo01<T>(T);
+        struct foo02<T>(T);
 
-        const foo3: foo1<i32> = foo1(1);
-        const foo4: foo1<f32> = foo1(1.0);
-        const foo5: foo2<i32> = foo2(2);
+        const foo03: foo01<i32> = foo01(1);
+        const foo04: foo01<f32> = foo01(1.0);
+        const foo05: foo02<i32> = foo02(2);
 
-        fn foo6(x: foo1<i32>) -> foo1<i32> {}
-        fn foo7(x: foo1<f32>) -> foo1<f32> {}
-        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+        fn foo06(x: foo01<i32>) -> foo01<i32> {}
+        fn foo07(x: foo01<f32>) -> foo01<f32> {}
+        fn foo08(x: foo02<i32>) -> foo02<i32> {}
 
-        macro_rules! foo9 {}
+        macro_rules! foo09 {}
 
         enum E { foo10 }
         use E::foo10;
 
-        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
-            let foo14 = foo1(1);
-            let foo15 = foo1(1.0);
-            let foo16 = foo2(2);
+        fn bar(foo11: foo01<i32>, foo12: foo01<f32>, foo13: foo02<i32>) -> foo01<i32> {
+            let foo14 = foo01(1);
+            let foo15 = foo01(1.0);
+            let foo16 = foo02(2);
 
             struct foo17;
 
-            const foo18: foo1<i32> = foo1(1);
-            const foo19: foo1<f32> = foo1(1.0);
-            const foo20: foo2<i32> = foo2(2);
+            const foo18: foo01<i32> = foo01(1);
+            const foo19: foo01<f32> = foo01(1.0);
+            const foo20: foo02<i32> = foo02(2);
 
-            fn foo21() -> foo1<i32> {}
-            fn foo22() -> foo1<f32> {}
-            fn foo23() -> foo2<i32> {}
+            fn foo21() -> foo01<i32> {}
+            fn foo22() -> foo01<f32> {}
+            fn foo23() -> foo02<i32> {}
 
             macro_rules! foo24 {}
 
-            foo6(foo/*caret*/);
+            foo06(foo/*caret*/);
         }
     """, listOf(
         RsPatBinding::class to "foo11",
-        RsStructItem::class to "foo1",
         RsPatBinding::class to "foo14",
         RsConstant::class to "foo18",
         RsFunction::class to "foo21",
-        RsStructItem::class to "foo2",
-        RsConstant::class to "foo3",
-        RsFunction::class to "foo6",
+        RsStructItem::class to "foo01",
+        RsConstant::class to "foo03",
+        RsFunction::class to "foo06",
         RsPatBinding::class to "foo12",
         RsPatBinding::class to "foo13",
         RsPatBinding::class to "foo15",
@@ -358,44 +357,45 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo23",
         RsMacro::class to "foo24",
         RsEnumVariant::class to "foo10",
-        RsConstant::class to "foo4",
-        RsConstant::class to "foo5",
-        RsFunction::class to "foo7",
-        RsFunction::class to "foo8",
-        RsMacro::class to "foo9"
+        RsStructItem::class to "foo02",
+        RsConstant::class to "foo04",
+        RsConstant::class to "foo05",
+        RsFunction::class to "foo07",
+        RsFunction::class to "foo08",
+        RsMacro::class to "foo09"
     ))
 
     fun `test expected types priority (return type)`() = doTest("""
-        struct foo1<T>(T);
-        struct foo2<T>(T);
+        struct foo01<T>(T);
+        struct foo02<T>(T);
 
-        const foo3: foo1<i32> = foo1(1);
-        const foo4: foo1<f32> = foo1(1.0);
-        const foo5: foo2<i32> = foo2(2);
+        const foo03: foo01<i32> = foo1(1);
+        const foo04: foo01<f32> = foo1(1.0);
+        const foo05: foo02<i32> = foo2(2);
 
-        fn foo6(x: foo1<i32>) -> foo1<i32> {}
-        fn foo7(x: foo1<f32>) -> foo1<f32> {}
-        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+        fn foo06(x: foo01<i32>) -> foo01<i32> {}
+        fn foo07(x: foo01<f32>) -> foo01<f32> {}
+        fn foo08(x: foo02<i32>) -> foo02<i32> {}
 
-        macro_rules! foo9 {}
+        macro_rules! foo09 {}
 
         enum E { foo10 }
         use E::foo10;
 
-        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
-            let foo14 = foo1(1);
-            let foo15 = foo1(1.0);
-            let foo16 = foo2(2);
+        fn bar(foo11: foo01<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo01<i32> {
+            let foo14 = foo01(1);
+            let foo15 = foo01(1.0);
+            let foo16 = foo02(2);
 
             struct foo17;
 
-            const foo18: foo1<i32> = foo1(1);
-            const foo19: foo1<f32> = foo1(1.0);
-            const foo20: foo2<i32> = foo2(2);
+            const foo18: foo01<i32> = foo01(1);
+            const foo19: foo01<f32> = foo01(1.0);
+            const foo20: foo02<i32> = foo02(2);
 
-            fn foo21() -> foo1<i32> {}
-            fn foo22() -> foo1<f32> {}
-            fn foo23() -> foo2<i32> {}
+            fn foo21() -> foo01<i32> {}
+            fn foo22() -> foo01<f32> {}
+            fn foo23() -> foo02<i32> {}
 
             macro_rules! foo24 {}
 
@@ -403,13 +403,12 @@ class RsCompletionSortingTest : RsTestBase() {
         }
     """, listOf(
         RsPatBinding::class to "foo11",
-        RsStructItem::class to "foo1",
         RsPatBinding::class to "foo14",
         RsConstant::class to "foo18",
         RsFunction::class to "foo21",
-        RsStructItem::class to "foo2",
-        RsConstant::class to "foo3",
-        RsFunction::class to "foo6",
+        RsStructItem::class to "foo01",
+        RsConstant::class to "foo03",
+        RsFunction::class to "foo06",
         RsPatBinding::class to "foo12",
         RsPatBinding::class to "foo13",
         RsPatBinding::class to "foo15",
@@ -421,11 +420,12 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo23",
         RsMacro::class to "foo24",
         RsEnumVariant::class to "foo10",
-        RsConstant::class to "foo4",
-        RsConstant::class to "foo5",
-        RsFunction::class to "foo7",
-        RsFunction::class to "foo8",
-        RsMacro::class to "foo9"
+        RsStructItem::class to "foo02",
+        RsConstant::class to "foo04",
+        RsConstant::class to "foo05",
+        RsFunction::class to "foo07",
+        RsFunction::class to "foo08",
+        RsMacro::class to "foo09"
     ))
 
     fun `test expected types priority (dot expr)`() = doTest("""
