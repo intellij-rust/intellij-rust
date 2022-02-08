@@ -11,7 +11,8 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -40,7 +41,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 val qualifier = path.qualifier
 
                 val context = when {
-                    qualifier == null && isPathUnresolved -> AutoImportFix.findApplicableContext(holder.project, path)
+                    qualifier == null && isPathUnresolved -> AutoImportFix.findApplicableContext(path)
                     qualifier != null && isPathUnresolved -> {
                         // There is not sense to highlight path as unresolved
                         // if qualifier cannot be resolved as well
@@ -52,7 +53,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                     // the view of the rust compiler. Specifically we resolve associated items even if corresponding
                     // trait is not in the scope, so here we suggest importing such traits
                     (qualifier != null || path.typeQual != null) && !isPathUnresolved ->
-                        AutoImportFix.findApplicableContextForAssocItemPath(holder.project, path)
+                        AutoImportFix.findApplicableContextForAssocItemPath(path)
                     else -> null
                 }
 
@@ -63,7 +64,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
             override fun visitMethodCall(methodCall: RsMethodCall) {
                 val isMethodResolved = methodCall.reference.multiResolve().isNotEmpty()
-                val context = AutoImportFix.findApplicableContext(holder.project, methodCall)
+                val context = AutoImportFix.findApplicableContext(methodCall)
 
                 if (!isMethodResolved || context != null) {
                     holder.registerProblem(methodCall, context)
@@ -109,7 +110,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 }
 
 private fun createQuickFixes(
-    candidates: List<ImportCandidateBase>?,
+    candidates: List<ImportCandidate>?,
     element: RsReferenceElement,
     context: AutoImportFix.Context?
 ): List<LocalQuickFix> {

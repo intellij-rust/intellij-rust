@@ -55,7 +55,7 @@ class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMet
         val inserted = parentDot.replace(ufcs) as RsCallExpr
         val path = (inserted.expr as? RsPathExpr)?.path ?: return
 
-        val importCtx = AutoImportFix.findApplicableContext(project, path)
+        val importCtx = AutoImportFix.findApplicableContext(path)
         importCtx?.candidates?.firstOrNull()?.import(inserted)
     }
 

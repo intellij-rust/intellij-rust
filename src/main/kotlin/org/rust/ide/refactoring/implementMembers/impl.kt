@@ -15,7 +15,7 @@ import org.rust.ide.presentation.PsiRenderingOptions
 import org.rust.ide.presentation.renderFunctionSignature
 import org.rust.ide.presentation.renderTypeReference
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
@@ -197,7 +197,7 @@ class MembersGenerator(
         listOf(pathPsiSubst(impl.traitRef!!.path, trait.element)),
         impl.members!!
     )
-    val itemsToImport: Set<ImportCandidateBase> get() = renderer.itemsToImport
+    val itemsToImport: Set<ImportCandidate> get() = renderer.itemsToImport
 
     fun createTraitMembers(members: Collection<RsAbstractable>): RsMembers {
         val body = members.joinToString(separator = "\n", transform = {

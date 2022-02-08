@@ -22,7 +22,7 @@ import org.rust.stdext.isSortedWith
  * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
  * This action requires write access.
  */
-fun ImportCandidateBase.import(context: RsElement) = info.import(context)
+fun ImportCandidate.import(context: RsElement) = info.import(context)
 
 fun ImportInfo.import(context: RsElement) {
     checkWriteAccessAllowed()

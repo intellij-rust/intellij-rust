@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.psi.RsFile
 
 abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
@@ -76,7 +76,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         var areElementEquals: Boolean? = null
 
         withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<ImportCandidateBase>, callback: (ImportCandidateBase) -> Unit) {
+            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
                 val actualItems = items.map { it.info.usePath }
                 areElementEquals = expectedElements == actualItems
                 assertEquals(expectedElements, actualItems)  // exception here does not fail the test

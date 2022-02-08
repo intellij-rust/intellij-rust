@@ -61,7 +61,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     private fun chooseItemAndImport(
         project: Project,
         dataContext: DataContext,
-        items: List<ImportCandidateBase>,
+        items: List<ImportCandidate>,
         context: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
@@ -106,7 +106,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
         const val NAME = "Import"
 
-        fun findApplicableContext(project: Project, path: RsPath): Context? {
+        fun findApplicableContext(path: RsPath): Context? {
             if (path.reference == null) return null
 
             val basePath = path.basePath()
@@ -129,36 +129,21 @@ class AutoImportFix(element: RsElement, private val context: Context) :
                 return null
             }
 
-            val superPath = path.rootPath()
-            val candidates = if (path.useAutoImportWithNewResolve) run {
-                val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return@run emptyList()
-                ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
-            } else {
-                ImportCandidatesCollector.getImportCandidates(
-                    ImportContext.from(project, path, false),
-                    referenceName,
-                    superPath.text
-                ) {
-                    superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
-                }.toList()
-            }
+            val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return null
+            val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
 
             return Context(GENERAL_PATH, candidates)
         }
 
-        fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context? {
+        fun findApplicableContext(methodCall: RsMethodCall): Context? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
             if (results.isEmpty()) return Context(METHOD, emptyList())
-            val candidates = if (methodCall.useAutoImportWithNewResolve) {
-                ImportCandidatesCollector2.getImportCandidates(methodCall, results)
-            } else {
-                ImportCandidatesCollector.getImportCandidates(project, methodCall, results)?.toList()
-            } ?: return null
+            val candidates = ImportCandidatesCollector2.getImportCandidates(methodCall, results) ?: return null
             return Context(METHOD, candidates)
         }
 
         /** Import traits for type-related UFCS method calls and assoc items */
-        fun findApplicableContextForAssocItemPath(project: Project, path: RsPath): Context? {
+        fun findApplicableContextForAssocItemPath(path: RsPath): Context? {
             val parent = path.parent as? RsPathExpr ?: return null
 
             val qualifierElement = path.qualifier?.reference?.resolve()
@@ -169,18 +154,14 @@ class AutoImportFix(element: RsElement, private val context: Context) :
                 if (it !is ResolvedPath.AssocItem) return null
                 it.source
             }
-            val candidates = if (path.useAutoImportWithNewResolve) {
-                ImportCandidatesCollector2.getTraitImportCandidates(path, sources)
-            } else {
-                ImportCandidatesCollector.getTraitImportCandidates(project, path, sources)?.toList()
-            } ?: return null
+            val candidates = ImportCandidatesCollector2.getTraitImportCandidates(path, sources) ?: return null
             return Context(ASSOC_ITEM_PATH, candidates)
         }
     }
 
     data class Context(
         val type: Type,
-        val candidates: List<ImportCandidateBase>
+        val candidates: List<ImportCandidate>
     )
 
     enum class Type {
