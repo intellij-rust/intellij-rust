@@ -31,10 +31,8 @@ class RsGenericParameterInfoHandler : RsAsyncParameterInfoHandler<RsTypeArgument
         } else {
             return null
         }
-        val paramsWithBounds = genericDeclaration
-            .genericParameters
-            .filterNot { it is RsLifetimeParameter }
-            .nullize() ?: return null
+        val paramsWithBounds = genericDeclaration.getGenericParameters(includeLifetimes = false)
+        if (paramsWithBounds.isEmpty()) return null
         return listOfNotNull(firstLine(paramsWithBounds), secondLine(paramsWithBounds)).toTypedArray()
     }
 

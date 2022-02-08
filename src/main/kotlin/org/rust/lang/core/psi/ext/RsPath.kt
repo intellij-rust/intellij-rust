@@ -106,12 +106,6 @@ enum class PathResolveStatus {
     RESOLVED, UNRESOLVED, NO_REFERENCE
 }
 
-val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeArguments.orEmpty()
-
-val RsPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeArguments.orEmpty()
-
-val RsPath.constArguments: List<RsElement> get() = typeArgumentList?.constArguments.orEmpty()
-
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {
     constructor(node: ASTNode) : super(node)

@@ -9,10 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.isRef
-import org.rust.lang.core.psi.ext.mutability
+import org.rust.lang.core.psi.ext.*
 
 class ElideLifetimesFix : LocalQuickFix {
     override fun getName() = "Elide lifetimes"
@@ -35,7 +32,7 @@ private class LifetimeRemover : RsVisitor() {
 
     override fun visitTypeParameterList(typeParameters: RsTypeParameterList) {
         boundsLifetimes.addAll(typeParameters.lifetimeParameterList)
-        val typeNames = typeParameters.typeParameterList.map { it.text }
+        val typeNames = typeParameters.getGenericParameters(includeLifetimes = false).map { it.text }
         if (typeNames.isEmpty()) {
             typeParameters.delete()
         } else {
@@ -46,8 +43,7 @@ private class LifetimeRemover : RsVisitor() {
 
     override fun visitTypeArgumentList(typeArguments: RsTypeArgumentList) {
         super.visitTypeArgumentList(typeArguments)
-        val restNames = typeArguments.typeReferenceList.map { it.text } +
-            typeArguments.assocTypeBindingList.map { it.text }
+        val restNames = typeArguments.getGenericArguments(includeLifetimes = false).map { it.text }
         if (restNames.isEmpty()) {
             typeArguments.delete()
         } else {

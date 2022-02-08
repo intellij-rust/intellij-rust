@@ -8,7 +8,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.intentions.UnElideLifetimesIntention.*
+import org.rust.ide.intentions.UnElideLifetimesIntention.LifetimeContext
+import org.rust.ide.intentions.UnElideLifetimesIntention.PotentialLifetimeRef
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.hasReEarlyBounds
@@ -50,7 +51,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
         }
 
         val genericParams = RsPsiFactory(project).createTypeParameterList(
-            addedLifetimes + fn.typeParameters.map { it.text }
+            addedLifetimes + fn.getGenericParameters(includeLifetimes = false).map { it.text }
         )
         fn.typeParameterList?.replace(genericParams) ?: fn.addAfter(genericParams, fn.identifier)
 
@@ -145,26 +146,18 @@ private fun addLifetimeParameter(ref: PotentialLifetimeRef, names: List<String>)
     return when (ref) {
         is PotentialLifetimeRef.Self -> {
             val elem = ref.element
-            elem.replace(factory.createMethodParam(elem.text.replaceFirst("&", "&${names[0]} ")))
+            elem.replace(factory.createMethodParam(elem.text.replaceFirst("&", "&${names.first()} ")))
         }
         is PotentialLifetimeRef.RefLike -> {
             val elem = ref.element
-            val typeRef = factory.createType(elem.text.replaceFirst("&", "&${names[0]} "))
+            val typeRef = factory.createType(elem.text.replaceFirst("&", "&${names.first()} "))
             elem.replace(typeRef)
         }
         is PotentialLifetimeRef.BaseType -> {
             val elem = ref.baseType
-            val typeList = names.toMutableList()
-
-            val typeArguments = elem.path?.typeArgumentList
-            if (typeArguments != null) {
-                typeList += typeArguments.typeReferenceList.map { it.text }
-                typeList += typeArguments.assocTypeBindingList.map { it.text }
-            }
-
-            val baseTypeName = elem.name
-            val types = factory.createTypeArgumentList(typeList)
-            val replacement = factory.createType("$baseTypeName${types.text}")
+            val restArgs = elem.path?.getGenericArguments(includeLifetimes = false)?.map { it.text }.orEmpty()
+            val types = factory.createTypeArgumentList(names + restArgs)
+            val replacement = factory.createType("${elem.name}${types.text}")
             elem.replace(replacement)
         }
     }

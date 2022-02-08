@@ -27,7 +27,7 @@ class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
     // Don't apply generic declaration checks to Fn-traits and `Self`
     private fun isPathValid(path: RsPath?): Boolean = path?.valueParameterList == null && path?.cself == null
 
-    private fun checkGenericArguments(holder: RsProblemsHolder, element: RsElement) {
+    private fun checkGenericArguments(holder: RsProblemsHolder, element: RsMethodOrPath) {
         val (actualArguments, declaration) = getTypeArgumentsAndDeclaration(element) ?: return
         if (actualArguments == null) return
         val parameterList = declaration.typeParameterList ?: return

@@ -35,7 +35,8 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
         val declaration = ctx.ancestorStrict<RsGenericDeclaration>() ?: return
 
         val typeParameterList = declaration.typeParameterList ?: return
-        val generics = typeParameterList.genericParameterList
+        val generics = typeParameterList
+            .getGenericParameters()
             .filter { it.name != null }
             .map { param ->
                 when (param) {

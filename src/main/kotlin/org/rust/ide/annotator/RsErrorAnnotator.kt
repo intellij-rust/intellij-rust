@@ -960,7 +960,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             is RsAbstractableOwner.Trait -> {
                 ta.typeReference?.let { ASSOCIATED_TYPE_DEFAULTS.check(holder, it, "associated type defaults") }
                 val typeParameterList = ta.typeParameterList
-                if (typeParameterList != null && typeParameterList.genericParameterList.isNotEmpty()) {
+                if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
                     GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
                 }
                 ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }
@@ -970,7 +970,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     INHERENT_ASSOCIATED_TYPES.check(holder, ta, "inherent associated types")
                 }
                 val typeParameterList = ta.typeParameterList
-                if (typeParameterList != null && typeParameterList.genericParameterList.isNotEmpty()) {
+                if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
                     GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
                 }
                 ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }

@@ -287,14 +287,16 @@ class RsPsiFactory(
     ): RsImplItem {
         val whereText = whereClause?.text ?: ""
         val typeParameterListText = typeParameterList?.text ?: ""
-        val typeArgumentListText = if (typeParameterList == null) {
-            ""
-        } else {
-            val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
-                typeParameterList.typeParameterList.map { it.name } +
-                typeParameterList.constParameterList.map { it.name }
-            parameterNames.joinToString(", ", "<", ">")
-        }
+        val typeArgumentListText = typeParameterList
+            ?.getGenericParameters()
+            ?.mapNotNull {
+                if (it is RsLifetimeParameter) {
+                    it.quoteIdentifier.text
+                } else {
+                    it.name
+                }
+            }?.joinToString(", ", "<", ">")
+            .orEmpty()
 
         return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an trait impl with text: `$text`")

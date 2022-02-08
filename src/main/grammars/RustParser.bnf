@@ -191,7 +191,8 @@ MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExprWithoutAttrs | MetaItemW
 private PathIdent ::= <<parsePathIdent>>
 
 fake Path ::= (Path '::' | '::' | TypeQual)? (identifier | self | super | 'Self' | crate) PathTypeArguments? {
-  implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
+                 "org.rust.lang.core.psi.ext.RsMethodOrPath" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1347,7 +1348,8 @@ FieldLookup ::= identifier | INTEGER_LITERAL {
 }
 
 MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
-  implements = [ "org.rust.lang.core.psi.ext.RsMethodOrField" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMethodOrField"
+                 "org.rust.lang.core.psi.ext.RsMethodOrPath" ]
   mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
 
