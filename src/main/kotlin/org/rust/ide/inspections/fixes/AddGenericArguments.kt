@@ -35,7 +35,7 @@ class AddGenericArguments(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val element = startElement as? RsElement ?: return
+        val element = startElement as? RsMethodOrPath ?: return
         val inserted = insertGenericArgumentsIfNeeded(element) ?: return
         editor?.buildAndRunTemplate(element, inserted.map { it.createSmartPointer() })
     }
@@ -55,7 +55,7 @@ class AddGenericArguments(
 /**
  * Inserts type arguments if they are needed and returns a list of inserted generic arguments.
  */
-fun insertGenericArgumentsIfNeeded(pathOrMethodCall: RsElement): List<RsElement>? {
+fun insertGenericArgumentsIfNeeded(pathOrMethodCall: RsMethodOrPath): List<RsElement>? {
     val (typeArguments, declaration) = getTypeArgumentsAndDeclaration(pathOrMethodCall) ?: return null
 
     val requiredParameters = declaration.requiredGenericParameters
