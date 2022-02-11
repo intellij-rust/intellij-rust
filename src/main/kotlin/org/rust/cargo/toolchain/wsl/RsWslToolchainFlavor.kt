@@ -45,20 +45,21 @@ fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     @Suppress("UnstableApiUsage")
     val root = uncRootPath
     val environment = compute("Getting environment variables...") { environment }
+    if (environment != null) {
+        val home = environment["HOME"]
+        val remoteCargoPath = home?.let { "$it/.cargo/bin" }
+        val localCargoPath = remoteCargoPath?.let { root.resolve(it) }
+        if (localCargoPath?.isDirectory() == true) {
+            yield(localCargoPath)
+        }
 
-    val home = environment["HOME"]
-    val remoteCargoPath = home?.let { "$it/.cargo/bin" }
-    val localCargoPath = remoteCargoPath?.let { root.resolve(it) }
-    if (localCargoPath?.isDirectory() == true) {
-        yield(localCargoPath)
-    }
-
-    val sysPath = environment["PATH"]
-    for (remotePath in sysPath.orEmpty().split(":")) {
-        if (remotePath.isEmpty()) continue
-        val localPath = root.resolveOrNull(remotePath) ?: continue
-        if (!localPath.isDirectory()) continue
-        yield(localPath)
+        val sysPath = environment["PATH"]
+        for (remotePath in sysPath.orEmpty().split(":")) {
+            if (remotePath.isEmpty()) continue
+            val localPath = root.resolveOrNull(remotePath) ?: continue
+            if (!localPath.isDirectory()) continue
+            yield(localPath)
+        }
     }
 
     for (remotePath in listOf("/usr/local/bin", "/usr/bin")) {
