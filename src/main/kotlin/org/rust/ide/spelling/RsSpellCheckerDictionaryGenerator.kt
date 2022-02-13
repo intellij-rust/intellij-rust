@@ -9,10 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsConstParameterImplMixin
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
-import java.util.*
 
 class RsSpellCheckerDictionaryGenerator(project: Project, outputFolder: String) :
     SpellCheckerDictionaryGenerator(project, outputFolder, "rust") {
@@ -21,13 +19,13 @@ class RsSpellCheckerDictionaryGenerator(project: Project, outputFolder: String) 
         file.accept(object : RsRecursiveVisitor() {
             override fun visitElement(element: RsElement) {
                 when (element) {
-                    is RsConstParameterImplMixin,
+                    is RsConstParameter,
                     is RsLabelDecl,
                     is RsLifetime,
                     is RsLifetimeParameter,
                     is RsMacroBinding,
                     is RsPatBinding,
-                    is RsTypeParameter -> Unit
+                    is RsTypeParameter -> return
                     is RsNameIdentifierOwner -> processLeafsNames(element, seenNames)
                     else -> Unit
                 }

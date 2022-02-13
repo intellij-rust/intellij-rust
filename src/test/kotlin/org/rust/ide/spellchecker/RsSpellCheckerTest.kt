@@ -52,6 +52,11 @@ class RsSpellCheckerTest : RsInspectionsTestBase(SpellCheckingInspection::class)
         }
     """)
 
+    // https://youtrack.jetbrains.com/issue/CPP-28113
+    fun `test do not highlight word from rust bundled dictionary 2`() = doTest("""
+        fn foo(addr: *const usize) {}
+    """)
+
     private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
         (inspection as SpellCheckingInspection).processLiterals = processLiterals
         (inspection as SpellCheckingInspection).processComments = processComments

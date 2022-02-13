@@ -19,14 +19,25 @@ class RsSpellCheckerGenerateDictionariesAction : AnAction() {
         val module = e.getData(LangDataKeys.MODULE) ?: return
         val contextRootPath = ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path ?: return
         val generator = RsSpellCheckerDictionaryGenerator(project, "$contextRootPath/dicts")
+
         val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
-        cargoProject.workspace?.packages.orEmpty()
-            .mapNotNull { if (it.origin == PackageOrigin.STDLIB) it.contentRoot else null }
-            .forEach { generator.addFolder("rust", it) }
+        val stdlibPackages = cargoProject.workspace?.packages.orEmpty().filter { it.origin == PackageOrigin.STDLIB }
+        for (pkg in stdlibPackages) {
+            val contentRoot = pkg.contentRoot ?: continue
+            generator.addFolder("rust", contentRoot)
+            // do not analyze "non-production" code since it contains identifiers like "aaaa", "aaba", etc.
+            EXCLUDE_DIRS
+                .mapNotNull { contentRoot.findChild(it) }
+                .forEach { generator.excludeFolder(it) }
+        }
         generator.generate()
     }
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = e.project?.cargoProjects?.hasAtLeastOneValidProject == true
+    }
+
+    companion object {
+        private val EXCLUDE_DIRS = listOf("tests", "benches")
     }
 }
