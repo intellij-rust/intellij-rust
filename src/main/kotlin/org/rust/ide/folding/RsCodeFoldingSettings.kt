@@ -11,9 +11,9 @@ import com.intellij.openapi.components.service
 abstract class RsCodeFoldingSettings {
 
     abstract var collapsibleOneLineMethods: Boolean
+    abstract var foldableParameterLists: Boolean
 
     companion object {
         fun getInstance(): RsCodeFoldingSettings = service()
     }
 }
-
