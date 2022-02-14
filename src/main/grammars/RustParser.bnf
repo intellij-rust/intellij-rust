@@ -1362,6 +1362,9 @@ LitExpr ::= OuterAttr* AnyLitToken {
 }
 LitExprWithoutAttrs ::= AnyLitToken { elementType = LitExpr }
 
+IntegerExpr ::= INTEGER_LITERAL { elementType = LitExpr }
+IdentifierExpr ::= identifier { elementType = PathExpr }
+
 private AnyLitToken ::= STRING_LITERAL | BYTE_STRING_LITERAL
                       | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
                       | CHAR_LITERAL | BYTE_LITERAL
@@ -1448,7 +1451,7 @@ private Macro2FunctionLikeBody ::= '(' MacroPatternContents ')' '{' MacroExpansi
 private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
-    MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
+    MacroArgument | ExprMacroArgument | FormatMacroArgument | FormatMacro2Argument | AssertMacroArgument |
       VecMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument | AsmMacroArgument
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
@@ -1518,11 +1521,36 @@ TT ::= <<any_braces TT*>> | <<unpairedToken>>
 // Expression node is optional to avoid parsing error when expr is not typed yet (like `dbg!()`)
 //noinspection BnfUnusedRule
 ExprMacroArgument ::= <<any_braces [ AnyExpr ','? ]>>
+
 // https://doc.rust-lang.org/std/fmt/
 //noinspection BnfUnusedRule
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
 //noinspection BnfUnusedRule
 FormatMacroArg ::= [ identifier '=' ] AnyExpr
+
+//noinspection BnfUnusedRule
+// Todo: <<any_braces doesn't compile
+FormatMacro2Argument ::= '(' FormatMacroFormatString [',' <<comma_separated_list FormatMacroArg>> ] ')'
+// Todo: how to wrap in double quotes? '"' <...> '"' doesn't work
+FormatMacroFormatString ::= (FmtMaybeFormat | FmtText )*
+// TODO: use lexer to parse "contents" of a string literal?
+FmtText ::= 'x'
+FmtMaybeFormat ::= '{{' | '}}' | FmtArgument
+FmtArgument ::= '{' FmtArgumentIdentifier (':' FmtSpecifier )? '}'
+FmtArgumentIdentifier ::= IntegerExpr | IdentifierExpr
+FmtSpecifier ::= (FmtFill? FmtAlign)? FmtSign? FmtHash? FmtZero? FmtWidth? ('.' FmtPrecision)? FmtType?
+// Todo: how to use (any) char literal, but without ''? lexer?
+FmtFill ::= f
+FmtAlign ::= '<' | '^' | '>'
+FmtSign ::= '+' | '-'
+FmtHash ::= '#'
+FmtZero ::= '0'
+FmtWidth ::= FmtCount
+FmtPrecision ::= FmtCount | '*'
+FmtType ::= '?' | 'x?' | 'X?' | identifier
+FmtCount ::= FmtParameter | INTEGER_LITERAL
+FmtParameter ::= FmtArgumentIdentifier '$'
+
 //noinspection BnfUnusedRule
 AssertMacroArgument ::= <<any_braces (AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ])>>
 //noinspection BnfUnusedRule
