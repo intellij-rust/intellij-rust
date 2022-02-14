@@ -29,6 +29,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
+import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
@@ -298,29 +299,28 @@ fun RsMetaItem.resolveToProcMacroWithoutPsi(checkIsMacroAttr: Boolean = true): P
 private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): MacroDefInfo? {
     val (project, defMap, modData, crate) = containingModInfo
     return RsResolveCache.getInstance(project)
-        .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
+        .resolveWithCaching(this, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE) {
             val callPath = path.pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
             val macroIndex = containingModInfo.getMacroIndex(this, crate) ?: return@resolveWithCaching null
             defMap.resolveMacroCallToMacroDefInfo(modData, callPath, macroIndex)
+                ?.takeIf { it !is ProcMacroDefInfo || it.procMacroKind == RsProcMacroKind.FUNCTION_LIKE }
         }
 }
 
 @VisibleForTesting
 fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroIndex? {
     if (element is RsMetaItem) {
-        val owner = element.owner as? RsAttrProcMacroOwner
-        if (owner != null && RsProcMacroPsiUtil.canBeCustomDerive(element)) {
-            val ownerIndex = getMacroIndex(owner, elementCrate) ?: return null
-            val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
-                owner,
-                explicitCrate = crate,
-                withDerives = true
-            )
-            val deriveIndex = when (attr) {
-                is ProcMacroAttribute.Derive -> attr.derives.indexOf(element)
-                else -> 0
-            }
-            return ownerIndex.append(deriveIndex)
+        val owner = element.owner as? RsAttrProcMacroOwner ?: return null
+        val ownerIndex = getMacroIndex(owner, elementCrate) ?: return null
+        val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
+            owner,
+            explicitCrate = crate,
+            withDerives = true
+        )
+        return when (attr) {
+            is ProcMacroAttribute.Derive -> ownerIndex.append(attr.derives.indexOf(element))
+            is ProcMacroAttribute.Attr -> ownerIndex
+            is ProcMacroAttribute.None -> return null
         }
     }
 
@@ -357,6 +357,20 @@ private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement, crate: C
         parent.children.asSequence()
             .takeWhile { it !== item }
             .count { it.hasMacroIndex(crate) }
+    }
+}
+
+fun PsiElement.findItemWithMacroIndex(macroIndexInParent: Int, crate: Crate): PsiElement {
+    val parentStub = if (this is PsiFileBase) greenStub else (this as? StubBasedPsiElement<*>)?.greenStub
+    return if (parentStub != null) {
+        parentStub.childrenStubs.asSequence()
+            .filter { it.hasMacroIndex(crate) }
+            .elementAt(macroIndexInParent)
+            .psi
+    } else {
+        children.asSequence()
+            .filter { it.hasMacroIndex(crate) }
+            .elementAt(macroIndexInParent)
     }
 }
 
@@ -445,7 +459,7 @@ sealed class RsModInfoBase {
         val defMap: CrateDefMap,
         val modData: ModData,
         val crate: Crate,
-        val dataPsiHelper: DataPsiHelper?,
+        val dataPsiHelper: DataPsiHelper? = null,
     ) : RsModInfoBase()
 }
 

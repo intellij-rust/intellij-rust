@@ -11,11 +11,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
-import org.rust.CheckTestmarkHit
 import org.rust.ExpandMacros
 import org.rust.TestProject
 import org.rust.fileTreeFromText
-import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.childrenOfType
@@ -24,7 +22,6 @@ import org.rust.lang.core.psi.ext.stubChildrenOfType
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.TestmarkPred
-import org.rust.openapiext.not
 
 @ExpandMacros
 class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
@@ -111,27 +108,27 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         checkAllMacroExpansionsInFile(myFixture.file, expectedExpansions.map { Pair<String, Testmark?>(it, null) }.toTypedArray())
     }
 
-    fun `test edit call`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
+    fun `test edit call`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a/*caret*/);
-        bar!(a);
+        bar!(b);
     """, "foo")
 
-    fun `test edit def 1`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 1`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a);
-        bar!(a);
+        bar!(b);
     """, "foo")
 
-    fun `test edit def 2`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 2`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         macro_rules! if_std { ($ i:item) => { $ i } }
         foo!(a);
-        if_std! { if_std! { if_std! { foo!(a); } } }
-        bar!(a);
+        if_std! { if_std! { if_std! { foo!(b); } } }
+        bar!(b);
     """, "foo")
 
     fun `test edit def 3`() = checkReExpanded(type(), """
@@ -140,13 +137,12 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         bar!();
     """, "bar", "foo")
 
-    fun `test edit def 4`() = Testmarks.RefsRecover.not().checkReExpanded(type(), """
+    fun `test edit def 4`() = checkReExpanded(type(), """
         macro_rules! foo { () => { mod a/*caret*/ {} } }
         macro_rules! bar { () => { foo!(); } }
         bar!();
     """, "foo")
 
-    @CheckTestmarkHit(Testmarks.RefsRecover::class)
     fun `test stub call 1`() = checkReExpandedTree(replaceInFile("main.rs", "aaa", "aab"), """
     //- main.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
@@ -155,7 +151,6 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         bar!(bbb);
     """, listOf("foo"))
 
-    @CheckTestmarkHit(Testmarks.RefsRecoverNotHit::class)
     fun `test stub call 2`() = checkReExpandedTree(replaceInFile("main.rs", "//", ""), """
     //- main.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
@@ -211,18 +206,14 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test edit-save-reload document`() = checkExpansionAfterAction({
-        Testmarks.RefsRecover.checkNotHit {
-            myFixture.type("\b\b\b")
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+        myFixture.type("\b\b\b")
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-            FileDocumentManager.getInstance().saveAllDocuments()
-            FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.file))
-        }
+        FileDocumentManager.getInstance().saveAllDocuments()
+        FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.file))
 
-        Testmarks.StubBasedLookup.checkHit {
-            myFixture.file.childrenOfType<RsMacroCall>()
-                .forEach { it.expansion }
-        }
+        myFixture.file.childrenOfType<RsMacroCall>()
+            .forEach { it.expansion }
     }, """
         macro_rules! foo {
             () => { mod foo {} }

@@ -18,8 +18,8 @@ import org.rust.checkMacroExpansionFileSystemAfterTest
 class MacroExpansionFileSystemTest : BasePlatformTestCase() {
     fun `test simple`() {
         batch {
-            createFile("/foo", "bar.txt", "bar content")
-            createFile("/foo", "baz.txt", "baz content")
+            createFile("/foo/bar.txt", "bar content")
+            createFile("/foo/baz.txt", "baz content")
         }
         val vfs = MacroExpansionFileSystem.getInstance()
         val foo = vfs.findNonNullFileByPath("/foo")
@@ -34,10 +34,6 @@ class MacroExpansionFileSystemTest : BasePlatformTestCase() {
         assertEquals(vfs.findNonNullFileByPath("/foo"), foo)
         assertEquals(vfs.findNonNullFileByPath("/foo/"), foo)
         assertEquals(vfs.findNonNullFileByPath("/"), foo.parent)
-
-        batch { writeFile(bar, "new bar content") }
-        assertEquals("new bar content", VfsUtil.loadText(bar))
-        assertEquals("baz content", VfsUtil.loadText(baz))
 
         batch { deleteFile(bar) }
         assertNull(vfs.findFileByPath("/foo/bar.txt"))
@@ -57,7 +53,7 @@ class MacroExpansionFileSystemTest : BasePlatformTestCase() {
 
     fun `test vfs hash`() {
         batch {
-            createFile("/foo", "bar.txt", "bar content")
+            createFile("/foo/bar.txt", "bar content")
         }
         val vfs = MacroExpansionFileSystem.getInstance()
         val bar = vfs.findNonNullFileByPath("/foo/bar.txt")
@@ -97,8 +93,8 @@ class MacroExpansionFileSystemTest : BasePlatformTestCase() {
 private fun VirtualFileSystem.findNonNullFileByPath(path: String): VirtualFile =
     findFileByPath(path) ?: error("File not found: $path")
 
-private fun batch(action: VfsBatch.() -> Unit) {
-    val batch = VfsBatch()
+private fun batch(action: MacroExpansionVfsBatch.() -> Unit) {
+    val batch = MacroExpansionVfsBatch("")
     batch.action()
     batch.applyToVfs(async = false)
 }

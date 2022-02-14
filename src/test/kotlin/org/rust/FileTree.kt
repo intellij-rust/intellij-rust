@@ -19,6 +19,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
 import org.junit.ComparisonFailure
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
@@ -117,6 +118,7 @@ class FileTree(val rootDirectory: Entry.Directory) {
             go(rootDirectory, directory)
             fullyRefreshDirectory(directory)
         }
+        project.macroExpansionManagerIfCreated?.updateInUnitTestMode()
 
         return TestProject(project, directory, files, filesWithCaret, filesWithSelection)
     }

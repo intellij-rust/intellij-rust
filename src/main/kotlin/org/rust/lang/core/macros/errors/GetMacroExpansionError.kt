@@ -11,11 +11,6 @@ import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.stdext.readEnum
-import org.rust.stdext.writeEnum
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.IOException
 
 /**
  * An error type for [org.rust.lang.core.psi.ext.expansionResult]
@@ -26,31 +21,28 @@ sealed class GetMacroExpansionError {
     object IncludingFileNotFound : GetMacroExpansionError()
     object OldEngineStd : GetMacroExpansionError()
 
-    object MemExpDuringMacroExpansion : GetMacroExpansionError()
     object MemExpAttrMacro : GetMacroExpansionError()
     data class MemExpParsingError(
         val expansionText: CharSequence,
         val context: MacroExpansionContext
     ) : GetMacroExpansionError()
 
-    object NextStepMacroAccess : GetMacroExpansionError()
-    object ExpandedInfoNotFound : GetMacroExpansionError()
+    object ModDataNotFound : GetMacroExpansionError()
+    object NoMacroIndex : GetMacroExpansionError()
+    object ExpansionNameNotFound : GetMacroExpansionError()
+    object ExpansionFileNotFound : GetMacroExpansionError()
+    object InconsistentExpansionCacheAndVfs : GetMacroExpansionError()
 
     // Can't expand the macro because ...
     // Failed to expand the macro because ...
     @Nls
-    fun toUserViewableMessage(): String = when(this) {
+    fun toUserViewableMessage(): String = when (this) {
         MacroExpansionIsDisabled -> "macro expansion is disabled in project settings"
         MacroExpansionEngineIsNotReady -> "macro expansion engine is not ready"
         IncludingFileNotFound -> "including file is not found"
         OldEngineStd -> "the old macro expansion engine can't expand macros in Rust stdlib"
-        MemExpDuringMacroExpansion -> "internal error: in-memory macro expansion is requested during other " +
-            "macro expansion"
         MemExpAttrMacro -> "the old macro expansion engine can't expand an attribute or derive macro"
         is MemExpParsingError -> "can't parse `$expansionText` as `$context`"
-        NextStepMacroAccess -> "internal error: the expansion from a next expansion step is accessed during " +
-            "a previous expansion step"
-        ExpandedInfoNotFound -> "the macro is not yet expanded (1)"
         EMIGetExpansionError.InvalidExpansionFile -> "internal error: the expansion file has been invalidated"
         ExpansionPipelineError.CfgDisabled -> "the macro call is conditionally disabled with a `#[cfg()]` attribute"
         ExpansionPipelineError.MacroCallSyntax -> "there is an error in the macro call syntax"
@@ -83,6 +75,11 @@ sealed class GetMacroExpansionError {
                 "(maybe it's not provided for your platform by IntelliJ-Rust)"
             ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> "procedural macro expansion is not enabled"
         }
+        ModDataNotFound -> "can't find ModData for containing mod of the macro call"
+        NoMacroIndex -> "can't find macro index of the macro call"
+        ExpansionNameNotFound -> "internal error: expansion name not found"
+        ExpansionFileNotFound -> "the macro is not yet expanded"
+        InconsistentExpansionCacheAndVfs -> "internal error: expansion file not found, but cache has valid expansion"
     }
 
     override fun toString(): String = "${GetMacroExpansionError::class.simpleName}.${javaClass.simpleName}"
@@ -119,45 +116,4 @@ fun ResolveMacroWithoutPsiError.toExpansionPipelineError(): ExpansionPipelineErr
         ExpansionPipelineError.UnmatchedProcMacroKind(callKind, defKind)
     ResolveMacroWithoutPsiError.Macro2IsNotSupported -> ExpansionPipelineError.Macro2IsNotSupported
     ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute -> ExpansionPipelineError.Skipped
-}
-
-@Throws(IOException::class)
-fun DataOutput.writeExpansionPipelineError(err: ExpansionPipelineError) {
-    val ordinal = when (err) {
-        ExpansionPipelineError.NotYetExpanded -> 0
-        ExpansionPipelineError.CfgDisabled -> 1
-        ExpansionPipelineError.Skipped -> 2
-        ExpansionPipelineError.Unresolved -> 3
-        ExpansionPipelineError.NoProcMacroArtifact -> 4
-        is ExpansionPipelineError.UnmatchedProcMacroKind -> 5
-        ExpansionPipelineError.Macro2IsNotSupported -> 6
-        ExpansionPipelineError.MacroCallSyntax -> 7
-        ExpansionPipelineError.MacroDefSyntax -> 8
-        is ExpansionPipelineError.ExpansionError -> 9
-    }
-    writeByte(ordinal)
-
-    when (err) {
-        is ExpansionPipelineError.UnmatchedProcMacroKind -> {
-            writeEnum(err.callKind)
-            writeEnum(err.defKind)
-        }
-        is ExpansionPipelineError.ExpansionError -> writeMacroExpansionError(err.e)
-        else -> Unit
-    }
-}
-
-@Throws(IOException::class)
-fun DataInput.readExpansionPipelineError(): ExpansionPipelineError = when (val ordinal = readUnsignedByte()) {
-    0 -> ExpansionPipelineError.NotYetExpanded
-    1 -> ExpansionPipelineError.CfgDisabled
-    2 -> ExpansionPipelineError.Skipped
-    3 -> ExpansionPipelineError.Unresolved
-    4 -> ExpansionPipelineError.NoProcMacroArtifact
-    5 -> ExpansionPipelineError.UnmatchedProcMacroKind(readEnum(), readEnum())
-    6 -> ExpansionPipelineError.Macro2IsNotSupported
-    7 -> ExpansionPipelineError.MacroCallSyntax
-    8 -> ExpansionPipelineError.MacroDefSyntax
-    9 -> ExpansionPipelineError.ExpansionError(readMacroExpansionError())
-    else -> throw IOException("Unknown expansion pipeline error code $ordinal")
 }

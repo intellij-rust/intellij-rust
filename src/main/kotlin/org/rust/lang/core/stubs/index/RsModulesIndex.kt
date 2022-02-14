@@ -14,10 +14,10 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.RsConstants
-import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAttr
+import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
@@ -36,8 +36,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             val result = SmartList<RsModDeclItem>()
 
-            val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope
-                ?: RsWithMacrosProjectScope(project)
+            val scope = RsWithMacrosProjectScope(project)
 
             fun processElements(key: String) {
                 StubIndex.getInstance().processElements(

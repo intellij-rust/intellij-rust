@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
 import org.rust.findAnnotationInstance
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import kotlin.reflect.KClass
 
 abstract class AnnotationTestFixtureBase(
@@ -76,6 +77,7 @@ abstract class AnnotationTestFixtureBase(
 
     protected open fun configureByText(text: String) {
         codeInsightFixture.configureByText(baseFileName, replaceCaretMarker(text.trimIndent()))
+        codeInsightFixture.project.macroExpansionManagerIfCreated?.updateInUnitTestMode()
     }
 
     fun checkByText(

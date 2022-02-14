@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -35,7 +34,6 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
-import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
@@ -82,16 +80,10 @@ class RsFile(
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
-            val state = project.macroExpansionManagerIfCreated?.expansionState
-            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-            val (key, cacheDependency) = if (state != null) {
-                CACHED_DATA_MACROS_KEY to state.stepModificationTracker
-            } else {
-                CACHED_DATA_KEY to ModificationTracker.NEVER_CHANGED
-            }
+            val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
                 val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
-                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker, cacheDependency)
+                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
             }
         }
 
@@ -108,19 +100,16 @@ class RsFile(
             // Else try injected crate, included file, or fill file info with just project and workspace
         }
 
-        // if new resolve is enabled and we are called not from macro expansion engine,
-        // then [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
+        // [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
         // so we have to fallback to use [declaration]
-        if (!project.isNewResolveEnabled || project.macroExpansionManagerIfCreated?.expansionState == null) {
-            val declaration = declaration
-            if (declaration != null) {
-                val declarationFile = declaration.contextualFile
-                val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-                val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
-                    && declaration.existsAfterExpansion
-                    && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
-                return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
-            }
+        val declaration = declaration
+        if (declaration != null) {
+            val declarationFile = declaration.contextualFile
+            val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
+            val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
+                && declaration.existsAfterExpansion
+                && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
+            return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
         }
 
         val possibleCrateRoot = this
@@ -237,20 +226,9 @@ class RsFile(
             // the key PSI element
             val originalFile = originalFile as? RsFile ?: return emptyList()
 
-            val state = project.macroExpansionManagerIfCreated?.expansionState
-            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-            val (key, cacheDependency) = if (state != null) {
-                MOD_DECL_MACROS_KEY to state.stepModificationTracker
-            } else {
-                MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
-            }
-            return CachedValuesManager.getCachedValue(originalFile, key) {
+            return CachedValuesManager.getCachedValue(originalFile, MOD_DECL_KEY) {
                 val decl = if (originalFile.isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
-                CachedValueProvider.Result.create(
-                    decl,
-                    originalFile.rustStructureOrAnyPsiModificationTracker,
-                    cacheDependency
-                )
+                CachedValueProvider.Result.create(decl, originalFile.rustStructureOrAnyPsiModificationTracker)
             }
         }
 

@@ -1233,15 +1233,13 @@ private fun exportedMacrosAsScopeEntries(scope: RsFile): List<ScopeEntry> {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
     }
-    val cacheKey = if (scope.project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
-    return CachedValuesManager.getCachedValue(scope, cacheKey) {
+    return CachedValuesManager.getCachedValue(scope, EXPORTED_KEY) {
         val macros = exportedMacrosInternal(scope)
         CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
     }
 }
 
 private val EXPORTED_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_KEY")
-private val EXPORTED_MACROS_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_MACROS_KEY")
 
 private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
     // proc-macro crates are allowed to export only procedural macros.

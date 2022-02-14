@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.openapi.application.impl.LaterInvocator
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -291,6 +292,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         val todoConfiguration = TodoConfiguration.getInstance()
         val todoPatterns = todoConfiguration.todoPatterns
         todoConfiguration.todoPatterns = emptyArray()
+        LaterInvocator.dispatchPendingFlushes()
         try {
             action()
         } finally {
