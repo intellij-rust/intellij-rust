@@ -356,7 +356,7 @@ project(":") {
     }
 
     dependencies {
-        implementation("org.jetbrains:markdown:0.2.0") {
+        implementation("org.jetbrains:markdown:0.3.1") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
             exclude(module = "kotlin-stdlib-common")
