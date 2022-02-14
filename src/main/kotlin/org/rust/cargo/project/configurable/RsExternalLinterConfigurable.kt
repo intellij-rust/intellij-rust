@@ -11,23 +11,24 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.toBinding
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
 
-class RsExternalLinterConfigurable(project: Project) : RsConfigurableBase(project, "Linters") {
+class RsExternalLinterConfigurable(project: Project) : RsConfigurableBase(project, RsBundle.message("settings.rust.external.linters.name")) {
     override fun createPanel(): DialogPanel = panel {
-        row("External tool:") {
+        row(RsBundle.message("settings.rust.external.linters.tool.label")) {
             comboBox(
                 EnumComboBoxModel(ExternalLinter::class.java),
                 state::externalLinter,
-            ).comment("External tool to use for code analysis")
+            ).comment(RsBundle.message("settings.rust.external.linters.tool.comment"))
         }
 
-        row("Additional arguments:") {
+        row(RsBundle.message("settings.rust.external.linters.additional.arguments.label")) {
             RsCommandLineEditor(project, CargoCommandCompletionProvider(project.cargoProjects, "check ") { null })(CCFlags.growX)
-                .comment("Additional arguments to pass to <b>cargo check</b> or <b>cargo clippy</b> command")
+                .comment(RsBundle.message("settings.rust.external.linters.additional.arguments.comment"))
                 .withBinding(
                     componentGet = { it.text },
                     componentSet = { component, value -> component.text = value },
@@ -37,12 +38,9 @@ class RsExternalLinterConfigurable(project: Project) : RsConfigurableBase(projec
 
         row {
             checkBox(
-                "Run external linter to analyze code on the fly",
+                RsBundle.message("settings.rust.external.linters.on.the.fly.label"),
                 state::runExternalLinterOnTheFly,
-                comment = """
-                Enable external linter to add code highlighting based on the used linter result.
-                Can be CPU-consuming
-            """.trimIndent()
+                comment = RsBundle.message("settings.rust.external.linters.on.the.fly.comment")
             )
         }
     }

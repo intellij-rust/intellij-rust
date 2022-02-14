@@ -8,33 +8,34 @@ package org.rust.cargo.project.configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
+import org.rust.RsBundle
 
-class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo") {
+class CargoConfigurable(project: Project) : RsConfigurableBase(project, RsBundle.message("settings.rust.cargo.name")) {
     override fun createPanel(): DialogPanel = panel {
         row {
             checkBox(
-                "Automatically show first error in editor after a build failure",
+                RsBundle.message("settings.rust.cargo.show.first.error.label"),
                 state::autoShowErrorsInEditor
             )
         }
         row {
             checkBox(
-                "Update project automatically if Cargo.toml changes",
+                RsBundle.message("settings.rust.cargo.auto.update.project.label"),
                 state::autoUpdateEnabled
             )
         }
         row {
             checkBox(
-                "Compile all project targets if possible",
+                RsBundle.message("settings.rust.cargo.compile.all.targets.label"),
                 state::compileAllTargets,
-                comment = "Pass <b>--target-all</b> option to Сargo <b>build</b>/<b>check</b> command"
+                comment = RsBundle.message("settings.rust.cargo.compile.all.targets.comment")
             )
         }
         row {
             checkBox(
-                "Offline mode",
+                RsBundle.message("settings.rust.cargo.offline.mode.label"),
                 state::useOffline,
-                comment = "Pass <b>--offline</b> option to Cargo not to perform network requests"
+                comment = RsBundle.message("settings.rust.cargo.offline.mode.comment")
             )
         }
     }

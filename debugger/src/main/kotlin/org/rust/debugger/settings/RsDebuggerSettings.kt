@@ -13,6 +13,7 @@ import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
+import org.rust.debugger.RsDebuggerBundle
 
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
@@ -42,7 +43,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     private fun createDataViewConfigurable(): Configurable {
         return SimpleConfigurable.create(
             DATA_VIEW_ID,
-            "Rust",
+            RsDebuggerBundle.message("settings.rust.debugger.data.view.name"),
             RsDebuggerDataViewConfigurableUi::class.java,
             ::getInstance
         )
@@ -51,7 +52,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     private fun createGeneralSettingsConfigurable(): Configurable {
         return SimpleConfigurable.create(
             GENERAL_SETTINGS_ID,
-            "Rust",
+            RsDebuggerBundle.message("settings.rust.debugger.title"),
             RsDebuggerGeneralSettingsConfigurableUi::class.java,
             Companion::getInstance
         )

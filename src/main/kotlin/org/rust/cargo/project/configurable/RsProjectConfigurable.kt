@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.panel
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -23,32 +24,30 @@ import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
     project: Project
-) : RsConfigurableBase(project, "Rust"), Configurable.NoScroll {
+) : RsConfigurableBase(project, RsBundle.message("settings.rust.toolchain.name")), Configurable.NoScroll {
     private val projectDir = project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     private val rustProjectSettings = RustProjectSettingsPanel(projectDir)
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros:") {
+        row(RsBundle.message("settings.rust.toolchain.expand.macros.label")) {
             comboBox(
                 EnumComboBoxModel(MacroExpansionEngine::class.java),
                 state::macroExpansionEngine,
                 createExpansionEngineListRenderer()
-            ).comment(
-                "Allow plugin to process declarative macro invocations to extract information for name resolution and type inference"
-            )
+            ).comment(RsBundle.message("settings.rust.toolchain.expand.macros.comment"))
         }
         row {
-            checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
+            checkBox(RsBundle.message("settings.rust.toolchain.inject.rust.in.doc.comments.checkbox"), state::doctestInjectionEnabled)
         }
     }
 
     private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {
         return SimpleListCellRenderer.create("") {
             when (it) {
-                MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
-                MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
-                MacroExpansionEngine.NEW -> "Use new engine"
+                MacroExpansionEngine.DISABLED -> RsBundle.message("settings.rust.toolchain.expand.macros.disable.label")
+                MacroExpansionEngine.OLD -> RsBundle.message("settings.rust.toolchain.expand.macros.old.engine.label")
+                MacroExpansionEngine.NEW -> RsBundle.message("settings.rust.toolchain.expand.macros.new.engine.label")
                 null -> error("Unreachable")
             }
         }

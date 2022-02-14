@@ -3,19 +3,18 @@
  * found in the LICENSE file.
  */
 
-package org.rust
+package org.rust.debugger
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-const val BUNDLE = "messages.RsBundle"
+const val BUNDLE = "messages.RsDebuggerBundle"
 
-object RsBundle : DynamicBundle(BUNDLE) {
+object RsDebuggerBundle : DynamicBundle(BUNDLE) {
     @Nls
     fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
-
     fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> =
         getLazyMessage(key, *params)
 }

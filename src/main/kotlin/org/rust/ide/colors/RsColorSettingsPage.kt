@@ -10,11 +10,12 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.util.io.StreamUtil
+import org.rust.RsBundle
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.ide.icons.RsIcons
 
 class RsColorSettingsPage : ColorSettingsPage {
-    override fun getDisplayName() = "Rust"
+    override fun getDisplayName() = RsBundle.message("settings.rust.color.scheme.title")
     override fun getIcon() = RsIcons.RUST
     override fun getAttributeDescriptors() = ATTRS
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY

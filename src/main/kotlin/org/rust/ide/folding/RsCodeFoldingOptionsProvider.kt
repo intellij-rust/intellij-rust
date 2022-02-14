@@ -7,15 +7,16 @@ package org.rust.ide.folding
 
 import com.intellij.application.options.editor.CodeFoldingOptionsProvider
 import com.intellij.openapi.options.BeanConfigurable
+import org.rust.RsBundle
 
 class RsCodeFoldingOptionsProvider :
-    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.getInstance(), "Rust"),
+    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.getInstance(), RsBundle.message("settings.rust.folding.title")),
     CodeFoldingOptionsProvider {
 
     init {
         val settings = instance
         if (settings != null) {
-            checkBox("One-line methods", settings::collapsibleOneLineMethods)
+            checkBox(RsBundle.message("settings.rust.folding.one.line.methods.checkbox"), settings::collapsibleOneLineMethods)
         }
     }
 }
