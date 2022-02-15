@@ -24,9 +24,8 @@ import javax.swing.JTree
 
 class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsAbstractable) : ClassMember {
     private val text: String = when (member) {
-        is RsFunction ->
+        is RsFunction, is RsTypeAlias ->
             member.presentationInfo?.projectStructureItemText ?: ""
-        is RsTypeAlias -> "${member.name}"
         is RsConstant -> "${member.name}: ${member.typeReference?.text}"
         else -> error("Unknown trait member: $member")
     }

@@ -59,6 +59,9 @@ fun RsPsiRenderer.renderValueParameterList(list: RsValueParameterList): String =
 fun RsPsiRenderer.renderFunctionSignature(fn: RsFunction): String =
     buildString { appendFunctionSignature(this, fn) }
 
+fun RsPsiRenderer.renderTypeAliasSignature(ta: RsTypeAlias, renderBounds: Boolean): String =
+    buildString { appendTypeAliasSignature(this, ta, renderBounds) }
+
 data class PsiRenderingOptions(
     val renderLifetimes: Boolean = true,
     /** Related to [RsPsiRenderer.appendFunctionSignature] */
@@ -114,10 +117,24 @@ open class RsPsiRenderer(
         }
         val whereClause = fn.whereClause
         if (whereClause != null && renderGenericsAndWhere) {
-            sb.append(" where ")
-            whereClause.wherePredList.joinToWithBuffer(sb, separator = ", ") {
-                appendWherePred(sb, this)
-            }
+            appendWhereClause(sb, whereClause)
+        }
+    }
+
+    open fun appendTypeAliasSignature(sb: StringBuilder, ta: RsTypeAlias, renderBounds: Boolean) {
+        sb.append("type ")
+        sb.append(ta.escapedName ?: "")
+        val typeParameterList = ta.typeParameterList
+        if (typeParameterList != null && renderGenericsAndWhere) {
+            appendTypeParameterList(sb, typeParameterList)
+        }
+        val whereClause = ta.whereClause
+        if (whereClause != null && renderGenericsAndWhere) {
+            appendWhereClause(sb, whereClause)
+        }
+        val typeParamBounds = ta.typeParamBounds
+        if (typeParamBounds != null && renderBounds) {
+            appendTypeParamBounds(sb, typeParamBounds)
         }
     }
 
@@ -138,11 +155,22 @@ open class RsPsiRenderer(
             appendTypeReference(sb, type)
             val typeParamBounds = pred.typeParamBounds
             if (typeParamBounds != null) {
-                sb.append(": ")
-                typeParamBounds.polyboundList.joinToWithBuffer(sb, " + ") {
-                    appendPolybound(sb, this)
-                }
+                appendTypeParamBounds(sb, typeParamBounds)
             }
+        }
+    }
+
+    private fun appendWhereClause(sb: StringBuilder, whereClause: RsWhereClause) {
+        sb.append(" where ")
+        whereClause.wherePredList.joinToWithBuffer(sb, separator = ", ") {
+            appendWherePred(sb, this)
+        }
+    }
+
+    private fun appendTypeParamBounds(sb: StringBuilder, bounds: RsTypeParamBounds) {
+        sb.append(": ")
+        bounds.polyboundList.joinToWithBuffer(sb, " + ") {
+            appendPolybound(sb, this)
         }
     }
 

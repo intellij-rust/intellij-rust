@@ -10,10 +10,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.presentation.ImportingPsiRenderer
-import org.rust.ide.presentation.PsiRenderingOptions
-import org.rust.ide.presentation.renderFunctionSignature
-import org.rust.ide.presentation.renderTypeReference
+import org.rust.ide.presentation.*
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.import
@@ -216,7 +213,7 @@ class MembersGenerator(
                 "const ${element.nameLikeElement.text}: ${element.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
             }
             is RsTypeAlias ->
-                "type ${element.escapedName} = ();"
+                "${element.renderTypeAliasSignature()} = ();"
             is RsFunction ->
                 "${element.renderFunctionSignature()} {\n        todo!()\n    }"
             else ->
@@ -225,5 +222,6 @@ class MembersGenerator(
     }
 
     private fun RsFunction.renderFunctionSignature(): String = renderer.renderFunctionSignature(this)
+    private fun RsTypeAlias.renderTypeAliasSignature(): String = renderer.renderTypeAliasSignature(this, renderBounds = false)
     private fun RsTypeReference.renderTypeReference(): String = renderer.renderTypeReference(this)
 }
