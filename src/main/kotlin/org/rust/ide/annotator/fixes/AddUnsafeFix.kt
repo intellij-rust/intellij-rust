@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
@@ -48,7 +49,11 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
                 RsFunction::class.java,
                 RsImplItem::class.java
             ) ?: return null
-            return AddUnsafeFix(parent)
+
+            return when {
+                parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent) -> null
+                else -> AddUnsafeFix(parent)
+            }
         }
     }
 }

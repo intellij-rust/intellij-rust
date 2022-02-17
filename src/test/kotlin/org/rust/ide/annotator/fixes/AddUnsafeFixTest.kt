@@ -8,6 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.*
 
 class AddUnsafeFixTest : RsAnnotationTestBase() {
+
     override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> {
         val annotatorClasses = listOf(RsUnsafeExpressionAnnotator::class, RsErrorAnnotator::class)
         return RsAnnotationTestFixture(this, myFixture, annotatorClasses = annotatorClasses)
@@ -16,13 +17,13 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     fun `test add unsafe to function`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
-        fn main() {
+        fn bar() {
             <error>foo()/*caret*/</error>;
         }
     """, """
         unsafe fn foo() {}
 
-        unsafe fn main() {
+        unsafe fn bar() {
             foo();
         }
     """)
@@ -34,7 +35,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
             unsafe fn foo(&self) {}
         }
 
-        fn main() {
+        fn bar() {
             let s = S;
             <error>s.foo()/*caret*/</error>;
         }
@@ -45,7 +46,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
             unsafe fn foo(&self) {}
         }
 
-        unsafe fn main() {
+        unsafe fn bar() {
             let s = S;
             s.foo();
         }
@@ -86,7 +87,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     fun `test add unsafe inside for`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
-        fn main() {
+        fn bar() {
             for i in 0..1 {
                 <error>foo()/*caret*/</error>;
             }
@@ -94,7 +95,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     """, """
         unsafe fn foo() {}
 
-        unsafe fn main() {
+        unsafe fn bar() {
             for i in 0..1 {
                 foo();
             }
@@ -104,7 +105,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     fun `test add unsafe inside loop`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
-        fn main() {
+        fn bar() {
             loop {
                 <error>foo()/*caret*/</error>;
             }
@@ -112,7 +113,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     """, """
         unsafe fn foo() {}
 
-        unsafe fn main() {
+        unsafe fn bar() {
             loop {
                 foo();
             }
@@ -122,7 +123,7 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     fun `test add unsafe inside if`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
-        fn main() {
+        fn bar() {
             if true {
                 <error>foo()/*caret*/</error>;
             }
@@ -130,10 +131,36 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
     """, """
         unsafe fn foo() {}
 
-        unsafe fn main() {
+        unsafe fn bar() {
             if true {
                 foo();
             }
+        }
+    """)
+
+    fun `test add unsafe to function (similar main function)`() = checkFixByText("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        fn main() {
+            fn main() {
+                <error>foo()/*caret*/</error>;
+            }
+        }
+    """, """
+        unsafe fn foo() {}
+
+        fn main() {
+            unsafe fn main() {
+                foo();
+            }
+        }
+    """)
+
+    fun `test do not provide 'add unsafe to function' in the main function`() = checkFixIsUnavailable("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        fn main() {
+            <error descr="Call to unsafe function requires unsafe function or block [E0133]">foo()/*caret*/</error>;
         }
     """)
 
