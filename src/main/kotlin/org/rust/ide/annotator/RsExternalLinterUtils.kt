@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
@@ -292,7 +291,7 @@ private fun RustcMessage.collectQuickFixes(file: PsiFile, document: Document): L
     val quickFixes = mutableListOf<ApplySuggestionFix>()
 
     fun go(message: RustcMessage) {
-        val span = message.spans.firstOrNull { it.is_primary && it.isValid() }
+        val span = message.spans.singleOrNull { it.is_primary && it.isValid() }
         createQuickFix(file, document, span, message.message)?.let { quickFixes.add(it) }
         message.children.forEach(::go)
     }
