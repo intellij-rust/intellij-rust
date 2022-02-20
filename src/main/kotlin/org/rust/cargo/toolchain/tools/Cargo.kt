@@ -183,7 +183,8 @@ class Cargo(
         dstPath: Path,
         listener: ProcessListener? = null
     ): RsProcessResult<Unit> {
-        val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
+        val additionalArgs = listOf("--respect-source-config", dstPath.toString())
+        val commandLine = CargoCommandLine("vendor", projectDirectory, additionalArgs)
         commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
         return Ok(Unit)
     }
