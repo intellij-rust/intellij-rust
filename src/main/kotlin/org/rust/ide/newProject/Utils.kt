@@ -18,6 +18,7 @@ import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Cargo.Companion.GeneratedFilesHolder
+import org.rust.ide.statistics.RsCounterUsagesCollector
 import org.rust.openapiext.RsProcessResult
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.toPath
@@ -28,9 +29,12 @@ fun Cargo.makeProject(
     baseDir: VirtualFile,
     name: String,
     template: RsProjectTemplate
-): RsProcessResult<GeneratedFilesHolder> = when (template) {
-    is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary)
-    is RsCustomTemplate -> generate(project, module, baseDir, name, template.url)
+): RsProcessResult<GeneratedFilesHolder> {
+    RsCounterUsagesCollector.newProjectCreation(template)
+    return when (template) {
+        is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary)
+        is RsCustomTemplate -> generate(project, module, baseDir, name, template.url)
+    }
 }
 
 fun Project.openFiles(files: GeneratedFilesHolder) = invokeLater {
