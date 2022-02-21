@@ -52,7 +52,7 @@ plugins {
     kotlin("jvm") version "1.6.10"
     id("org.jetbrains.intellij") version "1.4.0"
     id("org.jetbrains.grammarkit") version "2021.2.1"
-    id("net.saliman.properties") version "1.5.1"
+    id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.3.1"
 }
 
