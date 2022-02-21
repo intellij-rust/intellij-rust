@@ -136,6 +136,9 @@
         <lang.smartEnterProcessor language="Rust"
                                   implementationClass="org.rust.ide.typing.assist.RsSmartEnterProcessor"/>
 
+        <!-- Copy paste processors -->
+        <copyPastePostProcessor implementation="org.rust.ide.typing.paste.RsConvertJsonToStructCopyPasteProcessor"/>
+
         <!-- Imports -->
 
         <lang.importOptimizer language="Rust" implementationClass="org.rust.ide.refactoring.RsImportOptimizer"/>
