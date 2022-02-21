@@ -87,6 +87,14 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         <error>fn foo() -> Option<i32> { Some(1) }</error>
     """, externalLinter = ExternalLinter.CLIPPY)
 
+    fun `test multi-primary fix suggestion`() = checkFixIsUnavailable("""
+        #[deny(clippy::let_and_return)]
+        fn _foo() -> i32 {
+            let x = 42;
+            <error>x</error>
+        }
+    """, externalLinter = ExternalLinter.CLIPPY)
+
     private fun checkFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
