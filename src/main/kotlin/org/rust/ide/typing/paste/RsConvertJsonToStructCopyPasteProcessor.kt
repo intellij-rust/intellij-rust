@@ -23,10 +23,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import org.rust.RsBundle
 import org.rust.ide.inspections.lints.toSnakeCase
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.resolve.knownItems
 import org.rust.openapiext.createSmartPointer
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.runWriteCommandAction
@@ -82,6 +86,8 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         val insertedItems: MutableList<SmartPsiElementPointer<RsStructItem>> = mutableListOf()
 
+        val hasSerdeDependency = file.containingCargoPackage?.dependencies?.any { it.name == "serde" } == true
+
         runWriteAction {
             // Delete original text
             editor.document.deleteString(bounds.startOffset, bounds.endOffset)
@@ -93,7 +99,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
             var anchor = element
 
             for (struct in structs) {
-                val inserted = createAndInsertStruct(factory, anchor, parent, struct, nameMap) ?: continue
+                val inserted = createAndInsertStruct(factory, anchor, parent, struct, nameMap, hasSerdeDependency) ?: continue
                 anchor = inserted
                 insertedItems.add(inserted.createSmartPointer())
             }
@@ -134,9 +140,10 @@ private fun createAndInsertStruct(
     anchor: PsiElement?,
     parent: PsiElement,
     struct: Struct,
-    nameMap: Map<Struct, String>
+    nameMap: Map<Struct, String>,
+    hasSerdeDependency: Boolean
 ): RsStructItem? {
-    val structPsi = generateStruct(factory, struct, nameMap) ?: return null
+    val structPsi = generateStruct(factory, struct, nameMap, hasSerdeDependency) ?: return null
 
     val inserted = if (anchor == null) {
         parent.add(structPsi)
@@ -144,11 +151,30 @@ private fun createAndInsertStruct(
         parent.addAfter(structPsi, anchor)
     } as RsStructItem
 
+    if (hasSerdeDependency) {
+        val knownItems = inserted.knownItems
+        val traits: List<RsQualifiedNamedElement> = listOfNotNull(
+            knownItems.findItem("serde::Serialize", isStd = false),
+            knownItems.findItem("serde::Deserialize", isStd = false)
+        )
+        for (trait in traits) {
+            RsImportHelper.importElement(inserted, trait)
+        }
+    }
+
     return inserted
 }
 
-fun generateStruct(factory: RsPsiFactory, struct: Struct, nameMap: Map<Struct, String>): RsStructItem? {
+fun generateStruct(
+    factory: RsPsiFactory,
+    struct: Struct,
+    nameMap: Map<Struct, String>,
+    hasSerdeDependency: Boolean
+): RsStructItem? {
     val structString = buildString {
+        if (hasSerdeDependency) {
+            append("#[derive(Serialize, Deserialize)]\n")
+        }
         append("struct ${nameMap[struct]} {\n")
 
         for ((field, type) in struct.fields) {
@@ -283,6 +309,4 @@ private class PotentialJsonTransferableData(val text: String) : TextBlockTransfe
     }
 }
 
-// TODO: add serde to dependencies
-// TODO: derive and import Serialize/Deserialize
 // TODO: settings GUI + do not ask checkbox
