@@ -13,12 +13,14 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.panel
+import com.intellij.util.ui.JBUI
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ui.RsNewProjectPanel
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
@@ -31,7 +33,7 @@ class CargoConfigurationWizardStep(
 
     override fun getComponent(): JComponent = panel {
         newProjectPanel.attachTo(this)
-    }
+    }.withBorderIfNeeded()
 
     override fun disposeUIResources() = Disposer.dispose(newProjectPanel)
 
@@ -53,6 +55,19 @@ class CargoConfigurationWizardStep(
         newProjectPanel.validateSettings()
         return true
     }
+
+    // It's simple hack to imitate new UI style if new project wizard is enabled
+    // TODO: drop it and support new project wizard properly
+    //  see https://github.com/intellij-rust/intellij-rust/issues/8585
+    private fun <T : JComponent> T.withBorderIfNeeded(): T {
+        if (isNewWizard()) {
+            // border size is taken from `com.intellij.ide.wizard.NewProjectWizardStepPanel`
+            border = JBUI.Borders.empty(14, 20)
+        }
+        return this
+    }
+
+    private fun isNewWizard(): Boolean = isFeatureEnabled("new.project.wizard")
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
         var data: RustProjectSettingsPanel.Data? = null
