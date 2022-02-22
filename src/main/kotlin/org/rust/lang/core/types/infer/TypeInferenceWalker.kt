@@ -205,6 +205,7 @@ class RsTypeInferenceWalker(
             is RsYieldExpr -> inferYieldExprType(this)
             is RsRetExpr -> inferRetExprType(this)
             is RsBreakExpr -> inferBreakExprType(this)
+            is RsLetExpr -> inferLetExprType(this)
             is RsContExpr -> TyNever
             else -> TyUnknown
         }
@@ -943,7 +944,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferWhileExprType(expr: RsWhileExpr): Ty {
-        expr.condition?.inferTypes()
+        expr.condition?.expr?.inferType(TyBool.INSTANCE)
         expr.block?.inferType()
         return TyUnit.INSTANCE
     }
@@ -954,13 +955,7 @@ class RsTypeInferenceWalker(
         for (arm in arms) {
             arm.pat.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)
-
-            val guard = arm.matchArmGuard
-            if (guard != null) {
-                val expectedGuardTy = if (guard.let == null) TyBool.INSTANCE else null
-                val guardTy = guard.expr?.inferType(Expectation.maybeHasType(expectedGuardTy)) ?: TyUnknown
-                guard.pat?.extractBindings(guardTy)
-            }
+            arm.matchArmGuard?.expr?.inferType(TyBool.INSTANCE)
         }
 
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })
@@ -1039,7 +1034,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Expectation): Ty {
-        expr.condition?.inferTypes()
+        expr.condition?.expr?.inferType(TyBool.INSTANCE)
         val blockTys = mutableListOf<Ty?>()
         blockTys.add(expr.block?.inferType(expected))
         val elseBranch = expr.elseBranch
@@ -1048,21 +1043,6 @@ class RsTypeInferenceWalker(
             blockTys.add(elseBranch.block?.inferType(expected))
         }
         return if (expr.elseBranch == null) TyUnit.INSTANCE else getMoreCompleteType(blockTys.filterNotNull())
-    }
-
-    private fun RsCondition.inferTypes() {
-        val pat = pat
-        if (pat != null) {
-            // if let Some(a) = ... {}
-            // if let V1(a) | V2(a) = ... {}
-            // or
-            // while let Some(a) = ... {}
-            // while let V1(a) | V2(a) = ... {}
-            val exprTy = resolveTypeVarsWithObligations(expr?.inferType() ?: TyUnknown)
-            pat.extractBindings(exprTy)
-        } else {
-            expr?.inferType(TyBool.INSTANCE)
-        }
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
@@ -1460,6 +1440,12 @@ class RsTypeInferenceWalker(
     private fun inferBreakExprType(expr: RsBreakExpr): Ty {
         expr.expr?.inferType()
         return TyNever
+    }
+
+    private fun inferLetExprType(letExpr: RsLetExpr): Ty {
+        val exprTy = letExpr.expr?.inferType()?.let(::resolveTypeVarsWithObligations)
+        letExpr.pat?.extractBindings(exprTy ?: TyUnknown)
+        return TyBool.INSTANCE
     }
 
     // TODO should be replaced with coerceMany
