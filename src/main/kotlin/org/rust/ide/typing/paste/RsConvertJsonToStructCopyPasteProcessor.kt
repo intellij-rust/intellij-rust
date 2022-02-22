@@ -11,9 +11,9 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.showYesNoDialog
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -100,16 +100,47 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     }
 }
 
+enum class StoredPreference {
+    YES,
+    NO,
+    ASK_EVERY_TIME;
+
+    override fun toString(): String = when (this) {
+        YES -> "Yes"
+        NO -> "No"
+        ASK_EVERY_TIME -> "Ask every time"
+    }
+}
+
 private fun shouldConvertJson(project: Project): Boolean {
     return if (isUnitTestMode) {
         true
     } else {
-        showYesNoDialog(
-            RsBundle.message("copy.paste.convert.json.to.struct.dialog.title"),
-            RsBundle.message("copy.paste.convert.json.to.struct.dialog.text"),
-            project,
-            icon = Messages.getQuestionIcon()
-        )
+        when (AdvancedSettings.getEnum("org.rust.convert.json.to.struct", StoredPreference::class.java)) {
+            StoredPreference.YES -> true
+            StoredPreference.NO -> false
+            StoredPreference.ASK_EVERY_TIME -> {
+                MessageDialogBuilder.yesNo(
+                    title=RsBundle.message("copy.paste.convert.json.to.struct.dialog.title"),
+                    message=RsBundle.message("copy.paste.convert.json.to.struct.dialog.text")
+                )
+                    .yesText(Messages.getYesButton())
+                    .noText(Messages.getNoButton())
+                    .icon(Messages.getQuestionIcon())
+                    .doNotAsk(object : DoNotAskOption.Adapter() {
+                        override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+                            if (isSelected) {
+                                val value = when (exitCode) {
+                                    Messages.YES -> StoredPreference.YES
+                                    else -> StoredPreference.NO
+                                }
+                                AdvancedSettings.setEnum("org.rust.convert.json.to.struct", value)
+                            }
+                        }
+                    })
+                    .ask(project)
+            }
+        }
     }
 }
 
