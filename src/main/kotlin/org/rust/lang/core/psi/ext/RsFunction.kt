@@ -31,6 +31,15 @@ val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrai
 val RsFunction.isTest: Boolean
     get() = queryAttributes.isTest
 
+val RsFunction.isMain: Boolean get() {
+    if (name != "main") return false
+    val parent = parent
+    if (parent !is RsFile || !parent.isCrateRoot) return false
+    if (parent.queryAttributes.hasAttribute("no_main")) return false
+    val targetKind = containingCargoTarget?.kind ?: return false
+    return targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild
+}
+
 private val QueryAttributes<*>.isTest
     get() = metaItems.mapNotNull { it.path?.referenceName }.any { it.contains("test") } || hasAtomAttribute("quickcheck")
 

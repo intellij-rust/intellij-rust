@@ -138,6 +138,19 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test do not provide 'add unsafe to function' in the main function 1`() = checkNoAddUnsafeFixOnMainFun("main.rs")
+    fun `test do not provide 'add unsafe to function' in the main function 2`() = checkNoAddUnsafeFixOnMainFun("build.rs")
+    fun `test do not provide 'add unsafe to function' in the main function 3`() = checkNoAddUnsafeFixOnMainFun("example/a.rs")
+
+    private fun checkNoAddUnsafeFixOnMainFun(filePath: String) = checkFixIsUnavailableByFileTree("Add unsafe to function", """
+    //- $filePath
+        unsafe fn foo() {}
+
+        fn main() {
+            <error descr="Call to unsafe function requires unsafe function or block [E0133]">foo()/*caret*/</error>;
+        }
+    """)
+
     fun `test add unsafe to function (similar main function)`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
@@ -156,11 +169,21 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test do not provide 'add unsafe to function' in the main function`() = checkFixIsUnavailable("Add unsafe to function", """
+    fun `test add unsafe to main function with no_main attr`() = checkFixByText("Add unsafe to function", """
+        #![no_main]
+
         unsafe fn foo() {}
 
         fn main() {
-            <error descr="Call to unsafe function requires unsafe function or block [E0133]">foo()/*caret*/</error>;
+            <error>foo()/*caret*/</error>;
+        }
+    """, """
+        #![no_main]
+
+        unsafe fn foo() {}
+
+        unsafe fn main() {
+            foo()/*caret*/;
         }
     """)
 
