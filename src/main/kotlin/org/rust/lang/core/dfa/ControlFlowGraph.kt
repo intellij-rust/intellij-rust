@@ -65,6 +65,32 @@ class CFGEdgeData(val exitingScopes: List<RsElement>)
 typealias CFGNode = Node<CFGNodeData, CFGEdgeData>
 typealias CFGGraph = PresentableGraph<CFGNodeData, CFGEdgeData>
 
+/**
+ * The control-flow graph we use is built on the top of the PSI tree.
+ * We do not operate with basic blocks, and therefore each tiny execution unit is represented in the graph as a separate node.
+ *
+ * For illustration, consider the following program:
+ * ```
+ * fn main() {
+ *   let x = 42;
+ * }
+ * ```
+ * The corresponding control-flow graph we build will consist of the following edges:
+ * ```
+ *   `Entry` -> `42`
+ *   `42` -> `x`
+ *   `x` -> `x`
+ *   `x` -> `let x = 42`
+ *   `let x = 42;` -> `BLOCK`
+ *   `BLOCK` -> `Exit`
+ *   `Exit` -> `Termination`
+ * ```
+ *
+ * You may see that the pattern bindings are duplicated here (`x` -> `x` edge).
+ * This occurs because `x` nodes correspond to both `RsPatIdent` (parent) and `RsPatBinding` (child).
+ *
+ * Please refer to [org.rust.lang.core.dfa.RsControlFlowGraphTest] for more examples.
+ */
 class ControlFlowGraph private constructor(
     val owner: RsElement,
     val graph: CFGGraph,
