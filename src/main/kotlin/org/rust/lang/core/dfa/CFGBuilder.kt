@@ -603,7 +603,16 @@ class CFGBuilder(
 
         val prevGuards = ArrayDeque<CFGNode>()
 
-        matchExpr.arms.forEach { arm ->
+        val arms = matchExpr.arms
+        if (arms.isEmpty()) {
+            // The only case where a match with no arms is valid is when the discriminant is
+            // an empty type (!, empty enum etc), but the unreachability in this case is handled
+            // by the type-based CFG analysis/
+            // In all other cases no match arms mean only that the user hasn't typed them yet, so
+            // we add a dummy edge to avoid breaking the CFG (otherwise everything after the match
+            // would be unreachable).
+            addContainedEdge(discriminantExit, exprExit)
+        } else arms.forEach { arm ->
             val armExit = addDummyNode()
             val guard = arm.matchArmGuard
 
