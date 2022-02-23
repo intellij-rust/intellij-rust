@@ -127,10 +127,10 @@ interface PresentableNodeData {
 
 class PresentableGraph<N : PresentableNodeData, E> : Graph<N, E>() {
     /**
-     * Creates graph description written in the DOT language.
-     * Usage: copy the output into `cfg.dot` file and run `dot -Tpng cfg.dot -o cfg.png`
+     * Creates graph description in the DOT language format.
+     * The graph can be rendered right inside the IDE using the [DOT Language plugin](https://plugins.jetbrains.com/plugin/10312-dot-language)
+     * Also, the graph can be rendered from the file using the CLI: `dot -Tpng cfg.dot -o cfg.png`
      */
-    @Suppress("unused")
     fun createDotDescription(): String =
         buildString {
             append("digraph {\n")
