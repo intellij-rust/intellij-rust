@@ -6,8 +6,9 @@
 package org.rust.ide.lineMarkers
 
 import org.intellij.lang.annotations.Language
-import org.rust.FileTree
+import org.rust.FileTreeBuilder
 import org.rust.RsTestBase
+import org.rust.fileTree
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
 
@@ -22,8 +23,8 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
         lineMarkerTestHelper.doTestByText("lib.rs", source)
     }
 
-    protected fun doTestFromFile(filePath: String, fileTree: FileTree) {
-        val testProject = fileTree.create()
+    protected fun doTestByFileTree(filePath: String, builder: FileTreeBuilder.() -> Unit) {
+        val testProject = fileTree(builder).create()
         lineMarkerTestHelper.doTestFromFile(testProject.file(filePath))
     }
 }
