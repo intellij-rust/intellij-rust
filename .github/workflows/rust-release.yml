@@ -114,56 +114,10 @@ jobs:
     build-native-code:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
         needs: [ fetch-latest-changes ]
-        strategy:
-            fail-fast: true
-            matrix:
-                config:
-                    - name: linux
-                      arch: x86-64
-                      os: ubuntu-18.04
-                      target: x86_64-unknown-linux-gnu
-                      artifact_path: native-helper/target/x86_64-unknown-linux-gnu/release/intellij-rust-native-helper
-                    - name: windows
-                      arch: x86-64
-                      os: windows-latest
-                      target: x86_64-pc-windows-msvc
-                      artifact_path: native-helper/target/x86_64-pc-windows-msvc/release/intellij-rust-native-helper.exe
-                    - name: macos
-                      arch: x86-64
-                      os: macos-latest
-                      target: x86_64-apple-darwin
-                      artifact_path: native-helper/target/x86_64-apple-darwin/release/intellij-rust-native-helper
-                    - name: macos
-                      arch: arm64
-                      os: macos-11
-                      target: aarch64-apple-darwin
-                      artifact_path: native-helper/target/aarch64-apple-darwin/release/intellij-rust-native-helper
-
-        name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
-        runs-on: ${{ matrix.config.os }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-
-            - name: Set up Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  target: ${{ matrix.config.target }}
-                  default: true
-
-            - name: Build
-              uses: actions-rs/cargo@v1
-              with:
-                  command: build
-                  args: --manifest-path native-helper/Cargo.toml --target ${{ matrix.config.target }} --release
-
-            - name: Publish
-              uses: actions/upload-artifact@v2
-              with:
-                  name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
-                  path: ${{ matrix.config.artifact_path }}
+        uses: ./.github/workflows/build-native-code.yml
+        with:
+            rust-version: stable
+            cache: false
 
     build:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
