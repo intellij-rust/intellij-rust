@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Key
+import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.tools.Rustup
@@ -30,7 +31,7 @@ class CargoBuildTaskProvider : RsBuildTaskProvider<CargoBuildTaskProvider.BuildT
 
         val projectDirectory = configuration.workingDirectory ?: return false
 
-        val configArgs = configuration.command.split(' ')
+        val configArgs = ParametersListUtil.parse(configuration.command)
         val targetFlagIdx = configArgs.indexOf("--target")
         val targetTriple = if (targetFlagIdx != -1) configArgs.getOrNull(targetFlagIdx + 1).orEmpty() else ""
 
