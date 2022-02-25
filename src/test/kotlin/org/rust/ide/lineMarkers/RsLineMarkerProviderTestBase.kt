@@ -12,7 +12,7 @@ import org.rust.fileTree
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
 
-    private lateinit var lineMarkerTestHelper: LineMarkerTestHelper
+    protected lateinit var lineMarkerTestHelper: LineMarkerTestHelper
 
     override fun setUp() {
         super.setUp()
