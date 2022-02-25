@@ -11,11 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.isMain
 
 class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     private val _text = run {
@@ -51,7 +51,7 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
             ) ?: return null
 
             return when {
-                parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent) -> null
+                parent is RsFunction && parent.isMain -> null
                 else -> AddUnsafeFix(parent)
             }
         }

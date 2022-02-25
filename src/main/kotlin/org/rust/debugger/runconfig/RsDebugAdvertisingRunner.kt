@@ -24,10 +24,12 @@ import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.debugger.NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID
 import org.rust.debugger.nativeDebuggingSupportPlugin
+import org.rust.openapiext.isUnitTestMode
 
 class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
+        if (isUnitTestMode) return false
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
         if (profile !is CargoCommandConfiguration) return false
         if (!isSupportedPlatform()) return false
