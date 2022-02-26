@@ -306,9 +306,12 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
         val sysroot = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getSysroot(workingDirectory) }
             ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+        val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
+            childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
+        }
         val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getTargets(workingDirectory) }
 
-        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustcTargets))
+        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
     }
 }
 

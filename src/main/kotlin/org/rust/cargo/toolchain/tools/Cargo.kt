@@ -141,7 +141,7 @@ class Cargo(
         projectDirectory: Path,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData = fetchMetadata(owner, projectDirectory, listenerProvider(CargoCallType.METADATA))
+        val rawData = fetchMetadata(owner, projectDirectory, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
@@ -160,10 +160,11 @@ class Cargo(
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
+        toolchainOverride: String? = null,
         listener: ProcessListener? = null
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
-        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        val additionalArgs = listOf("--verbose", "--format-version", "1", "--all-features")
+        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
             .execute(owner, listener = listener)
             .unwrapOrElse { return Err(it) }
             .stdout
@@ -181,10 +182,16 @@ class Cargo(
         owner: Project,
         projectDirectory: Path,
         dstPath: Path,
+        toolchainOverride: String? = null,
         listener: ProcessListener? = null
     ): RsProcessResult<Unit> {
         val additionalArgs = listOf("--respect-source-config", dstPath.toString())
-        val commandLine = CargoCommandLine("vendor", projectDirectory, additionalArgs)
+        val commandLine = CargoCommandLine(
+            "vendor",
+            projectDirectory,
+            additionalArgs,
+            toolchain = toolchainOverride
+        )
         commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
         return Ok(Unit)
     }
