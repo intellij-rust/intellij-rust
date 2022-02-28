@@ -120,7 +120,7 @@ open class CargoCommandConfiguration(
 
     fun setFromCmd(cmd: CargoCommandLine) {
         channel = cmd.channel
-        command = ParametersListUtil.join(listOfNotNull(cmd.toolchain, cmd.command, *cmd.additionalArguments.toTypedArray()))
+        command = cmd.toRawCommand()
         requiredFeatures = cmd.requiredFeatures
         allFeatures = cmd.allFeatures
         emulateTerminal = cmd.emulateTerminal
@@ -133,7 +133,7 @@ open class CargoCommandConfiguration(
     }
 
     fun canBeFrom(cmd: CargoCommandLine): Boolean =
-        command == ParametersListUtil.join(listOfNotNull(cmd.toolchain, cmd.command, *cmd.additionalArguments.toTypedArray()))
+        command == cmd.toRawCommand()
 
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
@@ -242,6 +242,11 @@ open class CargoCommandConfiguration(
         return CleanConfiguration.Ok(cmd, toolchain)
     }
 
+    private fun CargoCommandLine.toRawCommand(): String {
+        val toolchainOverride = toolchain?.let { "+$it" }
+        return ParametersListUtil.join(listOfNotNull(toolchainOverride, command, *additionalArguments.toTypedArray()))
+    }
+
     companion object {
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects
@@ -323,7 +328,7 @@ data class ParsedCommand(val command: String, val toolchain: String?, val additi
         fun parse(rawCommand: String): ParsedCommand? {
             val args = ParametersListUtil.parse(rawCommand)
             val command = args.firstOrNull { !it.startsWith("+") } ?: return null
-            val toolchain = args.firstOrNull()?.takeIf { it.startsWith("+") }
+            val toolchain = args.firstOrNull()?.takeIf { it.startsWith("+") }?.removePrefix("+")
             val additionalArguments = args.drop(args.indexOf(command) + 1)
             return ParsedCommand(command, toolchain, additionalArguments)
         }

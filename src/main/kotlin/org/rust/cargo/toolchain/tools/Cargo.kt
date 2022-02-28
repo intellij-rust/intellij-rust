@@ -384,7 +384,7 @@ class Cargo(
                 if (channel != RustChannel.DEFAULT) {
                     add("+$channel")
                 } else if (toolchain != null) {
-                    add(toolchain)
+                    add("+$toolchain")
                 }
                 if (project.rustSettings.useOffline) {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory)

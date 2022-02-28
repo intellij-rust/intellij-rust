@@ -82,7 +82,7 @@ class CargoTest : RsTestBase() {
     """)
 
     fun `test use +nightly explicitly`() = checkCommandLine(
-        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "+nightly")), """
+        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "nightly")), """
         cmd: /usr/bin/cargo +nightly run --color=always
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
@@ -91,7 +91,7 @@ class CargoTest : RsTestBase() {
     """)
 
     fun `test override explicitly used +toolchain flag if channel is set`() = checkCommandLine(
-        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "+nightly", channel = RustChannel.BETA)), """
+        cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, toolchain = "nightly", channel = RustChannel.BETA)), """
         cmd: /usr/bin/cargo +beta run --color=always
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
