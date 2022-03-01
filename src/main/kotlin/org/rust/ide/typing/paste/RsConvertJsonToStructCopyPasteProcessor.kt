@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -32,6 +34,8 @@ import org.rust.openapiext.toPsiFile
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
+val CONVERT_JSON_ON_PASTE: RegistryValue = Registry.get("org.rust.ide.json.paste.processor")
+
 class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     override fun collectTransferableData(
         file: PsiFile?,
@@ -41,6 +45,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     ): List<TextBlockTransferableData> = emptyList()
 
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {
+        if (!CONVERT_JSON_ON_PASTE.asBoolean()) return emptyList()
         try {
             if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 val text = content.getTransferData(DataFlavor.stringFlavor) as String
