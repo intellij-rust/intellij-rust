@@ -209,10 +209,10 @@ class Cargo(
         projectDirectory: Path,
         listener: ProcessListener?
     ): BuildMessages {
-        // `--tests` is needed here to compile dev dependencies during build script evaluation.
-        // `--all-targets` also can help to build dev dependencies,
-        // but it may force unnecessary compilation of examples, benches and other targets
-        val additionalArgs = listOf("--message-format", "json", "--workspace", "--tests")
+        // `--all-targets` is needed here to compile:
+        //   - build scripts even if a crate doesn't contain library or binary targets
+        //   - dev dependencies during build script evaluation
+        val additionalArgs = listOf("--message-format", "json", "--workspace", "--all-targets")
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)

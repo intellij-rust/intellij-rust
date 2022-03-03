@@ -873,6 +873,22 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsMethodCall>("src/main.rs", toFile = ".../hello.rs")
     }
 
+    fun `test crate with examples only`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("examples") {
+                rust("foo.rs", MAIN_RS)
+            }
+            rust("build.rs", BUILD_RS)
+        }.checkReferenceIsResolved<RsPath>("examples/foo.rs", toFile = ".../hello.rs")
+    }
+
     companion object {
         @Language("Rust")
         private const val MAIN_RS = """
