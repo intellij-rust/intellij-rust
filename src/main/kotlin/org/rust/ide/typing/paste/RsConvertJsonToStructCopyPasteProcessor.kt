@@ -339,5 +339,3 @@ private class PotentialJsonTransferableData(val text: String) : TextBlockTransfe
         )
     }
 }
-
-// TODO: settings GUI + do not ask checkbox
