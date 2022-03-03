@@ -1171,6 +1171,8 @@
                      description="Expand macros in parallel"/>
         <registryKey key="org.rust.external.linter.max.duration" defaultValue="3000" restartRequired="false"
                      description="Show notification warning if the external linter is running longer than the set value (ms)"/>
+        <registryKey key="org.rust.ide.json.paste.processor" defaultValue="false" restartRequired="false"
+                     description="Enable converting JSON to Rust struct on paste"/>
 
         <!-- Move refactoring -->
 
