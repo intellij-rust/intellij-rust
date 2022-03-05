@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.crateGraph
@@ -43,6 +44,7 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
                 else -> continue
             }
             info.packageIds += pkg.id
+            info.editions += target.edition
             when {
                 target.kind.isCustomBuild -> info.buildScriptCount += 1
                 target.kind.isProcMacro -> info.procMacroLibCount += 1
@@ -67,17 +69,22 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
             PROC_MACRO_WORKSPACE.with(workspaceInfo.procMacroLibCount),
             PROC_MACRO_DEPENDENCY.with(dependenciesInfo.procMacroLibCount)
         )
+        metrics += EDITIONS.metric(
+            workspaceInfo.editions.map { it.presentation },
+            dependenciesInfo.editions.map { it.presentation }
+        )
         return metrics
     }
 
     private data class PackagesInfo(
         val packageIds: MutableSet<PackageId> = mutableSetOf(),
+        val editions: MutableSet<Edition> = mutableSetOf(),
         var buildScriptCount: Int = 0,
         var procMacroLibCount: Int = 0
     )
 
     companion object {
-        private val GROUP = EventLogGroup("rust.project", 1)
+        private val GROUP = EventLogGroup("rust.project", 2)
 
         private val CARGO_PROJECTS_EVENT = GROUP.registerEvent("cargo_projects", EventFields.RoundedInt("count"))
 
@@ -97,6 +104,11 @@ class RsProjectUsagesCollector : ProjectUsagesCollector() {
             BUILD_SCRIPT_DEPENDENCY,
             PROC_MACRO_WORKSPACE,
             PROC_MACRO_DEPENDENCY,
+        )
+
+        private val EDITIONS = GROUP.registerEvent("editions",
+            EventFields.StringList("workspace", Edition.values().map { it.presentation }),
+            EventFields.StringList("dependencies", Edition.values().map { it.presentation })
         )
     }
 }
