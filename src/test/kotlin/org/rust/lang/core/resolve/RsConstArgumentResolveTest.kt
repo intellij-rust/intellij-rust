@@ -33,13 +33,33 @@ class RsConstArgumentResolveTest : RsResolveTestBase() {
                    //^
     """)
 
-    fun `test in the case of ambiguity const argument is resolved to a type`() = checkByCode("""
+    fun `test in the case of ambiguity const argument is resolved to a type 1`() = checkByCode("""
         const A: i32 = 0;
         type A = i32;
            //X
         struct Foo<const S: i32>();
         type T = Foo<A>;
                    //^
+    """)
+
+    fun `test in the case of ambiguity const argument is resolved to a type 2`() = checkByCode("""
+        struct S {}
+             //X
+        fn S() {}
+        struct Foo<const C: i32>();
+        type Bar = Foo<S>;
+                     //^
+    """)
+
+    fun `test in the case of ambiguity const argument is resolved to a type 3`() = checkByCode("""
+        enum E { S, B }
+        struct S {}
+             //X
+
+        use E::*;
+        struct Foo<const C: i32>();
+        type Bar = Foo<S>;
+                     //^
     """)
 
     // Expression path arguments:

@@ -175,10 +175,11 @@ fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWith
             0 -> emptyList()
             1 -> result
             else -> {
-                val withoutConstants = result.filter {
-                    it.inner.element !is RsConstant && it.inner.element !is RsConstParameter
+                val types = result.filter {
+                    val element = it.inner.element as? RsNamedElement ?: return@filter false
+                    Namespace.Types in element.namespaces
                 }
-                withoutConstants.ifEmpty { result }
+                types.ifEmpty { result }
             }
         }
     } else {
