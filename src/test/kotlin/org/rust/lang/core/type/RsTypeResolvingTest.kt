@@ -530,6 +530,14 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                              //^ <unknown>
     """)
 
+    fun `test resolve types with functions of the same name`() = testType("""
+        struct S;
+        fn S() {}
+        type Foo<T> = T;
+        type Bar = Foo<S>;
+                 //^ S
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */

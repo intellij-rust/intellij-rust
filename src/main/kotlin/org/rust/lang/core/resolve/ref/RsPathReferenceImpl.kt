@@ -72,7 +72,7 @@ class RsPathReferenceImpl(
     }
 
     override fun advancedResolve(): BoundElement<RsElement>? =
-        advancedMultiResolve().singleOrNull()?.inner
+        advancedMultiResolve().singleOrNull { it.inner.element !is RsFunction }?.inner
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         advancedMultiResolve().map2Array { it.inner }
@@ -87,9 +87,9 @@ class RsPathReferenceImpl(
         }
 
     private fun advancedMultiResolve(): List<BoundElementWithVisibility<RsElement>> =
-        advancedMultiresolveUsingInferenceCache() ?: advancedCachedMultiResolve()
+        advancedMultiResolveUsingInferenceCache() ?: advancedCachedMultiResolve()
 
-    private fun advancedMultiresolveUsingInferenceCache(): List<BoundElementWithVisibility<RsElement>>? {
+    private fun advancedMultiResolveUsingInferenceCache(): List<BoundElementWithVisibility<RsElement>>? {
         val path = element.parent as? RsPathExpr ?: return null
         return path.inference?.getResolvedPath(path)?.map { result ->
             val element = BoundElement(result.element, result.subst)
