@@ -80,7 +80,7 @@ data class StandardLibrary(
                     warn("Toolchain version is unknown. Hardcoded stdlib structure will be used")
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    val result = fetchActualStdlib(project, srcDir, rustcVersion, listener)
+                    val result = fetchActualStdlib(project, srcDir, rustcVersion, rustcInfo.rustupActiveToolchain, listener)
                     if (result == null) {
                         warn("Fetching actual stdlib info failed. Hardcoded stdlib structure will be used")
                     }
@@ -107,18 +107,19 @@ data class StandardLibrary(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
+            activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean = false
         ): StandardLibrary? {
             try {
-                return StdlibDataFetcher.create(project, srcDir, version, listener, cleanVendorDir)?.fetchStdlibData()
+                return StdlibDataFetcher.create(project, srcDir, version, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
             } catch (e: Throwable) {
                 if (!isUnitTestMode) {
                     // Logger.error in tests, fail the test
                     LOG.error(e)
                 }
                 if (!cleanVendorDir && e is CargoMetadataException) {
-                    return fetchActualStdlib(project, srcDir, version, listener, cleanVendorDir = true)
+                    return fetchActualStdlib(project, srcDir, version, activeToolchain, listener, cleanVendorDir = true)
                 }
             }
             return null
@@ -186,6 +187,7 @@ class StdlibDataFetcher private constructor(
     private val srcDir: VirtualFile,
     private val testPackageSrcDir: VirtualFile,
     private val stdlibDependenciesDir: Path,
+    private val activeToolchain: String?,
     private val listener: ProcessProgressListener?
 ) {
     private val workspaceMembers = mutableListOf<PackageId>()
@@ -293,7 +295,7 @@ class StdlibDataFetcher private constructor(
             return
         }
 
-        val metadataProject = cargo.fetchMetadata(project, pathAsPath, listener).unwrapOrElse {
+        val metadataProject = cargo.fetchMetadata(project, pathAsPath, activeToolchain, listener).unwrapOrElse {
             listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
             LOG.error(it)
             return
@@ -310,6 +312,7 @@ class StdlibDataFetcher private constructor(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
+            activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean
         ): StdlibDataFetcher? {
@@ -324,10 +327,19 @@ class StdlibDataFetcher private constructor(
                 srcDir,
                 testPackageSrcDir,
                 version,
+                activeToolchain,
                 listener,
                 cleanVendorDir
             ) ?: return null
-            return StdlibDataFetcher(project, cargo, srcDir, testPackageSrcDir, stdlibDependenciesDir, listener)
+            return StdlibDataFetcher(
+                project,
+                cargo,
+                srcDir,
+                testPackageSrcDir,
+                stdlibDependenciesDir,
+                activeToolchain,
+                listener
+            )
         }
 
         @VisibleForTesting
@@ -342,6 +354,7 @@ class StdlibDataFetcher private constructor(
             srcDir: VirtualFile,
             testPackageSrcDir: VirtualFile,
             version: RustcVersion,
+            activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean
         ): Path? {
@@ -360,7 +373,7 @@ class StdlibDataFetcher private constructor(
             if (!stdlibVendorExists) {
                 // `test` package depends on all other stdlib packages,
                 // so it's enough to vendor only its dependencies
-                cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, listener).unwrapOrElse {
+                cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, activeToolchain, listener).unwrapOrElse {
                     listener?.error("Failed to load stdlib dependencies", it.message.orEmpty())
                     LOG.error(it)
                     return null

@@ -108,6 +108,17 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
             workingDirectory = projectDirectory
         ).execute(owner).convertResult()
 
+    fun activeToolchainName(): String? {
+        val output = createBaseCommandLine("show", "active-toolchain", workingDirectory = projectDirectory)
+            .execute(toolchain.executionTimeoutInMilliseconds) ?: return null
+        if (!output.isSuccess) return null
+        // Expected outputs:
+        //  1.48.0-x86_64-apple-darwin (default)
+        //  stable-x86_64-apple-darwin (overridden by '/path/to/rust-toolchain.toml')
+        //  nightly-x86_64-apple-darwin (directory override for '/path/to/override/dir')
+        return output.stdout.substringBefore("(").trim()
+    }
+
     private fun RsProcessResult<ProcessOutput>.convertResult() =
         when (this) {
             is RsResult.Ok -> DownloadResult.Ok(Unit)

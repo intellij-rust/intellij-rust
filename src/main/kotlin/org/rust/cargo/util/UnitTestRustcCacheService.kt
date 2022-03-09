@@ -18,18 +18,17 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 interface UnitTestRustcCacheService {
     fun <T> cachedInner(
         rustcVersion: RustcVersion?,
-        cls: Class<T>,
         cacheIf: () -> Boolean,
         computation: () -> T
     ): T
 
     companion object {
-        inline fun <reified T> cached(
+        fun <T> cached(
             rustcVersion: RustcVersion?,
-            noinline cacheIf: () -> Boolean = { true },
-            noinline computation: () -> T
+            cacheIf: () -> Boolean = { true },
+            computation: () -> T
         ): T {
-            return service<UnitTestRustcCacheService>().cachedInner(rustcVersion, T::class.java, cacheIf, computation)
+            return service<UnitTestRustcCacheService>().cachedInner(rustcVersion, cacheIf, computation)
         }
     }
 }
@@ -37,7 +36,6 @@ interface UnitTestRustcCacheService {
 class UnitTestRustcCacheServiceImpl : UnitTestRustcCacheService {
     override fun <T> cachedInner(
         rustcVersion: RustcVersion?,
-        cls: Class<T>,
         cacheIf: () -> Boolean,
         computation: () -> T
     ): T {
