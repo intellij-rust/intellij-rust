@@ -1,0 +1,24 @@
+name: supported errors
+
+on:
+    schedule:
+        - cron: '5 * * * *'
+
+jobs:
+    check-supported-errors:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo content
+              uses: actions/checkout@v2
+
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.9
+
+            - name: Install python packages
+              run: pip install -r scripts/requirements.txt
+
+            - name: Analyze errors and create an issue
+              run: python scripts/check_tracking_issue.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+                 --repo ${{ github.repository }}
