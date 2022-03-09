@@ -131,8 +131,9 @@ class RsExtractTraitProcessor(
         }
         val traitBody = members.joinToString(separator = "\n") { it.text }
 
+        val visibility = getTraitVisibility()
         val trait = psiFactory.tryCreateTraitItem(
-            "trait $traitName $typeParameters $whereClause {\n$traitBody\n}"
+            "${visibility}trait $traitName $typeParameters $whereClause {\n$traitBody\n}"
         ) ?: return null
 
         copyAttributes(traitOrImpl, trait)
@@ -153,6 +154,15 @@ class RsExtractTraitProcessor(
 
         copyAttributes(traitOrImpl, newImpl)
         return impl.parent.addAfter(newImpl, impl) as? RsImplItem
+    }
+
+    private fun getTraitVisibility(): String {
+        val unitedVisibility = when (traitOrImpl) {
+            is RsTraitItem -> traitOrImpl.visibility
+            is RsImplItem -> members.map { it.visibility }.reduce(RsVisibility::unite)
+            else -> error("unreachable")
+        }
+        return unitedVisibility.format()
     }
 
     private fun extractMembersFromOldImpl(impl: RsImplItem): String {
