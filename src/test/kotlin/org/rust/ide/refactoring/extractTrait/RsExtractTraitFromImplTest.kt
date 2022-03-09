@@ -3,15 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring
+package org.rust.ide.refactoring.extractTrait
 
-import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
-import org.rust.ide.refactoring.extractTrait.RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-
-class RsExtractTraitTest : RsTestBase() {
+class RsExtractTraitTest : RsExtractTraitBaseTest() {
 
     fun `test one method 1`() = doTest("""
         struct S;
@@ -198,6 +192,23 @@ class RsExtractTraitTest : RsTestBase() {
         }
     """)
 
+    fun `test generics with bounds`() = doTest("""
+        struct S<A> { a: A }
+        impl<A: Debug> S<A> {
+            /*caret*/fn get_a(&self) -> &A { &self.a }
+        }
+    """, """
+        struct S<A> { a: A }
+
+        impl<A: Debug> Trait<A> for S<A> {
+            fn get_a(&self) -> &A { &self.a }
+        }
+
+        trait Trait<A: Debug> {
+            fn get_a(&self) -> &A;
+        }
+    """)
+
     fun `test generics in function 1`() = doTest("""
         struct S<A> { a: A }
         impl<A> S<A> {
@@ -378,33 +389,4 @@ class RsExtractTraitTest : RsTestBase() {
             }
         }
     """)
-
-    private fun doTest(
-        @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) {
-        check("/*caret*/" in before)
-        checkByText(before.trimIndent(), after.trimIndent()) {
-            markItemsUnderCarets()
-            myFixture.performEditorAction(ACTION_ID)
-        }
-    }
-
-    private fun doUnavailableTest(@Language("Rust") before: String) {
-        check("/*caret*/" in before)
-        checkByText(before.trimIndent(), before.trimIndent()) {
-            markItemsUnderCarets()
-            myFixture.performEditorAction(ACTION_ID)
-        }
-    }
-
-    private fun markItemsUnderCarets() {
-        for (caret in myFixture.editor.caretModel.allCarets) {
-            val element = myFixture.file.findElementAt(caret.offset)!!
-            val item = element.ancestorOrSelf<RsItemElement>()!!
-            item.putUserData(RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED, true)
-        }
-    }
 }
-
-private const val ACTION_ID: String = "Rust.RsExtractTrait"

@@ -56,11 +56,12 @@ data class GenericConstraints(
 
     fun buildTypeParameters(): String {
         val all: List<RsNameIdentifierOwner> = lifetimes + typeParameters + constParameters
-        return if (all.isNotEmpty()) {
-            all.joinToString(", ", prefix = "<", postfix = ">") { it.text }
-        } else {
-            ""
-        }
+        return all.joinToGenericListString { it.text }
+    }
+
+    fun buildTypeArguments(): String {
+        val all: List<RsNameIdentifierOwner> = lifetimes + typeParameters + constParameters
+        return all.joinToGenericListString { it.name ?: "" }
     }
 
     fun buildWhereClause(): String {
@@ -301,4 +302,9 @@ private fun createLifetimePredicate(
     } else {
         null
     }
+}
+
+fun <T> List<T>.joinToGenericListString(transform: (T) -> String): String {
+    if (isEmpty()) return ""
+    return joinToString(", ", prefix = "<", postfix = ">", transform = transform)
 }
