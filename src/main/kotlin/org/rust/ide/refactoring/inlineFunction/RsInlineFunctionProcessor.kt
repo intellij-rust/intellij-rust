@@ -443,4 +443,11 @@ class RsInlineFunctionProcessor(
     private fun PsiElement.addLeftSibling(element: PsiElement) {
         this.parent.addBefore(element, this)
     }
+
+    override fun getElementsToWrite(descriptor: UsageViewDescriptor): Collection<PsiElement> =
+        when {
+            inlineThisOnly -> listOfNotNull(ref?.element)
+            function.isWritable -> listOfNotNull(ref?.element, function)
+            else -> emptyList()
+        }
 }
