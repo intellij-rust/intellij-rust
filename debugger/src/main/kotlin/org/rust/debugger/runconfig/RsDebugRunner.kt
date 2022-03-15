@@ -11,13 +11,15 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
+import org.rust.debugger.isDebuggingIntegrationEnabled
 
 class RsDebugRunner : RsDebugRunnerBase() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean =
         super.canRun(executorId, profile) &&
             profile is CargoCommandConfiguration &&
-            profile.project.toolchain !is RsWslToolchain
+            profile.project.toolchain !is RsWslToolchain &&
+            isDebuggingIntegrationEnabled()
 
     override fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? =
         RsDebugRunnerUtils.checkToolchainSupported(project, host)
