@@ -77,8 +77,71 @@ class RsExtractTraitTest : RsExtractTraitBaseTest() {
             fn a(&self) {}
         }
 
-        trait Trait {
+        pub trait Trait {
             fn a(&self);
+        }
+    """)
+
+    fun `test public method with usage`() = doTest("""
+        mod inner {
+            pub struct S;
+            impl S {
+                /*caret*/pub fn a(&self) {}
+            }
+        }
+
+        use crate::inner::S;
+        fn foo(s: S) {
+            s.a();
+        }
+    """, """
+        mod inner {
+            pub struct S;
+
+            impl Trait for S {
+                fn a(&self) {}
+            }
+
+            pub trait Trait {
+                fn a(&self);
+            }
+        }
+
+        use crate::inner::{S, Trait};
+        fn foo(s: S) {
+            s.a();
+        }
+    """)
+
+    fun `test restricted methods`() = doTest("""
+        mod mod1 {
+            mod mod2 {
+                mod mod3 {
+                    pub struct S;
+                    impl S {
+                        /*caret*/pub(in crate::mod1) fn a(&self) {}
+                        /*caret*/pub(in crate::mod1::mod2) fn b(&self) {}
+                    }
+                }
+            }
+        }
+    """, """
+        mod mod1 {
+            mod mod2 {
+                mod mod3 {
+                    pub struct S;
+
+                    impl Trait for S {
+                        fn a(&self) {}
+                        fn b(&self) {}
+                    }
+
+                    pub(in crate::mod1) trait Trait {
+                        fn a(&self);
+                        fn b(&self);
+                    }
+                }
+            }
         }
     """)
 

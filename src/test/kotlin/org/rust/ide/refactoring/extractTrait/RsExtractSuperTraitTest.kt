@@ -48,6 +48,50 @@ class RsExtractSuperTraitTest : RsExtractTraitBaseTest() {
         }
     """)
 
+    fun `test public trait`() = doTest("""
+        pub trait Derived {
+            /*caret*/fn a(&self);
+        }
+    """, """
+        pub trait Derived: Trait {}
+
+        pub trait Trait {
+            fn a(&self);
+        }
+    """)
+
+    fun `test restricted trait 1`() = doTest("""
+        pub(crate) trait Derived {
+            /*caret*/fn a(&self);
+        }
+    """, """
+        pub(crate) trait Derived: Trait {}
+
+        pub(crate) trait Trait {
+            fn a(&self);
+        }
+    """)
+
+    fun `test restricted trait 2`() = doTest("""
+        mod inner1 {
+            mod inner2 {
+                pub(super) trait Derived {
+                    /*caret*/fn a(&self);
+                }
+            }
+        }
+    """, """
+        mod inner1 {
+            mod inner2 {
+                pub(super) trait Derived: Trait {}
+
+                pub(in crate::inner1) trait Trait {
+                    fn a(&self);
+                }
+            }
+        }
+    """)
+
     fun `test impl in same mod`() = doTest("""
         trait Derived {
             /*caret*/fn a(&self);
