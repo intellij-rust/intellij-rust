@@ -10,7 +10,6 @@ import com.intellij.execution.RunManager
 import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -32,8 +31,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -99,7 +98,8 @@ open class CargoProjectsServiceImpl(
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 StartupManager.getInstance(project).runAfterOpened {
-                    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
+                    // TODO: provide a proper solution instead of using `invokeLater`
+                    ToolWindowManager.getInstance(project).invokeLater {
                         initializeToolWindow(project)
                     }
                 }
