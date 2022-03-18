@@ -2991,4 +2991,63 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub fn foo() {}
         }
     """)
+
+    fun `test import raw identifier (item name)`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod inner {
+            pub fn r#type() {}
+        }
+
+        fn main() {
+            r#type/*caret*/();
+        }
+    """, """
+        use crate::inner::r#type;
+
+        mod inner {
+            pub fn r#type() {}
+        }
+
+        fn main() {
+            r#type();
+        }
+    """)
+
+    fun `test import raw identifier (mod name)`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod r#type {
+            pub fn foo() {}
+        }
+
+        fn main() {
+            foo/*caret*/();
+        }
+    """, """
+        use crate::r#type::foo;
+
+        mod r#type {
+            pub fn foo() {}
+        }
+
+        fn main() {
+            foo();
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import raw identifier (crate name)`() = checkAutoImportFixByFileTree("""
+        //- loop/lib.rs
+        pub fn foo() {}
+        //- main.rs
+        fn main() {
+            <error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+        //- loop/lib.rs
+        pub fn foo() {}
+        //- main.rs
+        use r#loop::foo;
+
+        fn main() {
+            foo();
+        }
+    """)
 }

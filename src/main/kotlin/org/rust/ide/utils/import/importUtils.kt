@@ -87,7 +87,7 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
 
 
 private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
-    val externCrateItem = psiFactory.createExternCrateItem(crateName)
+    val externCrateItem = psiFactory.createExternCrateItem(crateName.escapeIdentifierIfNeeded())
     val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
     if (lastExternCrateItem != null) {
         addAfter(externCrateItem, lastExternCrateItem)
