@@ -1141,6 +1141,7 @@
         <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsToolchainUsagesCollector"/>
         <!--suppress PluginXmlValidity -->
         <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsProjectUsagesCollector"/>
+        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCounterUsagesCollector"/>
 
         <!-- Registry keys -->
 
