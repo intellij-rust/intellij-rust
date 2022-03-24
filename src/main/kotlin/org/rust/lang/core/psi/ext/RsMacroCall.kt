@@ -43,8 +43,8 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
 
     override fun incModificationCount(element: PsiElement): Boolean {
         modificationTracker.incModificationCount()
-        val isStructureModification = ancestors.any { it is RsMacroCall && it.macroName == "include" }
-        return !isStructureModification // Note: RsMacroCall is a special case for RsPsiManagerImpl
+        // global tracker will be incremented if top level
+        return !isTopLevelExpansion
     }
 }
 
@@ -52,7 +52,7 @@ val RsMacroCall.macroName: String
     get() = path.referenceName.orEmpty() // TODO return null if `referenceName` is null
 
 val RsMacroCall.isTopLevelExpansion: Boolean
-    get() = parent is RsMod || parent is RsMembers
+    get() = parent is RsMod
 
 val RsMacroCall.bracesKind: MacroBraces?
     get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }

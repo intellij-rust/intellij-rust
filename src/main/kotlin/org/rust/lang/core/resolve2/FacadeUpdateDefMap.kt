@@ -77,9 +77,9 @@ fun updateDefMapForAllCrates(
     pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean = true
-) {
-    if (!project.isNewResolveEnabled) return
-    executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
+): List<CrateDefMap> {
+    if (!project.isNewResolveEnabled) return emptyList()
+    return executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
         doUpdateDefMapForAllCrates(project, pool, wrappedIndicator, multithread)
     }
 }
@@ -90,10 +90,10 @@ private fun doUpdateDefMapForAllCrates(
     indicator: ProgressIndicator,
     multithread: Boolean,
     rootCrateIds: List<CratePersistentId>? = null
-) {
+): List<CrateDefMap> {
     val dumbService = DumbService.getInstance(project)
     val defMapService = project.defMapService
-    runReadActionInSmartMode(dumbService) {
+    return runReadActionInSmartMode(dumbService) {
         defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
             check(defMapService.defMapsBuildLock.holdCount == 1)
             DefMapUpdater(rootCrateIds, defMapService, pool, indicator, multithread).run()
@@ -155,7 +155,7 @@ private class DefMapUpdater(
     }
     private var numberUpdatedCrates: Int = 0
 
-    fun run() {
+    fun run(): List<CrateDefMap> {
         checkReadAccessAllowed()
         val time = measureTimeMillis {
             executeUnderProgress(indicator) {
@@ -165,6 +165,10 @@ private class DefMapUpdater(
         if (numberUpdatedCrates > 0) {
             val cratesCount = if (numberUpdatedCrates == topSortedCrates.size) "all" else numberUpdatedCrates.toString()
             RESOLVE_LOG.info("Updated $cratesCount DefMaps in $time ms")
+        }
+        return crates.mapNotNull {
+            val crateId = it.id ?: return@mapNotNull null
+            defMapService.getDefMapHolder(crateId).defMap
         }
     }
 

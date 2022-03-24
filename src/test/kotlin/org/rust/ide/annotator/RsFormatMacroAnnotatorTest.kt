@@ -570,8 +570,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
     @ExpandMacros
     fun `test custom macro`() = checkErrors("""
-        $implDisplayI32
-
         macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
         fn main() {
             as_is! {

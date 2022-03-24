@@ -15,7 +15,6 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.getTraversedRawAttributes
@@ -49,8 +48,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
 
         fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
             checkCommitIsNotInProgress(project)
-            val cacheKey = if (project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
-            return CachedValuesManager.getManager(project).getCachedValue(project, cacheKey, {
+            return CachedValuesManager.getManager(project).getCachedValue(project, EXPORTED_KEY, {
                 val result = HashMap<RsMod, MutableList<RsMacro>>()
                 val keys = StubIndex.getInstance().getAllKeys(KEY, project)
                 for (key in keys) {
@@ -80,6 +78,5 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         }
 
         private val EXPORTED_KEY: Key<CachedValue<Map<RsMod, List<RsMacro>>>> = Key.create("EXPORTED_KEY")
-        private val EXPORTED_MACROS_KEY: Key<CachedValue<Map<RsMod, List<RsMacro>>>> = Key.create("EXPORTED_MACROS_KEY")
     }
 }

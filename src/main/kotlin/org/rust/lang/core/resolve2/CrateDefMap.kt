@@ -13,6 +13,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
+import gnu.trove.TObjectHashingStrategy
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.*
@@ -77,6 +78,12 @@ class CrateDefMap(
     val rootAsPerNs: PerNs = PerNs.types(VisItem(root.path, Public, true))
 
     val globImportGraph: GlobImportGraph = GlobImportGraph()
+
+    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = THashMap()
+    val macroCallToExpansionName: MutableMap<MacroIndex, String> = THashMap(object : TObjectHashingStrategy<MacroIndex> {
+        override fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = MacroIndex.equals(index1, index2)
+        override fun computeHashCode(index: MacroIndex): Int = MacroIndex.hashCode(index)
+    })
 
     val isAtLeastEdition2018: Boolean
         get() = metaData.edition >= Edition.EDITION_2018
@@ -202,6 +209,10 @@ class FileInfo(
  */
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+
+    val parent: MacroIndex get() = MacroIndex(indices.copyOfRange(0, indices.size - 1))
+    val last: Int get() = indices.last()
+
     fun append(index: Int): MacroIndex = MacroIndex(indices + index)
     fun append(index: MacroIndex): MacroIndex = MacroIndex(indices + index.indices)
 
@@ -227,6 +238,8 @@ inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> 
         }
 
         fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = index1.indices.contentEquals(index2.indices)
+
+        fun hashCode(index: MacroIndex): Int = index.indices.contentHashCode()
     }
 
     override fun toString(): String = indices.contentToString()

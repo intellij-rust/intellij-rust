@@ -6,7 +6,6 @@
 package org.rust.lang.core.stubs.index
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndex
@@ -17,7 +16,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.KeyDescriptor
 import org.rust.ide.search.RsWithMacrosProjectScope
-import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.findIncludingFile
 import org.rust.lang.core.psi.ext.macroName
@@ -39,7 +37,6 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RsIncludeMacroIndex")
 
         private val INCLUDING_MOD_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("INCLUDING_MOD_KEY")
-        private val INCLUDING_MOD_MACROS_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("INCLUDING_MOD_MACROS_KEY")
 
         fun index(stub: RsMacroCallStub, indexSink: IndexSink) {
             val key = key(stub.psi) ?: return
@@ -51,19 +48,10 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
          */
         fun getIncludedFrom(file: RsFile): RsMacroCall? {
             val originalFile = file.originalFile as? RsFile ?: return null
-            val state = file.project.macroExpansionManagerIfCreated?.expansionState
-
-            val (key, cacheDependency) = if (state != null) {
-                INCLUDING_MOD_MACROS_KEY to state.stepModificationTracker
-            } else {
-                INCLUDING_MOD_KEY to ModificationTracker.NEVER_CHANGED
-            }
-
-            return CachedValuesManager.getCachedValue(originalFile, key) {
+            return CachedValuesManager.getCachedValue(originalFile, INCLUDING_MOD_KEY) {
                 CachedValueProvider.Result.create(
                     getIncludedFromInternal(originalFile),
-                    originalFile.rustStructureOrAnyPsiModificationTracker,
-                    cacheDependency
+                    originalFile.rustStructureOrAnyPsiModificationTracker
                 )
             }
         }
@@ -79,8 +67,7 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
                 checkCommitIsNotInProgress(project)
 
                 var includedFrom: RsMacroCall? = null
-                val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope
-                    ?: RsWithMacrosProjectScope(project)
+                val scope = RsWithMacrosProjectScope(project)
                 StubIndex.getInstance().processElements(KEY, key, project, scope, RsMacroCall::class.java) { macroCall ->
                     val includingFile = macroCall.findIncludingFile()
                     if (includingFile == file) {

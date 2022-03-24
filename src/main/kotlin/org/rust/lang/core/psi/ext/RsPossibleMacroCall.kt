@@ -414,16 +414,13 @@ val RsPossibleMacroCall.expansion: MacroExpansion?
 
 val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpansionError>
     get() {
-        val mgr = project.macroExpansionManager
-        if (mgr.expansionState != null) return mgr.getExpansionFor(this).value
-
         return CachedValuesManager.getCachedValue(this) {
             val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
                 // Use the original element only if macro bodies are equal. They
                 // will be different if completion invoked inside the macro body.
                 it.macroBody == this.macroBody
             } ?: this
-            mgr.getExpansionFor(originalOrSelf)
+            project.macroExpansionManager.getExpansionFor(originalOrSelf)
         }
     }
 

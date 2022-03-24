@@ -158,7 +158,7 @@ class DefMapService(val project: Project) : Disposable {
      * - After IDE restart: full recheck (for each crate compare [CrateMetaData] and `modificationStamp` of each file).
      *   Tasks [CARGO_SYNC] and [MACROS_UNPROCESSED] are executed.
      * - File changed: calculate hash and compare with hash stored in [CrateDefMap.fileInfos].
-     *   Task [MACROS_WORKSPACE] is executed.
+     *   Task [MACROS_FULL] is executed.
      * - File added: check whether [missedFiles] contains file path
      * - File deleted: check whether [fileIdToCrateId] contains this file
      * - Crate workspace changed: full recheck

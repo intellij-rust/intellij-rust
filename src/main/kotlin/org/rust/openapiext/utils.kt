@@ -305,8 +305,12 @@ fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(
     indicator: ProgressIndicator,
     action: (ProgressIndicator) -> T
 ): T {
-    checkReadAccessNotAllowed()
     indicator.checkCanceled()
+    if (isUnitTestMode && ApplicationManager.getApplication().isReadAccessAllowed) {
+        return action(indicator)
+    } else {
+        checkReadAccessNotAllowed()
+    }
     var result: T? = null
     do {
         val wrappedIndicator = SensitiveProgressWrapper(indicator)

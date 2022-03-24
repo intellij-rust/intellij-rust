@@ -28,7 +28,7 @@ import kotlin.math.max
  * An implementation of [com.intellij.openapi.vfs.VirtualFileSystem] used to store macro expansions.
  *
  * The problem is that we need to store tens of thousands of small files (with macro expansions).
- * A real filesystem is slow, and a lot small files consumes too much of diskspace.
+ * A real filesystem is slow, and a lot of small files consumes too much of diskspace.
  * [com.intellij.openapi.vfs.ex.temp.TempFileSystem] can't be used because these files should
  * persist between IDE restarts, and because `TempFileSystem` stores all files in the RAM.
  *
@@ -54,7 +54,7 @@ import kotlin.math.max
  * expensive, so on-demand solution is preferred.
  *
  * For macro expansions we use such directory layout:
- * "/rust_expanded_macros/<random_project_id>/a/b/<random_file_name>.rs", where "<random_project_id>" is a
+ * "/rust_expanded_macros/<random_project_id>/<crate_id>/a/b/<mix_hash>_<order>.rs", where "<random_project_id>" is a
  * project root that should be loaded/unloaded on-demand. Loading is trivial - it's just a combination of
  * [readFSItem] and [setDirectory] methods. More interesting is unloading. There is a problem with it:
  * [MacroExpansionFileSystem] still should say `last modified` and `length` to the platform for
@@ -228,6 +228,21 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             timestamp = max(currentTimestamp(), timestamp + 1)
         }
 
+        @Synchronized
+        fun delete() {
+            parent?.removeChild(name, bump = true)
+        }
+
+        fun absolutePath(): String =
+            buildString {
+                fun FSItem.go() {
+                    parent?.go()
+                    append('/')
+                    append(name)
+                }
+                go()
+            }
+
         override fun toString(): String = javaClass.simpleName + ": " + name
 
         open class FSDir(
@@ -327,15 +342,17 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             }
 
             @Synchronized
+            fun setImplicitContent(fileSize: Int) {
+                tempContent = null
+                length = fileSize
+                bumpTimestamp()
+            }
+
+            @Synchronized
             fun fetchAndRemoveContent(): ByteArray? {
                 val tmp = tempContent
                 tempContent = null
                 return tmp
-            }
-
-            @Synchronized
-            fun delete() {
-                parent.removeChild(name, bump = true)
             }
         }
     }
@@ -349,12 +366,21 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     @Throws(FSException::class)
-    fun createFileWithContent(path: String, content: ByteArray, mkdirs: Boolean = false) {
+    fun createFileWithExplicitContent(path: String, content: ByteArray, mkdirs: Boolean = false) {
+        createFileWithoutContent(path, mkdirs).setContent(content)
+    }
+
+    @Throws(FSException::class)
+    fun createFileWithImplicitContent(path: String, fileSize: Int, mkdirs: Boolean = false) {
+        createFileWithoutContent(path, mkdirs).setImplicitContent(fileSize)
+    }
+
+    @Throws(FSException::class)
+    fun createFileWithoutContent(path: String, mkdirs: Boolean = false): FSFile {
         val (parentName, name) = splitFilenameAndParent(path)
         val parent = convert(parentName, mkdirs) ?: throw FSItemNotFoundException(parentName)
         if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
-        val item = parent.addChildFile(name)
-        item.setContent(content)
+        return parent.addChildFile(name)
     }
 
     @Throws(FSException::class)

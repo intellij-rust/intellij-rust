@@ -158,7 +158,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
     """, "a")
 
     @ExpandMacros
-    fun `test macro call (new engine)`() = checkModCount(NOT_INC, """
+    fun `test macro call (new engine)`() = checkModCount(INC, """
         foo! { /*caret*/ }
     """, "a")
 

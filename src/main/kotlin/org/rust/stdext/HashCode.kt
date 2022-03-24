@@ -72,6 +72,12 @@ import java.security.DigestOutputStream
             check(bytes.size == ARRAY_LEN)
             return HashCode(bytes)
         }
+
+        fun fromHexString(hex: String): HashCode {
+            val bytes = Hex.decodeHex(hex)
+            check(bytes.size == ARRAY_LEN)
+            return HashCode(bytes)
+        }
     }
 }
 
