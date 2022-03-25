@@ -25,7 +25,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl<T> S<T> {
             pub fn new(n: i32, m: T) -> Self {
                 Self { n, m }
-            }
+            }/*caret*/
         }
     """)
 
@@ -46,7 +46,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S {
             pub fn new(n: i32, m: ()) -> Self {
                 Self { n, m }
-            }
+            }/*caret*/
         }
     """)
 
@@ -74,7 +74,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl Color {
             pub fn new(field0: i32, field1: i32, field2: i32) -> Self {
                 Self(field0, field1, field2)
-            }
+            }/*caret*/
         }
     """)
 
@@ -95,7 +95,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S {
             pub fn new() -> Self {
                 Self { n: (), m: () }
-            }
+            }/*caret*/
         }
     """)
 
@@ -116,7 +116,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S {
             pub fn new(n: i32, m: i64) -> Self {
                 Self { n, m }
-            }
+            }/*caret*/
         }
     """)
 
@@ -137,7 +137,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S {
             pub fn new(n: i32) -> Self {
                 Self { n, m: () }
-            }
+            }/*caret*/
         }
     """)
 
@@ -162,7 +162,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S {
             pub fn new(n: i32, m: i64) -> Self {
                 Self { n, m }
-            }
+            }/*caret*/
         }
     """)
 
@@ -203,7 +203,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl S<i32> {
             pub fn new(field0: i32) -> Self {
                 Self(field0)
-            }
+            }/*caret*/
         }
     """)
 
@@ -219,7 +219,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl <'a> S<'a, i32> {
             pub fn new(field0: &'a i32) -> Self {
                 Self(field0)
-            }
+            }/*caret*/
         }
     """)
 
@@ -239,7 +239,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl System {
             pub fn new(point: Coordinates) -> Self {
                 Self { point }
-            }
+            }/*caret*/
         }
     """)
 
@@ -263,7 +263,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl System {
             pub fn new(s: foo::S) -> Self {
                 Self { s }
-            }
+            }/*caret*/
         }
     """)
 
@@ -283,7 +283,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
         impl System {
             pub fn new(field0: foo::S) -> Self {
                 Self(field0)
-            }
+            }/*caret*/
         }
     """)
 
@@ -304,7 +304,7 @@ class GenerateConstructorActionTest : RsGenerateBaseTest() {
             fn foo(&self) {}
             pub fn new(s: u32) -> Self {
                 Self { s }
-            }
+            }/*caret*/
         }
     """)
 }

@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.lang.core.types.Substitution
 import org.rust.openapiext.checkWriteAccessAllowed
@@ -46,8 +47,8 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
 
         val anchor = impl.lastChild.lastChild
         val constructor = createConstructor(struct, chosenFields, psiFactory, substitution)
-        impl.lastChild.addBefore(constructor, anchor)
-        editor.caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
+        val inserted = impl.lastChild.addBefore(constructor, anchor)
+        editor.caretModel.moveToOffset(inserted.endOffset)
     }
 
     private fun createConstructor(
