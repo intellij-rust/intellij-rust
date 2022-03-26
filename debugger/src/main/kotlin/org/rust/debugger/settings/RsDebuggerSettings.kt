@@ -14,6 +14,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettings
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import org.rust.debugger.RsDebuggerBundle
+import org.rust.debugger.isDebuggingIntegrationEnabled
 
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
@@ -32,6 +33,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     }
 
     override fun createConfigurables(category: DebuggerSettingsCategory): Collection<Configurable> {
+        if (!isDebuggingIntegrationEnabled()) return emptyList()
         val configurable = when (category) {
             DebuggerSettingsCategory.DATA_VIEWS -> createDataViewConfigurable()
             DebuggerSettingsCategory.GENERAL -> createGeneralSettingsConfigurable()
