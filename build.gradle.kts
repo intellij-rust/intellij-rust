@@ -1,4 +1,5 @@
 import groovy.json.JsonSlurper
+import groovy.xml.XmlParser
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -284,6 +285,36 @@ project(":plugin") {
         implementation(project(":ml-completion"))
     }
 
+    // Collects all jars produced by compilation of project modules and merges them into singe one.
+    // We need to put all plugin manifest files into single jar to make new plugin model work
+    val mergePluginJarTask = task<Jar>("mergePluginJars") {
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+        archiveBaseName.set("intellij-rust")
+
+        exclude("META-INF/MANIFEST.MF")
+
+        val pluginLibDir by lazy {
+            val sandboxTask = tasks.prepareSandbox.get()
+            sandboxTask.destinationDir.resolve("${sandboxTask.pluginName.get()}/lib")
+        }
+
+        val pluginJars by lazy {
+            pluginLibDir.listFiles().orEmpty().filter { it.isPluginJar() }
+        }
+
+        destinationDirectory.set(project.layout.dir(provider { pluginLibDir }))
+
+        doFirst {
+            for (file in pluginJars) {
+                from(zipTree(file))
+            }
+        }
+
+        doLast {
+            delete(pluginJars)
+        }
+    }
+
     tasks {
         buildPlugin {
             // Set proper name for final plugin zip.
@@ -291,7 +322,10 @@ project(":plugin") {
             archiveBaseName.set("intellij-rust")
         }
         runIde { enabled = true }
-        prepareSandbox { enabled = true }
+        prepareSandbox {
+            finalizedBy(mergePluginJarTask)
+            enabled = true
+        }
         buildSearchableOptions {
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
@@ -807,4 +841,22 @@ fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false, pr
     errReader.join()
     if (process.exitValue() != 0 && !ignoreExitCode) error("Non-zero exit status for `$this`")
     return result
+}
+
+fun File.isPluginJar(): Boolean {
+    if (!isFile) return false
+    if (extension != "jar") return false
+    return zipTree(this).files.any { it.isManifestFile() }
+}
+
+fun File.isManifestFile(): Boolean {
+    if (extension != "xml") return false
+    val rootNode = try {
+        val parser = XmlParser()
+        parser.parse(this)
+    } catch (e: Exception) {
+        logger.error("Failed to parse $path", e)
+        return false
+    }
+    return rootNode.name() == "idea-plugin"
 }
