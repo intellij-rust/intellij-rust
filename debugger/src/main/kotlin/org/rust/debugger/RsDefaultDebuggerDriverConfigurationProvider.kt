@@ -12,7 +12,7 @@ import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguratio
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import java.io.File
 
-class RsDebuggerDriverConfigurationProviderImpl : RsDebuggerDriverConfigurationProvider {
+class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
         @Suppress("MoveVariableDeclarationIntoWhen")
         val lldbStatus = RsDebuggerToolchainService.getInstance().getLLDBStatus()
