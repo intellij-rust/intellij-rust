@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-ra_ap_proc_macro_srv = "=0.0.101"
+ra_ap_proc_macro_srv = "=0.0.102"
 
 [target."cfg(windows)".dependencies.winapi]
 version = "*"
