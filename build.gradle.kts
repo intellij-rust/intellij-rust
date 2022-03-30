@@ -52,7 +52,7 @@ plugins {
     idea
     kotlin("jvm") version "1.6.10"
     id("org.jetbrains.intellij") version "1.4.0"
-    id("org.jetbrains.grammarkit") version "2021.2.1"
+    id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.3.1"
 }
@@ -410,9 +410,7 @@ project(":") {
         doLast {
             rootProject.allprojects
                 .map { it.configurations }
-                // Don't resolve `bomConfiguration` because it cannot be resolved.
-                // See https://github.com/JetBrains/gradle-grammar-kit-plugin/issues/69
-                .flatMap { it.filter { c -> c.isCanBeResolved && c.name != "bomConfiguration" } }
+                .flatMap { it.filter { c -> c.isCanBeResolved } }
                 .forEach { it.resolve() }
         }
     }
