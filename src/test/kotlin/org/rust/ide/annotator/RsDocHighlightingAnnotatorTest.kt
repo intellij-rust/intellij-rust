@@ -124,7 +124,7 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
         /// ####### foo
         /// #5 bolt
         /// #hashtag
-        /// #	there is tab here
+        /// <DOC_HEADING>#	there is tab here</DOC_HEADING>
         /// \## foo
         /// <DOC_HEADING> ### foo</DOC_HEADING>
         /// <DOC_HEADING>  ## foo</DOC_HEADING>
