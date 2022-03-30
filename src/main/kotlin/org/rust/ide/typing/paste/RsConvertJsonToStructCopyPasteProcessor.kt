@@ -21,8 +21,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
-import org.rust.ide.inspections.lints.toSnakeCase
+import org.rust.ide.inspections.lints.*
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
@@ -86,7 +87,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         val insertedItems: MutableList<SmartPsiElementPointer<RsStructItem>> = mutableListOf()
 
-        val hasSerdeDependency = file.containingCargoPackage?.dependencies?.any { it.name == "serde" } == true
+        val hasSerdeDependency = hasSerdeDependency(file)
 
         runWriteAction {
             // Delete original text
@@ -109,6 +110,26 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
             replacePlaceholders(editor, insertedItems, nameMap, file)
         }
     }
+}
+
+@TestOnly
+var CONVERT_JSON_SERDE_PRESENT: Boolean = false
+
+fun convertJsonWithSerdePresent(hasSerde: Boolean, action: () -> Unit) {
+    val original = CONVERT_JSON_SERDE_PRESENT
+    CONVERT_JSON_SERDE_PRESENT = hasSerde
+    try {
+        action()
+    } finally {
+        CONVERT_JSON_SERDE_PRESENT = original
+    }
+}
+
+private fun hasSerdeDependency(file: RsFile): Boolean {
+    if (isUnitTestMode && CONVERT_JSON_SERDE_PRESENT) {
+        return true
+    }
+    return file.containingCargoPackage?.dependencies?.any { it.name == "serde" } == true
 }
 
 enum class StoredPreference {
@@ -196,7 +217,26 @@ private fun createAndInsertStruct(
     return inserted
 }
 
-fun generateStruct(
+private fun StringBuilder.writeStructField(
+    field: String,
+    type: DataType,
+    structNameMap: Map<Struct, String>,
+    generatedFieldNames: MutableSet<String>,
+    hasSerdeDependency: Boolean
+) {
+    val normalizedName = createFieldName(field, generatedFieldNames)
+    val serdeType = getSerdeType(type, structNameMap)
+    if (hasSerdeDependency && field != normalizedName) {
+        // Escape quotes
+        val rawField = field.replace("\"", "\\\"")
+        append("#[serde(rename = \"$rawField\")]\n")
+    }
+
+    append("pub $normalizedName: ${serdeType},\n")
+    generatedFieldNames.add(normalizedName)
+}
+
+private fun generateStruct(
     factory: RsPsiFactory,
     struct: Struct,
     nameMap: Map<Struct, String>,
@@ -208,10 +248,9 @@ fun generateStruct(
         }
         append("struct ${nameMap[struct]} {\n")
 
+        val names = mutableSetOf<String>()
         for ((field, type) in struct.fields) {
-            val name = normalizeFieldName(field)
-            val serdeType = getSerdeType(type, nameMap)
-            append("pub $name: ${serdeType},\n")
+           writeStructField(field, type, nameMap, names, hasSerdeDependency)
         }
 
         append("}")
@@ -221,13 +260,27 @@ fun generateStruct(
 
 private val NON_IDENTIFIER_REGEX: Regex = Regex("[^a-zA-Z_0-9]")
 
-fun normalizeFieldName(field: String): String {
+private fun normalizeFieldName(field: String): String {
     var name = field.replace(NON_IDENTIFIER_REGEX, "_")
     if (name.getOrNull(0)?.isDigit() == true) {
         name = "_$name"
     }
 
-    return name.toSnakeCase(false).escapeIdentifierIfNeeded()
+    name = name.toSnakeCase(false)
+    if (name.all { it == '_' }) {
+        name += "field"
+    }
+
+    return name.escapeIdentifierIfNeeded()
+}
+
+private fun createFieldName(field: String, generatedFieldNames: Set<String>): String {
+    val normalizedName = normalizeFieldName(field)
+    if (normalizedName !in generatedFieldNames) return normalizedName
+
+    return generateSequence(0) { it + 1 }
+        .map { "${normalizedName}_$it" }
+        .first { it !in generatedFieldNames }
 }
 
 private fun getSerdeType(type: DataType, nameMap: Map<Struct, String>): String {
