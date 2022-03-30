@@ -8,8 +8,9 @@ package org.rust.cargo.toolchain.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
@@ -20,6 +21,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.HashCode
+import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
 import java.io.IOException
 import java.nio.file.Files
@@ -326,17 +328,22 @@ object CargoMetadata {
 
         val members = project.workspace_members
         val packageIdToNode = project.resolve.nodes.associateBy { it.id }
+
+        val packages = project.packages.map { pkg ->
+            // resolve contains all enabled features for each package
+            val resolveNode = packageIdToNode[pkg.id]
+            if (resolveNode == null) {
+                LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
+            }
+            val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
+            val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
+            pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
+        }
+
+        adjustFileSizeLimitForFilesInOutDirs(packages)
+
         return CargoWorkspaceData(
-            project.packages.map { pkg ->
-                // resolve contains all enabled features for each package
-                val resolveNode = packageIdToNode[pkg.id]
-                if (resolveNode == null) {
-                    LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
-                }
-                val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
-                val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-                pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
-            },
+            packages,
             project.resolve.nodes.associate { node ->
                 val dependencySet = if (node.deps != null) {
                     node.deps.mapToSet { (pkgId, name, depKinds) ->
@@ -353,6 +360,41 @@ object CargoMetadata {
             workspaceRoot.url
         )
     }
+
+    /**
+     * Rust buildscripts (`build.rs`) often generate files that are larger than the default IntelliJ size limit.
+     * The default filesize limit is specified by [com.intellij.openapi.util.io.FileUtilRt.DEFAULT_INTELLISENSE_LIMIT]
+     * or "idea.max.intellisense.filesize" system property.
+     * Here we ensure that the file size limit is not less than [ADJUSTED_FILE_SIZE_LIMIT_FOR_OUTPUT_FILES] for
+     * cargo generated files.
+     */
+    private fun adjustFileSizeLimitForFilesInOutDirs(packages: List<CargoWorkspaceData.Package>) {
+        if (PersistentFSConstants.getMaxIntellisenseFileSize() >= ADJUSTED_FILE_SIZE_LIMIT_FOR_OUTPUT_FILES) return
+
+        val outDirs = packages
+            .mapNotNull { it.outDirUrl }
+            .mapNotNullToSet { VirtualFileManager.getInstance().refreshAndFindFileByUrl(it) }
+
+        if (outDirs.isEmpty()) return
+
+        RefreshQueue.getInstance().refresh(false, true, null, outDirs)
+
+        for (outDir in outDirs) {
+            VfsUtilCore.visitChildrenRecursively(outDir,
+                object : VirtualFileVisitor<ArrayList<VirtualFile>>() {
+                    override fun visitFile(outFile: VirtualFile): Boolean {
+                        if (!outFile.isDirectory && outFile.length <= ADJUSTED_FILE_SIZE_LIMIT_FOR_OUTPUT_FILES) {
+                            SingleRootFileViewProvider.doNotCheckFileSizeLimit(outFile)
+                        }
+                        return true
+                    }
+                })
+        }
+    }
+
+    // Experimentally verified that 8Mb works with the default IDEA -Xmx768M. Larger values may
+    // lead to OOM, please verify before adjusting
+    private const val ADJUSTED_FILE_SIZE_LIMIT_FOR_OUTPUT_FILES: Int = 8 * 1024 * 1024
 
     private fun Package.clean(
         fs: LocalFileSystem,
