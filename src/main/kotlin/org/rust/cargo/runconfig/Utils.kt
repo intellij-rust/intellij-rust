@@ -25,10 +25,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
-import org.rust.cargo.runconfig.filters.RsBacktraceFilter
-import org.rust.cargo.runconfig.filters.RsConsoleFilter
-import org.rust.cargo.runconfig.filters.RsExplainFilter
-import org.rust.cargo.runconfig.filters.RsPanicFilter
+import org.rust.cargo.runconfig.filters.*
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.openapiext.checkIsDispatchThread
@@ -98,6 +95,7 @@ fun createFilters(cargoProject: CargoProject?): Collection<Filter> = buildList {
     val dir = cargoProject?.workspaceRootDir ?: cargoProject?.rootDir
     if (cargoProject != null && dir != null) {
         add(RsConsoleFilter(cargoProject.project, dir))
+        add(RsDbgFilter(cargoProject.project, dir))
         add(RsPanicFilter(cargoProject.project, dir))
         add(RsBacktraceFilter(cargoProject.project, dir, cargoProject.workspace))
     }
