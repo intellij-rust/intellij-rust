@@ -5,8 +5,10 @@
 
 package org.rust.ide.annotator
 
+import org.rust.CheckTestmarkHit
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.ide.injected.DoctestInfo
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
@@ -176,6 +178,30 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
         |</inject></info>///<info> <inject>let b = 0;
         |</inject></info>///  ```
         |fn foo() {}
+        |""")
+
+    @CheckTestmarkHit(DoctestInfo.Testmarks.UnbalancedCodeFence::class)
+    fun `test injection broken into two parts 1`() = doTest("""
+        |/// ```
+        |///<info> <inject>let a = 0;</inject></info>
+        |//
+        |/// let b = 1;
+        |/// ```
+        |/// no injection here
+        |/// ```
+        |fn foo() {}
+        |""")
+
+    @CheckTestmarkHit(DoctestInfo.Testmarks.UnbalancedCodeFence::class)
+    fun `test injection broken into two parts 2`() = doTest("""
+        |/// ```
+        |///<info> <inject>let a = 0;</inject></info>
+        |fn foo() {
+        |    //! let b = 1;
+        |    //! ```
+        |    //! no injection here
+        |    //! ```
+        }
         |""")
 
     fun doTest(code: String) = checkByFileTree(

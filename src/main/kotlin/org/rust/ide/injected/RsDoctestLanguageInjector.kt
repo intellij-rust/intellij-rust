@@ -27,9 +27,12 @@ import org.rust.lang.core.parser.probe
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.doc.docElements
 import org.rust.lang.doc.psi.RsDocCodeFence
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.doc.psi.RsDocElementTypes.DOC_DATA
 import org.rust.lang.doc.psi.RsDocGap
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.withPrevious
 import java.util.regex.Pattern
@@ -193,6 +196,7 @@ class DoctestInfo private constructor(
         fun fromCodeFence(codeFence: RsDocCodeFence): DoctestInfo? {
             if (!codeFence.project.rustSettings.doctestInjectionEnabled) return null
             if (codeFence.containingCrate?.areDoctestsEnabled != true) return null
+            if (hasUnbalancedCodeFencesBefore(codeFence)) return null
 
             val lang = codeFence.lang?.text ?: ""
             val parts = lang.split(LANG_SPLIT_REGEX).filter { it.isNotBlank() }
@@ -232,6 +236,26 @@ class DoctestInfo private constructor(
 
             return DoctestInfo(docIndent, fenceIndent, contents, codeFence.text)
         }
+
+        private fun hasUnbalancedCodeFencesBefore(context: RsDocCodeFence): Boolean {
+            val containingDoc = context.containingDoc
+            val docOwner = containingDoc.owner ?: return false
+            for (docElement in docOwner.docElements()) {
+                if (docElement !is RsDocComment) continue // Ignore `#[doc = ""]` attributes for now
+                if (docElement == containingDoc) return false
+
+                if (docElement.codeFences.any { it.end == null }) {
+                    Testmarks.UnbalancedCodeFence.hit()
+                    return true
+                }
+            }
+
+            return false
+        }
+    }
+
+    object Testmarks {
+        object UnbalancedCodeFence : Testmark()
     }
 }
 
