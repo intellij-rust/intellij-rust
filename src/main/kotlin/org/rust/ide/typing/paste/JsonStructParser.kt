@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonFactoryBuilder
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.intellij.grazie.utils.toLinkedSet
 import java.io.IOException
 
 sealed class DataType {
@@ -102,10 +103,12 @@ private class StructParser {
         if (parser.currentToken != JsonToken.END_OBJECT) return null
 
         val struct = Struct(fields)
-        if (struct !in structMap) {
-            structMap.add(struct)
-        }
+        registerStruct(struct)
         return struct
+    }
+
+    private fun registerStruct(struct: Struct) {
+        structMap.add(struct)
     }
 
     private fun parseField(parser: JsonParser): Field? {
@@ -136,14 +139,59 @@ private class StructParser {
             foundDataTypes.add(dataType)
         }
 
-        val containsNull = foundDataTypes.any { it is DataType.Nullable }
+        return DataType.Array(generateContainedType(foundDataTypes))
+    }
+
+    private fun extractStructType(type: DataType): DataType.StructRef? {
+        return when {
+            type is DataType.StructRef -> type
+            type is DataType.Nullable && type.type is DataType.StructRef -> type.type
+            else -> null
+        }
+    }
+
+    private fun generateContainedType(types: Set<DataType>): DataType {
+        val containsNull = types.any { it is DataType.Nullable }
+        val structTypes = types.mapNotNull { extractStructType(it) }
         val innerType = when {
-            foundDataTypes.size == 1 -> foundDataTypes.first()
-            foundDataTypes.size == 2 && containsNull -> DataType.Nullable(foundDataTypes.first())
+            types.size == 1 -> types.first()
+            types.size == 2 && containsNull -> DataType.Nullable(types.first { it !is DataType.Nullable })
+            structTypes.size == types.size -> {
+                val type = unifyStructs(structTypes)
+                if (containsNull) {
+                    DataType.Nullable(type)
+                } else {
+                    type
+                }
+            }
+            containsNull -> DataType.Nullable(DataType.Unknown)
             else -> DataType.Unknown
         }
+        return innerType
+    }
 
-        return DataType.Array(innerType)
+    /**
+     * Look through a list of structs and try to unify them to a single struct type with optional fields.
+     */
+    private fun unifyStructs(structTypes: List<DataType.StructRef>): DataType {
+        // Gather all field keys
+        val foundFields = structTypes
+            .flatMap { it.struct.fields.entries }
+            .groupByTo(mutableMapOf(), { it.key }, { it.value })
+
+        // Add null to fields that are not inside all structs
+        for (types in foundFields.values) {
+            if (types.size < structTypes.size) {
+                types.add(DataType.Nullable(types[0]))
+            }
+        }
+
+        // Use toLinkedSet to keep a deterministic order
+        val fields = foundFields.mapValuesTo(linkedMapOf()) { generateContainedType(it.value.toLinkedSet()) }
+
+        val struct = Struct(fields)
+        registerStruct(struct)
+        return DataType.StructRef(struct)
     }
 
     private fun parseDataType(parser: JsonParser): DataType {

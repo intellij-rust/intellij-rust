@@ -229,7 +229,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"a": [null]}""")
 
-    fun `test nullable type array`() = doCopyPasteTest("""
+    fun `test nullable type array 1`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
@@ -238,6 +238,16 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
             pub a: Vec<Option<i64>>,
         }
     """, """{"a": [1, null]}""")
+
+    fun `test nullable type array 2`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct {
+            pub a: Vec<Option<i64>>,
+        }
+    """, """{"a": [null, 1]}""")
 
     fun `test nested array in array`() = doCopyPasteTest("""
         //- lib.rs
@@ -395,6 +405,122 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
             pub a: Vec<i64>,
         }
     """, """{"a": [1, 2, 3,],}""")
+
+    fun `test unify structs in array 1`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: Option<i64>,
+            pub b: Option<i64>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Struct1>,
+        }
+    """, """{"items": [{"a": 1}, {"b":  2}]}""")
+
+    fun `test unify structs in array 2`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: i64,
+            pub opt_field: Option<_>,
+            pub opt_field_2: Option<i64>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Struct1>,
+        }
+    """, """{"items": [{"a": 1, "opt_field": true}, {"a":  2}, {"a":  2, "opt_field_2": 2}, {"a":  2, "opt_field": 1}]}""")
+
+    fun `test unify structs in array 3`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub field1: i64,
+            pub optional: Option<i64>,
+        }
+
+        struct Struct2 {
+            pub a: Struct1,
+        }
+
+        struct Struct3 {
+            pub items: Vec<Struct2>,
+        }
+    """, """{
+  "items": [
+    {
+      "a": {
+        "field1": 1
+      }
+    },
+    {
+      "a": {
+        "field1": 1,
+        "optional": 2
+      }
+    }
+  ]
+}""")
+
+    fun `test unify structs in array 4`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub field1: Option<i64>,
+            pub field2: Option<i64>,
+        }
+
+        struct Struct2 {
+            pub field1: Option<i64>,
+            pub optional: Option<i64>,
+        }
+
+        struct Struct3 {
+            pub a: Struct2,
+            pub b: Option<i64>,
+            pub c: Option<Struct1>,
+        }
+
+        struct Struct4 {
+            pub items: Vec<Struct3>,
+        }
+    """, """{
+  "items": [
+    {
+      "a": {
+        "field1": 1
+      },
+      "b": 5,
+      "c": {
+        "field1": 1
+      }
+    },
+    {
+      "a": {
+        "field1": 1,
+        "optional": 2
+      },
+      "c": {
+        "field2": 1
+      }
+    },
+    {
+      "a": {
+        "optional": 2
+      }
+    }
+  ]
+}""")
 
     override fun setUp() {
         super.setUp()
