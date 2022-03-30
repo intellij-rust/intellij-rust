@@ -5,11 +5,15 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.Executor
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.notification.NotificationType
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -17,6 +21,7 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
+import org.rust.ide.notifications.RsNotifications
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
@@ -27,9 +32,16 @@ abstract class RsCommandLineBase {
     abstract val redirectInputFrom: File?
     abstract val additionalArguments: List<String>
 
+    protected abstract val executableName: String
+
     protected abstract fun createRunConfiguration(runManager: RunManagerEx, name: String? = null): RunnerAndConfigurationSettings
 
-    fun run(cargoProject: CargoProject, presentableName: String = command, saveConfiguration: Boolean = true) {
+    fun run(
+        cargoProject: CargoProject,
+        presentableName: String = command,
+        saveConfiguration: Boolean = true,
+        executor: Executor = DefaultRunExecutor.getRunExecutorInstance()
+    ) {
         val project = cargoProject.project
         val configurationName = when {
             project.cargoProjects.allProjects.size > 1 -> "$presentableName [${cargoProject.presentableName}]"
@@ -41,8 +53,18 @@ abstract class RsCommandLineBase {
                 runManager.setTemporaryConfiguration(this)
             }
         }
-        val executor = DefaultRunExecutor.getRunExecutorInstance()
-        ProgramRunnerUtil.executeConfiguration(configuration, executor)
+
+        val runner = ProgramRunner.getRunner(executor.id, configuration.configuration)
+        val finalExecutor = if (runner == null) {
+            RsNotifications.pluginNotifications()
+                .createNotification(RsBundle.message("notification.0.action.is.not.available.for.1.command", executor.actionName, "$executableName $command"), NotificationType.WARNING)
+                .notify(project)
+            DefaultRunExecutor.getRunExecutorInstance()
+        } else {
+            executor
+        }
+
+        ProgramRunnerUtil.executeConfiguration(configuration, finalExecutor)
     }
 }
 
@@ -60,6 +82,9 @@ data class CargoCommandLine(
     val emulateTerminal: Boolean = false,
     val withSudo: Boolean = false
 ) : RsCommandLineBase() {
+
+    override val executableName: String
+        get() = "cargo"
 
     override fun createRunConfiguration(runManager: RunManagerEx, name: String?): RunnerAndConfigurationSettings =
         runManager.createCargoCommandRunConfiguration(this, name)
@@ -163,6 +188,10 @@ data class WasmPackCommandLine(
     override val workingDirectory: Path,
     override val additionalArguments: List<String> = emptyList()
 ) : RsCommandLineBase() {
+
+    override val executableName: String
+        get() = "wasm-pack"
+
     override val redirectInputFrom: File? = null
 
     override fun createRunConfiguration(runManager: RunManagerEx, name: String?): RunnerAndConfigurationSettings {
