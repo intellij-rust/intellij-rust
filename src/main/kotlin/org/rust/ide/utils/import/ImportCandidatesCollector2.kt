@@ -7,17 +7,15 @@ package org.rust.ide.utils.import
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.map2Array
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
-import org.rust.lang.core.psi.RsCodeFragmentFactory
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.TraitImplSource
@@ -399,6 +397,7 @@ private fun ImportContext2.createPathWithImportAdded(usePath: String): RsPath? {
 
 private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {
     val crateName = path.first()
+    val path = path.map2Array(String::escapeIdentifierIfNeeded)
     return if (crateName == "crate") {
         val usePath = path.joinToString("::").let {
             if (defMap.isAtLeastEdition2018) it else it.removePrefix("crate::")

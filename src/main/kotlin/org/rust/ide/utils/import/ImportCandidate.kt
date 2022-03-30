@@ -8,6 +8,7 @@ package org.rust.ide.utils.import
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.psi.escapeIdentifierIfNeeded
 import org.rust.lang.core.psi.ext.QualifiedNamedItem2
 
 sealed class ImportInfo {
@@ -50,6 +51,7 @@ sealed class ImportInfo {
     ) : ImportInfo() {
         override val usePath: String = run {
             val absolutePrefix = if (hasModWithSameNameAsExternCrate) "::" else ""
+            val externCrateName = externCrateName.escapeIdentifierIfNeeded()
             "$absolutePrefix$externCrateName::$crateRelativePath"
         }
     }

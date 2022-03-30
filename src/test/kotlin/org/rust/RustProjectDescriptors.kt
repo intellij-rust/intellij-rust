@@ -363,6 +363,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         val transLib = externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib")
         val transLib2 = externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2")
         val transCommonLib = externalPackage("$contentRoot/trans-common-lib", "lib.rs", "trans-common-lib")
+        val rawIdentifierLib = externalPackage("$contentRoot/loop", "lib.rs", "loop")
         val depProcMacro = externalPackage(
             "$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO,
             procMacroArtifact = testProcMacroArtifact1
@@ -373,7 +374,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
 
         val packages = listOf(
             testPackage, depLib, depLibNew, depLib2, depLibWithCyclicDep, depLibToBeRenamed,
-            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2,
+            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, rawIdentifierLib, depProcMacro, depProcMacro2,
             cyclicDepLibDevDep
         )
 
@@ -386,6 +387,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 dep(noSourceLib.id),
                 dep(depProcMacro.id),
                 dep(depProcMacro2.id),
+                dep(rawIdentifierLib.id),
             ),
             depLib.id to setOf(
                 dep(transLib.id),
