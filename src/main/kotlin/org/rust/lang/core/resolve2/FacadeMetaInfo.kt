@@ -33,6 +33,11 @@ fun RsMod.exportedItems(context: RsMod): List<NamedItem> {
         }
 }
 
+fun RsMod.allScopeItemNames(): Set<String> {
+    val info = getModInfo(this) as? RsModInfo ?: return emptySet()
+    return info.modData.visibleItems.keys
+}
+
 private fun PerNs.allVisItems(): Array<Pair<VisItem, Namespace>> =
     types.map2Array { it to Namespace.Types } +
         values.map2Array { it to Namespace.Values } +

@@ -70,27 +70,32 @@ open class RsCamelCaseNamingInspection(
     }
 
     private fun suggestName(name: String): String {
-        val result = StringBuilder(name.length)
-        var wasUnderscore = true
-        var startWord = true
-        for (char in name) {
-            when {
-                char == '_' -> wasUnderscore = true
-                wasUnderscore || startWord && char.canStartWord -> {
-                    result.append(char.toUpperCase())
-                    wasUnderscore = false
-                    startWord = false
-                }
-                else -> {
-                    startWord = char.isLowerCase()
-                    result.append(char.toLowerCase())
-                }
+        val result = name.toCamelCase()
+        return result.ifEmpty { "CamelCase" }
+    }
+}
+
+private val Char.canStartWord: Boolean get() = isUpperCase() || isDigit()
+
+fun String.toCamelCase(): String {
+    val result = StringBuilder(length)
+    var wasUnderscore = true
+    var startWord = true
+    for (char in this) {
+        when {
+            char == '_' -> wasUnderscore = true
+            wasUnderscore || startWord && char.canStartWord -> {
+                result.append(char.uppercase())
+                wasUnderscore = false
+                startWord = false
+            }
+            else -> {
+                startWord = char.isLowerCase()
+                result.append(char.lowercase())
             }
         }
-        return if (result.isEmpty()) "CamelCase" else result.toString()
     }
-
-    private val Char.canStartWord: Boolean get() = isUpperCase() || isDigit()
+    return result.toString()
 }
 
 val Char.hasCase: Boolean get() = isLowerCase() || isUpperCase()
