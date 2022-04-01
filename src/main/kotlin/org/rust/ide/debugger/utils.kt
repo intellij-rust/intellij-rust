@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.debugger
+package org.rust.ide.debugger
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore

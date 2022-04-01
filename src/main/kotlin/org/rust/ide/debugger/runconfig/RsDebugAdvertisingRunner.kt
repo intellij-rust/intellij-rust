@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.debugger.runconfig
+package org.rust.ide.debugger.runconfig
 
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultDebugExecutor
@@ -23,8 +23,8 @@ import com.intellij.util.PlatformUtils.*
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.hasRemoteTarget
-import org.rust.debugger.NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID
-import org.rust.debugger.nativeDebuggingSupportPlugin
+import org.rust.ide.debugger.NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID
+import org.rust.ide.debugger.nativeDebuggingSupportPlugin
 import org.rust.openapiext.isUnitTestMode
 
 class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {

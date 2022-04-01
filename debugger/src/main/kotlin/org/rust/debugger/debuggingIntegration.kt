@@ -8,6 +8,7 @@ package org.rust.debugger
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
+import org.rust.ide.debugger.nativeDebuggingSupportPlugin
 
 private val CIDR_DEBUGGER_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.cidr.debugger")
 
