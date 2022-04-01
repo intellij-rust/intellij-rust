@@ -1,4 +1,9 @@
-<idea-plugin>
+<idea-plugin package="org.rust.coverage">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.modules.coverage"/>
+    </dependencies>
+
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="org.rust.coverage.GrcovRunner"/>
         <coverageEngine implementation="org.rust.coverage.RsCoverageEngine"/>

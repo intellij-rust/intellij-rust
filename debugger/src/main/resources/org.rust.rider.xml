@@ -1,0 +1,8 @@
+<idea-plugin package="org.rust.rider">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <module name="org.rust.debugger"/>
+
+        <plugin id="com.intellij.modules.rider"/>
+    </dependencies>
+</idea-plugin>

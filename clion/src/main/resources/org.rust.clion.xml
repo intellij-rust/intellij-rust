@@ -1,8 +1,12 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
-    <depends>com.intellij.cidr.base</depends>
-    <depends>com.intellij.clion</depends>
+<idea-plugin package="org.rust.clion" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.clion"/>
+        <plugin id="com.intellij.cidr.base"/>
 
-    <xi:include href="/META-INF/debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+        <module name="org.rust.debugger"/>
+    </dependencies>
+
     <xi:include href="/META-INF/platform-clion-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="cidr">

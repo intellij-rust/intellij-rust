@@ -1,4 +1,9 @@
-<idea-plugin>
+<idea-plugin package="org.rust.copyright">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.copyright"/>
+    </dependencies>
+
     <extensions defaultExtensionNs="com.intellij.copyright">
         <updater filetype="Rust"
                  implementationClass="com.maddyhome.idea.copyright.psi.UpdateAnyFileCopyright$Provider"/>

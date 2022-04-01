@@ -1,4 +1,10 @@
-<idea-plugin>
+<idea-plugin package="org.rust.toml">
+
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="org.toml.lang"/>
+    </dependencies>
+
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="TOML"
                                   implementation="org.rust.toml.resolve.CargoTomlReferenceContributor"/>

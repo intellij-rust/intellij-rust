@@ -1,4 +1,9 @@
-<idea-plugin>
+<idea-plugin package="org.rust.ide.idea">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.modules.java"/>
+    </dependencies>
+
     <extensions defaultExtensionNs="com.intellij">
         <projectStructureDetector implementation="org.rust.ide.idea.RsProjectStructureDetector"/>
     </extensions>

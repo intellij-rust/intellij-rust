@@ -1,5 +1,8 @@
-<idea-plugin>
-    <depends>com.intellij.modules.cidr.debugger</depends>
+<idea-plugin package="org.rust.debugger">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.modules.cidr.debugger"/>
+    </dependencies>
 
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"

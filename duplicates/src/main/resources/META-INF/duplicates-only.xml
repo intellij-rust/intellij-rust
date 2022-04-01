@@ -1,5 +1,0 @@
-<idea-plugin allow-bundled-update="true">
-    <extensions defaultExtensionNs="com.intellij">
-        <duplicateScope language="Rust" implementationClass="org.rust.ide.clones.RsDuplicateScope"/>
-    </extensions>
-</idea-plugin>

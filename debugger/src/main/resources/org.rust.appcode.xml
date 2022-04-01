@@ -1,0 +1,8 @@
+<idea-plugin package="org.rust.appcode">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <module name="org.rust.debugger"/>
+
+        <plugin id="com.intellij.modules.appcode"/>
+    </dependencies>
+</idea-plugin>

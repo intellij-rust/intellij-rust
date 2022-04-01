@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin package="org.rust" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.rust.lang</id>
     <name>Rust</name>
 
@@ -15,16 +15,23 @@
 
     <xi:include href="/META-INF/rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-    <depends config-file="toml-only.xml">org.toml.lang</depends>
-    <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
-    <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.appcode</depends>
-    <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.rider</depends>
-    <depends optional="true" config-file="native-debug-only.xml">com.intellij.nativeDebug</depends>
-    <depends optional="true" config-file="copyright-only.xml">com.intellij.copyright</depends>
-    <depends optional="true" config-file="duplicates-only.xml">com.intellij.modules.duplicatesDetector</depends>
-    <depends optional="true" config-file="coverage-only.xml">com.intellij.modules.coverage</depends>
-    <depends optional="true" config-file="grazie-only.xml">tanvd.grazi</depends>
-    <depends optional="true" config-file="js-only.xml">JavaScript</depends>
-    <depends optional="true" config-file="ml-completion-only.xml">com.intellij.completion.ml.ranking</depends>
+    <dependencies>
+        <plugin id="org.toml.lang"/>
+    </dependencies>
+
+    <content>
+        <module name="org.rust.toml"/>
+        <module name="org.rust.idea"/>
+        <module name="org.rust.debugger"/>
+        <module name="org.rust.clion"/>
+        <module name="org.rust.nativeDebug"/>
+        <module name="org.rust.appcode"/>
+        <module name="org.rust.rider"/>
+        <module name="org.rust.copyright"/>
+        <module name="org.rust.duplicates"/>
+        <module name="org.rust.coverage"/>
+        <module name="org.rust.grazie"/>
+        <module name="org.rust.js"/>
+        <module name="org.rust.mlCompletion"/>
+    </content>
 </idea-plugin>
