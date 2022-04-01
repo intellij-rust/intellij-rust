@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonFactoryBuilder
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.intellij.grazie.utils.toLinkedSet
 import java.io.IOException
 
 sealed class DataType {
@@ -186,8 +185,8 @@ private class StructParser {
             }
         }
 
-        // Use toLinkedSet to keep a deterministic order
-        val fields = foundFields.mapValuesTo(linkedMapOf()) { generateContainedType(it.value.toLinkedSet()) }
+        // Use `LinkedHashSet` to keep a deterministic order
+        val fields = foundFields.mapValuesTo(linkedMapOf()) { generateContainedType(LinkedHashSet(it.value)) }
 
         val struct = Struct(fields)
         registerStruct(struct)
