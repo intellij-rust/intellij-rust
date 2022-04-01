@@ -23,6 +23,7 @@
         <module name="org.rust.toml"/>
         <module name="org.rust.idea"/>
         <module name="org.rust.debugger"/>
+        <module name="org.rust.profiler"/>
         <module name="org.rust.clion"/>
         <module name="org.rust.nativeDebug"/>
         <module name="org.rust.appcode"/>

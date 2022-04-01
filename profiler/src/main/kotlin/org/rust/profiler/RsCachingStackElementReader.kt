@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler
+package org.rust.profiler
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.profiler.api.BaseCallStackElement
 import com.intellij.profiler.model.BaseCachingStackElementReader
 import com.intellij.profiler.model.CantBeParsedCall
-import org.rust.clion.profiler.dtrace.RsDTraceNavigatableNativeCall
+import org.rust.profiler.dtrace.RsDTraceNavigatableNativeCall
 
 @Suppress("UnstableApiUsage")
 class RsCachingStackElementReader : BaseCachingStackElementReader() {

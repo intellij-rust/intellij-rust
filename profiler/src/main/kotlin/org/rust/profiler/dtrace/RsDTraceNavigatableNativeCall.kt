@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler.dtrace
+package org.rust.profiler.dtrace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -13,7 +13,7 @@ import com.intellij.profiler.model.NativeCall
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.util.containers.Interner
 import com.intellij.util.containers.stream
-import org.rust.clion.profiler.RsSymbolSearcher
+import org.rust.profiler.RsSymbolSearcher
 
 @Suppress("UnstableApiUsage")
 data class RsDTraceNavigatableNativeCall(private val nativeCall: NativeCall) : BaseCallStackElement() {

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler.perf
+package org.rust.profiler.perf
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -27,9 +27,9 @@ import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.clion.profiler.RsProfilerRunner
-import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
 import org.rust.lang.core.psi.RsFunction
+import org.rust.profiler.RsProfilerRunner
+import org.rust.profiler.legacy.RsProfilerRunnerLegacy
 import java.nio.file.Path
 
 class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {

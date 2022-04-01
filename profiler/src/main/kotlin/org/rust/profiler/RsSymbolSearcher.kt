@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler
+package org.rust.profiler
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project

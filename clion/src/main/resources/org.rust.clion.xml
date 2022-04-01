@@ -21,18 +21,11 @@
                        implementation="org.rust.clion.debugger.runconfig.legacy.RsCLionDebugRunnerLegacy"
                        order="before RsDebugRunnerLegacy"/>
 
-        <programRunner implementation="org.rust.clion.profiler.RsProfilerRunner"/>
-        <programRunner implementation="org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy"/>
-        <projectService serviceImplementation="org.rust.clion.profiler.RsCachingStackElementReader"/>
-
         <programRunner implementation="org.rust.clion.valgrind.RsValgrindRunner"/>
         <programRunner implementation="org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.rust">
-        <runConfigurationExtension implementation="org.rust.clion.profiler.perf.RsPerfConfigurationExtension"/>
-        <runConfigurationExtension implementation="org.rust.clion.profiler.dtrace.RsDTraceConfigurationExtension"/>
-
         <runConfigurationExtension implementation="org.rust.clion.valgrind.RsValgrindConfigurationExtension"/>
 
         <debugger.driverConfigurationProvider

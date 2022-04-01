@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler.dtrace
+package org.rust.profiler.dtrace
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -25,8 +25,8 @@ import com.intellij.profiler.clion.dtrace.DTraceProfilerSettings
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.clion.profiler.RsProfilerRunner
-import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
+import org.rust.profiler.RsProfilerRunner
+import org.rust.profiler.legacy.RsProfilerRunnerLegacy
 import java.io.File
 
 class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {

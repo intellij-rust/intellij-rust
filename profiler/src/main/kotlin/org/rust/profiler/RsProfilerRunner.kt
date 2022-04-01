@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler
+package org.rust.profiler
 
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.profiler.clion.ProfilerExecutor
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.clion.profiler.dtrace.RsDTraceConfigurationExtension
-import org.rust.clion.profiler.perf.RsPerfConfigurationExtension
+import org.rust.profiler.dtrace.RsDTraceConfigurationExtension
+import org.rust.profiler.perf.RsPerfConfigurationExtension
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run profiler"
 

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler.dtrace
+package org.rust.profiler.dtrace
 
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
@@ -20,8 +20,8 @@ import com.intellij.profiler.sudo.SudoProcessHandler
 import com.intellij.profiler.ui.NativeCallStackElementRenderer
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.concurrency.Promise
-import org.rust.clion.profiler.RsCachingStackElementReader
 import org.rust.lang.utils.RsDemangler
+import org.rust.profiler.RsCachingStackElementReader
 
 
 @Suppress("UnstableApiUsage")
