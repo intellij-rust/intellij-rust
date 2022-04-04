@@ -18,7 +18,7 @@ import com.intellij.util.indexing.IndexId
 @Suppress("UnstableApiUsage")
 class RsGlobalIndexFilterForMacroExpansionFileSystem : GlobalIndexFilter {
 
-    /** Please, bump [STORAGE_VERSION] if you change this set */
+    /** Please, bump [MACRO_STORAGE_VERSION] if you change this set */
     private val disabledIndices: Set<IndexId<*, *>> = setOf(
         // `IdIndex` is disabled only for performance reasons.
         // Note that `IdIndex` is used in reference search implementation, so stuff like

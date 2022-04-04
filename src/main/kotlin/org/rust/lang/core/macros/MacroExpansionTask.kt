@@ -15,9 +15,9 @@ import org.rust.RsTask
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
 import org.rust.lang.core.resolve2.CrateDefMap
+import org.rust.lang.core.resolve2.DefCollector
 import org.rust.lang.core.resolve2.MacroIndex
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
-import org.rust.openapiext.checkReadAccessNotAllowed
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toThreadSafeProgressIndicator
 import org.rust.stdext.HashCode
@@ -37,6 +37,7 @@ import java.util.concurrent.ExecutorService
  * Here is typical path of expansion file:
  * "/rust_expanded_macros/<random_project_id>/<crate_id>/a/b/<mix_hash>_<order>.rs"
  * List of methods that rely on such path format:
+ * - [DefCollector.recordExpansionFileName]
  * - [expansionNameToPath]
  * - [VirtualFile.loadMixHash]
  * - [MacroExpansionServiceImplInner.getDefMapForExpansionFile]
