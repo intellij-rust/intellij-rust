@@ -538,7 +538,7 @@ project(":ml-completion") {
         plugins.set(listOf(mlCompletionPlugin))
     }
     dependencies {
-        implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.2.3")
+        implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.4.1")
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
     }
