@@ -446,7 +446,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     class IllegalPathException(path: String) : FSException(path)
 
     companion object {
-        private const val PROTOCOL: String = "rust_macros"
+        private const val PROTOCOL: String = "rust-macros"
 
         fun getInstance(): MacroExpansionFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MacroExpansionFileSystem

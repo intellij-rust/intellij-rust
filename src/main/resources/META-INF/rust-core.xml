@@ -1118,7 +1118,7 @@
                         serviceImplementation="org.rust.lang.core.macros.MacroExpansionManagerImpl"/>
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
-        <virtualFileSystem key="rust_macros" implementationClass="org.rust.lang.core.macros.MacroExpansionFileSystem"/>
+        <virtualFileSystem key="rust-macros" implementationClass="org.rust.lang.core.macros.MacroExpansionFileSystem"/>
         <fileTypeOverrider implementation="org.rust.lang.core.macros.RsFileTypeOverriderForMacroExpansionFileSystem"/>
         <globalIndexFilter implementation="org.rust.lang.core.macros.RsGlobalIndexFilterForMacroExpansionFileSystem"/>
         <filetype.prebuiltStubsProvider filetype="Rust"
