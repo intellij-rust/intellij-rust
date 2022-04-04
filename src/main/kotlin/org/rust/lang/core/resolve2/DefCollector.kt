@@ -175,7 +175,8 @@ class DefCollector(
             if (isUnitTestMode) error("Glob import from not module or enum: $import")
             return false
         }
-        val targetMod = defMap.tryCastToModData(types) ?: return false
+
+        val targetMod = defMap.tryCastToModData(types, context.hangingModData) ?: return false
         val containingMod = import.containingMod
         when {
             import.isPrelude -> {

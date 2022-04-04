@@ -102,7 +102,7 @@ private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): M
         crateDescription = "$pathSegment in ${contextData.crateDescription}",
     )
 
-    val collectorContext = CollectorContext(crate, project, isHangingMode = true)
+    val collectorContext = CollectorContext(crate, project, hangingModData)
     val modCollectorContext = ModCollectorContext(defMap, collectorContext)
     val dollarCrateHelper = createDollarCrateHelper(scope)
     collectScope(scope, hangingModData, modCollectorContext, dollarCrateHelper = dollarCrateHelper)
@@ -159,19 +159,22 @@ private class LocalScopeDataPsiHelper(
         return delegate?.dataToPsi(data)
     }
 
-    override fun findModData(path: ModPath): ModData? {
-        if (path == modData.path) return modData
-        path.getRelativePathTo(modData.path)?.let { relativePath ->
-            return modData.getChildModData(relativePath)
-        }
-        return delegate?.findModData(path)
-    }
-
-    /** 'mod1::mod2::#block::local1::local2'.getRelativePathTo('mod1::mod2::#block') == 'local1::local2' */
-    private fun ModPath.getRelativePathTo(parent: ModPath): Array<String>? =
-        if (parent.isSubPathOf(this)) {
-            segments.copyOfRange(parent.segments.size, segments.size)
-        } else {
-            null
-        }
+    override fun findModData(path: ModPath): ModData? =
+        findHangingModData(path, modData) ?: delegate?.findModData(path)
 }
+
+fun findHangingModData(path: ModPath, hangingModData: ModData): ModData? {
+    if (path == hangingModData.path) return hangingModData
+    path.getRelativePathTo(hangingModData.path)?.let { relativePath ->
+        return hangingModData.getChildModData(relativePath)
+    }
+    return null
+}
+
+/** 'mod1::mod2::#block::local1::local2'.getRelativePathTo('mod1::mod2::#block') == 'local1::local2' */
+private fun ModPath.getRelativePathTo(parent: ModPath): Array<String>? =
+    if (parent.isSubPathOf(this)) {
+        segments.copyOfRange(parent.segments.size, segments.size)
+    } else {
+        null
+    }

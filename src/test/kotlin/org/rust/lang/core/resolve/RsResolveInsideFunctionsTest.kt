@@ -231,8 +231,7 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
     """)
     }
 
-    fun `test local glob import from local enum`() = expect<IllegalStateException> {
-    checkByCode("""
+    fun `test local glob import from local enum 1`() = checkByCode("""
         fn main() {
             enum E { A, B }
                    //X
@@ -240,7 +239,17 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
             A;
         } //^
     """)
-    }
+
+    fun `test local glob import from local enum 2`() = checkByCode("""
+        fn main() {
+            enum E { A, B }
+                   //X
+            use E::*;
+            {
+                A;
+            } //^
+        }
+    """)
 
     fun `test resolve of local mod`() = checkByCode("""
         fn main() {
