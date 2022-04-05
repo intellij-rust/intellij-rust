@@ -101,7 +101,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         UsefulTestCase.assertSameElements(kindsKeywords, actualKeywords)
     }
 
-    @IgnoreInPlatform(213)
     fun `test is_operator_method feature for a method call`() = doTest("ml_rust_is_operator_method", """
         #[lang = "add"]
         pub trait Add<Rhs = Self> {
@@ -130,7 +129,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "as_ref" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_operator_method feature for a UFCS path`() = doTest("ml_rust_is_operator_method", """
         #[lang = "add"]
         pub trait Add<Rhs = Self> {
@@ -158,7 +156,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "as_ref" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_blanket_impl_member feature for a method call`() = doTest("ml_rust_is_blanket_impl_member", """
         trait Trait1 {
             fn foo(&self);
@@ -185,7 +182,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "baz" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_blanket_impl_member feature for a UFCS path`() = doTest("ml_rust_is_blanket_impl_member", """
         trait Trait1 {
             fn foo(&self);
@@ -220,7 +216,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "EGGS" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_unsafe_fn feature`() = doTest("ml_rust_is_unsafe_fn", """
         unsafe fn foo() {}
         extern "C" {
@@ -238,7 +233,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "qux" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_async_fn feature`() = doTest("ml_rust_is_async_fn", """
         async fn foo() {}
         fn bar() {}
@@ -250,7 +244,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "bar" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_const_fn_or_const feature`() = doTest("ml_rust_is_const_fn_or_const", """
         const fn foo() {}
         const C: i32 = 1;
@@ -266,7 +259,6 @@ class RsElementFeatureProviderTest : RsTestBase() {
         "S" to 0,
     ))
 
-    @IgnoreInPlatform(213)
     fun `test is_extern_fn feature`() = doTest("ml_rust_is_extern_fn", """
         extern "C" fn foo() {}
         fn bar() {}

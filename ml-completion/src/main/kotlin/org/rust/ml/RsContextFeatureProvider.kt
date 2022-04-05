@@ -8,7 +8,6 @@ package org.rust.ml
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import org.rust.lang.core.completion.RsCompletionContributor
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -27,9 +26,6 @@ class RsContextFeatureProvider : ContextFeatureProvider {
     override fun getName(): String = "rust"
 
     override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
-        // BACKCOMPAT: 2021.3
-        if (!RsCompletionContributor.isAtLeast221Platform) return emptyMap()
-
         val result = hashMapOf<String, MLFeatureValue>()
         val position = environment.parameters.position.findExpansionElementOrSelf()
         val ancestorExpr = position.ancestorOrSelf<RsExpr>()

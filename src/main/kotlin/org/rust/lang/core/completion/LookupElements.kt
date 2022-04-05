@@ -249,12 +249,7 @@ fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
 
 fun LookupElementBuilder.toRsLookupElement(properties: RsLookupElementProperties): LookupElement {
-    return if (RsCompletionContributor.isAtLeast221Platform) {
-        RsLookupElement(this, properties)
-    } else {
-        // BACKCOMPAT: 2021.3
-        this.withPriority(properties.calculateBackCompatPriority())
-    }
+    return RsLookupElement(this, properties)
 }
 
 fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind.KEYWORD): LookupElement =
