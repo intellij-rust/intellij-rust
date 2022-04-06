@@ -38,7 +38,6 @@ def main():
         "mchernyavsky",
         "vlad20012",
         "dima74",
-        "avrong",
         "ozkriff"
     ]
 
