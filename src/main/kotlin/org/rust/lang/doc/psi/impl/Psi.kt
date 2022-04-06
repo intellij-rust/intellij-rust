@@ -94,6 +94,9 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
     override val start: RsDocCodeFenceStartEnd
         get() = notNullChild(childOfType())
 
+    override val end: RsDocCodeFenceStartEnd?
+        get() = childrenOfType<RsDocCodeFenceStartEnd>().getOrNull(1)
+
     override val lang: RsDocCodeFenceLang?
         get() = childOfType()
 
