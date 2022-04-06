@@ -889,6 +889,89 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("examples/foo.rs", toFile = ".../hello.rs")
     }
 
+    fun `test include large generated file`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+            rust("build.rs", """
+                use std::env;
+                use std::fs::File;
+                use std::io::{Seek, Write};
+                use std::path::Path;
+
+                fn main() {
+                    let out_dir = env::var("OUT_DIR").unwrap();
+                    let dest_path = Path::new(&out_dir).join("hello.rs");
+                    let mut f = File::create(&dest_path).unwrap();
+
+                    let payload = b"
+                        pub fn message() -> &'static str {
+                            \"Hello, World!\"
+                        }";
+                    f.write_all(payload).unwrap();
+                    let mut size = payload.len();
+                    while size < 4 * 1024 * 1024 {
+                        let garbage = b"// Some comments that should bloat the file size\n";
+                        f.write_all(garbage).unwrap();
+                        size += garbage.len();
+                    }
+                }
+            """)
+            dir("src") {
+                rust("main.rs", MAIN_RS)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
+    fun `test include large generated file in a subdirectory`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+            rust("build.rs", """
+                use std::env;
+                use std::fs::{create_dir, File};
+                use std::io::{Seek, Write};
+                use std::path::Path;
+
+                fn main() {
+                    let out_dir = env::var("OUT_DIR").unwrap();
+                    let dest_path = Path::new(&out_dir).join("foo").join("hello.rs");
+                    create_dir(dest_path.parent().unwrap()).unwrap();
+                    let mut f = File::create(&dest_path).unwrap();
+
+                    let payload = b"
+                        pub fn message() -> &'static str {
+                            \"Hello, World!\"
+                        }";
+                    f.write_all(payload).unwrap();
+                    let mut size = payload.len();
+                    while size < 4 * 1024 * 1024 {
+                        let garbage = b"// Some comments that should bloat the file size\n";
+                        f.write_all(garbage).unwrap();
+                        size += garbage.len();
+                    }
+                }
+            """)
+            dir("src") {
+                rust("main.rs", """
+                    include!(concat!(env!("OUT_DIR"), "/foo/hello.rs"));
+                    fn main() {
+                        println!("{}", message());
+                                       //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
     companion object {
         @Language("Rust")
         private const val MAIN_RS = """
