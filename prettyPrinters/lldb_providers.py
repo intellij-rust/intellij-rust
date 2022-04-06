@@ -262,6 +262,77 @@ class TupleSyntheticProvider:
         return True
 
 
+def MSVCEnumSummaryProvider(valobj, _dict):
+    internal = valobj.GetChildMemberWithName("internal")
+    type_name = internal.GetType().name
+    segments = type_name.rsplit("::", 1)
+    if len(segments) > 1:
+        if segments[-1] != "Discriminant$":
+            return segments[-1]
+        else:
+            # Niche-layout enum without data
+            return internal.GetValue()
+    else:
+        return ""
+
+
+class MSVCEnumSyntheticProvider:
+    def __init__(self, valobj, _dict):
+        # type: (SBValue, dict) -> None
+        self.valobj = valobj
+        self.variant = None
+        self.size = 0
+
+        type = valobj.GetType()
+        discriminant = valobj.GetChildMemberWithName("discriminant").GetValue()
+
+        dataful_variant = valobj.GetChildMemberWithName("dataful_variant")
+        if dataful_variant:
+            # Niche-layout enum
+            # Split from the right because type name might have templates
+            # e.g. "enum$<Foo<..., ...>>, 1, 100, Some>"
+            items = type.name.rsplit(',', 4)
+            start = int(items[-3])
+            end = int(items[-2])
+            if discriminant.isnumeric() and start <= int(discriminant) <= end:
+                self.variant = dataful_variant
+                self.size = 1
+            else:
+                self.variant = valobj.GetChildMemberWithName("discriminant")
+                self.size = 0
+        else:
+            # Directly tagged enums
+            for field in type.fields:
+                field_variant = field.type.name
+                if discriminant is not None and field_variant.endswith("::" + discriminant):
+                    self.variant = self.valobj.GetChildMemberWithName(field.name)
+                    self.size = self.variant.GetNumChildren()
+
+    def num_children(self):
+        # type: () -> int
+        return self.size
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        if name == "internal":
+            return self.size
+        return self.variant.GetIndexOfChildWithName(name)
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if index == self.size:
+            return self.variant
+        return self.variant.GetChildAtIndex(index)
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
 class StdVecSyntheticProvider:
     """Pretty-printer for alloc::vec::Vec<T>
 
@@ -407,22 +478,7 @@ class StdHashMapSyntheticProvider:
         ctrl = inner_table.GetChildMemberWithName("ctrl").GetChildAtIndex(0)
 
         self.size = inner_table.GetChildMemberWithName("items").GetValueAsUnsigned()
-
-        if table.type.GetNumberOfTemplateArguments() > 0:
-            self.pair_type = table.type.template_args[0].GetTypedefedType()
-        else:
-            # LLDB without Rust patches
-            type_name = table.type.name  # expected "RawTable<tuple$<K,V>>,alloc::alloc::Global>"
-            template_args = type_name[type_name.find('<') + 1: type_name.rfind('>')]
-            first_arg_end = template_args.rfind(">,")
-            if first_arg_end >= 0 and template_args.endswith("alloc::alloc::Global"):
-                first_template_arg = template_args[:first_arg_end + 1]  # expected "tuple$<K,V>"
-            else:
-                # fallback, try to use the entire string as a type name
-                # (this might happen if LLDB omits the allocator type for some reason)
-                first_template_arg = template_args
-            self.pair_type = table.GetTarget().FindTypes(first_template_arg).GetTypeAtIndex(0)
-
+        self.pair_type = table.type.template_args[0].GetTypedefedType()
         self.pair_type_size = self.pair_type.GetByteSize()
 
         self.new_layout = not inner_table.GetChildMemberWithName("data").IsValid()
