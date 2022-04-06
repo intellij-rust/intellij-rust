@@ -42,7 +42,7 @@ def classify_rust_type(type):
             return RustType.ENUM
         return classify_struct(type.tag, type.fields())
     if type_class == TYPE_CODE_UNION:
-        return classify_union(type.fields())
+        return classify_union(type.tag, type.fields())
 
     return RustType.OTHER
 

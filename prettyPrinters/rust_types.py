@@ -9,6 +9,7 @@ class RustType(object):
     TUPLE_VARIANT = "TupleVariant"
     STRUCT_VARIANT = "StructVariant"
     ENUM = "Enum"
+    MSVC_ENUM = "MSVCEnum"
     EMPTY = "Empty"
     SINGLETON_ENUM = "SingletonEnum"
     REGULAR_ENUM = "RegularEnum"
@@ -82,9 +83,11 @@ STD_RANGE_TO_REGEX = re.compile(r"^core::ops::range::RangeTo<.+>$")
 STD_RANGE_TO_INCLUSIVE_REGEX = re.compile(r"^core::ops::range::RangeToInclusive<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
+MSVC_ENUM_REGEX = re.compile(r"^enum\$<.+>$")
 
 ENCODED_ENUM_PREFIX = "RUST$ENCODED$ENUM$"
 ENUM_DISR_FIELD_NAME = "<<variant>>"
+MSVC_ENUM_DISR_FIELD_NAME = "discriminant"
 
 STD_TYPE_TO_REGEX = {
     RustType.STD_STRING: STD_STRING_REGEX,
@@ -133,7 +136,16 @@ def classify_struct(name, fields):
         if regex.match(name):
             return ty
 
-    if fields[0].name == ENUM_DISR_FIELD_NAME:
+    field_names = [field.name for field in fields]
+
+    # Check for enum parsed by MSVC LLDB with Rust support.
+    # When using MSVC toolchain, rustc generates a **union** of structs for each enum variant.
+    # https://github.com/rust-lang/rust/blob/master/compiler/rustc_codegen_llvm/src/debuginfo/metadata/enums/cpp_like.rs
+    # When Rust support is enabled, MSVC LLDB parses enum unions properly as **structures**
+    if name and MSVC_ENUM_REGEX.match(name) and MSVC_ENUM_DISR_FIELD_NAME in field_names:
+        return RustType.MSVC_ENUM
+
+    if field_names[0] == ENUM_DISR_FIELD_NAME:
         return RustType.ENUM
 
     if is_tuple_fields(fields):
@@ -142,17 +154,22 @@ def classify_struct(name, fields):
     return RustType.STRUCT
 
 
-def classify_union(fields):
+def classify_union(name, fields):
     if len(fields) == 0:
         return RustType.EMPTY
 
-    first_variant_name = fields[0].name
-    if first_variant_name is None:
+    field_names = [field.name for field in fields]
+
+    # Check for enum parsed by MSVC LLDB without Rust support
+    if MSVC_ENUM_REGEX.match(name) and MSVC_ENUM_DISR_FIELD_NAME in field_names:
+        return RustType.MSVC_ENUM
+
+    if field_names[0] is None:
         if len(fields) == 1:
             return RustType.SINGLETON_ENUM
         else:
             return RustType.REGULAR_ENUM
-    elif first_variant_name.startswith(ENCODED_ENUM_PREFIX):
+    elif field_names[0].startswith(ENCODED_ENUM_PREFIX):
         assert len(fields) == 1
         return RustType.COMPRESSED_ENUM
     else:

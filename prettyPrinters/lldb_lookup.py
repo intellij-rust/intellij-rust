@@ -11,7 +11,7 @@ def classify_rust_type(type):
     if type_class == eTypeClassStruct:
         return classify_struct(type.name, type.fields)
     if type_class == eTypeClassUnion:
-        return classify_union(type.fields)
+        return classify_union(type.name, type.fields)
     if type_class == eTypeClassPointer:
         return classify_pointer(type.name)
 
@@ -80,6 +80,9 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
         return StdRangeToInclusiveSummaryProvider(valobj, dict)
 
+    if rust_type == RustType.MSVC_ENUM:
+        return MSVCEnumSummaryProvider(valobj, dict)
+
     return ""
 
 
@@ -103,6 +106,8 @@ def synthetic_lookup(valobj, dict):
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
+    if rust_type == RustType.MSVC_ENUM:
+        return MSVCEnumSyntheticProvider(valobj, dict)
 
     if rust_type == RustType.STD_SLICE or rust_type == RustType.STD_MSVC_SLICE:
         return StdSliceSyntheticProvider(valobj, dict)

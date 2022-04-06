@@ -200,6 +200,7 @@ class RsDebugProcessConfigurationHelper(
          * may be not supported by LLDB so it should not be used there
          */
         private val RUST_STD_TYPES: List<String> = listOf(
+            "^enum\\$<.+>$",
             "^(alloc::([a-z_]+::)+)String$",
             "^[&*]?(const |mut )?str\\*?$",
             "^&(mut )?\\[.*\\]$",
