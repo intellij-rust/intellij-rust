@@ -14,6 +14,7 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.cargo.project.model.CargoProject
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
+import org.rust.debugger.settings.RsDebuggerSettings
 
 class RsDebugRunParameters(
     val project: Project,
@@ -31,6 +32,8 @@ class RsDebugRunParameters(
         }
         return object : LLDBDriverConfiguration() {
             override fun isElevated(): Boolean = isElevated
+
+            override fun useRustTypeSystem(): Boolean = RsDebuggerSettings.getInstance().enableRustMSVC
         }
     }
 }

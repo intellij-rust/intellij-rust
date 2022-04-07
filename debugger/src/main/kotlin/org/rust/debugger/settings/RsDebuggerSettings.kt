@@ -26,6 +26,8 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     var breakOnPanic: Boolean = true
 
+    var enableRustMSVC: Boolean = false
+
     override fun getState(): RsDebuggerSettings = this
 
     override fun loadState(state: RsDebuggerSettings) {

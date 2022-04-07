@@ -26,6 +26,7 @@ class RsDebuggerGeneralSettingsConfigurableUi : ConfigurableUi<RsDebuggerSetting
             components.add(RsDebuggerToolchainConfigurableUi())
         }
         components.add(RsBreakOnPanicConfigurableUi())
+        components.add(RsEnableRustMSVCConfigurableUi())
         components
     }
 
