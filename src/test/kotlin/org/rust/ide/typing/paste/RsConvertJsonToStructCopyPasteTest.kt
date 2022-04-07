@@ -643,7 +643,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"a": [1, 2, 3,],}""")
 
-    fun `test unify structs in array 1`() = doCopyPasteTest("""
+    fun `test unify structs in array disjoint types`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
@@ -658,7 +658,35 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"items": [{"a": 1}, {"b":  2}]}""")
 
-    fun `test unify structs in array 2`() = doCopyPasteTest("""
+    fun `test unify structs in array one array is empty`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: Vec<String>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Struct1>,
+        }
+    """, """{"items": [{"a": []}, {"a": ["a", "b"]}]}""")
+
+    fun `test unify structs in array one array contains null`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: Vec<Option<String>>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Struct1>,
+        }
+    """, """{"items": [{"a": ["a", null]}, {"a": ["a", "b"]}]}""")
+
+    fun `test unify structs in array field with multiple types`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
@@ -674,7 +702,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"items": [{"a": 1, "opt_field": true}, {"a":  2}, {"a":  2, "opt_field_2": 2}, {"a":  2, "opt_field": 1}]}""")
 
-    fun `test unify structs in array 3`() = doCopyPasteTest("""
+    fun `test unify structs in array nested optional field`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
@@ -707,7 +735,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
   ]
 }""")
 
-    fun `test unify structs in array 4`() = doCopyPasteTest("""
+    fun `test unify structs in array nested disjoint and optional keys`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
@@ -758,6 +786,77 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     }
   ]
 }""")
+
+    fun `test unify structs in array containing null`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: String,
+            pub b: Option<i64>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Option<Struct1>>,
+        }
+    """, """{
+      "items": [
+        {
+          "a": "1"
+        },
+        {
+          "a": "2",
+          "b": 1
+        },
+        null,
+        null
+      ]
+    }""")
+
+    fun `test unify structs in array containing non-struct type`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct {
+            pub items: Vec<_>,
+        }
+    """, """{
+      "items": [
+        {
+          "a": "1"
+        },
+        {
+          "a": "2",
+          "b": 1
+        },
+        1
+      ]
+    }""")
+
+    fun `test unify structs in array null field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct1 {
+            pub a: Option<String>,
+        }
+
+        struct Struct2 {
+            pub items: Vec<Struct1>,
+        }
+    """, """{
+      "items": [
+        {
+          "a": "1"
+        },
+        {
+          "a": null
+        }
+      ]
+    }""")
 
     override fun setUp() {
         super.setUp()
