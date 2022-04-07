@@ -10,6 +10,7 @@ import com.jetbrains.cidr.ArchitectureType
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
+import org.rust.debugger.settings.RsDebuggerSettings
 import java.io.File
 
 class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
@@ -28,6 +29,8 @@ private open class RsLLDBDriverConfiguration(
     private val isElevated: Boolean
 ) : LLDBDriverConfiguration() {
     override fun isElevated(): Boolean = isElevated
+
+    override fun useRustTypeSystem(): Boolean = RsDebuggerSettings.getInstance().enableRustMSVC
 }
 
 private class RsCustomBinariesLLDBDriverConfiguration(
