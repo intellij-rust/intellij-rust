@@ -11,7 +11,6 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,6 +25,8 @@ import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.filters.*
+import org.rust.cargo.runconfig.target.startProcess
+import org.rust.cargo.runconfig.target.targetEnvironment
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.openapiext.checkIsDispatchThread
@@ -189,15 +190,13 @@ fun CargoRunStateBase.executeCommandLine(
     environment: ExecutionEnvironment
 ): DefaultExecutionResult {
     val runConfiguration = runConfiguration
+    val targetEnvironment = runConfiguration.targetEnvironment
     val context = ConfigurationExtensionContext()
 
     val extensionManager = RsRunConfigurationExtensionManager.getInstance()
     extensionManager.patchCommandLine(runConfiguration, environment, commandLine, context)
     extensionManager.patchCommandLineState(runConfiguration, environment, this, context)
-
-    val handler = RsProcessHandler(commandLine)
-    ProcessTerminatedListener.attach(handler) // shows exit code upon termination
-
+    val handler = commandLine.startProcess(environment.project, targetEnvironment, processColors = true, uploadExecutable = true)
     extensionManager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
 
     val console = consoleBuilder.console

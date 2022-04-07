@@ -20,9 +20,10 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -31,13 +32,14 @@ import org.rust.stdext.toPath
 import java.util.concurrent.CompletableFuture
 
 abstract class RsExecutableRunner(
-    private val executorId: String,
+    protected val executorId: String,
     private val errorMessageTitle: String
 ) : RsDefaultProgramRunnerBase() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
-        if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
-            profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return profile.isBuildToolWindowEnabled &&
+        if (executorId != this.executorId || profile !is CargoCommandConfiguration) return false
+        if (profile.clean().ok == null) return false
+        return !profile.hasRemoteTarget &&
+            profile.isBuildToolWindowAvailable &&
             !isBuildConfiguration(profile) &&
             getBuildConfiguration(profile) != null
     }

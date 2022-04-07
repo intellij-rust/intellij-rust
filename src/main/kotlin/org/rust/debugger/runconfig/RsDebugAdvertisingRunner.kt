@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.util.PlatformUtils.*
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.debugger.NATIVE_DEBUGGING_SUPPORT_PLUGIN_ID
 import org.rust.debugger.nativeDebuggingSupportPlugin
 import org.rust.openapiext.isUnitTestMode
@@ -33,6 +34,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
         if (profile !is CargoCommandConfiguration) return false
         if (!isSupportedPlatform()) return false
+        if (profile.hasRemoteTarget) return false
         val plugin = nativeDebuggingSupportPlugin() ?: return true
         val loadedPlugins = PluginManagerCore.getLoadedPlugins()
         return plugin !in loadedPlugins || !plugin.isEnabled

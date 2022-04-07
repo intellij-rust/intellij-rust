@@ -13,14 +13,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.CargoRunStateBase
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner.Companion.Binary
 import org.rust.debugger.runconfig.RsDebugRunnerUtils
 import org.rust.debugger.runconfig.RsDebugRunnerUtils.ERROR_MESSAGE_TITLE
 
 /**
- * This runner is used if [isBuildToolWindowEnabled] is false.
+ * This runner is used if [isBuildToolWindowAvailable] is false.
  */
 abstract class RsDebugRunnerLegacyBase : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID
