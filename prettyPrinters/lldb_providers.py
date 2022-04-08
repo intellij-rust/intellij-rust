@@ -37,7 +37,7 @@ from lldb import eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar,
 
 PY3 = sys.version_info[0] == 3
 if PY3:
-    from typing import Optional
+    from typing import Optional, List
 
 
 def unwrap_unique_or_non_null(unique_or_nonnull):
@@ -53,6 +53,26 @@ def unwrap_unique_or_non_null(unique_or_nonnull):
         return inner_ptr
     else:
         return ptr
+
+
+def get_template_params(type_name):
+    # type: (str) -> List[str]
+    params = []
+    level = 0
+    start = 0
+    for i, c in enumerate(type_name):
+        if c == '<':
+            level += 1
+            if level == 1:
+                start = i + 1
+        elif c == '>':
+            level -= 1
+            if level == 0:
+                params.append(type_name[start:i].strip())
+        elif c == ',' and level == 1:
+            params.append(type_name[start:i].strip())
+            start = i + 1
+    return params
 
 
 class ValueBuilder:
@@ -418,7 +438,15 @@ class StdHashMapSyntheticProvider:
         ctrl = inner_table.GetChildMemberWithName("ctrl").GetChildAtIndex(0)
 
         self.size = inner_table.GetChildMemberWithName("items").GetValueAsUnsigned()
-        self.pair_type = table.type.template_args[0].GetTypedefedType()
+
+        if table.type.GetNumberOfTemplateArguments() > 0:
+            self.pair_type = table.type.template_args[0].GetTypedefedType()
+        else:
+            # MSVC LLDB (does not support template arguments at the moment)
+            type_name = table.type.name  # expected "RawTable<tuple$<K,V>,alloc::alloc::Global>"
+            first_template_arg = get_template_params(type_name)[0]
+            self.pair_type = table.GetTarget().FindTypes(first_template_arg).GetTypeAtIndex(0)
+
         self.pair_type_size = self.pair_type.GetByteSize()
 
         self.new_layout = not inner_table.GetChildMemberWithName("data").IsValid()
