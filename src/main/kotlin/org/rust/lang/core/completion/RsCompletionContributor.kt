@@ -9,8 +9,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.BuildNumber
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.RsPsiPattern.declarationPattern
 import org.rust.lang.core.RsPsiPattern.inherentImplDeclarationPattern
@@ -59,25 +57,17 @@ class RsCompletionContributor : CompletionContributor() {
 
     companion object {
         private val RS_COMPLETION_WEIGHERS_GROUPED: List<AnchoredWeigherGroup> = splitIntoGroups(RS_COMPLETION_WEIGHERS)
-        // BACKCOMPAT: 2021.3
-        private val BUILD_221 = BuildNumber.fromString("221")!!
-        val isAtLeast221Platform get() = ApplicationInfo.getInstance().build >= BUILD_221
 
         /**
          * Applies [RS_COMPLETION_WEIGHERS] to [result]
          */
         fun withRustSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
-            return if (isAtLeast221Platform) {
-                var sorter = (CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl)
-                    .withoutClassifiers { it.id == "liftShorter" }
-                for (weigherGroups in RS_COMPLETION_WEIGHERS_GROUPED) {
-                    sorter = sorter.weighAfter(weigherGroups.anchor, *weigherGroups.weighers)
-                }
-                result.withRelevanceSorter(sorter)
-            } else {
-                // BACKCOMPAT: 2021.3
-                result
+            var sorter = (CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl)
+                .withoutClassifiers { it.id == "liftShorter" }
+            for (weigherGroups in RS_COMPLETION_WEIGHERS_GROUPED) {
+                sorter = sorter.weighAfter(weigherGroups.anchor, *weigherGroups.weighers)
             }
+            return result.withRelevanceSorter(sorter)
         }
 
         private fun splitIntoGroups(weighersWithAnchors: List<Any>): List<AnchoredWeigherGroup> {

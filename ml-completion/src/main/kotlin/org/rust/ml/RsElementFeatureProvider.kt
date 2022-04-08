@@ -11,7 +11,6 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.ide.utils.import.isStd
-import org.rust.lang.core.completion.RsCompletionContributor
 import org.rust.lang.core.completion.RsLookupElement
 import org.rust.lang.core.completion.sort.RS_COMPLETION_WEIGHERS
 import org.rust.lang.core.completion.sort.RsCompletionWeigher
@@ -63,17 +62,14 @@ class RsElementFeatureProvider : ElementFeatureProvider {
             result[IS_FROM_STDLIB] = MLFeatureValue.binary(containingCrate.isStd)
         }
 
-        // BACKCOMPAT: 2021.3
-        if (RsCompletionContributor.isAtLeast221Platform) {
-            val rsElement = element.`as`(RsLookupElement::class.java)
-            if (rsElement != null) {
-                result[IS_OPERATOR_METHOD] = MLFeatureValue.binary(rsElement.props.isOperatorMethod)
-                result[IS_BLANKET_IMPL_MEMBER] = MLFeatureValue.binary(rsElement.props.isBlanketImplMember)
-                result[IS_UNSAFE_FN] = MLFeatureValue.binary(rsElement.props.isUnsafeFn)
-                result[IS_ASYNC_FN] = MLFeatureValue.binary(rsElement.props.isAsyncFn)
-                result[IS_CONST_FN_OR_CONST] = MLFeatureValue.binary(rsElement.props.isConstFnOrConst)
-                result[IS_EXTERN_FN] = MLFeatureValue.binary(rsElement.props.isExternFn)
-            }
+        val rsElement = element.`as`(RsLookupElement::class.java)
+        if (rsElement != null) {
+            result[IS_OPERATOR_METHOD] = MLFeatureValue.binary(rsElement.props.isOperatorMethod)
+            result[IS_BLANKET_IMPL_MEMBER] = MLFeatureValue.binary(rsElement.props.isBlanketImplMember)
+            result[IS_UNSAFE_FN] = MLFeatureValue.binary(rsElement.props.isUnsafeFn)
+            result[IS_ASYNC_FN] = MLFeatureValue.binary(rsElement.props.isAsyncFn)
+            result[IS_CONST_FN_OR_CONST] = MLFeatureValue.binary(rsElement.props.isConstFnOrConst)
+            result[IS_EXTERN_FN] = MLFeatureValue.binary(rsElement.props.isExternFn)
         }
 
         return result
