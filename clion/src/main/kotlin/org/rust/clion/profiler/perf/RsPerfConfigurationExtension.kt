@@ -63,7 +63,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         PerfUtils.validateKernelVariables(toolEnvironment, project)?.let { throw it }
 
         val settings = PerfProfilerSettings.instance.state
-        val perfPath = settings.executablePath.orEmpty()
+        val perfPath = toolchain.toLocalPath(settings.executablePath.orEmpty())
         val outputFilePath = PerfUtils.createOutputFilePath(toolEnvironment, settings.outputDirectory.nullize())
         cmdLine.addPerfStarter(perfPath, settings.samplingFrequency, settings.defaultCmdArgs, outputFilePath.toString())
         toolchain.patchCommandLine(cmdLine)
