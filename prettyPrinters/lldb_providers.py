@@ -407,7 +407,22 @@ class StdHashMapSyntheticProvider:
         ctrl = inner_table.GetChildMemberWithName("ctrl").GetChildAtIndex(0)
 
         self.size = inner_table.GetChildMemberWithName("items").GetValueAsUnsigned()
-        self.pair_type = table.type.template_args[0].GetTypedefedType()
+
+        if table.type.GetNumberOfTemplateArguments() > 0:
+            self.pair_type = table.type.template_args[0].GetTypedefedType()
+        else:
+            # LLDB without Rust patches
+            type_name = table.type.name  # expected "RawTable<tuple$<K,V>>,alloc::alloc::Global>"
+            template_args = type_name[type_name.find('<') + 1: type_name.rfind('>')]
+            first_arg_end = template_args.rfind(">,")
+            if first_arg_end >= 0 and template_args.endswith("alloc::alloc::Global"):
+                first_template_arg = template_args[:first_arg_end + 1]  # expected "tuple$<K,V>"
+            else:
+                # fallback, try to use the entire string as a type name
+                # (this might happen if LLDB omits the allocator type for some reason)
+                first_template_arg = template_args
+            self.pair_type = table.GetTarget().FindTypes(first_template_arg).GetTypeAtIndex(0)
+
         self.pair_type_size = self.pair_type.GetByteSize()
 
         self.new_layout = not inner_table.GetChildMemberWithName("data").IsValid()
