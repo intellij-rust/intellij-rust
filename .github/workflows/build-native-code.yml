@@ -49,7 +49,7 @@ jobs:
               uses: actions/cache@v2.1.4
               with:
                   path: ${{ matrix.config.artifact_path }}
-                  key: ${{ matrix.config.arch }}-${{ runner.os }}-native-helper-${{ inputs.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
+                  key: ${{ matrix.config.arch }}-${{ matrix.config.os }}-native-helper-${{ inputs.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
 
             - name: Set up Rust
               if: ${{ !inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit }}
