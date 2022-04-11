@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.util.DocumentUtil
 import org.rust.lang.RsFileType
@@ -153,6 +154,7 @@ private fun reformatMacroExpansion(
 private class MacroExpansionViewComponent(expansion: MacroExpansion) : JPanel(BorderLayout()) {
 
     private val editor: EditorEx
+    private var isEditorReleased: Boolean = false
 
     init {
         require(expansion.elements.isNotEmpty()) { "Must be at least one expansion!" }
@@ -182,8 +184,10 @@ private class MacroExpansionViewComponent(expansion: MacroExpansion) : JPanel(Bo
      */
     override fun removeNotify() {
         super.removeNotify()
-
-        EditorFactory.getInstance().releaseEditor(editor)
+        if (ScreenUtil.isStandardAddRemoveNotify(this) && !isEditorReleased) {
+            isEditorReleased = true // remove notify can be called several times for popup windows
+            EditorFactory.getInstance().releaseEditor(editor)
+        }
     }
 }
 
