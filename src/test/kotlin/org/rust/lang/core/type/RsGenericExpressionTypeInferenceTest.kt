@@ -1521,6 +1521,28 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test infer associated type binding from supertrait`() = testExpr("""
+        trait Parent {
+            type Item;
+            fn item(&self) -> Self::Item;
+        }
+        trait Child : Parent {}
+
+        struct Foo;
+        struct Bar;
+        impl Parent for Foo {
+            type Item = Bar;
+            fn item(&self) -> Self::Item { unimplemented!() }
+        }
+        impl Child for Foo {}
+
+        fn new() -> impl Child<Item = Bar> { unimplemented!() }
+        fn main() {
+            let bar = new().item();
+            bar;
+        } //^ Bar
+    """)
+
     fun `test select trait from unconstrained integer`() = testExpr("""
         struct X;
         trait Tr<A> {}
