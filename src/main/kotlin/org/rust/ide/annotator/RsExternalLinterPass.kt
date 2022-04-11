@@ -83,7 +83,9 @@ class RsExternalLinterPass(
             return
         }
 
-        val update = object : Update(file) {
+        class RsUpdate: Update(file) {
+            val updateFile: RsFile = file
+
             override fun setRejected() {
                 super.setRejected()
                 doFinish(highlights)
@@ -102,9 +104,10 @@ class RsExternalLinterPass(
                 })
             }
 
-            override fun canEat(update: Update?): Boolean = true
+            override fun canEat(update: Update?): Boolean = updateFile == (update as? RsUpdate)?.updateFile
         }
 
+        val update = RsUpdate()
         if (isUnitTestMode) {
             update.run()
         } else {
