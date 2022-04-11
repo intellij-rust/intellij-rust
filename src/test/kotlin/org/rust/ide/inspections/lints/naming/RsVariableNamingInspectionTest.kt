@@ -98,4 +98,11 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
             let (一, 二) = (1, 2);
         }
     """)
+
+    fun `test not a variable - unit struct`() = checkByText("""
+        struct Foo;
+        fn main() {
+            let Foo = Foo;
+        }
+    """)
 }

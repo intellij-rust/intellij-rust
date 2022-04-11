@@ -320,6 +320,8 @@ class RsVariableNamingInspection : RsSnakeCaseNamingInspection("Variable") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitPatBinding(el: RsPatBinding) {
+                if (el.isReferenceToConstant) return
+
                 val pattern = PsiTreeUtil.getTopmostParentOfType(el, RsPat::class.java) ?: return
                 when (pattern.parent) {
                     is RsLetDecl -> inspect(el.identifier, holder)
