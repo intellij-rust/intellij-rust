@@ -388,10 +388,9 @@ class Cargo(
     private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
         with(commandLine.patchArgs(project, colors)) {
             val parameters = buildList<String> {
-                if (channel != RustChannel.DEFAULT) {
-                    add("+$channel")
-                } else if (toolchain != null) {
-                    add("+$toolchain")
+                when {
+                    channel != RustChannel.DEFAULT -> add("+$channel")
+                    toolchain != null -> add("+$toolchain")
                 }
                 if (project.rustSettings.useOffline) {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory)

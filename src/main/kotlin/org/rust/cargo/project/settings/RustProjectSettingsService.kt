@@ -49,7 +49,9 @@ interface RustProjectSettingsService {
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
         var doctestInjectionEnabled: Boolean = true,
+        // BACKCOMPAT: 2022.1
         var useRustfmt: Boolean = false,
+        // BACKCOMPAT: 2022.1
         var runRustfmtOnSave: Boolean = false,
     ) {
         @get:Transient
@@ -106,8 +108,6 @@ interface RustProjectSettingsService {
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
     val doctestInjectionEnabled: Boolean
-    val useRustfmt: Boolean
-    val runRustfmtOnSave: Boolean
 
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")

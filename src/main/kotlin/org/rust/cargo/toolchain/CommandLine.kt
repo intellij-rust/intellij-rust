@@ -138,12 +138,16 @@ data class CargoCommandLine(
             cargoProject: CargoProject,
             command: String,
             additionalArguments: List<String> = emptyList(),
-            channel: RustChannel = RustChannel.DEFAULT
+            toolchain: String? = null,
+            channel: RustChannel = RustChannel.DEFAULT,
+            environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
         ): CargoCommandLine = CargoCommandLine(
             command,
             workingDirectory = cargoProject.workingDirectory,
             additionalArguments = additionalArguments,
-            channel = channel
+            toolchain = toolchain,
+            channel = channel,
+            environmentVariables = environmentVariables
         )
 
         fun forPackage(

@@ -58,8 +58,6 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(true, service.useOffline)
         assertEquals(MacroExpansionEngine.DISABLED, service.macroExpansionEngine)
         assertEquals(false, service.doctestInjectionEnabled)
-        assertEquals(true, service.useRustfmt)
-        assertEquals(true, service.runRustfmtOnSave)
     }
 
     fun `test update from version 1`() {
