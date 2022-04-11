@@ -51,6 +51,35 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         """, sourceElement)
     }
 
+    fun `test long output`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("long_output.txt", "0".repeat(9000))
+
+                rust("lib.rs", """
+                    #[test]
+                    fn test_long_output() {
+                        println!("{}", include_str!("long_output.txt"));
+                    }
+                """)
+            }
+        }
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](+)
+            .sandbox(+)
+            ..test_long_output(+)
+        """, sourceElement)
+    }
+
     fun `test doctests statuses`() {
         buildProject {
             toml("Cargo.toml", """
@@ -198,7 +227,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                     /// true;
                     /// ```
                     pub fn doctest_should_pass() {}
-                    
+
                     /// ```
                     /// assert_eq!(1, 2);
                     /// ```
@@ -242,7 +271,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                     /// true;
                     /// ```
                     pub fn doctest_should_pass() {}
-                    
+
                     /// ```
                     /// assert_eq!(1, 2);
                     /// ```
