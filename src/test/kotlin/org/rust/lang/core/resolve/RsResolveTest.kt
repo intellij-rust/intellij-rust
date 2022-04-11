@@ -1286,6 +1286,30 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test pattern constant binding ambiguity enum variant`() = checkByCode("""
+        enum Enum { Var1, Var2 }
+                  //X
+        use Enum::Var1;
+        fn main() {
+            match Enum::Var1 {
+                Var1 => {}
+                //^
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test pattern constant binding ambiguity unit struct`() = checkByCode("""
+        struct Foo;
+             //X
+        fn main() {
+            match Foo {
+                Foo => {}
+                //^
+            }
+        }
+    """)
+
     fun `test match enum path`() = checkByCode("""
         enum Enum { Var1, Var2 }
                   //X

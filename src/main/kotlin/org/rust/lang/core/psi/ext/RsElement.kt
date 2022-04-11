@@ -22,7 +22,10 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.resolve.*
 
 interface RsElement : PsiElement {
@@ -83,7 +86,7 @@ val PsiElement.isAtLeastEdition2018: Boolean
  * Constant-like element can be: real constant, static variable, and enum variant without fields.
  */
 val RsElement.isConstantLike: Boolean
-    get() = this is RsConstant || (this is RsEnumVariant && isFieldless)
+    get() = this is RsConstant || (this is RsFieldsOwner && isFieldless)
 
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCrate
