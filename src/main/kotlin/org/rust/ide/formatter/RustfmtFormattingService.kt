@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.formatter.FormatterUtil
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
@@ -35,7 +35,7 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
     override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
 
     override fun canFormat(file: PsiFile): Boolean =
-        file is RsFile && file.project.rustSettings.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
+        file is RsFile && file.project.rustfmtSettings.state.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
 
     override fun createFormattingTask(request: AsyncFormattingRequest): FormattingTask? {
         val context = request.context

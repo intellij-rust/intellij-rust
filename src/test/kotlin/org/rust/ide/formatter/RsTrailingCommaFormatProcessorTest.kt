@@ -6,7 +6,7 @@
 package org.rust.ide.formatter
 
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
@@ -164,7 +164,7 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
         """.trimIndent()
 
         // This enables usage of `RustfmtExternalFormatProcessor`, but not `Rustfmt` itself
-        project.rustSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
+        project.rustfmtSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
         // `Rustfmt` will not be used because of range restriction
         myTextRange = RsPsiFactory(project).createFile(before).descendantOfTypeStrict<RsStructItem>()!!.textRange
 

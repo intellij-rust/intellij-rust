@@ -178,7 +178,7 @@ jobs:
               with:
                   profile: minimal
                   toolchain: nightly
-                  components: rust-src
+                  components: rust-src, rustfmt
                   default: false
 
             - name: Cache cargo binaries

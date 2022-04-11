@@ -1023,6 +1023,9 @@
 
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
+
+        <projectService serviceImplementation="org.rust.cargo.project.settings.RustfmtProjectSettingsService"/>
+
         <projectService serviceInterface="org.rust.cargo.project.model.CargoProjectsService"
                         serviceImplementation="org.rust.cargo.project.model.impl.CargoProjectsServiceImpl"
                         testServiceImplementation="org.rust.cargo.project.model.impl.TestCargoProjectsServiceImpl"/>

@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions.runAnything.wasmpack
 
+import com.intellij.execution.Executor
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -24,8 +25,8 @@ class WasmPackRunAnythingProvider : RsRunAnythingProvider() {
     override fun getMainListItem(dataContext: DataContext, value: String): RunAnythingItem =
         RunAnythingWasmPackItem(getCommand(value), getIcon(value))
 
-    override fun run(command: String, params: List<String>, workingDirectory: Path, cargoProject: CargoProject) {
-        WasmPackCommandLine(command, workingDirectory, params).run(cargoProject)
+    override fun run(executor: Executor, command: String, params: List<String>, workingDirectory: Path, cargoProject: CargoProject) {
+        WasmPackCommandLine(command, workingDirectory, params).run(cargoProject, executor = executor)
     }
 
     override fun getCompletionProvider(project: Project, dataContext: DataContext): RsCommandCompletionProvider =
