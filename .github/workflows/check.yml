@@ -204,8 +204,8 @@ jobs:
                   args: evcxr_repl --locked
 
             - name: Install cargo-generate
-              # BACKCOMPAT: zeroize dependency requires Rust 1.51.0 or newer
-              if: matrix.rust-version >= '1.51.0'
+              # BACKCOMPAT: kstring dependency requires Rust 1.59.0 or newer
+              if: matrix.rust-version >= '1.59.0'
               uses: actions-rs/cargo@v1
               with:
                   command: install
