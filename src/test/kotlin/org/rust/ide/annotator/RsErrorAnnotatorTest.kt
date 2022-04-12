@@ -1796,15 +1796,173 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum E {}
         type T = S;
         mod a {}
+        fn f() {}
         trait Trait {}
         trait TraitAlias = Trait;
         impl <error descr="Expected trait, found struct `S` [E0404]">S</error> for S {}
         impl <error descr="Expected trait, found enum `E` [E0404]">E</error> for S {}
         impl <error descr="Expected trait, found type alias `T` [E0404]">T</error> for S {}
         impl <error descr="Expected trait, found module `a` [E0404]">a</error> for S {}
+        impl <error descr="Expected trait, found function `f` [E0404]">f</error> for S {}
         fn foo<A: <error descr="Expected trait, found struct `S` [E0404]">S</error>>() {}
         fn foo2<A: TraitAlias>() {}
         impl Trait for S {}
+    """)
+
+    fun `test E0573 expected type`() = checkErrors("""
+        fn f() {}
+        const C: i32 = 0;
+        type T1 = <error descr="Expected type, found function `f` [E0573]">f</error>;
+        type T2 = <error descr="Expected type, found constant `C` [E0573]">C</error>;
+        fn foo(
+            a: <error descr="Expected type, found function `f` [E0573]">f</error>,
+            b: <error descr="Expected type, found constant `C` [E0573]">C</error>
+        ) {
+            let c: <error descr="Expected type, found function `f` [E0573]">f</error>;
+            let c: <error descr="Expected type, found constant `C` [E0573]">C</error>;
+        }
+    """)
+
+    fun `test E0532 expected unit struct, unit variant or constant`() = checkErrors("""
+        mod a {
+            pub struct S {}
+            pub type T = i32;
+        }
+        fn main() {
+            let a::<error descr="Expected unit struct, unit variant or constant, found struct `S` [E0532]">S</error> = 1;
+            let a::<error descr="Expected unit struct, unit variant or constant, found type alias `T` [E0532]">T</error> = 1;
+        }
+    """)
+
+    fun `test E0532 tuple struct or tuple variant`() = checkErrors("""
+        fn f() {}
+        const C: i32 = 0;
+        struct S {}
+        struct U;
+        struct T();
+        type TT = T;
+        type TI = i32;
+        fn main() {
+            let <error descr="Expected tuple struct or tuple variant, found function `f` [E0532]">f</error>() = 1;
+            let <error descr="Expected tuple struct or tuple variant, found constant `C` [E0532]">C</error>() = 1;
+            let <error descr="Expected tuple struct or tuple variant, found struct `S` [E0532]">S</error>() = 1;
+            let <error descr="Expected tuple struct or tuple variant, found struct `U` [E0532]">U</error>() = 1;
+            let T() = 1;
+            let <error descr="Expected tuple struct or tuple variant, found type alias `TT` [E0532]">TT</error>() = 1;
+            let <error descr="Expected tuple struct or tuple variant, found type alias `TI` [E0532]">TI</error>() = 1;
+        }
+        impl T {
+            fn foo() {
+                let Self() = 1;
+            }
+        }
+    """)
+
+    fun `test E0423 expected value`() = checkErrors("""
+        pub struct S {}
+        pub type T = i32;
+        fn main() {
+            let _ = <error descr="Expected value, found struct `S` [E0423]">S</error>;
+            let _ = <error descr="Expected value, found type alias `T` [E0423]">T</error>;
+        }
+    """)
+
+    fun `test E0423 expected function`() = checkErrors("""
+        pub struct s {}
+        pub type t = i32;
+        fn main() {
+            let _ = <error descr="Expected function, found struct `s` [E0423]">s</error>();
+            let _ = <error descr="Expected function, found type alias `t` [E0423]">t</error>();
+        }
+    """)
+
+    fun `test E0423 expected function, tuple struct or tuple variant`() = checkErrors("""
+        pub struct S {}
+        pub type T = i32;
+        fn main() {
+            let _ = <error descr="Expected function, tuple struct or tuple variant, found struct `S` [E0423]">S</error>();
+            let _ = <error descr="Expected function, tuple struct or tuple variant, found type alias `T` [E0423]">T</error>();
+        }
+    """)
+
+    fun `test E0574 expected struct, variant or union type in a struct literal`() = checkErrors("""
+        fn f() {}
+        const C: i32 = 0;
+        struct S {}
+        struct U;
+        type TS = S;
+        type TI = i32;
+        fn main() {
+            let _ = <error descr="Expected struct, variant or union type, found function `f` [E0574]">f</error> {};
+            let _ = <error descr="Expected struct, variant or union type, found constant `C` [E0574]">C</error> {};
+            let _ = S {};
+            let _ = U {};
+            let _ = TS {};
+            let _ = <error descr="Expected struct, variant or union type, found type alias `TI` [E0574]">TI</error> {};
+        }
+        impl TS {
+            fn foo() {
+                let _ = Self {};
+            }
+        }
+    """)
+
+    fun `test E0574 expected struct, variant or union type in a struct pattern`() = checkErrors("""
+        fn f() {}
+        const C: i32 = 0;
+        struct S {}
+        struct U;
+        type TS = S;
+        type TI = i32;
+        fn main() {
+            let <error descr="Expected struct, variant or union type, found function `f` [E0574]">f</error> {} = 1;
+            let <error descr="Expected struct, variant or union type, found constant `C` [E0574]">C</error> {} = 1;
+            let S {} = 1;
+            let U {} = 1;
+            let TS {} = 1;
+            let <error descr="Expected struct, variant or union type, found type alias `TI` [E0574]">TI</error> {} = 1;
+        }
+        impl TS {
+            fn foo() {
+                let Self {} = 1;
+            }
+        }
+    """)
+
+    fun `test E0575 expected associated type`() = checkErrors("""
+        trait Trait {
+            type Item;
+            const Constant: i32;
+            fn method(&self) {}
+        }
+        struct S;
+        impl Trait for S {
+            type Item = ();
+            const Constant: i32 = 1;
+        }
+        fn main() {
+            let a: <S as Trait>::Item;
+            let a: <S as Trait>::<error descr="Expected associated type, found constant `Constant` [E0575]">Constant</error>;
+            let a: <S as Trait>::<error descr="Expected associated type, found function `method` [E0575]">method</error>;
+        }
+    """)
+
+    fun `test E0575 expected method or associated constant`() = checkErrors("""
+        trait Trait {
+            type Item;
+            const Constant: i32;
+            fn method(&self) {}
+        }
+        struct S;
+        impl Trait for S {
+            type Item = ();
+            const Constant: i32 = 1;
+        }
+        fn main() {
+            let a = <S as Trait>::<error descr="Expected method or associated constant, found type alias `Item` [E0575]">Item</error>;
+            let a = <S as Trait>::Constant;
+            let a = <S as Trait>::method;
+        }
     """)
 
     @MockRustcVersion("1.21.0")
@@ -1980,7 +2138,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum E2 { A, V { x: i32 } }
         fn foo(a: S, b: ST, c: E1, d: E2, e: Unknown) {
             if let S { x } = a {}
-            if let S(x) = b {}
+            if let ST(x) = b {}
             if let E1::V { x } = c {}
             if let E2::V { x } = d {}
             if let Unknown { x } = e {}

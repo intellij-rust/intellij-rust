@@ -457,7 +457,7 @@ fun RsPathReference.deepResolve(): RsElement? =
     advancedDeepResolve()?.element
 
 /** Resolves a reference through type aliases */
-fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
+fun RsPathReference.advancedDeepResolve(implOnly: Boolean = false): BoundElement<RsElement>? {
     val boundElement = advancedResolve()?.let { resolved ->
         // Resolve potential `Self` inside `impl`
         if (resolved.element is RsImplItem && element.hasCself) {
@@ -466,6 +466,8 @@ fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
             resolved
         }
     }
+
+    if (implOnly) return boundElement
 
     // Resolve potential type aliases
     return if (boundElement != null && boundElement.element is RsTypeAlias) {
