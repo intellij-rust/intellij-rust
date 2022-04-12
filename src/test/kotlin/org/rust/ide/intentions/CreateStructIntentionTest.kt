@@ -189,4 +189,22 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             Foo { a: bar::S };
         }
     """)
+
+    fun `test available if the path is resolved in wrong namespace`() = doAvailableTest("""
+        fn Foo() {}
+        
+        fn main() {
+            Foo/*caret*/ { a: 0 };
+        }
+    """, """
+        fn Foo() {}
+
+        struct Foo {
+            a: i32
+        }
+
+        fn main() {
+            Foo { a: 0 };
+        }
+    """)
 }

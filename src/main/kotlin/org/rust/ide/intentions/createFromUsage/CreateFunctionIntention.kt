@@ -97,7 +97,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val functionCall = path?.parentOfType<RsCallExpr>()
         if (functionCall != null) {
             if (!functionCall.expr.isAncestorOf(path)) return null
-            if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
+            if (!path.resolveStatus.isUnresolvedOrWrongNamespace) return null
 
             val target = getTargetItemForFunctionCall(path) ?: return null
             val name = path.referenceName ?: return null

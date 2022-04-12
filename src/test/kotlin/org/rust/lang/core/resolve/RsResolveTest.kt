@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.CheckTestmarkHit
 import org.rust.MockRustcVersion
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsFieldDecl
@@ -962,12 +963,14 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test self in static`() = checkByCode("""
+        //X
         struct S;
 
         impl S {
             fn foo() { self }
-                      //^ unresolved
+                      //^
         }
     """)
 

@@ -142,13 +142,13 @@ fun RsUseSpeck.isUsed(): Boolean {
 }
 
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
-    if (useSpeck.path?.resolveStatus != PathResolveStatus.RESOLVED) return true
+    val path = useSpeck.path ?: return true
+    if (path.resolveStatus != PathResolveStatus.Resolved) return true
 
     val items = if (useSpeck.isStarImport) {
-        val module = useSpeck.path?.reference?.resolve() as? RsMod ?: return true
+        val module = path.reference?.resolve() as? RsMod ?: return true
         module.exportedItems(useSpeck.containingMod)
     } else {
-        val path = useSpeck.path ?: return true
         val items = path.reference?.multiResolve() ?: return true
         val name = useSpeck.itemName(withAlias = true) ?: return true
         items.filterIsInstance<RsNamedElement>().map { NamedItem(name, it) }

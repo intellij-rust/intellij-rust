@@ -5,10 +5,12 @@
 
 package org.rust.lang.core.type
 
+import org.rust.CheckTestmarkHit
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.lang.core.resolve.NameResolutionTestmarks
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test function call`() = testExpr("""
@@ -1704,6 +1706,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = &raw mut a;
             b;
           //^ *mut i32
+        }
+    """)
+
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
+    fun `test type is unknown in the case of a namespace fallback 1`() = testExpr("""
+        struct Foo {}
+        fn main() {
+            let a = Foo;
+            a;
+          //^ <unknown>
         }
     """)
 }

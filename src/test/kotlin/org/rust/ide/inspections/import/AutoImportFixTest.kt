@@ -668,12 +668,12 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod foo {
             pub struct Foo;
             impl Foo {
-                pub fn foo() {}
+                pub fn bar() {}
             }
         }
 
         fn main() {
-            <error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>();
         }
     """)
 

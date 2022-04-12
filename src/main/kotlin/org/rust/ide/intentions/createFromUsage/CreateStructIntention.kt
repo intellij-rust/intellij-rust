@@ -30,7 +30,7 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
         val structLiteral = path?.parentOfType<RsStructLiteral>()
         if (structLiteral != null) {
             if (structLiteral.path != path) return null
-            if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
+            if (!path.resolveStatus.isUnresolvedOrWrongNamespace) return null
 
             val target = getTargetModForStruct(path) ?: return null
             val name = path.referenceName ?: return null

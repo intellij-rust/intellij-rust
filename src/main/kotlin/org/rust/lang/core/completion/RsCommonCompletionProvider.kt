@@ -210,7 +210,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
     private fun addCompletionsForOutOfScopeFirstPathSegment(path: RsPath, result: CompletionResultSet, context: RsCompletionContext) {
         val qualifier = path.path ?: return
         val isApplicablePath = (qualifier.path == null && qualifier.typeQual == null && !qualifier.hasColonColon
-            && qualifier.resolveStatus == PathResolveStatus.UNRESOLVED)
+            && qualifier.resolveStatus.isUnresolvedOrWrongNamespace)
         if (!isApplicablePath) return
 
         // We don't use `Type.COMPLETION` because we're importing the first segment of the 2-segment path,

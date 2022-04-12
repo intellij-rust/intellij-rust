@@ -11,7 +11,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
@@ -37,15 +36,15 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                     if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isEnabled()) return
                 }
 
-                val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
+                val isPathUnresolved = path.resolveStatus.isUnresolved
                 val qualifier = path.qualifier
 
                 val context = when {
                     qualifier == null && isPathUnresolved -> AutoImportFix.findApplicableContext(path)
                     qualifier != null && isPathUnresolved -> {
-                        // There is not sense to highlight path as unresolved
+                        // There is no sense to highlight path as unresolved
                         // if qualifier cannot be resolved as well
-                        if (qualifier.resolveStatus != PathResolveStatus.RESOLVED) return
+                        if (qualifier.resolveStatus != PathResolveStatus.Resolved) return
                         if (qualifier.reference?.multiResolve()?.let { it.size > 1 } == true) return
                         null
                     }

@@ -70,7 +70,17 @@ val BoundElement<RsGenericDeclaration>.singleParamValue: Ty
 
 data class BoundElementWithVisibility<T : RsElement>(
     val inner: BoundElement<T>,
-    val isVisible: Boolean,
+    val isVisible: Boolean = true,
+
+    /**
+     * ```
+     * fn foo() {}
+     * fn main() {
+     *     let a: foo;
+     * }        //~~~ // isCorrectNamespace = false
+     * ```
+     */
+    val isCorrectNamespace: Boolean = true,
 ) {
     override fun toString(): String {
         val visibility = if (isVisible) "public" else "private"
@@ -80,4 +90,4 @@ data class BoundElementWithVisibility<T : RsElement>(
 
 fun <T : RsElement> BoundElementWithVisibility<T>.map(
     f: (BoundElement<T>) -> BoundElement<T>
-): BoundElementWithVisibility<T> = BoundElementWithVisibility(f(inner), isVisible)
+): BoundElementWithVisibility<T> = copy(inner = f(inner))

@@ -293,7 +293,7 @@ class RsInferenceContext(
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
             val fn = impl.expandedMembers.functions.find { it.name == fnName } ?: continue
             val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(impl))
-            val result = ResolvedPath.AssocItem(fn, source)
+            val result = ResolvedPath.AssocItem(fn, source, variant.isCorrectNamespace)
             result.subst = variant.subst // TODO remap subst
             resolvedPaths[path] = listOf(result)
         }
@@ -1128,28 +1128,34 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 sealed class ResolvedPath {
     abstract val element: RsElement
     var subst: Substitution = emptySubstitution
+    abstract val isCorrectNamespace: Boolean
 
-    class Item(override val element: RsElement, val isVisible: Boolean) : ResolvedPath()
+    class Item(
+        override val element: RsElement,
+        val isVisible: Boolean,
+        override val isCorrectNamespace: Boolean,
+    ) : ResolvedPath()
 
     class AssocItem(
         override val element: RsAbstractable,
-        val source: TraitImplSource
+        val source: TraitImplSource,
+        override val isCorrectNamespace: Boolean,
     ) : ResolvedPath()
 
     companion object {
-        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath? {
+        fun from(entry: ScopeEntry, context: RsElement, isCorrectNamespace: Boolean): ResolvedPath? {
             return if (entry is AssocItemScopeEntry) {
-                AssocItem(entry.element, entry.source)
+                AssocItem(entry.element, entry.source, isCorrectNamespace)
             } else {
                 entry.element?.let {
                     val isVisible = entry.isVisibleFrom(context.containingMod)
-                    Item(it, isVisible)
+                    Item(it, isVisible, isCorrectNamespace)
                 }
             }
         }
 
-        fun from(entry: AssocItemScopeEntry): ResolvedPath =
-            AssocItem(entry.element, entry.source)
+        fun from(entry: AssocItemScopeEntry, isCorrectNamespace: Boolean): ResolvedPath =
+            AssocItem(entry.element, entry.source, isCorrectNamespace)
     }
 }
 

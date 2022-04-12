@@ -10,7 +10,6 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
@@ -104,19 +103,6 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         fn main() {
             use foo::Foo;
             123.foo();
-        }
-    """)
-
-    @CheckTestmarkHit(AutoImportFix.Testmarks.NameInScope::class)
-    fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
-        use foo::Foo;
-
-        mod foo {
-            pub struct Foo {}
-        }
-
-        fn main() {
-            Foo
         }
     """)
 
@@ -335,6 +321,13 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         mod tests {
             use trans_lib::foo;/*caret*/
             use trans_lib::<error descr="Unresolved reference: `bar`">bar</error>;
+        }
+    """, false)
+
+    fun `test no unresolved reference if path qualifier missed`() = checkByText("""
+        mod foo {}
+        fn main () {
+            foo::<error descr="'::', < or identifier expected, got '::'">:</error>:bar();
         }
     """, false)
 
