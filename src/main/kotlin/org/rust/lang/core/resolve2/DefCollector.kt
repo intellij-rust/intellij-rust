@@ -390,7 +390,7 @@ class DefCollector(
     private fun recordExpansionFileName(call: MacroCallInfo, mixHash: HashCode) {
         if (context.isHangingMode) return
         val order = macroMixHashToOrder.merge(mixHash, 1, Int::plus)!!
-        val expansionName = "${mixHash}_$order.rs"
+        val expansionName = "${mixHash}_${order}_$MACRO_STORAGE_VERSION.rs"
         val lightInfo = MacroCallLightInfo(call.containingMod, call.macroIndex, call.body.kind)
         defMap.macroCallToExpansionName[call.macroIndex] = expansionName
         defMap.expansionNameToMacroCall[expansionName] = lightInfo

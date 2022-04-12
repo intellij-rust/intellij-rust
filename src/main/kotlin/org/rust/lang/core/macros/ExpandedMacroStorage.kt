@@ -8,12 +8,19 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import org.rust.lang.core.macros.decl.DeclMacroExpander
+import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.stdext.HashCode
 import java.lang.ref.WeakReference
 
 private const val RANGE_MAP_ATTRIBUTE_VERSION = 2
+
+const val MACRO_STORAGE_VERSION: Int = 1 +  // self version
+    DeclMacroExpander.EXPANDER_VERSION +
+    ProcMacroExpander.EXPANDER_VERSION +
+    RANGE_MAP_ATTRIBUTE_VERSION
 
 /** We use [WeakReference] because uncached [loadRangeMap] is quite cheap */
 private val MACRO_RANGE_MAP_CACHE_KEY: Key<WeakReference<RangeMap>> = Key.create("MACRO_RANGE_MAP_CACHE_KEY")
@@ -48,7 +55,7 @@ fun VirtualFile.loadRangeMap(): RangeMap? {
 
 fun VirtualFile.loadMixHash(): HashCode? {
     val name = name
-    val underscoreIndex = name.lastIndexOf('_')
+    val underscoreIndex = name.indexOf('_')
     if (underscoreIndex == -1) return null
     return HashCode.fromHexString(name.substring(0, underscoreIndex))
 }
