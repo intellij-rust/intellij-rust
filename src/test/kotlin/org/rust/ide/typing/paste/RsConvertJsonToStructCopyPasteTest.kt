@@ -375,15 +375,252 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"a": {"b": 5}, "b": {"b": 5}}""", "Foo\tBar\t")
 
-    fun `test struct field to snake case`() = doCopyPasteTest("""
+    fun `test struct lowercase single field`() = doCopyPasteTest("""
         //- lib.rs
         /*caret*/
     """, """
         //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            pub field: i64,
+        }
+    """, """{"field": 1}""", hasSerde = true)
+
+    fun `test struct lowercase multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            pub field: i64,
+            pub bar: i64,
+        }
+    """, """{"field": 1, "bar": 1}""", hasSerde = true)
+
+    fun `test struct snake case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
         struct Struct {
             pub my_long_field: i64,
         }
-    """, """{"MyLongField": 1}""")
+    """, """{"my_long_field": 1}""", hasSerde = true)
+
+    fun `test struct snake case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            pub my_long_field: i64,
+            pub my_long_field_b: i64,
+        }
+    """, """{"my_long_field": 1, "my_long_field_b": 1}""", hasSerde = true)
+
+    fun `test struct kebab case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "my-long-field")]
+            pub my_long_field: i64,
+        }
+    """, """{"my-long-field": 1}""", hasSerde = true)
+
+    fun `test struct kebab case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "my-long-field")]
+            pub my_long_field: i64,
+            #[serde(rename = "my-long-field-2")]
+            pub my_long_field_2: i64,
+        }
+    """, """{"my-long-field": 1, "my-long-field-2": 2}""", hasSerde = true)
+
+    fun `test struct camel case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "myLongField")]
+            pub my_long_field: i64,
+        }
+    """, """{"myLongField": 1}""", hasSerde = true)
+
+    fun `test struct camel case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "myLongField")]
+            pub my_long_field: i64,
+            #[serde(rename = "myLongFieldB")]
+            pub my_long_field_b: i64,
+        }
+    """, """{"myLongField": 1, "myLongFieldB": 2}""", hasSerde = true)
+
+    fun `test struct pascal case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "MyLongField")]
+            pub my_long_field: i64,
+        }
+    """, """{"MyLongField": 1}""", hasSerde = true)
+
+    fun `test struct pascal case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "MyLongField")]
+            pub my_long_field: i64,
+            #[serde(rename = "MyLongFieldB")]
+            pub my_long_field_b: i64,
+        }
+    """, """{"MyLongField": 1, "MyLongFieldB": 1}""", hasSerde = true)
+
+    fun `test struct upper case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "FIELD")]
+            pub field: i64,
+        }
+    """, """{"FIELD": 1}""", hasSerde = true)
+
+    fun `test struct upper case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "FIELD")]
+            pub field: i64,
+            #[serde(rename = "BAR")]
+            pub bar: i64,
+        }
+    """, """{"FIELD": 1, "BAR": 1}""", hasSerde = true)
+
+    fun `test struct screaming snake case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "FOO_BAR")]
+            pub foo_bar: i64,
+        }
+    """, """{"FOO_BAR": 1}""", hasSerde = true)
+
+    fun `test struct screaming snake case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "FOO_BAR")]
+            pub foo_bar: i64,
+            #[serde(rename = "BAR_BAZ")]
+            pub bar_baz: i64,
+        }
+    """, """{"FOO_BAR": 1, "BAR_BAZ": 1}""", hasSerde = true)
+
+    fun `test struct screaming kebab case single field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "MY-LONG-FIELD")]
+            pub my_long_field: i64,
+        }
+    """, """{"MY-LONG-FIELD": 1}""", hasSerde = true)
+
+    fun `test struct screaming kebab case multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "MY-LONG-FIELD")]
+            pub my_long_field: i64,
+            #[serde(rename = "ANOTHER-FIELD")]
+            pub another_field: i64,
+        }
+    """, """{"MY-LONG-FIELD": 1, "ANOTHER-FIELD": 1}""", hasSerde = true)
+
+    fun `test struct field with multiple conventions`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "foo_bar-baz")]
+            pub foo_bar_baz: i64,
+            #[serde(rename = "bar_baz-foo")]
+            pub bar_baz_foo: i64,
+        }
+    """, """{"foo_bar-baz": 1, "bar_baz-foo": 1}""", hasSerde = true)
+
+    fun `test struct rename invalid fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            #[serde(rename = "f@")]
+            pub f: i64,
+            #[serde(rename = "0")]
+            pub _0: i64,
+            #[serde(rename = "#")]
+            pub _field: i64,
+            #[serde(rename = "\"asd\"")]
+            pub _asd: i64,
+        }
+    """, """{"f@": 1, "0": 1, "#": 1, "\"asd\"": 1}""", hasSerde = true)
+
+    fun `test struct duplicated field names`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        #[derive(Serialize, Deserialize)]
+        struct Struct {
+            pub _0: i64,
+            #[serde(rename = "0")]
+            pub _0_0: i64,
+        }
+    """, """{"_0": 1, "0": 1}""", hasSerde = true)
 
     fun `test fill underscore types`() = doCopyPasteTestWithLiveTemplate("""
         //- lib.rs
@@ -530,39 +767,44 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     private fun doCopyPasteTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-        @Language("JSON") toPaste: String
-    ) = doTest(before, after, toPaste)
+        @Language("JSON") toPaste: String,
+        hasSerde: Boolean = false
+    ) = doTest(before, after, toPaste, hasSerde = hasSerde)
 
     private fun doCopyPasteTestWithLiveTemplate(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         @Language("JSON") toPaste: String,
-        toType: String
+        toType: String,
+        hasSerde: Boolean = false
     ) {
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
 
-        doTest(before, after, toPaste) {
+        doTest(before, after, toPaste, {
             PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
             assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
             myFixture.type(toType)
             assertNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
-        }
+        }, hasSerde)
     }
 
     private fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         @Language("JSON") toPaste: String,
-        action: () -> Unit = {}
+        action: () -> Unit = {},
+        hasSerde: Boolean
     ) {
         val testProject = fileTreeFromText(before).create()
         CopyPasteManager.getInstance().setContents(StringSelection(toPaste))
 
         myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
-        myFixture.performEditorAction(IdeActions.ACTION_PASTE)
 
-        action()
+        convertJsonWithSerdePresent(hasSerde) {
+            myFixture.performEditorAction(IdeActions.ACTION_PASTE)
+            action()
+        }
 
         fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
     }
