@@ -309,7 +309,7 @@ object CargoBuildManager {
             remove("--quiet")
             // If `json-diagnostic-rendered-ansi` is used, `rendered` field of JSON messages contains
             // embedded ANSI color codes for respecting rustc's default color scheme.
-            addFormatJsonOption(this, "--message-format", "json-diagnostic-rendered-ansi")
+            // addFormatJsonOption(this, "--message-format", "json-diagnostic-rendered-ansi")
         }
 
         val oldVariables = commandLine.environmentVariables
