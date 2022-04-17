@@ -84,8 +84,8 @@ fn foo() {
         10, y = 30
     }
     panic!("division by zero");
-    fooprint!("{a}", a = 5);
-    // fooprint!({x:#?}, a = 5);
+    fooprint!({a});
+
     unimplemented!("{} {} {}", 1, 2, 3);
     todo!("it's too {epithet} to implement", epithet = "boring");
     std::println!("{}", 92); // fully qualified macro call

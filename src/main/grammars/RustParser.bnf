@@ -1451,7 +1451,7 @@ private Macro2FunctionLikeBody ::= '(' MacroPatternContents ')' '{' MacroExpansi
 private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
-    MacroArgument | ExprMacroArgument | FormatMacroArgument | FormatMacro2Argument | AssertMacroArgument |
+    MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
       VecMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument | AsmMacroArgument
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
@@ -1523,24 +1523,15 @@ TT ::= <<any_braces TT*>> | <<unpairedToken>>
 ExprMacroArgument ::= <<any_braces [ AnyExpr ','? ]>>
 
 // https://doc.rust-lang.org/std/fmt/
-//noinspection BnfUnusedRule
-FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
-//noinspection BnfUnusedRule
+FormatMacroArgument ::= <<any_braces (FormatString [ <<comma_separated_list FormatMacroArg>> ]) >>
 FormatMacroArg ::= [ identifier '=' ] AnyExpr
 
-//noinspection BnfUnusedRule
-// Todo: <<any_braces doesn't compile
-FormatMacro2Argument ::= '(' FormatMacroFormatString [',' <<comma_separated_list FormatMacroArg>> ] ')'
-// Todo: how to wrap in double quotes? '"' <...> '"' doesn't work
-FormatMacroFormatString ::= (FmtMaybeFormat | FmtText )*
-// TODO: use lexer to parse "contents" of a string literal?
-FmtText ::= 'x'
-FmtMaybeFormat ::= '{{' | '}}' | FmtArgument
-FmtArgument ::= '{' FmtArgumentIdentifier (':' FmtSpecifier )? '}'
+FormatString ::= (InterpolationBlock | STRING_CONTENT)*
+InterpolationBlock ::= '{' (IntegerExpr | IdentifierExpr)? [':' FmtSpecifier] '}'
+
 FmtArgumentIdentifier ::= IntegerExpr | IdentifierExpr
 FmtSpecifier ::= (FmtFill? FmtAlign)? FmtSign? FmtHash? FmtZero? FmtWidth? ('.' FmtPrecision)? FmtType?
-// Todo: how to use (any) char literal, but without ''? lexer?
-FmtFill ::= f
+FmtFill ::= CHAR_LITERAL
 FmtAlign ::= '<' | '^' | '>'
 FmtSign ::= '+' | '-'
 FmtHash ::= '#'

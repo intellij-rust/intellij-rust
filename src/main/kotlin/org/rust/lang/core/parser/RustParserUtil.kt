@@ -448,7 +448,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
-        put(RustParser::FormatMacro2Argument, true, "fooprint")
         put(RustParser::ExprMacroArgument, true, "dbg")
         put(
             RustParser::FormatMacroArgument, true, "format", "format_args", "format_args_nl", "write", "writeln",

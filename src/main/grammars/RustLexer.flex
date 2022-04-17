@@ -128,7 +128,9 @@ BIN_LITERAL = "0b" [01_]*
 
 CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a-fA-F0-9][a-fA-F0-9_]* "}"? )? ( \' {SUFFIX}? | \\ )? )
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
-STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
+STRING_CONTENT = [^\\\"] | \\[^]
+DOUBLE_QUOTE = \"
+STRING_LITERAL = {DOUBLE_QUOTE} ( {STRING_CONTENT} )* ( {DOUBLE_QUOTE} {SUFFIX}? | \\ )?
 
 INNER_EOL_DOC = ({LINE_WS}*"//!".*{EOL_WS})*({LINE_WS}*"//!".*)
 // !(!a|b) is a (set) difference between a and b.
