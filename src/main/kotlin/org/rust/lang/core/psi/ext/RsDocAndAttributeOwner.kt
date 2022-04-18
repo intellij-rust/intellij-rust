@@ -141,6 +141,9 @@ object RsInnerAttributeOwnerRegistry {
     }
 }
 
+fun RsDocAndAttributeOwner.findFirstMetaItem(name: String): RsMetaItem? =
+    rawMetaItems.find { it.name == name }
+
 /**
  * Find the first outer attribute with the given identifier.
  */
