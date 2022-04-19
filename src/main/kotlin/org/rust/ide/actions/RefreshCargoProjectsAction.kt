@@ -6,6 +6,7 @@
 package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import org.rust.cargo.project.model.CargoProjectActionBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
@@ -14,7 +15,7 @@ import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.ide.notifications.confirmLoadingUntrustedProject
 import org.rust.openapiext.saveAllDocuments
 
-class RefreshCargoProjectsAction : CargoProjectActionBase() {
+class RefreshCargoProjectsAction : CargoProjectActionBase(), UpdateInBackground {
 
     override fun update(e: AnActionEvent) {
         val project = e.project

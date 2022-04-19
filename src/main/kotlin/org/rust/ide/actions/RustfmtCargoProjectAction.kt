@@ -6,6 +6,7 @@
 package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtil
 import org.rust.cargo.project.model.CargoProject
@@ -19,7 +20,7 @@ import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocumentsAsTheyAre
 import org.rust.stdext.unwrapOrElse
 
-class RustfmtCargoProjectAction : DumbAwareAction() {
+class RustfmtCargoProjectAction : DumbAwareAction(), UpdateInBackground {
 
     override fun update(e: AnActionEvent) {
         super.update(e)
