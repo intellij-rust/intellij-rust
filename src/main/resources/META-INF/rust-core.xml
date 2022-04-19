@@ -1390,12 +1390,6 @@
 
         <!-- Cargo-->
 
-        <action id="Cargo.RustfmtFile"
-                class="org.rust.ide.actions.RustfmtFileAction"
-                icon="AllIcons.Actions.RealIntentionBulb">
-            <add-to-group group-id="CodeMenu" anchor="last"/>
-        </action>
-
         <action id="Cargo.RustfmtCargoProject"
                 class="org.rust.ide.actions.RustfmtCargoProjectAction"
                 icon="AllIcons.Actions.RealIntentionBulb">
@@ -1467,7 +1461,6 @@
                 <separator/>
             </group>
 
-            <reference id="Cargo.RustfmtFile"/>
             <reference id="Cargo.RustfmtCargoProject"/>
             <reference id="Rust.ConsoleREPL"/>
             <reference id="Rust.ShareInPlayground"/>

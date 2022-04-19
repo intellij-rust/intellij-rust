@@ -6,9 +6,7 @@
 package org.rust.cargo.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -80,7 +78,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         reformatRange(file, textRange, shouldHitTestmark = false)
     }
 
-    fun `test rustfmt file action`() = doTest({
+    fun `test rustfmt file`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -99,9 +97,9 @@ class RustfmtTest : RsWithToolchainTestBase() {
         fn main() {
             println!("Hello, ΣΠ∫!");
         }
-    """) { reformatFile(myFixture.editor) }
+    """) { reformatRange(myFixture.file) }
 
-    fun `test rustfmt file action ignores emit option 1`() = doTest({
+    fun `test rustfmt file ignores emit option 1`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -124,10 +122,10 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "--emit files"
         }
-        reformatFile(myFixture.editor)
+        reformatRange(myFixture.file)
     }
 
-    fun `test rustfmt file action ignores emit option 2`() = doTest({
+    fun `test rustfmt file ignores emit option 2`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -150,10 +148,10 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "--emit=files"
         }
-        reformatFile(myFixture.editor)
+        reformatRange(myFixture.file)
     }
 
-    fun `test rustfmt file action with edited configuration 1`() = doTest({
+    fun `test rustfmt file with edited configuration 1`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -177,10 +175,10 @@ class RustfmtTest : RsWithToolchainTestBase() {
             it.additionalArguments = "--unstable-features"
             it.channel = RustChannel.NIGHTLY
         }
-        reformatFile(myFixture.editor)
+        reformatRange(myFixture.file)
     }
 
-    fun `test rustfmt file action with edited configuration 2`() = doTest({
+    fun `test rustfmt file with edited configuration 2`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -204,12 +202,10 @@ class RustfmtTest : RsWithToolchainTestBase() {
             it.additionalArguments = "--unstable-features"
             it.channel = RustChannel.STABLE
         }
-        assertThrows(RsProcessExecutionException::class.java) {
-            reformatFile(myFixture.editor)
-        }
+        reformatRange(myFixture.file)
     }
 
-    fun `test rustfmt file action supports toolchain override`() = doTest({
+    fun `test rustfmt file supports toolchain override`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -232,10 +228,10 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "+nightly --unstable-features"
         }
-        reformatFile(myFixture.editor)
+        reformatRange(myFixture.file)
     }
 
-    fun `test rustfmt file action edition 2018`() = doTest({
+    fun `test rustfmt file edition 2018`() = doTest({
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -255,7 +251,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         async fn foo() {
             println!("Hello, ΣΠ∫!");
         }
-    """) { reformatFile(myFixture.editor) }
+    """) { reformatRange(myFixture.file) }
 
     fun `test rustfmt cargo project action`() = doTest({
         toml("Cargo.toml", """
@@ -529,10 +525,6 @@ class RustfmtTest : RsWithToolchainTestBase() {
                 CodeStyleManager.getInstance(project).reformatRange(file, textRange.startOffset, textRange.endOffset)
             })
         }
-    }
-
-    private fun reformatFile(editor: Editor) {
-        myFixture.launchAction("Cargo.RustfmtFile", CommonDataKeys.EDITOR_EVEN_IF_INACTIVE to editor)
     }
 
     private fun reformatCargoProject() {
