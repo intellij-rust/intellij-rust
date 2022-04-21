@@ -339,7 +339,7 @@ class Cargo(
         project: Project,
         owner: Disposable,
         args: CargoCheckArgs
-    ): RsResult<ProcessOutput, RsProcessExecutionException.Start> {
+    ): RsProcessResult<ProcessOutput> {
         val useClippy = args.linter == ExternalLinter.CLIPPY
             && !checkNeedInstallClippy(project, args.cargoProjectDirectory)
         val checkCommand = if (useClippy) "clippy" else "check"
@@ -376,7 +376,7 @@ class Cargo(
             }
         }
 
-        return commandLine.execute(project, owner).ignoreExitCode()
+        return commandLine.execute(project, owner)
     }
 
     fun toColoredCommandLine(project: Project, commandLine: CargoCommandLine): GeneralCommandLine =

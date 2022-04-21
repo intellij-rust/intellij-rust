@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -33,9 +34,11 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.*
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
+import org.rust.ide.actions.RsExternalLinterEditSettingsAction
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
 import org.rust.ide.annotator.fixes.ApplySuggestionFix
+import org.rust.ide.notifications.showBalloon
 import org.rust.ide.status.RsExternalLinterWidget
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
@@ -134,7 +137,7 @@ object RsExternalLinterUtils {
             .cargoOrWrapper(workingDirectory)
             .checkProject(project, owner, args)
             .unwrapOrElse { e ->
-                LOG.error(e)
+                e.showLinterError(project)
                 return null
             }
         val finish = Instant.now()
@@ -344,5 +347,12 @@ private fun formatMessage(message: String): String {
     return groups.joinToString {
         if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
         else it.lines.joinToString("<br>")
+    }
+}
+
+private fun RsProcessExecutionException.showLinterError(project: Project) {
+    val message = message.orEmpty().trimEnd('\n').replace("\n", "<br>")
+    if (message.isNotEmpty()) {
+        project.showBalloon("External linter", message, NotificationType.ERROR, RsExternalLinterEditSettingsAction("Show settings..."))
     }
 }
