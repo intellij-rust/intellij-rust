@@ -168,4 +168,27 @@ class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpress
             asm!();
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test unsafe intrinsics`() = checkErrors("""
+        #![feature(core_intrinsics)]
+
+        use std::intrinsics::atomic_fence;
+
+        fn main() {
+            <error descr="Call to unsafe function requires unsafe function or block [E0133]">atomic_fence()</error>;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test safe intrinsics`() = checkErrors("""
+        #![feature(core_intrinsics)]
+
+        use std::intrinsics::{add_with_overflow, likely};
+
+        fn main() {
+            if likely(true) {}
+            let x = add_with_overflow(1, 2);
+        }
+    """)
 }
