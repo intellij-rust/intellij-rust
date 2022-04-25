@@ -18,6 +18,7 @@ import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.stdext.buildMap
@@ -253,7 +254,13 @@ fun <T : RsElement> instantiatePathGenerics(
 
     val psiSubst = pathPsiSubst(path, element)
     val newSubst = psiSubst.toSubst(resolver)
-    return BoundElement(resolved.element, subst + newSubst, psiSubst.assoc.mapValues { it.value.type })
+    val assoc = psiSubst.assoc.mapValues {
+        when (val value = it.value) {
+            is AssocValue.Present -> value.value.type
+            AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
+        }
+    }
+    return BoundElement(resolved.element, subst + newSubst, assoc)
 }
 
 fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
@@ -316,24 +323,27 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
                         // resolving of an assoc type depends on a parent path resolve,
                         // so we coming back here and entering the infinite recursion
                         resolveAssocTypeBinding(resolved, binding)?.let { assoc ->
-                            binding.typeReference?.let { put(assoc, it) }
+                            binding.typeReference?.let { put(assoc, AssocValue.Present(it)) }
                         }
 
                     }
                 }
                 // Fn() -> T
                 is RsPsiPathParameters.FnSugar -> buildMap {
-                    if (args.outputArg != null) {
-                        val outputParam = path.knownItems.FnOnce?.findAssociatedType("Output")
-                        if (outputParam != null) {
-                            put(outputParam, args.outputArg)
+                    val outputParam = path.knownItems.FnOnce?.findAssociatedType("Output")
+                    if (outputParam != null) {
+                        val value = if (args.outputArg != null) {
+                            AssocValue.Present(args.outputArg)
+                        } else {
+                            AssocValue.FnSugarImplicitRet
                         }
+                        put(outputParam, value)
                     }
                 }
                 null -> emptyMap()
             }
         } else {
-            emptyMap<RsTypeAlias, RsTypeReference>()
+            emptyMap<RsTypeAlias, AssocValue>()
         }
     }
 

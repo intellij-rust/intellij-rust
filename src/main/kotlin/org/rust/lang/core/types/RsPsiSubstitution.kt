@@ -21,7 +21,7 @@ open class RsPsiSubstitution(
     val typeSubst: Map<RsTypeParameter, Value<TypeValue, TypeDefault>> = emptyMap(),
     val regionSubst: Map<RsLifetimeParameter, Value<RsLifetime, Nothing>> = emptyMap(),
     val constSubst: Map<RsConstParameter, Value<RsElement, RsExpr>> = emptyMap(),
-    val assoc: Map<RsTypeAlias, RsTypeReference> = emptyMap(),
+    val assoc: Map<RsTypeAlias, AssocValue> = emptyMap(),
 ) {
     sealed class Value<out P, out D> {
         object RequiredAbsent : Value<Nothing, Nothing>()
@@ -35,6 +35,11 @@ open class RsPsiSubstitution(
         class FnSugar(val inputArgs: List<RsTypeReference?>) : TypeValue()
     }
     data class TypeDefault(val value: RsTypeReference, val selfTy: Ty?)
+
+    sealed class AssocValue {
+        class Present(val value: RsTypeReference) : AssocValue()
+        object FnSugarImplicitRet : AssocValue()
+    }
 }
 
 fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.default): Substitution {

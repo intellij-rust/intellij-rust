@@ -944,4 +944,12 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    fun `test call type parameter with FnOnce with implicit return type`() = stubOnlyTypeInfer("""
+    //- main.rs
+        pub fn foo<F: FnOnce(i32)>(f: F) -> Self {
+            let a = f(1);
+            a;
+        } //^ ()
+    """)
 }
