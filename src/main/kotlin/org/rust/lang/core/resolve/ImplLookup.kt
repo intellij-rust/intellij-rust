@@ -368,8 +368,15 @@ class ImplLookup(
      * @see <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html#additional-implementors">Copy additional implementors</a>
      */
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        if (ty is TyTuple || ty is TyArray || ty is TyFunction) {
+        if (ty is TyTuple || ty is TyArray) {
             return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
+        }
+        if (ty is TyFunction) {
+            val fnOnceOutput = fnOnceOutput
+            val args = if (ty.paramTypes.isEmpty()) TyUnit.INSTANCE else TyTuple(ty.paramTypes)
+            val assoc = if (fnOnceOutput != null) mapOf(fnOnceOutput to ty.retType) else emptyMap()
+            return fnTraits.map { it.withSubst(args).copy(assoc = assoc) } +
+                listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
         }
 
         if (project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New) {
@@ -679,7 +686,6 @@ class ImplLookup(
                 }
                 assembleImplCandidates(ref) { add(it); false }
                 addAll(assembleDerivedCandidates(ref))
-                if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
                 if (ref.selfTy is TyTraitObject) {
                     ref.selfTy.getTraitBoundsTransitively().find { it.element == ref.trait.element }
                         ?.let { add(SelectionCandidate.TraitObject) }
@@ -807,12 +813,6 @@ class ImplLookup(
                     Obligation(newRecDepth, Predicate.Trait(TraitRef(it, BoundElement(candidate.item))))
                 }
                 Selection(candidate.item, obligations)
-            }
-            is SelectionCandidate.Closure -> {
-                // TODO hacks hacks hacks
-                val (trait, _, assoc) = ref.trait
-                ctx.combineTypes(assoc[fnOnceOutput] ?: TyUnit.INSTANCE, (ref.selfTy as TyFunction).retType)
-                Selection(trait, emptyList())
             }
             is SelectionCandidate.TypeParameter -> {
                 testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
@@ -1128,7 +1128,6 @@ private sealed class SelectionCandidate {
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()
 
-    object Closure : SelectionCandidate()
     class Projection(val bound: TraitRef) : SelectionCandidate()
 }
 
