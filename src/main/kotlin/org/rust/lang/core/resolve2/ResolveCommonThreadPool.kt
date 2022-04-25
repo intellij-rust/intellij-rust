@@ -9,7 +9,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.ThreadTracker
+import org.rust.openapiext.isUnitTestMode
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory
 import java.util.concurrent.ForkJoinTask
@@ -25,13 +27,17 @@ class ResolveCommonThreadPool : Disposable {
     private val pool: ExecutorService = createPool()
 
     private fun createPool(): ExecutorService {
-        val parallelism = Runtime.getRuntime().availableProcessors()
-        val threadFactory = ForkJoinWorkerThreadFactory { pool ->
-            val thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool)
-            ThreadTracker.longRunningThreadCreated(this, thread.name)
-            thread
+        return if (isUnitTestMode) {
+            val parallelism = Runtime.getRuntime().availableProcessors()
+            val threadFactory = ForkJoinWorkerThreadFactory { pool ->
+                val thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool)
+                ThreadTracker.longRunningThreadCreated(this, thread.name)
+                thread
+            }
+            ForkJoinPool(parallelism, threadFactory, null, true)
+        } else {
+            Executors.newWorkStealingPool()
         }
-        return ForkJoinPool(parallelism, threadFactory, null, true)
     }
 
     override fun dispose() {
