@@ -552,6 +552,9 @@ class RsTypeInferenceWalker(
         val derefTy = lookup.coercionSequence(baseTy).mapNotNull {
             lookup.asTyFunction(it)
         }.firstOrNull()
+        if (baseTy != TyUnknown && derefTy == null) {
+            ctx.addDiagnostic(RsDiagnostic.ExpectedFunction(expr))
+        }
         val argExprs = expr.valueArgumentList.exprList
         val calleeType = (derefTy?.register() ?: unknownTyFunction(argExprs.size))
             .foldWith(associatedTypeNormalizer) as TyFunction

@@ -2192,40 +2192,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test expected function on a impl FnMut E0618`() = checkErrors("""
-        struct Foo;
-        #[lang = "fn_mut"]
-        trait FnMut<Args> {
-            type Output;
-            fn call(&mut self, args: Args) -> Self::Output;
-        }
-        impl FnMut<()> for Foo {
-            type Output = ();
-            fn call(&mut self, (): ()) {}
-        }
-
-        fn bar() {
-            Foo();
-        }
-    """)
-
-    fun `test expected function on a impl Fn E0618`() = checkErrors("""
-        struct Foo;
-        #[lang = "fn"]
-        trait Fn<Args> {
-            type Output;
-            fn call(&self, args: Args) -> Self::Output;
-        }
-        impl Fn<()> for Foo {
-            type Output = ();
-            fn call(&self, (): ()) {}
-        }
-
-        fn bar() {
-            Foo();
-        }
-    """)
-
     @MockRustcVersion("1.34.0")
     fun `test label_break_value 1`() = checkErrors("""
         fn main() {
