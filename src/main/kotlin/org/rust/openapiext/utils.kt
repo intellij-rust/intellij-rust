@@ -386,7 +386,17 @@ val DataContext.elementUnderCaretInEditor: PsiElement?
         return psiFile.findElementAt(editor.caretModel.offset)
     }
 
-fun isFeatureEnabled(featureId: String): Boolean = Experiments.getInstance().isFeatureEnabled(featureId)
+fun isFeatureEnabled(featureId: String): Boolean {
+    // Hack to pass values of experimental features in headless IDE run
+    // Should help to configure IDE-based tools like Qodana
+    if (isHeadlessEnvironment) {
+        val value = System.getProperty(featureId)?.toBooleanStrictOrNull()
+        if (value != null) return value
+    }
+
+    return Experiments.getInstance().isFeatureEnabled(featureId)
+}
+
 fun setFeatureEnabled(featureId: String, enabled: Boolean) = Experiments.getInstance().setFeatureEnabled(featureId, enabled)
 
 fun <T> runWithEnabledFeatures(vararg featureIds: String, action: () -> T): T {
