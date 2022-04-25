@@ -551,7 +551,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
         fn main() {
-            let x = foo(Foo(Bar()));
+            let x = foo(Foo(Bar));
             x.bar();
              //^
         }
@@ -570,7 +570,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
         fn foo<F1, F2, F3>(x: FooBar<Foo<F1, F2>, Bar<F3>>) -> Foo<F2, F3> { unimplemented!() }
         fn main() {
-            let x = foo(FooBar(Foo(123, "foo"), Bar::V(S())));
+            let x = foo(FooBar(Foo(123, "foo"), Bar::V(S)));
             x.1.bar();
               //^
         }
@@ -592,7 +592,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
 
         fn main() {
-            let x = Foo(123).foo(Bar::V(S()));
+            let x = Foo(123).foo(Bar::V(S));
             x.1.bar();
               //^
         }

@@ -935,4 +935,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    fun `test call an fn pointer under Rc`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::rc::Rc;
+        fn foo(f: Rc<fn() -> i32>) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
 }

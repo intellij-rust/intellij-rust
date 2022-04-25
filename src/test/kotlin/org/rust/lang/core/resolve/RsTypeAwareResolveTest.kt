@@ -532,7 +532,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
               //X
         }
         fn main() {
-            let t = (1, Foo());
+            let t = (1, Foo);
             t.1.foo();
                //^
         }
@@ -546,7 +546,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
-            let x = foo(&[Foo(), Foo()]);
+            let x = foo(&[Foo, Foo]);
             x.foo()
              //^
         }

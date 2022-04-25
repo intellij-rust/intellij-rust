@@ -546,18 +546,14 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferCallExprType(expr: RsCallExpr, expected: Ty?): Ty {
-        val callee = expr.expr
-        val ty = resolveTypeVarsWithObligations(callee.inferType()) // or error
-        // `struct S; S();`
-        if (callee is RsPathExpr) {
-            ctx.getResolvedPath(callee).singleOrNull()?.element?.let {
-                if (it is RsFieldsOwner && it.isFieldless) {
-                    return ty
-                }
-            }
-        }
+        val calleeExpr = expr.expr
+        val baseTy = resolveTypeVarsWithObligations(calleeExpr.inferType()) // or error
+        // TODO add adjustment
+        val derefTy = lookup.coercionSequence(baseTy).mapNotNull {
+            lookup.asTyFunction(it)
+        }.firstOrNull()
         val argExprs = expr.valueArgumentList.exprList
-        val calleeType = (lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size))
+        val calleeType = (derefTy?.register() ?: unknownTyFunction(argExprs.size))
             .foldWith(associatedTypeNormalizer) as TyFunction
         if (expected != null) ctx.combineTypes(expected, calleeType.retType)
         inferArgumentTypes(calleeType.paramTypes, argExprs)
