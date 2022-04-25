@@ -66,7 +66,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.*
 import kotlin.Pair
 
 typealias MacroExpansionCachedResult = CachedValueProvider.Result<RsResult<MacroExpansion, GetMacroExpansionError>>
@@ -397,18 +396,6 @@ private class MacroExpansionServiceImplInner(
     @Volatile
     private var lastSavedStorageModCount: Long = modificationTracker.modificationCount
 
-    /**
-     * We must use a separate pool because:
-     * 1. [ForkJoinPool.commonPool] is heavily used by the platform
-     * 2. [ForkJoinPool] can start execute a task when joining ([ForkJoinTask.get]) another task
-     * 3. the platform sometimes join ForkJoinTasks under read lock
-     * 4. for macro expansion it's critically important that tasks are executed without read lock.
-     *
-     * In short, use of [ForkJoinPool.commonPool] in this place leads to crashes.
-     * See [issue](https://github.com/intellij-rust/intellij-rust/issues/3966)
-     */
-    private val pool: ExecutorService = Executors.newWorkStealingPool()
-
     private val lastUpdatedMacrosAt: MutableMap<CratePersistentId, Long> = hashMapOf()
 
     private val dataFile: Path
@@ -671,7 +658,6 @@ private class MacroExpansionServiceImplInner(
         val task = MacroExpansionTask(
             project,
             modificationTracker,
-            pool,
             lastUpdatedMacrosAt,
             dirs.projectDirName,
             taskType,
@@ -840,9 +826,6 @@ private class MacroExpansionServiceImplInner(
         } else {
             dirs.dataFile.delete()
         }
-
-        pool.shutdownNow()
-        pool.awaitTermination(5, TimeUnit.SECONDS)
 
         releaseExpansionDirectory()
     }

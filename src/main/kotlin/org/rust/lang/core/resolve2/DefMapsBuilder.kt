@@ -168,7 +168,7 @@ class DefMapsBuilder(
  * We use [ForkJoinPool.invokeAll] there, which can execute tasks
  * from completely different thread pool (associated with current thread).
  * That's why we need to be sure that we build DefMaps on thread associated with our [ForkJoinPool].
- * Also see [org.rust.lang.core.macros.MacroExpansionServiceImplInner.pool].
+ * Also see [ResolveCommonThreadPool.pool].
  */
 private fun invokeWithoutHelpingOtherForkJoinPools(forkJoinPool: ExecutorService, action: () -> Unit) {
     val future = SettableFuture.create<Unit>()

@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.util.ConcurrencyUtil.newSameThreadExecutorService
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
@@ -26,14 +25,13 @@ import org.rust.stdext.withLockAndCheckingCancelled
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.withLock
 import kotlin.system.measureTimeMillis
 
 /**
  * Returns defMap stored in [DefMapHolder] if it is up-to-date.
- * Otherwise rebuilds if needed [CrateDefMap] for [crate] and all its dependencies.
+ * Otherwise, rebuilds if needed [CrateDefMap] for [crate] and all its dependencies.
  * If process is cancelled ([ProcessCanceledException]), then only part of defMaps could be updated,
  * other defMaps will be updated in next call to [getOrUpdateIfNeeded].
  */
@@ -53,11 +51,10 @@ fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<Crat
         check(defMapsBuildLock.holdCount == 1) { "Can't use resolve while building CrateDefMap" }
         if (holders.all { it.hasLatestStamp() }) return@withLockAndCheckingCancelled holders.defMaps()
 
-        val pool = Executors.newWorkStealingPool()
         try {
             val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
             // TODO: Invoke outside of read action ?
-            DefMapUpdater(crates, this, pool, indicator, multithread = true).run()
+            DefMapUpdater(crates, this, indicator, multithread = true).run()
             for (holder in holders) {
                 if (hasDefMapFor(holder.crateId)) {
                     holder.checkHasLatestStamp()
@@ -65,7 +62,6 @@ fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<Crat
             }
             holders.defMaps()
         } finally {
-            pool.shutdown()
             MacroExpansionSharedCache.getInstance().flush()
         }
     }
@@ -74,19 +70,17 @@ fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<Crat
 /** Called from macro expansion task */
 fun updateDefMapForAllCrates(
     project: Project,
-    pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean = true
 ): List<CrateDefMap> {
     if (!project.isNewResolveEnabled) return emptyList()
     return executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
-        doUpdateDefMapForAllCrates(project, pool, wrappedIndicator, multithread)
+        doUpdateDefMapForAllCrates(project, wrappedIndicator, multithread)
     }
 }
 
 private fun doUpdateDefMapForAllCrates(
     project: Project,
-    pool: ExecutorService,
     indicator: ProgressIndicator,
     multithread: Boolean,
     rootCrateIds: List<CratePersistentId>? = null
@@ -96,23 +90,18 @@ private fun doUpdateDefMapForAllCrates(
     return runReadActionInSmartMode(dumbService) {
         defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
             check(defMapService.defMapsBuildLock.holdCount == 1)
-            DefMapUpdater(rootCrateIds, defMapService, pool, indicator, multithread).run()
+            DefMapUpdater(rootCrateIds, defMapService, indicator, multithread).run()
         }
     }
 }
 
 fun Project.forceRebuildDefMapForAllCrates(multithread: Boolean) {
-    val pool = Executors.newWorkStealingPool()
-    try {
-        runReadAction {
-            defMapService.defMapsBuildLock.withLock {
-                defMapService.scheduleRebuildAllDefMaps()
-            }
+    runReadAction {
+        defMapService.defMapsBuildLock.withLock {
+            defMapService.scheduleRebuildAllDefMaps()
         }
-        doUpdateDefMapForAllCrates(this, pool, EmptyProgressIndicator(), multithread)
-    } finally {
-        pool.shutdown()
     }
+    doUpdateDefMapForAllCrates(this, EmptyProgressIndicator(), multithread)
 }
 
 fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
@@ -121,7 +110,7 @@ fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
             defMapService.scheduleRebuildDefMap(crateId)
         }
     }
-    doUpdateDefMapForAllCrates(this, newSameThreadExecutorService(), EmptyProgressIndicator(), multithread = false, listOf(crateId))
+    doUpdateDefMapForAllCrates(this, EmptyProgressIndicator(), multithread = false, listOf(crateId))
 }
 
 fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapNotNull {
@@ -132,17 +121,17 @@ fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapN
 private class DefMapUpdater(
     /**
      * If null, DefMap is updated for all crates.
-     * Otherwise for [rootCrateIds] and all its dependencies.
+     * Otherwise, for [rootCrateIds] and all its dependencies.
      */
     rootCrateIds: List<CratePersistentId>?,
     private val defMapService: DefMapService,
-    private val pool: ExecutorService,
     private val indicator: ProgressIndicator,
     multithread: Boolean,
 ) {
     // Note: we can use only current thread if we are inside write action
     // (read action will not be started in other threads)
     private val multithread: Boolean = multithread && !ApplicationManager.getApplication().isWriteAccessAllowed
+    private val pool: ExecutorService = ResolveCommonThreadPool.get()
     private val topSortedCrates: List<Crate> = defMapService.project.crateGraph.topSortedCrates
 
     /** Crates to check for update */

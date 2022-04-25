@@ -22,7 +22,6 @@ import org.rust.openapiext.testAssert
 import org.rust.openapiext.toThreadSafeProgressIndicator
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
-import java.util.concurrent.ExecutorService
 
 /**
  * Overview of macro expansion process:
@@ -46,7 +45,6 @@ import java.util.concurrent.ExecutorService
 class MacroExpansionTask(
     project: Project,
     private val modificationTracker: SimpleModificationTracker,
-    private val pool: ExecutorService,
     private val lastUpdatedMacrosAt: MutableMap<CratePersistentId, Long>,
     private val projectDirectoryName: String,
     override val taskType: RsTask.TaskType,
@@ -61,7 +59,7 @@ class MacroExpansionTask(
 
         val allDefMaps = try {
             indicator.text = "Preparing resolve data"
-            updateDefMapForAllCrates(project, pool, subTaskIndicator)
+            updateDefMapForAllCrates(project, subTaskIndicator)
         } catch (e: ProcessCanceledException) {
             throw e
         }
