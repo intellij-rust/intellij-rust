@@ -89,3 +89,6 @@ fn <FUNCTION>test</FUNCTION>() {
         <UNSAFE_CODE>a_function</UNSAFE_CODE>(1);
     }
 }
+
+<CFG_DISABLED_CODE>#[cfg(feature = "disabled_feature")]
+fn cfg_disabled_function() {}</CFG_DISABLED_CODE>

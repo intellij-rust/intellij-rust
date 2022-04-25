@@ -52,8 +52,10 @@ class CollectorContext(
     val crate: Crate,
     val project: Project,
     /** See [getHangingModInfo] */
-    val isHangingMode: Boolean = false,
+    val hangingModData: ModData? = null,
 ) {
+    val isHangingMode: Boolean get() = hangingModData != null
+
     /** All imports (including expanded from macros - filled in [DefCollector]) */
     val imports: MutableList<Import> = mutableListOf()
 

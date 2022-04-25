@@ -91,15 +91,19 @@ class CrateDefMap(
     fun getDefMap(crate: CratePersistentId): CrateDefMap? =
         if (crate == this.crate) this else allDependenciesDefMaps[crate]
 
-    fun getModData(path: ModPath): ModData? {
-        val defMap = getDefMap(path.crate) ?: error("Can't find ModData for path $path")
-        return defMap.root.getChildModData(path.segments)
+    fun getModData(path: ModPath, hangingModData: ModData? = null): ModData? {
+        return if (hangingModData == null) {
+            val defMap = getDefMap(path.crate) ?: error("Can't find ModData for path $path")
+            defMap.root.getChildModData(path.segments)
+        } else {
+            findHangingModData(path, hangingModData)
+                ?: getModData(path, hangingModData.context)
+        }
     }
 
-    // TODO: Possible optimization - store in [CrateDefMap] map from [String] (mod path) to [ModData]
-    fun tryCastToModData(types: VisItem): ModData? {
+    fun tryCastToModData(types: VisItem, hangingModData: ModData? = null): ModData? {
         if (!types.isModOrEnum) return null
-        return getModData(types.path)
+        return getModData(types.path, hangingModData)
     }
 
     fun getModData(mod: RsMod): ModData? {
