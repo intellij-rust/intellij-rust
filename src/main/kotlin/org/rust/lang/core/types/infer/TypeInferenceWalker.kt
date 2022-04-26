@@ -370,6 +370,18 @@ class RsTypeInferenceWalker(
         scopeEntry: ScopeEntry,
         pathExpr: RsPathExpr
     ): Ty {
+        if (element is RsImplItem) {
+            val implForTy = element.typeReference?.type ?: TyUnknown
+            val tupleFields = ((implForTy as? TyAdt)?.item as? RsFieldsOwner)?.tupleFields
+            return if (tupleFields != null) {
+                // Treat tuple constructor as a function
+                TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, implForTy)
+                    .substitute(implForTy.typeParameterValues)
+            } else {
+                implForTy
+            }.foldWith(associatedTypeNormalizer)
+        }
+
         val path = pathExpr.path
 
         if (element is RsGenericDeclaration) {
