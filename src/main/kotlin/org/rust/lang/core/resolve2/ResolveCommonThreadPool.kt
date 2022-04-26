@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.testFramework.ThreadTracker
 import org.rust.openapiext.isUnitTestMode
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory
 import java.util.concurrent.ForkJoinTask
@@ -26,18 +25,20 @@ class ResolveCommonThreadPool : Disposable {
      */
     private val pool: ExecutorService = createPool()
 
-    private fun createPool(): ExecutorService {
-        return if (isUnitTestMode) {
-            val parallelism = Runtime.getRuntime().availableProcessors()
-            val threadFactory = ForkJoinWorkerThreadFactory { pool ->
-                val thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool)
-                ThreadTracker.longRunningThreadCreated(this, thread.name)
-                thread
-            }
-            ForkJoinPool(parallelism, threadFactory, null, true)
-        } else {
-            Executors.newWorkStealingPool()
+    init {
+        if (isUnitTestMode) {
+            ThreadTracker.longRunningThreadCreated(this, THREAD_NAME_PREFIX)
         }
+    }
+
+    private fun createPool(): ExecutorService {
+        val parallelism = Runtime.getRuntime().availableProcessors()
+        val threadFactory = ForkJoinWorkerThreadFactory { pool ->
+            ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool).apply {
+                name = "$THREAD_NAME_PREFIX$poolIndex"
+            }
+        }
+        return ForkJoinPool(parallelism, threadFactory, null, true)
     }
 
     override fun dispose() {
@@ -45,6 +46,9 @@ class ResolveCommonThreadPool : Disposable {
     }
 
     companion object {
+
+        private const val THREAD_NAME_PREFIX = "Rust-resolve-thread-"
+
         fun get(): ExecutorService = service<ResolveCommonThreadPool>().pool
     }
 }
