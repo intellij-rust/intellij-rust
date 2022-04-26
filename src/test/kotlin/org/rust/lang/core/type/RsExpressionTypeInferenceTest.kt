@@ -1175,14 +1175,44 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    // TODO
-    fun `test Self tuple struct init`() = testExpr("""
+    fun `test Self tuple struct init 1`() = testExpr("""
         struct S();
         impl S {
             fn new() {
                 let a = Self();
                 a;
-            } //^ <unknown>
+            } //^ S
+        }
+    """)
+
+    fun `test Self tuple struct init 2`() = testExpr("""
+        struct S(i32);
+        impl S {
+            fn new() {
+                let b = Self;
+                let a = b(1);
+                a;
+            } //^ S
+        }
+    """)
+
+    fun `test Self tuple struct init 3`() = testExpr("""
+        struct S<A>(i32);
+        impl<B> S<B> {
+            fn new() {
+                let a = Self(1);
+                a;
+            } //^ S<B>
+        }
+    """)
+
+    fun `test Self unit struct`() = testExpr("""
+        struct S;
+        impl S {
+            fn new() {
+                let a = Self;
+                a;
+            } //^ S
         }
     """)
 
@@ -1538,7 +1568,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = a();
             b;
         } //^ <unknown>
-    """)
+    """, allowErrors = true)
 
     fun `test call expr with callee of struct without fields type 2`() = testExpr("""
         struct S;
@@ -1546,7 +1576,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S();
             b;
         } //^ <unknown>
-    """)
+    """, allowErrors = true)
 
     fun `test call expr with callee of struct without fields type 3`() = testExpr("""
         struct S();

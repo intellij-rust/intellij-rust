@@ -907,4 +907,49 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ *mut i32
         }
     """)
+
+    fun `test iter map using std identity`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = vec![1, 2]
+                .into_iter()
+                .map(std::convert::identity)
+                .next()
+                .unwrap();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer reference`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo(f: &fn() -> i32) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer 2-reference`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo(f: &&fn() -> i32) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer under Rc`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::rc::Rc;
+        fn foo(f: Rc<fn() -> i32>) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call type parameter with FnOnce with implicit return type`() = stubOnlyTypeInfer("""
+    //- main.rs
+        pub fn foo<F: FnOnce(i32)>(f: F) -> Self {
+            let a = f(1);
+            a;
+        } //^ ()
+    """)
 }

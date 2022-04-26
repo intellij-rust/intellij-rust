@@ -443,12 +443,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkCallExpr(holder: RsAnnotationHolder, o: RsCallExpr) {
-        val path = (o.expr as? RsPathExpr)?.path ?: return
         checkNotCallingDrop(o, holder)
-        val owner = path.reference?.deepResolve() as? RsFieldsOwner ?: return
-        if (owner.tupleFields == null && !owner.implLookup.isAnyFn(owner.asTy())) {
-            RsDiagnostic.ExpectedFunction(o).addToHolder(holder)
-        }
     }
 
     private fun checkTraitRef(holder: RsAnnotationHolder, o: RsTraitRef) {
