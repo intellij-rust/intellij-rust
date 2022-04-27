@@ -98,7 +98,7 @@ class CargoCommandConfigurationEditor(project: Project)
     private val environmentVariables = EnvironmentVariablesComponent()
     private val requiredFeatures = CheckBox("Implicitly add required features if possible", true)
     private val allFeatures = CheckBox("Use all features in tests", false)
-    private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
+    private val emulateTerminal = CheckBox("Emulate terminal in output console", CargoCommandConfiguration.emulateTerminalDefault)
     private val withSudo = CheckBox(
         if (SystemInfo.isWindows) "Run with Administrator privileges" else "Run with root privileges",
         false
@@ -144,7 +144,7 @@ class CargoCommandConfigurationEditor(project: Project)
         configuration.channel = configChannel
         configuration.requiredFeatures = requiredFeatures.isSelected
         configuration.allFeatures = allFeatures.isSelected
-        configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
+        configuration.emulateTerminal = emulateTerminal.isSelected && SystemInfo.isUnix
         configuration.withSudo = withSudo.isSelected
         configuration.buildTarget = if (buildOnRemoteTarget.isSelected) BuildTarget.REMOTE else BuildTarget.LOCAL
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
@@ -173,7 +173,7 @@ class CargoCommandConfigurationEditor(project: Project)
         row { requiredFeatures() }
         row { allFeatures() }
 
-        if (!SystemInfo.isWindows) {
+        if (SystemInfo.isUnix) {
             row { emulateTerminal() }
         }
         row { withSudo() }

@@ -9,7 +9,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.wsl.WslPath
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import org.rust.cargo.CargoConstants
@@ -105,9 +104,7 @@ abstract class RsToolchainBase(val location: Path) {
         environmentVariables.configureCommandLine(commandLine, true)
 
         if (emulateTerminal) {
-            if (!SystemInfo.isWindows) {
-                commandLine.environment["TERM"] = "xterm-256color"
-            }
+            commandLine.environment["TERM"] = "xterm-256color"
             commandLine = PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
         }
 
