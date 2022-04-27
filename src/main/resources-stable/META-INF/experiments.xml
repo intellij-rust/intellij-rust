@@ -12,9 +12,6 @@
         <experimentalFeature id="org.rust.cargo.fetch.actual.stdlib.metadata" percentOfUsers="100">
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.macros.new.engine" percentOfUsers="100">
-            <description>Enables new macro expansion engine by default</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.macros.proc" percentOfUsers="0">
             <description>Enables procedural macro expansion</description>
         </experimentalFeature>

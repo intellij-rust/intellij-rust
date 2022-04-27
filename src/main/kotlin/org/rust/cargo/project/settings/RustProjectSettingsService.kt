@@ -16,8 +16,6 @@ import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
-import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Paths
 import kotlin.reflect.KProperty1
@@ -126,11 +124,7 @@ interface RustProjectSettingsService {
         )
 
         private val defaultMacroExpansionEngine: MacroExpansionEngine
-            get() = if (isFeatureEnabled(RsExperiments.MACROS_NEW_ENGINE)) {
-                MacroExpansionEngine.NEW
-            } else {
-                MacroExpansionEngine.OLD
-            }
+            get() = MacroExpansionEngine.NEW
     }
 
     interface RustSettingsListener {
