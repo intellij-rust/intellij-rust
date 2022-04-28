@@ -44,6 +44,7 @@ import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import org.rust.openapiext.isUnitTestMode
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -68,7 +69,7 @@ class CargoCommandConfiguration(
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
-    var emulateTerminal: Boolean = false
+    var emulateTerminal: Boolean = CargoCommandConfiguration.emulateTerminalDefault
     var withSudo: Boolean = false
     var buildTarget: BuildTarget = BuildTarget.REMOTE
     var backtrace: BacktraceMode = BacktraceMode.SHORT
@@ -349,6 +350,9 @@ class CargoCommandConfiguration(
                 }
             }
         }
+
+        val emulateTerminalDefault: Boolean
+            get() = isFeatureEnabled(RsExperiments.EMULATE_TERMINAL) && (SystemInfo.isLinux || SystemInfo.isMac) && !isUnitTestMode
     }
 }
 

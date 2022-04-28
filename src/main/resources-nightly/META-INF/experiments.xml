@@ -18,5 +18,8 @@
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="100">
             <description>Enables crates local index</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.cargo.emulate.terminal" percentOfUsers="100">
+            <description>Emulate terminal in output console by default</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>
