@@ -218,7 +218,6 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                     rawDependencies = emptyMap(),
                     workspaceRootUrl = contentRootUrl
                 ),
-                CfgOptions.DEFAULT
             )
 
             project.testCargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)

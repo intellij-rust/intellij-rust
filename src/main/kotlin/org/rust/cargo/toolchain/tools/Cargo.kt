@@ -7,7 +7,9 @@ package org.rust.cargo.toolchain.tools
 
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.toml.TomlMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -25,6 +27,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -209,6 +212,49 @@ class Cargo(
             workingDirectory = projectDirectory,
             environment = mapOf(RUSTC_BOOTSTRAP to "1")
         ).execute(owner).map { output -> CfgOptions.parse(output.stdoutLines) }
+    }
+
+    /**
+     * Execute `cargo config get <path>` to and parse output as Jackson Tree ([JsonNode]).
+     * Use [JsonNode.at] to get properties by path (in `/foo/bar` format)
+     */
+    fun getConfig(
+        owner: Project,
+        projectDirectory: Path?
+    ): RsResult<CargoConfig, RsProcessExecutionOrDeserializationException> {
+        val parameters = mutableListOf("-Z", "unstable-options", "config", "get")
+
+        val output = createBaseCommandLine(
+            parameters,
+            workingDirectory = projectDirectory,
+            environment = mapOf(RUSTC_BOOTSTRAP to "1")
+        ).execute(owner).unwrapOrElse { return Err(it) }.stdout
+
+        val tree = try {
+            TOML_MAPPER.readTree(output)
+        } catch (e: JacksonException) {
+            return Err(RsDeserializationException(e))
+        }
+
+        val buildTarget = tree.at("/build/target").asText()
+        val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
+            // Value can be either string or object with additional `forced` and `relative` params.
+            // https://doc.rust-lang.org/cargo/reference/config.html#env
+            if (field.value.isTextual) {
+                field.key to CargoConfig.EnvValue(field.value.asText())
+            } else if (field.value.isObject) {
+                val valueParams = try {
+                    TOML_MAPPER.treeToValue(field.value, CargoConfig.EnvValue::class.java)
+                } catch (e: JacksonException) {
+                    return Err(RsDeserializationException(e))
+                }
+                field.key to CargoConfig.EnvValue(valueParams.value, valueParams.isForced, valueParams.isRelative)
+            } else {
+                null
+            }
+        }.toMap()
+
+        return Ok(CargoConfig(buildTarget, env))
     }
 
     private fun fetchBuildScriptsInfo(
@@ -462,6 +508,7 @@ class Cargo(
         private val JSON_MAPPER: ObjectMapper = ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .registerKotlinModule()
+        private val TOML_MAPPER = TomlMapper()
 
         @JvmStatic
         val TEST_NOCAPTURE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.cargo.test.nocapture")

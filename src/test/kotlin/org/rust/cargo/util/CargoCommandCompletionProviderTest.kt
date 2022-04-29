@@ -190,7 +190,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
                 dependencies = emptyMap(),
                 rawDependencies = emptyMap()
             ),
-            CfgOptions.DEFAULT
         )
     }
 
