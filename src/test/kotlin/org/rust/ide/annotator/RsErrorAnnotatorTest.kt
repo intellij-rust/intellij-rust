@@ -4649,4 +4649,312 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             };
         }
     """)
+
+    fun `test no E0609 error for await`() = checkErrors("""
+        async fn call() -> i32 {
+            1
+        }
+        async fn caller() {
+            call().await/*caret*/;
+        }
+    """)
+
+    fun `test no E0609 error for known field in struct 1`() = checkErrors("""
+        struct E {
+            x: i32,
+        }
+        fn main() {
+            let t = E { x: 1 };
+            println!("{}", t.x/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in struct 2`() = checkErrors("""
+         mod m {
+            use super::E;
+            fn bar() {
+                let e = E { x: 10 };
+                println!("{}", e.x/*caret*/);
+            }
+        }
+        struct E { x: i32 }
+    """)
+
+    fun `test no E0609 error for known field in struct 3`() = checkByFileTree("""
+        //- m/mod.rs
+            use super::E;
+            fn bar() {
+                let e = E { x: 10 };
+                println!("{}", e.x/*caret*/);
+            }
+        //- main.rs
+            mod m;
+            pub struct E { x: i32 }
+    """)
+
+    fun `test no E0609 error for known field in struct 4`() = checkByFileTree("""
+        //- m/mod.rs
+            pub struct E { pub x: i32 }
+        //- n/mod.rs
+            use crate::m::E;
+            fn bar() {
+                let e = E { x: 10 };
+                println!("{}", e.x/*caret*/);
+            }
+        //- main.rs
+            mod m;
+            mod n;
+    """)
+
+    fun `test no E0609 error for known field in struct 5`() = checkErrors("""
+        struct In {
+            x: i32,
+        }
+        struct E {
+            inner: In,
+        }
+        fn main() {
+            let e = E { inner: In { x: 10 }};
+            println!("{}", e.inner.x/*caret*/);
+        }
+    """)
+
+    fun `test E0609 for unknown field in struct 1`() = checkErrors("""
+        struct E;
+        fn main() {
+            let t = E;
+            println!("{}", t.<error descr="No field `x` on type `E` [E0609]">x/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in struct 2`() = checkErrors("""
+        struct E;
+        fn call(e: E) {
+            println!("{}", e.<error descr="No field `x` on type `E` [E0609]">x/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in struct 3`() = checkErrors("""
+        mod m {
+           use super::E;
+            fn bar() {
+                let e = E;
+                println!("{}", e.<error descr="No field `x` on type `E` [E0609]">x/*caret*/</error>);
+            }
+        }
+        pub struct E;
+    """)
+
+    fun `test E0609 for unknown field in struct 4`() = checkByFileTree("""
+        //- m/mod.rs
+            use super::E;
+            fn bar() {
+                let e = E;
+                println!("{}", e.<error descr="No field `x` on type `E` [E0609]">x/*caret*/</error>);
+            }
+        //- main.rs
+            mod m;
+            pub struct E;
+    """)
+
+    fun `test E0609 for unknown field in struct 5`() = checkErrors("""
+        struct E;
+        impl E {
+            fn call(&self) {
+                println!("{}", self.<error descr="No field `x` on type `&E` [E0609]">x/*caret*/</error>);
+            }
+        }
+    """)
+
+    fun `test E0609 for unknown field in struct 6`() = checkErrors("""
+        struct E;
+        impl E {
+            fn call(&self) {
+                println!("{}", self.<error descr="No field `x` on type `&E` [E0609]">x/*caret*/</error>.y.z);
+            }
+        }
+    """)
+
+    fun `test E0609 for unknown field in struct 7`() = checkErrors("""
+        struct E {
+            x: i32,
+        }
+        fn closure(e: E, call: impl FnOnce(&E) -> ()) {
+            call(&e);
+        }
+        fn main() {
+            let e = E { x: 10 };
+            closure(e, |ee| {
+                println!("{}", ee.x/*caret*/);
+            });
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple 1`() = checkErrors("""
+        fn main() {
+            let t = (1, true, 3.0);
+            println!("{}", t./*caret*/1);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple 2`() = checkErrors("""
+        fn call(t: &(i32, bool)) {
+            let t = (1, true, 3.0);
+            println!("{}", t.1/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple 3`() = checkErrors("""
+        fn call() -> (i32, bool) {
+            (4, true)
+        }
+
+        fn main() {
+            let t = call();
+            println!("{}", t.1/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple 4`() = checkByFileTree("""
+        //- m/mod.rs
+            pub fn call() -> (i32, bool) {
+                (4, true)
+            }
+        //- n/mod.rs
+            use crate::m::call;
+            fn bar() {
+                let e = call();
+                println!("{}", e.0/*caret*/);
+            }
+        //- main.rs
+            mod m;
+            mod n;
+    """)
+
+    fun `test no E0609 error for known field in tuple 5`() = checkErrors("""
+        fn closure(e: (i32, bool), call: impl FnOnce(&(i32, bool)) -> ()) {
+            call(&e);
+        }
+        fn main() {
+            let e = (10, true);
+            closure(e, |ee| {
+                println!("{}", ee.0 /*caret*/);
+            });
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple 1`() = checkErrors("""
+        fn main() {
+            let t = (1, true, 3.0);
+            println!("{}", t.<error descr="No field `x` on type `(i32, bool, f64)` [E0609]">x/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple 2`() = checkErrors("""
+        fn main() {
+            let t = (1, true, 3.0);
+            println!("{}", t.<error descr="No field `5` on type `(i32, bool, f64)` [E0609]">5/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple 3`() = checkErrors("""
+        fn call() -> (i32, bool) {
+            (4, true)
+        }
+
+        fn main() {
+            let t = call();
+            println!("{}", t.<error descr="No field `2` on type `(i32, bool)` [E0609]">2/*caret*/</error>);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple struct 1`() = checkErrors("""
+        struct E (bool,i32);
+        fn main() {
+            let t = E(true, 1);
+            println!("{}", t.1/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple struct 2`() = checkErrors("""
+        struct Inner (bool, i32);
+        struct E (Inner);
+        fn main() {
+            let t = E(Inner(true, 1));
+            println!("{}", t.0.1/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple struct 3`() = checkErrors("""
+        struct Inner { x: i32 }
+        struct E (Inner);
+        fn main() {
+            let t = E(Inner { x: 10 });
+            println!("{}", t.0.x/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple struct 4`() = checkErrors("""
+        struct Inner (bool, i32);
+        struct E { inner: Inner }
+        fn main() {
+            let t = E { inner: Inner(true, 10) };
+            println!("{}", t.inner.1/*caret*/);
+        }
+    """)
+
+    fun `test no E0609 error for known field in tuple struct 5`() = checkErrors("""
+        struct Inner { x: i32 }
+        struct E (Inner);
+        impl E {
+            fn call(&mut self) {
+                println!("{}", self.0.x/*caret*/);
+            }
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple struct 1`() = checkErrors("""
+        struct T (bool,i32);
+        fn main() {
+            let t = T(true, 1);
+            println!("{}", t.<error descr="No field `3` on type `T` [E0609]">3/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple struct 2`() = checkErrors("""
+        struct T (i32, i32, i32, i32);
+        fn main() {
+            let t = T(1, 2, 3, 4);
+            println!("{}", t.<error descr="No field `5` on type `T` [E0609]">5/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple struct 3`() = checkErrors("""
+        struct Inner (i32, i32);
+        struct T (Inner);
+        fn main() {
+            let t = T(Inner(1, 2));
+            println!("{}", t.0.<error descr="No field `3` on type `Inner` [E0609]">3/*caret*/</error>);
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple struct 4`() = checkErrors("""
+        struct Inner { x: i32 }
+        struct E (Inner);
+        impl E {
+            fn call(&mut self) {
+                println!("{}", self.0.<error descr="No field `y` on type `Inner` [E0609]">y/*caret*/</error>);
+            }
+        }
+    """)
+
+    fun `test E0609 for unknown field in tuple struct 5`() = checkErrors("""
+        struct Inner { x: i32 }
+        struct E (Inner);
+        impl E {
+            fn call(&mut self) {
+                println!("{}", self.0.<error descr="No field `y` on type `Inner` [E0609]">y/*caret*/</error>);
+            }
+        }
+    """)
 }
