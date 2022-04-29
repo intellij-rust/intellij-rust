@@ -272,7 +272,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "FOR_LIFETIMES" -> RsPlaceholderStub.Type("FOR_LIFETIMES", ::RsForLifetimesImpl)
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
-    "ASSOC_TYPE_BINDING" -> RsAssocTypeBindingStub.Type
+    "ASSOC_TYPE_BINDING" -> RsPlaceholderStub.Type("ASSOC_TYPE_BINDING", ::RsAssocTypeBindingImpl)
 
     "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
     "POLYBOUND" -> RsPolyboundStub.Type
@@ -2152,31 +2152,6 @@ private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
             dataStream.writeDoubleAsNullable(value)
             dataStream.writeByte(ty?.ordinal ?: -1)
         }
-    }
-}
-
-class RsAssocTypeBindingStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String
-) : StubBase<RsAssocTypeBinding>(parent, elementType) {
-
-    object Type : RsStubElementType<RsAssocTypeBindingStub, RsAssocTypeBinding>("ASSOC_TYPE_BINDING") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(
-                parentStub, this,
-                dataStream.readNameAsString()!!
-            )
-
-        override fun serialize(stub: RsAssocTypeBindingStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.referenceName)
-            }
-
-        override fun createPsi(stub: RsAssocTypeBindingStub): RsAssocTypeBinding =
-            RsAssocTypeBindingImpl(stub, this)
-
-        override fun createStub(psi: RsAssocTypeBinding, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(parentStub, this, psi.referenceName)
     }
 }
 

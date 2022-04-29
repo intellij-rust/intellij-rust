@@ -429,6 +429,56 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
+    @Suppress("DuplicatedCode")
+    @JvmStatic
+    fun typeReferenceOrAssocTypeBinding(
+        b: PsiBuilder,
+        level: Int,
+        pathP: Parser,
+        assocTypeBindingUpperP: Parser,
+        typeReferenceP: Parser,
+        traitTypeUpperP: Parser,
+    ): Boolean {
+        if (b.tokenType == DYN || b.tokenType == IDENTIFIER && b.tokenText == "dyn" && b.lookAhead(1) != EXCL) {
+            return typeReferenceP.parse(b, level)
+        }
+
+        val typeOrAssoc = enter_section_(b)
+        val polybound = enter_section_(b)
+        val bound = enter_section_(b)
+        val traitRef = enter_section_(b)
+
+        if (!pathP.parse(b, level) || nextTokenIsFast(b, EXCL)) {
+            exit_section_(b, traitRef, null, false)
+            exit_section_(b, bound, null, false)
+            exit_section_(b, polybound, null, false)
+            exit_section_(b, typeOrAssoc, null, false)
+            return typeReferenceP.parse(b, level)
+        }
+
+        if (nextTokenIsFast(b, PLUS) ) {
+            exit_section_(b, traitRef, TRAIT_REF, true)
+            exit_section_(b, bound, BOUND, true)
+            exit_section_(b, polybound, POLYBOUND, true)
+            val result = traitTypeUpperP.parse(b, level)
+            exit_section_(b, typeOrAssoc, TRAIT_TYPE, result)
+            return result
+        }
+
+        exit_section_(b, traitRef, null, true)
+        exit_section_(b, bound, null, true)
+        exit_section_(b, polybound, null, true)
+
+        if (!nextTokenIsFast(b, EQ) && !nextTokenIsFast(b, COLON)) {
+            exit_section_(b, typeOrAssoc, BASE_TYPE, true)
+            return true
+        }
+
+        val result = assocTypeBindingUpperP.parse(b, level)
+        exit_section_(b, typeOrAssoc, ASSOC_TYPE_BINDING, result)
+        return result
+    }
+
     private val SPECIAL_MACRO_PARSERS: Map<String, (PsiBuilder, Int) -> Boolean>
     private val SPECIAL_EXPR_MACROS: Set<String>
 

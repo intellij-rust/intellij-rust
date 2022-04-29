@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import org.rust.lang.core.psi.RsAssocTypeBinding
 import org.rust.lang.core.psi.RsLifetime
 import org.rust.lang.core.psi.RsTypeArgumentList
 import org.rust.lang.core.psi.RsTypeReference
@@ -12,6 +13,7 @@ import org.rust.lang.core.psi.RsTypeReference
 val RsMethodOrPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeArguments.orEmpty()
 val RsMethodOrPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeArguments.orEmpty()
 val RsMethodOrPath.constArguments: List<RsElement> get() = typeArgumentList?.constArguments.orEmpty()
+val RsMethodOrPath.assocTypeBindings: List<RsAssocTypeBinding> get() = typeArgumentList?.assocTypeBindingList.orEmpty()
 
 fun RsMethodOrPath.getGenericArguments(
     includeLifetimes: Boolean = true,

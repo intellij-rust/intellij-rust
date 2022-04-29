@@ -419,7 +419,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
     when (this) {
         is RsPath -> generatePathDocumentation(this, buffer)
         is RsAssocTypeBinding -> {
-            buffer += identifier.text
+            path.generateDocumentation(buffer)
             typeReference?.generateDocumentation(buffer, " = ")
         }
         is RsTraitRef -> path.generateDocumentation(buffer)

@@ -324,6 +324,9 @@ fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: 
     if (parent is RsMacroCall) {
         error("Tried to use `processPathResolveVariants` for macro path. See `RsMacroPathReferenceImpl`")
     }
+    if (parent is RsAssocTypeBinding) {
+        return processAssocTypeVariants(parent, processor)
+    }
     val qualifier = path.qualifier
     val typeQual = path.typeQual
     val ns = path.allowedNamespaces(isCompletion)
