@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoConfig
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
@@ -38,6 +39,7 @@ interface CargoWorkspace {
     val workspaceRoot: VirtualFile?
 
     val cfgOptions: CfgOptions
+    val cargoConfig: CargoConfig
 
     /**
      * Flatten list of packages including workspace members, dependencies, transitive dependencies
@@ -222,8 +224,13 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): CargoWorkspace =
-            WorkspaceImpl.deserialize(manifestPath, data, cfgOptions)
+        fun deserialize(
+            manifestPath: Path,
+            data: CargoWorkspaceData,
+            cfgOptions: CfgOptions = CfgOptions.DEFAULT,
+            cargoConfig: CargoConfig = CargoConfig.DEFAULT,
+        ): CargoWorkspace =
+            WorkspaceImpl.deserialize(manifestPath, data, cfgOptions, cargoConfig)
     }
 }
 
@@ -233,6 +240,7 @@ private class WorkspaceImpl(
     val workspaceRootUrl: String?,
     packagesData: Collection<CargoWorkspaceData.Package>,
     override val cfgOptions: CfgOptions,
+    override val cargoConfig: CargoConfig,
     val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>
 ) : CargoWorkspace {
 
@@ -346,6 +354,7 @@ private class WorkspaceImpl(
             workspaceRootUrl,
             newPackagesData,
             cfgOptions,
+            cargoConfig,
             featuresState
         )
 
@@ -394,6 +403,7 @@ private class WorkspaceImpl(
             workspaceRootUrl,
             packages.map { it.asPackageData() },
             cfgOptions,
+            cargoConfig,
             featuresState
         ).withDependenciesOf(this)
     }
@@ -485,6 +495,7 @@ private class WorkspaceImpl(
             workspaceRootUrl,
             newPackagesData,
             cfgOptions,
+            cargoConfig,
             featuresState
         )
 
@@ -523,6 +534,7 @@ private class WorkspaceImpl(
             pkg.asPackageData(packageEdition)
         },
         cfgOptions,
+        cargoConfig,
         featuresState
     ).withDependenciesOf(this)
 
@@ -532,6 +544,7 @@ private class WorkspaceImpl(
         workspaceRootUrl,
         packages.map { it.asPackageData() },
         cfgOptions,
+        cargoConfig,
         featuresState
     ).withDependenciesOf(this)
 
@@ -545,6 +558,7 @@ private class WorkspaceImpl(
             workspaceRootUrl,
             packages.map { it.asPackageData().copy(features = packageToFeatures[it].orEmpty(), enabledFeatures = packageToFeatures[it].orEmpty().keys) },
             cfgOptions,
+            cargoConfig,
             featuresState
         ).withDependenciesOf(this).withDisabledFeatures(UserDisabledFeatures.EMPTY)
     }
@@ -555,14 +569,26 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): WorkspaceImpl {
+        fun deserialize(
+            manifestPath: Path,
+            data: CargoWorkspaceData,
+            cfgOptions: CfgOptions,
+            cargoConfig: CargoConfig,
+        ): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
             // are used only for tests), then `X`, and then `P`s tests. So we need to
             // handle cycles here.
 
-            val result = WorkspaceImpl(manifestPath, data.workspaceRootUrl, data.packages, cfgOptions, emptyMap())
+            val result = WorkspaceImpl(
+                manifestPath,
+                data.workspaceRootUrl,
+                data.packages,
+                cfgOptions,
+                cargoConfig,
+                emptyMap()
+            )
 
             // Fill package dependencies
             run {

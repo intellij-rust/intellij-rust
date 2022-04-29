@@ -90,8 +90,10 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
     open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(testCargoPackage(contentRoot))
-        return CargoWorkspace.deserialize(Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+        return CargoWorkspace.deserialize(
+            Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot),
+        )
     }
 
     protected open fun externalPackage(
@@ -406,7 +408,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             cyclicDepLibDevDep.id to setOf(
                 dep(depLibWithCyclicDep.id),
             )
-        ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+        ), emptyMap(), contentRoot))
     }
 
     private fun dep(id: PackageId, name: String? = null, depKind: DepKind = DepKind.Normal): Dependency =
@@ -423,7 +425,8 @@ private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescrip
         )
         return CargoWorkspace.deserialize(
             Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot),
+        )
     }
 }
 
