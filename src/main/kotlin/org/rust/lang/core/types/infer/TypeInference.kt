@@ -1028,9 +1028,9 @@ private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<PsiPredicate> 
         val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<PsiPredicate>()
         val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<PsiPredicate>()
 
-        val assocTypeBounds = traitRef.path.typeArgumentList?.assocTypeBindingList.orEmpty().asSequence()
+        val assocTypeBounds = traitRef.path.assocTypeBindings.asSequence()
             .flatMap nestedFlatMap@{
-                val assoc = it.reference.resolve() as? RsTypeAlias
+                val assoc = it.path.reference?.resolve() as? RsTypeAlias
                     ?: return@nestedFlatMap emptySequence<PsiPredicate>()
                 val projectionTy = TyProjection.valueOf(selfTy, assoc)
                 val typeRef = it.typeReference

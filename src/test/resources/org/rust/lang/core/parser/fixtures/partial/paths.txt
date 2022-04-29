@@ -192,7 +192,7 @@ FILE
                     RsPathImpl(PATH)
                       PsiElement(identifier)('bar')
                     PsiElement(::)('::')
-                    PsiErrorElement:'!', '(', '+', ',', '::', <, <path parameters>, <type argument list>, '>' or identifier expected, got '>'
+                    PsiErrorElement:'(', ',', '::', <, <path parameters>, <type argument list>, '>' or identifier expected, got '>'
                       <empty list>
                 PsiElement(>)('>')
             PsiElement(::)('::')

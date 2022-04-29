@@ -38,6 +38,11 @@ class RsPathReferenceImpl(
 
         if (target is RsAbstractable) {
             val owner = target.owner
+
+            if (target is RsTypeAlias && owner.isImplOrTrait && path.parent is RsAssocTypeBinding) {
+                return super.isReferenceTo(target)
+            }
+
             if (owner.isImplOrTrait && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
                 return false
             }
@@ -417,7 +422,7 @@ private fun pathTypeParameters(path: RsPath): RsPsiPathParameters? {
 }
 
 private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
-    collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
+    collectResolveVariants(binding.path.referenceName) { processAssocTypeVariants(trait, it) }
         .singleOrNull() as? RsTypeAlias?
 
 /** Resolves a reference through type aliases */

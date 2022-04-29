@@ -229,15 +229,18 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= &'::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '::'? '<' !'=' <<list_element AnyTypeArgument>>* '>' { pin = 3 }
-private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | RestrictedConstExpr
+private AnyTypeArgument ::= <<typeReferenceOrAssocTypeBinding TypePathGenericArgsNoTypeQual AssocTypeBinding_upper TypeReference TraitType_upper>>
+                          | Lifetime
+                          | RestrictedConstExpr
+                          | never (AssocTypeBinding | TypeReference)
 
-AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
-  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsAssocTypeBindingMixin"
-  stubClass = "org.rust.lang.core.stubs.RsAssocTypeBindingStub"
+AssocTypeBinding ::= TypePathGenericArgsNoTypeQual (AssocTypeBindingType | AssocTypeBindingBound) {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+private AssocTypeBinding_upper ::= AssocTypeBindingType | AssocTypeBindingBound
 private AssocTypeBindingType ::=  '=' TypeReference { pin = 1 }
 private AssocTypeBindingBound ::=  ':' TypeBounds { pin = 1 }
 
@@ -941,7 +944,7 @@ ScalarTypeReference ::= ArrayType
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   pin = 1
   implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"i
 }
 
 private RefLikeStart ::= ( '&' Lifetime? mut? | '*' [ const | mut ] )
@@ -1008,9 +1011,7 @@ private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
 
 private TraitType_upper ::= ('+' Polybound)+
 
-upper TypeAlias ::= TYPE_KW identifier
-              [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
-              [ '=' TypeReference ] ';' {
+upper TypeAlias ::= TYPE_KW identifier TypeParameterList? TypeParamBounds? WhereClause? [ '=' TypeReference ] ';' {
   pin = 'identifier'
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -1138,7 +1139,7 @@ AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp <<setStmtMode 'Stmt
 MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>>
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
-RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt <<checkGtAllowed>> '>' { name = "operator" }
+RelCompBinOp     ::= lteq | <<checkGtAllowed>> gteq | !ltlt '<' | !gtgt <<checkGtAllowed>> '>' { name = "operator" }
 BitShiftBinOp    ::= ltlt | <<checkGtAllowed>> gtgt { name = "operator" }
 AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }

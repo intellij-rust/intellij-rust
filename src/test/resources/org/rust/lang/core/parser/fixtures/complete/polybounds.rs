@@ -46,3 +46,9 @@ fn assoc_type_bounds2<T: Foo<Item: Bar+Baz>>(t: T) {}
 fn assoc_type_bounds3<T: Foo<Item1: Bar, Item2 = ()>>(t: T) {}
 fn assoc_type_bounds4<T: Foo<Item1 = (), Item2: Bar>>(t: T) {}
 fn assoc_type_bounds_in_args(t: &dyn Foo<Item: Bar>) {}
+
+fn gat_bounds1<T: Foo<Item<T>: Bar>>(t: T) {}
+fn gat_bounds2<T: Foo<Item<T>: Bar+Baz>>(t: T) {}
+fn gat_bounds3<T: Foo<Item1<T>: Bar, Item2<T> = ()>>(t: T) {}
+fn gat_bounds4<T: Foo<Item1<T> = (), Item2<T>: Bar>>(t: T) {}
+fn gat_in_args(t: &dyn Foo<Item<T>: Bar>) {}
