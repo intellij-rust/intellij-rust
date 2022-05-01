@@ -1230,6 +1230,11 @@
             default="ASK_EVERY_TIME"
             groupKey="advanced.setting.rust.group"
         />
+        <advancedSetting
+            id="org.rust.external.doc.url"
+            default="https://docs.rs/"
+            groupKey="advanced.setting.rust.group"
+        />
     </extensions>
 
     <extensions defaultExtensionNs="org.rust">

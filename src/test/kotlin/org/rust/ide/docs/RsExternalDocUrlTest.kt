@@ -6,6 +6,7 @@
 package org.rust.ide.docs
 
 import org.rust.CheckTestmarkHit
+import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.docs.RsDocumentationProvider.Testmarks
@@ -163,4 +164,28 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         pub enum Foo { FOO, BAR }
                 //^
     """, null)
+
+    fun `test custom documentation URL`() = doCustomUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+                    //^
+            () => { unimplemented!() };
+        }
+    """, "file:///mydoc/", "file:///mydoc/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
+    fun `test custom documentation URL add slash`() = doCustomUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+                    //^
+            () => { unimplemented!() };
+        }
+    """, "file:///mydoc", "file:///mydoc/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
+    private fun doCustomUrlTestByFileTree(@Language("Rust") text: String, docBaseUrl: String, expectedUrl: String) {
+        withExternalDocumentationBaseUrl(docBaseUrl) {
+            doUrlTestByFileTree(text, expectedUrl)
+        }
+    }
 }
