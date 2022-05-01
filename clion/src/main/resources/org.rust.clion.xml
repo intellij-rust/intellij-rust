@@ -1,0 +1,36 @@
+<idea-plugin package="org.rust.clion" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.clion"/>
+        <plugin id="com.intellij.cidr.base"/>
+
+        <module name="org.rust.debugger"/>
+    </dependencies>
+
+    <xi:include href="/META-INF/platform-clion-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <extensions defaultExtensionNs="cidr">
+        <buildConfigurationProvider implementation="org.rust.clion.cargo.CargoBuildConfigurationProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <programRunner id="RsCLionDebugRunner"
+                       implementation="org.rust.clion.debugger.runconfig.RsCLionDebugRunner"
+                       order="before RsDebugRunner"/>
+        <programRunner id="RsCLionDebugRunnerLegacy"
+                       implementation="org.rust.clion.debugger.runconfig.legacy.RsCLionDebugRunnerLegacy"
+                       order="before RsDebugRunnerLegacy"/>
+
+        <programRunner implementation="org.rust.clion.valgrind.RsValgrindRunner"/>
+        <programRunner implementation="org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.rust">
+        <runConfigurationExtension implementation="org.rust.clion.valgrind.RsValgrindConfigurationExtension"/>
+
+        <debugger.driverConfigurationProvider
+            id="RsCLionDebuggerDriverConfigurationProvider"
+            implementation="org.rust.clion.debugger.RsCLionDebuggerDriverConfigurationProvider"
+            order="before RsDefaultDebuggerDriverConfigurationProvider"/>
+    </extensions>
+</idea-plugin>

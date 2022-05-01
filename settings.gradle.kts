@@ -5,6 +5,7 @@ include(
     "idea",
     "clion",
     "debugger",
+    "profiler",
     "toml",
     "copyright",
     "coverage",

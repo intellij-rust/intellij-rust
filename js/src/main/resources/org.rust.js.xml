@@ -1,0 +1,10 @@
+<idea-plugin package="org.rust.js">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="JavaScript"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.js.RsWasmBindgenLineMarkerProvider"/>
+    </extensions>
+</idea-plugin>

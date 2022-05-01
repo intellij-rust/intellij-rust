@@ -1,0 +1,86 @@
+<idea-plugin package="org.rust.toml">
+
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="org.toml.lang"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.rust.toml.resolve.CargoTomlReferenceContributor"/>
+        <psi.referenceContributor language="Rust"
+                                  implementation="org.rust.toml.resolve.RsCargoTomlIntegrationReferenceContributor"/>
+        <completion.contributor language="TOML"
+                                implementationClass="org.rust.toml.completion.CargoTomlCompletionContributor"/>
+        <completion.contributor language="Rust"
+                                implementationClass="org.rust.toml.completion.RsCargoTomlIntegrationCompletionContributor"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="org.rust.toml.CargoFeatureLineMarkerProvider"/>
+        <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
+
+        <findUsagesHandlerFactory implementation="org.rust.toml.search.CargoTomlFindUsagesHandlerFactory"/>
+        <usageTypeProvider implementation="org.rust.toml.search.CargoTomlUsageTypeProvider"/>
+        <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
+
+        <localInspection groupName="Rust"
+                         displayName="Missing features"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"/>
+
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         displayName="Cyclic feature dependency"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"/>
+        <localInspection language="TOML"
+                         displayName="Crate not found"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"/>
+
+        <!-- Version-related inspections are disabled for now due to false-positives -->
+        <localInspection language="TOML"
+                         displayName="Invalid crate version"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="false"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"/>
+        <localInspection language="TOML"
+                         displayName="New crate version available"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="false"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"/>
+
+        <intentionAction>
+            <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
+            <category>Rust/Cargo.toml</category>
+        </intentionAction>
+
+        <intentionAction>
+            <className>org.rust.toml.intentions.SimplifyDependencySpecificationIntention</className>
+            <category>Rust/Cargo.toml</category>
+        </intentionAction>
+
+        <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
+                            serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
+                            testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
+
+        <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
+
+        <vfs.asyncListener implementation="org.rust.toml.crates.local.CratesLocalIndexVfsListener"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="org.rust.toml.crates.local.CratesLocalIndexWaker"
+                  topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
+    </projectListeners>
+</idea-plugin>
