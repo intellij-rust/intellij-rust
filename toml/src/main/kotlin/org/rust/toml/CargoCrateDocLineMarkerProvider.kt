@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.util.io.URLUtil
 import org.rust.cargo.CargoConstants
+import org.rust.ide.docs.getExternalDocumentationBaseUrl
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
 import org.rust.lang.core.psi.ext.elementType
@@ -59,11 +60,12 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
             else -> version
         }
 
+        val baseUrl = getExternalDocumentationBaseUrl()
         return RsLineMarkerInfoUtils.create(
             anchor,
             anchor.textRange,
             RsIcons.DOCS_MARK,
-            { _, _ -> BrowserUtil.browse("https://docs.rs/$name/${URLUtil.encodeURIComponent(urlVersion)}") },
+            { _, _ -> BrowserUtil.browse("$baseUrl$name/${URLUtil.encodeURIComponent(urlVersion)}") },
             GutterIconRenderer.Alignment.LEFT
         ) { "Open documentation for `$name@$urlVersion`" }
     }

@@ -12,6 +12,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.ide.MockBrowserLauncher
+import org.rust.ide.docs.withExternalDocumentationBaseUrl
 import org.rust.ide.lineMarkers.invokeNavigationHandler
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -91,6 +92,11 @@ class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase(
         a.b = "1"
     """)
 
+    fun `test custom url`() = doCustomUrlTest("""
+        [dependencies]
+        base64 = "0.8.0"  # - Open documentation for `base64@^0.8.0`
+    """, "https://foo.bar", "https://foo.bar/base64/%5E0.8.0")
+
     private fun doTest(@Language("Toml") source: String, vararg expectedUrls: String) {
         doTestByText(source)
 
@@ -106,5 +112,11 @@ class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase(
             actualUrls += launcher.lastUrl!!
         }
         assertEquals(expectedUrls.toList(), actualUrls)
+    }
+
+    private fun doCustomUrlTest(@Language("Toml") source: String, docBaseUrl: String, vararg expectedUrls: String) {
+        withExternalDocumentationBaseUrl(docBaseUrl) {
+            doTest(source, *expectedUrls)
+        }
     }
 }

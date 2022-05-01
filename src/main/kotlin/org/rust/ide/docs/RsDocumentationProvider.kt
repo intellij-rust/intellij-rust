@@ -9,8 +9,10 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
@@ -167,6 +169,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             }
         }
 
+        val baseUrl = getExternalDocumentationBaseUrl()
         val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
             DEPENDENCY, STDLIB_DEPENDENCY -> {
@@ -176,7 +179,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                     Testmarks.PkgWithoutSource.hit()
                     return emptyList()
                 }
-                "$DOCS_RS_HOST/${pkg.name}/${pkg.version}"
+                "$baseUrl${pkg.name}/${pkg.version}"
             }
             else -> {
                 Testmarks.NonDependency.hit()
@@ -252,7 +255,6 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     companion object {
         const val STD_DOC_HOST = "https://doc.rust-lang.org"
-        const val DOCS_RS_HOST = "https://docs.rs"
     }
 
     object Testmarks {
@@ -262,6 +264,32 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         object NonDependency : Testmark()
     }
 }
+
+private const val EXTERNAL_DOCUMENTATION_URL_SETTING_KEY: String = "org.rust.external.doc.url"
+
+/**
+ * Returns the base URL used for creating external code and crate documentation links.
+ */
+fun getExternalDocumentationBaseUrl(): String {
+    val url = AdvancedSettings.getString(EXTERNAL_DOCUMENTATION_URL_SETTING_KEY)
+    return if (url.endsWith("/")) {
+        url
+    } else {
+        "$url/"
+    }
+}
+
+@TestOnly
+fun withExternalDocumentationBaseUrl(url: String, action: () -> Unit) {
+    val originalUrl = getExternalDocumentationBaseUrl()
+    try {
+        AdvancedSettings.setString(EXTERNAL_DOCUMENTATION_URL_SETTING_KEY, url)
+        action()
+    } finally {
+        AdvancedSettings.setString(EXTERNAL_DOCUMENTATION_URL_SETTING_KEY, originalUrl)
+    }
+}
+
 
 private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
     val rawLines = when (this) {
