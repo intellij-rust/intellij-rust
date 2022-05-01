@@ -24,6 +24,8 @@ class CargoTestConsoleProperties(
         isIdBasedTestTree = true
     }
 
+    override fun isEditable(): Boolean = true
+
     override fun getTestLocator(): SMTestLocator = CargoTestLocator
 
     override fun createTestEventsConverter(

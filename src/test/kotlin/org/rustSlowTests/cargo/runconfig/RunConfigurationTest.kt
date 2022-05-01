@@ -215,6 +215,66 @@ class RunConfigurationTest : RunConfigurationTestBase() {
         check("3. ccc" !in stdout)
     }
 
+    fun `test redirect input (test)`() {
+        val testProject = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    use std::io::{self, BufRead};
+
+                    fn helper() {
+                        let stdin = io::stdin();
+                        let mut iter = stdin.lock().lines();
+                        println!("{}", iter.next().unwrap().unwrap());
+                    }
+
+                    #[cfg(test)]
+                    mod tests {
+                        use crate::helper;
+                        /*caret*/
+
+                        #[test]
+                        fn foo() {
+                            helper()
+                        }
+
+                        #[test]
+                        fn bar() {
+                            helper()
+                        }
+                    }
+                """)
+            }
+
+            file("in.txt", """
+                1. aaa
+                2. bbb
+                3. ccc
+            """)
+        }.create()
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+
+        val configuration = createTestRunConfigurationFromContext()
+            .apply {
+                isRedirectInput = true
+                redirectInputPath = "in.txt"
+            }
+
+        val result = executeAndGetOutput(configuration)
+        val stdout = result.stdout
+        check("""{ "type": "test", "event": "started", "name": "tests::foo" }""" in stdout)
+        check("""{ "type": "test", "name": "tests::bar", "event": "ok", "stdout": "1. aaa\n" }""" in stdout)
+        check("""{ "type": "test", "event": "started", "name": "tests::bar" }""" in stdout)
+        check("""{ "type": "test", "name": "tests::foo", "event": "ok", "stdout": "2. bbb\n" }""" in stdout)
+        check("3. ccc" !in stdout)
+    }
+
     fun `test toolchain override`() {
         fileTree {
             toml("Cargo.toml", """
