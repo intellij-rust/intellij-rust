@@ -56,8 +56,10 @@ val CargoCommandConfiguration.hasRemoteTarget: Boolean
  * This class describes a Run Configuration.
  * It is basically a bunch of values which are persisted to .xml files inside .idea,
  * or displayed in the GUI form. It has to be mutable to satisfy various IDE's APIs.
+ *
+ * Class is open not to break [EduTools](https://plugins.jetbrains.com/plugin/10081-edutools) plugin
  */
-class CargoCommandConfiguration(
+open class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
