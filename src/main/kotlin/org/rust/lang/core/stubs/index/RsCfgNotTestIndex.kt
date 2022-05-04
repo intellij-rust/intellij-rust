@@ -19,8 +19,9 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
-import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.psi.ext.stubAncestors
+import org.rust.lang.core.psi.ext.stubParent
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMetaItemStub
@@ -72,9 +73,9 @@ class RsCfgNotTestIndex : StringStubIndexExtension<RsMetaItem>() {
         @VisibleForTesting
         fun isCfgNotTest(psi: RsMetaItem): Boolean {
             if (psi.name != "test") return false
-            val parent = psi.parent as? RsMetaItemArgs ?: return false
-            val not = parent.ancestors.find { it is RsMetaItem && it.name == "not" } ?: return false
-            return not.ancestors.any { it is RsMetaItem && RsPsiPattern.anyCfgCondition.accepts(it) }
+            val parent = psi.stubParent as? RsMetaItemArgs ?: return false
+            val not = parent.stubAncestors.find { it is RsMetaItem && it.name == "not" } ?: return false
+            return not.stubAncestors.any { it is RsMetaItem && RsPsiPattern.anyCfgCondition.accepts(it) }
         }
     }
 }
