@@ -944,7 +944,7 @@ ScalarTypeReference ::= ArrayType
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   pin = 1
   implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"i
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 private RefLikeStart ::= ( '&' Lifetime? mut? | '*' [ const | mut ] )
