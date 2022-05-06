@@ -145,7 +145,15 @@ enum class FeatureState {
      * so such language features can be used with stable/beta compiler since some version
      * without any additional attributes
      */
-    ACCEPTED
+    ACCEPTED,
+    /**
+     * Represents unstable features which have since been removed (it was once Active)
+     */
+    REMOVED,
+    /**
+     * Represents stable features which have since been removed (it was once Accepted)
+     */
+    STABILIZED
 }
 
 enum class FeatureAvailability {
