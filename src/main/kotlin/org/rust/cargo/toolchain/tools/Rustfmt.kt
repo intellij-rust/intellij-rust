@@ -147,7 +147,8 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         private fun RsProcessExecutionException.showRustfmtError(project: Project) {
             val message = message.orEmpty().trimEnd('\n')
             if (message.isNotEmpty()) {
-                project.showBalloon("Rustfmt", message, NotificationType.ERROR, RustfmtEditSettingsAction("Show settings..."))
+                val html = "<html>${message.escaped.replace("\n", "<br>")}</html>"
+                project.showBalloon("Rustfmt", html, NotificationType.ERROR, RustfmtEditSettingsAction("Show settings..."))
             }
         }
     }
