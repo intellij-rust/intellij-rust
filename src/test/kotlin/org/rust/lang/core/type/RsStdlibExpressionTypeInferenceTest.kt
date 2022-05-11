@@ -961,4 +961,28 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(a: Box<[u8]>) {}
     """)
+
+    fun `test infer lambda parameter type 1`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo(_: fn(i32)) {}
+    """)
+
+    fun `test infer lambda parameter type 2`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo<T: FnOnce(i32)>(_: T) {}
+    """)
 }

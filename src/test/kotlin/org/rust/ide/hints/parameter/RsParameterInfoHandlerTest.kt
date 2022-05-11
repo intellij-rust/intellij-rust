@@ -210,5 +210,5 @@ class RsParameterInfoHandlerTest
             let foo = |a: usize, b| { a + b };
             foo(0/*caret*/, 1);
         }
-    """, "a: usize, b: _", 0)
+    """, "a: usize, b: i32", 0)
 }

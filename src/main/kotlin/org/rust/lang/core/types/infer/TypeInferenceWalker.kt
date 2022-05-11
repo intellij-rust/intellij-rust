@@ -1288,7 +1288,7 @@ class RsTypeInferenceWalker(
         val expectedFnTy = expected
             .tyAsNullable(ctx)
             ?.let(this::deduceLambdaType)
-            ?: unknownTyFunction(params.size)
+            ?: TyFunction(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown)
         val extendedArgs = expectedFnTy.paramTypes.asSequence().infiniteWithTyUnknown()
         val paramTypes = extendedArgs.zip(params.asSequence()).map { (expectedArg, actualArg) ->
             val paramTy = actualArg.typeReference?.type ?: expectedArg
