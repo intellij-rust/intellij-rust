@@ -5,14 +5,19 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.openapi.paths.GlobalPathReferenceProvider
+import com.intellij.openapi.paths.WebReference
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.intellij.util.ProcessingContext
+import com.intellij.util.SmartList
 import org.rust.lang.RsFileType
 import org.rust.lang.core.RsPsiPattern.includeMacroLiteral
+import org.rust.lang.core.RsPsiPattern.literal
 import org.rust.lang.core.RsPsiPattern.pathAttrLiteral
 import org.rust.lang.core.or
 import org.rust.lang.core.psi.*
@@ -28,10 +33,13 @@ import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 import org.rust.lang.core.with
+import org.rust.lang.utils.parseRustStringCharacters
 
 class RsLitExprReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
         registrar.registerReferenceProvider(includeMacroLiteral or pathAttrLiteral or pathValueLiteral, RsFileReferenceProvider())
+        // LOWER_PRIORITY is used to have ability to override reference if needed
+        registrar.registerReferenceProvider(literal, RsLiteralWebReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY)
     }
 }
 
@@ -143,5 +151,45 @@ private fun getFunctionAndArguments(expr: RsLitExpr): Pair<RsFunction, RsValueAr
             function to grandParent.valueArgumentList
         }
         else -> null
+    }
+}
+
+private class RsLiteralWebReferenceProvider : PsiReferenceProvider() {
+
+    // Web references do not point to any real PsiElement
+    override fun acceptsTarget(target: PsiElement): Boolean = false
+
+    override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+        val stringLiteral = (element as? RsLitExpr)?.kind as? RsLiteralKind.String ?: return PsiReference.EMPTY_ARRAY
+        // Url should contain `:` symbol.
+        // In combination with the fact that `textContains` doesn't allocate memory,
+        // it makes quite cheap check
+        if (!element.textContains(':')) return PsiReference.EMPTY_ARRAY
+
+        val valueRange = stringLiteral.offsets.value ?: return PsiReference.EMPTY_ARRAY
+        val rawValue = stringLiteral.rawValue ?: return PsiReference.EMPTY_ARRAY
+        val (content, indexFn) = if (stringLiteral.node.elementType in RS_RAW_LITERALS) {
+            rawValue to { i: Int -> i }
+        } else {
+            val (content, indices) = parseRustStringCharacters(rawValue)
+            content to { i: Int -> indices[i] }
+        }
+
+        val references = SmartList<PsiReference>()
+        var index = 0
+        for (word in content.split(SPACE_SPLITTER)) {
+            if (word.isNotEmpty() && GlobalPathReferenceProvider.isWebReferenceUrl(word)) {
+                val startOffset = valueRange.startOffset + indexFn(index)
+                val endOffset = valueRange.startOffset + indexFn(index + word.length)
+                references += WebReference(element, TextRange(startOffset, endOffset), word)
+            }
+            index += word.length + 1
+        }
+
+        return references.toArray(PsiReference.EMPTY_ARRAY)
+    }
+
+    companion object {
+        private val SPACE_SPLITTER: Regex = Regex("\\s")
     }
 }

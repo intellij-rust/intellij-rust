@@ -117,10 +117,12 @@ object RsPsiPattern {
         rootMetaItem
             .with("lintAttributeCondition") { e -> e.name in LINT_ATTRIBUTES }
 
-    val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+    val literal: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+
+    val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = literal
         .withParent(psiElement<RsIncludeMacroArgument>())
 
-    val pathAttrLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+    val pathAttrLiteral: PsiElementPattern.Capture<RsLitExpr> = literal
         .withParent(
             rootMetaItem("path", psiElement<RsModDeclItem>() or psiElement<RsModItem>())
         )
