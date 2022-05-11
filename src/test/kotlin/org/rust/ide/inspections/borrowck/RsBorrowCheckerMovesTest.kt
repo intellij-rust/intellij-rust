@@ -336,6 +336,26 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 when deref Rc with Copy type`() = checkByText("""
+        use std::rc::Rc;
+        fn main() {
+            let a = *Rc::new(1i32);
+            let (b, c) = *Rc::new((1i32, 1i32));
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 when partially move from Box`() = checkByText("""
+        struct NonCopy;
+        struct Foo {
+            f1: NonCopy,
+        }
+        fn foo(a: Box<Foo>) {
+            drop(a.f1);
+        }
+    """, checkWarn = false)
+
     /** Issue [#3062](https://github.com/intellij-rust/intellij-rust/issues/3062) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no move error E0507 when deref copyable self`() = checkByText("""

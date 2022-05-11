@@ -42,7 +42,7 @@ class RsIndexExprReferenceImpl(element: RsIndexExpr) : RsReferenceCached<RsIndex
  * If `preferMutable` is true, `IndexMut` will be attempted for resolution first.
  */
 fun findIndexFunction(element: RsIndexExpr, preferMutable: Boolean): RsFunction? {
-    val container = element.containerExpr ?: return null
+    val container = element.containerExpr
     val index = element.indexExpr ?: return null
 
     val (lookup, items) = element.implLookupAndKnownItems

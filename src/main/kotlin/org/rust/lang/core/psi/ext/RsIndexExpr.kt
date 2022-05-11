@@ -14,8 +14,8 @@ import org.rust.lang.core.resolve.ref.RsIndexExprReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
-val RsIndexExpr.containerExpr: RsExpr?
-    get() = exprList.getOrNull(0)
+val RsIndexExpr.containerExpr: RsExpr
+    get() = exprList[0]
 
 val RsIndexExpr.indexExpr: RsExpr?
     get() = exprList.getOrNull(1)
