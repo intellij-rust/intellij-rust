@@ -17,6 +17,8 @@ import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.resolve.ref.resolvePathRaw
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.*
+import org.rust.lang.core.types.infer.TypeError.ConstMismatch
+import org.rust.lang.core.types.infer.TypeError.TypeMismatch
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
@@ -24,6 +26,10 @@ import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.dequeOf
 import org.rust.stdext.mapToSet
 import org.rust.stdext.zipValues
 
@@ -416,11 +422,11 @@ class RsInferenceContext(
         return res
     }
 
-    fun combineTypes(ty1: Ty, ty2: Ty): CoerceResult {
+    fun combineTypes(ty1: Ty, ty2: Ty): RelateResult {
         return combineTypesResolved(shallowResolve(ty1), shallowResolve(ty2))
     }
 
-    private fun combineTypesResolved(ty1: Ty, ty2: Ty): CoerceResult {
+    private fun combineTypesResolved(ty1: Ty, ty2: Ty): RelateResult {
         return when {
             ty1 is TyInfer.TyVar -> combineTyVar(ty1, ty2)
             ty2 is TyInfer.TyVar -> combineTyVar(ty2, ty1)
@@ -432,7 +438,7 @@ class RsInferenceContext(
         }
     }
 
-    private fun combineTyVar(ty1: TyInfer.TyVar, ty2: Ty): CoerceResult {
+    private fun combineTyVar(ty1: TyInfer.TyVar, ty2: Ty): RelateResult {
         when (ty2) {
             is TyInfer.TyVar -> varUnificationTable.unifyVarVar(ty1, ty2)
             else -> {
@@ -453,31 +459,31 @@ class RsInferenceContext(
                 }
             }
         }
-        return CoerceResult.Ok
+        return Ok(Unit)
     }
 
-    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty): CoerceResult {
+    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty): RelateResult {
         when (ty1) {
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
                 is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.TypeMismatch(ty1, ty2)
+                else -> return Err(TypeMismatch(ty1, ty2))
             }
             is TyInfer.FloatVar -> when (ty2) {
                 is TyInfer.FloatVar -> floatUnificationTable.unifyVarVar(ty1, ty2)
                 is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.TypeMismatch(ty1, ty2)
+                else -> return Err(TypeMismatch(ty1, ty2))
             }
             is TyInfer.TyVar -> error("unreachable")
         }
-        return CoerceResult.Ok
+        return Ok(Unit)
     }
 
-    fun combineTypesNoVars(ty1: Ty, ty2: Ty): CoerceResult =
+    fun combineTypesNoVars(ty1: Ty, ty2: Ty): RelateResult =
         when {
-            ty1 === ty2 -> CoerceResult.Ok
-            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1.javaClass == ty2.javaClass -> CoerceResult.Ok
-            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> CoerceResult.Ok
+            ty1 === ty2 -> Ok(Unit)
+            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1.javaClass == ty2.javaClass -> Ok(Unit)
+            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> Ok(Unit)
             ty1 is TyProjection && ty2 is TyProjection && ty1.target == ty2.target && combineBoundElements(ty1.trait, ty2.trait) -> {
                 combineTypes(ty1.type, ty2.type)
             }
@@ -503,48 +509,48 @@ class RsInferenceContext(
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject &&
                 // TODO: Use all trait bounds
-                combineBoundElements(ty1.traits.first(), ty2.traits.first()) -> CoerceResult.Ok
-            ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> CoerceResult.Ok
-            ty1 is TyNever || ty2 is TyNever -> CoerceResult.Ok
-            else -> CoerceResult.TypeMismatch(ty1, ty2)
+                combineBoundElements(ty1.traits.first(), ty2.traits.first()) -> Ok(Unit)
+            ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> Ok(Unit)
+            ty1 is TyNever || ty2 is TyNever -> Ok(Unit)
+            else -> Err(TypeMismatch(ty1, ty2))
         }
 
-    fun combineConsts(const1: Const, const2: Const): CoerceResult {
+    fun combineConsts(const1: Const, const2: Const): RelateResult {
         return combineConstsResolved(shallowResolve(const1), shallowResolve(const2))
     }
 
-    private fun combineConstsResolved(const1: Const, const2: Const): CoerceResult =
+    private fun combineConstsResolved(const1: Const, const2: Const): RelateResult =
         when {
             const1 is CtInferVar -> combineConstVar(const1, const2)
             const2 is CtInferVar -> combineConstVar(const2, const1)
             else -> combineConstsNoVars(const1, const2)
         }
 
-    private fun combineConstVar(const1: CtInferVar, const2: Const): CoerceResult {
+    private fun combineConstVar(const1: CtInferVar, const2: Const): RelateResult {
         if (const2 is CtInferVar) {
             constUnificationTable.unifyVarVar(const1, const2)
         } else {
             val const1r = constUnificationTable.findRoot(const1)
             constUnificationTable.unifyVarValue(const1r, const2)
         }
-        return CoerceResult.Ok
+        return Ok(Unit)
     }
 
-    private fun combineConstsNoVars(const1: Const, const2: Const): CoerceResult =
+    private fun combineConstsNoVars(const1: Const, const2: Const): RelateResult =
         when {
-            const1 === const2 -> CoerceResult.Ok
-            const1 is CtUnknown || const2 is CtUnknown -> CoerceResult.Ok
-            const1 is CtUnevaluated || const2 is CtUnevaluated -> CoerceResult.Ok
-            const1 == const2 -> CoerceResult.Ok
-            else -> CoerceResult.ConstMismatch(const1, const2)
+            const1 === const2 -> Ok(Unit)
+            const1 is CtUnknown || const2 is CtUnknown -> Ok(Unit)
+            const1 is CtUnevaluated || const2 is CtUnevaluated -> Ok(Unit)
+            const1 == const2 -> Ok(Unit)
+            else -> Err(ConstMismatch(const1, const2))
         }
 
-    fun combineTypePairs(pairs: List<Pair<Ty, Ty>>): CoerceResult = combinePairs(pairs, ::combineTypes)
+    fun combineTypePairs(pairs: List<Pair<Ty, Ty>>): RelateResult = combinePairs(pairs, ::combineTypes)
 
-    fun combineConstPairs(pairs: List<Pair<Const, Const>>): CoerceResult = combinePairs(pairs, ::combineConsts)
+    fun combineConstPairs(pairs: List<Pair<Const, Const>>): RelateResult = combinePairs(pairs, ::combineConsts)
 
-    private fun <T : Kind> combinePairs(pairs: List<Pair<T, T>>, combine: (T, T) -> CoerceResult): CoerceResult {
-        var canUnify: CoerceResult = CoerceResult.Ok
+    private fun <T : Kind> combinePairs(pairs: List<Pair<T, T>>, combine: (T, T) -> RelateResult): RelateResult {
+        var canUnify: RelateResult = Ok(Unit)
         for ((k1, k2) in pairs) {
             canUnify = combine(k1, k2).and { canUnify }
         }
@@ -568,31 +574,88 @@ class RsInferenceContext(
             combineTypePairs(zipValues(be1.assoc, be2.assoc)).isOk
 
     fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
+        if (inferred === expected) {
+            return Ok(CoerceOk())
+        }
+        if (inferred == TyNever) {
+            return Ok(CoerceOk())
+        }
+        if (inferred is TyInfer.TyVar) {
+            return combineTypes(inferred, expected).into()
+        }
+        val unsize = commitIfNotNull { coerceUnsized(inferred, expected) }
+        if (unsize != null) {
+            return Ok(unsize)
+        }
         return when {
-            inferred == TyNever -> CoerceResult.Ok
-            // Coerce array to slice
-            inferred is TyReference && inferred.referenced is TyArray &&
-                expected is TyReference && expected.referenced is TySlice -> {
-                combineTypes(inferred.referenced.base, expected.referenced.elementType)
-            }
             // Coerce reference to pointer
             inferred is TyReference && expected is TyPointer &&
                 coerceMutability(inferred.mutability, expected.mutability) -> {
-                combineTypes(inferred.referenced, expected.referenced)
+                combineTypes(inferred.referenced, expected.referenced).into()
             }
             // Coerce mutable pointer to const pointer
             inferred is TyPointer && inferred.mutability.isMut
                 && expected is TyPointer && !expected.mutability.isMut -> {
-                combineTypes(inferred.referenced, expected.referenced)
+                combineTypes(inferred.referenced, expected.referenced).into()
             }
             // Coerce references
             inferred is TyReference && expected is TyReference &&
                 coerceMutability(inferred.mutability, expected.mutability) -> {
-                coerceReference(inferred, expected)
+                coerceReference(inferred, expected).into()
             }
-            // TODO trait object unsizing
-            else -> combineTypes(inferred, expected)
+            else -> combineTypes(inferred, expected).into()
         }
+    }
+
+    // &[T; n] or &mut [T; n] -> &[T]
+    // or &mut [T; n] -> &mut [T]
+    // or &Concrete -> &Trait, etc.
+    // Mirrors rustc's `coerce_unsized`
+    // https://github.com/rust-lang/rust/blob/97d48bec2d/compiler/rustc_typeck/src/check/coercion.rs#L486
+    private fun coerceUnsized(source: Ty, target: Ty): CoerceOk? {
+        if (source is TyInfer.TyVar || target is TyInfer.TyVar) return null
+        val unsizeTrait = items.Unsize ?: return null
+        val coerceUnsizedTrait = items.CoerceUnsized ?: return null
+        val traits = listOf(unsizeTrait, coerceUnsizedTrait)
+
+        // TODO reborrow
+
+        val resultObligations = mutableListOf<Obligation>()
+
+        val queue = dequeOf(Obligation(Predicate.Trait(TraitRef(source, coerceUnsizedTrait.withSubst(target)))))
+
+        while (!queue.isEmpty()) {
+            val obligation = queue.removeFirst()
+            val predicate = resolveTypeVarsIfPossible(obligation.predicate)
+            if (predicate is Predicate.Trait && predicate.trait.trait.element in traits) {
+                when (val selection = lookup.select(predicate.trait, obligation.recursionDepth)) {
+                    SelectionResult.Err -> return null
+                    is SelectionResult.Ok -> queue += selection.result.nestedObligations
+                    SelectionResult.Ambiguous -> if (predicate.trait.trait.element == unsizeTrait) {
+                        val selfTy = predicate.trait.selfTy
+                        val unsizeTy = predicate.trait.trait.singleParamValue
+                        if (selfTy is TyInfer.TyVar && unsizeTy is TyTraitObject && typeVarIsSized(selfTy)) {
+                            resultObligations += obligation
+                        } else {
+                            return null
+                        }
+                    } else {
+                        return null
+                    }
+                }
+            } else {
+                resultObligations += obligation
+                continue
+            }
+        }
+
+        return CoerceOk(resultObligations)
+    }
+
+    private fun typeVarIsSized(ty: TyInfer.TyVar): Boolean {
+        return fulfill.pendingObligations
+            .mapNotNull { it.obligation.predicate as? Predicate.Trait }
+            .any { it.trait.selfTy == ty && it.trait.trait.element == items.Sized }
     }
 
     private fun coerceMutability(from: Mutability, to: Mutability): Boolean =
@@ -602,14 +665,14 @@ class RsInferenceContext(
      * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
      * To match `A` with `B`, autoderef will be performed
      */
-    private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
+    private fun coerceReference(inferred: TyReference, expected: TyReference): RelateResult {
         for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
             // TODO proper handling of lifetimes
             val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
-            if (combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
+            if (combineTypesIfOk(derefTyRef, expected)) return Ok(Unit)
         }
 
-        return CoerceResult.TypeMismatch(inferred, expected)
+        return Err(TypeMismatch(inferred, expected))
     }
 
     fun <T : TypeFoldable<T>> shallowResolve(value: T): T = value.foldWith(shallowResolver)
@@ -1107,15 +1170,19 @@ data class InferredMethodCallInfo(
 
 }
 
-sealed class CoerceResult {
-    object Ok : CoerceResult()
-    class TypeMismatch(val ty1: Ty, val ty2: Ty) : CoerceResult()
-    class ConstMismatch(val const1: Const, val const2: Const) : CoerceResult()
+typealias RelateResult = RsResult<Unit, TypeError>
 
-    val isOk: Boolean get() = this is Ok
+private inline fun RelateResult.and(rhs: () -> RelateResult): RelateResult = if (isOk) rhs() else this
+
+sealed class TypeError {
+    class TypeMismatch(val ty1: Ty, val ty2: Ty) : TypeError()
+    class ConstMismatch(val const1: Const, val const2: Const) : TypeError()
 }
 
-inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = if (isOk) rhs() else this
+typealias CoerceResult = RsResult<CoerceOk, TypeError>
+data class CoerceOk(val obligations: List<Obligation> = emptyList())
+
+fun RelateResult.into(): CoerceResult = map { CoerceOk() }
 
 data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldable<ExpectedType> {
     override fun superFoldWith(folder: TypeFolder): ExpectedType = copy(ty = ty.foldWith(folder))
@@ -1137,4 +1204,8 @@ object TypeInferenceMarks {
     object MethodPickCollapseTraits : Testmark()
     object TraitSelectionSpecialization : Testmark()
     object MacroExprDepthLimitReached : Testmark()
+    object UnsizeToTraitObject : Testmark()
+    object UnsizeArrayToSlice : Testmark()
+    object UnsizeStruct : Testmark()
+    object UnsizeTuple : Testmark()
 }

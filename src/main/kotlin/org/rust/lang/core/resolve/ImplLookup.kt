@@ -560,7 +560,7 @@ class ImplLookup(
 
     /** Same as [select], but strictly evaluates all obligations (checks trait bounds) of impls */
     fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
-        selectStrictWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
+        selectStrictWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         val result = selectWithoutConfirm(ref, recursionDepth)
@@ -577,7 +577,7 @@ class ImplLookup(
      *     `impl Foo<U> for T {}`
      */
     fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
-        selectWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
+        selectWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err
@@ -646,7 +646,7 @@ class ImplLookup(
 
     private fun canEvaluateObligations(ref: TraitRef, candidate: SelectionCandidate, recursionDepth: Int): Boolean {
         return ctx.probe {
-            val obligation = confirmCandidate(ref, candidate, recursionDepth).nestedObligations
+            val obligation = confirmCandidate(ref, candidate, recursionDepth).ok()?.nestedObligations ?: return false
             val ff = FulfillmentContext(ctx, this)
             obligation.forEach(ff::registerPredicateObligation)
             ff.selectUntilError()
@@ -659,6 +659,7 @@ class ImplLookup(
             // The `Sized` trait is hardcoded in the compiler. It cannot be implemented in source code.
             // Trying to do so would result in a E0322.
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
+            element == items.Unsize -> unsizeTraitCandidates(ref)
             ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { add(SelectionCandidate.TraitObject) }
@@ -741,6 +742,35 @@ class ImplLookup(
         return listOf(candidate)
     }
 
+    // Mirrors rustc's `assemble_candidates_for_unsizing`
+    // https://github.com/rust-lang/rust/blob/97d48bec2d/compiler/rustc_trait_selection/src/traits/select/candidate_assembly.rs#L741
+    private fun unsizeTraitCandidates(ref: TraitRef): List<SelectionCandidate> {
+        val source = ref.selfTy
+        val target = ref.trait.singleParamValue
+        return when {
+            // Trait+Kx+'a -> Trait+Ky+'b (upcasts)
+            source is TyTraitObject && target is TyTraitObject -> {
+                listOf(SelectionCandidate.BuiltinUnsizeCandidate) // TODO
+            }
+
+            // `T` -> `Trait`
+            target is TyTraitObject -> listOf(SelectionCandidate.BuiltinUnsizeCandidate)
+
+            // `[T; n]` -> `[T]`
+            source is TyArray && target is TySlice -> listOf(SelectionCandidate.BuiltinUnsizeCandidate)
+
+            // `Struct<T>` -> `Struct<U>`
+            source is TyAdt && target is TyAdt && source.item == target.item && source.item is RsStructItem
+                && source.item.kind == RsStructKind.STRUCT -> listOf(SelectionCandidate.BuiltinUnsizeCandidate)
+
+            // `(.., T)` -> `(.., U)`
+            source is TyTuple && target is TyTuple && source.types.size == target.types.size ->
+                listOf(SelectionCandidate.BuiltinUnsizeCandidate)
+
+            else -> emptyList()
+        }
+    }
+
     /** See `org.rust.lang.core.type.RsImplicitTraitsTest` */
     private fun isSizedTypeImpl(ty: Ty): Boolean {
         val ancestors = mutableSetOf(ty)
@@ -789,7 +819,7 @@ class ImplLookup(
         ref: TraitRef,
         candidate: SelectionCandidate,
         recursionDepth: Int
-    ): Selection {
+    ): SelectionResult<Selection> {
         val newRecDepth = recursionDepth + 1
         return when (candidate) {
             is SelectionCandidate.Impl -> {
@@ -804,7 +834,7 @@ class ImplLookup(
                     mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst()
                 val obligations = typeObligations +
                     ctx.instantiateBounds(candidate.impl.predicates, candidateSubst, newRecDepth)
-                Selection(candidate.impl, obligations, candidateSubst)
+                SelectionResult.Ok(Selection(candidate.impl, obligations, candidateSubst))
             }
             is SelectionCandidate.DerivedTrait -> {
                 val selfTy = ref.selfTy as TyAdt // Guaranteed by `assembleCandidates`
@@ -812,18 +842,18 @@ class ImplLookup(
                 val obligations = selfTy.typeArguments.map {
                     Obligation(newRecDepth, Predicate.Trait(TraitRef(it, BoundElement(candidate.item))))
                 }
-                Selection(candidate.item, obligations)
+                SelectionResult.Ok(Selection(candidate.item, obligations))
             }
             is SelectionCandidate.TypeParameter -> {
                 testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
                 ctx.combineBoundElements(candidate.bound, ref.trait)
-                Selection(candidate.bound.element, emptyList())
+                SelectionResult.Ok(Selection(candidate.bound.element, emptyList()))
             }
             is SelectionCandidate.Projection -> {
                 ref.selfTy as TyProjection
                 val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
                 ctx.combineTraitRefs(ref, candidate.bound.substitute(subst))
-                Selection(ref.trait.element, emptyList())
+                SelectionResult.Ok(Selection(ref.trait.element, emptyList()))
             }
             SelectionCandidate.TraitObject -> {
                 val traits = when (ref.selfTy) {
@@ -834,8 +864,9 @@ class ImplLookup(
                 // should be nonnull because already checked in `assembleCandidates`
                 val be = traits.find { it.element == ref.trait.element } ?: error("Corrupted trait selection")
                 ctx.combineBoundElements(be, ref.trait)
-                Selection(be.element, emptyList())
+                SelectionResult.Ok(Selection(be.element, emptyList()))
             }
+            SelectionCandidate.BuiltinUnsizeCandidate -> confirmBuiltinUnsizeCandidate(ref, recursionDepth)
             is SelectionCandidate.HardcodedImpl -> {
                 val impl = getHardcodedImpls(ref.selfTy).first { be ->
                     be.element == ref.trait.element && ctx.probe {
@@ -845,9 +876,117 @@ class ImplLookup(
                 }
                 ctx.combineBoundElements(impl, ref.trait)
                 val obligations = getHardcodedImplPredicates(ref.selfTy, impl).map { Obligation(newRecDepth, it) }
-                Selection(impl.element, obligations, mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
+                SelectionResult.Ok(Selection(impl.element, obligations, mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst()))
             }
         }
+    }
+
+    // Mirrors rustc's `confirm_builtin_unsize_candidate`
+    // https://github.com/rust-lang/rust/blob/97d48bec2d/compiler/rustc_trait_selection/src/traits/select/confirmation.rs#L865
+    private fun confirmBuiltinUnsizeCandidate(
+        ref: TraitRef,
+        recursionDepth: Int
+    ): SelectionResult<Selection> {
+        val unsizeTrait = ref.trait.element
+        val unsizeTypeParam = unsizeTrait.typeParamSingle ?: return SelectionResult.Err
+        val source = ctx.shallowResolve(ref.selfTy)
+        val target = ctx.shallowResolve(ref.trait.subst.typeSubst[unsizeTypeParam] ?: return SelectionResult.Err)
+        val okSelection = Selection(
+            impl = unsizeTrait,
+            nestedObligations = emptyList(),
+            subst = mapOf(unsizeTypeParam to target).toTypeSubst()
+        )
+        when {
+            // `T` -> `Trait`
+            target is TyTraitObject -> {
+                // TODO implement unsizing. Currently always allowed
+                TypeInferenceMarks.UnsizeToTraitObject.hit()
+                return SelectionResult.Ok(okSelection)
+            }
+
+            // `[T; n]` -> `[T]`
+            source is TyArray && target is TySlice -> {
+                if (ctx.combineTypes(target.elementType, source.base).isOk) {
+                    TypeInferenceMarks.UnsizeArrayToSlice.hit()
+                    return SelectionResult.Ok(okSelection)
+                }
+            }
+
+            // `Struct<T>` -> `Struct<U>`
+            source is TyAdt && target is TyAdt -> {
+                check(source.item == target.item) { "Guaranteed by assembleCandidates" }
+                check(source.item is RsStructItem) { "Guaranteed by assembleCandidates" }
+                val fields = source.item.fields
+                val lastField = fields.lastOrNull() ?: return SelectionResult.Err
+                val lastFieldType = lastField.typeReference?.type ?: return SelectionResult.Err
+                val unsizingParams = hashSetOf<TyTypeParameter>()
+                // TODO consider const params
+                lastFieldType.visitTypeParameters { ty ->
+                    unsizingParams += ty
+                    false
+                }
+                for (field in fields) {
+                    if (field == lastField) break
+                    val fieldType = field.typeReference?.type ?: continue
+                    fieldType.visitTypeParameters { ty ->
+                        unsizingParams -= ty
+                        false
+                    }
+                }
+                if (unsizingParams.isEmpty()) return SelectionResult.Err
+
+                val sourceSubst = source.typeParameterValues
+                val targetSubst = target.typeParameterValues
+
+                // Check that the source struct with the target's unsizing parameters is equal to the target.
+                val subst = sourceSubst.mapTypeValues { (k, v) ->
+                    if (k in unsizingParams) targetSubst[k] ?: TyUnknown else v
+                }
+                val newStruct = source.item.declaredType.substitute(subst)
+                if (!ctx.combineTypes(target, newStruct).isOk) {
+                    return SelectionResult.Err
+                }
+
+                // Extract `TailField<T>` and `TailField<U>` from `Struct<T>` and `Struct<U>`.
+                val sourceTail = lastFieldType.substitute(sourceSubst)
+                val targetTail = lastFieldType.substitute(targetSubst)
+
+                // Construct the nested `TailField<T>: Unsize<TailField<U>>` predicate.
+                val nested = Obligation(
+                    recursionDepth + 1,
+                    Predicate.Trait(
+                        TraitRef(
+                            sourceTail,
+                            unsizeTrait.withSubst(targetTail)
+                        )
+                    )
+                )
+                TypeInferenceMarks.UnsizeStruct.hit()
+                return SelectionResult.Ok(okSelection.copy(nestedObligations = listOf(nested)))
+            }
+
+            // `(.., T)` -> `(.., U)`
+            source is TyTuple && target is TyTuple -> {
+                // Check that the source tuple with the target's last element is equal to the target
+                val newTuple = TyTuple(source.types.dropLast(1) + listOf(target.types.last()))
+                if (!ctx.combineTypes(target, newTuple).isOk) {
+                    return SelectionResult.Err
+                }
+                // Construct the nested `T: Unsize<U>` predicate.
+                val nested = Obligation(
+                    recursionDepth + 1,
+                    Predicate.Trait(
+                        TraitRef(
+                            source.types.last(),
+                            unsizeTrait.withSubst(target.types.last())
+                        )
+                    )
+                )
+                TypeInferenceMarks.UnsizeTuple.hit()
+                return SelectionResult.Ok(okSelection.copy(nestedObligations = listOf(nested)))
+            }
+        }
+        return SelectionResult.Err
     }
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
@@ -1092,6 +1231,12 @@ sealed class SelectionResult<out T> {
         is Ambiguous -> Ambiguous
         is Ok -> Ok(action(result))
     }
+
+    inline fun <R> andThen(action: (T) -> SelectionResult<R>): SelectionResult<R> = when (this) {
+        is Err -> Err
+        is Ambiguous -> Ambiguous
+        is Ok -> action(result)
+    }
 }
 
 data class Selection(
@@ -1124,6 +1269,7 @@ private sealed class SelectionCandidate {
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
     data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
     object TraitObject : SelectionCandidate()
+    object BuiltinUnsizeCandidate : SelectionCandidate()
 
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()

@@ -404,4 +404,26 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             S::<<error descr="mismatched types [E0308]expected `usize`, found `&str`">""</error>>.bar();
         }
     """)
+
+    fun `test no errors about unsizing`() = checkErrors("""
+        #![feature(unsized_tuple_coercion)]
+
+        #[lang = "sized"]  pub trait Sized {}
+        #[lang = "unsize"] pub trait Unsize<T: ?Sized> {}
+        #[lang = "coerce_unsized"] pub trait CoerceUnsized<T: ?Sized> {}
+        impl<'a, T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<&'a U> for &'a T {}
+
+        struct S<T: ?Sized> {
+            head: i32,
+            tail: T,
+        }
+
+        fn main() {
+            let _: &S<[i32]> = &S { head: 0, tail: [1, 2] };
+            let _: &(i32, [u8]) = &(1, [2, 3]);
+            foo(&bar([1, 2, 3]));
+        }
+        fn foo(_: &[u8]) {}
+        fn bar<T>(t: T) -> T { t }
+    """)
 }

@@ -29,6 +29,8 @@ import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.lang.utils.evaluation.toConst
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.RsResult
+import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
@@ -222,24 +224,26 @@ class RsTypeInferenceWalker(
             ctx.writeExpectedExprTyCoercable(element)
         }
         return when (val result = ctx.tryCoerce(inferred, expected)) {
-            CoerceResult.Ok -> true
+            is Ok -> true
 
-            is CoerceResult.TypeMismatch -> {
-                checkTypeMismatch(result, element, inferred, expected)
-                false
-            }
-
-            is CoerceResult.ConstMismatch -> {
-                if (result.const1.javaClass !in IGNORED_CONSTS && result.const2.javaClass !in IGNORED_CONSTS) {
-                    reportTypeMismatch(element, expected, inferred)
+            is RsResult.Err -> when (val err = result.err) {
+                is TypeError.TypeMismatch -> {
+                    checkTypeMismatch(err, element, inferred, expected)
+                    false
                 }
 
-                false
+                is TypeError.ConstMismatch -> {
+                    if (err.const1.javaClass !in IGNORED_CONSTS && err.const2.javaClass !in IGNORED_CONSTS) {
+                        reportTypeMismatch(element, expected, inferred)
+                    }
+
+                    false
+                }
             }
         }
     }
 
-    private fun checkTypeMismatch(result: CoerceResult.TypeMismatch, element: RsElement, inferred: Ty, expected: Ty) {
+    private fun checkTypeMismatch(result: TypeError.TypeMismatch, element: RsElement, inferred: Ty, expected: Ty) {
         if (result.ty1.javaClass in IGNORED_TYS || result.ty2.javaClass in IGNORED_TYS) return
         if (expected is TyReference && inferred is TyReference &&
             (expected.containsTyOfClass(IGNORED_TYS) || inferred.containsTyOfClass(IGNORED_TYS))) {
