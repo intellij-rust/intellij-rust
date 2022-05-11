@@ -996,4 +996,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             Ok(())
         }
     """)
+
+    fun `test for loop over type parameter implementing Iterator`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo<I: Iterator<Item = i32>>(a: I) {
+            for b in a {
+                b;
+            } //^ i32
+        }
+    """)
 }

@@ -1095,9 +1095,10 @@ class ImplLookup(
     }
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
-        return when (selfTy) {
-            is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
-            is TyTraitObject -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively().asSequence(), res.impl, assocType)
+        return when {
+            res.impl is RsImplItem -> lookupAssocTypeInSelection(res, assocType)
+            selfTy is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
+            selfTy is TyTraitObject -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively().asSequence(), res.impl, assocType)
             else -> {
                 lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy).asSequence(), res.impl, assocType)
