@@ -985,4 +985,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo<T: FnOnce(i32)>(_: T) {}
     """)
+
+    fun `test try-poll`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::task::Poll;
+        fn foo(p: Poll<Result<i32, ()>>) -> Result<(), ()> {
+            let a = p?;
+            a;
+          //^ Poll<i32>
+            Ok(())
+        }
+    """)
 }

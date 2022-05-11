@@ -76,7 +76,7 @@ class RsTypeInferenceWalker(
             tryTy = expected.onlyHasTy(ctx) ?: TyInfer.TyVar()
             val resultTy = tryTy ?: TyUnknown
             val okTy = blockExpr.block.inferType()
-            registerTryProjection(resultTy, "Ok", okTy)
+            registerTryProjection(resultTy, okTy)
             return resultTy
         } finally {
             tryTy = oldTryTy
@@ -1109,13 +1109,16 @@ class RsTypeInferenceWalker(
 
     private fun inferTryExprType(expr: RsTryExpr): Ty {
         val base = resolveTypeVarsWithObligations(expr.expr.inferType()) as? TyAdt ?: return TyUnknown
-        if (base.item != items.Result && base.item != items.Option) {
-            val tryItem = items.Try ?: return TyUnknown
-            val okType = tryItem.findAssociatedType("Ok") ?: return TyUnknown
-            return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(base, BoundElement(tryItem), okType)).value
+        if (base.item == items.Result || base.item == items.Option) {
+            TypeInferenceMarks.QuestionOperator.hit()
+            return base.typeArguments.getOrElse(0) { TyUnknown }
         }
-        TypeInferenceMarks.QuestionOperator.hit()
-        return base.typeArguments.getOrElse(0) { TyUnknown }
+        val tryItem = items.Try ?: return TyUnknown
+        val okType = tryItem.findAssociatedType("Output")
+            ?: tryItem.findAssociatedType("Ok")
+            ?: return TyUnknown
+        return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(base, BoundElement(tryItem), okType))
+            .register()
     }
 
     private fun inferRangeType(expr: RsRangeExpr): Ty {
@@ -1411,9 +1414,11 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun registerTryProjection(resultTy: Ty, assocTypeName: String, assocTypeTy: Ty) {
+    private fun registerTryProjection(resultTy: Ty, assocTypeTy: Ty) {
         val tryTrait = items.Try ?: return
-        val assocType = tryTrait.findAssociatedType(assocTypeName) ?: return
+        val assocType = tryTrait.findAssociatedType("Output")
+            ?: tryTrait.findAssociatedType("Ok")
+            ?: return
         val projection = TyProjection.valueOf(resultTy, assocType)
         val obligation = Obligation(Predicate.Projection(projection, assocTypeTy))
         fulfill.registerPredicateObligation(obligation)
