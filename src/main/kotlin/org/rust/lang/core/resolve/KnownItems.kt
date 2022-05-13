@@ -115,6 +115,7 @@ class KnownItems(
     val Drop: RsTraitItem? get() = findLangItem("drop")
     val Sized: RsTraitItem? get() = findLangItem("sized")
     val Unsize: RsTraitItem? get() = findLangItem("unsize")
+    val CoerceUnsized: RsTraitItem? get() = findLangItem("coerce_unsized")
     val Fn: RsTraitItem? get() = findLangItem("fn")
     val FnMut: RsTraitItem? get() = findLangItem("fn_mut")
     val FnOnce: RsTraitItem? get() = findLangItem("fn_once")

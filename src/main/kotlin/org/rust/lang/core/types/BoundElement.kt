@@ -19,6 +19,7 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.TyUnknown
 
 /**
  * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`,
@@ -63,6 +64,9 @@ val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
 
 val BoundElement<RsGenericDeclaration>.positionalConstArguments: List<Const>
     get() = element.constParameters.map { subst[it] ?: CtConstParameter(it) }
+
+val BoundElement<RsGenericDeclaration>.singleParamValue: Ty
+    get() = element.typeParameters.singleOrNull()?.let { subst[it] } ?: TyUnknown
 
 data class BoundElementWithVisibility<T : RsElement>(
     val inner: BoundElement<T>,

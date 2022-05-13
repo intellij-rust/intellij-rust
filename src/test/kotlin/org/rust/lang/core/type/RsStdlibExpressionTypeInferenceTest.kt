@@ -952,4 +952,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ ()
     """)
+
+    fun `test box unsizing`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            foo(Box::new([1, 2, 3]));
+        }             //^ Box<[u8; 3], Global>|Box<[u8; 3]>
+
+        fn foo(a: Box<[u8]>) {}
+    """)
 }

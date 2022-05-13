@@ -6,8 +6,16 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.TYPE
+import org.rust.lang.core.psi.RsCodeFragmentFactory
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -203,6 +211,70 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ Sized
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeArrayToSlice::class)
+    fun `test unsize array to slice`() = doTest("""
+        type T = [i32; 2];
+               //^ Unsize<[i32]>
+    """)
+
+    fun `test don't unsize array to slice if element types mismatch`() = doTest("""
+        type T = [i32; 2];
+               //^ !Unsize<[u8]>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeToTraitObject::class)
+    fun `test struct to trait object`() = doTest("""
+        struct S;
+        trait Foo {}
+        impl Foo for S {}
+        type T = S;
+               //^ Unsize<dyn Foo>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeTuple::class)
+    fun `test unsize tuple with unsize last field`() = doTest("""
+        type T = (i32, [i32; 2]);
+               //^ Unsize<(i32, [i32])>
+    """)
+
+    fun `test don't unsize tuple with different size`() = doTest("""
+        type T = (i32, i32, [i32; 2]);
+               //^ !Unsize<(i32, [i32])>
+    """)
+
+    fun `test don't unsize tuple with different types`() = doTest("""
+        type T = (i32, [i32; 2]);
+               //^ !Unsize<(u8, [i32])>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeStruct::class)
+    fun `test unsize struct with unsize last field`() = doTest("""
+        struct S<T: ?Sized> {
+            head: i32,
+            tail: T,
+        }
+        type T = S<[i32; 2]>;
+               //^ Unsize<S<[i32]>>
+    """)
+
+    fun `test don't unsize struct with different types`() = doTest("""
+        struct S<H, T: ?Sized> {
+            head: H,
+            tail: T,
+        }
+        type T = S<i32, [i32; 2]>;
+               //^ !Unsize<u32, S<[i32]>>
+    """)
+
+    fun `test don't unsize struct with multiple fields affected`() = doTest("""
+        struct S<T: ?Sized> {
+            head: T,
+            tail: T,
+        }
+        type T = S<[i32; 2]>;
+               //^ !Unsize<S<[i32]>>
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
@@ -216,8 +288,9 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
 
     private fun doTest(@Language("Rust") code: String) {
         val fullTestCode = """
-            #[lang = "sized"] pub trait Sized {}
-            #[lang = "copy"]  pub trait Copy {}
+            #[lang = "sized"]  pub trait Sized {}
+            #[lang = "copy"]   pub trait Copy {}
+            #[lang = "unsize"] pub trait Unsize<T: ?Sized> {}
 
             $code
         """
@@ -232,11 +305,11 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
 
         val lookup = ImplLookup.relativeTo(typeRef)
-        val hasImpl = when (traitName) {
-            "Sized" -> lookup.isSized(typeRef.type)
-            "Copy" -> lookup.isCopy(typeRef.type)
-            else -> error("Unknown trait: $traitName")
-        }
+        val traitPath = RsCodeFragmentFactory(project).createPath(traitName, myFixture.file as RsFile, TYPE, TYPES)
+            ?: error("Cannot parse path `$traitName`")
+        val trait = traitPath.reference?.advancedResolve()?.downcast<RsTraitItem>()
+            ?: error("Cannot resolve path `traitName` to a trait")
+        val hasImpl = lookup.canSelect(TraitRef(typeRef.type, trait))
 
         check(mustHaveImpl == hasImpl) {
             "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
