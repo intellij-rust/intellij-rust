@@ -659,6 +659,7 @@ class ImplLookup(
             // The `Sized` trait is hardcoded in the compiler. It cannot be implemented in source code.
             // Trying to do so would result in a E0322.
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
+            element == items.Destruct -> listOf(SelectionCandidate.TypeParameter(BoundElement(element)))
             element == items.Unsize -> unsizeTraitCandidates(ref)
             ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
