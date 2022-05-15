@@ -7,11 +7,6 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.types.ty.*
 
-/*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
-
 /**
  * When type-checking an expression, we propagate downward
  * whatever type hint we are able in the form of an `org.rust.lang.core.types.infer.Expectation`
