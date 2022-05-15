@@ -26,6 +26,7 @@ import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAM
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.*
+import org.rust.lang.core.completion.safeGetOriginalOrSelf
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
@@ -460,6 +461,23 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (field is RsMethodCall) {
             checkNotCallingDrop(field, holder)
         }
+        if (field is RsFieldLookup) {
+            checkUnknownField(field, holder)
+        }
+    }
+
+    // E0609: unknown field
+    private fun checkUnknownField(fieldLookup: RsFieldLookup, holder: RsAnnotationHolder) {
+        if (fieldLookup.identifier?.text == "await") return
+
+        val field = fieldLookup.safeGetOriginalOrSelf()
+        val type = field.receiver.type
+
+        if (type is TyUnknown) return
+        if (type is TyTuple && field.text.toIntOrNull() in type.types.indices) return
+        if (fieldLookup.reference.multiResolve().isNotEmpty()) return
+
+        RsDiagnostic.UnknownField(field, type).addToHolder(holder)
     }
 
     private fun checkYieldExpr(holder: RsAnnotationHolder, o: RsYieldExpr) {
