@@ -13,35 +13,48 @@ import org.rust.lang.core.psi.ext.*
 /**
  * Rust lints.
  */
-enum class RsLint(
+sealed class RsLint(
     val id: String,
     private val groupIds: List<String> = emptyList(),
     private val defaultLevel: RsLintLevel = WARN
 ) {
     // Rustc lints
     // warnings
-    NonSnakeCase("non_snake_case", listOf("bad_style", "nonstandard_style")),
-    NonCamelCaseTypes("non_camel_case_types", listOf("bad_style", "nonstandard_style")),
-    NonUpperCaseGlobals("non_upper_case_globals", listOf("bad_style", "nonstandard_style")),
-    Deprecated("deprecated"),
-    UnusedVariables("unused_variables", listOf("unused")),
-    UnusedImports("unused_imports", listOf("unused")),
-    UnreachablePattern("unreachable_patterns", listOf("unused")),
-    WhileTrue("while_true"),
-    UnreachableCode("unreachable_code"),
-    BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms")),
-    NonShorthandFieldPatterns("non_shorthand_field_patterns"),
-    UnusedQualifications("unused_qualifications", listOf("unused")),
-    UnusedMustUse("unused_must_use", listOf("unused")),
-    RedundantSemicolons("redundant_semicolons", listOf("unused")),
-    UnusedLabels("unused_labels", listOf("unused")),
-    PathStatements("path_statements", listOf("unused")),
+    object NonSnakeCase : RsLint("non_snake_case", listOf("bad_style", "nonstandard_style"))
+    object NonCamelCaseTypes : RsLint("non_camel_case_types", listOf("bad_style", "nonstandard_style"))
+    object NonUpperCaseGlobals : RsLint("non_upper_case_globals", listOf("bad_style", "nonstandard_style"))
+    object Deprecated : RsLint("deprecated")
+    object UnusedVariables : RsLint("unused_variables", listOf("unused"))
+    object UnusedImports : RsLint("unused_imports", listOf("unused"))
+    object UnreachablePattern : RsLint("unreachable_patterns", listOf("unused"))
+    object WhileTrue : RsLint("while_true")
+    object UnreachableCode : RsLint("unreachable_code")
+    object BareTraitObjects : RsLint("bare_trait_objects", listOf("rust_2018_idioms"))
+    object NonShorthandFieldPatterns : RsLint("non_shorthand_field_patterns")
+    object UnusedQualifications : RsLint("unused_qualifications", listOf("unused"))
+    object UnusedMustUse : RsLint("unused_must_use", listOf("unused"))
+    object RedundantSemicolons : RsLint("redundant_semicolons", listOf("unused"))
+    object UnusedLabels : RsLint("unused_labels", listOf("unused"))
+    object PathStatements : RsLint("path_statements", listOf("unused"))
     // errors
-    UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
+    object UnknownCrateTypes : RsLint("unknown_crate_types", defaultLevel = DENY)
     // CLippy lints
-    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy")),
-    DoubleMustUse("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy")),
-    WrongSelfConvention("clippy::wrong_self_convention", listOf("clippy::style", "clippy::all", "clippy"));
+    object NeedlessLifetimes : RsLint("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"))
+    object DoubleMustUse : RsLint("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy"))
+    object WrongSelfConvention : RsLint("clippy::wrong_self_convention", listOf("clippy::style", "clippy::all", "clippy"))
+
+    // External linter lint
+    class ExternalLinterLint(id: String) : RsLint(id) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+            other as ExternalLinterLint
+            if (id != other.id) return false
+            return true
+        }
+
+        override fun hashCode(): Int = id.hashCode()
+    }
 
     /**
      * Returns the level of the lint for the given PSI element.

@@ -8,7 +8,10 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -144,8 +147,29 @@ class RsExternalLinterPass(
         }
     }
 
+    /**
+     * We pass suppress actions as options directly to [HighlightInfo.registerFix] because otherwise
+     * actions from [IntentionManager.getStandardIntentionOptions] will be added to the options list
+     */
     private val highlights: List<HighlightInfo>
-        get() = annotationHolder.map(HighlightInfo::fromAnnotation)
+        get() = annotationHolder.map { annotation ->
+            val quickFixes = annotation.quickFixes?.toList().orEmpty()
+            annotation.quickFixes?.clear()
+            val highlight = HighlightInfo.fromAnnotation(annotation)
+            val element = file.findElementAt(highlight.startOffset) ?: file.findElementAt(highlight.endOffset - 1)
+            val problemGroup = highlight.problemGroup as? SuppressableProblemGroup
+            val options = problemGroup?.getSuppressActions(element)?.toList()
+            for (quickFix in quickFixes) {
+                highlight.registerFix(
+                    quickFix.quickFix,
+                    options,
+                    HighlightDisplayKey.getDisplayNameByKey(quickFix.key),
+                    quickFix.textRange,
+                    quickFix.key
+                )
+            }
+            highlight
+        }
 
     private val isAnnotationPassEnabled: Boolean
         get() = myProject.rustSettings.runExternalLinterOnTheFly

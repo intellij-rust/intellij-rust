@@ -16,6 +16,7 @@ import com.intellij.psi.PsiNamedElement
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.lints.RsLintLevel.*
+import org.rust.ide.inspections.lints.RsSuppressQuickFix.Companion.createSuppressFixes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -63,58 +64,14 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
 
     // TODO: fix quick fix order in UI
     override fun getBatchSuppressActions(element: PsiElement?): Array<SuppressQuickFix> {
-        val fixes = super.getBatchSuppressActions(element).toMutableList()
-        if (element == null) return fixes.toTypedArray()
-        val lint = getLint(element) ?: return fixes.toTypedArray()
-
-        for (ancestor in element.ancestors) {
-            val action = when (ancestor) {
-                is RsLetDecl,
-                is RsFieldDecl,
-                is RsEnumVariant,
-                is RsItemElement,
-                is RsFile -> {
-                    var target = when (ancestor) {
-                        is RsLetDecl -> "statement"
-                        is RsFieldDecl -> "field"
-                        is RsEnumVariant -> "enum variant"
-                        is RsStructItem -> "struct"
-                        is RsEnumItem -> "enum"
-                        is RsFunction -> "fn"
-                        is RsTypeAlias -> "type"
-                        is RsConstant -> "const"
-                        is RsModItem -> "mod"
-                        is RsImplItem -> "impl"
-                        is RsTraitItem -> "trait"
-                        is RsUseItem -> "use"
-                        is RsFile -> "file"
-                        else -> null
-                    }
-                    if (target != null) {
-                        val name = (ancestor as? PsiNamedElement)?.name
-                        if (name != null) {
-                            target += " $name"
-                        }
-                        RsSuppressQuickFix(ancestor as RsDocAndAttributeOwner, lint, target)
-                    } else {
-                        null
-                    }
-                }
-                is RsExprStmt -> {
-                    val expr = ancestor.expr
-                    if (expr is RsOuterAttributeOwner) RsSuppressQuickFix(expr, lint, "statement") else null
-                }
-                else -> null
-            }
-            if (action != null) {
-                fixes += action
-            }
-        }
-        return fixes.toTypedArray()
+        val fixes = super.getBatchSuppressActions(element)
+        if (element == null) return fixes
+        val lint = getLint(element) ?: return fixes
+        return fixes + createSuppressFixes(element, lint)
     }
 }
 
-private class RsSuppressQuickFix(
+class RsSuppressQuickFix(
     suppressAt: RsDocAndAttributeOwner,
     private val lint: RsLint,
     private val target: String
@@ -141,6 +98,57 @@ private class RsSuppressQuickFix(
                 val anchor = suppressAt.children.first { it !is RsInnerAttr && it !is PsiComment } ?: return
                 suppressAt.addInnerAttribute(attr, anchor)
             }
+        }
+    }
+
+    companion object {
+        fun createSuppressFixes(element: PsiElement, lint: RsLint): Array<RsSuppressQuickFix> {
+            if (lint.levelFor(element) != WARN) return emptyArray()
+            val fixes = mutableListOf<RsSuppressQuickFix>()
+            for (ancestor in element.ancestors) {
+                val action = when (ancestor) {
+                    is RsLetDecl,
+                    is RsFieldDecl,
+                    is RsEnumVariant,
+                    is RsItemElement,
+                    is RsFile -> {
+                        var target = when (ancestor) {
+                            is RsLetDecl -> "statement"
+                            is RsFieldDecl -> "field"
+                            is RsEnumVariant -> "enum variant"
+                            is RsStructItem -> "struct"
+                            is RsEnumItem -> "enum"
+                            is RsFunction -> "fn"
+                            is RsTypeAlias -> "type"
+                            is RsConstant -> "const"
+                            is RsModItem -> "mod"
+                            is RsImplItem -> "impl"
+                            is RsTraitItem -> "trait"
+                            is RsUseItem -> "use"
+                            is RsFile -> "file"
+                            else -> null
+                        }
+                        if (target != null) {
+                            val name = (ancestor as? PsiNamedElement)?.name
+                            if (name != null) {
+                                target += " $name"
+                            }
+                            RsSuppressQuickFix(ancestor as RsDocAndAttributeOwner, lint, target)
+                        } else {
+                            null
+                        }
+                    }
+                    is RsExprStmt -> {
+                        val expr = ancestor.expr
+                        if (expr is RsOuterAttributeOwner) RsSuppressQuickFix(expr, lint, "statement") else null
+                    }
+                    else -> null
+                }
+                if (action != null) {
+                    fixes += action
+                }
+            }
+            return fixes.toTypedArray()
         }
     }
 }

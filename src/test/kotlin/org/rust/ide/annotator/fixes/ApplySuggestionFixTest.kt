@@ -95,12 +95,20 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         }
     """, externalLinter = ExternalLinter.CLIPPY)
 
+    fun `test suppress fix`() = checkFixByText("""
+        type _SendVec<T: <weak_warning>Send</weak_warning>> = Vec<T>;
+    """, """
+        #[allow(type_alias_bounds)]
+        type _SendVec<T: Send> = Vec<T>;
+    """, "Suppress `type_alias_bounds` for type _SendVec")
+
     private fun checkFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        fixName: String? = null,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        val action = getQuickFixes(before, externalLinter).singleOrNull() ?: return // BACKCOMPAT: Rust ???
+        val action = getQuickFixes(before, fixName, externalLinter).singleOrNull() ?: return // BACKCOMPAT: Rust ???
         myFixture.launchAction(action)
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
@@ -109,10 +117,14 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         @Language("Rust") text: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        assertEmpty(getQuickFixes(text, externalLinter))
+        assertEmpty(getQuickFixes(text, null, externalLinter))
     }
 
-    private fun getQuickFixes(@Language("Rust") text: String, externalLinter: ExternalLinter): List<IntentionAction> {
+    private fun getQuickFixes(
+        @Language("Rust") text: String,
+        fixName: String?,
+        externalLinter: ExternalLinter
+    ): List<IntentionAction> {
         project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
         fileTree {
             toml("Cargo.toml", """
@@ -129,6 +141,8 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         val filePath = "src/lib.rs"
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath(filePath)!!)
         myFixture.checkHighlighting()
-        return myFixture.getAllQuickFixes(filePath).filter { it.text.startsWith("External Linter: ") }
+        return myFixture.getAllQuickFixes(filePath).filter { fix ->
+            if (fixName != null) fix.text == fixName else fix.text.startsWith("External Linter: ")
+        }
     }
 }
