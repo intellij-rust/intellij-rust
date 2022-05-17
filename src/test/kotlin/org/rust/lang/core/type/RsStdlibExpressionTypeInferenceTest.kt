@@ -961,4 +961,48 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(a: Box<[u8]>) {}
     """)
+
+    fun `test infer lambda parameter type 1`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo(_: fn(i32)) {}
+    """)
+
+    fun `test infer lambda parameter type 2`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo<T: FnOnce(i32)>(_: T) {}
+    """)
+
+    fun `test try-poll`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::task::Poll;
+        fn foo(p: Poll<Result<i32, ()>>) -> Result<(), ()> {
+            let a = p?;
+            a;
+          //^ Poll<i32>
+            Ok(())
+        }
+    """)
+
+    fun `test for loop over type parameter implementing Iterator`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo<I: Iterator<Item = i32>>(a: I) {
+            for b in a {
+                b;
+            } //^ i32
+        }
+    """)
 }

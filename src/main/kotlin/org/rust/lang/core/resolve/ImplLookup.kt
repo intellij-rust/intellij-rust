@@ -659,6 +659,7 @@ class ImplLookup(
             // The `Sized` trait is hardcoded in the compiler. It cannot be implemented in source code.
             // Trying to do so would result in a E0322.
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
+            element == items.Destruct -> listOf(SelectionCandidate.TypeParameter(BoundElement(element)))
             element == items.Unsize -> unsizeTraitCandidates(ref)
             ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
@@ -1095,9 +1096,10 @@ class ImplLookup(
     }
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
-        return when (selfTy) {
-            is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
-            is TyTraitObject -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively().asSequence(), res.impl, assocType)
+        return when {
+            res.impl is RsImplItem -> lookupAssocTypeInSelection(res, assocType)
+            selfTy is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
+            selfTy is TyTraitObject -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively().asSequence(), res.impl, assocType)
             else -> {
                 lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy).asSequence(), res.impl, assocType)

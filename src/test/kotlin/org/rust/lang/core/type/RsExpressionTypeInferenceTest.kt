@@ -197,9 +197,9 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test try block expr (option)`() = testExpr("""
         #[lang = "core::option::Option"]
         enum Option<T> { None, Some(T) }
-        #[lang = "core::ops::try::Try"]
-        trait Try { type Ok; type Error; }
-        impl<T> Try for Option<T> { type Ok = T; type Error = (); }
+        #[lang = "core::ops::try_trait::Try"]
+        trait Try { type Output; type Error; }
+        impl<T> Try for Option<T> { type Output = T; type Error = (); }
         fn main() {
             let x: Option<_> = try { 42 };
             x;
@@ -210,9 +210,9 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test try block expr transitive (option)`() = testExpr("""
         #[lang = "core::option::Option"]
         enum Option<T> { None, Some(T) }
-        #[lang = "core::ops::try::Try"]
-        trait Try { type Ok; type Error; }
-        impl<T> Try for Option<T> { type Ok = T; type Error = (); }
+        #[lang = "core::ops::try_trait::Try"]
+        trait Try { type Output; type Error; }
+        impl<T> Try for Option<T> { type Output = T; type Error = (); }
         fn main() {
             let x = try { 42 };
             let y: Option<_> = x;
@@ -227,12 +227,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         #[lang = "core::result::Result"]
         enum Result<T, E> { Ok(T), Err(E) }
 
-        #[lang = "core::ops::try::Try"]
-        trait Try { type Ok; type Error; }
+        #[lang = "core::ops::try_trait::Try"]
+        trait Try { type Output; type Error; }
 
         impl Try for S {
-            type Ok = u32;
-            type Error = u64;
+            type Output = u32;
+            type Residual = u64;
 
             fn into_result(self) -> Result<Self::Ok, Self::Error> {
                 unimplemented!()
@@ -262,12 +262,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         #[lang = "core::result::Result"]
         enum Result<T, E> { Ok(T), Err(E) }
 
-        #[lang = "core::ops::try::Try"]
-        trait Try { type Ok; type Error; }
+        #[lang = "core::ops::try_trait::Try"]
+        trait Try { type Output; type Error; }
 
         impl<T> Try for S<T> {
-            type Ok = T;
-            type Error = u64;
+            type Output = T;
+            type Residual = u64;
 
             fn into_result(self) -> Result<Self::Ok, Self::Error> {
                 unimplemented!()
@@ -371,9 +371,9 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test lambda try expr`() = testExpr("""
         #[lang = "core::option::Option"]
         enum Option<T> { None, Some(T) }
-        #[lang = "core::ops::try::Try"]
-        trait Try { type Ok; type Error; }
-        impl<T> Try for Option<T> { type Ok = T; type Error = (); }
+        #[lang = "core::ops::try_trait::Try"]
+        trait Try { type Output; type Error; }
+        impl<T> Try for Option<T> { type Output = T; type Error = (); }
         fn main() {
             let x: fn() -> Option<_> = || try { 42 };
             x;
