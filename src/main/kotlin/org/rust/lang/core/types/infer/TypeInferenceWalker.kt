@@ -227,7 +227,11 @@ class RsTypeInferenceWalker(
         expr.inferTypeCoercableTo(expected)
 
 
-    private fun coerce(element: RsElement, inferred: Ty, expected: Ty): Boolean =
+    @JvmName("inferType_")
+    fun inferType(expr: RsExpr): Ty =
+        expr.inferType()
+
+    fun coerce(element: RsElement, inferred: Ty, expected: Ty): Boolean =
         coerceResolved(
             element,
             resolveTypeVarsWithObligations(inferred),
@@ -1495,6 +1499,10 @@ class RsTypeInferenceWalker(
 
     fun writePatFieldTy(psi: RsPatField, ty: Ty): Unit =
         ctx.writePatFieldTy(psi, ty)
+
+    fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> {
+        return ctx.getResolvedPath(expr)
+    }
 
     private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
         val outputTy = this.lookupRawFutureOutputTy(lookup)
