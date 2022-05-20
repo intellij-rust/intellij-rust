@@ -43,10 +43,10 @@ val CONVERT_JSON_ON_PASTE: RegistryValue = Registry.get("org.rust.ide.json.paste
 
 class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     override fun collectTransferableData(
-        file: PsiFile?,
-        editor: Editor?,
-        startOffsets: IntArray?,
-        endOffsets: IntArray?
+        file: PsiFile,
+        editor: Editor,
+        startOffsets: IntArray,
+        endOffsets: IntArray
     ): List<TextBlockTransferableData> = emptyList()
 
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {

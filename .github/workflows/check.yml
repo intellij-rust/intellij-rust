@@ -134,7 +134,7 @@ jobs:
                 os: [ ubuntu-18.04, windows-latest ]
                 rust-version: [ 1.58.1, nightly-2021-12-26 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 213, 221 ]
+                platform-version: [ 213, 221, 222 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
