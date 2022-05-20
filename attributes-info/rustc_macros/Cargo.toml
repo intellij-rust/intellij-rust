@@ -1,0 +1,13 @@
+[package]
+name = "rustc_macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+synstructure = "0.12.1"
+syn = { version = "1", features = ["full"] }
+proc-macro2 = "1"
+quote = "1"

@@ -1,0 +1,15 @@
+[package]
+name = "attributes-info"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustc_feature = { path = "rustc_feature" }
+
+[workspace]
+members = [
+    "rustc_feature",
+    "rustc_span",
+    "rustc_data_structures",
+    "rustc_macros"
+]
