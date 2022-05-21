@@ -1,7 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="cidr.debugger">
-        <!-- Default implementation not to produce NPE for non-Rust stack frames -->
-        <!-- Workaround for https://github.com/intellij-rust/intellij-rust/issues/8122 -->
-        <languageSupport language="" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport" order="last"/>
-    </extensions>
-</idea-plugin>
