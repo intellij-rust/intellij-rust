@@ -737,6 +737,7 @@ class ImportingPsiRenderer(
     override fun appendPathWithoutArgs(sb: StringBuilder, path: RsPath) {
         val pathReferenceName = path.referenceName
         val tryImportPath1 = path.parent !is RsPath &&
+            path.parent !is RsAssocTypeBinding &&
             TyPrimitive.fromPath(path) == null &&
             path.basePath().referenceName != "Self" &&
             path.basePath().typeQual == null
