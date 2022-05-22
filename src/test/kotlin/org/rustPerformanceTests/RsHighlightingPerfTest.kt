@@ -119,6 +119,9 @@ class RsHighlightingPerfTest : RsRealProjectTestBase() {
         return timings
     }
 
+
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     private fun currentPsiModificationCount() =
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
 

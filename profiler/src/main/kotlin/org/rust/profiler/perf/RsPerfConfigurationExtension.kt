@@ -100,7 +100,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             toolEnvironment,
             RsFunction::class.java
         )
-        ProfilerUsageTriggerCollector.reportStart(project, profilerProcess.profilerConfiguration.configurationTypeId, configuration.type.id)
+        ProfilerUsageTriggerCollector.logRecordingStarted(project, profilerProcess.profilerConfiguration.configurationTypeId, configuration.type.id)
         ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(profilerProcess)
     }
 

@@ -33,7 +33,8 @@ private val RANGE_MAP_ATTRIBUTE = FileAttribute(
 fun VirtualFile.writeRangeMap(ranges: RangeMap) {
     checkWriteAccessAllowed()
 
-    RANGE_MAP_ATTRIBUTE.writeAttribute(this).use {
+    @Suppress("UnstableApiUsage")
+    RANGE_MAP_ATTRIBUTE.writeFileAttribute(this).use {
         ranges.writeTo(it)
     }
 
@@ -47,7 +48,8 @@ fun VirtualFile.loadRangeMap(): RangeMap? {
 
     getUserData(MACRO_RANGE_MAP_CACHE_KEY)?.get()?.let { return it }
 
-    val data = RANGE_MAP_ATTRIBUTE.readAttribute(this) ?: return null
+    @Suppress("UnstableApiUsage")
+    val data = RANGE_MAP_ATTRIBUTE.readFileAttribute(this) ?: return null
     val ranges = RangeMap.readFrom(data)
     putUserData(MACRO_RANGE_MAP_CACHE_KEY, WeakReference(ranges))
     return ranges

@@ -114,7 +114,7 @@ private class RsImportCandidateCellRenderer : DefaultPsiElementCellRenderer() {
         val importCandidate = element.importCandidate
         return if (importCandidate != null) {
             val crateName = (importCandidate.info as? ImportInfo.ExternCrateImportInfo)?.externCrateName
-            val parentPath = importCandidate.qualifiedNamedItem.parentCrateRelativePath ?: return null
+            val parentPath = importCandidate.qualifiedNamedItem.parentCrateRelativePath
             val container = when {
                 crateName == null -> parentPath
                 parentPath.isEmpty() -> crateName

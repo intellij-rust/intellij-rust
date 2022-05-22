@@ -7,7 +7,6 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -1414,8 +1413,7 @@ class RsTypeInferenceWalker(
                 return TyArray(TyInfer.TyVar(), size.foldCtConstParameterWith { CtInferVar(it) })
             }
 
-            // '!!' is safe here because we've just checked that elementTypes isn't null
-            val elementType = getMoreCompleteType(elementTypes!!)
+            val elementType = getMoreCompleteType(elementTypes)
             val inferredTy = if (expectedElemTy != null && ctx.tryCoerce(elementType, expectedElemTy).isOk) {
                 expectedElemTy
             } else {

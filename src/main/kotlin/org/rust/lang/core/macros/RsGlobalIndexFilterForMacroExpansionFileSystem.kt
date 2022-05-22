@@ -32,6 +32,7 @@ class RsGlobalIndexFilterForMacroExpansionFileSystem : GlobalIndexFilter {
 
         // `FilenameIndex` is disabled in order to exclude macro expansions from filename
         // search results (`Ctr+Shift+N`)
+        @Suppress("DEPRECATION")
         FilenameIndex.NAME
     )
 

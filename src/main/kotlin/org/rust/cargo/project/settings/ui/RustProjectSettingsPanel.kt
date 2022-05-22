@@ -7,7 +7,7 @@ package org.rust.cargo.project.settings.ui
 
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -164,8 +164,8 @@ class RustProjectSettingsPanel(
 }
 
 private fun isStdlibLocationCompatible(toolchainLocation: String, stdlibLocation: String): Boolean {
-    val isWslToolchain = WslDistributionManager.isWslPath(toolchainLocation)
-    val isWslStdlib = WslDistributionManager.isWslPath(stdlibLocation)
+    val isWslToolchain = WslPath.isWslUncPath(toolchainLocation)
+    val isWslStdlib = WslPath.isWslUncPath(stdlibLocation)
     // We should reset [pathToStdlibField] because non-WSL stdlib paths don't work with WSL toolchains
     return isWslToolchain == isWslStdlib
 }

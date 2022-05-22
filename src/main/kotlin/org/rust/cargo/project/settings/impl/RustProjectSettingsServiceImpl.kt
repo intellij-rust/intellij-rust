@@ -62,7 +62,7 @@ class RustProjectSettingsServiceImpl(
     override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
 
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION")
+    @Suppress("OverridingDeprecatedMember", "DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun getToolchain(): RsToolchain? = _state.toolchain?.let(RsToolchain::from)
 
     override fun getState(): Element {

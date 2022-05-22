@@ -9,7 +9,6 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,6 +26,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.io.DataOutputStream
@@ -862,7 +862,7 @@ private class MacroExpansionServiceImplInner(
         val taskQueue = project.taskQueue
         if (!taskQueue.isEmpty) {
             while (!taskQueue.isEmpty && !project.isDisposed) {
-                LaterInvocator.dispatchPendingFlushes()
+                PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
                 Thread.sleep(10)
             }
         }

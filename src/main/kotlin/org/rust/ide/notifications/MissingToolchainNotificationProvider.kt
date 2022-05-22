@@ -12,9 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationPanel
 import org.rust.RsBundle
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -52,8 +50,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             })
         }
     }
-
-    override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
     override fun createNotificationPanel(
         file: VirtualFile,
@@ -126,7 +122,5 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
         const val NO_RUST_TOOLCHAIN = "NoRustToolchain"
         const val NO_ATTACHED_STDLIB = "NoAttachedStdlib"
-
-        private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }
 }

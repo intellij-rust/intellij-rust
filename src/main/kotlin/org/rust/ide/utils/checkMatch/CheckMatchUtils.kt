@@ -99,7 +99,7 @@ private val RsExpr.value: Value<*>?
 private val RsPat.kind: PatternKind
     get() = when (this) {
         is RsPatIdent -> {
-            if (pat != null) throw TODO("Support `x @ pat`")
+            if (pat != null) TODO("Support `x @ pat`")
             when (val resolved = patBinding.reference.resolve()) {
                 is RsEnumVariant -> PatternKind.Variant(resolved.parentEnum, resolved, emptyList())
                 is RsConstant -> {
