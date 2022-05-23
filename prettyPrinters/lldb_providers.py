@@ -40,6 +40,21 @@ if PY3:
     from typing import Optional
 
 
+def unwrap_unique_or_non_null(unique_or_nonnull):
+    # type: (SBValue) -> SBValue
+    """
+    rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
+    rust 1.62.0: struct Unique<T: ?Sized> { pointer: NonNull<T>, ... }
+    struct NonNull<T> { pointer: *const T }
+    """
+    ptr = unique_or_nonnull.GetChildMemberWithName("pointer")
+    inner_ptr = ptr.GetChildMemberWithName("pointer")
+    if inner_ptr.IsValid():
+        return inner_ptr
+    else:
+        return ptr
+
+
 class ValueBuilder:
     def __init__(self, valobj):
         # type: (SBValue) -> None
@@ -267,9 +282,9 @@ class StdVecSyntheticProvider:
 
     struct Vec<T> { buf: RawVec<T>, len: usize }
     struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
-    rust 1.31.1: struct Unique<T: ?Sized> { pointer: NonZero<*const T>, ... }
     rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
-    struct NonZero<T>(T)
+    rust 1.62.0: struct Unique<T: ?Sized> { pointer: NonNull<T>, ... }
+    struct NonNull<T> { pointer: *const T }
     """
 
     def __init__(self, valobj, _dict):
@@ -300,9 +315,7 @@ class StdVecSyntheticProvider:
         # type: () -> None
         self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
         self.buf = self.valobj.GetChildMemberWithName("buf")
-
-        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
-
+        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
 
@@ -348,9 +361,7 @@ class StdVecDequeSyntheticProvider:
         self.buf = self.valobj.GetChildMemberWithName("buf")
         self.cap = self.buf.GetChildMemberWithName("cap").GetValueAsUnsigned()
         self.size = self.head - self.tail if self.head >= self.tail else self.cap + self.head - self.tail
-
-        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
-
+        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
 
@@ -455,9 +466,7 @@ class StdRcSyntheticProvider:
     """Pretty-printer for alloc::rc::Rc<T> and alloc::sync::Arc<T>
 
     struct Rc<T> { ptr: NonNull<RcBox<T>>, ... }
-    rust 1.31.1: struct NonNull<T> { pointer: NonZero<*const T> }
-    rust 1.33.0: struct NonNull<T> { pointer: *const T }
-    struct NonZero<T>(T)
+    struct NonNull<T> { pointer: *const T }
     struct RcBox<T> { strong: Cell<usize>, weak: Cell<usize>, value: T }
     struct Cell<T> { value: UnsafeCell<T> }
     struct UnsafeCell<T> { value: T }
@@ -470,16 +479,11 @@ class StdRcSyntheticProvider:
     def __init__(self, valobj, _dict, is_atomic=False):
         # type: (SBValue, dict, bool) -> None
         self.valobj = valobj
-
-        self.ptr = self.valobj.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
-
+        self.ptr = unwrap_unique_or_non_null(self.valobj.GetChildMemberWithName("ptr"))
         self.value = self.ptr.GetChildMemberWithName("data" if is_atomic else "value")
-
         self.strong = self.ptr.GetChildMemberWithName("strong").GetChildAtIndex(0).GetChildMemberWithName("value")
         self.weak = self.ptr.GetChildMemberWithName("weak").GetChildAtIndex(0).GetChildMemberWithName("value")
-
         self.value_builder = ValueBuilder(valobj)
-
         self.update()
 
     def num_children(self):
