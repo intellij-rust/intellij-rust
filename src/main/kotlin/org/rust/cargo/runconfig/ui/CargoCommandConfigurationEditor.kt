@@ -15,17 +15,14 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.Label
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.LayoutBuilder
-import com.intellij.ui.layout.Row
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.nullize
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -39,6 +36,7 @@ import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
 import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathTextField
 import javax.swing.JCheckBox
@@ -163,35 +161,38 @@ class CargoCommandConfigurationEditor(project: Project)
     }
 
     override fun createEditor(): JComponent = panel {
-        labeledRow("&Command:", command) {
-            command(CCFlags.pushX, CCFlags.growX)
+        row("&Command:") {
+            fullWidthCell(command)
+                .resizableColumn()
             channelLabel.labelFor = channel
-            channelLabel()
-            channel()
+            cell(channelLabel)
+            cell(channel)
         }
 
-        row { requiredFeatures() }
-        row { allFeatures() }
-        row { emulateTerminal() }
-        row { withSudo() }
-        row { buildOnRemoteTarget() }
+        row { cell(requiredFeatures) }
+        row { cell(allFeatures) }
+        row { cell(emulateTerminal) }
+        row { cell(withSudo) }
+        row { cell(buildOnRemoteTarget) }
 
         row(environmentVariables.label) {
-            environmentVariables(growX)
+            fullWidthCell(environmentVariables)
         }
         row(workingDirectory.label) {
-            workingDirectory(growX)
+            fullWidthCell(workingDirectory)
+                .resizableColumn()
             if (project.cargoProjects.allProjects.size > 1) {
-                cargoProject(growX)
+                cell(cargoProject)
             }
         }
         row {
-            cell(isFullWidth = true) {
-                isRedirectInput()
-                redirectInput()
-            }
+            layout(RowLayout.LABEL_ALIGNED)
+            cell(isRedirectInput)
+            fullWidthCell(redirectInput)
         }
-        labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
+        row("Back&trace:") {
+            cell(backtraceMode)
+        }
     }.also { panel = it }
 
     private fun hideUnsupportedFieldsIfNeeded() {
@@ -199,12 +200,5 @@ class CargoCommandConfigurationEditor(project: Project)
         val localTarget = DataManager.getInstance().getDataContext(panel)
             .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null
         buildOnRemoteTarget.isVisible = !localTarget
-    }
-
-    @Suppress("UnstableApiUsage")
-    private fun LayoutBuilder.labeledRow(@Label labelText: String, component: JComponent, init: Row.() -> Unit) {
-        val label = Label(labelText)
-        label.labelFor = component
-        row(label) { init() }
     }
 }
