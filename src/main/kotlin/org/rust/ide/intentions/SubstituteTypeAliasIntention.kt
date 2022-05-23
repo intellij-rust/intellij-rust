@@ -14,12 +14,13 @@ import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.endOffsetInParent
+import org.rust.lang.core.resolve.ref.advancedResolveTypeAliasToImpl
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.implLookupAndKnownItems
-import org.rust.lang.core.types.infer.RsInferenceContext
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 
 class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteTypeAliasIntention.Context>() {
     override fun getText() = "Substitute type alias"
@@ -34,7 +35,7 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>() ?: return null
-        val target = path.reference?.advancedResolve() ?: return null
+        val target = path.reference?.advancedResolveTypeAliasToImpl() ?: return null
 
         val typeAlias = target.element as? RsTypeAlias ?: return null
 
@@ -54,10 +55,10 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
             null
         }
         val subst = if (selfTy != null) {
-            val (lookup, items) = ctx.path.implLookupAndKnownItems
-            val inf = RsInferenceContext(project, lookup, items)
+            val lookup = ctx.path.implLookup
+            val inf = lookup.ctx
             val subst = inf.instantiateBounds(ctx.typeAlias, selfTy)
-            val type = typeRef.type.substitute(subst)
+            val type = typeRef.normType.substitute(subst)
             inf.combineTypes(type, selfTy)
             subst.mapTypeValues { (_, v) -> inf.resolveTypeVarsIfPossible(v) }
         } else {
@@ -79,6 +80,6 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
             ctx.path.replace(createdPath) as RsPath
         }
 
-        RsImportHelper.importTypeReferencesFromTy(insertedPath, typeRef.type)
+        RsImportHelper.importTypeReferencesFromTy(insertedPath, typeRef.rawType)
     }
 }

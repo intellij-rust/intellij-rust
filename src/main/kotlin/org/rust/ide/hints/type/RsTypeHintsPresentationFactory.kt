@@ -17,8 +17,8 @@ import org.rust.lang.core.types.Kind
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtValue
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 @Suppress("UnstableApiUsage")
 class RsTypeHintsPresentationFactory(
@@ -291,10 +291,10 @@ class RsTypeHintsPresentationFactory(
         level + elementsCount > FOLDING_THRESHOLD
 
     private fun isDefaultTypeParameter(argument: Ty, parameter: RsTypeParameter): Boolean =
-        argument.isEquivalentTo(parameter.typeReference?.type)
+        argument.isEquivalentTo(parameter.typeReference?.normType)
 
     private fun isDefaultTypeAlias(argument: Ty, alias: RsTypeAlias): Boolean =
-        argument.isEquivalentTo(alias.typeReference?.type)
+        argument.isEquivalentTo(alias.typeReference?.normType)
 
     private fun List<InlayPresentation>.join(separator: String = ""): InlayPresentation {
         if (separator.isEmpty()) {

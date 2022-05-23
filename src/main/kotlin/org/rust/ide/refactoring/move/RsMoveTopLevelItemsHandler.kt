@@ -25,8 +25,8 @@ import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.type
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.toPsiFile
 
@@ -169,7 +169,7 @@ fun groupImplsByStructOrTrait(containingMod: RsMod, items: Set<RsItemElement>): 
     return containingMod
         .childrenOfType<RsImplItem>()
         .mapNotNull { impl ->
-            val struct: RsItemElement? = (impl.typeReference?.type as? TyAdt)?.item
+            val struct: RsItemElement? = (impl.typeReference?.rawType as? TyAdt)?.item
             val trait = impl.traitRef?.path?.reference?.resolve() as? RsTraitItem
             val relatedStruct = struct?.takeIf { items.contains(it) }
             val relatedTrait = trait?.takeIf { items.contains(it) }

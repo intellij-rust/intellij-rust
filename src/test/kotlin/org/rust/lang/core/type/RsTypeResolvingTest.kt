@@ -10,7 +10,8 @@ import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.type.RsTypeResolvingTest.RenderMode.*
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
     fun `test path`() = testType("""
@@ -62,8 +63,24 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
-    // TODO `<S as T>::Assoc` should be unified to `S`
-    fun `test qualified path`() = testType("""
+    fun `test normalizable associated type path`() = testType("""
+        trait T {
+            type Assoc;
+        }
+
+        struct S;
+
+        impl T for S {
+            type Assoc = S;
+        }
+
+        fn main() {
+            let _: <S as T>::Assoc = S;
+                 //^ <S as T>::Assoc
+        }
+    """)
+
+    fun `test normalizable associated type path normalized`() = testType("""
         trait T {
             type Assoc;
         }
@@ -78,7 +95,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
             let _: <S as T>::Assoc = S;
                  //^ S
         }
-    """)
+    """, normalize = true)
 
     fun `test enum`() = testType("""
         enum E { X }
@@ -248,6 +265,15 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }           //^ <B as Trait<u8>>::Item
     """)
 
+    fun `test associated type is not normalized when not possible`() = testType("""
+        trait Trait<T> {
+            type Item;
+        }
+        fn foo<B: Trait<u8>>(_: B) {
+            let a: B::Item;
+        }           //^ <B as Trait<u8>>::Item
+    """, normalize = true)
+
     fun `test associated types for impl`() = testType("""
         trait A {
             type Item;
@@ -257,7 +283,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         impl A for S {
             type Item = S;
             fn foo(self) -> Self::Item { S }
-        }                         //^ S
+        }                         //^ <S as A>::Item
     """)
 
     fun `test inherited associated types for impl`() = testType("""
@@ -269,7 +295,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         impl A for S { type Item = S; }
         impl B for S {
             fn foo(self) -> Self::Item { S }
-        }                         //^ S
+        }                         //^ <S as A>::Item
     """)
 
     fun `test generic trait object`() = testType("""
@@ -519,7 +545,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
             type f64 = ();
         }
         type A = <S as Trait>::f64;
-                             //^ ()
+                             //^ <S as Trait>::f64
     """)
 
     fun `test unresolved associated type with name f64`() = testType("""
@@ -535,12 +561,17 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
      */
     private fun testType(
         @Language("Rust") code: String,
-        renderMode: RenderMode = DEFAULT
+        renderMode: RenderMode = DEFAULT,
+        normalize: Boolean = false
     ) {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
-        val ty = typeAtCaret.type
+        val ty = if (normalize) {
+            typeAtCaret.normType
+        } else {
+            typeAtCaret.rawType
+        }
         val renderedTy = when (renderMode) {
             DEFAULT -> ty.render(useAliasNames = false, skipUnchangedDefaultTypeArguments = false)
             WITH_LIFETIMES -> ty.renderInsertionSafe(includeLifetimeArguments = true, skipUnchangedDefaultTypeArguments = false)

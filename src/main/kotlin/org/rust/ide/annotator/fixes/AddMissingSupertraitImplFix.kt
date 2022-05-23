@@ -55,14 +55,15 @@ class AddMissingSupertraitImplFix(implItem: RsImplItem) : LocalQuickFixAndIntent
         val trait = impl.implementedTrait ?: return
 
         val typeRef = impl.typeReference ?: return
-        val type = typeRef.type
         val implLookup = impl.implLookup
+        val type = typeRef.normType(implLookup)
 
         val traits = mutableListOf<Pair<BoundElement<RsTraitItem>, RsTraitRef>>()
         val substitutions = mutableListOf(pathPsiSubst(traitRef.path, trait.element))
         collectSuperTraits(trait, traitRef, substitutions, traits, mutableSetOf())
 
         for ((superTrait, ref) in traits) {
+            if (superTrait == trait) continue
             if (!implLookup.canSelect(TraitRef(type, superTrait))) {
                 implementTrait(impl, ref, typeRef, trait, substitutions)
             }
@@ -86,7 +87,7 @@ private fun implementTrait(
     val factory = RsPsiFactory(context.project)
 
     val typeReferences = superTraitRef.descendantsOfType<RsTypeReference>() + typeReference.descendantsOfType()
-    val types = typeReferences.map { it.type.substitute(trait.subst) }
+    val types = typeReferences.map { it.rawType.substitute(trait.subst) }
     val constraints = GenericConstraints.create(context).filterByTypes(types)
 
     val typeParameters = constraints.buildTypeParameters()

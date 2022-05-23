@@ -1046,19 +1046,22 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }           //^ unresolved
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test 'impl for generic type' is USED for associated type resolve UFCS 1`() = checkByCode("""
         trait Bound {}
         trait Tr { type Item; }
+                      //X
         impl<A: Bound> Tr for A { type Item = (); }
-        fn foo<B: Bound>(b: B) {     //X
+        fn foo<B: Bound>(b: B) {
             let a: <B as Tr>::Item;
         }                   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test 'impl for generic type' is USED for associated type resolve UFCS 2`() = checkByCode("""
         trait Bound { type Item; }
+                         //X
         impl<A: Bound> Bound for &A { type Item = (); }
-                                          //X
         fn foo<B: Bound>(b: B) {
             let a: <&B as Bound>::Item;
         }                       //^
@@ -1144,15 +1147,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 1)`() = checkByCode("""
         struct S;
         trait Trait1<T> { type Item; }
+                             //X
         trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
 
         impl Trait1<i32> for S {
             type Item = i32;
-        }       //X
+        }
         impl Trait1<u8> for S {
             type Item = u8;
         }
@@ -1161,15 +1166,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }                   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = checkByCode("""
         struct S;
         trait Trait1<T=u8> { type Item; }
+                                //X
         trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
 
         impl Trait1<i32> for S {
             type Item = i32;
-        }       //X
+        }
         impl Trait1 for S {
             type Item = u8;
         }
@@ -1292,8 +1299,10 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test explicit UFCS-like type-qualified path is resolved to correct impl when inapplicable blanket impl exists`() = checkByCode("""
         trait Trait { type Item; }
+                         //X
         trait Bound {}
         impl<I: Bound> Trait for I {
             type Item = I;
@@ -1301,7 +1310,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         struct S;
         impl Trait for S {
             type Item = ();
-        }      //X
+        }
         fn main() {
             let a: <S as Trait>::Item;
         }                      //^

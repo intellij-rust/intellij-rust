@@ -19,8 +19,9 @@ import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 object RsImportHelper {
     fun importTypeReferencesFromElements(
@@ -132,7 +133,7 @@ object RsImportHelper {
             }
 
             override fun visitTypeReference(reference: RsTypeReference) =
-                collectImportSubjectsFromTy(reference.type, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
+                collectImportSubjectsFromTy(reference.rawType, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
 
             override fun visitElement(element: RsElement) =
                 element.acceptChildren(this)
@@ -161,7 +162,7 @@ object RsImportHelper {
                         if (skipUnchangedDefaultTypeArguments) {
                             val filteredTypeArguments = ty.typeArguments
                                 .zip(ty.item.typeParameters)
-                                .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.type) }
+                                .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.normType) }
                                 .map { (argumentTy, _) -> argumentTy }
                             return ty.copy(typeArguments = filteredTypeArguments).superVisitWith(this)
                         }

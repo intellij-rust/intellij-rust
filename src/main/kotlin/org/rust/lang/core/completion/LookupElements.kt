@@ -28,6 +28,7 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
@@ -169,10 +170,10 @@ private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitu
 
 private val RsElement.asTy: Ty?
     get() = when (this) {
-        is RsConstant -> typeReference?.type
-        is RsConstParameter -> typeReference?.type
-        is RsFieldDecl -> typeReference?.type
-        is RsFunction -> retType?.typeReference?.type
+        is RsConstant -> typeReference?.normType
+        is RsConstParameter -> typeReference?.normType
+        is RsFieldDecl -> typeReference?.normType
+        is RsFunction -> retType?.typeReference?.normType
         is RsStructItem -> declaredType
         is RsEnumVariant -> parentEnum.declaredType
         is RsPatBinding -> type

@@ -25,8 +25,8 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 val RsImplItem.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
@@ -42,7 +42,7 @@ val IMPL_ITEM_IS_RESERVATION_IMPL_PROP: StubbedAttributeProperty<RsImplItem, RsI
     StubbedAttributeProperty({ it.hasAttribute("rustc_reservation_impl") }, RsImplItemStub::mayBeReservationImpl)
 
 val RsImplItem.implementingType: TyAdt?
-    get() = typeReference?.type as? TyAdt
+    get() = typeReference?.normType as? TyAdt
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -98,7 +98,7 @@ fun checkOrphanRules(impl: RsImplItem, isSameCrate: (RsElement) -> Boolean): Boo
     val traitRef = impl.traitRef ?: return true
     val (trait, subst, _) = traitRef.resolveToBoundTrait() ?: return true
     if (isSameCrate(trait)) return true
-    val typeParameters = subst.typeSubst.values + (impl.typeReference?.type ?: return true)
+    val typeParameters = subst.typeSubst.values + (impl.typeReference?.normType ?: return true)
     return typeParameters.any { tyWrapped ->
         val ty = tyWrapped.unwrapFundamentalTypes()
         ty is TyUnknown

@@ -10,9 +10,9 @@ import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.TyTraitObject
 import org.rust.lang.core.types.ty.walk
-import org.rust.lang.core.types.type
 
 class RsTyTraitObjectRegionTest : RsTestBase() {
     fun `test trait under ref`() = doTest("""
@@ -80,7 +80,7 @@ class RsTyTraitObjectRegionTest : RsTestBase() {
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val (typeAtCaret, expectedRegion) = findElementAndDataInEditor<RsTypeReference>()
-        val ty = typeAtCaret.type
+        val ty = typeAtCaret.rawType
         val traitObjectTy = ty.walk().asSequence().filterIsInstance<TyTraitObject>().first()
         val actualRegion = traitObjectTy.region.toString()
         check(actualRegion == expectedRegion) {

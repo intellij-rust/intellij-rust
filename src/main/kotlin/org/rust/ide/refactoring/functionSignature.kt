@@ -7,7 +7,7 @@ package org.rust.ide.refactoring
 
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.rawType
 
 /**
  * Helper class for storing and formatting information about the signature of a function.
@@ -26,7 +26,7 @@ abstract class RsFunctionSignatureConfig(val function: RsFunction) {
             if (wherePredList.isEmpty()) return ""
             val typeParams = typeParameters().map { it.declaredType }
             if (typeParams.isEmpty()) return ""
-            val filtered = wherePredList.filter { it.typeReference?.type in typeParams }
+            val filtered = wherePredList.filter { it.typeReference?.rawType in typeParams }
             if (filtered.isEmpty()) return ""
             return filtered.joinToString(separator = ", ", prefix = " where ") { it.text }
         }

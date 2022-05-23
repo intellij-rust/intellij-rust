@@ -25,13 +25,10 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.implLookupAndKnownItems
-import org.rust.lang.core.types.positionalTypeArguments
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 import org.rust.lang.core.with
 import org.rust.lang.utils.parseRustStringCharacters
 
@@ -93,7 +90,7 @@ private val pathValueLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<
 private fun isPathLitExpr(expr: RsLitExpr): Boolean {
     val (function, arguments) = getFunctionAndArguments(expr) ?: return false
     val owner = function.owner as? RsAbstractableOwner.Impl
-    val ownerType = (owner?.impl?.typeReference?.type as? TyAdt)?.item
+    val ownerType = (owner?.impl?.typeReference?.normType as? TyAdt)?.item
     val (implLookup, knownItems) = expr.implLookupAndKnownItems
     val isCallExpr = arguments.parent is RsCallExpr
 
@@ -126,13 +123,13 @@ private fun isPathLitExpr(expr: RsLitExpr): Boolean {
 
 // fn foo<P: AsRef<Path>>(p: P)
 private fun isAsRefPathGeneric(lookup: ImplLookup, knownItems: KnownItems, parameter: RsValueParameter): Boolean {
-    val type = parameter.typeReference?.type as? TyTypeParameter ?: return false
+    val type = parameter.typeReference?.rawType as? TyTypeParameter ?: return false
     return lookup.getEnvBoundTransitivelyFor(type).any { isAsRefPath(knownItems, it) }
 }
 
 // fn foo(p: impl AsRef<Path>)
 private fun isImplAsRefPath(knownItems: KnownItems, parameter: RsValueParameter): Boolean {
-    val type = parameter.typeReference?.type as? TyAnon ?: return false
+    val type = parameter.typeReference?.rawType as? TyAnon ?: return false
     return type.traits.any { isAsRefPath(knownItems, it) }
 }
 

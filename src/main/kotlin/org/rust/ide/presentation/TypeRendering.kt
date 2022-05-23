@@ -18,12 +18,12 @@ import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.consts.CtValue
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
@@ -275,7 +275,7 @@ private data class TypeRenderer(
             if (skipUnchangedDefaultTypeArguments && !nonDefaultParamFound) {
                 if (parameter is RsTypeParameter &&
                     parameter.typeReference != null &&
-                    parameter.typeReference?.type?.isEquivalentTo(subst[parameter]) == true) {
+                    parameter.typeReference?.normType?.isEquivalentTo(subst[parameter]) == true) {
                     continue
                 } else {
                     nonDefaultParamFound = true

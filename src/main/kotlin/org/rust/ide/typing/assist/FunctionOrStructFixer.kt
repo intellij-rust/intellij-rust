@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.endOffset
-import org.rust.lang.core.psi.ext.returnType
+import org.rust.lang.core.psi.ext.rawReturnType
 import org.rust.lang.core.types.ty.TyUnknown
 
 class FunctionOrStructFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
@@ -37,7 +37,7 @@ class FunctionOrStructFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterPr
                      * fn foo(a: i32, b: i32/*caret*/)
                      * fn foo() -> i32/*caret*/
                      */
-                    parent.returnType !is TyUnknown -> ""
+                    parent.rawReturnType !is TyUnknown -> ""
 
                     else -> null
                 }

@@ -21,6 +21,7 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.resolveTypeAliasToImpl
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.RsDocRenderMode
@@ -151,7 +152,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             RsCodeFragmentFactory(context.project)
                 .createPath(link, element)
                 ?.reference
-                ?.resolve()
+                ?.resolveTypeAliasToImpl()
         } else {
             qualifiedName.findPsiElement(psiManager, element)
         }

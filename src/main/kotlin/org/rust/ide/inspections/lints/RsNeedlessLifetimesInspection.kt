@@ -12,10 +12,10 @@ import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.ide.inspections.lints.ReferenceLifetime.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.ty.TyTraitObject
-import org.rust.lang.core.types.type
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.chain
 
@@ -119,7 +119,7 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecu
     }
 
     override fun visitTypeReference(ref: RsTypeReference) {
-        val type = ref.type
+        val type = ref.rawType
         if (type is TyTraitObject && (type.region is ReEarlyBound || type.region is ReStatic)) {
             abort = true
         }

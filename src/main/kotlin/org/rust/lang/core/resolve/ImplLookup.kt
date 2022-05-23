@@ -996,7 +996,7 @@ class ImplLookup(
                 check(source.item is RsStructItem) { "Guaranteed by assembleCandidates" }
                 val fields = source.item.fields
                 val lastField = fields.lastOrNull() ?: return SelectionResult.Err
-                val lastFieldType = lastField.typeReference?.type ?: return SelectionResult.Err
+                val lastFieldType = lastField.typeReference?.rawType ?: return SelectionResult.Err
                 val unsizingParams = hashSetOf<TyTypeParameter>()
                 // TODO consider const params
                 lastFieldType.visitTypeParameters { ty ->
@@ -1005,7 +1005,7 @@ class ImplLookup(
                 }
                 for (field in fields) {
                     if (field == lastField) break
-                    val fieldType = field.typeReference?.type ?: continue
+                    val fieldType = field.typeReference?.rawType ?: continue
                     fieldType.visitTypeParameters { ty ->
                         unsizingParams -= ty
                         false
@@ -1187,7 +1187,7 @@ class ImplLookup(
     }
 
     private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
-        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
+        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.rawType?.substitute(selection.subst)
 
     private fun lookupAssocTypeInBounds(
         subst: Sequence<BoundElement<RsTraitItem>>,
@@ -1279,7 +1279,7 @@ class ImplLookup(
                         impl.traitRef?.isAncestorOf(psi) == true || impl.typeReference?.isAncestorOf(psi) == true
                     }
                 if (useLegacy) {
-                    // We should mock ParamEnv here. Otherwise we run into infinite recursion
+                    // We should mock ParamEnv here. Otherwise, we run into infinite recursion
                     // This is mostly a hack. It should be solved in the future somehow
                     ParamEnv.LEGACY
                 } else {

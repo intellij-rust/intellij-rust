@@ -17,19 +17,8 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.TyNever
-import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 import org.rust.openapiext.runWriteCommandAction
-
-/**
- * This method is used to filter Unit type and Never type, and exclude expressions where type is not inferred
- */
-fun checkTypeIsExtractable(expr: RsExpr): Boolean {
-    val psiFactory = RsPsiFactory(expr.project)
-    val typeRef = psiFactory.tryCreateType(expr.type.renderInsertionSafe()) ?: return false
-    return typeRef.type !is TyUnit && typeRef.type !is TyNever
-}
 
 fun extractExpression(editor: Editor, expr: RsExpr) {
     val project = expr.project

@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.collectInferTys
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -76,7 +77,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
     override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector {
         val project = file.project
         val crate = (file as? RsFile)?.crate
-        
+
         return object : FactoryInlayHintsCollector(editor) {
 
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, settings.showObviousTypes)
@@ -125,7 +126,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             private fun presentTypePlaceholders(declaration: RsLetDecl) {
                 if (!declaration.existsAfterExpansion(crate)) return
                 val inferredType = declaration.pat?.type ?: return
-                val formalType = declaration.typeReference?.type ?: return
+                val formalType = declaration.typeReference?.rawType ?: return
                 val placeholders = formalType.collectInferTys()
                     .mapNotNull {
                         if (it is TyInfer.TyVar && it.origin is RsBaseType) {

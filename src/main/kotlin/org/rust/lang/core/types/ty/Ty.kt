@@ -165,7 +165,7 @@ fun Ty.structTail(): Ty? {
             is TyAdt -> {
                 val item = ty.item as? RsStructItem ?: return ty
                 val typeRef = item.fields.lastOrNull()?.typeReference
-                val fieldTy = typeRef?.type?.substitute(ty.typeParameterValues) ?: return null
+                val fieldTy = typeRef?.rawType?.substitute(ty.typeParameterValues) ?: return null
                 if (!ancestors.add(fieldTy)) return null
                 structTailInner(fieldTy)
             }

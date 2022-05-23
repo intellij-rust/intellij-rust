@@ -11,12 +11,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsFunctionOrLambda
 import org.rust.lang.core.psi.ext.withSubst
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.implLookupAndKnownItems
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.type
 
 /**
  * Base class for converting the given `expr` to the type [ty] using trait [traitName]. The conversion process is
@@ -65,14 +64,13 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
     }
 
     private fun findParentFnOrLambdaRetTy(element: RsExpr): Ty? =
-        findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
+        findParentFunctionOrLambdaRsRetType(element)?.typeReference?.normType
 
     private fun findParentFunctionOrLambdaRsRetType(element: RsExpr): RsRetType? {
         var parent = element.parent
         while (parent != null) {
             when (parent) {
-                is RsFunction -> return parent.retType
-                is RsLambdaExpr -> return parent.retType
+                is RsFunctionOrLambda -> return parent.retType
                 else -> parent = parent.parent
             }
         }

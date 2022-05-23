@@ -16,12 +16,12 @@ import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.lang.utils.evaluation.tryEvaluate
 
@@ -92,7 +92,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
         }
 
         is RsArrayType -> {
-            val componentType = type.typeReference?.type ?: TyUnknown
+            val componentType = type.typeReference?.rawType ?: TyUnknown
             if (type.isSlice) {
                 TySlice(componentType)
             } else {
@@ -102,8 +102,8 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
         }
 
         is RsFnPointerType -> {
-            val paramTypes = type.valueParameters.map { it.typeReference?.type ?: TyUnknown }
-            TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit.INSTANCE)
+            val paramTypes = type.valueParameters.map { it.typeReference?.rawType ?: TyUnknown }
+            TyFunction(paramTypes, type.retType?.let { it.typeReference?.rawType ?: TyUnknown } ?: TyUnit.INSTANCE)
         }
 
         is RsTraitType -> {
