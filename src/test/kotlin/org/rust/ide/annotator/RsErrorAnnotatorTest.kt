@@ -4615,4 +4615,56 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             };
         }
     """)
+
+    @MockRustcVersion("1.60.0-nightly")
+    fun `test feature attribute in nightly channel`() = checkErrors("""
+        #![feature(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0-beta")
+    fun `test feature attribute in beta channel`() = checkErrors("""
+        #![<error descr="`#![feature]` may not be used on the beta release channel [E0554]">feature</error>(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test feature attribute in stable channel`() = checkErrors("""
+        #![<error descr="`#![feature]` may not be used on the stable release channel [E0554]">feature</error>(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.60.0")
+    fun `test feature attribute inside cfg_attr`() = checkErrors("""
+        #![cfg_attr(intellij_rust, <error descr="`#![feature]` may not be used on the stable release channel [E0554]">feature</error>(never_type))]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test outer feature attribute`() = checkErrors("""
+        #[feature(never_type)]
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test remove feature attribute quick-fix`() = checkFixByText("Remove attribute `feature`", """
+        #![<error>/*caret*/feature</error>(never_type)]
+
+        fn main() {}
+    """, """
+        fn main() {}
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.60.0")
+    fun `test no remove feature attribute quick-fix inside cfg_attr`() = checkFixIsUnavailable("Remove attribute `feature`", """
+        #![cfg_attr(intellij_rust, <error>/*caret*/feature</error>(never_type))]
+
+        fn main() {}
+    """)
 }
