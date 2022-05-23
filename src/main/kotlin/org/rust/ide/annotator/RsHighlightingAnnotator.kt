@@ -42,26 +42,32 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         holder.newSilentAnnotation(severity).textAttributes(color.textAttributesKey).create()
     }
 
+    private fun macroGroupColor(parent: RsElement): RsColor? {
+        return if (parent is RsMacroExpansionReferenceGroup || parent is RsMacroBindingGroup) RsColor.MACRO else null
+    }
+
     private fun highlightLeaf(element: PsiElement, holder: AnnotationHolder): RsColor? {
         val parent = element.parent as? RsElement ?: return null
 
-        if (parent is RsMetaVarIdentifier) {
-            val metavarParent = parent.parent as? RsElement ?: return null
-            return highlightIdentifier(parent, metavarParent, holder)
-        }
-
         return when (element.elementType) {
+            DOLLAR -> RsColor.MACRO // TODO: It would be possible to see whether parent is RsMacroBindingGroups or RsMacroExpansionReferenceGroup or RsMacroBinding
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD
             FLOAT_LITERAL -> RsColor.NUMBER
 
-            Q -> if (parent is RsTryExpr) {
+            Q -> macroGroupColor(parent) /* Note: RustParser.bnf ensures that those only match at the end */ ?: if (parent is RsTryExpr) {
                 RsColor.Q_OPERATOR
             } else {
                 null
             }
+            COLON -> if (parent is RsMacroBinding) {
+                RsColor.MACRO
+            } else {
+                null
+            }
+            MUL, PLUS, LPAREN, LBRACE, RPAREN, RBRACE -> macroGroupColor(parent)
             EXCL -> if (parent is RsMacro || parent is RsMacroCall && shouldHighlightMacroCall(parent, holder)) {
                 RsColor.MACRO
             } else {
@@ -92,6 +98,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             } else {
                 null
             }
+            parent is RsMacroPattern || parent is RsMacroBinding -> RsColor.MACRO
             parent is RsNameIdentifierOwner && parent.nameIdentifier == element -> {
                 colorFor(parent)
             }
