@@ -77,6 +77,9 @@ val PsiElement.childrenWithLeaves: Sequence<PsiElement>
  * Extracts node's element type
  */
 val PsiElement.elementType: IElementType
+    get() = elementTypeOrNull!!
+
+val PsiElement.elementTypeOrNull: IElementType?
     // XXX: be careful not to switch to AST
     get() = if (this is RsFile) RsFileStub.Type else PsiUtilCore.getElementType(this)
 
@@ -304,7 +307,7 @@ inline val <T : StubElement<*>> StubBasedPsiElement<T>.greenStub: T?
     get() = (this as? StubBasedPsiElementBase<T>)?.greenStub
 
 fun PsiElement.isKeywordLike(): Boolean {
-    return when (elementType) {
+    return when (elementTypeOrNull) {
         in RS_KEYWORDS,
         RsElementTypes.BOOL_LITERAL -> true
         RsElementTypes.IDENTIFIER -> {
