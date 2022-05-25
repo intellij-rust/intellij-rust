@@ -17,7 +17,11 @@ import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
+import com.intellij.util.ThreeState
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
@@ -1451,6 +1455,19 @@ sealed class RsDiagnostic(
         }
     }
 
+    class FeatureAttributeInNonNightlyChannel(
+        element: PsiElement,
+        private val channelName: String,
+        private val quickFix: RemoveElementFix?
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0554,
+            "`#![feature]` may not be used on the $channelName release channel",
+            fixes = listOfNotNull(quickFix)
+        )
+    }
+
     class InvalidConstGenericArgument(expr: RsExpr) : RsDiagnostic(expr) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
@@ -1483,7 +1500,7 @@ enum class RsErrorCode {
     E0200, E0201, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
-    E0517, E0518, E0537, E0552, E0562, E0569, E0583, E0586, E0594,
+    E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
     E0703, E0704, E0732, E0741, E0747;
 
@@ -1650,3 +1667,10 @@ val SUPPORTED_CALLING_CONVENTIONS = mapOf(
     "unadjusted" to ABI_UNADJUSTED
 )
 
+fun RsElement.areUnstableFeaturesAvailable(version: RustcVersion): ThreeState {
+    val crate = containingCrate ?: return ThreeState.UNSURE
+
+    val origin = crate.origin
+    val isStdlibPart = origin == PackageOrigin.STDLIB || origin == PackageOrigin.STDLIB_DEPENDENCY
+    return if (version.channel != RustChannel.NIGHTLY && !isStdlibPart) ThreeState.NO else ThreeState.YES
+}

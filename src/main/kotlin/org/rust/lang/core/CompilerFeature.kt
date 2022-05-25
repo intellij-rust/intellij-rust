@@ -9,9 +9,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
+import com.intellij.util.ThreeState
 import com.intellij.util.text.SemVer
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
@@ -21,6 +20,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import org.rust.lang.utils.areUnstableFeaturesAvailable
 import org.rust.lang.utils.evaluation.CfgEvaluator
 
 class CompilerFeature(
@@ -51,11 +51,13 @@ class CompilerFeature(
             return AVAILABLE
         }
 
-        val crate = rsElement.containingCrate ?: return UNKNOWN
-        val origin = crate.origin
-        val isStdlibPart = origin == PackageOrigin.STDLIB || origin == PackageOrigin.STDLIB_DEPENDENCY
-        if (version.channel != RustChannel.NIGHTLY && !isStdlibPart) return NOT_AVAILABLE
+        when (rsElement.areUnstableFeaturesAvailable(version)) {
+            ThreeState.NO -> return NOT_AVAILABLE
+            ThreeState.UNSURE -> return UNKNOWN
+            ThreeState.YES -> Unit
+        }
 
+        val crate = rsElement.containingCrate ?: return UNKNOWN
         val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
         val possibleFeatureAttrs = attrs.asSequence()
