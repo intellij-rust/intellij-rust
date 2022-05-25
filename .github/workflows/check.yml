@@ -64,66 +64,10 @@ jobs:
         # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
         # to get more details about cache access
         if: ${{ github.event_name == 'schedule' || !fromJSON(needs.calculate-git-info.outputs.is_master_branch) || !fromJSON(needs.calculate-git-info.outputs.checked) }}
-        strategy:
-            fail-fast: true
-            matrix:
-                rust-version: [ 1.58.1 ]
-                config:
-                    - name: linux
-                      arch: x86-64
-                      os: ubuntu-latest
-                      target: x86_64-unknown-linux-gnu
-                      artifact_path: native-helper/target/x86_64-unknown-linux-gnu/release/intellij-rust-native-helper
-                    - name: windows
-                      arch: x86-64
-                      os: windows-latest
-                      target: x86_64-pc-windows-msvc
-                      artifact_path: native-helper/target/x86_64-pc-windows-msvc/release/intellij-rust-native-helper.exe
-                    - name: macos
-                      arch: x86-64
-                      os: macos-latest
-                      target: x86_64-apple-darwin
-                      artifact_path: native-helper/target/x86_64-apple-darwin/release/intellij-rust-native-helper
-                    - name: macos
-                      arch: arm64
-                      os: macos-11
-                      target: aarch64-apple-darwin
-                      artifact_path: native-helper/target/aarch64-apple-darwin/release/intellij-rust-native-helper
-
-        name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
-        runs-on: ${{ matrix.config.os }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-
-            - name: Cache native code artifact
-              id: cache-native-code-artifact
-              uses: actions/cache@v2.1.4
-              with:
-                  path: ${{ matrix.config.artifact_path }}
-                  key: ${{ matrix.config.arch }}-${{ runner.os }}-native-helper-${{ matrix.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
-
-            - name: Set up Rust
-              if: ${{ !steps.cache-native-code-artifact.outputs.cache-hit }}
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: ${{ matrix.rust-version }}
-                  target: ${{ matrix.config.target }}
-                  default: true
-
-            - name: Build
-              if: ${{ !steps.cache-native-code-artifact.outputs.cache-hit }}
-              uses: actions-rs/cargo@v1
-              with:
-                  command: build
-                  args: --manifest-path native-helper/Cargo.toml --target ${{ matrix.config.target }} --release
-
-            - name: Publish
-              uses: actions/upload-artifact@v2
-              with:
-                  name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
-                  path: ${{ matrix.config.artifact_path }}
+        uses: ./.github/workflows/build-native-code.yml
+        with:
+            rust-version: 1.58.1
+            cache: true
 
     check-plugin:
         needs: [ calculate-git-info, build-native-code ]
