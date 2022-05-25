@@ -6,8 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
-import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.SemverException
+import io.github.z4kn4fein.semver.toVersionOrNull
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.RsElementTypes.CSELF
 import org.rust.lang.core.psi.RsFile
@@ -73,9 +72,9 @@ class RsDeprecationInspection : RsLintInspection() {
 
     // Presently as in not in the future; in the current version
     private fun RsMetaItem.isPresentlyDeprecated(since: String?): Boolean {
-        // In case we can't check if the since version is at least the current version just assume it is
-        val sinceVersion = since?.asVersion() ?: return true
-        val currentVersion = this.containingCargoPackage?.version?.asVersion() ?: return true
+        // In case we can't check if the `sinceVersion` is at least the `currentVersion` just assume it is
+        val sinceVersion = since?.toVersionOrNull(false) ?: return true
+        val currentVersion = this.containingCargoPackage?.version?.toVersionOrNull() ?: return true
 
         return currentVersion >= sinceVersion
     }
@@ -97,13 +96,5 @@ class RsDeprecationInspection : RsLintInspection() {
         private const val SINCE_PARAM_NAME: String = "since"
         private const val NOTE_PARAM_NAME: String = "note"
         private const val REASON_PARAM_NAME: String = "reason"
-    }
-}
-
-private fun String.asVersion(): Semver? {
-    return try {
-        Semver(this, Semver.SemverType.NPM)
-    } catch (e: SemverException) {
-        null
     }
 }

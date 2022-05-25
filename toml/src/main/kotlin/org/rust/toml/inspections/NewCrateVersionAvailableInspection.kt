@@ -7,7 +7,7 @@ package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.vdurmont.semver4j.Semver
+import io.github.z4kn4fein.semver.Version
 import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.CrateVersionRequirement
 import org.rust.toml.stringValue
@@ -34,9 +34,9 @@ class NewCrateVersionAvailableInspection : CrateVersionInspection() {
 
         holder.registerProblem(
             versionElement,
-            "A newer version is available for crate ${dependency.crateName}: ${newerVersion.value}",
+            "A newer version is available for crate ${dependency.crateName}: $newerVersion",
             ProblemHighlightType.WEAK_WARNING,
-            UpdateCrateVersionFix(versionElement, newerVersion.value)
+            UpdateCrateVersionFix(versionElement, newerVersion.toString())
         )
     }
 }
@@ -44,5 +44,5 @@ class NewCrateVersionAvailableInspection : CrateVersionInspection() {
 /**
  * A lot of Rust crates stay at 0.x.y for a long time, so we consider even major versions 0 to be stable.
  */
-private val Semver.isRustStable: Boolean
-    get() = suffixTokens.isEmpty()
+private val Version.isRustStable: Boolean
+    get() = preRelease == null

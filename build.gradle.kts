@@ -403,12 +403,12 @@ project(":") {
             exclude(module = "kotlin-stdlib")
             exclude(module = "kotlin-stdlib-common")
         }
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3"){
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
         }
-        api("com.vdurmont:semver4j:3.1.0")
+        api("io.github.z4kn4fein:semver:1.3.3")
         testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
     }
 
