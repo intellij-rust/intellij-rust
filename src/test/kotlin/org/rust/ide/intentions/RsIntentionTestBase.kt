@@ -10,12 +10,11 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.PathUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
@@ -28,15 +27,15 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return
 
         val directory = "intentionDescriptions/${intentionClass.simpleName}"
-        val description = checkFileExists(Paths.get(directory, "description.html"))
+        val description = checkFileExists("$directory/description.html")
         checkHtmlStyle(description)
 
-        checkFileExists(Paths.get(directory, "before.rs.template"))
-        checkFileExists(Paths.get(directory, "after.rs.template"))
+        checkFileExists("$directory/before.rs.template")
+        checkFileExists("$directory/after.rs.template")
     }
 
-    private fun checkFileExists(path: Path): String = getResourceAsString(path.toString())
-        ?: error("No ${path.fileName} found for $intentionClass ($path)")
+    private fun checkFileExists(path: String): String = getResourceAsString(path)
+        ?: error("No ${PathUtil.getFileName(path)} found for $intentionClass ($path)")
 
     protected fun doAvailableTest(
         @Language("Rust") before: String,
