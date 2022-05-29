@@ -5,6 +5,8 @@
 
 package org.rust.toml.resolve
 
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceRegistrar
 import org.rust.lang.core.or
@@ -30,7 +32,15 @@ class CargoTomlReferenceContributor : PsiReferenceContributor() {
             }
             registrar.registerReferenceProvider(onFeatureDependencyLiteral, CargoTomlFeatureDependencyReferenceProvider())
             registrar.registerReferenceProvider(onDependencyPackageFeature, CargoTomlDependencyFeaturesReferenceProvider())
-            registrar.registerReferenceProvider(dependencyGitUrl or packageUrl, CargoTomlUrlReferenceProvider())
+            // Starting from 2022.2 Toml plugin inserts web references in all string literals itself if needed
+            if (ApplicationInfo.getInstance().build < BUILD_222) {
+                registrar.registerReferenceProvider(dependencyGitUrl or packageUrl, CargoTomlUrlReferenceProvider())
+            }
         }
+    }
+
+    companion object {
+        // BACKCOMPAT: 2022.1
+        private val BUILD_222 = BuildNumber.fromString("222")!!
     }
 }
