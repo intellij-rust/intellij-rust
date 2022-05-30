@@ -17,7 +17,6 @@ import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
@@ -80,7 +79,7 @@ data class CargoCommandLine(
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val requiredFeatures: Boolean = true,
     val allFeatures: Boolean = false,
-    val emulateTerminal: Boolean = CargoCommandConfiguration.emulateTerminalDefault,
+    val emulateTerminal: Boolean = false,
     val withSudo: Boolean = false
 ) : RsCommandLineBase() {
 

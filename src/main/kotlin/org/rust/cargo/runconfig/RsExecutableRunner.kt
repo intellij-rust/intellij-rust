@@ -89,7 +89,7 @@ abstract class RsExecutableRunner(
                 .firstOrNull { it.origin == PackageOrigin.WORKSPACE }
         }
 
-        val runCargoCommand = state.prepareCommandLine()
+        val runCargoCommand = state.prepareCommandLine().copy(emulateTerminal = false)
         val workingDirectory = pkg?.rootDirectory
             ?.takeIf { runCargoCommand.command == "test" }
             ?: runCargoCommand.workingDirectory

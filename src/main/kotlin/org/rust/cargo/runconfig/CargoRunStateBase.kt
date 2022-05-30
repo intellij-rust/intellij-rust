@@ -86,7 +86,7 @@ abstract class CargoRunStateBase(
                 commandLine.prependArgument("--target-dir=${targetEnvironment.projectRootOnTarget}/target")
             } else {
                 commandLine
-            }
+            }.copy(emulateTerminal = false)
         }
 
         val commandLine = cargo().toColoredCommandLine(project, prepareCommandLine(remoteRunPatch))

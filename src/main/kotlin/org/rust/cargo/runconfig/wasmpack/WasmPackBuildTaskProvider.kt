@@ -64,6 +64,7 @@ class WasmPackBuildTaskProvider : RsBuildTaskProvider<WasmPackBuildTaskProvider.
         ).apply {
             command = buildCommand
             workingDirectory = configuration.workingDirectory
+            emulateTerminal = false
         }
 
         return doExecuteTask(buildConfiguration, environment)
