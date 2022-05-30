@@ -470,7 +470,7 @@ class Cargo(
         stdIn: ByteArray? = null,
         listener: ProcessListener? = null
     ): RsProcessResult<ProcessOutput> {
-        return toGeneralCommandLine(project, this).execute(owner, stdIn, listener = listener)
+        return toGeneralCommandLine(project, copy(emulateTerminal = false)).execute(owner, stdIn, listener = listener)
     }
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener): RsResult<Unit, RsProcessExecutionException.Start> {

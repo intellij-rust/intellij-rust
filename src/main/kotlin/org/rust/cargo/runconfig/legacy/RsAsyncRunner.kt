@@ -78,7 +78,7 @@ abstract class RsAsyncRunner(
             if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
         } else {
             commandLine.copy(command = "build", additionalArguments = commandArguments + additionalBuildArgs)
-        }.copy(emulateTerminal = false, withSudo = false) // building does not require root privileges
+        }.copy(withSudo = false) // building does not require root privileges
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
@@ -89,7 +89,7 @@ abstract class RsAsyncRunner(
                     backtraceMode,
                     environmentVariables,
                     executableArguments,
-                    emulateTerminal,
+                    false, // emulateTerminal
                     withSudo,
                     patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed
                 )
@@ -170,8 +170,9 @@ abstract class RsAsyncRunner(
                             result = checkToolchainSupported(project, host)
                             if (result != null) return
 
+                            val jsonCommand = command.prependArgument("--message-format=json").copy(emulateTerminal = false)
                             val processForJson = RsCapturingProcessHandler.startProcess(
-                                cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
+                                cargo.toGeneralCommandLine(project, jsonCommand)
                             ).unwrapOrThrow()
                             processForJson.setHasPty(toolchain is RsWslToolchain)
                             val output = processForJson.runProcessWithProgressIndicator(indicator)

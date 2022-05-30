@@ -42,7 +42,7 @@ class CargoTestRunState(
             }
             project.showBalloon(message, NotificationType.WARNING)
         }
-        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), withSudo = false)
+        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), emulateTerminal = false, withSudo = false)
     }
 
     init {

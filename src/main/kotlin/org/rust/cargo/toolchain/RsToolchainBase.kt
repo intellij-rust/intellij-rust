@@ -104,8 +104,9 @@ abstract class RsToolchainBase(val location: Path) {
         environmentVariables.configureCommandLine(commandLine, true)
 
         if (emulateTerminal) {
-            commandLine.environment["TERM"] = "xterm-256color"
-            commandLine = PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+            commandLine = PtyCommandLine(commandLine)
+                .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+                .withConsoleMode(false)
         }
 
         if (patchToRemote) {

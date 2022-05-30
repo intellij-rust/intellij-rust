@@ -71,7 +71,7 @@ open class CargoCommandConfiguration(
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
-    var emulateTerminal: Boolean = CargoCommandConfiguration.emulateTerminalDefault
+    var emulateTerminal: Boolean = emulateTerminalDefault
     var withSudo: Boolean = false
     var buildTarget: BuildTarget = BuildTarget.REMOTE
     var backtrace: BacktraceMode = BacktraceMode.SHORT

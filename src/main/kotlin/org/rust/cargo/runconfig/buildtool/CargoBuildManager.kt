@@ -245,6 +245,7 @@ object CargoBuildManager {
             else -> return null
         })
 
+        buildConfiguration.emulateTerminal = false
         // building does not require root privileges and redirect input anyway
         buildConfiguration.withSudo = false
         buildConfiguration.isRedirectInput = false
