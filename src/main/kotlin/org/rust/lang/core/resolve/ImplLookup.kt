@@ -36,7 +36,7 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() = typeParameters.singleOrNull()?.let { TyTypeParameter.named(it) }
 
-const val DEFAULT_RECURSION_LIMIT = 64
+const val DEFAULT_RECURSION_LIMIT = 128
 
 // libcore/num/mod.rs (impl_from!)
 val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
