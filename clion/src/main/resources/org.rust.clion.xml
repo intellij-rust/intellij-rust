@@ -7,10 +7,12 @@
         <module name="org.rust.debugger"/>
     </dependencies>
 
-    <xi:include href="/META-INF/platform-clion-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
     <extensions defaultExtensionNs="cidr">
         <buildConfigurationProvider implementation="org.rust.clion.cargo.CargoBuildConfigurationProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.jetbrains.cidr">
+        <fus.projectModelTypeProvider implementation="org.rust.clion.statistics.CargoProjectModelTypeProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

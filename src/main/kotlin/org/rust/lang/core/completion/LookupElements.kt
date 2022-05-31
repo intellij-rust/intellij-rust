@@ -31,25 +31,9 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
-import org.rust.stdext.exhaustive
 import org.rust.stdext.mapToSet
 
-const val KEYWORD_PRIORITY = 80.0
-const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
-const val FRAGMENT_SPECIFIER_PRIORITY = KEYWORD_PRIORITY
-
-const val VARIABLE_PRIORITY = 5.0
-const val ENUM_VARIANT_PRIORITY = 4.0
-const val FIELD_DECL_PRIORITY = 3.0
-const val ASSOC_FN_PRIORITY = 2.0
 const val DEFAULT_PRIORITY = 0.0
-const val MACRO_PRIORITY = -0.1
-const val DEPRECATED_PRIORITY = -1.0
-
-private const val EXPECTED_TYPE_PRIORITY_OFFSET = 40.0
-private const val MUT_METHOD_PRIORITY_OFFSET = -50.0
-private const val LOCAL_PRIORITY_OFFSET = 20.0
-private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 interface CompletionEntity {
     val ty: Ty?
@@ -169,56 +153,6 @@ fun createLookupElement(
         .copy(isReturnTypeConformsToExpectedType = isCompatibleTypes)
 
     return lookup.toRsLookupElement(properties)
-}
-
-// BACKCOMPAT: 2021.3 we have to maintain priorities for ML-assisted completion
-private fun RsLookupElementProperties.calculateBackCompatPriority(): Double {
-    if (isImplMemberFullLineCompletion) {
-        return KEYWORD_PRIORITY + 1
-    }
-
-    when (keywordKind) {
-        KeywordKind.PUB -> return KEYWORD_PRIORITY + 3
-        KeywordKind.PUB_CRATE -> return KEYWORD_PRIORITY + 2
-        KeywordKind.PUB_PARENS -> return KEYWORD_PRIORITY + 1
-        KeywordKind.LAMBDA_EXPR -> return KEYWORD_PRIORITY * 1.01
-        KeywordKind.ELSE_BRANCH -> return KEYWORD_PRIORITY * 1.0001
-        KeywordKind.AWAIT -> return KEYWORD_PRIORITY * 1.0001
-        KeywordKind.KEYWORD -> return KEYWORD_PRIORITY
-        KeywordKind.NOT_A_KEYWORD -> Unit
-    }.exhaustive
-
-    var priority = when (elementKind) {
-        RsLookupElementProperties.ElementKind.DERIVE_GROUP -> 5.1
-        RsLookupElementProperties.ElementKind.DERIVE -> 5.0
-        RsLookupElementProperties.ElementKind.LINT -> 5.0
-        RsLookupElementProperties.ElementKind.LINT_GROUP -> 4.0
-        RsLookupElementProperties.ElementKind.VARIABLE -> VARIABLE_PRIORITY
-        RsLookupElementProperties.ElementKind.ENUM_VARIANT -> ENUM_VARIANT_PRIORITY
-        RsLookupElementProperties.ElementKind.FIELD_DECL -> FIELD_DECL_PRIORITY
-        RsLookupElementProperties.ElementKind.ASSOC_FN -> ASSOC_FN_PRIORITY
-        RsLookupElementProperties.ElementKind.DEFAULT -> DEFAULT_PRIORITY
-        RsLookupElementProperties.ElementKind.MACRO -> MACRO_PRIORITY
-        RsLookupElementProperties.ElementKind.DEPRECATED -> DEPRECATED_PRIORITY
-    }
-
-    if (!isSelfTypeCompatible) {
-        priority += MUT_METHOD_PRIORITY_OFFSET
-    }
-
-    if (isLocal) {
-        priority += LOCAL_PRIORITY_OFFSET
-    }
-
-    if (isInherentImplMember) {
-        priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
-    }
-
-    if (isReturnTypeConformsToExpectedType) {
-        priority += EXPECTED_TYPE_PRIORITY_OFFSET
-    }
-
-    return priority
 }
 
 private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =

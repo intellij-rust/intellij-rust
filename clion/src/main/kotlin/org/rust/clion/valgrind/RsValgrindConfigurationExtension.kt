@@ -32,6 +32,7 @@ import com.jetbrains.cidr.cpp.CLionProfilingBundle
 import com.jetbrains.cidr.cpp.profiling.*
 import com.jetbrains.cidr.cpp.profiling.ui.MemoryProfileOutputPanel
 import com.jetbrains.cidr.cpp.valgrind.*
+import com.jetbrains.cidr.cpp.valgrind.actions.EditValgrindSettingsAction
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
@@ -101,7 +102,12 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
         val project = configuration.project
         val treeDataModel = MemoryProfileTreeDataModel("Valgrind", project)
-        val outputPanel = createMemoryProfileOutputPanel(treeDataModel, project)
+        val outputPanel = MemoryProfileOutputPanel(
+            treeDataModel,
+            EditValgrindSettingsAction(),
+            ValgrindUtil.TREE_POPUP_ID,
+            project
+        )
         putUserData(DATA_MODEL_KEY, treeDataModel, configuration, context)
         putUserData(OUTPUT_PANEL_KEY, outputPanel, configuration, context)
         val console = state.consoleBuilder.console

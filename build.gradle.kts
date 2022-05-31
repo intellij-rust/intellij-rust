@@ -34,8 +34,7 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-// BACKCOMPAT: 2021.3
-val tomlPlugin = if (platformVersion >= 221) "org.toml.lang" else "org.toml.lang:${prop("tomlPluginVersion")}"
+val tomlPlugin = "org.toml.lang"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -293,6 +292,7 @@ project(":plugin") {
         archiveBaseName.set("intellij-rust")
 
         exclude("META-INF/MANIFEST.MF")
+        exclude("**/classpath.index")
 
         val pluginLibDir by lazy {
             val sandboxTask = tasks.prepareSandbox.get()
@@ -377,10 +377,10 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2021.3. Update value to 221 and this comment
+        // BACKCOMPAT: 2022.1. Update value to 222 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "213")
+        environment("IDEA_BUILD_NUMBER", "221")
     }
 }
 
