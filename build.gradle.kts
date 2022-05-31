@@ -292,6 +292,7 @@ project(":plugin") {
         archiveBaseName.set("intellij-rust")
 
         exclude("META-INF/MANIFEST.MF")
+        exclude("**/classpath.index")
 
         val pluginLibDir by lazy {
             val sandboxTask = tasks.prepareSandbox.get()
