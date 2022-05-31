@@ -1042,7 +1042,7 @@ class ImplLookup(
     ): SelectionResult<TyWithObligations<Ty>?> =
         select(ref, recursionDepth).map { selection ->
             lookupAssociatedType(ref.selfTy, selection, assocType)
-                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
+                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth + 1) }
                 ?.withObligations(selection.nestedObligations)
         }
 
@@ -1062,7 +1062,7 @@ class ImplLookup(
     ): SelectionResult<TyWithObligations<Ty>?> {
         return selectStrict(ref, recursionDepth).map { selection ->
             lookupAssociatedType(ref.selfTy, selection, assocType)
-                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
+                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth + 1) }
                 ?.withObligations(selection.nestedObligations)
         }
     }
