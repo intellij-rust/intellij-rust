@@ -541,7 +541,7 @@ class ImplLookup(
         // TODO: take into account the lifetimes (?)
         return ctx.probe {
             val (normTy2, _) = ctx.normalizeAssociatedTypesIn(ty2.substitute(subst))
-            ctx.canCombineTypes(normTy2, ty1)
+            ctx.combineTypes(normTy2, ty1).isOk
         }
     }
 
