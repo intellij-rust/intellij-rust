@@ -11,6 +11,7 @@ import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -134,9 +135,9 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
             subst.variables + singletonMap("crate", MetaVarValue.Fragment(MACRO_DOLLAR_CRATE_IDENTIFIER, null, null, -1))
         )
 
-        val result = substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
+        val result = substituteMacro(macroExpansion, substWithGlobalVars).map { (text, ranges) ->
             text to loweringRanges.mapAll(ranges)
-        } ?: return Err(DeclMacroExpansionError.DefSyntax)
+        }.unwrapOrElse { return Err(it) }
 
         checkRanges(call, result.first, result.second)
 
@@ -173,11 +174,16 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     private data class MatchedPattern(val case: RsMacroCase, val subst: MacroSubstitution, val ranges: RangeMap)
 
-    private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): Pair<CharSequence, RangeMap>? {
+    private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): RsResult<Pair<CharSequence, RangeMap>, DeclMacroExpansionError> {
         val sb = StringBuilder()
         val ranges = SmartList<MappedTextRange>()
-        if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) return null
-        return sb to RangeMap.from(ranges)
+        if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) {
+            if (sb.length > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+                return Err(DeclMacroExpansionError.TooLargeExpansion)
+            }
+            return Err(DeclMacroExpansionError.DefSyntax)
+        }
+        return Ok(sb to RangeMap.from(ranges))
     }
 
     private fun substituteMacro(
@@ -187,6 +193,8 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
         subst: MacroSubstitution,
         nesting: MutableList<NestingState>
     ): Boolean {
+        if (sb.length > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return false
+
         root.forEachChild { child ->
             when (child.elementType) {
                 in RS_REGULAR_COMMENTS -> Unit
@@ -284,7 +292,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
     }
 
     companion object {
-        const val EXPANDER_VERSION = 15
+        const val EXPANDER_VERSION = 16
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )

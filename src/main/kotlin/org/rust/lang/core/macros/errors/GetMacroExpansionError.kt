@@ -61,6 +61,7 @@ sealed class GetMacroExpansionError {
         is ExpansionPipelineError.ExpansionError -> when (e) {
             BuiltinMacroExpansionError -> "built-in macro expansion is not supported"
             DeclMacroExpansionError.DefSyntax -> "there is an error in the macro definition syntax"
+            DeclMacroExpansionError.TooLargeExpansion -> "the macro expansion is too large"
             is DeclMacroExpansionError.Matching -> "can't match the macro call body against the " +
                 "macro definition pattern(s)"
             is ProcMacroExpansionError.ServerSideError -> "a procedural macro error occurred:\n${e.message}"

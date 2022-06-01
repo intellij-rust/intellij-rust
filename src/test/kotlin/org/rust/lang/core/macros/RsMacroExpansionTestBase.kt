@@ -147,5 +147,6 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
             }
         }
         DeclMacroExpansionError.DefSyntax -> "syntax error in the macro definition"
+        DeclMacroExpansionError.TooLargeExpansion -> "too large expansion"
     }
 }
