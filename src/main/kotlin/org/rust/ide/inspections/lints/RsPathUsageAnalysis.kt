@@ -8,11 +8,9 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsItemsOwner
-import org.rust.lang.core.psi.ext.isEnabledByCfg
-import org.rust.lang.core.psi.ext.qualifier
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.TreeStatus
@@ -60,15 +58,19 @@ val RsItemsOwner.pathUsage: PathUsageMap
 
 private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
     val usage = PathUsageMapMutable()
+
+    val crate = owner.containingCrate ?: return usage
+    if (!owner.existsAfterExpansion(crate)) return usage
+
     for (child in owner.children) {
-        handleSubtree(child, usage)
+        handleSubtree(child, usage, crate)
     }
     return usage
 }
 
-private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable) {
+private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable, crate: Crate) {
     processElementsWithMacros(root) { element ->
-        if (handleElement(element, usage)) {
+        if (handleElement(element, usage, crate)) {
             TreeStatus.VISIT_CHILDREN
         } else {
             TreeStatus.SKIP_CHILDREN
@@ -76,8 +78,8 @@ private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable) {
     }
 }
 
-private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Boolean {
-    if (!element.isEnabledByCfg) return false
+private fun handleElement(element: PsiElement, usage: PathUsageMapMutable, crate: Crate): Boolean {
+    if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf(crate)) return false
 
     return when (element) {
         is RsModItem -> false
@@ -106,7 +108,7 @@ private fun handleElement(element: PsiElement, usage: PathUsageMapMutable): Bool
             true
         }
         is RsMacroCall -> {
-            handleSubtree(element.path, usage)
+            handleSubtree(element.path, usage, crate)
             true
         }
         is RsMethodCall -> {

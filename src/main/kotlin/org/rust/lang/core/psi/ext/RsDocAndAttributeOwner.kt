@@ -431,18 +431,24 @@ class QueryAttributes<out T: RsMetaItemPsiOrStub>(
  *
  * HACK: do not check on [RsFile] as [RsFile.queryAttributes] would access the PSI
  */
-val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
-    get() {
-        if (getCodeStatus(null) == RsCodeStatus.ATTR_PROC_MACRO_CALL) return true
-        return evaluateCfg() != ThreeValuedLogic.False
-    }
+val RsDocAndAttributeOwner.isEnabledByCfgSelfOrInAttrProcMacroBody: Boolean
+    get() = isEnabledByCfgSelfOrInAttrProcMacroBody(null)
+
+fun RsDocAndAttributeOwner.isEnabledByCfgSelfOrInAttrProcMacroBody(crate: Crate?): Boolean {
+    if (getCodeStatus(crate) == RsCodeStatus.ATTR_PROC_MACRO_CALL) return true
+    return evaluateCfg() != ThreeValuedLogic.False
+}
 
 /**
- * Returns `true` if it [isEnabledByCfgSelf] and is not under attribute procedural macro
+ * Returns `true` if it [isEnabledByCfgSelfOrInAttrProcMacroBody] and is not under attribute procedural macro
  */
 val RsDocAndAttributeOwner.existsAfterExpansionSelf: Boolean
-    get() = evaluateCfg() != ThreeValuedLogic.False &&
-        (this !is RsAttrProcMacroOwner || procMacroAttribute !is ProcMacroAttribute.Attr)
+    get() = existsAfterExpansionSelf(null)
+
+fun RsDocAndAttributeOwner.existsAfterExpansionSelf(crate: Crate?): Boolean =
+    evaluateCfg(crate) != ThreeValuedLogic.False &&
+        (this !is RsAttrProcMacroOwner ||
+            ProcMacroAttribute.getProcMacroAttribute(this, explicitCrate = crate) !is ProcMacroAttribute.Attr)
 
 fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
     isEnabledByCfgSelfInner(crate)

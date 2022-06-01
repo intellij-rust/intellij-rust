@@ -158,11 +158,9 @@ enum class RsCodeStatus {
 }
 
 /** Returns `true` if this attribute is `#[cfg_attr()]` and it is disabled */
-val RsAttr.isDisabledCfgAttrAttribute: Boolean
-    get() {
-        val metaItem = metaItem
-        if (metaItem.name != "cfg_attr") return false
-        val condition = metaItem.metaItemArgs?.metaItemList?.firstOrNull() ?: return false
-        val crate = containingCrate ?: return false
-        return CfgEvaluator.forCrate(crate).evaluateCondition(condition) == ThreeValuedLogic.False
-    }
+fun RsAttr.isDisabledCfgAttrAttribute(crate: Crate): Boolean {
+    val metaItem = metaItem
+    if (metaItem.name != "cfg_attr") return false
+    val condition = metaItem.metaItemArgs?.metaItemList?.firstOrNull() ?: return false
+    return CfgEvaluator.forCrate(crate).evaluateCondition(condition) == ThreeValuedLogic.False
+}
