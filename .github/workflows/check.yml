@@ -153,7 +153,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: cargo-generate --locked
+                  args: cargo-generate --locked --version 0.13.1
 
             - name: Check environment
               run: |
