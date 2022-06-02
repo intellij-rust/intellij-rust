@@ -2088,4 +2088,65 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ [i32; 1]
     """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.TraitSelectionOverflow::class)
+    fun `test recursion limit for associated type projection`() = testExpr("""
+        trait Trait { type Item; }
+
+        struct W<T>(T);
+        impl<T: Trait> Trait for W<T> {
+            type Item = T::Item;
+        }
+
+        struct X;
+        impl Trait for X {
+            type Item = i32;
+        }
+
+        // More than 128-level nesting
+        type T = W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+            W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                    W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                        X
+                    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>;
+
+        fn foo(a: <T as Trait>::Item) {
+            a;
+        } //^ <unknown>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.TraitSelectionOverflow::class)
+    fun `test recursion limit for trait selection`() = testExpr("""
+        trait Trait<T> {}
+
+        struct W<T>(T);
+        impl<A: Trait<B>, B> Trait<B> for W<A> {}
+
+        struct X;
+        impl Trait<i32> for X {}
+
+        // More than 128-level nesting
+        type T = W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+            W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                    W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<
+                        X
+                    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>;
+
+        fn foo<A: Trait<B>, B>(_: A) -> B {
+            todo!()
+        }
+
+        fn bar(a: T) {
+            let b = foo(a);
+            b;
+        } //^ <unknown>
+    """)
 }

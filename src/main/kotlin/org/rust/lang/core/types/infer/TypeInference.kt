@@ -1203,6 +1203,7 @@ object TypeInferenceMarks {
     object MethodPickDerefOrder : Testmark()
     object MethodPickCollapseTraits : Testmark()
     object TraitSelectionSpecialization : Testmark()
+    object TraitSelectionOverflow : Testmark()
     object MacroExprDepthLimitReached : Testmark()
     object UnsizeToTraitObject : Testmark()
     object UnsizeArrayToSlice : Testmark()
