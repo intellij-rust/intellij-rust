@@ -5,6 +5,8 @@
 
 package org.rust.lang.utils.snapshot
 
+import org.rust.stdext.removeLast
+
 interface Snapshot {
     fun commit()
     fun rollback()
@@ -48,11 +50,13 @@ private class LogBasedSnapshot private constructor(
 
     override fun rollback() {
         assertOpenSnapshot()
-        val toRollback = undoLog.subList(position + 1, undoLog.size)
-        toRollback.asReversed().forEach(Undoable::undo)
-        toRollback.clear()
+        if (position + 1 != undoLog.size) {
+            val toRollback = undoLog.subList(position + 1, undoLog.size)
+            toRollback.asReversed().forEach(Undoable::undo)
+            toRollback.clear()
+        }
 
-        val last = undoLog.removeAt(undoLog.size - 1)
+        val last = undoLog.removeLast()
         check(last == OpenSnapshot)
         check(undoLog.size == position)
     }

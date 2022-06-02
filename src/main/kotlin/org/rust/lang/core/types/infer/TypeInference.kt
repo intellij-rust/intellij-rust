@@ -403,6 +403,7 @@ class RsInferenceContext(
         addDiagnostic(RsDiagnostic.TypeError(element, expected, actual))
     }
 
+    @Suppress("unused")
     fun canCombineTypes(ty1: Ty, ty2: Ty): Boolean {
         return probe { combineTypes(ty1, ty2).isOk }
     }
