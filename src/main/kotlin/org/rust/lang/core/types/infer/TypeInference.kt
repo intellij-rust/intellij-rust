@@ -30,7 +30,7 @@ import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.dequeOf
-import org.rust.stdext.mapToSet
+import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
@@ -960,7 +960,7 @@ class RsInferenceContext(
     fun canEvaluateBounds(source: TraitImplSource, selfTy: Ty): Boolean {
         return when (source) {
             is TraitImplSource.ExplicitImpl -> canEvaluateBounds(source.value, selfTy)
-            is TraitImplSource.Derived, is TraitImplSource.Hardcoded -> {
+            is TraitImplSource.Derived, is TraitImplSource.Builtin -> {
                 if (source.value.typeParameters.isNotEmpty()) return true
                 lookup.canSelect(TraitRef(selfTy, BoundElement(source.value as RsTraitItem)))
             }
@@ -1016,7 +1016,7 @@ class RsInferenceContext(
                 .find { it.element == source.value }?.subst ?: emptySubstitution
             else -> emptySubstitution
         }
-        is TraitImplSource.Collapsed, is TraitImplSource.Hardcoded -> {
+        is TraitImplSource.Collapsed, is TraitImplSource.Builtin -> {
             // Method has been resolved to a trait, so we should add a predicate
             // `Self : Trait<Args>` to select args and also refine method path if possible.
             // Method path refinement needed if there are multiple impls of the same trait to the same type
@@ -1061,25 +1061,37 @@ val RsGenericDeclaration.predicates: List<Predicate>
 private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
     val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
-            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<Predicate>()
+            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<PsiPredicate>()
             it.typeParamBounds?.polyboundList.toPredicates(selfTy)
         }
     val bounds = typeParameters.asSequence().flatMap {
         val selfTy = TyTypeParameter.named(it)
         it.typeParamBounds?.polyboundList.toPredicates(selfTy)
     }
-    val assocTypeBounds = if (this is RsTraitItem) {
-        expandedMembers.types.asSequence().flatMap { it.typeParamBounds?.polyboundList.toPredicates(it.declaredType) }
-    } else {
-        emptySequence()
-    }
-    val explicitPredicates = (bounds + whereBounds + assocTypeBounds).toList()
-    val unbounds = explicitPredicates.filterIsInstance<PsiPredicate.Unbound>().mapToSet { it.selfTy }
-    val sized = knownItems.Sized
-    val implicitPredicates = if (sized != null) {
-        generics.filter { it !in unbounds }.map { Predicate.Trait(TraitRef(it, sized.withSubst())) }
+    val assocTypes = if (this is RsTraitItem) {
+        expandedMembers.types.map { TyProjection.valueOf(it) }
     } else {
         emptyList()
+    }
+    val assocTypeBounds = assocTypes.asSequence().flatMap { it.target.typeParamBounds?.polyboundList.toPredicates(it) }
+    val explicitPredicates = (bounds + whereBounds + assocTypeBounds).toList()
+    val sized = knownItems.Sized
+    val implicitPredicates = if (sized != null) {
+        val sizedBounds = explicitPredicates.mapNotNullToSet {
+            when (it) {
+                is PsiPredicate.Unbound -> it.selfTy
+                is PsiPredicate.Bound -> if (it.predicate is Predicate.Trait && it.predicate.trait.trait.element == sized) {
+                    it.predicate.trait.selfTy
+                } else {
+                    null
+                }
+            }
+        }
+        (generics.asSequence() + assocTypes.asSequence())
+            .filter { it !in sizedBounds }
+            .map { Predicate.Trait(TraitRef(it, sized.withSubst())) }
+    } else {
+        emptySequence()
     }
     return explicitPredicates.mapNotNull { (it as? PsiPredicate.Bound)?.predicate } + implicitPredicates
 }
@@ -1203,7 +1215,10 @@ object TypeInferenceMarks {
     object MethodPickCheckBounds : Testmark()
     object MethodPickDerefOrder : Testmark()
     object MethodPickCollapseTraits : Testmark()
-    object TraitSelectionSpecialization : Testmark()
+    object WinnowSpecialization : Testmark()
+    object WinnowParamCandidateWins : Testmark()
+    object WinnowParamCandidateLoses : Testmark()
+    object WinnowObjectOrProjectionCandidateWins : Testmark()
     object TraitSelectionOverflow : Testmark()
     object MacroExprDepthLimitReached : Testmark()
     object UnsizeToTraitObject : Testmark()

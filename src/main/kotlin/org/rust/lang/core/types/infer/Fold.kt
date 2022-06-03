@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.infer
 
-import com.intellij.util.BitUtil
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -214,10 +213,10 @@ fun <T> TypeFoldable<T>.visitTypeParameters(visitor: (TyTypeParameter) -> Boolea
     })
 }
 
-private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
-    override fun visitTy(ty: Ty): Boolean = BitUtil.isSet(ty.flags, flag)
-    override fun visitRegion(region: Region): Boolean = BitUtil.isSet(region.flags, flag)
-    override fun visitConst(const: Const): Boolean = BitUtil.isSet(const.flags, flag)
+private data class HasTypeFlagVisitor(val mask: TypeFlags) : TypeVisitor {
+    override fun visitTy(ty: Ty): Boolean = ty.flags.and(mask) != 0
+    override fun visitRegion(region: Region): Boolean = region.flags.and(mask) != 0
+    override fun visitConst(const: Const): Boolean = const.flags.and(mask) != 0
 
     companion object {
         val HAS_TY_INFER_VISITOR = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
@@ -227,6 +226,22 @@ private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
         val HAS_CT_INFER_VISITOR = HasTypeFlagVisitor(HAS_CT_INFER_MASK)
         val HAS_CT_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_CT_PARAMETER_MASK)
         val HAS_CT_UNEVALUATED_VISITOR = HasTypeFlagVisitor(HAS_CT_UNEVALUATED_MASK)
+
+        val NEEDS_INFER = HasTypeFlagVisitor(HAS_TY_INFER_MASK or HAS_CT_INFER_MASK)
+        val NEEDS_EVAL = HasTypeFlagVisitor(HAS_CT_UNEVALUATED_MASK or HAS_CT_PARAMETER_MASK)
+        val NEEDS_SUBST = HasTypeFlagVisitor(
+            HAS_TY_TYPE_PARAMETER_MASK
+                or HAS_RE_EARLY_BOUND_MASK
+                or HAS_CT_PARAMETER_MASK
+        )
+        /** `true` if there are "names" of types and regions and so forth that are local to a particular fn */
+        val HAS_FREE_LOCAL_NAMES = HasTypeFlagVisitor(
+            HAS_TY_TYPE_PARAMETER_MASK
+                or HAS_CT_PARAMETER_MASK
+                or HAS_TY_INFER_MASK
+                or HAS_CT_INFER_MASK
+                or HAS_TY_OPAQUE_MASK
+        )
     }
 }
 
@@ -252,10 +267,17 @@ val TypeFoldable<*>.hasCtConstParameters
     get(): Boolean = visitWith(HAS_CT_PARAMETER_VISITOR)
 
 val TypeFoldable<*>.needsInfer
-    get(): Boolean = hasTyInfer || hasCtInfer
+    get(): Boolean = visitWith(HasTypeFlagVisitor.NEEDS_INFER)
 
 val TypeFoldable<*>.needsSubst
-    get(): Boolean = hasTyTypeParameters || hasReEarlyBounds || hasCtConstParameters
+    get(): Boolean = visitWith(HasTypeFlagVisitor.NEEDS_SUBST)
 
 val TypeFoldable<*>.needsEval
-    get(): Boolean = hasCtUnevaluated && !hasCtConstParameters
+    get(): Boolean = visitWith(HasTypeFlagVisitor.NEEDS_EVAL)
+
+/**
+ * Indicates whether this value references only 'global' generic parameters that are the same regardless
+ * of what fn we are in. This is used for caching.
+ */
+val TypeFoldable<*>.isGlobal
+    get(): Boolean = !visitWith(HasTypeFlagVisitor.HAS_FREE_LOCAL_NAMES)

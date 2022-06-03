@@ -164,12 +164,40 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test RPIT is Sized`() = doTest("""
+        trait Foo {}
+        fn foo() -> impl Foo { todo!() }
+                  //^ Sized
+    """)
+
+    fun `test RPIT is not Sized if qSized unbound is present`() = doTest("""
+        trait Foo {}
+        fn foo() -> impl Foo+?Sized { todo!() }
+                  //^ !Sized
+    """)
+
     fun `test derive for generic type`() = doTest("""
         struct X; // Not `Copy`
         #[derive(Copy, Clone)]
         struct S<T>(T);
         type T = S<X>;
                //^ !Copy
+    """)
+
+    fun `test associated type projection is Sized`() = doTest("""
+        trait Foo {
+            type Item;
+        }
+        fn foo<T: Foo>() -> T::Item { todo!() }
+                             //^ Sized
+    """)
+
+    fun `test associated type projection is not Sized when qSized bound is present`() = doTest("""
+        trait Foo {
+            type Item: ?Sized;
+        }
+        fn foo<T: Foo>() -> T::Item { todo!() }
+                             //^ !Sized
     """)
 
     fun `test tuple of 'Copy' types is 'Copy'`() = doTest("""
@@ -180,17 +208,6 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     fun `test tuple of not 'Copy' types is not 'Copy'`() = doTest("""
         struct X;
         type T = (i32, X);
-               //^ !Copy
-    """)
-
-    fun `test array of 'Copy' type is 'Copy'`() = doTest("""
-        type T = [(); 4];
-               //^ Copy
-    """)
-
-    fun `test array of non 'Copy' type is not 'Copy'`() = doTest("""
-        struct X;
-        type T = [X; 4];
                //^ !Copy
     """)
 

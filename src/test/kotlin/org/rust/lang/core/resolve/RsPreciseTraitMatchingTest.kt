@@ -346,7 +346,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }
     """)
 
-    @CheckTestmarkHit(TypeInferenceMarks.TraitSelectionSpecialization::class)
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowSpecialization::class)
     fun `test specialization simple`() = checkByCode("""
         trait Tr { fn foo(&self); }
         struct S;

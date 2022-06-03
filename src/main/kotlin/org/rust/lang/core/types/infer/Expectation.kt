@@ -81,7 +81,7 @@ sealed class Expectation {
          * which still is useful, because it informs integer literals and the like
          */
         fun rvalueHint(ty: Ty): Expectation {
-            return when (ty.structTail()) {
+            return when (ty.structTail() ?: ty) {
                 is TyUnknown -> NoExpectation
                 is TySlice, is TyTraitObject, is TyStr -> ExpectRvalueLikeUnsized(ty)
                 else -> ExpectHasType(ty)
