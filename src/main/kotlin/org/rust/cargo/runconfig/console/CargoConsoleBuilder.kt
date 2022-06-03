@@ -12,12 +12,22 @@ import com.intellij.execution.filters.TextConsoleBuilderImpl
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ExecutionSearchScopes
+import com.intellij.terminal.TerminalExecutionConsole
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_FRAMEWORK_NAME
 
-open class CargoConsoleBuilder(project: Project, scope: GlobalSearchScope) : TextConsoleBuilderImpl(project, scope) {
-    override fun createConsole(): ConsoleView = CargoConsoleView(project, scope, isViewer, true)
+open class CargoConsoleBuilder(
+    project: Project,
+    val config: CargoCommandConfiguration
+) : TextConsoleBuilderImpl(project, ExecutionSearchScopes.executionScope(project, config)) {
+    override fun createConsole(): ConsoleView =
+        if (config.emulateTerminal && !config.hasRemoteTarget) {
+            TerminalExecutionConsole(project, null)
+        } else {
+            CargoConsoleView(project, scope, isViewer, true)
+        }
 }
 
 class CargoTestConsoleBuilder(

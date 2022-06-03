@@ -6,9 +6,13 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.openapi.util.Key
+import com.intellij.util.io.BaseDataReader
+import com.intellij.util.io.BaseOutputReader
+import com.pty4j.PtyProcess
 import java.nio.charset.Charset
 
 /**
@@ -18,7 +22,9 @@ class RsProcessHandler : KillableProcessHandler, AnsiEscapeDecoder.ColoredTextAc
     private val decoder: AnsiEscapeDecoder?
 
     constructor(commandLine: GeneralCommandLine, processColors: Boolean = true) : super(commandLine) {
-        decoder = if (processColors) RsAnsiEscapeDecoder() else null
+        setHasPty(commandLine is PtyCommandLine)
+        setShouldDestroyProcessRecursively(!hasPty())
+        decoder = if (processColors && !hasPty()) RsAnsiEscapeDecoder() else null
     }
 
     constructor(
@@ -27,11 +33,9 @@ class RsProcessHandler : KillableProcessHandler, AnsiEscapeDecoder.ColoredTextAc
         charset: Charset,
         processColors: Boolean = true
     ) : super(process, commandRepresentation, charset) {
-        decoder = if (processColors) RsAnsiEscapeDecoder() else null
-    }
-
-    init {
-        setShouldDestroyProcessRecursively(true)
+        setHasPty(process is PtyProcess)
+        setShouldDestroyProcessRecursively(!hasPty())
+        decoder = if (processColors && !hasPty()) RsAnsiEscapeDecoder() else null
     }
 
     override fun notifyTextAvailable(text: String, outputType: Key<*>) {
@@ -40,5 +44,16 @@ class RsProcessHandler : KillableProcessHandler, AnsiEscapeDecoder.ColoredTextAc
 
     override fun coloredTextAvailable(text: String, attributes: Key<*>) {
         super.notifyTextAvailable(text, attributes)
+    }
+
+    override fun readerOptions(): BaseOutputReader.Options = object : BaseOutputReader.Options() {
+        override fun policy(): BaseDataReader.SleepingPolicy =
+            if (hasPty() || java.lang.Boolean.getBoolean("output.reader.blocking.mode")) {
+                BaseDataReader.SleepingPolicy.BLOCKING
+            } else {
+                BaseDataReader.SleepingPolicy.NON_BLOCKING
+            }
+
+        override fun splitToLines(): Boolean = !hasPty()
     }
 }

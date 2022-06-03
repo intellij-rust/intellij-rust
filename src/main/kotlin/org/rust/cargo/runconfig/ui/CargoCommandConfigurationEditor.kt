@@ -144,7 +144,7 @@ class CargoCommandConfigurationEditor(project: Project)
         configuration.channel = configChannel
         configuration.requiredFeatures = requiredFeatures.isSelected
         configuration.allFeatures = allFeatures.isSelected
-        configuration.emulateTerminal = emulateTerminal.isSelected && SystemInfo.isUnix
+        configuration.emulateTerminal = emulateTerminal.isSelected
         configuration.withSudo = withSudo.isSelected
         configuration.buildTarget = if (buildOnRemoteTarget.isSelected) BuildTarget.REMOTE else BuildTarget.LOCAL
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
@@ -172,10 +172,7 @@ class CargoCommandConfigurationEditor(project: Project)
 
         row { requiredFeatures() }
         row { allFeatures() }
-
-        if (SystemInfo.isUnix) {
-            row { emulateTerminal() }
-        }
+        row { emulateTerminal() }
         row { withSudo() }
         row { buildOnRemoteTarget() }
 
