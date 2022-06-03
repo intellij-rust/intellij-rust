@@ -354,7 +354,7 @@ open class CargoCommandConfiguration(
         }
 
         val emulateTerminalDefault: Boolean
-            get() = isFeatureEnabled(RsExperiments.EMULATE_TERMINAL) && (SystemInfo.isLinux || SystemInfo.isMac) && !isUnitTestMode
+            get() = isFeatureEnabled(RsExperiments.EMULATE_TERMINAL) && !isUnitTestMode
     }
 }
 
