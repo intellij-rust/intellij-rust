@@ -68,7 +68,9 @@ interface RustProjectSettingsService {
     }
 
     enum class MacroExpansionEngine {
-        DISABLED, OLD, NEW
+        DISABLED,
+        OLD, // `OLD` can't be selected by a user anymore, it exists for backcompat with saved user settings
+        NEW
     }
 
     @Retention(AnnotationRetention.RUNTIME)

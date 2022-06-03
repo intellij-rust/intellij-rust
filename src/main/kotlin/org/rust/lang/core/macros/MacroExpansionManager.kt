@@ -933,7 +933,7 @@ sealed class MacroExpansionMode {
 
 private fun RustProjectSettingsService.MacroExpansionEngine.toMode(): MacroExpansionMode = when (this) {
     RustProjectSettingsService.MacroExpansionEngine.DISABLED -> MacroExpansionMode.DISABLED
-    RustProjectSettingsService.MacroExpansionEngine.OLD -> MacroExpansionMode.OLD
+    RustProjectSettingsService.MacroExpansionEngine.OLD,
     RustProjectSettingsService.MacroExpansionEngine.NEW -> MacroExpansionMode.NEW_ALL
 }
 
