@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import org.rust.cargo.project.model.CargoProject
-import org.rust.lang.core.macros.MacroExpansionMode
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
@@ -21,11 +19,6 @@ import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.consts.FreshCtInferVar
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
-import org.rust.lang.core.types.ty.Mutability.MUTABLE
-import org.rust.lang.core.types.ty.TyFloat.F32
-import org.rust.lang.core.types.ty.TyFloat.F64
-import org.rust.lang.core.types.ty.TyInteger.*
 import org.rust.lang.utils.CargoProjectCache
 import org.rust.openapiext.testAssert
 import org.rust.stdext.Cache
@@ -37,76 +30,6 @@ private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() = typeParameters.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 const val DEFAULT_RECURSION_LIMIT = 128
-
-// libcore/num/mod.rs (impl_from!)
-val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
-    val list = listOf(
-        // Unsigned -> Unsigned
-        U8.INSTANCE to U16.INSTANCE,
-        U8.INSTANCE to U32.INSTANCE,
-        U8.INSTANCE to U64.INSTANCE,
-        U8.INSTANCE to U128.INSTANCE,
-        U8.INSTANCE to USize.INSTANCE,
-        U16.INSTANCE to U32.INSTANCE,
-        U16.INSTANCE to U64.INSTANCE,
-        U16.INSTANCE to U128.INSTANCE,
-        U32.INSTANCE to U64.INSTANCE,
-        U32.INSTANCE to U128.INSTANCE,
-        U64.INSTANCE to U128.INSTANCE,
-
-        // Signed -> Signed
-        I8.INSTANCE to I16.INSTANCE,
-        I8.INSTANCE to I32.INSTANCE,
-        I8.INSTANCE to I64.INSTANCE,
-        I8.INSTANCE to I128.INSTANCE,
-        I8.INSTANCE to ISize.INSTANCE,
-        I16.INSTANCE to I32.INSTANCE,
-        I16.INSTANCE to I64.INSTANCE,
-        I16.INSTANCE to I128.INSTANCE,
-        I32.INSTANCE to I64.INSTANCE,
-        I32.INSTANCE to I128.INSTANCE,
-        I64.INSTANCE to I128.INSTANCE,
-
-        // Unsigned -> Signed
-        U8.INSTANCE to I16.INSTANCE,
-        U8.INSTANCE to I32.INSTANCE,
-        U8.INSTANCE to I64.INSTANCE,
-        U8.INSTANCE to I128.INSTANCE,
-        U16.INSTANCE to I32.INSTANCE,
-        U16.INSTANCE to I64.INSTANCE,
-        U16.INSTANCE to I128.INSTANCE,
-        U32.INSTANCE to I64.INSTANCE,
-        U32.INSTANCE to I128.INSTANCE,
-        U64.INSTANCE to I128.INSTANCE,
-
-        // https://github.com/rust-lang/rust/pull/49305
-        U16.INSTANCE to USize.INSTANCE,
-        U8.INSTANCE to ISize.INSTANCE,
-        I16.INSTANCE to ISize.INSTANCE,
-
-        // Signed -> Float
-        I8.INSTANCE to F32.INSTANCE,
-        I8.INSTANCE to F64.INSTANCE,
-        I16.INSTANCE to F32.INSTANCE,
-        I16.INSTANCE to F64.INSTANCE,
-        I32.INSTANCE to F64.INSTANCE,
-
-        // Unsigned -> Float
-        U8.INSTANCE to F32.INSTANCE,
-        U8.INSTANCE to F64.INSTANCE,
-        U16.INSTANCE to F32.INSTANCE,
-        U16.INSTANCE to F64.INSTANCE,
-        U32.INSTANCE to F64.INSTANCE,
-
-        // Float -> Float
-        F32.INSTANCE to F64.INSTANCE
-    )
-    val map = mutableMapOf<TyPrimitive, MutableList<TyPrimitive>>()
-    for ((from, to) in list) {
-        map.getOrPut(to) { mutableListOf() }.add(from)
-    }
-    map
-}
 
 sealed class TraitImplSource {
     abstract val value: RsTraitOrImpl
@@ -252,7 +175,6 @@ class ImplLookup(
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
-    private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
     private val traitSelectionCache: Cache<TraitRef, SelectionResult<SelectionCandidate>> =
         if (paramEnv.isEmpty() && cargoProject != null) {
             cargoProjectGlobalTraitSelectionCache.getCache(cargoProject)
@@ -267,12 +189,6 @@ class ImplLookup(
         } else {
             Cache.new()
         }
-    private val arithOps by lazy(NONE) {
-        ArithmeticOp.values().mapNotNull { it.findTrait(items) }
-    }
-    private val assignArithOps by lazy(NONE) {
-        ArithmeticAssignmentOp.values().mapNotNull { it.findTrait(items) }
-    }
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = items.FnOnce ?: return@lazy null
@@ -379,103 +295,11 @@ class ImplLookup(
                 listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
         }
 
-        if (project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New) {
-            if (ty is TyUnit) {
-                return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
-            }
-            return emptyList()
+        if (ty is TyUnit) {
+            return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
         }
 
-        // TODO this code should be completely removed after removal of "old" macro expansion engine
-        return when (ty) {
-            is TyPrimitive -> {
-                primitiveTyHardcodedImplsCache.getOrPut(ty) {
-                    getHardcodedImplsForPrimitives(ty)
-                }
-            }
-            is TyAdt -> when (ty.item) {
-                items.findItem<RsNamedElement>("core::slice::Iter") -> {
-                    val trait = items.Iterator ?: return emptyList()
-                    listOf(
-                        trait.substAssocType(
-                            "Item",
-                            TyReference(ty.typeParameterValues.typeByName("T"), IMMUTABLE)
-                        )
-                    )
-                }
-                items.findItem<RsNamedElement>("core::slice::IterMut") -> {
-                    val trait = items.Iterator ?: return emptyList()
-                    listOf(
-                        trait.substAssocType(
-                            "Item",
-                            TyReference(ty.typeParameterValues.typeByName("T"), MUTABLE)
-                        )
-                    )
-                }
-                else -> emptyList()
-            }
-            // Can't cache type variables
-            is TyInfer.IntVar, is TyInfer.FloatVar -> getHardcodedImplsForPrimitives(ty)
-            else -> emptyList()
-        }
-    }
-
-    private fun getHardcodedImplsForPrimitives(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        val impls = mutableListOf<BoundElement<RsTraitItem>>()
-
-        fun addImpl(trait: RsTraitItem?, vararg subst: Ty) {
-            trait?.let { impls += it.withSubst(*subst) }
-        }
-
-        if (ty is TyNumeric || ty is TyInfer.IntVar || ty is TyInfer.FloatVar) {
-            // libcore/ops/arith.rs libcore/ops/bit.rs
-            impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
-            impls += assignArithOps.map { it.withSubst(ty) }
-            // Debug (libcore/fmt/num.rs libcore/fmt/float.rs)
-            addImpl(items.Debug)
-        }
-        if (ty is TyInteger || ty is TyInfer.IntVar) {
-            // libcore/num/mod.rs
-            items.FromStr?.let {
-                impls += it.substAssocType("Err", items.findItem<RsStructItem>("core::num::ParseIntError").asTy())
-            }
-
-            // libcore/hash/mod.rs
-            addImpl(items.Hash)
-        }
-        HARDCODED_FROM_IMPLS_MAP[ty]?.forEach { from ->
-            addImpl(items.From, from)
-        }
-        if (ty !is TyStr) {
-            // Default (libcore/default.rs)
-            addImpl(items.Default)
-
-            // PartialEq (libcore/cmp.rs)
-            if (ty != TyNever && ty !is TyUnit) {
-                addImpl(items.PartialEq, ty)
-            }
-
-            // Eq (libcore/cmp.rs)
-            if (ty !is TyFloat && ty !is TyInfer.FloatVar && ty != TyNever) {
-                addImpl(items.Eq)
-            }
-
-            // PartialOrd (libcore/cmp.rs)
-            if (ty !is TyUnit && ty !is TyBool && ty != TyNever) {
-                addImpl(items.PartialOrd, ty)
-                // Ord (libcore/cmp.rs)
-                if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
-                    addImpl(items.Ord)
-                }
-            }
-
-            // Clone (libcore/clone.rs)
-            addImpl(items.Clone)
-            // Copy (libcore/markers.rs)
-            addImpl(items.Copy)
-        }
-
-        return impls
+        return emptyList()
     }
 
     /**

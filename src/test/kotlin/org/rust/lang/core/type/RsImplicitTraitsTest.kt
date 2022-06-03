@@ -173,7 +173,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     """)
 
     fun `test tuple of 'Copy' types is 'Copy'`() = doTest("""
-        type T = (i32, i32);
+        type T = ((), ());
                //^ Copy
     """)
 
@@ -184,7 +184,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     """)
 
     fun `test array of 'Copy' type is 'Copy'`() = doTest("""
-        type T = [i32; 4];
+        type T = [(); 4];
                //^ Copy
     """)
 

@@ -5,10 +5,13 @@
 
 package org.rust.ide.template.postfix
 
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+@ExpandMacros(MacroExpansionScope.ALL, "std")
 class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test string`() = doTest("""
        fn main() {
@@ -175,7 +178,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
     """, """
         fn main() {
             let test = 4;
-            println!("{:?}", test);/*caret*/
+            println!("{}", test);/*caret*/
         }
     """)
 
@@ -186,7 +189,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
     """, """
         fn main() {
             let test = 4;
-            println!("{:?}", test);/*caret*/
+            println!("{}", test);/*caret*/
         }
     """)
 
@@ -200,7 +203,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         fn main() {
             let a = 123;
             let b = a - 42 * 3; // this is a comment
-            println!("{:?}", b);/*caret*/
+            println!("{}", b);/*caret*/
             let c = a + b;
         }
     """)
@@ -215,7 +218,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         fn main() {
             let a = 123;
             let b = a - 42 * 3; // this is a comment
-            println!("{:?}", 42);/*caret*/
+            println!("{}", 42);/*caret*/
             let c = a + b;
         }
     """)
@@ -237,7 +240,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
             let a = 123;
             match E::A(22) {
                 E::A(value) => {
-                    println!("{:?}", 42);/*caret*/
+                    println!("{}", 42);/*caret*/
                     a - 42 * 3
                 } // this is a comment
                 _ => -1
@@ -258,7 +261,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         enum E<T> { A(T), B }
 
         fn main() {
-            println!("{:?}", match E::A(22) {
+            println!("{}", match E::A(22) {
                 E::A(value) => value,
                 _ => -1
             });/*caret*/
@@ -282,7 +285,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         fn main() {
             match E::A(22) {
                 E::A(value) => {
-                    println!("{:?}", value);/*caret*/
+                    println!("{}", value);/*caret*/
                 }
                 _ => ()
             }
@@ -304,7 +307,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         fn main() {
             match E::A(22) {
                 E::A(value) => {
-                    println!("{:?}", value);/*caret*/
+                    println!("{}", value);/*caret*/
                     value
                 }
                 _ => -1
@@ -326,7 +329,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
 
         fn main() {
             match E::A(22) {
-                E::A(value) => println!("{:?}", value),/*caret*/
+                E::A(value) => println!("{}", value),/*caret*/
                 _ => ()
             };
         }
