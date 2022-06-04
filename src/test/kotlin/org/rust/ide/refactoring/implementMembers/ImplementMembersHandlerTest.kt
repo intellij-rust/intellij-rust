@@ -1157,6 +1157,40 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement assoc type binding`() = doTest("""
+        trait A {
+            type B;
+        }
+
+        trait C<D> {
+            fn e<F: A<B=D>>();
+        }
+
+        struct G;
+        struct H;
+
+        impl C<G> for H {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("e<F: A<B=D>>()", true)
+    ), """
+        trait A {
+            type B;
+        }
+
+        trait C<D> {
+            fn e<F: A<B=D>>();
+        }
+
+        struct G;
+        struct H;
+
+        impl C<G> for H {
+            fn e<F: A<B=G>>() {
+                todo!()
+            }
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
