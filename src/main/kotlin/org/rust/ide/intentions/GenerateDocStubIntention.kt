@@ -10,10 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.CharArrayUtil
-import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
-import org.rust.lang.core.types.ty.Ty
 import kotlin.math.max
 
 class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
@@ -21,8 +19,7 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
     override fun getFamilyName() = text
     data class Context(
         val func: RsElement,
-        val params: List<RsValueParameter>,
-        val returnType: Ty
+        val isUnsafe: Boolean,
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -30,16 +27,12 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
         if (targetFunc !is RsFunctionImpl) return null
         if (targetFunc.name != element.text) return null
         if (targetFunc.text.startsWith("///")) return null
-        val params = targetFunc.valueParameters
-        if (params.isEmpty()) {
-            return null
-        }
-        val returnType = targetFunc.returnType
-        return Context(targetFunc, params, returnType)
+        val unsafe = targetFunc.unsafe
+        return Context(targetFunc, unsafe != null)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (targetFunc, params, returnType) = ctx
+        val (targetFunc, isUnsafe) = ctx
         val document = editor.document
         var commentStartOffset: Int = targetFunc.textRange.startOffset
         val lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset))
@@ -57,7 +50,7 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
         document.insertString(commentStartOffset, buffer)
         val docManager = PsiDocumentManager.getInstance(project)
         docManager.commitDocument(document)
-        val stub = generateDocumentStub(indentation, params, returnType)
+        val stub = generateDocumentStub(indentation, isUnsafe)
         if (stub.isNotEmpty()) {
             val insertionOffset = commentStartOffset + commentBodyRelativeOffset
             document.insertString(insertionOffset, stub)
@@ -69,21 +62,16 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
 
 private fun generateDocumentStub(
     indentation: String,
-    params: List<RsValueParameter>,
-    returnType: Ty
+    isUnsafe: Boolean,
 ): String = buildString {
-    append("$indentation/// \n")
-    append("$indentation/// # Arguments \n")
-    append("$indentation/// \n")
-    for (param in params) {
-        append("$indentation/// * `${param.patText}`: \n")
+    append("$indentation///\n")
+    if (isUnsafe) {
+        append("$indentation/// # Safety\n")
+        append("$indentation///\n")
+        append("$indentation/// \n")
+        append("$indentation///\n")
     }
-    append("$indentation/// \n")
-
-    append("$indentation/// returns: $returnType \n")
-
-    append("$indentation/// \n")
-    append("$indentation/// # Examples \n")
+    append("$indentation/// # Examples\n")
     append("$indentation/// \n")
     append("$indentation/// ```\n")
     append("$indentation/// \n")
