@@ -30,7 +30,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
-import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
 import org.rust.openapiext.toPsiFile
@@ -589,7 +588,8 @@ private fun MacroDefInfo.legacyMacroToPsi(containingScope: RsItemsOwner, info: R
             val defIndex = info.getMacroIndex(it, crate) ?: return@singleOrNull false
             MacroIndex.equals(defIndex, macroIndex)
         }
-        is ProcMacroDefInfo, is DeclMacro2DefInfo -> items.named[path.name]?.firstOrNull()
+        is ProcMacroDefInfo -> items.named[path.name]?.firstOrNull { it is RsFunction }
+        is DeclMacro2DefInfo -> items.named[path.name]?.firstOrNull { it is RsMacro2 }
     }
     // Note that we can return null, e.g. if old macro engine is enabled and macro definition is itself expanded
 }
