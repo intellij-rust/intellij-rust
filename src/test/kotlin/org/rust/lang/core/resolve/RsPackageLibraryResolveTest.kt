@@ -578,6 +578,19 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                 //X
     """)
 
+    fun `test macro 2 (import by macro_use)`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+        fn main() {
+            foo!();
+        } //^ lib.rs
+    //- lib.rs
+        mod foo {}
+        pub macro foo() {}
+                //X
+    """)
+
     fun `test macro 2 (unresolved in textual scope)`() = stubOnlyResolve("""
     //- lib.rs
         pub macro foo() {}

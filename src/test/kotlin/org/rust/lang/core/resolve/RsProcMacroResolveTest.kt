@@ -77,6 +77,18 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         //^ dep-proc-macro/lib.rs
     """)
 
+    fun `test resolve bang proc macro from macro call (other item with same name)`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        mod example_proc_macro {}
+        #[proc_macro]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[macro_use]
+        extern crate dep_proc_macro;
+        example_proc_macro!();
+        //^ dep-proc-macro/lib.rs
+    """)
+
     fun `test resolve attr proc macro in use item`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_attribute]
