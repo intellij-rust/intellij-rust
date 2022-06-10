@@ -17,6 +17,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ContentEntry
@@ -39,12 +40,10 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
-import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
-import org.rust.cargo.project.model.RustcInfo
-import org.rust.cargo.project.model.setup
+import org.rust.cargo.project.model.CargoProjectsService.CargoRefreshStatus
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
@@ -69,6 +68,7 @@ import org.rust.taskQueue
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
 
 
@@ -80,21 +80,29 @@ open class CargoProjectsServiceImpl(
     final override val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element>, Disposable {
     init {
-        with(project.messageBus.connect()) {
-            if (!isUnitTestMode) {
-                subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(this@CargoProjectsServiceImpl, fun() {
-                    if (!project.rustSettings.autoUpdateEnabled) return
-                    refreshAllProjects()
-                }))
-            }
+        val newProjectModelImportEnabled = isNewProjectModelImportEnabled
+        if (newProjectModelImportEnabled) {
+            @Suppress("LeakingThis")
+            registerProjectAware(project, this)
+        }
 
-            subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
-                override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
-                    if (e.affectsCargoMetadata) {
+        with(project.messageBus.connect()) {
+            if (!newProjectModelImportEnabled) {
+                if (!isUnitTestMode) {
+                    subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(this@CargoProjectsServiceImpl, fun() {
+                        if (!project.rustSettings.autoUpdateEnabled) return
                         refreshAllProjects()
-                    }
+                    }))
                 }
-            })
+
+                subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
+                    override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
+                        if (e.affectsCargoMetadata) {
+                            refreshAllProjects()
+                        }
+                    }
+                })
+            }
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 StartupManager.getInstance(project).runAfterOpened {
@@ -322,9 +330,16 @@ open class CargoProjectsServiceImpl(
      * [allProjects] contains fresh projects.
      */
     protected fun modifyProjects(
-        f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
-    ): CompletableFuture<List<CargoProjectImpl>> =
-        projects.updateAsync(f)
+        updater: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
+    ): CompletableFuture<List<CargoProjectImpl>> {
+        val refreshStatusPublisher = project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_REFRESH_TOPIC)
+
+        val wrappedUpdater = { projects: List<CargoProjectImpl> ->
+            refreshStatusPublisher.onRefreshStarted()
+            updater(projects)
+        }
+
+        return projects.updateAsync(wrappedUpdater)
             .thenApply { projects ->
                 invokeAndWaitIfNeeded {
                     val fileTypeManager = FileTypeManager.getInstance()
@@ -352,9 +367,21 @@ open class CargoProjectsServiceImpl(
                         initialized = true
                     }
                 }
-
+                projects
+            }.handle { projects, err ->
+                val status = err?.toRefreshStatus() ?: CargoRefreshStatus.SUCCESS
+                refreshStatusPublisher.onRefreshFinished(status)
                 projects
             }
+    }
+
+    private fun Throwable.toRefreshStatus(): CargoRefreshStatus {
+        return when {
+            this is ProcessCanceledException -> CargoRefreshStatus.CANCEL
+            this is CompletionException && cause is ProcessCanceledException -> CargoRefreshStatus.CANCEL
+            else -> CargoRefreshStatus.FAILURE
+        }
+    }
 
     private fun modifyProjectsLite(
         f: (List<CargoProjectImpl>) -> List<CargoProjectImpl>
