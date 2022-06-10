@@ -5,87 +5,87 @@
     "properties": {
         "cargo-features": {
             "type": "array",
-            "description": "Unstable, nightly-only features",
+            "title": "Unstable, nightly-only features",
+            "description": "Experimental Cargo features only available on the nightly channel",
             "items": {
-                "type": "string",
-                "oneOf": [
-                    {
-                        "const": "named-profiles",
-                        "description": "Custom named profiles"
-                    },
-                    {
-                        "const": "strip",
-                        "description": "Profile strip option"
-                    },
-                    {
-                        "const": "per-package-target",
-                        "description": "Adds `default-target` and `forced-target` in `package`"
-                    },
-                    {
-                        "const": "rust-version",
-                        "description": "Adds `package.rust-version`"
-                    },
-                    {
-                        "const": "edition2021",
-                        "description": "Enable 2021 edition support"
-                    }
-                ]
+                "type": "string"
             }
         },
         "package": {
             "type": "object",
-            "description": "Package definition",
+            "title": "Package definition",
             "required": [
                 "name",
-                "version",
-                "authors"
+                "version"
             ],
             "properties": {
                 "name": {
                     "type": "string",
-                    "description": "Name of the package"
+                    "title": "Name of the package",
+                    "pattern": "^[a-zA-Z0-9_-]+$"
                 },
                 "version": {
                     "type": "string",
-                    "description": "Version of the package"
+                    "title": "Version of the package",
+                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
                 },
                 "authors": {
                     "type": "array",
-                    "description": "Authors of the package",
+                    "title": "Authors of the package",
                     "items": {
                         "type": "string"
                     }
                 },
                 "edition": {
+                    "name": "Rust edition to use",
                     "$ref": "#/$defs/edition"
+                },
+                "rust-version": {
+                    "type": "string",
+                    "name": "Required language and compiler version",
+                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*))?$"
                 },
                 "description": {
                     "type": "string",
-                    "description": "Description of the package"
+                    "title": "Description of the package"
                 },
                 "documentation": {
                     "type": "string",
                     "description": "URL of package documentation"
                 },
                 "readme": {
-                    "type": "string",
-                    "description": "Path to package's README file"
+                    "title": "Package's README file",
+                    "description": "The readme field should be the path to a file in the package root (relative to this Cargo.toml) that contains general information about the package. This file will be transferred to the registry when you publish. crates.io will interpret it as Markdown and render it on the crate's page.",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "title": "Path to package's README file"
+                        },
+                        {
+                            "const": false,
+                            "title": "Do not use README file"
+                        }, {
+                            "const": true,
+                            "title": "Use README.md file by default"
+                        }
+                    ]
                 },
                 "homepage": {
                     "type": "string",
-                    "description": "URL of package homepage"
+                    "title": "URL of package homepage"
                 },
                 "repository": {
                     "type": "string",
-                    "description": "URL of package source repository"
+                    "title": "URL of package source repository"
                 },
                 "license": {
                     "type": "string",
-                    "description": "Package license"
+                    "title": "Package license",
+                    "description": "crates.io interprets the license field as an SPDX 2.1 license expression. The name must be a known license from the SPDX license list 3.11"
                 },
                 "license-file": {
                     "type": "string",
-                    "description": "Path to full text of license"
+                    "title": "Path to license file"
                 },
                 "keywords": {
                     "type": "array",
@@ -107,64 +107,81 @@
                 },
                 "build": {
                     "type": "string",
-                    "description": "Path to package build script"
+                    "title": "Path to package build script",
+                    "description": "Default is `build.rs`"
                 },
                 "links": {
                     "type": "string",
-                    "description": "Name of the native library the package links with"
+                    "title": "Name of the native library the package links with",
+                    "description": "Setting `include` will override an `exclude`. If you need to have exclusions to a set of include files, use the ! operator described below.\nThe patterns should be gitignore-style patterns."
                 },
                 "exclude": {
                     "type": "array",
-                    "description": "Files to exclude when publishing",
+                    "title": "Files to exclude when publishing",
+                    "description": "Setting `exclude` will override an `include`.\nThe patterns should be gitignore-style patterns.",
                     "items": {
                         "type": "string"
                     }
                 },
                 "include": {
                     "type": "array",
-                    "description": "Files to include when publishing",
+                    "title": "Files to include when publishing",
                     "items": {
                         "type": "string"
                     }
                 },
                 "publish": {
-                    "type": "boolean",
-                    "description": "If false, prevents package publishing"
+                    "title": "Restrict publishing to registries",
+                    "description": "Can be used to prevent a package from being published to a package registry (like crates.io) by mistake, for instance to keep a package private in a company.",
+                    "oneOf": [
+                        {
+                            "const": false,
+                            "title": "Disable publishing"
+                        },
+                        {
+                            "type": "array",
+                            "title": "Allowed registry names",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
                 },
                 "metadata": {
                     "type": "object",
-                    "description": "Extra settings for external tools. Ignored by Cargo"
+                    "title": "Extra settings for external tools. Ignored by Cargo",
+                    "additionalProperties": true
                 },
                 "default-run": {
                     "type": "string",
-                    "description": "The default binary to run by `cargo run`"
+                    "title": "The default binary to run by `cargo run`"
                 },
                 "autobins": {
                     "type": "boolean",
-                    "description": "Use binary auto discovery"
+                    "title": "Use binary auto discovery"
                 },
                 "autoexamples": {
                     "type": "boolean",
-                    "description": "Use example auto discovery"
+                    "title": "Use example auto discovery"
                 },
                 "autotests": {
                     "type": "boolean",
-                    "description": "Use test auto discovery"
+                    "title": "Use test auto discovery"
                 },
                 "autobenches": {
                     "type": "boolean",
-                    "description": "Use benches auto discovery"
+                    "title": "Use benches auto discovery"
                 },
                 "resolver": {
                     "type": "string",
                     "oneOf": [
                         {
                             "const": "2",
-                            "description": "New feature resolver"
+                            "title": "Modern feature resolver, from 1.50"
                         },
                         {
                             "const": "1",
-                            "description": "Original feature resolver shipped up to 1.50"
+                            "title": "Original feature resolver shipped up to 1.50"
                         }
                     ]
                 }
@@ -172,62 +189,72 @@
         },
         "lib": {
             "type": "object",
-            "description": "Library target settings",
+            "title": "Library target settings",
             "$ref": "#/$defs/target-settings"
         },
         "bin": {
             "type": "array",
-            "description": "Binary target settings",
+            "title": "Binary target settings",
             "items": {
                 "$ref": "#/$defs/target-settings"
             }
         },
         "example": {
             "type": "array",
-            "description": "Example target settings",
+            "title": "Example target settings",
             "items": {
                 "$ref": "#/$defs/target-settings"
             }
         },
         "test": {
             "type": "array",
-            "description": "Test target settings",
+            "title": "Test target settings",
             "items": {
                 "$ref": "#/$defs/target-settings"
             }
         },
         "bench": {
             "type": "array",
-            "description": "Benchmark target settings",
+            "title": "Benchmark target settings",
             "items": {
                 "$ref": "#/$defs/target-settings"
             }
         },
         "dependencies": {
             "type": "object",
-            "description": "Package library dependencies",
+            "title": "Package library dependencies",
             "$ref": "#/$defs/dependencies"
         },
         "dev-dependencies": {
             "type": "object",
-            "description": "Examples, tests and benchmarks dependencies",
+            "title": "Examples, tests and benchmarks dependencies",
             "$ref": "#/$defs/dependencies"
         },
         "build-dependencies": {
             "type": "object",
-            "description": "Build scripts dependencies",
+            "title": "Build scripts dependencies",
             "$ref": "#/$defs/dependencies"
         },
         "target": {
             "type": "object",
-            "description": "Platform-specific dependencies",
+            "title": "Platform-specific dependencies",
             "patternProperties": {
                 "^.+$": {
                     "type": "object",
                     "properties": {
-                        // TODO: add dev-dependencies etc.
                         "dependencies": {
                             "type": "object",
+                            "title": "Package library dependencies",
+                            "$ref": "#/$defs/dependencies"
+                        },
+                        "dev-dependencies": {
+                            "type": "object",
+                            "title": "Examples, tests and benchmarks dependencies",
+                            "$ref": "#/$defs/dependencies"
+                        },
+                        "build-dependencies": {
+                            "type": "object",
+                            "title": "Build scripts dependencies",
                             "$ref": "#/$defs/dependencies"
                         }
                     }
@@ -236,11 +263,23 @@
         },
         "badges": {
             "type": "object",
-            "description": "Badges to display on a registry",
-            "deprecated": true
+            "title": "Status badges to display on registry",
+            "description": "Badges are not shown on crates.io anymore, they should be placed in README instead "
         },
         "features": {
             "type": "object",
+            "title": "Conditional complication features",
+            "properties": {
+                "default": {
+                    "title": "Features enabled by default for others",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "patternProperties": {
                 "^.+$": {
                     "oneOf": [
@@ -259,9 +298,10 @@
         },
         "patch": {
             "type": "object",
-            "description": "Override dependencies",
+            "title": "Override dependencies",
             "properties": {
                 "crates-io": {
+                    "title": "Default crates.io registry",
                     "$ref": "#/$defs/dependencies"
                 }
             },
@@ -273,128 +313,40 @@
         },
         "replace": {
             "type": "object",
-            "description": "Override dependencies (deprecated)",
+            "title": "(Deprecated) Override dependencies",
+            "description": "Use [patch] instead",
             "deprecated": true
         },
         "profile": {
             "type": "object",
-            "description": "Compiler settings and optimizations",
+            "title": "Compiler settings and optimizations",
             "properties": {
-                "opt-level": {
-                    "type": ["integer", "string"],
-                    "description": "Optimization level (-C opt-level)",
-                    "oneOf": [
-                        {
-                            "const": 0,
-                            "description": "No optimizations"
-                        },
-                        {
-                            "const": 1,
-                            "description": "Basic optimizations"
-                        },
-                        {
-                            "const": 2,
-                            "description": "Some optimizations"
-                        },
-                        {
-                            "const": 3,
-                            "description": "All optimizations"
-                        },
-                        {
-                            "const": "s",
-                            "description": "Optimize for binary size"
-                        },
-                        {
-                            "const": "z",
-                            "description": "Optimize for binary size, no loop vectorization"
-                        }
-                    ]
+                "dev": {
+                    "title": "Development & debugging (cargo build)",
+                    "$ref": "#/$defs/profile-settings"
                 },
-                "debug": {
-                    "type": ["integer", "boolean"],
-                    "description": "Debug information (-C debuginfo)",
-                    "oneOf": [
-                        {
-                            "enum": [0, false],
-                            "description": "No debug info at all"
-                        },
-                        {
-                            "const": 1,
-                            "description": "Line tables only"
-                        },
-                        {
-                            "enum": [2, true],
-                            "description": "Full debug info"
-                        }
-                    ]
+                "release": {
+                    "title": "cargo --release, cargo install",
+                    "$ref": "#/$defs/profile-settings"
                 },
-                "split-debuginfo": {
-                    "type": "string",
-                    "description": "Debug information generation (-C split-debuginfo)",
-                    "enum": ["off", "packed", "unpacked"]
+                "test": {
+                    "title": "cargo test, uses dev by default",
+                    "$ref": "#/$defs/profile-settings"
                 },
-                "debug-assertions": {
-                    "type": "boolean",
-                    "description": "Use `cfg(debug_assertions)` (-C debug-assertions)"
-                },
-                "overflow-checks": {
-                    "type": "boolean",
-                    "description": "Enable runtime integer overflow (-C overflow-checks)"
-                },
-                "lto": {
-                    "type": ["boolean", "string"],
-                    "description": "Link time optimizations (-C lto)",
-                    "oneOf": [
-                        {
-                            "const": false,
-                            "description": "Thin local LTO"
-                        },
-                        {
-                            "enum": [true, "fat"],
-                            "description": "Fat LTO"
-                        },
-                        {
-                            "const": "thin",
-                            "description": "Thin LTO"
-                        },
-                        {
-                            "const": false,
-                            "description": "Disable LTO"
-                        }
-                    ]
-                },
-                "panic": {
-                    "type": "string",
-                    "description": "Panic strategy to use (-C panic)",
-                    "oneOf": [
-                        {
-                            "const": "unwind",
-                            "description": "Unwind the stack upon panic"
-                        },
-                        {
-                            "const": "abort",
-                            "description": "Terminate the process upon panic"
-                        }
-                    ]
-                },
-                "incremental": {
-                    "type": "boolean",
-                    "description": "Enable incremental compilation (-C incremental)"
-                },
-                "codegen-units": {
-                    "type": "integer",
-                    "description": "Codegen units for crate to split in (-C codegen-units)",
-                    "minimum": 0
-                },
-                "rpath": {
-                    "type": "boolean",
-                    "description": "Enable rpath (-C rpath)"
+                "bench": {
+                    "title": "cargo bench, uses release by default",
+                    "$ref": "#/$defs/profile-settings"
+                }
+            },
+            "patternProperties": {
+                "^.+$": {
+                    "$ref": "#/$defs/profile-settings"
                 }
             }
         },
         "workspace": {
             "type": "object",
-            "description": "Workspace definition",
+            "title": "Workspace definition",
             "properties": {
                 "members": {
                     "type": "array",
@@ -421,7 +373,9 @@
                 },
                 "metadata": {
                     "type": "object",
-                    "description": "Extra settings for external tools. Ignored by Cargo"
+                    "title": "Extra settings for external tools",
+                    "description": "Ignored by Cargo",
+                    "additionalProperties": true
                 }
             }
         }
@@ -431,77 +385,78 @@
             "properties": {
                 "name": {
                     "type": "string",
-                    "description": "Name of target"
+                    "title": "Name of target"
                 },
                 "path": {
                     "type": "string",
-                    "description": "Source file of the target"
+                    "title": "Source file of the target"
                 },
                 "test": {
                     "type": "boolean",
-                    "description": "Tested by default"
+                    "title": "Is tested by default"
                 },
                 "doctest": {
                     "type": "boolean",
-                    "description": "Doc tests are tested by default"
+                    "title": "Doc tests are tested by default"
                 },
                 "bench": {
                     "type": "boolean",
-                    "description": "Benchmarked by default"
+                    "title": "Is benchmarked by default"
                 },
                 "doc": {
                     "type": "boolean",
-                    "description": "Documented by default"
+                    "title": "Is documented by default"
                 },
                 "plugin": {
                     "type": "boolean",
-                    "description": "Use as a compiler plugin",
+                    "title": "(Deprecated) Use as a compiler plugin",
                     "deprecated": true
                 },
                 "proc-macro": {
                     "type": "boolean",
-                    "description": "Is procedural macro library"
+                    "title": "Is procedural macro library"
                 },
                 "harness": {
                     "type": "boolean",
-                    "description": "Use libtest harness"
+                    "title": "Use libtest harness"
                 },
                 "edition": {
+                    "title": "Edition of the target",
                     "$ref": "#/$defs/edition"
                 },
                 "crate-type": {
                     "type": "string",
-                    "description": "Crate types to generate",
+                    "title": "Crate types to generate",
                     "oneOf": [
                         {
                             "const": "bin",
-                            "description": "Runnable executable"
+                            "title": "Runnable executable"
                         },
                         {
                             "const": "lib",
-                            "description": "Rust library"
+                            "title": "Rust library"
                         },
                         {
                             "const": "dylib",
-                            "description": "Dynamic Rust library"
+                            "title": "Dynamic Rust library"
                         },
                         {
                             "const": "cdylib",
-                            "description": "Dynamic system library"
+                            "title": "Dynamic system library"
                         },
                         {
                             "const": "rlib",
-                            "description": "Rust intermediate library file"
+                            "title": "Rust intermediate library file"
                         },
                         {
                             "const": "proc-macro",
-                            "description": "Procedural macro"
+                            "title": "Procedural macro"
                         }
                     ]
                 },
                 "required-features": {
                     "type": "array",
-                    "description": "Features required to build target",
+                    "title": "Features required to build target",
                     "items": {
                         "type": "string"
                     }
@@ -510,59 +465,191 @@
         },
         "edition": {
             "type": "string",
-            "description": "Rust edition",
             "enum": [
                 "2015",
                 "2018",
                 "2021"
-            ],
-            "default": "2018"
+            ]
         },
         "dependencies": {
-            "patternProperties": {
-                "^.+$": {
+            "patternProperties": {"^.+$": {
                     "type": "object",
                     "properties": {
                         "version": {
                             "type": "string",
-                            "description": "Version requirement"
+                            "title": "Version requirement"
                         },
                         "registry": {
                             "type": "string",
-                            "description": "Custom registry"
+                            "title": "Custom registry"
                         },
                         "features": {
                             "type": "array",
-                            "description": "",
+                            "title": "Enabled features",
                             "items": {
                                 "type": "string"
                             }
                         },
                         "git": {
                             "type": "string",
-                            "description": "Link to git repository"
+                            "title": "Link to git repository"
                         },
                         "branch": {
                             "type": "string",
-                            "description": "Branch of git repository"
+                            "title": "Branch of git repository"
                         },
                         "path": {
                             "type": "string",
-                            "description": "Path to crate"
+                            "title": "Local path to package"
                         },
                         "package": {
                             "type": "string",
-                            "description": "Package name in registry (replacing key)"
+                            "title": "Package name in registry (overriding key)"
                         },
                         "default-features": {
                             "type": "boolean",
-                            "description": "Do not include default features"
+                            "title": "Do not include default features"
                         },
                         "optional": {
                             "type": "boolean",
-                            "description": "Optionally include using features"
+                            "title": "Optionally include using features"
                         }
                     }
+                }
+            }
+        },
+        // For now, it's duplicated with another one in `cargo-config-schema.json`
+        "profile-settings": {
+            "properties": {
+                "opt-level": {
+                    "type": ["integer", "string"],
+                    "title": "Optimization level",
+                    "oneOf": [
+                        {
+                            "const": 0,
+                            "title": "No optimizations"
+                        },
+                        {
+                            "const": 1,
+                            "title": "Basic optimizations"
+                        },
+                        {
+                            "const": 2,
+                            "title": "Some optimizations"
+                        },
+                        {
+                            "const": 3,
+                            "title": "All optimizations"
+                        },
+                        {
+                            "const": "s",
+                            "title": "Optimize for binary size"
+                        },
+                        {
+                            "const": "z",
+                            "title": "Optimize for binary size, no loop vectorization"
+                        }
+                    ]
+                },
+                "debug": {
+                    "type": ["integer", "boolean"],
+                    "title": "Debug information",
+                    "oneOf": [
+                        {
+                            "enum": [0, false],
+                            "title": "No debug info at all"
+                        },
+                        {
+                            "const": 1,
+                            "title": "Line tables only"
+                        },
+                        {
+                            "enum": [2, true],
+                            "title": "Full debug info"
+                        }
+                    ]
+                },
+                "split-debuginfo": {
+                    "type": "string",
+                    "title": "Debug information generation",
+                    "enum": ["off", "packed", "unpacked"]
+                },
+                "strip": {
+                    "type": ["boolean", "string"],
+                    "title": "Strip symbols/debuginfo from binary",
+                    "oneOf": [
+                        {
+                            "enum": [true, "symbols"],
+                            "title": "Strip symbols"
+                        },
+                        {
+                            "const": "debuginfo",
+                            "title": "Strip debuginfo"
+                        },
+                        {
+                            "enum": [false, "none"],
+                            "title": "Disable strip"
+                        }
+                    ]
+                },
+                "debug-assertions": {
+                    "type": "boolean",
+                    "title": "Turn `cfg(debug_assertions)` on",
+                    "description": "The debug-assertions setting controls the `-C debug-assertions` flag which turns `cfg(debug_assertions)` conditional compilation on or off. Debug assertions are intended to include runtime validation which is only available in debug/development builds. These may be things that are too expensive or otherwise undesirable in a release build. Debug assertions enables the `debug_assert!` macro in the standard library."
+                },
+                "overflow-checks": {
+                    "type": "boolean",
+                    "title": "Enable runtime integer overflow"
+                },
+                "lto": {
+                    "type": ["boolean", "string"],
+                    "title": "Link time optimizations",
+                    "oneOf": [
+                        {
+                            "const": false,
+                            "title": "Thin local LTO"
+                        },
+                        {
+                            "enum": [true, "fat"],
+                            "title": "Fat LTO"
+                        },
+                        {
+                            "const": "thin",
+                            "title": "Thin LTO"
+                        },
+                        {
+                            "const": "off",
+                            "title": "Disable LTO"
+                        }
+                    ]
+                },
+                "panic": {
+                    "type": "string",
+                    "title": "Panic strategy",
+                    "oneOf": [
+                        {
+                            "const": "unwind",
+                            "title": "Unwind the stack upon panic"
+                        },
+                        {
+                            "const": "abort",
+                            "title": "Terminate the process upon panic"
+                        }
+                    ]
+                },
+                "incremental": {
+                    "type": "boolean",
+                    "title": "Enable incremental compilation"
+                },
+                "codegen-units": {
+                    "type": "integer",
+                    "title": "Codegen units for crate to split in",
+                    "description": "The default is 256 for incremental builds, and 16 for non-incremental builds.",
+                    "minimum": 0
+                },
+                "rpath": {
+                    "type": "boolean",
+                    "title": "Enable rpath"
                 }
             }
         }

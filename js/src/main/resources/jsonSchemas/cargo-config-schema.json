@@ -6,14 +6,15 @@
     "properties": {
         "paths": {
             "type": "array",
-            "description": "Path dependency overrides",
+            "title": "Dependencies overrides",
             "items": {
                 "type": "string"
             }
         },
         "alias": {
             "type": "object",
-            "description": "CLI command aliases",
+            "title": "CLI command aliases",
+            "description": "Environment: CARGO_ALIAS_<name>",
             "patternProperties": {
                 "^.+$": {
                     "type": [
@@ -28,42 +29,53 @@
         },
         "build": {
             "type": "object",
-            "description": "Build-time operations and compiler settings",
+            "title": "Build-time operations and compiler settings",
             "properties": {
                 "jobs": {
                     "type": "integer",
-                    "description": "Maximum number of parallel compiler processes"
+                    "title": "Maximum number of parallel compiler processes",
+                    "description": "Environment: CARGO_BUILD_JOBS"
                 },
                 "rustc": {
                     "type": "string",
-                    "description": "Executable for `rustc`"
+                    "title": "Executable for `rustc`",
+                    "description": "Environment: CARGO_BUILD_RUSTC or RUSTC",
+                    "default": "rustc"
                 },
                 "rustc-wrapper": {
                     "type": "string",
-                    "description": "Wrapper to execute instead of `rustc`"
+                    "title": "Wrapper to execute instead of `rustc`",
+                    "description": "Environment: CARGO_BUILD_RUSTC_WRAPPER or RUSTC_WRAPPER"
                 },
                 "rustc-workspace-wrapper": {
                     "type": "string",
-                    "description": "Wrapper to execute instead of `rustc` (workspace-only)"
+                    "title": "Wrapper to execute instead of `rustc` (workspace-only)",
+                    "description": "Environment: CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER or RUSTC_WORKSPACE_WRAPPER"
                 },
                 "rustdoc": {
                     "type": "string",
-                    "description": "Executable for `rustdoc`"
+                    "title": "Executable for `rustdoc`",
+                    "description": "Environment: CARGO_BUILD_RUSTDOC or RUSTDOC",
+                    "default": "rustdoc"
                 },
                 "target": {
                     "type": "string",
-                    "description": "Default target platform triple"
+                    "title": "Default target platform triple",
+                    "description": "Environment: CARGO_BUILD_TARGET"
                 },
                 "target-dir": {
                     "type": "string",
-                    "description": "Compiler output location"
+                    "title": "Compiler output location",
+                    "description": "Environment: CARGO_BUILD_TARGET_DIR or CARGO_TARGET_DIR",
+                    "default": "target"
                 },
                 "rustflags": {
                     "type": [
                         "string",
                         "array"
                     ],
-                    "description": "Extra flags for `rustc`",
+                    "title": "Extra flags for `rustc`",
+                    "description": "Environment: CARGO_BUILD_RUSTFLAGS or CARGO_ENCODED_RUSTFLAGS or RUSTFLAGS.\nIgnored if there is any other source of Rust flags present.",
                     "items": {
                         "type": "string"
                     }
@@ -73,49 +85,59 @@
                         "string",
                         "array"
                     ],
-                    "description": "Extra flags for `rustdoc`",
+                    "title": "Extra flags for `rustdoc`",
+                    "description": "Environment: CARGO_BUILD_RUSTDOCFLAGS or CARGO_ENCODED_RUSTDOCFLAGS or RUSTDOCFLAGS\nIgnored if there is any other source of Rustdoc flags present.",
                     "items": {
                         "type": "string"
                     }
                 },
                 "incremental": {
                     "type": "boolean",
-                    "description": "Perform incremental compilation"
+                    "title": "Perform incremental compilation",
+                    "description": "Environment: CARGO_BUILD_INCREMENTAL or CARGO_INCREMENTAL"
                 },
                 "dep-into-basedir": {
                     "type": "string",
-                    "description": "Strips the given path prefix from dep info file paths"
+                    "title": "Strips the given path prefix from dep info file paths",
+                    "description": "Environment: CARGO_BUILD_DEP_INFO_BASEDIR"
                 },
                 "pipelining": {
                     "type": "boolean",
-                    "description": "Use build pipelining"
+                    "title": "(Deprecated) Use build pipelining",
+                    "description": "This option is deprecated and unused. Cargo always has pipelining enabled.",
+                    "deprecated": true
                 }
             }
         },
         "doc": {
             "type": "object",
-            "description": "Options for `cargo doc`",
+            "title": "Options for `cargo doc`",
             "properties": {
                 "browser": {
-                    "type": "string"
+                    "type": "string",
+                    "title": "Browser to be used",
+                    "description": "Default: BROWSER environment variable, or, if that is missing, opening the link in a system specific way"
                 }
             }
         },
         "cargo-new": {
             "type": "object",
-            "description": "Defaults for `cargo new`",
+            "title": "Defaults for `cargo new`",
             "properties": {
                 "name": {
                     "type": "string",
+                    "title": "(Deprecated)",
                     "deprecated": true
                 },
                 "email": {
                     "type": "string",
+                    "title": "(Deprecated)",
                     "deprecated": true
                 },
                 "vcs": {
                     "type": "string",
-                    "description": "Source control system to use",
+                    "title": "Source control system to use",
+                    "default": "git",
                     "enum": [
                         "git",
                         "hg",
@@ -126,36 +148,90 @@
                 }
             }
         },
+        "env": {
+            "type": "object",
+            "title": "Additional environment variables",
+            "description": "Sets environment variables for build scripts, rustc, cargo run and cargo build. By default will not override values in environment, to do this, use --force.",
+            "patternProperties": {
+                "^.+$": {
+                    "type": ["string", "object"],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "title": "Value"
+                                },
+                                "force": {
+                                    "type": "boolean",
+                                    "title": "Override if present in environment"
+                                },
+                                "relative": {
+                                    "type": "boolean",
+                                    "title": "Evaluate path in value as parent-dir-relative to config"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "future-incompat-report": {
+            "title": "Future icompat reporting settings",
+            "description": "Cargo checks for future-incompatible warnings in all dependencies. These are warnings for changes that may become hard errors in the future, causing the dependency to stop building in a future version of rustc. If any warnings are found, a small notice is displayed indicating that the warnings were found, and provides instructions on how to display a full report.",
+            "items": {
+                "frequency": {
+                    "type": "string",
+                    "title": "Display notification in terminal",
+                    "description": "Environment: CARGO_FUTURE_INCOMPAT_REPORT_FREQUENCY",
+                    "default": "always",
+                    "enum": [
+                        "always",
+                        "never"
+                    ]
+                }
+            }
+        },
         "http": {
             "type": "object",
-            "description": "HTTP behaviour settings",
+            "title": "HTTP behaviour settings",
+            "description": "Defines settings for HTTP behavior. This includes fetching crate dependencies and accessing remote git repositories.",
             "properties": {
                 "debug": {
                     "type": "boolean",
-                    "description": "Enable debug for HTTP requests"
+                    "title": "Enable debug for HTTP requests",
+                    "description": "Environment: CARGO_HTTP_DEBUG"
                 },
                 "proxy": {
                     "type": "string",
-                    "description": "HTTP(S) proxy to use"
+                    "title": "HTTP(S) proxy to use",
+                    "description": "Environment: CARGO_HTTP_PROXY or HTTPS_PROXY or https_proxy or http_proxy"
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Timeout for each request (seconds)"
+                    "title": "Timeout for each request (seconds)",
+                    "description": "Environment: CARGO_HTTP_TIMEOUT or HTTP_TIMEOUT"
                 },
                 "cainfo": {
                     "type": "string",
-                    "description": "Path to a Certificate Authority (CA) bundle file"
+                    "title": "Path to a Certificate Authority (CA) bundle file",
+                    "description": "Environment: CARGO_HTTP_CAINFO\nUsed to verify TLS certificates. If not specified, Cargo attempts to use the system certificates."
                 },
                 "check-revoke": {
                     "type": "boolean",
-                    "description": "Perform TLS certificate revocation (windows-only)"
+                    "title": "Perform TLS certificate revocation (windows-only)",
+                    "description": "Environment: CARGO_HTTP_CHECK_REVOKE"
                 },
                 "ssl-version": {
                     "type": [
                         "string",
                         "object"
                     ],
-                    "description": "Minimum TLS version to use",
+                    "title": "Minimum TLS version to use",
                     "oneOf": [
                         {
                             "type": "string",
@@ -180,73 +256,242 @@
                 },
                 "low-speed-limit": {
                     "type": "integer",
-                    "description": "Retry when speed is lower for `http.timeout` seconds"
+                    "title": "Retry when speed is lower for `http.timeout` seconds",
+                    "description": "Environment: CARGO_HTTP_LOW_SPEED_LIMIT",
+                    "default": 10
                 },
                 "multiplexing": {
                     "type": "boolean",
-                    "description": "Use HTTP2 protocol with multiplexing"
+                    "title": "Use HTTP2 protocol with multiplexing",
+                    "description": "Environment: CARGO_HTTP_MULTIPLEXING",
+                    "default": true
                 },
                 "user-agent": {
                     "type": "string",
-                    "description": "Custom user-agent header to use"
+                    "title": "Custom user-agent header",
+                    "description": "Environment: CARGO_HTTP_USER_AGENT"
                 }
             }
         },
         "install": {
             "type": "object",
-            "description": "Defaults for `cargo install`",
+            "title": "Defaults for `cargo install`",
             "properties": {
                 "root": {
                     "type": "string",
-                    "description": "Root path for installing executables"
+                    "title": "Root path for installing executables",
+                    "description": "Environment: CARGO_INSTALL_ROOT"
                 }
             }
         },
         "net": {
             "type": "object",
-            "description": "Networking configuration",
+            "title": "Networking configuration",
             "properties": {
                 "retry": {
                     "type": "integer",
-                    "description": "Number of times to retry possibly spurious network errors"
+                    "title": "Times to retry possibly spurious network errors",
+                    "description": "Environment: CARGO_NET_RETRY",
+                    "default": 2
                 },
                 "git-fetch-with-cli": {
                     "type": "boolean",
-                    "description": "Use `git` executable to fetch registry indexes and git dependencies"
+                    "title": "Use `git` executable to fetch registry indexes and git dependencies",
+                    "description": "Environment: CARGO_NET_GIT_FETCH_WITH_CLI",
+                    "default": false
                 },
                 "offline": {
                     "type": "boolean",
-                    "description": "Avoid accessing network, attempt to proceed with cached data"
+                    "title": "Avoid network, try cached data",
+                    "description": "Environment: CARGO_NET_OFFLINE",
+                    "default": false
+                }
+            }
+        },
+        // Same as in `cargo-manifest-schema.json`
+        "patch": {
+            "type": "object",
+            "title": "Override dependencies",
+            "properties": {
+                "crates-io": {
+                    "title": "Default crates.io registry",
+                    "$ref": "#/$defs/dependencies"
+                }
+            },
+            "patternProperties": {
+                "^.+$": {
+                    "$ref": "#/$defs/dependencies"
                 }
             }
         },
         "profile": {
             "type": "object",
-            "description": "Globally change profile settings, override settings Cargo.toml",
+            "title": "Change profile settings, override settings Cargo.toml",
+            "description": "",
+            "properties": {
+            },
             "patternProperties": {
                 "^.+$": {
                     "type": "object",
                     "properties": {
-                        // TODO: Reuse profile properties from `cargo-manifest-schema.json`
+                        "package": {
+                            "type": "object",
+                            "title": "Override profile settings for packages",
+                            "patternProperties": {
+                                "^.+$": {
+                                    "type": "object",
+                                    // Should be normal profile but without panic, lto, rpath.
+                                    // For now it is just normal profile
+                                    "$ref": "#/$defs/profile-settings"
+                                }
+                            }
+                        },
+                        "build-override": {
+                            "type": "object",
+                            "title": "Override settings for build scripts, proc macros, deps",
+                            "description": "CARGO_PROFILE_<name>_BUILD_OVERRIDE_<key>",
+                            "$ref": "#/$defs/profile-settings"
+                        },
+                        "opt-level": {
+                            "type": ["integer", "string"],
+                            "title": "Optimization level",
+                            "description": "Environment: CARGO_PROFILE_<name>_OPT_LEVEL",
+                            "oneOf": [
+                                {
+                                    "const": 0,
+                                    "title": "No optimizations"
+                                },
+                                {
+                                    "const": 1,
+                                    "title": "Basic optimizations"
+                                },
+                                {
+                                    "const": 2,
+                                    "title": "Some optimizations"
+                                },
+                                {
+                                    "const": 3,
+                                    "title": "All optimizations"
+                                },
+                                {
+                                    "const": "s",
+                                    "title": "Optimize for binary size"
+                                },
+                                {
+                                    "const": "z",
+                                    "title": "Optimize for binary size, no loop vectorization"
+                                }
+                            ]
+                        },
+                        "debug": {
+                            "type": ["integer", "boolean"],
+                            "title": "Debug information",
+                            "description": "Environment: CARGO_PROFILE_<name>_DEBUG",
+                            "oneOf": [
+                                {
+                                    "enum": [0, false],
+                                    "title": "No debug info at all"
+                                },
+                                {
+                                    "const": 1,
+                                    "title": "Line tables only"
+                                },
+                                {
+                                    "enum": [2, true],
+                                    "title": "Full debug info"
+                                }
+                            ]
+                        },
+                        "split-debuginfo": {
+                            "type": "string",
+                            "title": "Debug information generation",
+                            "description": "Environment: CARGO_PROFILE_<name>_SPLIT_DEBUGINFO",
+                            "enum": ["off", "packed", "unpacked"]
+                        },
+                        "debug-assertions": {
+                            "type": "boolean",
+                            "title": "Turn `cfg(debug_assertions)` on",
+                            "description": "Environment: CARGO_PROFILE_<name>_DEBUG_ASSERTIONS\nThe debug-assertions setting controls the `-C debug-assertions` flag which turns `cfg(debug_assertions)` conditional compilation on or off. Debug assertions are intended to include runtime validation which is only available in debug/development builds. These may be things that are too expensive or otherwise undesirable in a release build. Debug assertions enables the `debug_assert!` macro in the standard library."
+                        },
+                        "overflow-checks": {
+                            "type": "boolean",
+                            "title": "Enable runtime integer overflow",
+                            "description": "Environment: CARGO_PROFILE_<name>_OVERFLOW_CHECKS"
+                        },
+                        "lto": {
+                            "type": ["boolean", "string"],
+                            "title": "Link time optimizations",
+                            "description": "Environment: CARGO_PROFILE_<name>_LTO",
+                            "oneOf": [
+                                {
+                                    "const": false,
+                                    "title": "Thin local LTO"
+                                },
+                                {
+                                    "enum": [true, "fat"],
+                                    "title": "Fat LTO"
+                                },
+                                {
+                                    "const": "thin",
+                                    "title": "Thin LTO"
+                                },
+                                {
+                                    "const": "off",
+                                    "title": "Disable LTO"
+                                }
+                            ]
+                        },
+                        "panic": {
+                            "type": "string",
+                            "title": "Panic strategy",
+                            "description": "Environment: CARGO_PROFILE_<name>_CODEGEN_UNITS",
+                            "oneOf": [
+                                {
+                                    "const": "unwind",
+                                    "title": "Unwind the stack upon panic"
+                                },
+                                {
+                                    "const": "abort",
+                                    "title": "Terminate the process upon panic"
+                                }
+                            ]
+                        },
+                        "incremental": {
+                            "type": "boolean",
+                            "title": "Enable incremental compilation",
+                            "description": "Environment: CARGO_PROFILE_<name>_INCREMENTAL"
+                        },
+                        "codegen-units": {
+                            "type": "integer",
+                            "title": "Codegen units for crate to split in",
+                            "description": "Environment: CARGO_PROFILE_<name>_CODEGEN_UNITS\nThe default is 256 for incremental builds, and 16 for non-incremental builds.",
+                            "minimum": 0
+                        },
+                        "rpath": {
+                            "type": "boolean",
+                            "title": "Enable rpath",
+                            "description": "Environment: CARGO_PROFILE_<name>_RPATH"
+                        }
                     }
                 }
             }
         },
         "registries": {
             "type": "object",
-            "description": "Additional registries",
+            "title": "Additional registries",
             "patternProperties": {
                 "^.+$": {
                     "type": "object",
                     "properties": {
                         "index": {
                             "type": "string",
-                            "description": "URL of the git index"
+                            "title": "Git index URL",
+                            "description": "Environment: CARGO_REGISTRIES_<name>_INDEX"
                         },
                         "token": {
                             "type": "string",
-                            // TODO: This value should only appear in credentials file
-                            "description": "Authentication token"
+                            "title": "Authentication token",
+                            "description": "Environment: CARGO_REGISTRIES_<name>_TOKEN\nThis value should appear only in $CARGO_HOME/credentials.toml file!"
                         }
                     }
                 }
@@ -255,55 +500,63 @@
         "registry": {
             "type": "object",
             "properties": {
+                "index": {
+                    "title": "(Deprecated)",
+                    "deprecated": true
+                },
                 "default": {
                     "type": "string",
-                    "description": "Default registry for cargo commands",
+                    "title": "Default registry for cargo commands",
+                    "description": "Environment: CARGO_REGISTRY_DEFAULT\nName from [registeries] table",
                     "default": "crates-io"
                 },
                 "token": {
                     "type": "string",
-                    // TODO: This value should only appear in credentials file
-                    "description": "Authentication token"
+                    "title": "Authentication token for crates.io",
+                    "description": "Environment: CARGO_REGISTRY_TOKEN\nThis value should appear only in $CARGO_HOME/credentials.toml file!"
                 }
             }
         },
         "source": {
             "type": "object",
-            "description": "Registry sources",
+            "title": "Registry sources",
             "patternProperties": {
                 "^.+$": {
                     "properties": {
                         "replace-with": {
                             "type": "string",
-                            "description": "Replace registry source with given one"
+                            "title": "Replace registry source with given one"
                         },
                         "directory": {
                             "type": "string",
-                            "description": "Path to directory to use as source"
+                            "title": "Path to directory to use as source"
                         },
                         "registry": {
                             "type": "string",
-                            "description": "URL to use for registry source"
+                            "title": "URL to use for registry source"
                         },
                         "local-registry": {
                             "type": "string",
-                            "description": "Path to directory to use as local registry source"
+                            "title": "Path to directory to use as local registry source"
                         },
                         "git": {
                             "type": "string",
-                            "description": "URL to use for git repository source"
+                            "title": "URL to use for git repository source"
                         },
                         "branch": {
                             "type": "string",
-                            "description": "Branch name to use with git repository source"
+                            "title": "Branch name to use with git repository source",
+                            "description": "If none of branch, tag, or rev is set, defaults to the master branch."
                         },
                         "tag": {
                             "type": "string",
-                            "description": "Tag to use with git repository source"
+                            "title": "Tag to use with git repository source",
+                            "description": "If none of branch, tag, or rev is set, defaults to the master branch."
                         },
                         "rev": {
                             "type": "string",
-                            "description": "Revision to use with git repository source"
+                            "title": "Revision to use with git repository source",
+                            "description": "If none of branch, tag, or rev is set, defaults to the master branch."
                         }
                     }
                 }
@@ -315,17 +568,35 @@
             "patternProperties": {
                 "^.+$": {
                     "properties": {
+                        "ar": {
+                            "title": "(Deprecated)",
+                            "deprecated": true
+                        },
                         "linker": {
                             "type": "string",
-                            "description": "Linker to use with rustc (-C linker)"
+                            "title": "Linker for rustc",
+                            "description": "Environment: CARGO_TARGET_<triple>_LINKER\nLinker to use with rustc (-C linker)"
                         },
                         "runner": {
-                            "type": "string",
-                            "description": "Runner for executables to execute with"
+                            "type": ["string", "array"],
+                            "title": "Runner for executables",
+                            "description": "Environment: CARGO_TARGET_<triple>_RUNNER\nThis applies to cargo run, cargo test and cargo bench commands.",
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
                         },
                         "rustflags": {
                             "type": ["string", "array"],
-                            "description": "Custom flags for compiler",
+                            "title": "Custom flags for compiler",
+                            "description": "Environment: CARGO_TARGET_<triple>_RUSTFLAGS\nHas higher priority than build.rustflags, but lower than envars. Joins flags together between target.<cfg> and target.<triple> if both are applicable",
                             "oneOf": [
                                 {
                                     "type": "string"
@@ -344,15 +615,22 @@
         },
         "term": {
             "type": "object",
-            "description": "Terminal output and interaction",
+            "title": "Terminal output and interaction",
             "properties": {
+                "quiet": {
+                    "title": "Display cargo log messages",
+                    "description": "Environment: CARGO_TERM_QUIET",
+                    "default": false
+                },
                 "verbose": {
                     "type": "boolean",
-                    "description": "Display extra detailed messages"
+                    "title": "Display extra detailed messages",
+                    "description": "Environment: CARGO_TERM_VERBOSE"
                 },
                 "color": {
                     "type": "string",
-                    "description": "Display colors",
+                    "title": "Use colored output",
+                    "description": "Environment: CARGO_TERM_COLOR",
                     "enum": ["auto", "always", "never"],
                     "default": "auto"
                 },
@@ -361,13 +639,15 @@
                     "properties": {
                         "when": {
                             "type": "string",
-                            "description": "Display progress bar",
+                            "title": "Display progress bar",
+                            "description": "Environment: CARGO_TERM_PROGRESS_WHEN",
                             "enum": ["auto", "always", "never"],
                             "default": "auto"
                         },
                         "width": {
                             "type": "integer",
-                            "description": "Progress bar width"
+                            "title": "Progress bar width",
+                            "description": "Environment: CARGO_TERM_PROGRESS_WIDTH"
                         }
                     }
                 }
@@ -377,6 +657,189 @@
     "$defs": {
         "tls-versions": {
             "enum": ["tlsv1", "tlsv1.0", "tlsv1.1", "tlsv1.2", "tlsv1.3"]
+        },
+        // same as in manifest
+        "dependencies": {
+            "patternProperties": {
+                "^.+$": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string",
+                            "title": "Version requirement"
+                        },
+                        "registry": {
+                            "type": "string",
+                            "title": "Custom registry"
+                        },
+                        "features": {
+                            "type": "array",
+                            "title": "Enabled features",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "git": {
+                            "type": "string",
+                            "title": "Link to git repository"
+                        },
+                        "branch": {
+                            "type": "string",
+                            "title": "Branch of git repository"
+                        },
+                        "path": {
+                            "type": "string",
+                            "title": "Local path to package"
+                        },
+                        "package": {
+                            "type": "string",
+                            "title": "Package name in registry (overriding key)"
+                        },
+                        "default-features": {
+                            "type": "boolean",
+                            "title": "Do not include default features"
+                        },
+                        "optional": {
+                            "type": "boolean",
+                            "title": "Optionally include using features"
+                        }
+                    }
+                }
+            }
+        },
+        "profile-settings": {
+            "properties": {
+                "opt-level": {
+                    "type": ["integer", "string"],
+                    "title": "Optimization level",
+                    "oneOf": [
+                        {
+                            "const": 0,
+                            "title": "No optimizations"
+                        },
+                        {
+                            "const": 1,
+                            "title": "Basic optimizations"
+                        },
+                        {
+                            "const": 2,
+                            "title": "Some optimizations"
+                        },
+                        {
+                            "const": 3,
+                            "title": "All optimizations"
+                        },
+                        {
+                            "const": "s",
+                            "title": "Optimize for binary size"
+                        },
+                        {
+                            "const": "z",
+                            "title": "Optimize for binary size, no loop vectorization"
+                        }
+                    ]
+                },
+                "debug": {
+                    "type": ["integer", "boolean"],
+                    "title": "Debug information",
+                    "oneOf": [
+                        {
+                            "enum": [0, false],
+                            "title": "No debug info at all"
+                        },
+                        {
+                            "const": 1,
+                            "title": "Line tables only"
+                        },
+                        {
+                            "enum": [2, true],
+                            "title": "Full debug info"
+                        }
+                    ]
+                },
+                "split-debuginfo": {
+                    "type": "string",
+                    "title": "Debug information generation",
+                    "enum": ["off", "packed", "unpacked"]
+                },
+                "strip": {
+                    "type": ["boolean", "string"],
+                    "title": "Strip symbols/debuginfo from binary",
+                    "oneOf": [
+                        {
+                            "enum": [true, "symbols"],
+                            "title": "Strip symbols"
+                        },
+                        {
+                            "const": "debuginfo",
+                            "title": "Strip debuginfo"
+                        },
+                        {
+                            "enum": [false, "none"],
+                            "title": "Disable strip"
+                        }
+                    ]
+                },
+                "debug-assertions": {
+                    "type": "boolean",
+                    "title": "Turn `cfg(debug_assertions)` on",
+                    "description": "The debug-assertions setting controls the `-C debug-assertions` flag which turns `cfg(debug_assertions)` conditional compilation on or off. Debug assertions are intended to include runtime validation which is only available in debug/development builds. These may be things that are too expensive or otherwise undesirable in a release build. Debug assertions enables the `debug_assert!` macro in the standard library."
+                },
+                "overflow-checks": {
+                    "type": "boolean",
+                    "title": "Enable runtime integer overflow"
+                },
+                "lto": {
+                    "type": ["boolean", "string"],
+                    "title": "Link time optimizations",
+                    "oneOf": [
+                        {
+                            "const": false,
+                            "title": "Thin local LTO"
+                        },
+                        {
+                            "enum": [true, "fat"],
+                            "title": "Fat LTO"
+                        },
+                        {
+                            "const": "thin",
+                            "title": "Thin LTO"
+                        },
+                        {
+                            "const": "off",
+                            "title": "Disable LTO"
+                        }
+                    ]
+                },
+                "panic": {
+                    "type": "string",
+                    "title": "Panic strategy",
+                    "oneOf": [
+                        {
+                            "const": "unwind",
+                            "title": "Unwind the stack upon panic"
+                        },
+                        {
+                            "const": "abort",
+                            "title": "Terminate the process upon panic"
+                        }
+                    ]
+                },
+                "incremental": {
+                    "type": "boolean",
+                    "title": "Enable incremental compilation"
+                },
+                "codegen-units": {
+                    "type": "integer",
+                    "title": "Codegen units for crate to split in",
+                    "description": "The default is 256 for incremental builds, and 16 for non-incremental builds.",
+                    "minimum": 0
+                },
+                "rpath": {
+                    "type": "boolean",
+                    "title": "Enable rpath"
+                }
+            }
         }
     }
 }
