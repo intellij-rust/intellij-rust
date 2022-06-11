@@ -567,6 +567,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iter take`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -603,6 +604,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator cloned`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

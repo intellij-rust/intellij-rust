@@ -75,6 +75,10 @@ class RustProjectSettingsServiceImpl(
         val rawState = element.clone()
         rawState.updateToCurrentVersion()
         deserializeInto(_state, rawState)
+
+        if (_state.macroExpansionEngine == MacroExpansionEngine.OLD) {
+            _state.macroExpansionEngine = MacroExpansionEngine.NEW
+        }
     }
 
     override fun modify(action: (State) -> Unit) {

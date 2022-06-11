@@ -20,6 +20,7 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
+import java.util.*
 import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
@@ -32,7 +33,11 @@ class RsProjectConfigurable(
         rustProjectSettings.attachTo(this)
         row(RsBundle.message("settings.rust.toolchain.expand.macros.label")) {
             comboBox(
-                EnumComboBoxModel(MacroExpansionEngine::class.java),
+                object : EnumComboBoxModel<MacroExpansionEngine>(MacroExpansionEngine::class.java) {
+                    override fun createEnumSet(en: Class<MacroExpansionEngine>): EnumSet<MacroExpansionEngine> {
+                        return EnumSet.of(MacroExpansionEngine.DISABLED, MacroExpansionEngine.NEW)
+                    }
+                },
                 state::macroExpansionEngine,
                 createExpansionEngineListRenderer()
             ).comment(RsBundle.message("settings.rust.toolchain.expand.macros.comment"))
@@ -46,8 +51,7 @@ class RsProjectConfigurable(
         return SimpleListCellRenderer.create("") {
             when (it) {
                 MacroExpansionEngine.DISABLED -> RsBundle.message("settings.rust.toolchain.expand.macros.disable.label")
-                MacroExpansionEngine.OLD -> RsBundle.message("settings.rust.toolchain.expand.macros.old.engine.label")
-                MacroExpansionEngine.NEW -> RsBundle.message("settings.rust.toolchain.expand.macros.new.engine.label")
+                MacroExpansionEngine.OLD, MacroExpansionEngine.NEW -> RsBundle.message("settings.rust.toolchain.expand.macros.new.engine.label")
                 null -> error("Unreachable")
             }
         }
