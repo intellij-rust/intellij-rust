@@ -17,6 +17,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.errors.MacroExpansionError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.resolve.Namespace
@@ -39,6 +40,7 @@ private val EXPAND_MACROS_IN_PARALLEL: RegistryValue = Registry.get("org.rust.re
 /** Resolves all imports and expands macros (new items are added to [defMap]) using fixed point iteration algorithm */
 class DefCollector(
     private val project: Project,
+    private val macroExpander: MacroExpander<RsMacroData, MacroExpansionError>,
     private val defMap: CrateDefMap,
     private val context: CollectorContext,
     private val pool: ExecutorService?,
@@ -58,8 +60,6 @@ class DefCollector(
 
     private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
 
-    /** Created once as optimization */
-    private val macroExpander = FunctionLikeMacroExpander.new(project)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
     private val macroMixHashToOrder: MutableMap<HashCode /* mix hash */, Int> = THashMap()

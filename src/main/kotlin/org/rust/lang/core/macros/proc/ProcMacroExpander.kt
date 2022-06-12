@@ -17,6 +17,7 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ExecutableNotFound
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ProcMacroExpansionIsDisabled
+import org.rust.lang.core.macros.proc.RustcCompatibilityChecker.IncompatibilityCause
 import org.rust.lang.core.macros.tt.*
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.psi.*
@@ -25,23 +26,34 @@ import org.rust.lang.core.psi.ext.childrenWithLeaves
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
 import org.rust.openapiext.isUnitTestMode
-import org.rust.stdext.RsResult
+import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
-import org.rust.stdext.toResult
-import org.rust.stdext.unwrapOrElse
 import java.io.IOException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 import java.util.concurrent.TimeoutException
 
 class ProcMacroExpander(
     private val project: Project,
     private val toolchain: RsToolchainBase? = project.toolchain,
+    private val isRustcCompatible: Future<out RsResult<Unit, IncompatibilityCause>> = CompletableFuture.completedFuture(RsResult.Ok(Unit)),
     private val server: ProcMacroServerPool? = toolchain?.let { ProcMacroApplicationService.getInstance().getServer(it) },
     private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
 ) : MacroExpander<RsProcMacroData, ProcMacroExpansionError>() {
     private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isEnabled()
 
-    private fun serverOrErr(): RsResult<ProcMacroServerPool, ProcMacroExpansionError> =
-        server.toResult().mapErr { if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled }
+    private fun serverOrErr(): RsResult<ProcMacroServerPool, ProcMacroExpansionError> {
+        val server = server.toResult().mapErr { if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled }
+
+        val rustcCompatCheck = isRustcCompatible.getWithCheckCanceled(60_000)
+            .andThen { it }
+        if (rustcCompatCheck is Err) {
+            if (isUnitTestMode) error("Reference proc macro expansion failed with error: ${rustcCompatCheck.err}")
+            return Err(ProcMacroExpansionError.UnsupportedRustcVersion)
+        }
+
+        return server
+    }
 
     override fun expandMacroAsTextWithErr(
         def: RsProcMacroData,

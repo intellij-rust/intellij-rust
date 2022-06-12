@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
+import org.rust.lang.core.macros.FunctionLikeMacroExpander
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
@@ -108,7 +109,7 @@ private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): M
     collectScope(scope, hangingModData, modCollectorContext, dollarCrateHelper = dollarCrateHelper)
 
     val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
-    DefCollector(project, defMap, collectorContext, pool = null, indicator).collect()
+    DefCollector(project, FunctionLikeMacroExpander.new(crate), defMap, collectorContext, pool = null, indicator).collect()
     return hangingModData
 }
 

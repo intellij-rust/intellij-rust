@@ -918,8 +918,9 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
 private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
     val def = call.resolveToMacroWithoutPsiWithErr()
         .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionError())) }
-    val project = call.project
-    val result = FunctionLikeMacroExpander.new(project).expandMacro(
+    val crate = call.containingCrate ?: return memExpansionResult(call, Err(GetMacroExpansionError.Unresolved))
+    val project = crate.project
+    val result = FunctionLikeMacroExpander.new(crate).expandMacro(
         def,
         call,
         RsPsiFactory(project, markGenerated = false),

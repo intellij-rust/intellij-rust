@@ -469,15 +469,7 @@ object CargoMetadata {
     }
 
     private fun getProcMacroArtifact(buildMessages: List<CompilerMessage>): CargoWorkspaceData.ProcMacroArtifact? {
-        val procMacroArtifacts = buildMessages
-            .filterIsInstance<CompilerArtifactMessage>()
-            .filter {
-                it.target.kind.contains("proc-macro") && it.target.crate_types.contains("proc-macro")
-            }
-
-        val procMacroArtifactPath = procMacroArtifacts
-            .flatMap { it.filenames }
-            .find { file -> DYNAMIC_LIBRARY_EXTENSIONS.any { file.endsWith(it) } }
+        val procMacroArtifactPath = findProcMacroArtifact(buildMessages)
 
         return procMacroArtifactPath?.let {
             val originPath = Path.of(procMacroArtifactPath)
@@ -493,6 +485,19 @@ object CargoMetadata {
 
             CargoWorkspaceData.ProcMacroArtifact(path, hash)
         }
+    }
+
+    fun findProcMacroArtifact(buildMessages: List<CompilerMessage>): String? {
+        val procMacroArtifacts = buildMessages
+            .filterIsInstance<CompilerArtifactMessage>()
+            .filter {
+                it.target.kind.contains("proc-macro") && it.target.crate_types.contains("proc-macro")
+            }
+
+        val procMacroArtifactPath = procMacroArtifacts
+            .flatMap { it.filenames }
+            .find { file -> DYNAMIC_LIBRARY_EXTENSIONS.any { file.endsWith(it) } }
+        return procMacroArtifactPath
     }
 
     /**

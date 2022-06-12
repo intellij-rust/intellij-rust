@@ -117,6 +117,7 @@ abstract class RsToolchainBase(val location: Path) {
     }
 
     companion object {
+        // TODO get rid of `RustcCompatibilityChecker.MIN_SUPPORTED_TOOLCHAIN` after bump
         val MIN_SUPPORTED_TOOLCHAIN = "1.41.0".parseSemVer()
 
         /** Environment variable to unlock unstable features of rustc and cargo.

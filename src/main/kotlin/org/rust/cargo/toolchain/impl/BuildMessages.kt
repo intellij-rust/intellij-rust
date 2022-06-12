@@ -8,7 +8,7 @@ package org.rust.cargo.toolchain.impl
 import org.rust.cargo.project.workspace.PackageId
 
 class BuildMessages(
-    private val messages: Map<PackageId, List<CompilerMessage>>,
+    val messages: Map<PackageId, List<CompilerMessage>>,
     val isSuccessful: Boolean
 ) {
 

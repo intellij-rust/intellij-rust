@@ -89,6 +89,7 @@ sealed class ProcMacroExpansionError : MacroExpansionError() {
     object CantRunExpander : ProcMacroExpansionError()
     object ExecutableNotFound : ProcMacroExpansionError()
     object ProcMacroExpansionIsDisabled : ProcMacroExpansionError()
+    object UnsupportedRustcVersion : ProcMacroExpansionError()
 
     override fun toString(): String = "${ProcMacroExpansionError::class.simpleName}.${javaClass.simpleName}"
 }
@@ -109,6 +110,7 @@ fun DataOutput.writeMacroExpansionError(err: MacroExpansionError) {
         ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> 8
         BuiltinMacroExpansionError -> 9
         DeclMacroExpansionError.TooLargeExpansion -> 10
+        ProcMacroExpansionError.UnsupportedRustcVersion -> 11
     }
     writeByte(ordinal)
 
@@ -142,6 +144,7 @@ fun DataInput.readMacroExpansionError(): MacroExpansionError = when (val ordinal
     8 -> ProcMacroExpansionError.ProcMacroExpansionIsDisabled
     9 -> BuiltinMacroExpansionError
     10 -> DeclMacroExpansionError.TooLargeExpansion
+    11 -> ProcMacroExpansionError.UnsupportedRustcVersion
     else -> throw IOException("Unknown expansion error code $ordinal")
 }
 

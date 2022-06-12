@@ -15,6 +15,7 @@ import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
+import org.rust.lang.core.macros.FunctionLikeMacroExpander
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
 import org.rust.lang.core.psi.shouldIndexFile
@@ -40,7 +41,7 @@ fun buildDefMap(
     val context = CollectorContext(crate, project)
     val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps, isNormalCrate)
         ?: return null
-    DefCollector(project, defMap, context, pool, indicator).collect()
+    DefCollector(project, FunctionLikeMacroExpander.new(crate), defMap, context, pool, indicator).collect()
     testAssert({ !isNormalCrate || !isCrateChanged(crate, defMap) }, {
         "DefMap $defMap should be up-to-date just after built"
     })

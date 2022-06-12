@@ -200,15 +200,21 @@ private class ProcMacroServerProcess private constructor(
                 throw TimeoutException()
             }
 
-            try {
-                // throws TimeoutException, ExecutionException(cause = IOException), InterruptedException
-                responseFuture.getWithCheckCanceled(timeout)
-            } catch (e: ExecutionException) {
-                // Unwrap exceptions from `writeAndRead` method
-                throw e.cause ?: IllegalStateException("Unexpected ExecutionException without a cause", e)
-            } catch (e: InterruptedException) {
-                // Should not really happens
-                throw ProcessCanceledException(e)
+            when (val result = responseFuture.getWithCheckCanceled(timeout)) {
+                is RsResult.Ok -> result.ok
+                is RsResult.Err -> when (val err = result.err) {
+                    is FutureGetError.ExceptionThrown -> {
+                        // Unwrap exceptions from `writeAndRead` method (IOException)
+                        throw err.cause
+                    }
+                    is FutureGetError.Interrupted -> {
+                        // Should not really happen
+                        throw ProcessCanceledException(err.cause)
+                    }
+                    is FutureGetError.Timeout -> {
+                        throw err.cause
+                    }
+                }
             }
         } catch (t: Throwable) {
             Disposer.dispose(this) // Kill the process (if not yet)

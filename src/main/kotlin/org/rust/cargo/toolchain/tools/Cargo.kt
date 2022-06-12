@@ -257,7 +257,7 @@ class Cargo(
         return Ok(CargoConfig(buildTarget, env))
     }
 
-    private fun fetchBuildScriptsInfo(
+    fun fetchBuildScriptsInfo(
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?

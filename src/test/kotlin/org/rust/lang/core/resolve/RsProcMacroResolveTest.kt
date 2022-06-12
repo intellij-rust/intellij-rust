@@ -617,6 +617,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
+    @MinRustcVersion("1.46.0")
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
     @ProjectDescriptor(WithProcMacroAndDependencyRustProjectDescriptor::class)
     fun `test hardcoded not a macro on proc macro definition`() = stubOnlyResolve("""

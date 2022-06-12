@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import org.rust.stdext.RsResult.Ok
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.locks.Condition
@@ -96,18 +97,29 @@ class ThreadLocalDelegate<T>(initializer: () -> T) {
 }
 
 @Throws(TimeoutException::class, ExecutionException::class, InterruptedException::class)
-fun <V> Future<V>.getWithCheckCanceled(timeoutMillis: Long): V {
+fun <V> Future<V>.getWithCheckCanceled(timeoutMillis: Long): RsResult<V, FutureGetError> {
     val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
     while (true) {
         try {
-            return get(10, TimeUnit.MILLISECONDS)
+            return Ok(get(10, TimeUnit.MILLISECONDS))
         } catch (e: TimeoutException) {
             ProgressManager.checkCanceled()
             if (System.nanoTime() >= deadline) {
-                throw e
+                return RsResult.Err(FutureGetError.Timeout(timeoutMillis, e))
             }
+        } catch (e: ExecutionException) {
+            val cause = e.cause ?: IllegalStateException("Unexpected ExecutionException without a cause", e)
+            return RsResult.Err(FutureGetError.ExceptionThrown(cause))
+        } catch (e: InterruptedException) {
+            return RsResult.Err(FutureGetError.Interrupted(e))
         }
     }
+}
+
+sealed class FutureGetError {
+    data class Timeout(val timeout: Long, val cause: TimeoutException) : FutureGetError()
+    data class ExceptionThrown(val cause: Throwable) : FutureGetError()
+    data class Interrupted(val cause: InterruptedException) : FutureGetError()
 }
 
 fun <T> Lock.withLockAndCheckingCancelled(action: () -> T): T =

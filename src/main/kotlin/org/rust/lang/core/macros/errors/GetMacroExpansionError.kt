@@ -77,6 +77,8 @@ sealed class GetMacroExpansionError {
             ProcMacroExpansionError.ExecutableNotFound -> "`${RsPathManager.INTELLIJ_RUST_NATIVE_HELPER}` executable is not found; " +
                 "(maybe it's not provided for your platform by IntelliJ-Rust)"
             ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> "procedural macro expansion is not enabled"
+            ProcMacroExpansionError.UnsupportedRustcVersion -> "IntelliJ Rust can't expand procedural macros using " +
+                "your Rust toolchain version"
         }
         ModDataNotFound -> "can't find ModData for containing mod of the macro call"
         NoMacroIndex -> "can't find macro index of the macro call"
