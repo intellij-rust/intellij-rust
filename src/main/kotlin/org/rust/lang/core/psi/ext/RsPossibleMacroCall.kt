@@ -25,9 +25,9 @@ import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
-import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.KnownDerivableTrait
 import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
+import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.resolve2.resolveToProcMacroWithoutPsi
 import org.rust.lang.core.stubs.RsAttrProcMacroOwnerStub
@@ -425,7 +425,7 @@ val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpans
     }
 
 fun RsPossibleMacroCall.expandMacrosRecursively(
-    depthLimit: Int = DEFAULT_RECURSION_LIMIT,
+    depthLimit: Int = getRecursionLimit(this),
     replaceDollarCrate: Boolean = true,
     expander: (RsPossibleMacroCall) -> MacroExpansion? = RsPossibleMacroCall::expansion
 ): String {

@@ -19,7 +19,6 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.body
-import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
@@ -417,7 +416,7 @@ class DefCollector(
     }
 
     private fun getModCollectorContextForExpandedElements(call: MacroCallInfo): ModCollectorContext? {
-        if (call.depth >= DEFAULT_RECURSION_LIMIT) return null
+        if (call.depth >= defMap.recursionLimitRaw) return null
         return ModCollectorContext(
             defMap = defMap,
             context = context,
