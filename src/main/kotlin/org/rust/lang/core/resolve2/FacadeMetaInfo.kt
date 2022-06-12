@@ -57,5 +57,5 @@ fun CrateDefMap.hasTransitiveGlobImport(source: RsMod, target: RsMod): Boolean {
 fun getRecursionLimit(element: PsiElement): Int {
     val mod = element.ancestorOrSelf<RsElement>()?.containingMod ?: return DEFAULT_RECURSION_LIMIT
     val (_, defMap, _) = getModInfo(mod) as? RsModInfo ?: return DEFAULT_RECURSION_LIMIT
-    return defMap.recursionLimitRaw
+    return defMap.recursionLimit
 }

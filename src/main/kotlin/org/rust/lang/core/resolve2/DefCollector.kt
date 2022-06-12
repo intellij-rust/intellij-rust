@@ -71,6 +71,8 @@ class DefCollector(
             MacroExpansionMode.Old -> true
         }
 
+    private val recursionLimit: Int = defMap.recursionLimit
+
     fun collect() {
         do {
             // Have to call it in loop, because macro can expand to
@@ -416,7 +418,7 @@ class DefCollector(
     }
 
     private fun getModCollectorContextForExpandedElements(call: MacroCallInfo): ModCollectorContext? {
-        if (call.depth >= defMap.recursionLimitRaw) return null
+        if (call.depth >= recursionLimit) return null
         return ModCollectorContext(
             defMap = defMap,
             context = context,
