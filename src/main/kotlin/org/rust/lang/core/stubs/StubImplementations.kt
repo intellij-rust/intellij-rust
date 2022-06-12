@@ -52,6 +52,8 @@ class RsFileStub(
 
     val mayHaveStdlibAttributes: Boolean
         get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
+    val mayHaveRecursionLimitAttribute: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_RECURSION_LIMIT_MASK)
 
     override val rawMetaItems: Sequence<RsMetaItemStub>
         get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
@@ -72,7 +74,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 225
+        private const val STUB_VERSION = 226
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -91,6 +93,7 @@ class RsFileStub(
                 var flags = RsAttributeOwnerStub.extractFlags(rawAttributes)
                 val mayHaveStdlibAttributes = rawAttributes.hasAnyOfAttributes("no_std", "no_core")
                 flags = BitUtil.set(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK, mayHaveStdlibAttributes)
+                flags = BitUtil.set(flags, MAY_HAVE_RECURSION_LIMIT_MASK, rawAttributes.hasAttribute("recursion_limit"))
                 return RsFileStub(file, flags)
             }
 
@@ -135,6 +138,7 @@ class RsFileStub(
 
     companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
         private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = nextBitMask()
+        private val MAY_HAVE_RECURSION_LIMIT_MASK: Int = nextBitMask()
     }
 }
 

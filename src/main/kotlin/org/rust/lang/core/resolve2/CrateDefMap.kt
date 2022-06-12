@@ -45,6 +45,8 @@ class CrateDefMap(
     val rootModMacroIndex: Int,
     /** Attributes of root module */
     val stdlibAttributes: RsFile.Attributes,
+    // https://doc.rust-lang.org/reference/attributes/limits.html#the-recursion_limit-attribute
+    val recursionLimitRaw: Int,
     /** Only for debug */
     val crateDescription: String,
 ) {
