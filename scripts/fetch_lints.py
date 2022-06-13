@@ -62,7 +62,12 @@ def get_clippy_lints():
     for lint in clippy_lints:
         lints.append((lint["id"], False))
         groups.add(lint["group"])
-    return lints + [(group, True) for group in groups]
+
+    merged_lints = lints + [(group, True) for group in groups]
+    if ("all", True) not in merged_lints:
+        merged_lints.append(("all", True))
+
+    return merged_lints
 
 
 if __name__ == "__main__":
