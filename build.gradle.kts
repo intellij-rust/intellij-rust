@@ -407,7 +407,7 @@ project(":") {
             exclude(module = "jackson-annotations")
         }
         api("com.vdurmont:semver4j:3.1.0")
-        testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
     }
 
     val generateRustLexer = task<GenerateLexerTask>("generateRustLexer") {
