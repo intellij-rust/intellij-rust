@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
+import org.rust.cargo.project.settings.getMaximumRecursionLimit
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.*
@@ -30,6 +31,7 @@ import java.io.DataOutput
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import kotlin.math.min
 
 class CrateDefMap(
     val crate: CratePersistentId,
@@ -45,6 +47,8 @@ class CrateDefMap(
     val rootModMacroIndex: Int,
     /** Attributes of root module */
     val stdlibAttributes: RsFile.Attributes,
+    // https://doc.rust-lang.org/reference/attributes/limits.html#the-recursion_limit-attribute
+    val recursionLimitRaw: Int,
     /** Only for debug */
     val crateDescription: String,
 ) {
@@ -87,6 +91,8 @@ class CrateDefMap(
 
     val isAtLeastEdition2018: Boolean
         get() = metaData.edition >= Edition.EDITION_2018
+
+    val recursionLimit: Int get() = min(recursionLimitRaw, getMaximumRecursionLimit())
 
     fun getDefMap(crate: CratePersistentId): CrateDefMap? =
         if (crate == this.crate) this else allDependenciesDefMaps[crate]

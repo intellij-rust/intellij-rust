@@ -108,6 +108,7 @@ private fun buildDefMapContainingExplicitItems(
         metaData = CrateMetaData(crate),
         rootModMacroIndex = rootModMacroIndex,
         stdlibAttributes = stdlibAttributes,
+        recursionLimitRaw = crateRoot.getRecursionLimit(crate),
         crateDescription = crateDescription
     )
 

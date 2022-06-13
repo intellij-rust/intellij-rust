@@ -15,6 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
+import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.testAssert
@@ -152,10 +153,15 @@ fun RsItemsOwner.processExpandedItemsInternal(
     withMacroCalls: Boolean = false,
     processor: (RsElement, Boolean) -> Boolean
 ): Boolean {
-    return itemsAndMacros.any { it.processItem(withMacroCalls, processor) }
+    val recursionLimit = getRecursionLimit(this)
+    return itemsAndMacros.any { it.processItem(withMacroCalls, recursionLimit, processor) }
 }
 
-private fun RsElement.processItem(withMacroCalls: Boolean, processor: (RsElement, Boolean) -> Boolean): Boolean {
+private fun RsElement.processItem(
+    withMacroCalls: Boolean,
+    recursionLimit: Int,
+    processor: (RsElement, Boolean) -> Boolean
+): Boolean {
     val existsAfterExpansionSelf = this !is RsDocAndAttributeOwner || evaluateCfg() != ThreeValuedLogic.False
 
     val derives: Sequence<RsMetaItem>? = if (this is RsAttrProcMacroOwner) {
@@ -166,7 +172,7 @@ private fun RsElement.processItem(withMacroCalls: Boolean, processor: (RsElement
                 }
                 if (!existsAfterExpansionSelf) return false
                 return attr.attr.expansion?.elements.orEmpty().any {
-                    it.processItem(withMacroCalls, processor)
+                    it.processItem(withMacroCalls, recursionLimit, processor)
                 }
             }
             is ProcMacroAttribute.Derive -> attr.derives
@@ -182,8 +188,8 @@ private fun RsElement.processItem(withMacroCalls: Boolean, processor: (RsElement
                 if (processor(this, existsAfterExpansionSelf)) return true
             }
             if (existsAfterExpansionSelf) {
-                processExpansionRecursively {
-                    it.processItem(withMacroCalls, processor)
+                processExpansionRecursively(recursionLimit) {
+                    it.processItem(withMacroCalls, recursionLimit, processor)
                 }
             }
         }
@@ -199,7 +205,7 @@ private fun RsElement.processItem(withMacroCalls: Boolean, processor: (RsElement
                 if (processor(derive, existsAfterExpansionSelf)) return true
             }
             val result = derive.expansion?.elements.orEmpty().any {
-                it.processItem(withMacroCalls, processor)
+                it.processItem(withMacroCalls, recursionLimit, processor)
             }
             if (result) return true
         }

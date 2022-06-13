@@ -1235,6 +1235,11 @@
             default="https://docs.rs/"
             groupKey="advanced.setting.rust.group"
         />
+        <advancedSetting
+            id="org.rust.macros.maximum.recursion.limit"
+            default="0"
+            groupKey="advanced.setting.rust.group"
+        />
     </extensions>
 
     <extensions defaultExtensionNs="org.rust">

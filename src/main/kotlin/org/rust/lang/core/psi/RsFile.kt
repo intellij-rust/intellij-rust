@@ -35,6 +35,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
 import org.rust.lang.core.resolve2.isNewResolveEnabled
@@ -215,6 +216,14 @@ class RsFile(
         val stub = greenStub as RsFileStub?
         if (stub?.mayHaveMacroUse == false) return false
         return getQueryAttributes(crate, stub).hasAtomAttribute("macro_use")
+    }
+
+    fun getRecursionLimit(crate: Crate?): Int {
+        val stub = greenStub as RsFileStub?
+        if (stub?.mayHaveRecursionLimitAttribute == false) return DEFAULT_RECURSION_LIMIT
+        val attributes = getQueryAttributes(crate, stub)
+        val recursionLimit = attributes.lookupStringValueForKey("recursion_limit")
+        return recursionLimit?.toIntOrNull() ?: DEFAULT_RECURSION_LIMIT
     }
 
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()
