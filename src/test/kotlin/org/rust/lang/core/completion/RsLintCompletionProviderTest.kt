@@ -39,6 +39,12 @@ class RsLintCompletionProviderTest : RsAttributeCompletionTestBase() {
         fn foo() {}
     """)
 
+    fun `test complete all in clippy`() = checkContainsCompletion(
+        listOf("all"), """
+        #[allow(clippy::al/*caret*/)]
+        fn foo() {}
+    """)
+
     fun `test warn`() = doSingleAttributeCompletion("""
         #![warn(unused_var/*caret*/)]
     """, """
