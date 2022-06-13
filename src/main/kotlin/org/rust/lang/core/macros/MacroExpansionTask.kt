@@ -57,6 +57,8 @@ class MacroExpansionTask(
         indicator.isIndeterminate = false
         val subTaskIndicator = indicator.toThreadSafeProgressIndicator()
 
+        val start1 = System.currentTimeMillis()
+
         val allDefMaps = try {
             indicator.text = "Preparing resolve data"
             updateDefMapForAllCrates(project, subTaskIndicator)
@@ -64,8 +66,15 @@ class MacroExpansionTask(
             throw e
         }
 
+        val start2 = System.currentTimeMillis()
+        val elapsed1 = start2 - start1
+        MACRO_LOG.debug("Finished building DefMaps for all crates in $elapsed1 ms")
+
         indicator.text = "Save macro expansions"
         updateMacrosFiles(allDefMaps)
+
+        val elapsed2 = System.currentTimeMillis() - start2
+        MACRO_LOG.debug("Finished macro expansion task in $elapsed2 ms")
     }
 
     private data class FileAttributes(

@@ -72,6 +72,7 @@ class CargoSyncTask(
     override fun run(indicator: ProgressIndicator) {
         LOG.info("CargoSyncTask started")
         indicator.isIndeterminate = true
+        val start = System.currentTimeMillis()
 
         val syncProgress = SyncViewManager.createBuildProgress(project)
 
@@ -95,6 +96,9 @@ class CargoSyncTask(
             throw e
         }
         result.complete(refreshedProjects)
+
+        val elapsed = System.currentTimeMillis() - start
+        LOG.debug("Finished Cargo sync task in $elapsed ms")
     }
 
     private fun doRun(
