@@ -123,7 +123,7 @@ interface MacroExpansionManager {
 }
 
 @JvmField
-val MACRO_LOG: Logger = Logger.getInstance("org.rust.macros")
+val MACRO_LOG: Logger = Logger.getInstance("#org.rust.macros")
 
 // The path is visible in indexation progress
 const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
