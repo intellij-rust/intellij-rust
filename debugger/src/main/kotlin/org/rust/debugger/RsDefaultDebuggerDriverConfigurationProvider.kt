@@ -6,6 +6,8 @@
 package org.rust.debugger
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.ArchitectureType
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
@@ -24,10 +26,13 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
     }
 }
 
-private open class RsLLDBDriverConfiguration(
+open class RsLLDBDriverConfiguration(
     private val isElevated: Boolean
 ) : LLDBDriverConfiguration() {
     override fun isElevated(): Boolean = isElevated
+
+    override fun useRustTypeSystem(): Boolean =
+        SystemInfo.isWindows && Registry.`is`("org.rust.debugger.lldb.rust.msvc", false)
 }
 
 private class RsCustomBinariesLLDBDriverConfiguration(

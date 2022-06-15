@@ -11,9 +11,9 @@ import com.jetbrains.cidr.execution.Installer
 import com.jetbrains.cidr.execution.RunParameters
 import com.jetbrains.cidr.execution.TrivialInstaller
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
-import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.cargo.project.model.CargoProject
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
+import org.rust.debugger.RsLLDBDriverConfiguration
 
 class RsDebugRunParameters(
     val project: Project,
@@ -29,8 +29,6 @@ class RsDebugRunParameters(
         for (provider in RsDebuggerDriverConfigurationProvider.EP_NAME.extensionList) {
             return provider.getDebuggerDriverConfiguration(project, isElevated) ?: continue
         }
-        return object : LLDBDriverConfiguration() {
-            override fun isElevated(): Boolean = isElevated
-        }
+        return RsLLDBDriverConfiguration(isElevated)
     }
 }

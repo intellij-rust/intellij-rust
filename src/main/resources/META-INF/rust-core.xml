@@ -1200,6 +1200,8 @@
                      description="Show notification warning if the external linter is running longer than the set value (ms)"/>
         <registryKey key="org.rust.ide.json.paste.processor" defaultValue="false" restartRequired="false"
                      description="Enable converting JSON to Rust struct on paste"/>
+        <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="false" restartRequired="false"
+                     description="Enable Rust MSVC support in LLDB (Windows-only)"/>
 
         <!-- Move refactoring -->
 

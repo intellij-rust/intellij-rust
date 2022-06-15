@@ -6,6 +6,8 @@
 package org.rust.clion.debugger
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionLLDBDriverConfiguration
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.createDriverConfiguration
@@ -15,6 +17,14 @@ import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
         val toolchain = CPPToolchains.getInstance().defaultToolchain ?: return null
-        return createDriverConfiguration(project, CPPEnvironment(toolchain), isElevated)
+        val isLLDBRustMSVCSupportEnabled = Registry.`is`("org.rust.debugger.lldb.rust.msvc", false)
+
+        return if (toolchain.toolSet.isMSVC && isLLDBRustMSVCSupportEnabled) {
+            object : CLionLLDBDriverConfiguration(project, CPPEnvironment(toolchain), isElevated) {
+                override fun useRustTypeSystem(): Boolean = true
+            }
+        } else {
+            createDriverConfiguration(project, CPPEnvironment(toolchain), isElevated)
+        }
     }
 }
