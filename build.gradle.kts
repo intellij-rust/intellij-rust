@@ -389,8 +389,10 @@ project(":") {
         main {
             if (channel == "nightly" || channel == "dev") {
                 resources.srcDirs("src/main/resources-nightly")
+                resources.srcDirs("src/$platformVersion/main/resources-nightly")
             } else {
                 resources.srcDirs("src/main/resources-stable")
+                resources.srcDirs("src/$platformVersion/main/resources-stable")
             }
         }
     }

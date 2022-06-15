@@ -9,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
 import org.rust.RsBundle
+import org.rust.cargo.project.model.isNewProjectModelImportEnabled
 
+// TODO: move this configurable to `Preferences | Build, Execution, Deployment | Build Tools` when
+//  new project model reloading is enabled by default
 class CargoConfigurable(project: Project) : RsConfigurableBase(project, RsBundle.message("settings.rust.cargo.name")) {
     override fun createPanel(): DialogPanel = panel {
         row {
@@ -18,11 +21,15 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, RsBundle
                 state::autoShowErrorsInEditor
             )
         }
-        row {
-            checkBox(
-                RsBundle.message("settings.rust.cargo.auto.update.project.label"),
-                state::autoUpdateEnabled
-            )
+        // Project model updates is controlled with `Preferences | Build, Execution, Deployment | Build Tools` settings
+        // in case of new approach
+        if (!isNewProjectModelImportEnabled) {
+            row {
+                checkBox(
+                    RsBundle.message("settings.rust.cargo.auto.update.project.label"),
+                    state::autoUpdateEnabled
+                )
+            }
         }
         row {
             checkBox(

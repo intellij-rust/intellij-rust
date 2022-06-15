@@ -1,0 +1,8 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <registryKey key="org.rust.cargo.new.auto.import"
+                     defaultValue="true"
+                     description="Enable new Cargo project model reloading"
+                     restartRequired="false"/>
+    </extensions>
+</idea-plugin>
