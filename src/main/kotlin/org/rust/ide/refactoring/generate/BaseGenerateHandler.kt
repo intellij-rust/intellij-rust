@@ -130,7 +130,7 @@ private fun findSiblingImplItem(struct: RsStructItem): RsImplItem? {
         ?.firstOrNull { impl ->
             val cachedImpl = RsCachedImplItem.forImpl(impl)
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@firstOrNull false
-            cachedImpl.isInherent && cachedImpl.isValid
+            cachedImpl.isInherent && cachedImpl.isValid && !cachedImpl.isNegativeImpl
                 && generics.isEmpty() && constGenerics.isEmpty()  // TODO: Support generics
                 && type.isEquivalentTo(struct.declaredType)
         }

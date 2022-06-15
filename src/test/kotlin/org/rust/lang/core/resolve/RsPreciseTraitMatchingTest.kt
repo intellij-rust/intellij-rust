@@ -605,4 +605,20 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             //^
         }
     """)
+
+    fun `test trait bound satisfied for struct with negative impl`() = checkByCode("""
+        auto trait Sync {}
+        trait Tr1 { fn some_fn(&self) {} }
+        trait Tr2 { fn some_fn(&self) {} }
+                     //X
+        struct S<T> { value: T }
+        impl<T: Sync> Tr1 for S<T> {}
+        impl<T> Tr2 for S<T> {}
+        struct S0;
+        impl !Sync for S0 {}
+        fn main1(v: S<S0>) {
+            v.some_fn();
+            //^
+        }
+    """)
 }

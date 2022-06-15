@@ -91,7 +91,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             ?.firstOrNull { impl ->
                 val cachedImpl = RsCachedImplItem.forImpl(impl)
                 val (_, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@firstOrNull false
-                cachedImpl.isInherent && cachedImpl.isValid
+                cachedImpl.isInherent && cachedImpl.isValid && !cachedImpl.isNegativeImpl
                     && generics.isEmpty() && constGenerics.isEmpty()  // TODO: Support generics
                     && cachedImpl.typeAndGenerics == cachedTraitImpl.typeAndGenerics
             }
