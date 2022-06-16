@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonFactoryBuilder
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.json.JsonReadFeature
+import org.rust.stdext.mapToSet
 import java.io.IOException
 
 sealed class DataType {
@@ -19,7 +20,14 @@ sealed class DataType {
     object Unknown : DataType()
     data class StructRef(val struct: Struct) : DataType()
     data class Array(val type: DataType) : DataType()
-    data class Nullable(val type: DataType) : DataType()
+    data class Nullable(val type: DataType) : DataType() {
+        override fun unwrap(): DataType = type
+    }
+
+    /**
+     * Return the first non-nullable type contained in this type.
+     */
+    open fun unwrap(): DataType = this
 }
 
 // Structs with the same field names and types are considered the same, regardless of field order.
@@ -149,21 +157,51 @@ private class StructParser {
         }
     }
 
-    private fun generateContainedType(types: Set<DataType>): DataType {
-        val containsNull = types.any { it is DataType.Nullable }
+    /**
+     * Tries to unify multiple array types containing a similar value to a single array type.
+     */
+    private fun unifyArrayTypes(types: Set<DataType>): Set<DataType> {
+        if (!types.all { it is DataType.Array } || types.size < 2) return types
+
+        val arrayTypes = types.filterIsInstance<DataType.Array>().toSet()
+
+        // Ignore unknown, since it is contained in empty arrays
+        val innerTypes = arrayTypes
+            .map { it.type.unwrap() }
+            .filter { it !is DataType.Unknown }
+            .toSet()
+
+        return if (innerTypes.size == 1) {
+            val inner = if (arrayTypes.any { it.type is DataType.Nullable }) {
+                setOf(DataType.Nullable(innerTypes.first()))
+            } else {
+                innerTypes
+            }
+            inner.mapToSet { DataType.Array(it) }
+        } else {
+            types
+        }
+    }
+
+    private fun generateContainedType(containedTypes: Set<DataType>): DataType {
+        val types = unifyArrayTypes(containedTypes)
+
+        val containsNullable = types.any { it is DataType.Nullable }
+        val typesWithoutNull = types.filterNot { it is DataType.Nullable && it.type is DataType.Unknown }
+
         val structTypes = types.mapNotNull { extractStructType(it) }
         val innerType = when {
             types.size == 1 -> types.first()
-            types.size == 2 && containsNull -> DataType.Nullable(types.first { it !is DataType.Nullable })
-            structTypes.size == types.size -> {
+            types.size == 2 && containsNullable -> DataType.Nullable(types.first { it !is DataType.Nullable })
+            structTypes.size == typesWithoutNull.size -> {
                 val type = unifyStructs(structTypes)
-                if (containsNull) {
+                if (containsNullable) {
                     DataType.Nullable(type)
                 } else {
                     type
                 }
             }
-            containsNull -> DataType.Nullable(DataType.Unknown)
+            containsNullable -> DataType.Nullable(DataType.Unknown)
             else -> DataType.Unknown
         }
         return innerType
