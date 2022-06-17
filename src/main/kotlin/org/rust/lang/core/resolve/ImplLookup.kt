@@ -385,12 +385,15 @@ class ImplLookup(
         selectStrictWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
-        val result = selectWithoutConfirm(ref, recursionDepth)
+        val result = selectWithoutConfirm(ref, BoundConstness.NotConst, recursionDepth)
         val candidate = result.ok() ?: return result.map { error("unreachable") }
         // TODO optimize it. Obligations may be already evaluated, so we don't need to re-evaluated it
         if (!canEvaluateObligations(ref, candidate, recursionDepth)) return SelectionResult.Err
         return result
     }
+
+    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+        select(ref, BoundConstness.NotConst, recursionDepth)
 
     /**
      * If the TraitRef is a something like
@@ -398,15 +401,26 @@ class ImplLookup(
      * here we select an impl of the trait `Foo<U>` for the type `T`, i.e.
      *     `impl Foo<U> for T {}`
      */
-    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
-        selectWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
+    fun select(ref: TraitRef, constness: BoundConstness, recursionDepth: Int = 0): SelectionResult<Selection> =
+        selectWithoutConfirm(ref, constness, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
-    private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
+    private fun selectWithoutConfirm(
+        ref: TraitRef,
+        constness: BoundConstness,
+        recursionDepth: Int
+    ): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) {
             TypeInferenceMarks.TraitSelectionOverflow.hit()
             return SelectionResult.Err
         }
         testAssert { !ctx.hasResolvableTypeVars(ref) }
+
+        // BACKCOMPAT rustc 1.61.0: there are `~const Drop` bounds in stdlib that must be always satisfied in
+        // a non-const context. In newer rustc version these bounds are removed
+        if (constness == BoundConstness.ConstIfConst && ref.trait.element == items.Drop) {
+            return SelectionResult.Ok(ParamCandidate(BoundElement(ref.trait.element)))
+        }
+
         return traitSelectionCache.getOrPut(freshen(ref)) { selectCandidate(ref, recursionDepth) }
     }
 

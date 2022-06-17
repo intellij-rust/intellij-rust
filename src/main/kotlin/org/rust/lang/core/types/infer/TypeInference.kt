@@ -1120,7 +1120,12 @@ private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<PsiPredicate> 
                     it.polyboundList.toPredicates(projectionTy)
                 }
             }
-        sequenceOf(PsiPredicate.Bound(Predicate.Trait(TraitRef(selfTy, boundTrait)))) + assocTypeBounds
+        val constness = if (bound.hasConst) {
+            BoundConstness.ConstIfConst
+        } else {
+            BoundConstness.NotConst
+        }
+        sequenceOf(PsiPredicate.Bound(Predicate.Trait(TraitRef(selfTy, boundTrait), constness))) + assocTypeBounds
     }
 
 private sealed class PsiPredicate {
