@@ -81,7 +81,11 @@ class RsLivenessInspection : RsLintInspection() {
         if (isSimplePat) {
             when (kind) {
                 Parameter -> fixes.add(RemoveParameterFix(binding, name))
-                Variable -> fixes.add(RemoveVariableFix(binding, name))
+                Variable -> {
+                    if (binding.topLevelPattern.parent is RsLetDecl) {
+                        fixes.add(RemoveVariableFix(binding, name))
+                    }
+                }
             }
         }
 
