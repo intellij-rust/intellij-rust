@@ -16,7 +16,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.RsCachedTypeAlias
-import org.rust.lang.core.resolve.RsProcessor
 import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTypeAliasStub
@@ -32,8 +31,7 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
         fun findPotentialAliases(
             project: Project,
             tyf: TyFingerprint,
-            processor: RsProcessor<RsCachedTypeAlias>
-        ): Boolean {
+        ): List<RsCachedTypeAlias> {
             // Note that `getElements` is intentionally used with intermediate collection instead of
             // `StubIndex.processElements` in order to simplify profiling
             val aliases = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
@@ -62,11 +60,11 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
                         stdlibAliases + workspaceAliases
                     }
                     stdlibAliases.size <= threshold -> stdlibAliases
-                    else -> return false
+                    else -> return emptyList()
                 }
             }
 
-            return filteredAliases.any { processor(it) }
+            return filteredAliases
         }
 
         fun index(stub: RsTypeAliasStub, sink: IndexSink) {
