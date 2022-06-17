@@ -49,6 +49,28 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         fn main() { S.foo()/*caret*/ }
     """)
 
+    fun `test unsatisfied bound filtered 3`() = doSingleCompletion("""
+        trait Bound1 {}
+        trait Bound2 {}
+        trait Trait1 { fn foo(&self) {} }
+        trait Trait2 { fn bar(&self) {} }
+        impl<T: Bound1> Trait1 for T {}
+        impl<T: Bound2> Trait2 for T {}
+        struct S;
+        impl Bound1 for S {}
+        fn foo(a: &S) { a./*caret*/ }
+    """, """
+        trait Bound1 {}
+        trait Bound2 {}
+        trait Trait1 { fn foo(&self) {} }
+        trait Trait2 { fn bar(&self) {} }
+        impl<T: Bound1> Trait1 for T {}
+        impl<T: Bound2> Trait2 for T {}
+        struct S;
+        impl Bound1 for S {}
+        fn foo(a: &S) { a.foo()/*caret*/ }
+    """)
+
     fun `test unsatisfied bound not filtered for unknown type`() = doSingleCompletion("""
         trait Bound {}
         trait Trait { fn foo(&self) {} }

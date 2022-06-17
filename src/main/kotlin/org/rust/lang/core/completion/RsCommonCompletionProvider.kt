@@ -381,15 +381,15 @@ private fun filterMethodCompletionVariantsByTraitBounds(
     // Don't filter partially unknown types
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
 
-    val cache = mutableMapOf<TraitImplSource, Boolean>()
+    val cache = mutableMapOf<Pair<TraitImplSource, Int>, Boolean>()
     return createProcessor(processor.name) {
         // If not a method (actually a field) or a trait method - just process it
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         // Filter methods by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete methods
         // in the same impl and always have the same receiver type
-        val canEvaluate = cache.getOrPut(it.source) {
-            lookup.ctx.canEvaluateBounds(it.source, receiver)
+        val canEvaluate = cache.getOrPut(it.source to it.derefCount) {
+            lookup.ctx.canEvaluateBounds(it.source, it.selfTy)
         }
         if (canEvaluate) return@createProcessor processor(it)
 
