@@ -247,4 +247,13 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
             a./*caret*/;
         }
     """)
+
+    fun `test no completion for a method with ref self in ref impl`() = checkNoCompletion("""
+        struct S;
+        impl<'a> Foo for &'a S {}
+        trait Foo { fn foo(&self) {} }
+        fn main() {
+            S.fo/*caret*/;
+        }
+    """)
 }

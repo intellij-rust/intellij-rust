@@ -1007,4 +1007,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             } //^ i32
         }
     """)
+
+    fun `test Option clone method`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = Some(String::new());
+            let b = a.clone();
+            b;
+        } //^ Option<String>
+    """)
 }
