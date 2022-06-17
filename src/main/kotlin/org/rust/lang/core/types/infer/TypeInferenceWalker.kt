@@ -673,7 +673,7 @@ class RsTypeInferenceWalker(
             val variantsForDisplay = callee?.let { listOf(it.toMethodResolveVariant()) } ?: variants
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
 
-            callee ?: variants.firstOrNull()?.let { MethodPick.from(it) }
+            callee
         }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
