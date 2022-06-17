@@ -155,16 +155,16 @@ tailrec fun Ty.stripReferences(): Ty =
         else -> this
     }
 
-fun Ty.structTail(): Ty {
+fun Ty.structTail(): Ty? {
     val ancestors = mutableSetOf(this)
 
-    tailrec fun structTailInner(ty: Ty): Ty {
+    fun structTailInner(ty: Ty): Ty? {
         return when (ty) {
             is TyAdt -> {
                 val item = ty.item as? RsStructItem ?: return ty
                 val typeRef = item.fields.lastOrNull()?.typeReference
-                val fieldTy = typeRef?.type?.substitute(typeParameterValues) ?: return ty
-                if (!ancestors.add(fieldTy)) return ty
+                val fieldTy = typeRef?.type?.substitute(ty.typeParameterValues) ?: return null
+                if (!ancestors.add(fieldTy)) return null
                 structTailInner(fieldTy)
             }
 

@@ -1955,6 +1955,31 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ X
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowParamCandidateWins::class)
+    fun `test assoc type bound does not conflict with type bound`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item: Foo<X>; }
+        fn bar<T: Bar>(_: T, b: T::Item) where T::Item: Foo<X> {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowObjectOrProjectionCandidateWins::class)
+    fun `test assoc type bound wins over blanket impl`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        impl<T> Foo<X> for T {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item: Foo<X>; }
+        fn bar<T: Bar>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
     fun `test infer type parameter from associated type binding`() = testExpr("""
         trait Foo { type Item; }
         fn foo<A, B>(a: A) -> B where A: Foo<Item = B> { unimplemented!() }
@@ -1996,6 +2021,57 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn bar<T: Foo<S>>(t: T) {
             let a = foo(t);
+            a;
+        } //^ S
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowParamCandidateWins::class)
+    fun `test infer type parameter from blank impl 3`() = testExpr("""
+        struct W<T>(T);
+        struct S;
+        trait Foo<O> {}
+        impl<T> Foo<S> for W<T> {}
+        fn foo<T: Foo<B>, B>(t: T) -> B { todo!() }
+        fn bar<T>(t: W<T>) where W<T>: Foo<S> {
+            let a = foo(t);
+            a;
+        } //^ S
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowParamCandidateLoses::class)
+    fun `test global type bound does not affect type inference`() = testExpr("""
+        struct S;
+        struct X;
+        trait Foo<O> {}
+        impl Foo<X> for S {}
+        fn foo<T: Foo<B>, B>(t: T) -> B { todo!() }
+        fn bar(t: S) where S: Foo<X> {
+            let a = foo(t);
+            a;
+        } //^ X
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowObjectOrProjectionCandidateWins::class)
+    fun `test trait object wins over blank impl`() = testExpr("""
+        struct S;
+        trait Foo<O> {}
+        impl<T> Foo<S> for T {}
+        fn foo<T: Foo<B> + ?Sized, B>() -> B { todo!() }
+        fn bar() {
+            let a = foo::<dyn Foo<S>, _>();
+            a;
+        } //^ S
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.WinnowObjectOrProjectionCandidateWins::class)
+    fun `test 'impl Trait' wins over blank impl`() = testExpr("""
+        struct S;
+        trait Foo<O> {}
+        impl<T> Foo<S> for T {}
+        fn foo<T: Foo<B>, B>(t: T) -> B { todo!() }
+        fn impl_foo() -> impl Foo<S> { todo!() }
+        fn bar() {
+            let a = foo(impl_foo());
             a;
         } //^ S
     """)
@@ -2148,5 +2224,20 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = foo(a);
             b;
         } //^ <unknown>
+    """)
+
+    fun `test duplicated trait bounds`() = testExpr("""
+        struct S;
+        struct X;
+        trait Foo<O> {}
+
+        fn foo<T: Foo<B>, B>(t: T) -> B {
+            todo!()
+        }
+
+        fn bar<T: Foo<X> + Foo<X>>(t: T) {
+            let a = foo(t);
+            a;
+        } //^ X
     """)
 }

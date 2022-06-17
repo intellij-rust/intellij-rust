@@ -103,6 +103,11 @@ fun Testmark.hitOnFalse(b: Boolean): Boolean {
     return b
 }
 
+fun Testmark.hitOnTrue(b: Boolean): Boolean {
+    if (b) hit()
+    return b
+}
+
 interface TestmarkPred {
     @TestOnly
     fun <T> checkHit(f: () -> T): T
