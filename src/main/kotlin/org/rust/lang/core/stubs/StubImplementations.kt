@@ -1984,27 +1984,27 @@ class RsLetDeclStub(
  * This is a fake stub type. The actual stub does not exist and can't be created because [shouldCreateStub]
  * always returns `false`. This fake stub is needed in order to conform [RsStmt] signature
  */
-object RsEmptyStmtType : RsStubElementType<RsPlaceholderStub, RsEmptyStmt>("EMPTY_STMT") {
+object RsEmptyStmtType : RsStubElementType<RsPlaceholderStub<RsEmptyStmt>, RsEmptyStmt>("EMPTY_STMT") {
 
     override fun shouldCreateStub(node: ASTNode): Boolean = false
 
-    override fun serialize(stub: RsPlaceholderStub, dataStream: StubOutputStream) {
+    override fun serialize(stub: RsPlaceholderStub<RsEmptyStmt>, dataStream: StubOutputStream) {
         error("EmptyStmtType stub must never be created")
     }
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsPlaceholderStub =
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsPlaceholderStub<RsEmptyStmt> =
         error("EmptyStmtType stub must never be created")
 
-    override fun createStub(psi: RsEmptyStmt, parentStub: StubElement<out PsiElement>?): RsPlaceholderStub =
+    override fun createStub(psi: RsEmptyStmt, parentStub: StubElement<out PsiElement>?): RsPlaceholderStub<RsEmptyStmt> =
         error("EmptyStmtType stub must never be created")
 
-    override fun createPsi(stub: RsPlaceholderStub): RsEmptyStmt =
+    override fun createPsi(stub: RsPlaceholderStub<RsEmptyStmt>): RsEmptyStmt =
         error("EmptyStmtType stub must never be created")
 }
 
 class RsExprStubType<PsiT : RsElement>(
     debugName: String,
-    psiCtor: (RsPlaceholderStub, IStubElementType<*, *>) -> PsiT
+    psiCtor: (RsPlaceholderStub<*>, IStubElementType<*, *>) -> PsiT
 ) : RsPlaceholderStub.Type<PsiT>(debugName, psiCtor) {
     override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
 }
@@ -2012,7 +2012,7 @@ class RsExprStubType<PsiT : RsElement>(
 class RsBlockExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     private val flags: Int
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsBlockExpr>(parent, elementType) {
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
     val isTry: Boolean get() = BitUtil.isSet(flags, TRY_MASK)
@@ -2052,7 +2052,7 @@ class RsBlockExprStub(
 class RsLitExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val kind: RsStubLiteralKind?
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsLitExpr>(parent, elementType) {
     object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
@@ -2089,7 +2089,7 @@ private fun ASTNode.isFunctionBody() = this.elementType == BLOCK && treeParent?.
 class RsUnaryExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val operatorType: UnaryOperator
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsUnaryExpr>(parent, elementType) {
     object Type : RsStubElementType<RsUnaryExprStub, RsUnaryExpr>("UNARY_EXPR") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)

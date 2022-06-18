@@ -92,6 +92,7 @@ class RsDebuggerToolchainService {
                     NotificationType.ERROR
                 ))
             }
+            else -> Unit
         }
 
         return result

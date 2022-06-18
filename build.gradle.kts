@@ -50,7 +50,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.0"
     id("org.jetbrains.intellij") version "1.6.0"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
@@ -104,9 +104,9 @@ allprojects {
         withType<KotlinCompile> {
             kotlinOptions {
                 jvmTarget = "11"
-                languageVersion = "1.6"
+                languageVersion = "1.7"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
-                apiVersion = "1.5"
+                apiVersion = "1.6"
                 freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }

@@ -13,7 +13,7 @@ import org.rust.lang.core.stubs.RsPlaceholderStub
 
 abstract class RsContMixin : RsExprImpl, RsContExpr {
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val operator get() = `continue`
 }
