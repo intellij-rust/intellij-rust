@@ -10,6 +10,9 @@ on:
                 required: true
                 type: boolean
 
+env:
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
 jobs:
     build-native-code:
         strategy:
@@ -22,11 +25,22 @@ jobs:
                       container: ubuntu:18.04
                       target: x86_64-unknown-linux-gnu
                       artifact_path: native-helper/target/x86_64-unknown-linux-gnu/release/intellij-rust-native-helper
+                    - name: linux
+                      arch: arm64
+                      os: ubuntu-latest
+                      container: ubuntu:18.04
+                      target: aarch64-unknown-linux-gnu
+                      artifact_path: native-helper/target/aarch64-unknown-linux-gnu/release/intellij-rust-native-helper
                     - name: windows
                       arch: x86-64
                       os: windows-latest
                       target: x86_64-pc-windows-msvc
                       artifact_path: native-helper/target/x86_64-pc-windows-msvc/release/intellij-rust-native-helper.exe
+                    - name: windows
+                      arch: arm64
+                      os: windows-latest
+                      target: aarch64-pc-windows-msvc
+                      artifact_path: native-helper/target/aarch64-pc-windows-msvc/release/intellij-rust-native-helper.exe
                     - name: macos
                       arch: x86-64
                       os: macos-latest
@@ -71,6 +85,12 @@ jobs:
                   toolchain: ${{ inputs.rust-version }}
                   target: ${{ matrix.config.target }}
                   default: true
+
+            - name: Install Linux arm64 linker
+              if: matrix.config.target == 'aarch64-unknown-linux-gnu'
+              run: |
+                apt-get update
+                apt-get -y install gcc-aarch64-linux-gnu
 
             - name: Build
               if: ${{ !inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit }}
