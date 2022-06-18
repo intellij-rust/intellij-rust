@@ -19,9 +19,9 @@ val RsTupleFieldDecl.position: Int?
     get() = owner?.positionalFields?.withIndex()?.firstOrNull { it.value === this }?.index
 
 
-abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsTupleFieldDecl {
+abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStub<*>>, RsTupleFieldDecl {
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
         if (owner is RsEnumVariant) RsIcons.FIELD else iconWithVisibility(flags, RsIcons.FIELD)

@@ -321,9 +321,9 @@ val RsExpr.isInAsyncContext: Boolean
         return parent is RsBlockExpr || (parent is RsFunction && parent.isAsync)
     }
 
-abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
+abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub<*>>, RsExpr {
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

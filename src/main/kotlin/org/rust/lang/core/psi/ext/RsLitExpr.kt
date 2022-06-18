@@ -49,7 +49,7 @@ val RsLitExpr.stringValue: String? get() = (stubKind as? RsStubLiteralKind.Strin
 abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
 
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun isValidHost(): Boolean =
         node.findChildByType(RS_ALL_STRING_LITERALS) != null

@@ -104,9 +104,9 @@ allprojects {
         withType<KotlinCompile> {
             kotlinOptions {
                 jvmTarget = "11"
-                languageVersion = "1.6"
+                languageVersion = "1.7"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
-                apiVersion = "1.5"
+                apiVersion = "1.6"
                 freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }
