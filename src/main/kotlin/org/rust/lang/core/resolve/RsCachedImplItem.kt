@@ -56,6 +56,9 @@ class RsCachedImplItem(
         membersMap
     }
 
+    // Reduces heap memory usage by reducing number on `TraitImplSource.ExplicitImpl` instances
+    val explicitImpl: TraitImplSource.ExplicitImpl = TraitImplSource.ExplicitImpl(this)
+
     companion object {
         fun forImpl(impl: RsImplItem): RsCachedImplItem {
             return (impl as RsImplItemImplMixin).cachedImplItem.value
