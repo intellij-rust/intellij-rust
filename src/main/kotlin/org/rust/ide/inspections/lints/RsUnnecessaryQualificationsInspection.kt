@@ -50,7 +50,7 @@ class RsUnnecessaryQualificationsInspection : RsLintInspection() {
      * Once we find a path that can be resolved and which is shorter than the original path, we will return it.
      */
     private fun getUnnecessarilyQualifiedPath(path: RsPath): RsPath? {
-        if (path.resolveStatus == PathResolveStatus.UNRESOLVED) return null
+        if (path.resolveStatus != PathResolveStatus.Resolved) return null
 
         val target = path.reference?.resolve() ?: return null
 

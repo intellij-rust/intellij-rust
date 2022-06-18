@@ -1010,4 +1010,20 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             todo!()
         }
     """)
+
+    fun `test available if the path is resolved in wrong namespace`() = doAvailableTest("""
+        mod foo {}
+        fn main() {
+            /*caret*/foo();
+        }
+    """, """
+        mod foo {}
+        fn main() {
+            foo();
+        }
+
+        fn foo() {
+            todo!()/*caret*/
+        }
+    """)
 }

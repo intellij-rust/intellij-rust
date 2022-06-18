@@ -17,6 +17,7 @@ import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
@@ -80,6 +81,12 @@ class RsPathReferenceImpl(
     override fun advancedResolve(): BoundElement<RsElement>? =
         advancedMultiResolve().singleOrNull()?.inner
 
+    override fun advancedResolve2(): BoundElementWithVisibility<RsElement>? =
+        advancedMultiResolve().singleOrNull()
+
+    override fun advancedMultiResolve2(): List<BoundElementWithVisibility<RsElement>> =
+        advancedMultiResolve()
+
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         advancedMultiResolve().map2Array { it.inner }
 
@@ -100,7 +107,7 @@ class RsPathReferenceImpl(
         return path.inference?.getResolvedPath(path)?.map { result ->
             val element = BoundElement(result.element, result.subst)
             val isVisible = (result as? ResolvedPath.Item)?.isVisible ?: true
-            BoundElementWithVisibility(element, isVisible)
+            BoundElementWithVisibility(element, isVisible, result.isCorrectNamespace)
         }
     }
 
@@ -160,8 +167,20 @@ class RsPathReferenceImpl(
 }
 
 fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
-    return collectResolveVariantsAsScopeEntries(path.referenceName) {
+    return collectResolveVariantsAsScopeEntries<ScopeEntry>(path.referenceName) {
         processPathResolveVariants(lookup, path, false, it)
+    }
+}
+
+fun resolvePathRawWithFallback(path: RsPath, lookup: ImplLookup? = null): Pair<List<ScopeEntry>, Boolean> {
+    val result = resolvePathRaw(path, lookup)
+    return if (result.isNotEmpty()) {
+        result to true
+    } else {
+        NameResolutionTestmarks.NamespaceFallback.hit()
+        collectResolveVariantsAsScopeEntries<ScopeEntry>(path.referenceName) {
+            processPathResolveVariants(lookup, path, false, it, ns = TYPES)
+        } to false
     }
 }
 
@@ -170,6 +189,14 @@ fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWith
         processPathResolveVariants(lookup, path, false, it)
     }.let { rawResult ->
         tryRefineAssocTypePath(path, lookup, rawResult) ?: rawResult
+    }
+
+    // If the path is unresolved in allowed namespaces, retry in all namespaces
+    if (result.isEmpty() && path.parent !is RsPath && TyPrimitive.fromPath(path, checkResolve = false) == null) {
+        NameResolutionTestmarks.NamespaceFallback.hit()
+        return collectPathResolveVariants(path) {
+            processPathResolveVariants(lookup, path, false, it, ns = TYPES_N_VALUES)
+        }.map { it.copy(isCorrectNamespace = false) }
     }
 
     // type A = Foo<T>
@@ -430,7 +457,7 @@ fun RsPathReference.deepResolve(): RsElement? =
     advancedDeepResolve()?.element
 
 /** Resolves a reference through type aliases */
-fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
+fun RsPathReference.advancedDeepResolve(implOnly: Boolean = false): BoundElement<RsElement>? {
     val boundElement = advancedResolve()?.let { resolved ->
         // Resolve potential `Self` inside `impl`
         if (resolved.element is RsImplItem && element.hasCself) {
@@ -439,6 +466,8 @@ fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
             resolved
         }
     }
+
+    if (implOnly) return boundElement
 
     // Resolve potential type aliases
     return if (boundElement != null && boundElement.element is RsTypeAlias) {

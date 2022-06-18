@@ -32,7 +32,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
         val functionCall = path?.parentOfType<RsCallExpr>()
         if (functionCall != null) {
             if (!functionCall.expr.isAncestorOf(path)) return null
-            if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
+            if (!path.resolveStatus.isUnresolved) return null
 
             val target = getTargetItemForFunctionCall(path) ?: return null
             if (target !is CallableInsertionTarget.Module) return null

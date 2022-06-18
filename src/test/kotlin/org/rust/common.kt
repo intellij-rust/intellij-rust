@@ -36,6 +36,7 @@ import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.resolveToMacroWithoutPsi
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve.ref.RsDeriveTraitReferenceImpl
+import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.isFeatureEnabled
@@ -104,13 +105,15 @@ fun PsiElement.checkedResolve(offset: Int, errorMessagePrefix: String = ""): Psi
         }
     }
 
-    check(reference.isReferenceTo(resolved)) {
-        "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
+    if (reference !is RsPathReference || reference.advancedResolve2()!!.isCorrectNamespace) {
+        check(reference.isReferenceTo(resolved)) {
+            "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
+        }
+
+        checkSearchScope(this, resolved)
+
+        checkProcMacroResolve(reference, resolved)
     }
-
-    checkSearchScope(this, resolved)
-
-    checkProcMacroResolve(reference, resolved)
 
     return resolved
 }

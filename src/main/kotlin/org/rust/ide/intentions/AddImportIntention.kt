@@ -30,7 +30,7 @@ class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Conte
         val importablePath = path.findImportablePath() ?: return null
         if (importablePath.kind != PathKind.IDENTIFIER ||
             importablePath.reference == null ||
-            importablePath.resolveStatus != PathResolveStatus.RESOLVED) return null
+            importablePath.resolveStatus != PathResolveStatus.Resolved) return null
 
         // ignore paths that cannot be shortened
         if (importablePath.path == null) return null
@@ -92,7 +92,13 @@ private fun RsPath.shorten(target: RsQualifiedNamedElement) {
  * a::b::Struct::function -> a::b::Struct
  */
 private fun RsPath.findImportablePath(): RsPath? {
-    val target = reference?.resolve() as? RsQualifiedNamedElement ?: return path?.findImportablePath()
+    val target = reference
+        ?.advancedResolve2()
+        ?.takeIf { it.isCorrectNamespace }
+        ?.inner
+        ?.element
+        as? RsQualifiedNamedElement
+        ?: return path?.findImportablePath()
 
     val canBeImported = when (target) {
         is RsStructOrEnumItemElement,

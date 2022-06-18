@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.CheckTestmarkHit
+import org.rust.CheckTestmarkNotHit
+
 class RsNamespaceResolveTest : RsResolveTestBase() {
     fun `test mod and fn`() = checkByCode("""
         mod test {
@@ -62,11 +65,23 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                 //^
     """)
 
-    fun `test static is not type`() = checkByCode("""
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
+    fun `test type in a value namespace`() = checkByCode("""
+        struct Foo {}
+             //X
+        fn main() {
+            let _ = Foo;
+                  //^
+        }
+    """)
+
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
+    fun `test value in a type namespace`() = checkByCode("""
         static S: u8  = 0;
+             //X
         fn main() {
             let _: S = unimplemented!();
-                 //^ unresolved
+                 //^
         }
     """)
 
@@ -92,14 +107,15 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                    //^
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test path`() = checkByCode("""
         mod m {
             fn foo() {}
-        }
+        }    //X
 
         fn main() {
             let _: m::foo = unimplemented!();
-                     //^ unresolved
+                     //^
         }
     """)
 
@@ -240,9 +256,11 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
               //^
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (type alias)`() = checkByCode("""
-        type A<const N: usize> = [N; N];
-                                //^ unresolved
+        type A<const N: usize> =
+            [N; N];//X
+           //^
     """)
 
     fun `test const generic type namespace (enum)`() = checkByCode("""
@@ -253,9 +271,12 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (enum)`() = checkByCode("""
-        enum E<const N: usize> { V([N; N]) }
-                                  //^ unresolved
+        enum E<const N: usize> {
+                   //X
+            V([N; N])
+        }    //^
     """)
 
     fun `test const generic type namespace (struct)`() = checkByCode("""
@@ -266,9 +287,12 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         );
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (struct)`() = checkByCode("""
-        struct S<const N: usize>([N; N]);
-                                //^ unresolved
+        struct S<const N: usize>(
+                     //X
+            [N; N]
+        ); //^
     """)
 
     fun `test const generic type namespace (trait)`() = checkByCode("""
@@ -279,13 +303,16 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (trait)`() = checkByCode("""
         trait T<const N: usize> {
+                    //X
             fn f(x: [N; N]) {}
-                   //^ unresolved
+                   //^
         }
     """)
 
+    @CheckTestmarkNotHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic type namespace (impl)`() = checkByCode("""
         struct S;
         impl <const N: usize> S {
@@ -295,11 +322,13 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (impl)`() = checkByCode("""
         struct S;
         impl <const N: usize> S {
+                  //X
             fn f(x: [N; N]) {}
-                   //^ unresolved
+                   //^
         }
     """)
 
@@ -311,8 +340,11 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         ) {}
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.NamespaceFallback::class)
     fun `test const generic value namespace (function)`() = checkByCode("""
-        fn f<const N: usize>(x: [N; N]) {}
-                               //^ unresolved
+        fn f<const N: usize>(
+                 //X
+            x: [N; N]
+        ) {}  //^
     """)
 }

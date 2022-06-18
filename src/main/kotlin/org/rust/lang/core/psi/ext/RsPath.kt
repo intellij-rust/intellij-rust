@@ -94,17 +94,32 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
 
 val RsPath.resolveStatus: PathResolveStatus
     get() {
-        val reference = reference ?: return PathResolveStatus.NO_REFERENCE
-        return if (TyPrimitive.fromPath(this) == null && reference.multiResolve().isEmpty()) {
-            PathResolveStatus.UNRESOLVED
-        } else {
-            PathResolveStatus.RESOLVED
+        val reference = reference ?: return PathResolveStatus.NoReference
+        if (TyPrimitive.fromPath(this) != null) {
+            return PathResolveStatus.Resolved
         }
+        val resolved = reference.advancedMultiResolve2()
+        if (resolved.isEmpty()) {
+            return PathResolveStatus.Unresolved
+        }
+        if (resolved.any { !it.isCorrectNamespace }) {
+            return PathResolveStatus.ResolvedInWrongNamespace
+        }
+        return PathResolveStatus.Resolved
     }
 
 enum class PathResolveStatus {
-    RESOLVED, UNRESOLVED, NO_REFERENCE
+    Resolved,
+    ResolvedInWrongNamespace,
+    Unresolved,
+    NoReference
 }
+
+val PathResolveStatus.isUnresolved: Boolean
+    get() = this == PathResolveStatus.Unresolved
+
+val PathResolveStatus.isUnresolvedOrWrongNamespace: Boolean
+    get() = this == PathResolveStatus.Unresolved || this == PathResolveStatus.ResolvedInWrongNamespace
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {

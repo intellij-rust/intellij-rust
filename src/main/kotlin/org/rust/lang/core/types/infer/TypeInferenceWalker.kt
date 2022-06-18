@@ -296,7 +296,7 @@ class RsTypeInferenceWalker(
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
         val path = expr.path
-        val resolveVariants = resolvePathRaw(path, lookup)
+        val (resolveVariants, isCorrectNamespace) = resolvePathRawWithFallback(path, lookup)
         val assocVariants = resolveVariants.filterIsInstance<AssocItemScopeEntry>()
 
         val filteredVariants = if (resolveVariants.size == assocVariants.size) {
@@ -305,7 +305,8 @@ class RsTypeInferenceWalker(
             if (variants.size > 1 && fnVariants.size == variants.size && path.path != null) {
                 val resolved = collapseToTrait(fnVariants)
                 if (resolved != null) {
-                    ctx.writePath(expr, variants.map { ResolvedPath.from(it) })
+                    ctx.writePath(expr, variants.map { ResolvedPath.from(it, isCorrectNamespace) })
+                    if (!isCorrectNamespace) return TyUnknown
                     val subst = collapseSubst(
                         resolved,
                         variants.mapNotNull { e ->
@@ -325,7 +326,9 @@ class RsTypeInferenceWalker(
             resolveVariants
         }
 
-        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it, expr) })
+        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it, expr, isCorrectNamespace) })
+
+        if (!isCorrectNamespace) return TyUnknown
 
         val first = filteredVariants.singleOrNull() ?: return TyUnknown
         return instantiatePath(first.element ?: return TyUnknown, first, expr)

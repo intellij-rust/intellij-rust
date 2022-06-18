@@ -18,10 +18,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.ide.utils.import.*
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidatesCollector2
+import org.rust.ide.utils.import.ImportContext2
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.Testmark
@@ -110,7 +112,8 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             if (path.reference == null) return null
 
             val basePath = path.basePath()
-            if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED) return null
+            // TODO provide auto-import even if a path is resolved in another namespace?
+            if (!basePath.resolveStatus.isUnresolved) return null
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
@@ -119,16 +122,6 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             }
 
             val referenceName = basePath.referenceName ?: return null
-
-            val isNameInScope = path.hasInScope(referenceName, TYPES_N_VALUES) && path.parent !is RsMacroCall
-            if (isNameInScope) {
-                // Don't import names that are already in scope but cannot be resolved
-                // because namespace of psi element prevents correct name resolution.
-                // It's possible for incorrect or incomplete code like "let map = HashMap"
-                Testmarks.NameInScope.hit()
-                return null
-            }
-
             val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return null
             val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
 
@@ -172,6 +165,5 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     object Testmarks {
         object PathInUseItem : Testmark()
-        object NameInScope : Testmark()
     }
 }

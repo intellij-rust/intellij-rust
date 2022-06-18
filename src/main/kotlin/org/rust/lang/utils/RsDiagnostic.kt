@@ -302,6 +302,38 @@ sealed class RsDiagnostic(
         )
     }
 
+    class WrongPathResolutionError(
+        element: PsiElement,
+        private val kind: Kind,
+        private val resolvedTo: RsElement,
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation {
+            val itemType = when (resolvedTo) {
+                is RsItemElement -> resolvedTo.itemKindName
+                else -> "Item"
+            }
+
+            return PreparedAnnotation(
+                ERROR,
+                kind.code,
+                "Expected ${kind.expected}, found $itemType `${element.text}`",
+            )
+        }
+
+        enum class Kind(val expected: String, val code: RsErrorCode) {
+            Type("type", E0573),
+            Trait("trait", E0404),
+            Pat("unit struct, unit variant or constant", E0532),
+            TupleStruct("tuple struct or tuple variant", E0532),
+            Value("value", E0423),
+            Callable("function", E0423),
+            UppercaseCallable("function, tuple struct or tuple variant", E0423),
+            Struct("struct, variant or union type", E0574),
+            AssociatedType("associated type", E0575),
+            AssociatedValue("method or associated constant", E0575),
+        }
+    }
+
     class StructFieldAccessError(
         element: PsiElement,
         private val fieldName: String,
@@ -779,23 +811,6 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             return "The name `$fieldName` is already used for a type parameter in this type parameter list"
-        }
-    }
-
-    class NotTraitError(
-        element: PsiElement,
-        private val found: RsItemElement
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0404,
-            errorText()
-        )
-
-        private fun errorText(): String {
-            val itemKind = found.itemKindName
-            val name = found.name
-            return "Expected trait, found $itemKind `$name`"
         }
     }
 
@@ -1499,8 +1514,8 @@ enum class RsErrorCode {
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
-    E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
-    E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
+    E0403, E0404, E0407, E0415, E0416, E0423, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
+    E0517, E0518, E0532, E0537, E0552, E0554, E0562, E0569, E0573, E0574, E0575, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
     E0703, E0704, E0732, E0741, E0747;
 
