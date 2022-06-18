@@ -319,7 +319,7 @@ class ImplLookup(
             }
             if (result) return true
         }
-        return processor(TyFingerprint.TYPE_PARAMETER_FINGERPRINT)
+        return processor(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
 
     private fun canCombineTypes(

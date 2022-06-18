@@ -29,7 +29,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     companion object {
         /** return impls for generic type `impl<T> Trait for T {}` */
         fun findFreeImpls(project: Project, processor: RsProcessor<RsCachedImplItem>): Boolean {
-            return findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, processor)
+            return findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT, processor)
         }
 
         /**
