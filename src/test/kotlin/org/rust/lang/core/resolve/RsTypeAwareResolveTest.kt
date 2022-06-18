@@ -864,4 +864,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             str::trim();
         }      //^
     """)
+
+    fun `test impl for a macro type`() = checkByCode("""
+        struct S;
+        macro_rules! foo {
+            () => { S };
+        }
+
+        impl foo!() {
+            fn bar(self) {}
+        }    //X
+
+        fn main() {
+            S.bar();
+        }   //^
+    """)
 }

@@ -22,7 +22,7 @@ data class TyFingerprint constructor(
 ) {
     companion object {
 
-        val TYPE_PARAMETER_FINGERPRINT = TyFingerprint("#T")
+        val TYPE_PARAMETER_OR_MACRO_FINGERPRINT = TyFingerprint("#T")
         private val ANY_INTEGER_FINGERPRINT = TyFingerprint("{integer}")
         private val ANY_FLOAT_FINGERPRINT = TyFingerprint("{float}")
 
@@ -36,7 +36,7 @@ data class TyFingerprint constructor(
                     RsBaseTypeKind.Underscore -> return emptyList()
                     is RsBaseTypeKind.Path -> when (val name = kind.path.referenceName) {
                         null -> return emptyList()
-                        in typeParameters -> TYPE_PARAMETER_FINGERPRINT
+                        in typeParameters -> TYPE_PARAMETER_OR_MACRO_FINGERPRINT
                         in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
                         in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
                         else -> TyFingerprint(name)
@@ -60,6 +60,7 @@ data class TyFingerprint constructor(
                 } else {
                     return emptyList()
                 }
+                is RsMacroType -> TYPE_PARAMETER_OR_MACRO_FINGERPRINT
                 else -> return emptyList()
             }
             return listOf(fingerprint)
