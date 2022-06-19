@@ -43,14 +43,7 @@ sealed class TraitImplSource {
     open val implementedTrait: BoundElement<RsTraitItem>? get() = value.implementedTrait
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overridden by the impl */
-    open val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazy(PUBLICATION) {
-        val membersMap = THashMap<String, MutableList<RsAbstractable>>()
-        for (member in value.members?.expandedMembers.orEmpty()) {
-            val name = member.name ?: continue
-            membersMap.getOrPut(name) { SmartList() }.add(member)
-        }
-        membersMap
-    }
+    abstract val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>>
 
     open val isInherent: Boolean get() = false
 
@@ -78,7 +71,9 @@ sealed class TraitImplSource {
     }
 
     /** T: Trait */
-    data class TraitBound(override val value: RsTraitItem, override val isInherent: Boolean) : TraitImplSource()
+    data class TraitBound(override val value: RsTraitItem, override val isInherent: Boolean) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
 
     /**
      * Like [TraitBound], but this is a bound for an associated type projection defined at the trait
@@ -95,13 +90,18 @@ sealed class TraitImplSource {
      * }             //^ the bound
      * ```
      */
-    data class ProjectionBound(override val value: RsTraitItem) : TraitImplSource()
+    data class ProjectionBound(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
 
     /** Trait is implemented for item via ```#[derive]``` attribute. */
-    data class Derived(override val value: RsTraitItem) : TraitImplSource()
+    data class Derived(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
 
     /** dyn/impl Trait or a closure */
     data class Object(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
         override val isInherent: Boolean get() = true
     }
 
@@ -110,16 +110,38 @@ sealed class TraitImplSource {
      * (with different type parameter values), so we collapsed all impls to that trait. Specific impl
      * will be selected during type inference.
      */
-    data class Collapsed(override val value: RsTraitItem) : TraitImplSource()
+    data class Collapsed(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
 
     /**
      * A trait is directly referenced in UFCS path `TraitName::foo`, an impl should be selected
      * during type inference
      */
-    data class Trait(override val value: RsTraitItem) : TraitImplSource()
+    data class Trait(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
 
     /** A built-in trait impl, like `Clone` impl for tuples */
-    data class Builtin(override val value: RsTraitItem) : TraitImplSource()
+    data class Builtin(override val value: RsTraitItem) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
+
+    companion object {
+        @JvmStatic
+        private fun lazyTraitMembers(trait: RsTraitItem): Lazy<THashMap<String, MutableList<RsAbstractable>>> =
+            lazy(PUBLICATION) { collectTraitMembers(trait) }
+
+        @JvmStatic
+        private fun collectTraitMembers(trait: RsTraitItem): THashMap<String, MutableList<RsAbstractable>> {
+            val membersMap = THashMap<String, MutableList<RsAbstractable>>()
+            for (member in trait.members?.expandedMembers.orEmpty()) {
+                val name = member.name ?: continue
+                membersMap.getOrPut(name) { SmartList() }.add(member)
+            }
+            return membersMap
+        }
+    }
 }
 
 /**
@@ -242,10 +264,10 @@ class ImplLookup(
         when (ty) {
             is TyTraitObject -> {
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
             }
             is TyFunction -> {
-                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
                 listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
             }
@@ -253,7 +275,7 @@ class ImplLookup(
                 ty.getTraitBoundsTransitively()
                     .distinctBy { it.element }
                     .mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                RsImplIndex.findFreeImpls(project) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+                RsImplIndex.findFreeImpls(project) { implsAndTraits += it.explicitImpl; false }
             }
             is TyProjection -> {
                 val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
@@ -267,7 +289,7 @@ class ImplLookup(
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
-                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
                 if (ty is TyTuple || ty is TyUnit) {
                     listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
                 }
