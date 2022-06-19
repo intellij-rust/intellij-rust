@@ -316,4 +316,26 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
             a.foo()/*caret*/
         }
     """)
+
+    fun `test filter by a bound unsatisfied because of a negative impl`() = doSingleCompletion("""
+        auto trait Sync {}
+        struct S<T> { value: T }
+        impl<T: Sync> S<T> { fn foo1(&self) {} }
+        impl<T> S<T> { fn foo2(&self) {} }
+        struct S0;
+        impl !Sync for S0 {}
+        fn main1(v: S<S0>) {
+            v.fo/*caret*/
+        }
+    """, """
+        auto trait Sync {}
+        struct S<T> { value: T }
+        impl<T: Sync> S<T> { fn foo1(&self) {} }
+        impl<T> S<T> { fn foo2(&self) {} }
+        struct S0;
+        impl !Sync for S0 {}
+        fn main1(v: S<S0>) {
+            v.foo2()/*caret*/
+        }
+    """)
 }

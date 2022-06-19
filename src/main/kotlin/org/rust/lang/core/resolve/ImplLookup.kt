@@ -275,7 +275,12 @@ class ImplLookup(
                 ty.getTraitBoundsTransitively()
                     .distinctBy { it.element }
                     .mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                RsImplIndex.findFreeImpls(project) { implsAndTraits += it.explicitImpl; false }
+                RsImplIndex.findFreeImpls(project) {
+                    if (!it.isNegativeImpl) {
+                        implsAndTraits += it.explicitImpl
+                    }
+                    false
+                }
             }
             is TyProjection -> {
                 val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
@@ -316,6 +321,7 @@ class ImplLookup(
 
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
         return RsImplIndex.findPotentialImpls(project, tyf) { cachedImpl ->
+            if (cachedImpl.isNegativeImpl) return@findPotentialImpls false
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
             val isAppropriateImpl = canCombineTypes(selfTy, type, generics, constGenerics) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
@@ -419,7 +425,7 @@ class ImplLookup(
         if (candidateSet.ambiguous) {
             return SelectionResult.Ambiguous
         }
-        val candidates = candidateSet.list
+        val candidates = candidateSet.list.filter { it !is ImplCandidate.ExplicitImpl || !it.isNegativeImpl }
 
         return when (candidates.size) {
             0 -> SelectionResult.Err
@@ -594,8 +600,9 @@ class ImplLookup(
         assembleCandidatesFromProjectedTys(ref, candidates)
         assembleCandidatesFromCallerBounds(ref, candidates)
 
-        // Auto implementations have lower priority, so we only
-        // consider triggering a default if there is no other impl that can apply
+        // Auto implementations have lower priority, so we only consider triggering a default if
+        // there is no other impl that can apply. Note that `candidates.list` also contains negative
+        // impl like `impl !Sync for Foo {}`
         if (candidates.list.isEmpty() && trait.isAuto) {
             assembleCandidatesFromAutoImpls(ref, candidates)
         }
@@ -742,7 +749,7 @@ class ImplLookup(
             ctx.combineTraitRefs(implTraitRef, ref)
         }
         if (!probe) return null
-        return ImplCandidate.ExplicitImpl(impl, formalSelfTy, formalTraitRef)
+        return ImplCandidate.ExplicitImpl(impl, formalSelfTy, formalTraitRef, isNegativeImpl)
     }
 
     private fun assembleDerivedCandidates(ref: TraitRef, candidates: SelectionCandidateSet) {
@@ -1328,7 +1335,9 @@ private sealed class SelectionCandidate {
             val impl: RsImplItem,
             // We can always extract these values from impl, but it's better to cache them
             val formalSelfTy: Ty,
-            val formalTrait: BoundElement<RsTraitItem>
+            val formalTrait: BoundElement<RsTraitItem>,
+            /** `true` if it is `!` impl: `impl !Sync for Foo {}` */
+            val isNegativeImpl: Boolean
         ) : ImplCandidate() {
             override fun isEquivalentTo(other: SelectionCandidate): Boolean =
                 other is ExplicitImpl && impl == other.impl

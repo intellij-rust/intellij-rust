@@ -30,7 +30,8 @@ class RsCachedImplItem(
     val impl: RsImplItem
 ) {
     private val traitRef: RsTraitRef? = impl.traitRef
-    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl && !impl.isNegativeImpl
+    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl
+    val isNegativeImpl: Boolean = impl.isNegativeImpl
     val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by recursionSafeLazy { traitRef?.resolveToBoundTrait() }

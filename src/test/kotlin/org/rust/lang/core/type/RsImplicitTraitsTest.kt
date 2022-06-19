@@ -292,6 +292,19 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ !Unsize<S<[i32]>>
     """)
 
+    fun `test a type is automatically Sync`() = doTest("""
+        struct S;
+        type T = S;
+               //^ Sync
+    """)
+
+    fun `test a type is not Sync if a negative impl present`() = doTest("""
+        struct S;
+        impl !Sync for S {}
+        type T = S;
+               //^ !Sync
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
@@ -308,6 +321,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
             #[lang = "sized"]  pub trait Sized {}
             #[lang = "copy"]   pub trait Copy {}
             #[lang = "unsize"] pub trait Unsize<T: ?Sized> {}
+            #[lang = "sync"]   pub unsafe auto trait Sync {}
 
             $code
         """
