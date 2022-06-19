@@ -51,9 +51,12 @@ import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import org.rust.stdext.intersects
+import org.rust.stdext.withPrevious
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -1389,15 +1392,23 @@ private fun processMethodDeclarationsWithDeref(
     context: RsElement,
     processor: RsMethodResolveProcessor
 ): Boolean {
-    return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
-        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { (name, element, _, _, source) ->
+    return lookup.coercionSequence(receiver).withPrevious().withIndex().any { (i, tyWithPrev) ->
+        val (ty, prevTy) = tyWithPrev
+        val tyIsSuitableForMethodCall = ty != TyUnknown && ty !is TyInfer.TyVar
+        val withAutoBorrow = (prevTy !is TyReference || prevTy.mutability == MUTABLE) && tyIsSuitableForMethodCall
+        val withAutoBorrowMut = (prevTy !is TyReference || prevTy.mutability == IMMUTABLE) && tyIsSuitableForMethodCall
+        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { (name, element, _, selfTy, source) ->
+            val autoBorrow = selfTy is TyReference && selfTy.referenced === ty
             // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
             // it is an associated item and so if it is a function with self parameter - it is a method.
             // Also, this place is very hot and `hasSelfParameters` is cheaper than `isMethod`
-            element is RsFunction && element.hasSelfParameters &&
-                processor(MethodResolveVariant(name, element, ty, i, source))
+            element is RsFunction && element.hasSelfParameters
+                && (!autoBorrow || element.selfParameter?.isRef == false)
+                && processor(MethodResolveVariant(name, element, selfTy, i, source))
         }
         processAssociatedItems(lookup, ty, VALUES, context, methodProcessor)
+            || withAutoBorrow && processAssociatedItems(lookup, TyReference(ty, IMMUTABLE), VALUES, context, methodProcessor)
+            || withAutoBorrowMut && processAssociatedItems(lookup, TyReference(ty, MUTABLE), VALUES, context, methodProcessor)
     }
 }
 

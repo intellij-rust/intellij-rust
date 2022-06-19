@@ -879,4 +879,48 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             S.bar();
         }   //^
     """)
+
+    fun `test method in impl for reference`() = checkByCode("""
+        trait Foo { fn foo(self); }
+        struct S;
+        impl<'a> Foo for &'a S {
+            fn foo(self) { }
+        }    //X
+        fn bar(s: S) {
+            s.foo();
+        }   //^
+    """)
+
+    fun `test method in impl for mut reference`() = checkByCode("""
+        trait Foo { fn foo(self); }
+        struct S;
+        impl<'a> Foo for &'a mut S {
+            fn foo(self) { }
+        }    //X
+        fn bar(mut s: S) {
+            s.foo();
+        }   //^
+    """)
+
+    fun `test method in impl for reference with mut ref receiver`() = checkByCode("""
+        trait Foo { fn foo(self); }
+        struct S;
+        impl<'a> Foo for &'a S {
+            fn foo(self) { }
+        }    //X
+        fn bar(s: &mut S) {
+            s.foo();
+        }   //^
+    """)
+
+    fun `test method in impl for mut reference with ref receiver`() = checkByCode("""
+        trait Foo { fn foo(self); }
+        struct S;
+        impl<'a> Foo for &'a mut S {
+            fn foo(self) { }
+        }    //X
+        fn bar(s: &S) {
+            s.foo();
+        }   //^
+    """)
 }

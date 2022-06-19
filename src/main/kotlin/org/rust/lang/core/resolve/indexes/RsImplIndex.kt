@@ -14,7 +14,6 @@ import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.RsCachedImplItem
-import org.rust.lang.core.resolve.RsProcessor
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
@@ -27,11 +26,6 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<TyFingerprint> = TyFingerprint.KeyDescriptor
 
     companion object {
-        /** return impls for generic type `impl<T> Trait for T {}` */
-        fun findFreeImpls(project: Project, processor: RsProcessor<RsCachedImplItem>): Boolean {
-            return findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT, processor)
-        }
-
         /**
          * Note this method may return false positives
          * @see TyFingerprint
@@ -39,16 +33,15 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
         fun findPotentialImpls(
             project: Project,
             tyf: TyFingerprint,
-            processor: RsProcessor<RsCachedImplItem>
-        ): Boolean {
+        ): List<RsCachedImplItem> {
             checkCommitIsNotInProgress(project)
             val impls = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
 
             // Note that `getElements` is intentionally used with intermediate collection instead of
             // `StubIndex.processElements` in order to simplify profiling
-            return impls.any {
-                val cachedImpl = RsCachedImplItem.forImpl(it)
-                cachedImpl.isValid && processor(cachedImpl)
+            return impls.mapNotNull { impl ->
+                val cachedImpl = RsCachedImplItem.forImpl(impl)
+                cachedImpl.takeIf { it.isValid }
             }
         }
 

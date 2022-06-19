@@ -15,9 +15,12 @@ import org.rust.lang.core.types.ty.TyProjection
 
 sealed class Predicate : TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
-    data class Trait(val trait: TraitRef) : Predicate() {
+    data class Trait(
+        val trait: TraitRef,
+        val constness: BoundConstness = BoundConstness.NotConst,
+    ) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Trait =
-            Trait(trait.foldWith(folder))
+            Trait(trait.foldWith(folder), constness)
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean =
             trait.visitWith(visitor)
@@ -49,6 +52,17 @@ sealed class Predicate : TypeFoldable<Predicate> {
         override fun toString(): String =
             "$ty1 == $ty2"
     }
+}
+
+enum class BoundConstness {
+    /** `T: Trait` */
+    NotConst,
+
+    /**
+     * `T: ~const Trait`
+     * Requires resolving to const only when we are in a const context
+     */
+    ConstIfConst,
 }
 
 data class Obligation(val recursionDepth: Int, var predicate: Predicate) : TypeFoldable<Obligation> {
@@ -187,7 +201,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
             is Predicate.Trait -> {
                 if (predicate.trait.selfTy is TyInfer.TyVar) return ProcessPredicateResult.NoChanges
 
-                return when (val impl = lookup.select(predicate.trait, obligation.recursionDepth)) {
+                return when (val impl = lookup.select(predicate.trait, predicate.constness, obligation.recursionDepth)) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
                     is SelectionResult.Ambiguous -> {
                         pendingObligation.stalledOn = traitRefTypeVars(predicate.trait)

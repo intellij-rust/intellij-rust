@@ -218,6 +218,8 @@ class ImplLookup(
         } else {
             Cache.new()
         }
+    private val implIndexCache: Cache<TyFingerprint, List<RsCachedImplItem>> = Cache.new()
+    private val typeAliasIndexCache: Cache<TyFingerprint, List<RsCachedTypeAlias>> = Cache.new()
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = items.FnOnce ?: return@lazy null
@@ -275,11 +277,10 @@ class ImplLookup(
                 ty.getTraitBoundsTransitively()
                     .distinctBy { it.element }
                     .mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                RsImplIndex.findFreeImpls(project) {
+                findBlanketImpls().forEach {
                     if (!it.isNegativeImpl) {
                         implsAndTraits += it.explicitImpl
                     }
-                    false
                 }
             }
             is TyProjection -> {
@@ -320,9 +321,10 @@ class ImplLookup(
     }
 
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
-        return RsImplIndex.findPotentialImpls(project, tyf) { cachedImpl ->
-            if (cachedImpl.isNegativeImpl) return@findPotentialImpls false
-            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
+        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        return impls.any { cachedImpl ->
+            if (cachedImpl.isNegativeImpl) return@any false
+            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@any false
             val isAppropriateImpl = canCombineTypes(selfTy, type, generics, constGenerics) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
@@ -336,8 +338,11 @@ class ImplLookup(
         if (fingerprint != null) {
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
-            val result = RsTypeAliasIndex.findPotentialAliases(project, fingerprint) {
-                val name = it.name ?: return@findPotentialAliases false
+            val aliases = typeAliasIndexCache.getOrPut(fingerprint) {
+                RsTypeAliasIndex.findPotentialAliases(project, fingerprint)
+            }
+            val result = aliases.any {
+                val name = it.name ?: return@any false
                 val aliasFingerprint = TyFingerprint(name)
                 val isAppropriateAlias = set.add(aliasFingerprint) && run {
                     val (declaredType, generics, constGenerics) = it.typeAndGenerics
@@ -367,6 +372,13 @@ class ImplLookup(
         }
     }
 
+    /** return impls for a generic type `impl<T> Trait for T {}` */
+    private fun findBlanketImpls(): List<RsCachedImplItem> {
+        return implIndexCache.getOrPut(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT) {
+            RsImplIndex.findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
+        }
+    }
+
     /**
      * Checks that trait can be successfully selected on any deref level.
      * E.g. for type `&&T` it try to select trait for `&&T`, `&T` and `T` types
@@ -385,12 +397,15 @@ class ImplLookup(
         selectStrictWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
-        val result = selectWithoutConfirm(ref, recursionDepth)
+        val result = selectWithoutConfirm(ref, BoundConstness.NotConst, recursionDepth)
         val candidate = result.ok() ?: return result.map { error("unreachable") }
         // TODO optimize it. Obligations may be already evaluated, so we don't need to re-evaluated it
         if (!canEvaluateObligations(ref, candidate, recursionDepth)) return SelectionResult.Err
         return result
     }
+
+    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+        select(ref, BoundConstness.NotConst, recursionDepth)
 
     /**
      * If the TraitRef is a something like
@@ -398,15 +413,26 @@ class ImplLookup(
      * here we select an impl of the trait `Foo<U>` for the type `T`, i.e.
      *     `impl Foo<U> for T {}`
      */
-    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
-        selectWithoutConfirm(ref, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
+    fun select(ref: TraitRef, constness: BoundConstness, recursionDepth: Int = 0): SelectionResult<Selection> =
+        selectWithoutConfirm(ref, constness, recursionDepth).andThen { confirmCandidate(ref, it, recursionDepth) }
 
-    private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
+    private fun selectWithoutConfirm(
+        ref: TraitRef,
+        constness: BoundConstness,
+        recursionDepth: Int
+    ): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) {
             TypeInferenceMarks.TraitSelectionOverflow.hit()
             return SelectionResult.Err
         }
         testAssert { !ctx.hasResolvableTypeVars(ref) }
+
+        // BACKCOMPAT rustc 1.61.0: there are `~const Drop` bounds in stdlib that must be always satisfied in
+        // a non-const context. In newer rustc version these bounds are removed
+        if (constness == BoundConstness.ConstIfConst && ref.trait.element == items.Drop) {
+            return SelectionResult.Ok(ParamCandidate(BoundElement(ref.trait.element)))
+        }
+
         return traitSelectionCache.getOrPut(freshen(ref)) { selectCandidate(ref, recursionDepth) }
     }
 
@@ -733,7 +759,8 @@ class ImplLookup(
     }
 
     private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
-        return RsImplIndex.findPotentialImpls(project, tyf) {
+        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        return impls.any {
             val candidate = it.trySelectCandidate(ref)
             candidate != null && processor(candidate)
         }
