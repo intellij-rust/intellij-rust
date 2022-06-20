@@ -46,6 +46,10 @@ class CargoSettingsFilesService(private val project: Project) {
         if (rootPath != null) {
             out["$rootPath/${CargoConstants.MANIFEST_FILE}"] = SettingFileType.CONFIG
             out["$rootPath/${CargoConstants.LOCK_FILE}"] = SettingFileType.CONFIG
+            out["$rootPath/${CargoConstants.TOOLCHAIN_FILE}"] = SettingFileType.CONFIG
+            out["$rootPath/${CargoConstants.TOOLCHAIN_TOML_FILE}"] = SettingFileType.CONFIG
+            out["$rootPath/.cargo/${CargoConstants.CONFIG_FILE}"] = SettingFileType.CONFIG
+            out["$rootPath/.cargo/${CargoConstants.CONFIG_TOML_FILE}"] = SettingFileType.CONFIG
         }
 
         for (pkg in workspace?.packages.orEmpty().filter { it.origin == PackageOrigin.WORKSPACE }) {
