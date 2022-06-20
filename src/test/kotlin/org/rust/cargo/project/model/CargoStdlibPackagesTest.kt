@@ -36,6 +36,11 @@ class CargoStdlibPackagesTest : RsWithToolchainTestBase() {
         assertEquals(PackageOrigin.STDLIB_DEPENDENCY, hashbrownPkg.origin)
         hashbrownPkg.checkFeature("rustc-dep-of-std", FeatureState.Enabled)
         hashbrownPkg.checkFeature("default", FeatureState.Disabled)
+
+        for (pkgName in TARGET_SPECIFIC_DEPENDENCIES) {
+            val pkg = workspace.packages.find { it.name == pkgName }
+            assertNull("$pkgName shouldn't be in stdlib dependencies because it's target-specific", pkg)
+        }
     }
 
     fun `test recover corrupted stdlib dependency directory`() {
@@ -79,5 +84,8 @@ class CargoStdlibPackagesTest : RsWithToolchainTestBase() {
 
     companion object {
         private const val HASHBROWN = "hashbrown"
+
+        // Some stdlib dependencies for non default (from IDE point of view) build targets
+        private val TARGET_SPECIFIC_DEPENDENCIES = listOf("wasi", "hermit-abi", "dlmalloc", "fortanix-sgx-abi")
     }
 }

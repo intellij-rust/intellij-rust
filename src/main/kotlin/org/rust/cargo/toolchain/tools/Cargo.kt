@@ -142,9 +142,10 @@ class Cargo(
     fun fullProjectDescription(
         owner: Project,
         projectDirectory: Path,
+        buildTarget: String? = null,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData = fetchMetadata(owner, projectDirectory, listener = listenerProvider(CargoCallType.METADATA))
+        val rawData = fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
@@ -163,10 +164,16 @@ class Cargo(
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
+        buildTarget: String?,
         toolchainOverride: String? = null,
         listener: ProcessListener? = null
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
-        val additionalArgs = listOf("--verbose", "--format-version", "1", "--all-features")
+        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
+        if (buildTarget != null) {
+            additionalArgs.add("--filter-platform")
+            additionalArgs.add(buildTarget)
+        }
+
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
             .execute(owner, listener = listener)
             .unwrapOrElse { return Err(it) }

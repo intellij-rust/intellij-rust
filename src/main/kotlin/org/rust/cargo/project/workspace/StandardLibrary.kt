@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.ProcessProgressListener
@@ -53,16 +54,18 @@ data class StandardLibrary(
             project: Project,
             path: String,
             rustcInfo: RustcInfo?,
+            cargoConfig: CargoConfig = CargoConfig.DEFAULT,
             isPartOfCargoProject: Boolean = false,
             listener: ProcessProgressListener? = null
         ): StandardLibrary? = LocalFileSystem.getInstance().findFileByPath(path)?.let {
-            fromFile(project, it, rustcInfo, isPartOfCargoProject, listener)
+            fromFile(project, it, rustcInfo, cargoConfig, isPartOfCargoProject, listener)
         }
 
         fun fromFile(
             project: Project,
             sources: VirtualFile,
             rustcInfo: RustcInfo?,
+            cargoConfig: CargoConfig = CargoConfig.DEFAULT,
             isPartOfCargoProject: Boolean = false,
             listener: ProcessProgressListener? = null
         ): StandardLibrary? {
@@ -80,7 +83,8 @@ data class StandardLibrary(
                     warn("Toolchain version is unknown. Hardcoded stdlib structure will be used")
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    val result = fetchActualStdlib(project, srcDir, rustcVersion, rustcInfo.rustupActiveToolchain, listener)
+                    val buildTarget = cargoConfig.buildTarget ?: rustcVersion.host
+                    val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTarget, rustcInfo.rustupActiveToolchain, listener)
                     if (result == null) {
                         warn("Fetching actual stdlib info failed. Hardcoded stdlib structure will be used")
                     }
@@ -107,19 +111,20 @@ data class StandardLibrary(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
+            buildTarget: String?,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean = false
         ): StandardLibrary? {
             try {
-                return StdlibDataFetcher.create(project, srcDir, version, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
+                return StdlibDataFetcher.create(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
             } catch (e: Throwable) {
                 if (!isUnitTestMode) {
                     // Logger.error in tests, fail the test
                     LOG.error(e)
                 }
                 if (!cleanVendorDir && e is CargoMetadataException) {
-                    return fetchActualStdlib(project, srcDir, version, activeToolchain, listener, cleanVendorDir = true)
+                    return fetchActualStdlib(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir = true)
                 }
             }
             return null
@@ -187,6 +192,7 @@ class StdlibDataFetcher private constructor(
     private val srcDir: VirtualFile,
     private val testPackageSrcDir: VirtualFile,
     private val stdlibDependenciesDir: Path,
+    private val buildTarget: String?,
     private val activeToolchain: String?,
     private val listener: ProcessProgressListener?
 ) {
@@ -295,7 +301,13 @@ class StdlibDataFetcher private constructor(
             return
         }
 
-        val metadataProject = cargo.fetchMetadata(project, pathAsPath, activeToolchain, listener).unwrapOrElse {
+        val metadataProject = cargo.fetchMetadata(
+            project,
+            pathAsPath,
+            buildTarget = buildTarget,
+            toolchainOverride = activeToolchain,
+            listener = listener
+        ).unwrapOrElse {
             listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
             LOG.error(it)
             return
@@ -312,6 +324,7 @@ class StdlibDataFetcher private constructor(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
+            buildTarget: String?,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean
@@ -337,6 +350,7 @@ class StdlibDataFetcher private constructor(
                 srcDir,
                 testPackageSrcDir,
                 stdlibDependenciesDir,
+                buildTarget,
                 activeToolchain,
                 listener
             )
