@@ -47,6 +47,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [workspace]
                 members = [ "subproject" ]
             """)
+            configs()
             allTargets()
 
             dir("subproject") {
@@ -64,6 +65,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         // Configs
         testProject.checkFileModification("Cargo.toml", triggered = true)
         testProject.checkFileModification("Cargo.lock", triggered = true)
+        testProject.checkFileModification("rust-toolchain", triggered = true)
+        testProject.checkFileModification("rust-toolchain.toml", triggered = true)
+        testProject.checkFileModification(".cargo/config", triggered = true)
+        testProject.checkFileModification(".cargo/config.toml", triggered = true)
         testProject.checkFileModification("subproject/Cargo.toml", triggered = true)
         // Implicit crate roots
         // TODO: it should trigger project model reloading if build script evaluation is enabled
@@ -98,6 +103,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [workspace]
                 members = [ "subproject" ]
             """)
+            configs()
             allTargets()
 
             dir("subproject") {
@@ -115,6 +121,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         // Configs
         testProject.checkFileDeletion("Cargo.toml", triggered = true)
         testProject.checkFileDeletion("Cargo.lock", triggered = true)
+        testProject.checkFileDeletion("rust-toolchain", triggered = true)
+        testProject.checkFileDeletion("rust-toolchain.toml", triggered = true)
+        testProject.checkFileDeletion(".cargo/config", triggered = true)
+        testProject.checkFileDeletion(".cargo/config.toml", triggered = true)
         testProject.checkFileDeletion("subproject/Cargo.toml", triggered = true)
         // Implicit crate roots
         testProject.checkFileDeletion("build.rs", triggered = true)
@@ -159,6 +169,11 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         }.create()
         assertNotificationAware(event = "initial project creation")
 
+        // Configs
+        testProject.checkFileCreation("rust-toolchain", triggered = true)
+        testProject.checkFileCreation("rust-toolchain.toml", triggered = true)
+        testProject.checkFileCreation(".cargo/config", triggered = true)
+        testProject.checkFileCreation(".cargo/config.toml", triggered = true)
         // Implicit crate roots
         testProject.checkFileCreation("build.rs", triggered = true)
         testProject.checkFileCreation("src/main.rs", triggered = true)
@@ -351,6 +366,25 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         }
         rust("build.rs", """
             fn main() {}
+        """)
+    }
+
+    private fun FileTreeBuilder.configs() {
+        dir(".cargo") {
+            // Note, cargo reads only `config` file if both `config` and `config.toml` exist in `.config` dir.
+            // But it's OK for tests to have both of them
+            toml("config", "")
+            toml("config.toml", "")
+        }
+        // Note, cargo reads only `rust-toolchain` file if both `rust-toolchain` and `rust-toolchain.toml` exist.
+        // But it's OK for tests to have both of them
+        toml("rust-toolchain", """
+            [toolchain]
+            channel = "nightly"
+        """)
+        toml("rust-toolchain.toml", """
+            [toolchain]
+            channel = "nightly"
         """)
     }
 
