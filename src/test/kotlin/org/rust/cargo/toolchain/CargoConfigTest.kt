@@ -5,26 +5,38 @@
 
 package org.rust.cargo.toolchain
 
+import org.intellij.lang.annotations.Language
 import org.rust.MinRustcVersion
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.fileTree
 import org.rust.singleWorkspace
 
 @MinRustcVersion("1.53.0")
 class CargoConfigTest : RsWithToolchainTestBase() {
+
+    fun `test default config`() {
+        buildProject {
+            file("Cargo.toml", CARGO_TOML)
+            dir("src") { file("main.rs") }
+        }
+
+        val cargoConfig = project.cargoProjects.singleWorkspace().cargoConfig
+
+        assertEquals(CargoConfig.DEFAULT, cargoConfig)
+    }
+
     fun `test build target`() {
-        fileTree {
+        buildProject {
             dir(".cargo") {
-                file("config.toml", """
-                        [build]
-                        target = "wasm32-unknown-unknown"
-                    """)
+                toml("config.toml", """
+                    [build]
+                    target = "wasm32-unknown-unknown"
+                """)
             }
             file("Cargo.toml", CARGO_TOML)
             dir("src") { file("main.rs") }
-        }.create()
+        }
 
         val buildTarget = project.cargoProjects.singleWorkspace().cargoConfig.buildTarget
 
@@ -32,18 +44,18 @@ class CargoConfigTest : RsWithToolchainTestBase() {
     }
 
     fun `test env`() {
-        fileTree {
+        buildProject {
             dir(".cargo") {
-                file("config.toml", """
-                        [env]
-                        foo = "42"
-                        bar = { value = "24", forced = true }
-                        baz = { value = "hello/world", relative = true }
-                    """)
+                toml("config.toml", """
+                    [env]
+                    foo = "42"
+                    bar = { value = "24", forced = true }
+                    baz = { value = "hello/world", relative = true }
+                """)
             }
             file("Cargo.toml", CARGO_TOML)
             dir("src") { file("main.rs") }
-        }.create()
+        }
 
         val env = project.cargoProjects.singleWorkspace().cargoConfig.env
 
@@ -53,6 +65,7 @@ class CargoConfigTest : RsWithToolchainTestBase() {
     }
 
     companion object {
+        @Language("TOML")
         private val CARGO_TOML = """
             [package]
             name = "foo"
