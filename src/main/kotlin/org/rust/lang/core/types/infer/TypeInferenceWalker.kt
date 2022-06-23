@@ -22,6 +22,7 @@ import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Expectation.ExpectHasType
 import org.rust.lang.core.types.infer.Expectation.NoExpectation
 import org.rust.lang.core.types.regions.ReStatic
+import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.evaluation.ConstExpr
@@ -1489,8 +1490,23 @@ val RsSelfParameter.typeOfValue: Ty
 private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
     if (isExplicitType) {
         // self: Self, self: &Self, self: &mut Self, self: Box<Self>
-        val ty = this.typeReference?.type ?: TyUnknown
-        return ty.substitute(mapOf(TyTypeParameter.self() to selfType).toTypeSubst())
+        val formalSelfTy = this.typeReference?.type ?: TyUnknown
+        val ownerImplTy = (parentFunction.owner as? RsAbstractableOwner.Impl)?.impl?.typeReference?.type
+        return if (ownerImplTy != null) {
+            // In `impl`s, `Self` type has already been replaced with `impl`'s formal self ty.
+            // Let's replace it to the actual receiver type
+            formalSelfTy.foldWith(object : TypeFolder {
+                override fun foldTy(ty: Ty): Ty = when {
+                    ty.isEquivalentTo(ownerImplTy) -> selfType
+                    else -> ty.superFoldWith(this)
+                }
+
+                override fun foldRegion(region: Region): Region = region
+                override fun foldConst(const: Const): Const = const
+            })
+        } else {
+            formalSelfTy.substitute(mapOf(TyTypeParameter.self() to selfType).toTypeSubst())
+        }
     }
 
     // self, &self, &mut self
