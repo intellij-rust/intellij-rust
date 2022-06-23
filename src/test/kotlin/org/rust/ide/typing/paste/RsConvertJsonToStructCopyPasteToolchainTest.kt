@@ -32,7 +32,7 @@ class RsConvertJsonToStructCopyPasteToolchainTest : RsWithToolchainTestBase() {
         use serde::{Serialize, Deserialize};
 
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub a: i64,
         }
     """, """{"a": 1}"""
@@ -56,19 +56,19 @@ class RsConvertJsonToStructCopyPasteToolchainTest : RsWithToolchainTestBase() {
         use serde::{Serialize, Deserialize};
 
         #[derive(Serialize, Deserialize)]
-        struct Struct1 {
+        struct C {
             pub x: i64,
         }
 
         #[derive(Serialize, Deserialize)]
-        struct Struct2 {
+        struct A {
             pub b: bool,
         }
 
         #[derive(Serialize, Deserialize)]
-        struct Struct3 {
-            pub a: Struct2,
-            pub c: Struct1,
+        struct Root {
+            pub a: A,
+            pub c: C,
         }
     """, """{"a": {"b": true}, "c": {"x": 1}}"""
     )
@@ -90,13 +90,13 @@ class RsConvertJsonToStructCopyPasteToolchainTest : RsWithToolchainTestBase() {
         use serde::{Deserialize, Serialize};
 
         #[derive(Serialize, Deserialize)]
-        struct Struct1 {
+        struct A {
             pub b: bool,
         }
 
         #[derive(Serialize, Deserialize)]
-        struct Struct2 {
-            pub a: Struct1,
+        struct Root {
+            pub a: A,
         }
     """, """{"a": {"b": true}}"""
     )

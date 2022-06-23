@@ -68,28 +68,52 @@ fun extractStructsFromJson(text: String): List<Struct>? {
 
 data class Field(val name: String, val type: DataType)
 
+open class DataTypeVisitor {
+    open fun visit(dataType: DataType) {
+        when (dataType) {
+            is DataType.Array -> visitArray(dataType)
+            is DataType.Nullable -> visitNullable(dataType)
+            is DataType.StructRef -> visitStruct(dataType)
+            is DataType.Boolean -> visitBoolean(dataType)
+            is DataType.Float -> visitFloat(dataType)
+            is DataType.Integer -> visitInteger(dataType)
+            is DataType.String -> visitString(dataType)
+            is DataType.Unknown -> visitUnknown(dataType)
+        }
+    }
+    open fun visitArray(dataType: DataType.Array) {
+        visit(dataType.type)
+    }
+    open fun visitNullable(dataType: DataType.Nullable) {
+        visit(dataType.type)
+    }
+    open fun visitStruct(dataType: DataType.StructRef) {
+        for (fieldType in dataType.struct.fields.values) {
+            visit(fieldType)
+        }
+    }
+    open fun visitInteger(dataType: DataType.Integer) {}
+    open fun visitFloat(dataType: DataType.Float) {}
+    open fun visitBoolean(dataType: DataType.Boolean) {}
+    open fun visitString(dataType: DataType.String) {}
+    open fun visitUnknown(dataType: DataType.Unknown) {}
+}
+
 /**
  * Finds all unique structs contained in the root struct.
  */
 fun gatherEncounteredStructs(root: Struct): Set<Struct> {
     val structs = linkedSetOf<Struct>()
-    gatherStructs(DataType.StructRef(root), structs)
-    return structs
-}
 
-private fun gatherStructs(type: DataType, structs: MutableSet<Struct>) {
-    when (type) {
-        is DataType.Array -> gatherStructs(type.type, structs)
-        is DataType.Nullable -> gatherStructs(type.type, structs)
-        is DataType.StructRef -> {
-            structs.add(type.struct)
-            for (fieldType in type.struct.fields.values) {
-                gatherStructs(fieldType, structs)
-            }
+    val visitor = object : DataTypeVisitor() {
+        override fun visitStruct(dataType: DataType.StructRef) {
+            structs.add(dataType.struct)
+            super.visitStruct(dataType)
         }
-        DataType.Boolean, DataType.Float, DataType.Integer,
-        DataType.String, DataType.Unknown -> {}
     }
+
+    visitor.visit(DataType.StructRef(root))
+    return structs
 }
 
 private class StructParser {

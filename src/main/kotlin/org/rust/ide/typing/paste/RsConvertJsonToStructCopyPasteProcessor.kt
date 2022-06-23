@@ -23,7 +23,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
-import org.rust.ide.inspections.lints.*
+import org.rust.ide.inspections.lints.toCamelCase
+import org.rust.ide.inspections.lints.toSnakeCase
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
@@ -32,6 +33,7 @@ import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve2.allScopeItemNames
 import org.rust.openapiext.createSmartPointer
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.runWriteCommandAction
@@ -82,7 +84,10 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
         if (!shouldConvertJson(project)) return
 
         val factory = RsPsiFactory(project)
-        val nameMap = generateStructNames(structs)
+        // The only time `elementAtCaret` could be null is if we are pasting into an empty file
+        val parentMod = elementAtCaret?.parent as? RsMod ?: file
+        val existingNames = parentMod.allScopeItemNames()
+        val nameMap = generateStructNames(structs, existingNames)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         val insertedItems: MutableList<SmartPsiElementPointer<RsStructItem>> = mutableListOf()
@@ -112,9 +117,9 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     }
 }
 
-@TestOnly
-var CONVERT_JSON_SERDE_PRESENT: Boolean = false
+private var CONVERT_JSON_SERDE_PRESENT: Boolean = false
 
+@TestOnly
 fun convertJsonWithSerdePresent(hasSerde: Boolean, action: () -> Unit) {
     val original = CONVERT_JSON_SERDE_PRESENT
     CONVERT_JSON_SERDE_PRESENT = hasSerde
@@ -176,12 +181,51 @@ private fun shouldConvertJson(project: Project): Boolean {
     }
 }
 
-private fun generateStructNames(structs: List<Struct>): Map<Struct, String> {
-    return if (structs.size == 1) {
-        mapOf(structs[0] to "Struct")
-    } else {
-        structs.mapIndexed { index, struct -> struct to "Struct${index + 1}" }.toMap()
+private fun generateStructNames(structs: List<Struct>, existingNames: Set<String>): Map<Struct, String> {
+    val map = mutableMapOf<Struct, String>()
+    if (structs.isEmpty()) return map
+
+    val assignedNames = existingNames.toMutableSet()
+    val assignName = { struct: Struct, name: String ->
+        val actualName = if (name in assignedNames) {
+            generateSequence(1) { it + 1 }
+                .map { "$name$it" }
+                .first { it !in assignedNames }
+        } else {
+            name
+        }
+
+        assignedNames.add(actualName)
+        map[struct] = actualName
     }
+    assignName(structs.last(), "Root")
+
+    // Maps structs to fields under which they are embedded
+    val structEmbeddedFields = mutableMapOf<Struct, MutableSet<String>>()
+    val visitor = object: DataTypeVisitor() {
+        override fun visitStruct(dataType: DataType.StructRef) {
+            for ((field, type) in dataType.struct.fields) {
+                val innerType = type.unwrap()
+                if (innerType is DataType.StructRef) {
+                    structEmbeddedFields.getOrPut(innerType.struct) { mutableSetOf() }.add(field)
+                }
+            }
+            super.visitStruct(dataType)
+        }
+    }
+    visitor.visit(DataType.StructRef(structs.last()))
+
+    for (struct in structs.reversed()) {
+        if (struct !in map) {
+            val fields = structEmbeddedFields[struct].orEmpty()
+            if (fields.size == 1) {
+                assignName(struct, fields.first().toCamelCase())
+            } else {
+                assignName(struct, "Struct")
+            }
+        }
+    }
+    return map
 }
 
 /**
@@ -311,7 +355,6 @@ private fun replacePlaceholders(
         editor.project?.runWriteCommandAction {
             if (!file.isValid) return@runWriteCommandAction
             val template = editor.newTemplateBuilder(file) ?: return@runWriteCommandAction
-
 
             // Gather usages of structs in fields
             val structNames = nameMap.values.toSet()

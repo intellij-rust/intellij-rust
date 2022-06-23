@@ -44,7 +44,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: i64,
         }
     """, """{"a":  5}""")
@@ -59,7 +59,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         mod foo {
-            struct Struct {
+            struct Root {
                 pub a: i64,
             }
 
@@ -72,7 +72,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub r#type: i64,
         }
     """, """{"type":  5}""")
@@ -82,7 +82,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub _oi_d: i64,
         }
     """, """{"${'$'}oi/d":  5}""")
@@ -92,7 +92,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub _1: i64,
         }
     """, """{"1":  5}""")
@@ -126,7 +126,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {}
+        struct Root {}
     """, "{}")
 
     fun `test duplicated struct keys`() = doCopyPasteTest("""
@@ -134,7 +134,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: bool,
         }
     """, """{"a": true, "a": 0}""")
@@ -144,7 +144,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: bool,
         }
     """, """{"a": true}""")
@@ -154,7 +154,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: bool,
         }
     """, """{"a": false}""")
@@ -164,7 +164,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: i64,
         }
     """, """{"a": 0}""")
@@ -174,7 +174,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: f64,
         }
     """, """{"a": 0.1}""")
@@ -184,7 +184,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: String,
         }
     """, """{"a": "foo"}""")
@@ -194,7 +194,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Option<_>,
         }
     """, """{"a": null}""")
@@ -204,7 +204,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<_>,
         }
     """, """{"a": []}""")
@@ -214,7 +214,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<i64>,
         }
     """, """{"a": [1, 2, 3]}""")
@@ -224,7 +224,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<Option<_>>,
         }
     """, """{"a": [null]}""")
@@ -234,7 +234,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<Option<i64>>,
         }
     """, """{"a": [1, null]}""")
@@ -244,7 +244,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<Option<i64>>,
         }
     """, """{"a": [null, 1]}""")
@@ -254,7 +254,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<Vec<i64>>,
         }
     """, """{"a": [[1], [2]]}""")
@@ -264,12 +264,12 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub b: i64,
         }
 
-        struct Struct2 {
-            pub a: Vec<Struct1>,
+        struct Root {
+            pub a: Vec<Struct>,
         }
     """, """{"a": [{"b": 5}, {"b": 4}]}""")
 
@@ -278,7 +278,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<_>,
         }
     """, """{"a": [1, true]}""")
@@ -288,7 +288,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<_>,
         }
     """, """{"a": [1, true, {"c":  5}]}""")
@@ -298,7 +298,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: String,
             pub b: i64,
             pub bar: bool,
@@ -310,12 +310,12 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct A {
             pub foo: i64,
         }
 
-        struct Struct2 {
-            pub a: Struct1,
+        struct Root {
+            pub a: A,
         }
     """, """{"a": {"foo": 5}}""")
 
@@ -324,13 +324,13 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub foo: i64,
         }
 
-        struct Struct2 {
-            pub a: Struct1,
-            pub b: Struct1,
+        struct Root {
+            pub a: Struct,
+            pub b: Struct,
         }
     """, """{"a": {"foo": 5}, "b":  {"foo": 3}}""")
 
@@ -339,14 +339,14 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub bar: bool,
             pub foo: i64,
         }
 
-        struct Struct2 {
-            pub a: Struct1,
-            pub b: Struct1,
+        struct Root {
+            pub a: Struct,
+            pub b: Struct,
         }
     """, """{"a": {"bar": false, "foo": 5}, "b":  {"foo": 3, "bar": true}}""")
 
@@ -381,7 +381,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub field: i64,
         }
     """, """{"field": 1}""", hasSerde = true)
@@ -392,7 +392,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub field: i64,
             pub bar: i64,
         }
@@ -404,7 +404,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub my_long_field: i64,
         }
     """, """{"my_long_field": 1}""", hasSerde = true)
@@ -415,7 +415,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub my_long_field: i64,
             pub my_long_field_b: i64,
         }
@@ -427,7 +427,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "my-long-field")]
             pub my_long_field: i64,
         }
@@ -439,7 +439,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "my-long-field")]
             pub my_long_field: i64,
             #[serde(rename = "my-long-field-2")]
@@ -453,7 +453,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "myLongField")]
             pub my_long_field: i64,
         }
@@ -465,7 +465,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "myLongField")]
             pub my_long_field: i64,
             #[serde(rename = "myLongFieldB")]
@@ -479,7 +479,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "MyLongField")]
             pub my_long_field: i64,
         }
@@ -491,7 +491,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "MyLongField")]
             pub my_long_field: i64,
             #[serde(rename = "MyLongFieldB")]
@@ -505,7 +505,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "FIELD")]
             pub field: i64,
         }
@@ -517,7 +517,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "FIELD")]
             pub field: i64,
             #[serde(rename = "BAR")]
@@ -531,7 +531,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "FOO_BAR")]
             pub foo_bar: i64,
         }
@@ -543,7 +543,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "FOO_BAR")]
             pub foo_bar: i64,
             #[serde(rename = "BAR_BAZ")]
@@ -557,7 +557,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "MY-LONG-FIELD")]
             pub my_long_field: i64,
         }
@@ -569,7 +569,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "MY-LONG-FIELD")]
             pub my_long_field: i64,
             #[serde(rename = "ANOTHER-FIELD")]
@@ -583,7 +583,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "foo_bar-baz")]
             pub foo_bar_baz: i64,
             #[serde(rename = "bar_baz-foo")]
@@ -597,7 +597,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             #[serde(rename = "f@")]
             pub f: i64,
             #[serde(rename = "0")]
@@ -615,7 +615,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
     """, """
         //- lib.rs
         #[derive(Serialize, Deserialize)]
-        struct Struct {
+        struct Root {
             pub _0: i64,
             #[serde(rename = "0")]
             pub _0_0: i64,
@@ -638,7 +638,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub a: Vec<i64>,
         }
     """, """{"a": [1, 2, 3,],}""")
@@ -648,13 +648,13 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: Option<i64>,
             pub b: Option<i64>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Struct1>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{"items": [{"a": 1}, {"b":  2}]}""")
 
@@ -663,12 +663,12 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: Vec<String>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Struct1>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{"items": [{"a": []}, {"a": ["a", "b"]}]}""")
 
@@ -677,12 +677,12 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: Vec<Option<String>>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Struct1>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{"items": [{"a": ["a", null]}, {"a": ["a", "b"]}]}""")
 
@@ -691,14 +691,14 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: i64,
             pub opt_field: Option<_>,
             pub opt_field_2: Option<i64>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Struct1>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{"items": [{"a": 1, "opt_field": true}, {"a":  2}, {"a":  2, "opt_field_2": 2}, {"a":  2, "opt_field": 1}]}""")
 
@@ -707,17 +707,17 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct A {
             pub field1: i64,
             pub optional: Option<i64>,
         }
 
-        struct Struct2 {
-            pub a: Struct1,
+        struct Struct {
+            pub a: A,
         }
 
-        struct Struct3 {
-            pub items: Vec<Struct2>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{
   "items": [
@@ -740,24 +740,24 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct C {
             pub field1: Option<i64>,
             pub field2: Option<i64>,
         }
 
-        struct Struct2 {
+        struct A {
             pub field1: Option<i64>,
             pub optional: Option<i64>,
         }
 
-        struct Struct3 {
-            pub a: Struct2,
+        struct Struct {
+            pub a: A,
             pub b: Option<i64>,
-            pub c: Option<Struct1>,
+            pub c: Option<C>,
         }
 
-        struct Struct4 {
-            pub items: Vec<Struct3>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{
   "items": [
@@ -792,13 +792,13 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: String,
             pub b: Option<i64>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Option<Struct1>>,
+        struct Root {
+            pub items: Vec<Option<Struct>>,
         }
     """, """{
       "items": [
@@ -819,7 +819,7 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct {
+        struct Root {
             pub items: Vec<_>,
         }
     """, """{
@@ -840,12 +840,12 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         /*caret*/
     """, """
         //- lib.rs
-        struct Struct1 {
+        struct Struct {
             pub a: Option<String>,
         }
 
-        struct Struct2 {
-            pub items: Vec<Struct1>,
+        struct Root {
+            pub items: Vec<Struct>,
         }
     """, """{
       "items": [
@@ -857,6 +857,168 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
       ]
     }""")
+
+    fun `test suggest name for inner struct`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Foo {
+            pub a: i64,
+        }
+
+        struct Root {
+            pub foo: Foo,
+        }
+    """, """{"foo": {"a":  5}}""")
+
+    fun `test suggest name for inner struct use camel case`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct FooBar {
+            pub a: i64,
+        }
+
+        struct Root {
+            pub foo_bar: FooBar,
+        }
+    """, """{"foo_bar": {"a":  5}}""")
+
+    fun `test suggest name conflicting names`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Foo1 {
+            pub y: i64,
+        }
+
+        struct B {
+            pub foo: Foo1,
+        }
+
+        struct Foo {
+            pub x: i64,
+        }
+
+        struct A {
+            pub foo: Foo,
+        }
+
+        struct Root {
+            pub a: A,
+            pub b: B,
+        }
+    """, """{
+  "a": {
+    "foo": { "x": 1 }
+  },
+  "b": {
+    "foo": { "y": 2 }
+  }
+}""")
+
+    fun `test suggest name based on field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Bar {
+            pub bar_field: i64,
+        }
+
+        struct Foo {
+            pub foo_field: i64,
+        }
+
+        struct Root {
+            pub foo: Foo,
+            pub bar: Bar,
+        }
+    """, """{
+  "foo": {
+    "foo_field": 1
+  },
+  "bar": {
+    "bar_field": 2
+  }
+}""")
+
+    fun `test suggest name struct contained in multiple fields`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Struct {
+            pub foo_field: i64,
+        }
+
+        struct Root {
+            pub foo: Struct,
+            pub bar: Struct,
+        }
+    """, """{
+  "foo": {
+    "foo_field": 1
+  },
+  "bar": {
+    "foo_field": 2
+  }
+}""")
+
+    fun `test do not use names existing in file scope`() = doCopyPasteTest("""
+        //- lib.rs
+        struct Foo;
+        struct Root;
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct Foo;
+        struct Root;
+
+        struct Foo1 {
+            pub b: i64,
+            pub c: i64,
+        }
+
+        struct Root1 {
+            pub foo: Foo1,
+            pub b: bool,
+        }
+    """, """{"foo": {"b": 1, "c": 2}, "b": true}""")
+
+    fun `test do not use names existing in mod scope`() = doCopyPasteTest("""
+        //- lib.rs
+        struct Foo1;
+        struct Root1;
+
+        mod foo {
+            struct Foo;
+            struct Root;
+            /*caret*/
+        }
+    """, """
+        //- lib.rs
+        struct Foo1;
+        struct Root1;
+
+        mod foo {
+            struct Foo;
+            struct Root;
+
+            struct Foo1 {
+                pub b: i64,
+                pub c: i64,
+            }
+
+            struct Root1 {
+                pub foo: Foo1,
+                pub b: bool,
+            }
+        }
+    """, """{"foo": {"b": 1, "c": 2}, "b": true}""")
 
     override fun setUp() {
         super.setUp()
