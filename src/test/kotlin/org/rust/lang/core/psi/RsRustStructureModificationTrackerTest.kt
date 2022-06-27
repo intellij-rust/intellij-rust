@@ -6,6 +6,8 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
@@ -15,21 +17,33 @@ import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
 import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.resolve2.updateDefMapForAllCrates
 import org.rust.openapiext.runWriteCommandAction
 
 class RsRustStructureModificationTrackerTest : RsTestBase() {
     private enum class TestAction(val function: (Long, Long) -> Boolean, val comment: String) {
-        INC({ a, b -> a > b }, "Modification counter expected to be incremented, but it remained the same"),
-        NOT_INC({ a, b -> a == b }, "Modification counter expected to remain the same, but it was incremented")
+        INC({ a, b -> a > b }, "expected to be incremented, but it remained the same"),
+        NOT_INC({ a, b -> a == b }, "expected to remain the same, but it was incremented");
+
+        fun check(modTracker: ModificationTracker, oldValue: Long, modTrackerName: String) {
+            check(function(modTracker.modificationCount, oldValue)) {
+                "$modTrackerName $comment"
+            }
+        }
     }
 
-    private fun checkModCount(op: TestAction, action: () -> Unit) {
+    private fun checkModCount(op: TestAction, depsOp: TestAction = NOT_INC, action: () -> Unit) {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
+        updateDefMapForAllCrates(project, EmptyProgressIndicator(), multithread = false)
         val modTracker = project.rustStructureModificationTracker
+        val modTrackerInDeps = project.rustPsiManager.rustStructureModificationTrackerInDependencies
         val oldCount = modTracker.modificationCount
+        val oldCountInDeps = modTrackerInDeps.modificationCount
         action()
         PsiDocumentManager.getInstance(project).commitAllDocuments()
-        check(op.function(modTracker.modificationCount, oldCount)) { op.comment }
+
+        op.check(modTracker, oldCount, "rustStructureModificationTracker")
+        depsOp.check(modTrackerInDeps, oldCountInDeps, "rustStructureModificationTrackerInDependencies")
     }
 
     private fun checkModCount(op: TestAction, @Language("Rust") code: String, text: String) {
@@ -162,6 +176,14 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         foo! { /*caret*/ }
     """, "a")
 
+    @ExpandMacros
+    fun `test macro expanded call`() = checkModCount(INC, """
+        macro_rules! foo {
+            ($ i:ident) => { fn $ i() {} };
+        }
+        foo! { a/*caret*/ }
+    """, "a")
+
     fun `test macro call inside a function (old engine)`() = checkModCount(NOT_INC, """
         fn wrapped() { foo! { /*caret*/ } }
     """, "a")
@@ -198,7 +220,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
             fn bar() {}
         """).createAndOpenFileWithCaretMarker()
         val file = p.psiFile("foo.rs").virtualFile!!
-        checkModCount(INC) {
+        checkModCount(INC, depsOp = INC) {
             runWriteAction {
                 file.delete(null)
             }
@@ -214,7 +236,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
             fn bar() {}
         """).createAndOpenFileWithCaretMarker()
         val file = p.psiFile("foo").virtualFile!!
-        checkModCount(INC) {
+        checkModCount(INC, depsOp = INC) {
             runWriteAction {
                 file.delete(null)
             }

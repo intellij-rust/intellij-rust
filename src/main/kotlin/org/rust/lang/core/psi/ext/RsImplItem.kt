@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.CachedValueImpl
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
@@ -79,7 +80,13 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 
     val cachedImplItem: CachedValue<RsCachedImplItem> = CachedValueImpl {
-        CachedValueProvider.Result(RsCachedImplItem(this), project.rustStructureModificationTracker)
+        val cachedImpl = RsCachedImplItem(this)
+        val modTracker = if (cachedImpl.containingCrate?.origin == PackageOrigin.WORKSPACE) {
+            project.rustStructureModificationTracker
+        } else {
+            project.rustPsiManager.rustStructureModificationTrackerInDependencies
+        }
+        CachedValueProvider.Result(cachedImpl, modTracker)
     }
 }
 
