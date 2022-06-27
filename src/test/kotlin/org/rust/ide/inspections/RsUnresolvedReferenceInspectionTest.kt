@@ -338,6 +338,18 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/8962
+    fun `test no unresolved reference for explicit type-qualified associated member path`() = checkByText("""
+        struct S;
+        mod module {
+            pub trait Trait { fn convert(self); }
+            impl Trait for super::S { fn convert(self) {} }
+        }
+        fn main() {
+            <S as module::Trait>::convert(S);
+        }
+    """)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }
     }

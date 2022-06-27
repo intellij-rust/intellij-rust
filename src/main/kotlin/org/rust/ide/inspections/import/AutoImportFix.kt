@@ -18,7 +18,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.ide.utils.import.*
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidatesCollector2
+import org.rust.ide.utils.import.ImportContext2
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
@@ -146,8 +149,13 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         fun findApplicableContextForAssocItemPath(path: RsPath): Context? {
             val parent = path.parent as? RsPathExpr ?: return null
 
+            // `std::default::Default::default()`
             val qualifierElement = path.qualifier?.reference?.resolve()
             if (qualifierElement is RsTraitItem) return null
+
+            // `<Foo as bar::Baz>::qux()`
+            val typeQual = path.typeQual
+            if (typeQual != null && typeQual.traitRef != null) return null
 
             val resolved = path.inference?.getResolvedPath(parent) ?: return null
             val sources = resolved.map {
