@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <externalIconProvider key="Cargo"
+                              implementationClass="org.rust.cargo.project.model.impl.CargoExternalSystemIconProvider"/>
+    </extensions>
+</idea-plugin>
