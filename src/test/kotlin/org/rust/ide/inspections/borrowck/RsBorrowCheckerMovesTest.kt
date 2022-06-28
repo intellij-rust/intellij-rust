@@ -337,6 +337,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move error E0507 when deref Rc with Copy type`() = checkByText("""
         use std::rc::Rc;
         fn main() {
@@ -353,6 +354,52 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
         fn foo(a: Box<Foo>) {
             drop(a.f1);
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move Box deref twice`() = checkByText("""
+        struct S;
+        fn main() {
+            let x = Box::new(S);
+            *x;
+            <error descr="Use of moved value">*x</error>;
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move error when deref Rc`() = checkByText("""
+        use std::rc::Rc;
+        struct S;
+        fn main() {
+            let x = Rc::new(S);
+            <error descr="Cannot move">*x</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move custom overloaded deref`() = checkByText("""
+        #[lang = "deref"]
+        pub trait Deref {
+            #[lang = "deref_target"]
+            type Target: ?Sized;
+            fn deref(&self) -> &Self::Target;
+        }
+
+        struct S;
+        struct SmartPointer {
+            value: S
+        }
+        impl Deref for SmartPointer {
+            type Target = S;
+            
+            fn deref(&self) -> &S {
+                &self.value
+            }
+        }
+        
+        fn main() {
+            let x = SmartPointer { value: S };
+            <error descr="Cannot move">*x</error>;
         }
     """, checkWarn = false)
 
