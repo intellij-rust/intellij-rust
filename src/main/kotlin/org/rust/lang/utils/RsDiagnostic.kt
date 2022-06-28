@@ -1492,6 +1492,22 @@ sealed class RsDiagnostic(
             "Invalid label name `$labelName`"
         )
     }
+
+    class SelfImportNotInUseGroup(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0429,
+            "`self` imports are only allowed within a { } list",
+        )
+    }
+
+    class SelfImportInUseGroupWithEmptyPrefix(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0431,
+            "`self` import can only appear in an import list with a non-empty prefix",
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -1499,7 +1515,7 @@ enum class RsErrorCode {
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
-    E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
+    E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0431, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
     E0703, E0704, E0732, E0741, E0747;

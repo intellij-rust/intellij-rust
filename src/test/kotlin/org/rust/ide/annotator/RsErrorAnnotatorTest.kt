@@ -983,6 +983,27 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         use mod2::foo;
     """)
 
+    fun `test self import not in use group E0429`() = checkErrors("""
+        mod test {
+            use <error descr="`self` imports are only allowed within a { } list [E0429]">self</error>;
+            use <error descr="`self` imports are only allowed within a { } list [E0429]">self</error> as a;
+            use crate::foo::<error descr="`self` imports are only allowed within a { } list [E0429]">self</error>;
+            use ::foo::<error descr="`self` imports are only allowed within a { } list [E0429]">self</error>;
+            use crate::foo::{self};
+            use crate::foo::<error descr="Invalid path: self and super are allowed only at the beginning">self</error>::{a, b};
+            use crate::foo::{a, self};
+            use crate::foo::{a, b::self};
+            use crate::foo::b::<error descr="`self` imports are only allowed within a { } list [E0429]">self</error>;
+        }
+    """)
+
+    fun `test self import in use group with empty prefix E0431`() = checkErrors("""
+        use {<error descr="`self` import can only appear in an import list with a non-empty prefix [E0431]">self</error>};
+        use {<error descr="`self` import can only appear in an import list with a non-empty prefix [E0431]">self</error> as a};
+        use foo::{self};
+        use foo::{{self}};
+    """)
+
     fun `test unnecessary pub E0449`() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 

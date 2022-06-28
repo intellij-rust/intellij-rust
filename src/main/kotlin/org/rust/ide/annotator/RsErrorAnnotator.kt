@@ -612,6 +612,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
+        if (!checkSelfImport(holder, path)) return
+
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
             val element = path.referenceNameElement ?: return
@@ -650,6 +652,32 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         checkReferenceIsPublic(path, path, holder)
         checkUnstableAttribute(path, holder)
+    }
+
+    private fun checkSelfImport(holder: RsAnnotationHolder, path: RsPath): Boolean {
+        if (!path.isSelfImport()) return true
+
+        val element = path.referenceNameElement ?: return true
+        when (val parent2 = path.parent.parent) {
+            is RsUseItem -> {
+                RsDiagnostic.SelfImportNotInUseGroup(element).addToHolder(holder)
+                return false
+            }
+            is RsUseGroup -> {
+                val parent3 = parent2.parent
+                val parent4 = parent3.parent
+                if (parent4 is RsUseItem && parent3 is RsUseSpeck && parent3.path == null && path.path == null) {
+                    RsDiagnostic.SelfImportInUseGroupWithEmptyPrefix(element).addToHolder(holder)
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private fun RsPath.isSelfImport(): Boolean {
+        val parent = parent
+        return self != null && parent is RsUseSpeck && parent.useGroup == null
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
@@ -1670,7 +1698,7 @@ fun RsMethodCall.getFunctionCallContext(): FunctionCallContext? {
 private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
     if (path.self == null && path.`super` == null) return true
     if (path.path == null && path.coloncolon != null) return false
-    if (path.self != null && path.path != null) return false
+    if (path.self != null && path.path != null && path.parentOfType<RsUseGroup>() == null) return false
     if (path.`super` != null) {
         val q = path.path ?: return true
         return q.self != null || q.`super` != null
