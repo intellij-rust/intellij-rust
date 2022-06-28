@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.readFSItem
@@ -100,8 +101,20 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         PathUtilRt.isValidFileName(name, PathUtilRt.Platform.UNIX, false, null)
 
     @Throws(IOException::class)
-    override fun createChildDirectory(requestor: Any?, parent: VirtualFile, dir: String): VirtualFile =
-        throw UnsupportedOperationException()
+    override fun createChildDirectory(requestor: Any?, parent: VirtualFile, dir: String): VirtualFile {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val parentFsDir = convert(parent) ?: throw FileNotFoundException("${parent.path} (No such file or directory)")
+        if (parentFsDir !is FSDir) throw IOException("${parent.path} is not a directory")
+        val existingDir = parentFsDir.findChild(dir)
+        if (existingDir == null) {
+            parentFsDir.addChildDir(dir, bump = true)
+        } else if (existingDir !is FSDir) {
+            throw IOException("Directory already contains a file named $dir")
+        }
+        return FakeVirtualFile(parent, dir)
+    }
 
     @Throws(IOException::class)
     override fun createChildFile(requestor: Any?, parent: VirtualFile, file: String): VirtualFile =
@@ -116,12 +129,33 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         throw UnsupportedOperationException()
 
     @Throws(IOException::class)
-    override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile): Unit =
-        throw UnsupportedOperationException()
+    override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val fsItem = convert(file) ?: throw FileNotFoundException("${file.path} (No such file or directory)")
+        val newParentFsDir = convert(newParent) ?: throw FileNotFoundException("${newParent.path} (No such file or directory)")
+        if (newParentFsDir !is FSDir) throw IOException("${newParent.path} is not a directory")
+        if (newParentFsDir.findChild(file.name) != null) {
+            throw IOException("Directory already contains a file named $file.name")
+        }
+        val oldParentFsDir = fsItem.parent ?: throw IOException("Can't move root (${file.path})")
+        oldParentFsDir.removeChild(fsItem.name, bump = true)
+        fsItem.parent = newParentFsDir
+        newParentFsDir.addChild(fsItem, bump = true)
+    }
 
     @Throws(IOException::class)
-    override fun renameFile(requestor: Any?, file: VirtualFile, newName: String): Unit =
-        throw UnsupportedOperationException()
+    override fun renameFile(requestor: Any?, file: VirtualFile, newName: String) {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val fsItem = convert(file) ?: throw FileNotFoundException("${file.path} (No such file or directory)")
+        val parent = fsItem.parent ?: throw IOException("Can't rename root (${file.path})")
+        parent.removeChild(fsItem.name)
+        fsItem.name = newName
+        parent.addChild(fsItem, bump = true)
+    }
 
     private fun convert(file: VirtualFile): FSItem? {
         val parentFile = file.parent ?: return root
@@ -203,7 +237,19 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         modStamp: Long,
         timeStamp: Long
     ): OutputStream {
-        throw UnsupportedOperationException()
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        return object : ByteArrayOutputStream() {
+            @Throws(IOException::class)
+            override fun close() {
+                super.close()
+                val fsItem = convert(file)
+                if (fsItem !is FSFile) throw IOException("The file is a directory (${file.path}")
+                fsItem.length = size()
+                setTimeStamp(file, timeStamp)
+            }
+        }
     }
 
     override fun getLength(file: VirtualFile): Long {
@@ -220,7 +266,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     sealed class FSItem {
-        abstract val parent: FSDir?
+        abstract var parent: FSDir?
         abstract var name: String
         abstract var timestamp: Long
 
@@ -246,7 +292,12 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         override fun toString(): String = javaClass.simpleName + ": " + name
 
         open class FSDir(
+            @get:Synchronized
+            @set:Synchronized
             override var parent: FSDir?,
+
+            @get:Synchronized
+            @set:Synchronized
             override var name: String,
 
             @get:Synchronized
@@ -320,7 +371,12 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         }
 
         class FSFile(
-            override val parent: FSDir,
+            @get:Synchronized
+            @set:Synchronized
+            override var parent: FSDir?,
+
+            @get:Synchronized
+            @set:Synchronized
             override var name: String,
 
             @get:Synchronized
@@ -444,6 +500,8 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     class FSItemIsADirectoryException(path: String) : FSException(path)
     class FSItemAlreadyExistsException(path: String) : FSException(path)
     class IllegalPathException(path: String) : FSException(path)
+
+    object TrustedRequestor
 
     companion object {
         private const val PROTOCOL: String = "rust-macros"

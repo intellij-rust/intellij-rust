@@ -18,7 +18,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import org.rust.cargo.project.model.CargoProjectsService
@@ -84,9 +83,6 @@ interface RsPsiManager {
             psi.getUserData(IGNORE_PSI_EVENTS) == true
 
         private fun setIgnorePsiEvents(psi: PsiFile, ignore: Boolean) {
-            val virtualFile = psi.virtualFile ?: return
-            check(virtualFile is LightVirtualFile)
-
             psi.putUserData(IGNORE_PSI_EVENTS, if (ignore) true else null)
         }
     }
@@ -145,8 +141,9 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
 
             // if file is null, this is an event about VFS changes
             if (file == null) {
-                if (element is RsFile ||
-                    element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null) {
+                val isStructureModification = element is RsFile && !isIgnorePsiEvents(element)
+                    || element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null
+                if (isStructureModification) {
                     incRustStructureModificationCount(element as? RsFile, element as? RsFile)
                 }
             } else {
