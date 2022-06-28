@@ -361,6 +361,14 @@ class ImplLookup(
         genericsForTy2: List<TyTypeParameter>,
         constGenericsForTy2: List<CtConstParameter>
     ): Boolean {
+        // Optimization: early handle common cases in order to avoid heavier probe/substitute/ctx.combineTypes
+        if (genericsForTy2.size < 5) {
+            if (ty2 in genericsForTy2) return true
+            if (ty2 is TyReference && ty2.referenced in genericsForTy2) {
+                return ty1 is TyReference && ty1.mutability == ty2.mutability
+            }
+        }
+
         val subst = Substitution(
             typeSubst = genericsForTy2.associateWith { ctx.typeVarForParam(it) },
             constSubst = constGenericsForTy2.associateWith { ctx.constVarForParam(it) }
