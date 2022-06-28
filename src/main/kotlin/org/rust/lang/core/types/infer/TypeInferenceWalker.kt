@@ -11,6 +11,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralKind
@@ -19,11 +20,15 @@ import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.consts.CtUnknown
+import org.rust.lang.core.types.infer.Autoderef.AutoderefKind.ArrayToSlice
 import org.rust.lang.core.types.infer.Expectation.ExpectHasType
 import org.rust.lang.core.types.infer.Expectation.NoExpectation
+import org.rust.lang.core.types.infer.MethodPick.AutorefOrPtrAdjustment.Autoref
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.evaluation.ConstExpr
 import org.rust.lang.utils.evaluation.PathExprResolver
@@ -135,10 +140,14 @@ class RsTypeInferenceWalker(
             val explicitTy = psi.typeReference?.type
                 ?.let { normalizeAssociatedTypesIn(it) }
             val expr = psi.expr
+            val pat = psi.pat
             // We need to know type before coercion to correctly identify if expr is always diverging
             // so we can't call `inferTypeCoercableTo` directly here
             val (inferredTy, coercedInferredTy) = if (expr != null) {
-                val inferredTy = expr.inferType(Expectation.maybeHasType(explicitTy))
+                val patHasRefMut = pat?.descendantsOfTypeOrSelf<RsPatIdent>().orEmpty()
+                    .any { (it.patBinding.kind as? BindByReference)?.mutability == MUTABLE }
+                val initializerNeeds = if (patHasRefMut) Needs.MutPlace else Needs.None
+                val inferredTy = expr.inferType(Expectation.maybeHasType(explicitTy), needs = initializerNeeds)
                 val coercedTy = if (explicitTy != null && coerce(expr, inferredTy, explicitTy)) {
                     explicitTy
                 } else {
@@ -159,7 +168,7 @@ class RsTypeInferenceWalker(
     private fun RsExpr.inferType(expected: Ty?): Ty =
         inferType(Expectation.maybeHasType(expected))
 
-    private fun RsExpr.inferType(expected: Expectation = NoExpectation): Ty {
+    private fun RsExpr.inferType(expected: Expectation = NoExpectation, needs: Needs = Needs.None): Ty {
         ProgressManager.checkCanceled()
         if (ctx.isTypeInferred(this)) error("Trying to infer expression type twice")
 
@@ -201,6 +210,11 @@ class RsTypeInferenceWalker(
         }
 
         ctx.writeExprTy(this, ty)
+
+        if (needs == Needs.MutPlace) {
+            ctx.convertPlaceDerefsToMutable(unwrapParenExprs(this))
+        }
+
         return ty
     }
 
@@ -212,6 +226,7 @@ class RsTypeInferenceWalker(
     @JvmName("inferTypeCoercableTo_")
     fun inferTypeCoercableTo(expr: RsExpr, expected: Ty): Ty =
         expr.inferTypeCoercableTo(expected)
+
 
     private fun coerce(element: RsElement, inferred: Ty, expected: Ty): Boolean =
         coerceResolved(
@@ -225,7 +240,10 @@ class RsTypeInferenceWalker(
             ctx.writeExpectedExprTyCoercable(element)
         }
         return when (val result = ctx.tryCoerce(inferred, expected)) {
-            is Ok -> true
+            is Ok -> {
+                ctx.applyAdjustments(element, result.ok.adjustments)
+                true
+            }
 
             is RsResult.Err -> when (val err = result.err) {
                 is TypeError.TypeMismatch -> {
@@ -249,7 +267,7 @@ class RsTypeInferenceWalker(
         if (expected is TyReference && inferred is TyReference &&
             (expected.containsTyOfClass(IGNORED_TYS) || inferred.containsTyOfClass(IGNORED_TYS))) {
             // report errors with unknown types when &mut is needed, but & is present
-            if (!(expected.mutability == Mutability.MUTABLE && inferred.mutability == Mutability.IMMUTABLE)) {
+            if (!(expected.mutability == MUTABLE && inferred.mutability == IMMUTABLE)) {
                 return
             }
         }
@@ -273,9 +291,9 @@ class RsTypeInferenceWalker(
                 if (stubKind.isByte) {
                     val size = stubKind.value?.length?.toLong()
                     val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
-                    TyReference(TyArray(TyInteger.U8.INSTANCE, const), Mutability.IMMUTABLE, ReStatic)
+                    TyReference(TyArray(TyInteger.U8.INSTANCE, const), IMMUTABLE, ReStatic)
                 } else {
-                    TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE, ReStatic)
+                    TyReference(TyStr.INSTANCE, IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralKind.Integer -> {
@@ -634,10 +652,10 @@ class RsTypeInferenceWalker(
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             val callee = pickSingleMethod(receiver, variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
-            val variantsForDisplay = (callee?.let(::listOf) ?: variants)
+            val variantsForDisplay = callee?.let { listOf(it.toMethodResolveVariant()) } ?: variants
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
 
-            callee ?: variants.firstOrNull()
+            callee ?: variants.firstOrNull()?.let { MethodPick.from(it) }
         }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
@@ -645,19 +663,27 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
+        val adjustments: MutableList<Adjustment> = callee.derefSteps.toAdjustments(items).toMutableList()
+        val lastDerefTy = adjustments.lastOrNull()?.target ?: receiver
+        if (callee.autorefOrPtrAdjustment is Autoref) {
+            val mutability = callee.autorefOrPtrAdjustment.mutability
+            adjustments += Adjustment.BorrowReference(TyReference(lastDerefTy, mutability))
+            if (callee.autorefOrPtrAdjustment.unsize) {
+                val unsizedTy = if (lastDerefTy is TyArray) {
+                    TySlice(lastDerefTy.base)
+                } else {
+                    error("AutorefOrPtrAdjustment's unsize flag should only be set for array ty, found `$lastDerefTy`")
+                }
+                adjustments += Adjustment.Unsize(TyReference(unsizedTy, mutability))
+            }
+        }
+        ctx.applyAdjustments(methodCall.receiver, adjustments)
+
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
 
         var newSubst = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
 
-        // TODO: borrow adjustments for self parameter
-        /*
-        if (callee.selfTy is TyReference) {
-            val adjustment = BorrowReference( callee.selfTy)
-            ctx.addAdjustment(methodCall.receiver, adjustment)
-        }
-        */
-
-        newSubst = ctx.instantiateBounds(callee.element, callee.selfTy, newSubst)
+        newSubst = ctx.instantiateBounds(callee.element, callee.formalSelfTy, newSubst)
 
         val typeParameters = callee.element.typeParameters.map { TyTypeParameter.named(it) }
         val typeArguments = methodCall.typeArguments.map { it.type }
@@ -729,27 +755,39 @@ class RsTypeInferenceWalker(
         receiver: Ty,
         variants: List<MethodResolveVariant>,
         methodCall: RsMethodCall
-    ): MethodResolveVariant? {
-        val filtered = filterAssocItems(variants, methodCall).singleOrLet { list ->
+    ): MethodPick? {
+        val picked = run {
+            val list = filterAssocItems(variants, methodCall)
+
             // 4. Pick results matching receiver type
             TypeInferenceMarks.MethodPickDerefOrder.hit()
 
-            fun pick(ty: Ty): List<MethodResolveVariant> =
-                list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
+            val autoderef = lookup.coercionSequence(receiver)
+
+            fun pick(ty: Ty, borrow: Mutability?): List<MethodPick> {
+                val autoderefSteps = lazy(LazyThreadSafetyMode.NONE) { autoderef.steps() }
+                val autorefOrPtrAdjustment = lazy(LazyThreadSafetyMode.NONE) {
+                    borrow?.let { Autoref(it, autoderefSteps.value.lastOrNull()?.getKind(items) == ArrayToSlice) }
+                }
+                return list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
+                    .map { MethodPick.from(it, ty, autoderefSteps.value, autorefOrPtrAdjustment.value) }
+            }
 
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
-            lookup.coercionSequence(receiver).mapNotNull { ty ->
-                pick(ty)
+            autoderef.mapNotNull { ty ->
+                pick(ty, null)
                     // TODO do something with lifetimes
-                    .notEmptyOrLet { pick(TyReference(ty, Mutability.IMMUTABLE)) }
-                    .notEmptyOrLet { pick(TyReference(ty, Mutability.MUTABLE)) }
+                    .notEmptyOrLet { pick(TyReference(ty, IMMUTABLE), IMMUTABLE) }
+                    .notEmptyOrLet { pick(TyReference(ty, MUTABLE), MUTABLE) }
                     .takeIf { it.isNotEmpty() }
-            }.firstOrNull() ?: emptyList()
+            }.firstOrNull()
+                ?: list.singleOrNull()?.let { listOf(MethodPick.from(it)) }
+                ?: emptyList()
         }
 
-        return when (filtered.size) {
+        return when (picked.size) {
             0 -> null
-            1 -> filtered.single()
+            1 -> picked.single()
             else -> {
                 // 5. Try to collapse multiple resolved methods of the same trait, e.g.
                 // ```rust
@@ -757,18 +795,21 @@ class RsTypeInferenceWalker(
                 // impl Foo<Bar> for S { fn foo(&self, _: Bar) {} }
                 // impl Foo<Baz> for S { fn foo(&self, _: Baz) {} }
                 // ```
-                // In this case we `filtered` list contains 2 function defined in 2 impls.
-                // We want to collapse them to the single function defined in the trait.
+                // In this case `picked` list contains 2 function defined in 2 impls.
+                // We want to collapse them into the single function defined in the trait.
                 // Specific impl will be selected later according to the method parameter type.
-                val first = filtered.first()
-                collapseToTrait(filtered.map { it.element })?.let { fn ->
+                val first = picked.first()
+                collapseToTrait(picked.map { it.element })?.let { fn ->
                     TypeInferenceMarks.MethodPickCollapseTraits.hit()
-                    MethodResolveVariant(
-                        first.name,
+                    MethodPick(
                         fn,
-                        first.selfTy,
+                        first.formalSelfTy,
+                        first.methodSelfTy,
                         first.derefCount,
-                        TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait)
+                        TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait),
+                        first.derefSteps,
+                        first.autorefOrPtrAdjustment,
+                        first.isValid
                     )
                 }
             }
@@ -841,16 +882,17 @@ class RsTypeInferenceWalker(
         ctx.writeResolvedField(fieldLookup, variants.map { it.element })
         val field = variants.firstOrNull()
         if (field == null) {
-            for ((index, type) in lookup.coercionSequence(receiver).withIndex()) {
+            val autoderef = lookup.coercionSequence(receiver)
+            for (type in autoderef) {
                 if (type is TyTuple) {
-                    ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), index)
+                    ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, autoderef.steps().toAdjustments(items))
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
                 }
             }
             return TyUnknown
         }
-        ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), field.derefCount)
+        ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, field.derefSteps.toAdjustments(items))
 
         val fieldElement = field.element
 
@@ -921,19 +963,11 @@ class RsTypeInferenceWalker(
     private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Expectation): Ty {
         val innerExpr = expr.expr ?: return TyUnknown
         return when (expr.operatorType) {
-            UnaryOperator.REF -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE, BorrowKind.REF)
-            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE, BorrowKind.REF)
-            UnaryOperator.RAW_REF_CONST -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE, BorrowKind.RAW)
-            UnaryOperator.RAW_REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE, BorrowKind.RAW)
-            UnaryOperator.DEREF -> {
-                // expectation must NOT be used for deref
-                val base = resolveTypeVarsWithObligations(innerExpr.inferType())
-                val deref = lookup.deref(base)
-                if (deref == null && base != TyUnknown) {
-                    ctx.addDiagnostic(RsDiagnostic.DerefError(expr, base))
-                }
-                deref ?: TyUnknown
-            }
+            UnaryOperator.REF -> inferRefType(innerExpr, expected, IMMUTABLE, BorrowKind.REF)
+            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, MUTABLE, BorrowKind.REF)
+            UnaryOperator.RAW_REF_CONST -> inferRefType(innerExpr, expected, IMMUTABLE, BorrowKind.RAW)
+            UnaryOperator.RAW_REF_MUT -> inferRefType(innerExpr, expected, MUTABLE, BorrowKind.RAW)
+            UnaryOperator.DEREF -> inferDerefExprType(expr, innerExpr)
             UnaryOperator.MINUS -> innerExpr.inferType(expected)
             UnaryOperator.NOT -> innerExpr.inferType(expected)
             UnaryOperator.BOX -> {
@@ -946,6 +980,24 @@ class RsTypeInferenceWalker(
                 items.makeBox(innerExpr.inferType(expectedInner))
             }
         }
+    }
+
+    private fun inferDerefExprType(expr: RsUnaryExpr, operandExpr: RsExpr): Ty {
+        // expectation must NOT be used for deref
+        val operandTy = resolveTypeVarsWithObligations(operandExpr.inferType())
+        operandTy.builtinDeref(items, explicit = true)?.let {
+            return it.first
+        }
+        val overloadedDeref = lookup.deref(operandTy)
+        if (overloadedDeref == null && operandTy != TyUnknown) {
+            ctx.addDiagnostic(RsDiagnostic.DerefError(expr, operandTy))
+        }
+        if (overloadedDeref != null) {
+            // Adjust self type before calling `Deref::deref`
+            ctx.applyAdjustment(operandExpr, Adjustment.BorrowReference(TyReference(operandTy, IMMUTABLE)))
+            ctx.writeOverloadedOperator(expr)
+        }
+        return overloadedDeref ?: TyUnknown
     }
 
     private fun inferRefType(expr: RsExpr, expected: Expectation, mutable: Mutability, kind: BorrowKind): Ty {
@@ -972,7 +1024,7 @@ class RsTypeInferenceWalker(
             }
         } ?: NoExpectation
 
-        val ty = expr.inferType(hint)
+        val ty = expr.inferType(hint, needs = Needs.maybeMutPlace(mutable))
 
         return when (kind) {
             BorrowKind.REF -> TyReference(ty, mutable) // TODO infer the actual lifetime
@@ -1008,8 +1060,9 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
-        val lhsType = resolveTypeVarsWithObligations(expr.left.inferType())
         val op = expr.operatorType
+        val lhsNeeds = if (op is AssignmentOp) Needs.MutPlace else Needs.None
+        val lhsType = resolveTypeVarsWithObligations(expr.left.inferType(needs = lhsNeeds))
         val (rhsType, retTy) = when (op) {
             is BoolOp -> {
                 if (op is OverloadableBinaryOperator) {
@@ -1020,11 +1073,11 @@ class RsTypeInferenceWalker(
                             ?: TyUnknown
                     )
 
-                    val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, Mutability.IMMUTABLE))
-                    ctx.addAdjustment(expr.left, lhsAdjustment)
+                    val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, IMMUTABLE))
+                    ctx.applyAdjustment(expr.left, lhsAdjustment)
 
-                    val rhsAdjustment = Adjustment.BorrowReference(TyReference(rhsType, Mutability.IMMUTABLE))
-                    expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
+                    val rhsAdjustment = Adjustment.BorrowReference(TyReference(rhsType, IMMUTABLE))
+                    expr.right?.let { ctx.applyAdjustment(it, rhsAdjustment) }
 
                     rhsType to TyBool.INSTANCE
                 } else {
@@ -1043,8 +1096,8 @@ class RsTypeInferenceWalker(
                 enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
                 val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
 
-                val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, Mutability.MUTABLE))
-                ctx.addAdjustment(expr.left, lhsAdjustment)
+                val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, MUTABLE))
+                ctx.applyAdjustment(expr.left, lhsAdjustment)
 
                 rhsType to TyUnit.INSTANCE
             }
@@ -1158,35 +1211,33 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferIndexExprType(expr: RsIndexExpr): Ty {
-        fun isArrayToSlice(prevType: Ty?, type: Ty?): Boolean =
-            prevType is TyArray && type is TySlice
-
-        val containerExpr = expr.containerExpr ?: return TyUnknown
+        val containerExpr = expr.containerExpr
         val indexExpr = expr.indexExpr ?: return TyUnknown
 
         val containerType = containerExpr.inferType()
         val indexType = ctx.resolveTypeVarsIfPossible(indexExpr.inferType())
 
-        if (indexType is TyReference) {
-            ctx.addAdjustment(indexExpr, Adjustment.BorrowReference(indexType)) // TODO
-        }
+        val autoderef = lookup.coercionSequence(containerType)
+        val result = autoderef
+            .mapNotNull { lookup.findIndexOutputType(it, indexType) }
+            .firstOrNull()
+            ?.register()
+            ?.takeIf { it !is TyUnknown }
+            ?: return TyUnknown
 
-        var derefCount = -1 // starts with -1 because the fist element of the coercion sequence is the type itself
-        var prevType: Ty? = null
-        var result: Ty = TyUnknown
-        for (type in lookup.coercionSequence(containerType)) {
-            if (!isArrayToSlice(prevType, type)) derefCount++
-
-            val outputType = lookup.findIndexOutputType(type, indexType)
-            if (outputType != null) {
-                result = outputType.register()
-                break
+        val steps = autoderef.steps()
+        val lastStep = steps.lastOrNull()
+        val adjustedTy = lastStep?.to ?: containerType
+        val adjustments = mutableListOf<Adjustment>()
+        adjustments += steps.toAdjustments(items)
+        if (!isBuiltinIndex(adjustedTy, ctx.resolveTypeVarsIfPossible(indexType))) {
+            adjustments += Adjustment.BorrowReference(TyReference(adjustedTy, IMMUTABLE))
+            if (lastStep?.getKind(items) == ArrayToSlice) {
+                adjustments += Adjustment.Unsize(TyReference(lastStep.to, IMMUTABLE))
             }
-
-            prevType = type
+            ctx.writeOverloadedOperator(expr)
         }
-
-        ctx.addAdjustment(containerExpr, Adjustment.Deref(containerType), derefCount)
+        ctx.applyAdjustments(containerExpr, adjustments)
         return result
     }
 
@@ -1245,13 +1296,13 @@ class RsTypeInferenceWalker(
             macroCall.assertMacroArgument != null -> TyUnit.INSTANCE
             macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
             macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
-            name == "env" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
-            name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE))
-            name == "concat" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "env" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
+            name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr.INSTANCE, IMMUTABLE))
+            name == "concat" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "line" || name == "column" -> TyInteger.U32.INSTANCE
-            name == "file" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
-            name == "stringify" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
-            name == "module_path" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+            name == "file" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
+            name == "stringify" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
+            name == "module_path" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "cfg" -> TyBool.INSTANCE
             else -> inferMacroAsExpr(macroCall)
         }
@@ -1259,8 +1310,8 @@ class RsTypeInferenceWalker(
 
     private fun inferIncludeMacro(macroCall: RsMacroCall): Ty {
         return when (macroCall.macroName) {
-            "include_str" -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
-            "include_bytes" -> TyReference(TyArray(TyInteger.U8.INSTANCE, CtUnknown), Mutability.IMMUTABLE)
+            "include_str" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
+            "include_bytes" -> TyReference(TyArray(TyInteger.U8.INSTANCE, CtUnknown), IMMUTABLE)
             else -> TyUnknown
         }
     }
@@ -1472,6 +1523,27 @@ class RsTypeInferenceWalker(
     }
 }
 
+/**
+ * Specifies whether an expression needs mutable a mutable place or not. For
+ * example, `*x` expr in `*x = 1;` needs a mutable place but in `a = *x;` is not.
+ */
+private enum class Needs {
+    MutPlace,
+    None;
+
+    fun toMutability(): Mutability = when (this) {
+        MutPlace -> MUTABLE
+        None -> IMMUTABLE
+    }
+
+    companion object {
+        fun maybeMutPlace(mutability: Mutability): Needs = when (mutability) {
+            MUTABLE -> MutPlace
+            IMMUTABLE -> None
+        }
+    }
+}
+
 val RsFunction.selfType: Ty?
     get() {
         return when (val owner = owner) {
@@ -1585,3 +1657,6 @@ private fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
     return TyAnon(null, listOf(boundFuture))
 }
+
+fun isBuiltinIndex(baseType: Ty, indexType: Ty) =
+    (baseType is TyArray || baseType is TySlice) && indexType is TyInteger.USize

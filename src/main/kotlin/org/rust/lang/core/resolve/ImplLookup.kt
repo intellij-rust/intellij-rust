@@ -1070,17 +1070,7 @@ class ImplLookup(
         return Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
     }
 
-    fun coercionSequence(baseTy: Ty): Sequence<Ty> {
-        val result = mutableSetOf<Ty>()
-        return generateSequence(ctx.resolveTypeVarsIfPossible(baseTy)) {
-            if (result.add(it)) {
-                deref(it)?.let(ctx::resolveTypeVarsIfPossible)
-                    ?: (it as? TyArray)?.let { array -> TySlice(array.base) }
-            } else {
-                null
-            }
-        }.constrainOnce().take(DEFAULT_RECURSION_LIMIT)
-    }
+    fun coercionSequence(baseTy: Ty): Autoderef = Autoderef(this, ctx, baseTy)
 
     fun deref(ty: Ty): Ty? = when (ty) {
         is TyReference -> ty.referenced

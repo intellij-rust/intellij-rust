@@ -81,6 +81,7 @@ sealed class BorrowKind {
 }
 
 sealed class PointerKind {
+    object Unique : PointerKind()
     data class BorrowedPointer(val borrowKind: BorrowKind, val region: Region) : PointerKind()
     data class UnsafePointer(val mutability: Mutability) : PointerKind()
 }
@@ -138,8 +139,9 @@ enum class MutabilityCategory {
                 is MutableBorrow -> Declared
             }
 
-        fun from(pointerKind: PointerKind): MutabilityCategory =
+        fun from(BaseMut: MutabilityCategory, pointerKind: PointerKind): MutabilityCategory =
             when (pointerKind) {
+                PointerKind.Unique -> BaseMut.inherit()
                 is BorrowedPointer -> from(pointerKind.borrowKind)
                 is UnsafePointer -> from(pointerKind.mutability)
             }
@@ -223,9 +225,15 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     private fun processExprAdjustedWith(expr: RsExpr, adjustments: Iterator<Adjustment>): Cmt {
         return when (val adjustment = adjustments.nextOrNull()) {
+            null -> processExprUnadjusted(expr)
             is Adjustment.Deref -> {
-                // TODO: overloaded deref
-                processDeref(expr, processExprAdjustedWith(expr, adjustments))
+                val cmt = if (adjustment.overloaded != null) {
+                    val ref = TyReference(adjustment.target, adjustment.overloaded)
+                    processRvalue(expr, ref)
+                } else {
+                    processExprAdjustedWith(expr, adjustments)
+                }
+                processDeref(expr, cmt)
             }
             is Adjustment.BorrowReference -> {
                 val target = adjustment.target
@@ -237,7 +245,10 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
                     processRvalue(expr, target)
                 }
             }
-            else -> processExprUnadjusted(expr)
+            else -> {
+                val target = adjustment.target
+                processRvalue(expr, target)
+            }
         }
     }
 
@@ -254,8 +265,12 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     private fun processUnaryExpr(unaryExpr: RsUnaryExpr): Cmt {
         if (!unaryExpr.isDereference) return processRvalue(unaryExpr)
         val base = unaryExpr.expr ?: return Cmt(unaryExpr, ty = inference.getExprType(unaryExpr))
-        val baseCmt = processExpr(base)
-        return processDeref(unaryExpr, baseCmt)
+        return if (inference.isOverloadedOperator(unaryExpr)) {
+            processOverloadedPlace(unaryExpr, base)
+        } else {
+            val baseCmt = processExpr(base)
+            processDeref(unaryExpr, baseCmt)
+        }
     }
 
     private fun processDotExpr(dotExpr: RsDotExpr): Cmt {
@@ -268,10 +283,24 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     }
 
     private fun processIndexExpr(indexExpr: RsIndexExpr): Cmt {
-        val type = inference.getExprType(indexExpr)
-        val base = indexExpr.containerExpr ?: return Cmt(indexExpr, ty = type)
-        val baseCmt = processExpr(base)
-        return Cmt(indexExpr, Interior.Index(baseCmt), baseCmt.mutabilityCategory.inherit(), type)
+        return if (inference.isOverloadedOperator(indexExpr)) {
+            return processOverloadedPlace(indexExpr, indexExpr.containerExpr)
+        } else {
+            val type = inference.getExprType(indexExpr)
+            val baseCmt = processExpr(indexExpr.containerExpr)
+            Cmt(indexExpr, Interior.Index(baseCmt), baseCmt.mutabilityCategory.inherit(), type)
+        }
+    }
+
+    // rustc's cat_overloaded_place
+    private fun processOverloadedPlace(
+        expr: RsExpr,
+        base: RsExpr
+    ): Cmt {
+        val placeTy = inference.getExprType(expr)
+        val baseTy = inference.getExprTypeAdjusted(base) as? TyReference ?: return Cmt(expr, ty = placeTy)
+        val refTy = TyReference(placeTy, baseTy.mutability, baseTy.region)
+        return processDeref(expr, processRvalue(expr, refTy))
     }
 
     private fun processPathExpr(pathExpr: RsPathExpr): Cmt {
@@ -303,15 +332,22 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     private fun processDeref(expr: RsExpr, baseCmt: Cmt): Cmt {
         val baseType = baseCmt.ty
-        val (derefType, derefMut) = baseType.builtinDeref() ?: Pair(TyUnknown, Mutability.DEFAULT_MUTABILITY)
+        val (derefType, derefMut) = baseType.builtinDeref(lookup.items)
+            ?: Pair(TyUnknown, Mutability.DEFAULT_MUTABILITY)
 
         val pointerKind = when (baseType) {
+            is TyAdt -> PointerKind.Unique
             is TyReference -> BorrowedPointer(BorrowKind.from(baseType.mutability), baseType.region)
             is TyPointer -> UnsafePointer(baseType.mutability)
             else -> UnsafePointer(derefMut)
         }
 
-        return Cmt(expr, Deref(baseCmt, pointerKind), MutabilityCategory.from(pointerKind), derefType)
+        return Cmt(
+            expr,
+            Deref(baseCmt, pointerKind),
+            MutabilityCategory.from(baseCmt.mutabilityCategory, pointerKind),
+            derefType
+        )
     }
 
     // `rvalue_promotable_map` is needed to distinguish rvalues with static region and rvalue with temporary region,

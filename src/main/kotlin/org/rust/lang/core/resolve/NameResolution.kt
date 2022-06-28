@@ -113,10 +113,11 @@ fun processFieldExprResolveVariants(
     receiverType: Ty,
     originalProcessor: RsResolveProcessorBase<FieldResolveVariant>
 ): Boolean {
-    for ((i, ty) in lookup.coercionSequence(receiverType).withIndex()) {
+    val autoderef = lookup.coercionSequence(receiverType)
+    for (ty in autoderef) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
         val processor = createProcessor(originalProcessor.name) {
-            originalProcessor(FieldResolveVariant(it.name, it.element!!, ty, i))
+            originalProcessor(FieldResolveVariant(it.name, it.element!!, ty, autoderef.steps()))
         }
         if (processFieldDeclarations(ty.item, processor)) return true
     }

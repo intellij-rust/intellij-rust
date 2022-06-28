@@ -213,7 +213,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             }
 
             is RsIndexExpr -> {
-                expr.containerExpr?.let { selectFromExpr(it) }
+                selectFromExpr(expr.containerExpr)
                 expr.indexExpr?.let { consumeExpr(it) }
             }
 

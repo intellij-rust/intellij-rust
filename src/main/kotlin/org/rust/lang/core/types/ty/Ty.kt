@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
@@ -142,8 +143,9 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
     }
 }
 
-fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
+fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutability>? =
     when {
+        this is TyAdt && item == items.Box -> Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
         this is TyReference -> Pair(referenced, mutability)
         this is TyPointer && explicit -> Pair(referenced, mutability)
         else -> null

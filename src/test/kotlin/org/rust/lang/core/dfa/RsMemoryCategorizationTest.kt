@@ -71,6 +71,18 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @Language("Rust")
+    private val indexable = """
+        #[lang = "index"]
+        pub trait Index<Idx> { type Output; }
+        #[lang = "index_mut"]
+        pub trait IndexMut<Idx>: Index<Idx> {}
+        struct Indexable<T>;
+        impl<T> Index<usize> for Indexable<T> { type Output = T; }
+        impl<T> IndexMut<usize> for Indexable<T> {}
+    """.trimIndent()
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test immutable array`() = testExpr("""
         fn main() {
             let a: [i32; 3] = [0; 3];
@@ -79,11 +91,60 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test mutable array`() = testExpr("""
         fn main() {
             let mut a: [i32; 3] = [0; 3];
             a[1];
              //^ Index, Inherited
+        }
+    """)
+
+    fun `test overloaded index`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            (buf[0]);
+                 //^ Deref, Immutable
+        }
+    """)
+
+    fun `test overloaded index assign 1`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            buf[0] = 1;
+               //^ Deref, Declared
+        }
+    """)
+
+    fun `test overloaded index assign 2`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            (buf[0]) = 1;
+                //^ Deref, Declared
+        }
+    """)
+
+    fun `test overloaded index assign 3`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<&mut Indexable<u8>>) {
+            buf[0][0] = 1;
+               //^ Rvalue, Declared
+        }
+    """)
+
+    fun `test overloaded index mut 4`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            let _ = &mut (buf[0]);
+                       //^ Deref, Declared
+        }
+    """)
+
+    fun `test overloaded index mut 5`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            let ref mut a = (buf[0]);
+                          //^ Deref, Declared
         }
     """)
 
