@@ -10,6 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.util.io.storage.HeavyProcessLatch
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.TestProject
@@ -21,7 +23,6 @@ import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.stubChildrenOfType
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
 import org.rust.openapiext.Testmark
-import org.rust.openapiext.TestmarkPred
 
 @ExpandMacros
 class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
@@ -53,15 +54,22 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
             listOf(macroCall) + calls.orEmpty()
         }
 
-    private fun checkReExpandedInner(
-        testmark: TestmarkPred?,
+    private fun countDumbModeEnters(): DumbModeCounter {
+        val counter = DumbModeCounter()
+        HeavyProcessLatch.INSTANCE.addListener(testRootDisposable, counter)
+        return counter
+    }
+
+    private fun checkReExpanded(
         action: () -> Unit,
         @Language("Rust") code: String,
-        vararg names: String
+        vararg names: String,
+        allowDumbMode: Boolean = true,
     ) {
         InlineFile(code).withCaret()
         val oldStamps = myFixture.file.collectMacros().collectStamps()
-        testmark?.checkHit { action() } ?: action()
+        val dumbModeCounter = countDumbModeEnters()
+        action()
         val collectMacros = myFixture.file.collectMacros()
         val changed = collectMacros.collectStamps().entries
             .filter { oldStamps[it.key] != it.value }
@@ -69,23 +77,24 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         check(changed == names.toList()) {
             "Expected to re-expand ${names.asList()}, re-expanded $changed instead"
         }
+        if (!allowDumbMode) {
+            dumbModeCounter.checkDumbModeWasNotEntered()
+        }
     }
-
-    private fun checkReExpanded(action: () -> Unit, @Language("Rust") code: String, vararg names: String) =
-        checkReExpandedInner(null, action, code, *names)
-
-    private fun TestmarkPred.checkReExpanded(action: () -> Unit, @Language("Rust") code: String, vararg names: String) =
-        checkReExpandedInner(this, action, code, *names)
 
     private fun checkReExpandedTree(
         action: (p: TestProject) -> Unit,
         @Language("Rust") code: String,
-        names: List<String>
+        names: List<String>,
+        allowDumbMode: Boolean = true,
     ) {
         val p = fileTreeFromText(code).create()
         val file = p.psiFile("main.rs") as RsFile
-        checkAstNotLoaded()
+        PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter({
+            it.fileSystem !is MacroExpansionFileSystem
+        }, testRootDisposable)
         val oldStamps = file.collectMacros().collectStamps()
+        val dumbModeCounter = countDumbModeEnters()
         action(p)
         assertNotNull(file.stub)
         val changed = file.collectMacros().collectStamps().entries
@@ -93,6 +102,9 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
             .map { it.key }
         check(changed == names) {
             "Expected to re-expand $names, re-expanded $changed instead"
+        }
+        if (!allowDumbMode) {
+            dumbModeCounter.checkDumbModeWasNotEntered()
         }
     }
 
@@ -113,14 +125,14 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a/*caret*/);
         bar!(b);
-    """, "foo")
+    """, "foo", allowDumbMode = false)
 
     fun `test edit def 1`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(a);
         bar!(b);
-    """, "foo")
+    """, "foo", allowDumbMode = false)
 
     fun `test edit def 2`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {/*caret*/} } }
@@ -141,7 +153,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         macro_rules! foo { () => { mod a/*caret*/ {} } }
         macro_rules! bar { () => { foo!(); } }
         bar!();
-    """, "foo")
+    """, "foo", allowDumbMode = false)
 
     fun `test stub call 1`() = checkReExpandedTree(replaceInFile("main.rs", "aaa", "aab"), """
     //- main.rs
@@ -149,7 +161,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         macro_rules! bar { ($ i:ident) => { mod $ i {} } }
         foo!(aaa);
         bar!(bbb);
-    """, listOf("foo"))
+    """, listOf("foo"), allowDumbMode = false)
 
     fun `test stub call 2`() = checkReExpandedTree(replaceInFile("main.rs", "//", ""), """
     //- main.rs
@@ -256,4 +268,22 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         struct S2;
         struct S3;
     """)
+
+    private class DumbModeCounter : HeavyProcessLatch.HeavyProcessListener {
+        var count = 0
+
+        override fun processStarted(op: HeavyProcessLatch.Operation) {
+            if (op.type == HeavyProcessLatch.Type.Indexing) {
+                count++
+            }
+        }
+
+        override fun processFinished(op: HeavyProcessLatch.Operation) {}
+
+        fun checkDumbModeWasNotEntered() {
+            check(count == 0) {
+                "Expected Dumb Mode is not entered, actually Dumb Mode has been entered $count time(s)"
+            }
+        }
+    }
 }

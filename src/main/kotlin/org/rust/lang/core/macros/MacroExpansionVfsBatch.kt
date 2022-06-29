@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
+import org.rust.openapiext.findNearestExistingFile
 
 class MacroExpansionVfsBatch(private val contentRoot: String) {
 
@@ -75,7 +75,7 @@ class MacroExpansionVfsBatch(private val contentRoot: String) {
         val root = expansionFileSystem.findFileByPath("/") ?: return
 
         for (path in pathsToMarkDirty) {
-            markDirty(findNearestExistingFile(root, path))
+            markDirty(root.findNearestExistingFile(path).first)
         }
 
         RefreshQueue.getInstance().refresh(async, true, callback, root)
@@ -84,12 +84,4 @@ class MacroExpansionVfsBatch(private val contentRoot: String) {
     private fun markDirty(file: VirtualFile) {
         VfsUtil.markDirty(false, false, file)
     }
-}
-
-private fun findNearestExistingFile(root: VirtualFile, path: String): VirtualFile {
-    var file = root
-    for (segment in StringUtil.split(path, "/")) {
-        file = file.findChild(segment) ?: break
-    }
-    return file
 }

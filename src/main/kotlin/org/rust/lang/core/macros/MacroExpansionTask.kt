@@ -5,23 +5,29 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import org.rust.RsTask
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
+import org.rust.lang.core.macros.MacroExpansionFileSystem.TrustedRequestor
+import org.rust.lang.core.psi.RsPsiManager
 import org.rust.lang.core.resolve2.CrateDefMap
 import org.rust.lang.core.resolve2.DefCollector
 import org.rust.lang.core.resolve2.MacroIndex
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
-import org.rust.openapiext.testAssert
-import org.rust.openapiext.toThreadSafeProgressIndicator
+import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
+import java.io.IOException
 
 /**
  * Overview of macro expansion process:
@@ -77,13 +83,27 @@ class MacroExpansionTask(
         MACRO_LOG.debug("Finished macro expansion task in $elapsed2 ms")
     }
 
+    private class FileCreation(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val content: String,
+        val ranges: RangeMap,
+    )
+
+    private class FileDeletion(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val file: FSItem.FSFile,
+    )
+
     private data class FileAttributes(
         val path: MacroExpansionVfsBatch.Path,
         val rangeMap: RangeMap,
     )
 
     private fun updateMacrosFiles(allDefMaps: List<CrateDefMap>) {
-        val batch = MacroExpansionVfsBatch("/$MACRO_EXPANSION_VFS_ROOT/$projectDirectoryName")
+        val contentRoot = "/$MACRO_EXPANSION_VFS_ROOT/$projectDirectoryName"
+        val batch = MacroExpansionVfsBatch(contentRoot)
         val hasStaleExpansions = deleteStaleExpansions(allDefMaps, batch)
 
         val defMaps = allDefMaps.filter {
@@ -91,8 +111,17 @@ class MacroExpansionTask(
         }
         if (!hasStaleExpansions && defMaps.isEmpty()) return
 
-        val filesToWriteAttributes = createOrDeleteNeededFiles(defMaps, batch)
-        applyBatchAndWriteAttributes(batch, filesToWriteAttributes)
+        val files = collectFilesForCreationAndDeletion(defMaps)
+
+        val singleChangeApplied = !batch.hasChanges
+            && files.first.size == 1
+            && files.second.size == 1
+            && applySingleChange(contentRoot, files.first.single(), files.second.single())
+
+        if (!singleChangeApplied) {
+            val filesToWriteAttributes = createOrDeleteNeededFiles(files, batch)
+            applyBatchAndWriteAttributes(batch, filesToWriteAttributes)
+        }
 
         modificationTracker.incModificationCount()
         for (defMap in defMaps) {
@@ -100,9 +129,10 @@ class MacroExpansionTask(
         }
     }
 
-    private fun createOrDeleteNeededFiles(defMaps: List<CrateDefMap>, batch: MacroExpansionVfsBatch): List<FileAttributes> {
+    private fun collectFilesForCreationAndDeletion(defMaps: List<CrateDefMap>): Pair<List<FileCreation>, List<FileDeletion>> {
         val expansionSharedCache = MacroExpansionSharedCache.getInstance()
-        val filesToWriteAttributes = mutableListOf<FileAttributes>()
+        val pendingFileWrites = mutableListOf<FileCreation>()
+        val pendingFileDeletions = mutableListOf<FileDeletion>()
         for (defMap in defMaps) {
             val existingFiles = collectExistingFiles(defMap.crate)
 
@@ -118,13 +148,80 @@ class MacroExpansionTask(
                 val expansion = expansionSharedCache.getExpansionIfCached(mixHash)?.ok() ?: continue
 
                 val ranges = expansion.ranges
-                val path = batch.createFile(defMap.crate, expansionName, expansion.text, implicit = true)
-                filesToWriteAttributes += FileAttributes(path, ranges)
+                pendingFileWrites += FileCreation(defMap.crate, expansionName, expansion.text, ranges)
             }
             for (fileName in filesToDelete) {
                 val file = existingFiles.getValue(fileName)
-                batch.deleteFile(file)
+                pendingFileDeletions += FileDeletion(defMap.crate, fileName, file)
             }
+        }
+        return pendingFileWrites to pendingFileDeletions
+    }
+
+    /** An optimization for single macro change (i.e. typing in a macro call) */
+    private fun applySingleChange(
+        contentRoot: String,
+        singleWrite: FileCreation,
+        singleDeletion: FileDeletion
+    ): Boolean {
+        val oldPath = "$contentRoot/${singleDeletion.crate}/${expansionNameToPath(singleDeletion.expansionName)}"
+        val newPath = "$contentRoot/${singleWrite.crate}/${expansionNameToPath(singleWrite.expansionName)}"
+        val lastSlash = newPath.lastIndexOf('/')
+        if (lastSlash == -1) error("unreachable")
+        val newParentPath = newPath.substring(0, lastSlash)
+        val newName = newPath.substring(lastSlash + 1)
+
+        return invokeAndWaitIfNeeded {
+            val root = MacroExpansionFileSystem.getInstance().findFileByPath("/")!!
+            val oldFile = MacroExpansionFileSystem.getInstance().findFileByPath(oldPath)
+                ?: return@invokeAndWaitIfNeeded false
+            val oldPsiFile = oldFile.toPsiFile(project) ?: return@invokeAndWaitIfNeeded false
+            val (nearestNewParentFile, segmentsToCreate) = root.findNearestExistingFile(newParentPath)
+
+            runWriteAction {
+                try {
+                    var newFileParent = nearestNewParentFile
+                    for (segment in segmentsToCreate) {
+                        newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
+                    }
+                    RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
+                        oldFile.move(TrustedRequestor, newFileParent)
+                        oldFile.rename(TrustedRequestor, newName)
+                    }
+                    oldFile.getOutputStream(TrustedRequestor).use {
+                        it.write(singleWrite.content.toByteArray())
+                    }
+                    oldFile.writeRangeMap(singleWrite.ranges)
+                } catch (e: IOException) {
+                    MACRO_LOG.error(e)
+                    return@runWriteAction false
+                }
+
+                if (isUnitTestMode && runSyncInUnitTests) {
+                    // In unit tests macro expansion task works synchronously, so we have to
+                    // commit the document synchronously too
+                    val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
+                    if (doc != null) {
+                        PsiDocumentManager.getInstance(project).commitDocument(doc)
+                    }
+                }
+
+                true
+            }
+        }
+    }
+
+    private fun createOrDeleteNeededFiles(
+        files: Pair<List<FileCreation>, List<FileDeletion>>,
+        batch: MacroExpansionVfsBatch
+    ): List<FileAttributes> {
+        val filesToWriteAttributes = mutableListOf<FileAttributes>()
+        for (fileCreation in files.first) {
+            val path = batch.createFile(fileCreation.crate, fileCreation.expansionName, fileCreation.content, implicit = true)
+            filesToWriteAttributes += FileAttributes(path, fileCreation.ranges)
+        }
+        for (fileDeletion in files.second) {
+            batch.deleteFile(fileDeletion.file)
         }
         return filesToWriteAttributes
     }

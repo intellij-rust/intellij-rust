@@ -149,6 +149,15 @@ fun VirtualFile.findFileByMaybeRelativePath(path: String): VirtualFile? =
     else
         findFileByRelativePath(path)
 
+fun VirtualFile.findNearestExistingFile(path: String): Pair<VirtualFile, List<String>> {
+    var file = this
+    val segments = StringUtil.split(path, "/")
+    segments.forEachIndexed { i, segment ->
+        file = file.findChild(segment) ?: return file to segments.subList(i, segments.size)
+    }
+    return file to emptyList()
+}
+
 val VirtualFile.pathAsPath: Path get() = Paths.get(path)
 
 fun VirtualFile.toPsiFile(project: Project): PsiFile? =
