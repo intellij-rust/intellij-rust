@@ -42,7 +42,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
                 members = [ "subproject" ]
@@ -55,7 +55,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 allTargets()
             }
@@ -98,7 +98,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
                 members = [ "subproject" ]
@@ -111,7 +111,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 allTargets()
             }
@@ -150,7 +150,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
                 members = [ "subproject" ]
@@ -162,7 +162,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 noTargets()
             }
@@ -198,7 +198,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [dependencies]
                 #foo = { path = "./foo" }
@@ -219,7 +219,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "foo"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
 
                 dir("src") {
