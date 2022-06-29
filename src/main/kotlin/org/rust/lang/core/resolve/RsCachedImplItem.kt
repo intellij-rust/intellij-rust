@@ -8,11 +8,12 @@ package org.rust.lang.core.resolve
 import com.intellij.util.SmartList
 import com.intellij.util.recursionSafeLazy
 import gnu.trove.THashMap
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.isValidProjectMember
+import org.rust.lang.core.psi.isValidProjectMemberAndContainingCrate
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -30,8 +31,16 @@ class RsCachedImplItem(
     val impl: RsImplItem
 ) {
     private val traitRef: RsTraitRef? = impl.traitRef
-    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl
+    val containingCrate: Crate?
+    val isValid: Boolean
     val isNegativeImpl: Boolean = impl.isNegativeImpl
+
+    init {
+        val (isValid, crate) = impl.isValidProjectMemberAndContainingCrate
+        this.containingCrate = crate
+        this.isValid = isValid && !impl.isReservationImpl
+    }
+
     val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by recursionSafeLazy { traitRef?.resolveToBoundTrait() }

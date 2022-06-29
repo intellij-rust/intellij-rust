@@ -292,10 +292,16 @@ private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("C
  */
 @Suppress("KDocUnresolvedReference")
 val RsElement.isValidProjectMember: Boolean
+    get() = isValidProjectMemberAndContainingCrate.first
+
+val RsElement.isValidProjectMemberAndContainingCrate: Pair<Boolean, Crate?>
     get() {
         val file = contextualFile
-        if (file !is RsFile) return true
-        return existsAfterExpansion && file.isDeeplyEnabledByCfg && file.crateRoot != null
+        if (file !is RsFile) return true to null
+        if (!existsAfterExpansion || !file.isDeeplyEnabledByCfg) return false to null
+        val crate = file.crate ?: return false to null
+
+        return true to crate
     }
 
 /** Usually used to filter out test/bench non-workspace crates */

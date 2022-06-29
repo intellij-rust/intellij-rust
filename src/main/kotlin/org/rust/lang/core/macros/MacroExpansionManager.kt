@@ -87,6 +87,7 @@ interface MacroExpansionManager {
      */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
+    fun getCrateForExpansionFile(file: VirtualFile): CratePersistentId?
     fun reexpand()
 
     val macroExpansionMode: MacroExpansionMode
@@ -242,6 +243,9 @@ class MacroExpansionManagerImpl(
 
     override fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean =
         inner?.isExpansionFileOfCurrentProject(file) == true
+
+    override fun getCrateForExpansionFile(file: VirtualFile): CratePersistentId? =
+        inner?.getCrateForExpansionFile(file)?.first
 
     override fun reexpand() {
         inner?.reexpand()
@@ -406,6 +410,13 @@ private class MacroExpansionServiceImplInner(
 
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean {
         return VfsUtil.isAncestor(expansionsDirVi, file, true)
+    }
+
+    fun getCrateForExpansionFile(virtualFile: VirtualFile): Pair<Int, String>? {
+        if (!isExpansionFileOfCurrentProject(virtualFile)) return null
+        val expansionName = virtualFile.name
+        val crateId = virtualFile.parent.parent.parent.name.toIntOrNull() ?: return null
+        return crateId to expansionName
     }
 
     suspend fun save() {
@@ -784,9 +795,7 @@ private class MacroExpansionServiceImplInner(
     private fun getDefMapForExpansionFile(file: RsFile): Pair<CrateDefMap, String>? {
         val virtualFile = file.virtualFile ?: return null
 
-        if (!isExpansionFileOfCurrentProject(virtualFile)) return null
-        val expansionName = virtualFile.name
-        val crateId = virtualFile.parent.parent.parent.name.toIntOrNull() ?: return null
+        val (crateId, expansionName) = getCrateForExpansionFile(virtualFile) ?: return null
 
         val defMap = project.defMapService.getOrUpdateIfNeeded(crateId) ?: return null
         return defMap to expansionName

@@ -5,6 +5,7 @@
 
 package org.rustPerformanceTests
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDocumentManager
@@ -12,9 +13,12 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.rustPsiManager
+import org.rust.openapiext.runWriteCommandAction
 import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
 
@@ -64,6 +68,25 @@ class RsHighlightingPerfTest : RsRealProjectTestBase() {
         }
 
         timings.measure("resolve_cached") {
+            refs.forEach { it.reference?.resolve() }
+        }
+
+        val added = project.runWriteCommandAction {
+            myFixture.file.add(RsPsiFactory(project).createFunction("fn foo() {}"))
+        }
+        project.runWriteCommandAction {
+            added.delete()
+        }
+
+        timings.measure("resolve_after_workspace_modification") {
+            refs.forEach { it.reference?.resolve() }
+        }
+
+        runWriteAction {
+            project.rustPsiManager.incRustStructureModificationCount()
+        }
+
+        timings.measure("resolve_after_deps_modification") {
             refs.forEach { it.reference?.resolve() }
         }
 
