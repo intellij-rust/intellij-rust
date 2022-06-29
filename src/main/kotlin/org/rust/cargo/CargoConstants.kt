@@ -22,6 +22,8 @@ object CargoConstants {
     const val TOOLCHAIN_FILE = "rust-toolchain"
     const val TOOLCHAIN_TOML_FILE = "rust-toolchain.toml"
 
+    const val BUILD_FILE = "build.rs"
+
     const val RUST_BACKTRACE_ENV_VAR = "RUST_BACKTRACE"
 
     object ProjectLayout {
