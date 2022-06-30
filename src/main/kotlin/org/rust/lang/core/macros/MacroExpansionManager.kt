@@ -42,15 +42,16 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.indexing.RsIndexableSetContributor
-import org.rust.lang.core.macros.errors.ExpansionPipelineError
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
-import org.rust.lang.core.macros.errors.toExpansionPipelineError
+import org.rust.lang.core.macros.errors.ProcMacroExpansionError
+import org.rust.lang.core.macros.errors.toExpansionError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsProcMacroKind.DERIVE
 import org.rust.lang.core.psi.RsProcMacroKind.FUNCTION_LIKE
@@ -707,9 +708,9 @@ private class MacroExpansionServiceImplInner(
         val info = getModInfo(call.containingMod) as? RsModInfo
             ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
         val macroIndex = info.getMacroIndex(call, info.crate)
-            ?: return everChanged(Err(GetMacroExpansionError.NoMacroIndex))
+            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.defMap, null)))
         val expansionFile = getExpansionFile(info.defMap, macroIndex)
-            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(info.defMap, macroIndex)))
+            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.defMap, macroIndex)))
         val expansion = RsResult.Ok(getExpansionFromExpandedFile(MacroExpansionContext.ITEM, expansionFile)!!)
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, modificationTracker, call.modificationTracker)
@@ -780,7 +781,23 @@ private class MacroExpansionServiceImplInner(
         return file.toPsiFile(project) as? RsFile
     }
 
-    private fun getReasonWhyExpansionFileNotFound(defMap: CrateDefMap, callIndex: MacroIndex): GetMacroExpansionError {
+    private fun getReasonWhyExpansionFileNotFound(
+        call: RsPossibleMacroCall,
+        defMap: CrateDefMap,
+        callIndex: MacroIndex?
+    ): GetMacroExpansionError {
+        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) || !isFeatureEnabled(RsExperiments.PROC_MACROS)) {
+            return GetMacroExpansionError.ExpansionError(ProcMacroExpansionError.ProcMacroExpansionIsDisabled)
+        }
+        if (!call.existsAfterExpansion) {
+            return GetMacroExpansionError.CfgDisabled
+        }
+        call.resolveToMacroWithoutPsiWithErr()
+            .unwrapOrElse { return it.toExpansionError() }
+
+        if (callIndex == null) {
+            return GetMacroExpansionError.NoMacroIndex
+        }
         val expansionName = defMap.macroCallToExpansionName[callIndex]
             ?: return GetMacroExpansionError.ExpansionNameNotFound
         val mixHash = extractMixHashFromExpansionName(expansionName)
@@ -789,7 +806,7 @@ private class MacroExpansionServiceImplInner(
             ?: return GetMacroExpansionError.ExpansionFileNotFound
         val error = expansion.err()
             ?: return GetMacroExpansionError.InconsistentExpansionCacheAndVfs
-        return ExpansionPipelineError.ExpansionError(error)
+        return GetMacroExpansionError.ExpansionError(error)
     }
 
     private fun getDefMapForExpansionFile(file: RsFile): Pair<CrateDefMap, String>? {
@@ -867,7 +884,7 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
 
 private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
     val def = call.resolveToMacroWithoutPsiWithErr()
-        .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionPipelineError())) }
+        .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionError())) }
     val project = call.project
     val result = FunctionLikeMacroExpander.new(project).expandMacro(
         def,
@@ -886,12 +903,12 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
         expansion
     }.mapErr {
         when (it) {
-            MacroExpansionAndParsingError.MacroCallSyntaxError -> ExpansionPipelineError.MacroCallSyntax
+            MacroExpansionAndParsingError.MacroCallSyntaxError -> GetMacroExpansionError.MacroCallSyntax
             is MacroExpansionAndParsingError.ParsingError -> GetMacroExpansionError.MemExpParsingError(
                 it.expansionText,
                 it.context
             )
-            is MacroExpansionAndParsingError.ExpansionError -> ExpansionPipelineError.ExpansionError(it.error)
+            is MacroExpansionAndParsingError.ExpansionError -> GetMacroExpansionError.ExpansionError(it.error)
         }
     }
 

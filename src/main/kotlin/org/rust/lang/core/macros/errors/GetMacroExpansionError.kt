@@ -6,11 +6,9 @@
 package org.rust.lang.core.macros.errors
 
 import org.jetbrains.annotations.Nls
-import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.openapiext.RsPathManager
-import org.rust.openapiext.isFeatureEnabled
 
 /**
  * An error type for [org.rust.lang.core.psi.ext.expansionResult]
@@ -33,6 +31,18 @@ sealed class GetMacroExpansionError {
     object ExpansionFileNotFound : GetMacroExpansionError()
     object InconsistentExpansionCacheAndVfs : GetMacroExpansionError()
 
+    object CfgDisabled : GetMacroExpansionError()
+    object Skipped : GetMacroExpansionError()
+    object Unresolved : GetMacroExpansionError()
+    object NoProcMacroArtifact : GetMacroExpansionError()
+    data class UnmatchedProcMacroKind(
+        val callKind: RsProcMacroKind,
+        val defKind: RsProcMacroKind,
+    ) : GetMacroExpansionError()
+    object MacroCallSyntax : GetMacroExpansionError()
+    object MacroDefSyntax : GetMacroExpansionError()
+    data class ExpansionError(val e: MacroExpansionError) : GetMacroExpansionError()
+
     // Can't expand the macro because ...
     // Failed to expand the macro because ...
     @Nls
@@ -43,22 +53,14 @@ sealed class GetMacroExpansionError {
         OldEngineStd -> "the old macro expansion engine can't expand macros in Rust stdlib"
         MemExpAttrMacro -> "the old macro expansion engine can't expand an attribute or derive macro"
         is MemExpParsingError -> "can't parse `$expansionText` as `$context`"
-        EMIGetExpansionError.InvalidExpansionFile -> "internal error: the expansion file has been invalidated"
-        ExpansionPipelineError.CfgDisabled -> "the macro call is conditionally disabled with a `#[cfg()]` attribute"
-        ExpansionPipelineError.MacroCallSyntax -> "there is an error in the macro call syntax"
-        ExpansionPipelineError.MacroDefSyntax -> "there is an error in the macro definition syntax"
-        ExpansionPipelineError.NotYetExpanded -> "the macro is not yet expanded (2)"
-        ExpansionPipelineError.Skipped -> "expansion of this procedural macro is skipped by IntelliJ-Rust"
-        ExpansionPipelineError.Unresolved -> "the macro is not resolved"
-        ExpansionPipelineError.NoProcMacroArtifact -> if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-            "the procedural macro is not compiled because experimental feature " +
-                "`${RsExperiments.EVALUATE_BUILD_SCRIPTS}` is not enabled"
-        } else {
-            "the procedural macro is not compiled successfully"
-        }
-        is ExpansionPipelineError.UnmatchedProcMacroKind -> "`$defKind` proc macro can't be called as `$callKind`"
-        is ExpansionPipelineError.Macro2IsNotSupported -> "macros 2.0 are not supported by IntelliJ-Rust"
-        is ExpansionPipelineError.ExpansionError -> when (e) {
+        CfgDisabled -> "the macro call is conditionally disabled with a `#[cfg()]` attribute"
+        MacroCallSyntax -> "there is an error in the macro call syntax"
+        MacroDefSyntax -> "there is an error in the macro definition syntax"
+        Skipped -> "expansion of this procedural macro is skipped by IntelliJ-Rust"
+        Unresolved -> "the macro is not resolved"
+        NoProcMacroArtifact -> "the procedural macro is not compiled successfully"
+        is UnmatchedProcMacroKind -> "`$defKind` proc macro can't be called as `$callKind`"
+        is ExpansionError -> when (e) {
             BuiltinMacroExpansionError -> "built-in macro expansion is not supported"
             DeclMacroExpansionError.DefSyntax -> "there is an error in the macro definition syntax"
             DeclMacroExpansionError.TooLargeExpansion -> "the macro expansion is too large"
@@ -86,35 +88,10 @@ sealed class GetMacroExpansionError {
     override fun toString(): String = "${GetMacroExpansionError::class.simpleName}.${javaClass.simpleName}"
 }
 
-sealed class EMIGetExpansionError : GetMacroExpansionError() {
-    object InvalidExpansionFile : EMIGetExpansionError()
-
-    override fun toString(): String = "${EMIGetExpansionError::class.simpleName}.${javaClass.simpleName}"
-}
-
-sealed class ExpansionPipelineError : EMIGetExpansionError() {
-    object NotYetExpanded : ExpansionPipelineError()
-    object CfgDisabled : ExpansionPipelineError()
-    object Skipped : ExpansionPipelineError()
-    object Unresolved : ExpansionPipelineError()
-    object NoProcMacroArtifact : ExpansionPipelineError()
-    data class UnmatchedProcMacroKind(
-        val callKind: RsProcMacroKind,
-        val defKind: RsProcMacroKind,
-    ) : ExpansionPipelineError()
-    object Macro2IsNotSupported : ExpansionPipelineError()
-    object MacroCallSyntax : ExpansionPipelineError()
-    object MacroDefSyntax : ExpansionPipelineError()
-    data class ExpansionError(val e: MacroExpansionError) : ExpansionPipelineError()
-
-    override fun toString(): String = "${ExpansionPipelineError::class.simpleName}.${javaClass.simpleName}"
-}
-
-fun ResolveMacroWithoutPsiError.toExpansionPipelineError(): ExpansionPipelineError = when (this) {
-    ResolveMacroWithoutPsiError.Unresolved -> ExpansionPipelineError.Unresolved
-    ResolveMacroWithoutPsiError.NoProcMacroArtifact -> ExpansionPipelineError.NoProcMacroArtifact
+fun ResolveMacroWithoutPsiError.toExpansionError(): GetMacroExpansionError = when (this) {
+    ResolveMacroWithoutPsiError.Unresolved -> GetMacroExpansionError.Unresolved
+    ResolveMacroWithoutPsiError.NoProcMacroArtifact -> GetMacroExpansionError.NoProcMacroArtifact
     is ResolveMacroWithoutPsiError.UnmatchedProcMacroKind ->
-        ExpansionPipelineError.UnmatchedProcMacroKind(callKind, defKind)
-    ResolveMacroWithoutPsiError.Macro2IsNotSupported -> ExpansionPipelineError.Macro2IsNotSupported
-    ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute -> ExpansionPipelineError.Skipped
+        GetMacroExpansionError.UnmatchedProcMacroKind(callKind, defKind)
+    ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute -> GetMacroExpansionError.Skipped
 }
