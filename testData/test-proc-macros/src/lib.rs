@@ -57,6 +57,18 @@ pub fn function_like_do_brace_println_and_process_exit(input: TokenStream) -> To
 }
 
 #[proc_macro]
+pub fn function_like_do_println_braces(input: TokenStream) -> TokenStream {
+    println!("{{}}");
+    input
+}
+
+#[proc_macro]
+pub fn function_like_do_println_text_in_braces(input: TokenStream) -> TokenStream {
+    println!("{{hey there}}");
+    input
+}
+
+#[proc_macro]
 pub fn function_like_reverse_spans(item: TokenStream) -> TokenStream {
     let tts = item.into_iter().collect::<Vec<_>>();
     tts.iter().enumerate().map(|(i, tt)| {
