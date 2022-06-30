@@ -135,6 +135,7 @@ fun DataInput.readMacroExpansionError(): MacroExpansionError = when (val ordinal
     1 -> DeclMacroExpansionError.DefSyntax
     2 -> ProcMacroExpansionError.ServerSideError(IOUtil.readUTF(this))
     3 -> ProcMacroExpansionError.ProcessAborted(readInt())
+    4 -> ProcMacroExpansionError.IOExceptionThrown
     5 -> ProcMacroExpansionError.Timeout(readLong())
     6 -> ProcMacroExpansionError.CantRunExpander
     7 -> ProcMacroExpansionError.ExecutableNotFound
