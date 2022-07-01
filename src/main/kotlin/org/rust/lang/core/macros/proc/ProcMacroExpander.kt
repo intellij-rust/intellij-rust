@@ -17,6 +17,7 @@ import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ProcMacroExpansi
 import org.rust.lang.core.macros.tt.*
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import java.io.IOException
@@ -95,7 +96,9 @@ class ProcMacroExpander(
         } catch (e: ProcessAbortedException) {
             return Err(ProcMacroExpansionError.ProcessAborted(e.exitCode))
         } catch (e: IOException) {
-            MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
+            if (!isUnitTestMode) {
+                MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
+            }
             return Err(ProcMacroExpansionError.IOExceptionThrown)
         }
         check(response is Response.ExpandMacro)

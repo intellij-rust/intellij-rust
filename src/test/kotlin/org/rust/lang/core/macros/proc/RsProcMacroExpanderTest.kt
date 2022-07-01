@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros.proc
 
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.exists
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
@@ -13,6 +14,8 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
+import org.rust.lang.core.macros.errors.readMacroExpansionError
+import org.rust.lang.core.macros.errors.writeMacroExpansionError
 import org.rust.lang.core.macros.tt.TokenTree
 import org.rust.lang.core.macros.tt.parseSubtree
 import org.rust.lang.core.macros.tt.toDebugString
@@ -20,6 +23,9 @@ import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.RsResult
 import org.rust.stdext.toPath
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
 
 /**
  * A low-level test for proc macro expansion infrastructure
@@ -53,6 +59,8 @@ class RsProcMacroExpanderTest : RsTestBase() {
             checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_process_exit", "")
             checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_process_abort", "")
             checkError<ProcMacroExpansionError.ProcessAborted>(lib, "function_like_do_brace_println_and_process_exit", "")
+            checkError<ProcMacroExpansionError.IOExceptionThrown>(lib, "function_like_do_println_braces", "")
+            checkError<ProcMacroExpansionError.IOExceptionThrown>(lib, "function_like_do_println_text_in_braces", "")
             checkExpandedAsIs(lib, "function_like_as_is", "") // Insure it works after errors
         }
     }
@@ -116,9 +124,26 @@ class RsProcMacroExpanderTest : RsTestBase() {
         lib: String,
         name: String,
         macroCall: String
+    ) = checkError(T::class.java, lib, name, macroCall)
+
+    private fun ProcMacroExpander.checkError(
+        errorClass: Class<*>,
+        lib: String,
+        name: String,
+        macroCall: String
     ) {
         val result = expandMacroAsTtWithErr(project.createRustPsiBuilder(macroCall).parseSubtree().subtree, null, name, lib)
-        check(result.err() is T) { "Expected error ${T::class}, got result $result" }
+        check(errorClass.isInstance(result.err())) { "Expected error $errorClass, got result $result" }
+
+        val bytes = ByteArrayOutputStream()
+        val originError = result.err()!!
+        DataOutputStream(bytes).use {
+            it.writeMacroExpansionError(originError)
+        }
+        val restoredError = DataInputStream(ByteArrayInputStream(bytes.toByteArray())).use {
+            it.readMacroExpansionError()
+        }
+        assertEquals(originError, restoredError)
     }
 
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
