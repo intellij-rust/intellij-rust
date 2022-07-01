@@ -242,6 +242,7 @@ class ModCollectorBase private constructor(
             bodyStartOffsetInExpansion = item.startOffset,
             bodyEndOffsetInExpansion = item.startOffset + rawBody.length,
             originalItem,
+            fixupRustSyntaxErrors = item is RsFunctionStub
         )
         visitor.collectProcMacroCall(callLight)
     }
@@ -268,6 +269,7 @@ class ModCollectorBase private constructor(
             bodyStartOffsetInExpansion = item.startOffset,
             bodyEndOffsetInExpansion = item.startOffset + rawBody.length,
             null,
+            fixupRustSyntaxErrors = false
         )
         visitor.collectProcMacroCall(callLight)
     }
@@ -581,6 +583,7 @@ class ProcMacroCallLight(
     val bodyEndOffsetInExpansion: Int,
 
     val originalItem: SimpleItemLight?,
+    val fixupRustSyntaxErrors: Boolean,
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {
@@ -604,7 +607,8 @@ class ProcMacroCallLight(
                 body,
                 endOfAttrsOffset,
                 crate,
-                attrIndex
+                attrIndex,
+                fixupRustSyntaxErrors,
             )
         } else {
             doPrepareCustomDeriveMacroCallBody(

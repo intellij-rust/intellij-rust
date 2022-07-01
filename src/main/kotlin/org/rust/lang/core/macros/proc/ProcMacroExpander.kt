@@ -7,6 +7,9 @@ package org.rust.lang.core.macros.proc
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.SmartList
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -16,10 +19,16 @@ import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ExecutableNotFou
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ProcMacroExpansionIsDisabled
 import org.rust.lang.core.macros.tt.*
 import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.childrenWithLeaves
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
+import org.rust.stdext.toResult
+import org.rust.stdext.unwrapOrElse
 import java.io.IOException
 import java.util.concurrent.TimeoutException
 
@@ -31,14 +40,26 @@ class ProcMacroExpander(
 ) : MacroExpander<RsProcMacroData, ProcMacroExpansionError>() {
     private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isEnabled()
 
+    private fun serverOrErr(): RsResult<ProcMacroServerPool, ProcMacroExpansionError> =
+        server.toResult().mapErr { if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled }
+
     override fun expandMacroAsTextWithErr(
         def: RsProcMacroData,
         call: RsMacroCallData
     ): RsResult<Pair<CharSequence, RangeMap>, ProcMacroExpansionError> {
+        val server = serverOrErr().unwrapOrElse { return Err(it) }
+
         val (macroCallBodyText, attrText) = when (val macroBody = call.macroBody) {
-            is MacroCallBody.Attribute -> macroBody.item to macroBody.attr
-            is MacroCallBody.Derive -> MappedText.single(macroBody.item, 0) to null
             is MacroCallBody.FunctionLike -> MappedText.single(macroBody.text, 0) to null
+            is MacroCallBody.Derive -> MappedText.single(macroBody.item, 0) to null
+            is MacroCallBody.Attribute -> {
+                val item = if (macroBody.fixupRustSyntaxErrors) {
+                    fixupRustSyntaxErrors(macroBody.item)
+                } else {
+                    macroBody.item
+                }
+                item to macroBody.attr
+            }
         }
         val (macroCallBodyLowered, rangesLowering) = project
             .createRustPsiBuilder(macroCallBodyText.text)
@@ -62,7 +83,7 @@ class ProcMacroExpander(
         }
         val lib = def.artifact.path.toString()
         val env = call.packageEnv
-        return expandMacroAsTtWithErr(macroCallBodyTt, attrSubtree, def.name, lib, env).map {
+        return expandMacroAsTtWithErrInternal(server, macroCallBodyTt, attrSubtree, def.name, lib, env).map {
             val (text, ranges) = MappedSubtree(it, mergedTokenMap).toMappedText()
             text to mergedRanges.mapAll(ranges)
         }
@@ -75,8 +96,19 @@ class ProcMacroExpander(
         lib: String,
         env: Map<String, String> = emptyMap()
     ): RsResult<TokenTree.Subtree, ProcMacroExpansionError> {
+        val server = serverOrErr().unwrapOrElse { return Err(it) }
+        return expandMacroAsTtWithErrInternal(server, macroCallBody, attributes, macroName, lib, env)
+    }
+
+    private fun expandMacroAsTtWithErrInternal(
+        server: ProcMacroServerPool,
+        macroCallBody: TokenTree.Subtree,
+        attributes: TokenTree.Subtree?,
+        macroName: String,
+        lib: String,
+        env: Map<String, String> = emptyMap()
+    ): RsResult<TokenTree.Subtree, ProcMacroExpansionError> {
         val remoteLib = toolchain?.toRemotePath(lib) ?: lib
-        val server = server ?: return Err(if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled)
         val envMapped = env.mapValues { (_, v) -> toolchain?.toRemotePath(v) ?: v }
         val request = Request.ExpandMacro(
             FlatTree.fromSubtree(macroCallBody),
@@ -109,7 +141,70 @@ class ProcMacroExpander(
         }
     }
 
+    /**
+     * Attribute proc macros usually expect a correct Rust syntax passed as an input, but in an IDE
+     * a user usually has invalid syntax, especially during typing.
+     * This function tries to fix up the syntax in the input
+     */
+    private fun fixupRustSyntaxErrors(macroCallBodyText: MappedText): MappedText {
+        val sb = MutableMappedText(macroCallBodyText.text.length)
+        val item = RsPsiFactory(project, markGenerated = false)
+            .createFile(macroCallBodyText.text)
+            .firstChild as? RsDocAndAttributeOwner
+            ?: return macroCallBodyText
+
+        item.accept(object : RsRecursiveVisitor() {
+            override fun visitElement(element: PsiElement) {
+                if (element is LeafPsiElement) {
+                    val startOffset = element.startOffset
+                    sb.appendMapped(element.text, startOffset)
+                } else {
+                    super.visitElement(element)
+                }
+            }
+
+            override fun visitExpr(o: RsExpr) {
+                if (hasErrorToHandle(o)) {
+                    sb.appendUnmapped("__ij__fixup")
+                } else {
+                    super.visitExpr(o)
+                }
+            }
+
+            override fun visitDotExpr(o: RsDotExpr) {
+                super.visitDotExpr(o)
+                if (o.fieldLookup == null && o.methodCall == null) {
+                    sb.appendUnmapped("__ij__fixup")
+                }
+            }
+
+            override fun visitExprStmt(o: RsExprStmt) {
+                super.visitStmt(o)
+                if (o.semicolon == null && o.getNextNonCommentSibling() is RsStmt) {
+                    sb.appendUnmapped(";")
+                }
+            }
+
+            override fun visitLetDecl(o: RsLetDecl) {
+                super.visitLetDecl(o)
+                if (o.semicolon == null) {
+                    sb.appendUnmapped(";")
+                }
+            }
+        })
+
+        return if (sb.length == macroCallBodyText.text.length) {
+            macroCallBodyText
+        } else {
+            val (text, ranges) = sb.toMappedText()
+            MappedText(text, macroCallBodyText.ranges.mapAll(ranges))
+        }
+    }
+
+    fun hasErrorToHandle(psi: PsiElement): Boolean =
+        psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
+
     companion object {
-        const val EXPANDER_VERSION: Int = 4
+        const val EXPANDER_VERSION: Int = 5
     }
 }
