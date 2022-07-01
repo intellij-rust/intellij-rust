@@ -1180,8 +1180,6 @@
                      description="Enable Rust cfg attributes support"/>
         <registryKey key="org.rust.lang.highlight.macro.body" defaultValue="true" restartRequired="false"
                      description="Highlight Rust macro call bodies"/>
-        <registryKey key="org.rust.lang.macros.persistentCache" defaultValue="true" restartRequired="false"
-                     description="Use persistent cache for Rust macro expansions"/>
         <registryKey key="org.rust.cargo.lock.update.delay.threshold" defaultValue="5000" restartRequired="false"
                      description="Delay in ms between Cargo metadata call and changes in Cargo.lock
                      when automatic project structure reload doesn't occur"/>

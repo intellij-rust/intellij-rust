@@ -10,16 +10,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.stubs.*
 import com.intellij.testFramework.ReadOnlyLightVirtualFile
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.*
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
 import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX
@@ -49,7 +45,6 @@ import java.util.concurrent.atomic.AtomicReference
  * Such design is chosen because any operation with [PersistentHashMap] can lead to [IOException]
  * (since it's filesystem-based hash map), so this is a way to recover on possible errors.
  * For now, we just disable the cache (set [data] to `null`) if [IOException] occurs.
- * Also, the cache can be disabled via [CACHE_ENABLED] registry option.
  */
 @Suppress("UnstableApiUsage")
 @Service
@@ -59,28 +54,12 @@ class MacroExpansionSharedCache : Disposable {
         StubForwardIndexExternalizer.createFileLocalExternalizer()
 
     private val data: AtomicReference<PersistentCacheData?> =
-        AtomicReference(if (CACHE_ENABLED.asBoolean()) tryCreateData() else null)
-
-    init {
-        // Allows to enable/disable the cache without IDE restart
-        CACHE_ENABLED.addListener(object : RegistryValueListener {
-            override fun afterValueChanged(value: RegistryValue) {
-                if (value.asBoolean()) {
-                    val newData = tryCreateData()
-                    if (newData != null && !data.compareAndSet(null, newData)) {
-                        newData.close()
-                    }
-                } else {
-                    data.compareAndExchange(data.get(), null)?.close()
-                }
-            }
-        }, this)
-    }
+        AtomicReference(tryCreateData())
 
     private fun tryCreateData() = PersistentCacheData.tryCreate(getBaseMacroDir().resolve("cache"), stubExternalizer)
 
     val isEnabled: Boolean
-        get() = CACHE_ENABLED.asBoolean() && data.get() != null
+        get() = data.get() != null
 
     override fun dispose() {
         do {
@@ -99,8 +78,6 @@ class MacroExpansionSharedCache : Disposable {
         key: Key,
         computeValue: (SerializationManagerEx) -> Value,
     ): Value {
-        if (!CACHE_ENABLED.asBoolean()) return computeValue(globalSerMgr)
-
         val data = data.get() ?: return computeValue(globalSerMgr)
         val map = getMap(data)
 
@@ -182,7 +159,6 @@ class MacroExpansionSharedCache : Disposable {
     }
 
     fun getExpansionIfCached(hash: HashCode): RsResult<ExpansionResultOk, MacroExpansionError>? {
-        if (!CACHE_ENABLED.asBoolean()) return null
         val data = data.get() ?: return null
         val map = data.expansions
         return try {
@@ -238,9 +214,6 @@ class MacroExpansionSharedCache : Disposable {
     companion object {
         @JvmStatic
         fun getInstance(): MacroExpansionSharedCache = service()
-
-        @JvmStatic
-        private val CACHE_ENABLED = Registry.get("org.rust.lang.macros.persistentCache")
     }
 }
 
