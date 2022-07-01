@@ -187,12 +187,14 @@ private fun generateStructNames(structs: List<Struct>, existingNames: Set<String
 
     val assignedNames = existingNames.toMutableSet()
     val assignName = { struct: Struct, name: String ->
-        val actualName = if (name in assignedNames) {
+        val normalizedName = normalizeStructName(name)
+
+        val actualName = if (normalizedName in assignedNames) {
             generateSequence(1) { it + 1 }
-                .map { "$name$it" }
+                .map { "$normalizedName$it" }
                 .first { it !in assignedNames }
         } else {
-            name
+            normalizedName
         }
 
         assignedNames.add(actualName)
@@ -219,7 +221,7 @@ private fun generateStructNames(structs: List<Struct>, existingNames: Set<String
         if (struct !in map) {
             val fields = structEmbeddedFields[struct].orEmpty()
             if (fields.size == 1) {
-                assignName(struct, fields.first().toCamelCase())
+                assignName(struct, fields.first())
             } else {
                 assignName(struct, "Struct")
             }
@@ -304,18 +306,27 @@ private fun generateStruct(
 
 private val NON_IDENTIFIER_REGEX: Regex = Regex("[^a-zA-Z_0-9]")
 
+private fun normalizeName(name: String, placeholder: String, caseConversion: (String) -> String): String {
+    var normalized = name.replace(NON_IDENTIFIER_REGEX, "_")
+    normalized = caseConversion(normalized)
+
+    if (normalized.getOrNull(0)?.isDigit() == true) {
+        normalized = "_$normalized"
+    }
+
+    if (normalized.all { it == '_' }) {
+        normalized += placeholder
+    }
+
+    return normalized.escapeIdentifierIfNeeded()
+}
+
 private fun normalizeFieldName(field: String): String {
-    var name = field.replace(NON_IDENTIFIER_REGEX, "_")
-    if (name.getOrNull(0)?.isDigit() == true) {
-        name = "_$name"
-    }
+    return normalizeName(field, "field") { it.toSnakeCase(false) }
+}
 
-    name = name.toSnakeCase(false)
-    if (name.all { it == '_' }) {
-        name += "field"
-    }
-
-    return name.escapeIdentifierIfNeeded()
+private fun normalizeStructName(struct: String): String {
+    return normalizeName(struct, "Struct") { it.toCamelCase() }
 }
 
 private fun createFieldName(field: String, generatedFieldNames: Set<String>): String {

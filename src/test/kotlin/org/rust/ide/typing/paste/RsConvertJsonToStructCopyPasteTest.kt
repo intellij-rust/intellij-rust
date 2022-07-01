@@ -1020,6 +1020,34 @@ class RsConvertJsonToStructCopyPasteTest : RsTestBase() {
         }
     """, """{"foo": {"b": 1, "c": 2}, "b": true}""")
 
+    fun `test suggest name kebab case field`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct FooBar {
+            pub field: i64,
+        }
+
+        struct Root {
+            pub foo_bar: FooBar,
+        }
+    """, """{"foo-bar": {"field": 1}}""")
+
+    fun `test suggest name invalid field name`() = doCopyPasteTest("""
+        //- lib.rs
+        /*caret*/
+    """, """
+        //- lib.rs
+        struct _1 {
+            pub field: i64,
+        }
+
+        struct Root {
+            pub _1: _1,
+        }
+    """, """{"1_": {"field": 1}}""")
+
     override fun setUp() {
         super.setUp()
         CONVERT_JSON_ON_PASTE.setValue(true, testRootDisposable)
