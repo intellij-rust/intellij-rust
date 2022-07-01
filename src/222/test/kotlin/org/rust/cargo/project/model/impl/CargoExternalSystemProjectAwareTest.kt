@@ -15,14 +15,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.FileTreeBuilder
 import org.rust.TestProject
+import org.rust.WithExperimentalFeatures
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.fileTree
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath
 import org.rustSlowTests.cargo.runconfig.waitFinished
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 
+@WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
 class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
 
     private val notificationAware get() = AutoImportProjectNotificationAware.getInstance(project)
@@ -42,10 +45,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
-                members = [ "subproject" ]
+                members = [ "subproject", "custom_build_script" ]
             """)
             configs()
             allTargets()
@@ -55,9 +58,30 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 allTargets()
+            }
+            dir("custom_build_script") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "custom_build_script"
+                    version = "0.1.0"
+                    edition = "2018"
+                    build = "build/main.rs"
+                """)
+
+                dir("build") {
+                    rust("main.rs", """
+                        mod foo;
+                        fn main() {}
+                    """)
+                    rust("foo.rs", "")
+                }
+                dir("src") {
+                    rust("main.rs", "fn main() {}")
+                }
+                rust("build.rs", "fn main() {}")
             }
         }.create()
 
@@ -70,17 +94,20 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileModification(".cargo/config", triggered = true)
         testProject.checkFileModification(".cargo/config.toml", triggered = true)
         testProject.checkFileModification("subproject/Cargo.toml", triggered = true)
+        // Build scripts
+        testProject.checkFileModification("build.rs", triggered = true)
+        testProject.checkFileModification("subproject/build.rs", triggered = true)
+        testProject.checkFileModification("custom_build_script/build/main.rs", triggered = true)
+        // TODO: Ideally, we need to detect changes of children modules of build scripts as well
+        testProject.checkFileModification("custom_build_script/build/foo.rs", triggered = false)
+        testProject.checkFileModification("custom_build_script/build.rs", triggered = false)
         // Implicit crate roots
-        // TODO: it should trigger project model reloading if build script evaluation is enabled
-        testProject.checkFileModification("build.rs", triggered = false)
         testProject.checkFileModification("src/lib.rs", triggered = false)
         testProject.checkFileModification("src/main.rs", triggered = false)
         testProject.checkFileModification("src/bin/bin.rs", triggered = false)
         testProject.checkFileModification("examples/example.rs", triggered = false)
         testProject.checkFileModification("benches/bench.rs", triggered = false)
         testProject.checkFileModification("tests/test.rs", triggered = false)
-        // TODO: it should trigger project model reloading if build script evaluation is enabled
-        testProject.checkFileModification("subproject/build.rs", triggered = false)
         testProject.checkFileModification("subproject/src/lib.rs", triggered = false)
         testProject.checkFileModification("subproject/src/main.rs", triggered = false)
         testProject.checkFileModification("subproject/src/bin/bin.rs", triggered = false)
@@ -98,10 +125,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
-                members = [ "subproject" ]
+                members = [ "subproject", "custom_build_script" ]
             """)
             configs()
             allTargets()
@@ -111,9 +138,30 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 allTargets()
+            }
+            dir("custom_build_script") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "custom_build_script"
+                    version = "0.1.0"
+                    edition = "2018"
+                    build = "build/main.rs"
+                """)
+
+                dir("build") {
+                    rust("main.rs", """
+                        mod foo;
+                        fn main() {}
+                    """)
+                    rust("foo.rs", "")
+                }
+                dir("src") {
+                    rust("main.rs", "fn main() {}")
+                }
+                rust("build.rs", "fn main() {}")
             }
         }.create()
 
@@ -126,14 +174,19 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileDeletion(".cargo/config", triggered = true)
         testProject.checkFileDeletion(".cargo/config.toml", triggered = true)
         testProject.checkFileDeletion("subproject/Cargo.toml", triggered = true)
-        // Implicit crate roots
+        // Build scripts
         testProject.checkFileDeletion("build.rs", triggered = true)
+        testProject.checkFileDeletion("subproject/build.rs", triggered = true)
+        testProject.checkFileDeletion("custom_build_script/build/main.rs", triggered = true)
+        // TODO: Ideally, we need to detect changes of children modules of build scripts as well
+        testProject.checkFileDeletion("custom_build_script/build/foo.rs", triggered = false)
+        testProject.checkFileDeletion("custom_build_script/build.rs", triggered = false)
+        // Implicit crate roots
         testProject.checkFileDeletion("src/main.rs", triggered = true)
         testProject.checkFileDeletion("src/lib.rs", triggered = true)
         testProject.checkFileDeletion("examples/example.rs", triggered = true)
         testProject.checkFileDeletion("benches/bench.rs", triggered = true)
         testProject.checkFileDeletion("tests/test.rs", triggered = true)
-        testProject.checkFileDeletion("subproject/build.rs", triggered = true)
         testProject.checkFileDeletion("subproject/src/main.rs", triggered = true)
         testProject.checkFileDeletion("subproject/src/lib.rs", triggered = true)
         testProject.checkFileDeletion("subproject/examples/example.rs", triggered = true)
@@ -150,10 +203,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [workspace]
-                members = [ "subproject" ]
+                members = [ "subproject", "custom_build_script" ]
             """)
             noTargets()
 
@@ -162,9 +215,27 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "subproject"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
                 noTargets()
+            }
+            dir("custom_build_script") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "custom_build_script"
+                    version = "0.1.0"
+                    edition = "2018"
+                    build = "build/main.rs"
+                """)
+
+                dir("build") {
+                    rust("main.rs", """
+                        fn main() {}
+                    """)
+                }
+                dir("src") {
+                    rust("main.rs", "fn main() {}")
+                }
             }
         }.create()
         assertNotificationAware(event = "initial project creation")
@@ -174,14 +245,16 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileCreation("rust-toolchain.toml", triggered = true)
         testProject.checkFileCreation(".cargo/config", triggered = true)
         testProject.checkFileCreation(".cargo/config.toml", triggered = true)
-        // Implicit crate roots
+        // Build scripts
         testProject.checkFileCreation("build.rs", triggered = true)
+        testProject.checkFileCreation("subproject/build.rs", triggered = true)
+        testProject.checkFileCreation("custom_build_script/build.rs", triggered = false)
+        // Implicit crate roots
         testProject.checkFileCreation("src/main.rs", triggered = true)
         testProject.checkFileCreation("src/lib.rs", triggered = true)
         testProject.checkFileCreation("examples/example.rs", triggered = true)
         testProject.checkFileCreation("benches/bench.rs", triggered = true)
         testProject.checkFileCreation("tests/test.rs", triggered = true)
-        testProject.checkFileCreation("subproject/build.rs", triggered = true)
         testProject.checkFileCreation("subproject/src/main.rs", triggered = true)
         testProject.checkFileCreation("subproject/src/lib.rs", triggered = true)
         testProject.checkFileCreation("subproject/examples/example.rs", triggered = true)
@@ -198,7 +271,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 [package]
                 name = "hello"
                 version = "0.1.0"
-                authors = []
+                edition = "2018"
 
                 [dependencies]
                 #foo = { path = "./foo" }
@@ -219,7 +292,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     [package]
                     name = "foo"
                     version = "0.1.0"
-                    authors = []
+                    edition = "2018"
                 """)
 
                 dir("src") {

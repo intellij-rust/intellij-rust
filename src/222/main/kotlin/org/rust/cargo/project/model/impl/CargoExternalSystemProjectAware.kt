@@ -47,7 +47,8 @@ class CargoExternalSystemProjectAware(
         // so we don't need to collect fresh settings file list, and we can use cached value.
         // Also, `isIgnoredSettingsFileEvent` is called from EDT so using cache should make it much faster
         val settingsFiles = CargoSettingsFilesService.getInstance(project).collectSettingsFiles(useCache = true)
-        return settingsFiles[path] == SettingFileType.IMPLICIT_TARGET
+        val settingFileType = settingsFiles[path]
+        return settingFileType == null || settingFileType == SettingFileType.IMPLICIT_TARGET
     }
 
     override fun reloadProject(context: ExternalSystemProjectReloadContext) {

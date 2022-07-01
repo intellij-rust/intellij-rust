@@ -9,12 +9,14 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsFileType
+import org.rust.openapiext.isFeatureEnabled
 
 @Service
 class CargoSettingsFilesService(private val project: Project) {
@@ -53,23 +55,36 @@ class CargoSettingsFilesService(private val project: Project) {
         }
 
         for (pkg in workspace?.packages.orEmpty().filter { it.origin == PackageOrigin.WORKSPACE }) {
-            pkg.contentRoot?.collectSettingsFiles(out)
+            pkg.collectSettingsFiles(out)
         }
     }
 
-    private fun VirtualFile.collectSettingsFiles(out: MutableMap<String, SettingFileType>) {
-        out["$path/${CargoConstants.MANIFEST_FILE}"] = SettingFileType.CONFIG
+    private fun CargoWorkspace.Package.collectSettingsFiles(out: MutableMap<String, SettingFileType>) {
+        val root = contentRoot ?: return
+        out["${root.path}/${CargoConstants.MANIFEST_FILE}"] = SettingFileType.CONFIG
+
+        val (buildScriptFile, settingType) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+            // Ideally, we should add any child module of build script target as config files as well.
+            // But it's a quite rare case, so let's implement it separately if it's really needed
+            val buildScriptFile = targets.find { it.kind.isCustomBuild }?.crateRoot ?: root.findFileByRelativePath(CargoConstants.BUILD_FILE)
+            buildScriptFile to SettingFileType.CONFIG
+        } else {
+            root.findFileByRelativePath(CargoConstants.BUILD_FILE) to SettingFileType.IMPLICIT_TARGET
+        }
+        if (buildScriptFile != null) {
+            out[buildScriptFile.path] = settingType
+        }
 
         // Here we track only existing implicit target files.
         // It's enough because `com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware.getSettingsFiles`
         // will be called on new file creation by the platform, so we need to provide a list of all possible implicit target files here
         for (targetFileName in IMPLICIT_TARGET_FILES) {
-            val path = findFileByRelativePath(targetFileName)?.path ?: continue
+            val path = root.findFileByRelativePath(targetFileName)?.path ?: continue
             out[path] = SettingFileType.IMPLICIT_TARGET
         }
 
         for (targetDirName in IMPLICIT_TARGET_DIRS) {
-            val dir = findFileByRelativePath(targetDirName) ?: continue
+            val dir = root.findFileByRelativePath(targetDirName) ?: continue
             for (file in VfsUtil.collectChildrenRecursively(dir)) {
                 if (file.fileType == RsFileType) {
                     out[file.path] = SettingFileType.IMPLICIT_TARGET
@@ -82,7 +97,7 @@ class CargoSettingsFilesService(private val project: Project) {
         fun getInstance(project: Project): CargoSettingsFilesService = project.service()
 
         private val IMPLICIT_TARGET_FILES = listOf(
-            "build.rs", "src/main.rs", "src/lib.rs"
+            "src/main.rs", "src/lib.rs"
         )
 
         private val IMPLICIT_TARGET_DIRS = listOf(
