@@ -11,10 +11,7 @@ import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.parser.RustParserUtil
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsPathCodeFragment
-import org.rust.lang.core.psi.RsUseItem
-import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 
@@ -23,8 +20,11 @@ class RsUnnecessaryQualificationsInspection : RsLintInspection() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitPath(path: RsPath) {
-            val useItem = path.parentOfType<RsUseItem>()
-            if (useItem == null && path.rootPath() == path && path.canBeShortened()) {
+            val shouldCheckPath = path.parentOfType<RsUseItem>() == null
+                && path.parentOfType<RsVisRestriction>() == null
+                && path.rootPath() == path
+                && path.canBeShortened()
+            if (shouldCheckPath) {
                 val target = getUnnecessarilyQualifiedPath(path)
                 if (target != null) {
                     val pathRestStart = target.referenceNameElement!!.startOffset

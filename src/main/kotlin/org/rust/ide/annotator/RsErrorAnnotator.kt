@@ -727,6 +727,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
             RsDiagnostic.IncorrectVisibilityRestriction(visRestriction).addToHolder(holder)
         }
+        if (visRestriction.`in` != null) run {
+            val restrictedMod = path.reference?.resolve() ?: return@run
+            val itemMod = visRestriction.containingMod
+            if (restrictedMod !in itemMod.superMods) {
+                RsDiagnostic.VisibilityRestrictionMustBeAncestorModule(path).addToHolder(holder)
+            }
+        }
     }
 
     private fun checkLetDecl(holder: RsAnnotationHolder, letDecl: RsLetDecl) {
