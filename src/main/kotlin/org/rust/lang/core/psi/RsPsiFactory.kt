@@ -90,6 +90,10 @@ class RsPsiFactory(
         createFromText<RsLifetimeParameter>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
             ?: error("Failed to create quote identifier: `$text`")
 
+    fun createMetavarIdentifier(text: String): PsiElement =
+        createFromText<RsMetaVarIdentifier>("macro m { ($ $text) => () }")
+            ?: error("Failed to create metavar identifier: `$text`")
+
     fun createExpression(text: String): RsExpr =
         tryCreateExpression(text)
             ?: error("Failed to create expression from text: `$text`")
