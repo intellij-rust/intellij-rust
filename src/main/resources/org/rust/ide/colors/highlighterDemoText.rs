@@ -46,6 +46,29 @@ impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> <TRAIT>Default</TRAIT> for <STRUCT>Obje
     }
 }
 
+<MACRO>macro_rules</MACRO><MACRO>!</MACRO> make_wrapper {
+    (<MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION><MACRO>:</MACRO><MACRO>ident</MACRO>, <MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION><MACRO>:</MACRO><MACRO>ty</MACRO> <MACRO>$</MACRO><MACRO>(</MACRO>, <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION><MACRO>:</MACRO><MACRO>ty</MACRO><MACRO>)</MACRO><MACRO>?</MACRO>) => {
+        pub struct <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>(<MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>);
+        impl From<<MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION> {
+            fn from(base: <MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>) -> Self {
+                Self(base)
+            }
+        }
+        <MACRO>$</MACRO><MACRO>(</MACRO>
+            impl From<<MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION> {
+                fn from(lu: <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION>) -> Self {
+                    Self(lu.get())
+                }
+            }
+            impl From<<MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION> {
+                fn from(st: <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>) -> Self {
+                    Self::new(st.0)
+                }
+            }
+        <MACRO>)</MACRO><MACRO>?</MACRO>
+    }
+}
+
 /* Block comment */
 fn <FUNCTION>main</FUNCTION>() {
     // A simple integer calculator:
