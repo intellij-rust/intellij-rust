@@ -47,22 +47,21 @@ impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> <TRAIT>Default</TRAIT> for <STRUCT>Obje
 }
 
 <MACRO>macro_rules</MACRO><MACRO>!</MACRO> make_wrapper {
-    (<MACRO>$</MACRO> serde_ty<MACRO>:</MACRO><MACRO>ident</MACRO>, <MACRO>$</MACRO> base_ty<MACRO>:</MACRO><MACRO>ty</MACRO>
-, <MACRO>$</MACRO> format_string<MACRO>:</MACRO><MACRO>literal</MACRO> <MACRO>$</MACRO><MACRO>(</MACRO>, <MACRO>$</MACRO> lu_ty<MACRO>:</MACRO><MACRO>ty</MACRO><MACRO>)</MACRO><MACRO>?</MACRO>) => {
-        pub struct <MACRO>$</MACRO> serde_ty(<MACRO>$</MACRO> base_ty);
-        impl From<<MACRO>$</MACRO> base_ty> for <MACRO>$</MACRO> serde_ty {
-            fn from(base: <MACRO>$</MACRO> base_ty) -> Self {
+    (<MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION><MACRO>:</MACRO><MACRO>ident</MACRO>, <MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION><MACRO>:</MACRO><MACRO>ty</MACRO> <MACRO>$</MACRO><MACRO>(</MACRO>, <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION><MACRO>:</MACRO><MACRO>ty</MACRO><MACRO>)</MACRO><MACRO>?</MACRO>) => {
+        pub struct <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>(<MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>);
+        impl From<<MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION> {
+            fn from(base: <MACRO>$</MACRO><FUNCTION>base_ty</FUNCTION>) -> Self {
                 Self(base)
             }
         }
         <MACRO>$</MACRO><MACRO>(</MACRO>
-            impl From<<MACRO>$</MACRO> lu_ty> for <MACRO>$</MACRO> serde_ty {
-                fn from(lu: <MACRO>$</MACRO> lu_ty) -> Self {
+            impl From<<MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION> {
+                fn from(lu: <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION>) -> Self {
                     Self(lu.get())
                 }
             }
-            impl From<<MACRO>$</MACRO> serde_ty> for <MACRO>$</MACRO> lu_ty {
-                fn from(st: <MACRO>$</MACRO> serde_ty) -> Self {
+            impl From<<MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>> for <MACRO>$</MACRO><FUNCTION>lu_ty</FUNCTION> {
+                fn from(st: <MACRO>$</MACRO><FUNCTION>wrapper_ty</FUNCTION>) -> Self {
                     Self::new(st.0)
                 }
             }

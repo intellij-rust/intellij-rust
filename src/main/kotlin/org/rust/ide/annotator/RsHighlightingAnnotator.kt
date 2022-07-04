@@ -50,23 +50,14 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         val parent = element.parent as? RsElement ?: return null
 
         return when (element.elementType) {
-            DOLLAR -> RsColor.MACRO // TODO: It would be possible to see whether parent is RsMacroBindingGroups or RsMacroExpansionReferenceGroup or RsMacroBinding
+            DOLLAR -> RsColor.MACRO
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD
             FLOAT_LITERAL -> RsColor.NUMBER
-
-            Q -> macroGroupColor(parent) /* Note: RustParser.bnf ensures that those only match at the end */ ?: if (parent is RsTryExpr) {
-                RsColor.Q_OPERATOR
-            } else {
-                null
-            }
-            COLON -> if (parent is RsMacroBinding) {
-                RsColor.MACRO
-            } else {
-                null
-            }
+            Q -> if (parent is RsTryExpr) RsColor.Q_OPERATOR else macroGroupColor(parent)
+            COLON -> if (parent is RsMacroBinding) RsColor.MACRO else null
             MUL, PLUS, LPAREN, LBRACE, RPAREN, RBRACE -> macroGroupColor(parent)
             EXCL -> if (parent is RsMacro || parent is RsMacroCall && shouldHighlightMacroCall(parent, holder)) {
                 RsColor.MACRO
@@ -98,7 +89,8 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             } else {
                 null
             }
-            parent is RsMacroPattern || parent is RsMacroBinding -> RsColor.MACRO
+            parent is RsMetaVarIdentifier -> RsColor.FUNCTION // TODO FUNCTION?
+            parent is RsMacroBinding -> RsColor.MACRO
             parent is RsNameIdentifierOwner && parent.nameIdentifier == element -> {
                 colorFor(parent)
             }
@@ -196,6 +188,5 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
     is RsConstParameter -> RsColor.CONST_PARAMETER
-    is RsMacroBinding -> RsColor.FUNCTION // TODO FUNCTION?
     else -> null
 }

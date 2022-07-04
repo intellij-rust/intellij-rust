@@ -77,8 +77,15 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             <MACRO>unreachable</MACRO><MACRO>!</MACRO>();
         }
         <MACRO>macro_rules</MACRO><MACRO>!</MACRO> foo {
-            (x => <MACRO>$</MACRO> <MACRO>e</MACRO><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode X: {}", <MACRO>$</MACRO> <MACRO>e</MACRO>));
-            (y => <MACRO>$</MACRO> <MACRO>e</MACRO><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode Y: {}", <MACRO>$</MACRO> <MACRO>e</MACRO>));
+            (x => <MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode X: {}", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>));
+            (y => <MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode Y: {}", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>));
+            (z => <MACRO>$</MACRO><MACRO>(</MACRO><MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO> <MACRO>expr</MACRO>,<MACRO>)</MACRO><MACRO>*</MACRO>) => {
+                print!("mode Z:");
+                <MACRO>$</MACRO><MACRO>(</MACRO>
+                    print!(" {},", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>);
+                <MACRO>)</MACRO><MACRO>*</MACRO>
+                println!();
+            }
         }
         impl T {
             <MACRO>foo</MACRO><MACRO>!</MACRO>();
