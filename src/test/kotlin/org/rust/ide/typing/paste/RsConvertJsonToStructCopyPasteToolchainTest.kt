@@ -101,11 +101,6 @@ class RsConvertJsonToStructCopyPasteToolchainTest : RsWithToolchainTestBase() {
     """, """{"a": {"b": true}}"""
     )
 
-    override fun setUp() {
-        super.setUp()
-        CONVERT_JSON_ON_PASTE.setValue(true, testRootDisposable)
-    }
-
     private fun doCopyPasteTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

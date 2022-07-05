@@ -41,8 +41,6 @@ import org.rust.openapiext.toPsiFile
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
-val CONVERT_JSON_ON_PASTE: RegistryValue = Registry.get("org.rust.ide.json.paste.processor")
-
 class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     override fun collectTransferableData(
         file: PsiFile,
@@ -52,7 +50,6 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     ): List<TextBlockTransferableData> = emptyList()
 
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {
-        if (!CONVERT_JSON_ON_PASTE.asBoolean()) return emptyList()
         try {
             if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 val text = content.getTransferData(DataFlavor.stringFlavor) as String
