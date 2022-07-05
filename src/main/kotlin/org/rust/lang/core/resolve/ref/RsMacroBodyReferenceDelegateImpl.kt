@@ -16,7 +16,7 @@ class RsMacroBodyReferenceDelegateImpl(
     element: RsReferenceElementBase
 ) : RsReferenceBase<RsReferenceElementBase>(element) {
 
-    private val delegates: List<RsReference>
+    val delegates: List<RsReference>
         get() {
             Testmarks.Touched.hit()
             return element.findExpansionElements()?.mapNotNull { delegated ->
