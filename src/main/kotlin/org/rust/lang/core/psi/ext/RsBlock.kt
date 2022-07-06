@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.expandedFromSequence
 import org.rust.lang.core.psi.*
@@ -16,31 +19,38 @@ import org.rust.lang.core.psi.*
  * @see syntaxTailStmt
  */
 val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsStmt>, RsExpr?>
-    get() {
-        val stmts = mutableListOf<RsStmt>()
-        processExpandedStmtsInternal { stmt ->
-            if (stmt is RsStmt && (stmt !is RsDocAndAttributeOwner || stmt.existsAfterExpansionSelf)) {
-                stmts.add(stmt)
-            }
-            false
-        }
-        val tailStmt = stmts.lastOrNull()
-            ?.let { it as? RsExprStmt }
-            ?.takeIf { !it.hasSemicolon }
-            ?.takeIf { e ->
-                // If tail expr is expanded from a macro, we should check that this macro doesn't have
-                // semicolon (`foo!();`), otherwise it's not a tail expr but a regular statement
-                e.expandedFromSequence.all {
-                    val bracesKind = it.bracesKind ?: return@all false
-                    !bracesKind.needsSemicolon || it.semicolon == null
-                }
-            }
-
-        return when (tailStmt) {
-            null -> stmts
-            else -> stmts.subList(0, stmts.size - 1)
-        } to tailStmt?.expr
+    get() = CachedValuesManager.getCachedValue(this) {
+        CachedValueProvider.Result.create(
+            doGetExpandedStmtsAndTailExpr(),
+            PsiModificationTracker.MODIFICATION_COUNT
+        )
     }
+
+private fun RsBlock.doGetExpandedStmtsAndTailExpr(): Pair<MutableList<RsStmt>, RsExpr?> {
+    val stmts = mutableListOf<RsStmt>()
+    processExpandedStmtsInternal { stmt ->
+        if (stmt is RsStmt && (stmt !is RsDocAndAttributeOwner || stmt.existsAfterExpansionSelf)) {
+            stmts.add(stmt)
+        }
+        false
+    }
+    val tailStmt = stmts.lastOrNull()
+        ?.let { it as? RsExprStmt }
+        ?.takeIf { !it.hasSemicolon }
+        ?.takeIf { e ->
+            // If tail expr is expanded from a macro, we should check that this macro doesn't have
+            // semicolon (`foo!();`), otherwise it's not a tail expr but a regular statement
+            e.expandedFromSequence.all {
+                val bracesKind = it.bracesKind ?: return@all false
+                !bracesKind.needsSemicolon || it.semicolon == null
+            }
+        }
+
+    return when (tailStmt) {
+        null -> stmts
+        else -> stmts.subList(0, stmts.size - 1)
+    } to tailStmt?.expr
+}
 
 val RsBlock.expandedTailExpr: RsExpr?
     get() = expandedStmtsAndTailExpr.second
