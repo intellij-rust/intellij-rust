@@ -123,7 +123,6 @@ class MacroExpansionTask(
             applyBatchAndWriteAttributes(batch, filesToWriteAttributes)
         }
 
-        modificationTracker.incModificationCount()
         for (defMap in defMaps) {
             lastUpdatedMacrosAt[defMap.crate] = defMap.timestamp
         }
@@ -206,6 +205,7 @@ class MacroExpansionTask(
                     }
                 }
 
+                modificationTracker.incModificationCount()
                 true
             }
         }
@@ -233,6 +233,7 @@ class MacroExpansionTask(
                 val virtualFile = path.toVirtualFile() ?: continue
                 virtualFile.writeRangeMap(ranges)
             }
+            modificationTracker.incModificationCount()
         }
     }
 
