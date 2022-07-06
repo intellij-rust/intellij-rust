@@ -31,9 +31,6 @@ import org.rust.openapiext.recursionGuard
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
-import org.rust.stdext.dequeOf
-import org.rust.stdext.mapNotNullToSet
-import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = element.knownItems
@@ -463,7 +460,7 @@ class RsInferenceContext(
         addDiagnostic(RsDiagnostic.TypeError(element, expected, actual))
     }
 
-    @Suppress("unused")
+    @Suppress("MemberVisibilityCanBePrivate")
     fun canCombineTypes(ty1: Ty, ty2: Ty): Boolean {
         return probe { combineTypes(ty1, ty2).isOk }
     }
@@ -684,6 +681,10 @@ class RsInferenceContext(
     // https://github.com/rust-lang/rust/blob/97d48bec2d/compiler/rustc_typeck/src/check/coercion.rs#L486
     private fun coerceUnsized(source: Ty, target: Ty): CoerceOk? {
         if (source is TyInfer.TyVar || target is TyInfer.TyVar) return null
+
+        // Optimization: return early if unsizing is not needed to match types
+        if (target.isScalar || canCombineTypes(source, target)) return null
+
         val unsizeTrait = items.Unsize ?: return null
         val coerceUnsizedTrait = items.CoerceUnsized ?: return null
         val traits = listOf(unsizeTrait, coerceUnsizedTrait)
