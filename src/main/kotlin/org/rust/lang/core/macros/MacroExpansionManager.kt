@@ -25,7 +25,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -722,15 +725,34 @@ private class MacroExpansionServiceImplInner(
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall? {
         checkReadAccessAllowed()
         val parent = element.stubParent as? RsFile ?: return null
+        return CachedValuesManager.getCachedValue(parent, GET_EXPANDED_FROM_KEY) {
+            CachedValueProvider.Result.create(
+                doGetExpandedFromForExpansionFile(parent),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        }
+    }
+
+    private fun doGetExpandedFromForExpansionFile(parent: RsFile): RsPossibleMacroCall? {
         val (defMap, expansionName) = getDefMapForExpansionFile(parent) ?: return null
         val (modData, macroIndex, kind) = defMap.expansionNameToMacroCall[expansionName] ?: return null
-        val crate = project.crateGraph.findCrateById(defMap.crate) ?: return null  // todo выпилить crate из RsModInfo
+        val crate = project.crateGraph.findCrateById(defMap.crate) ?: return null  // todo remove crate from RsModInfo
         val info = RsModInfo(project, defMap, modData, crate, dataPsiHelper = null)
         return info.findMacroCall(macroIndex, kind)
     }
 
     /** @see MacroExpansionManager.getContextOfMacroCallExpandedFrom */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement? {
+        checkReadAccessAllowed()
+        return CachedValuesManager.getCachedValue(stubParent, GET_CONTEXT_OF_MACRO_CALL_EXPANDED_FROM_KEY) {
+            CachedValueProvider.Result.create(
+                doGetContextOfMacroCallExpandedFrom(stubParent),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        }
+    }
+
+    fun doGetContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement? {
         checkReadAccessAllowed()
         val (defMap, expansionName) = getDefMapForExpansionFile(stubParent) ?: return null
         val (modData, _, _) = defMap.expansionNameToMacroCall[expansionName] ?: return null
@@ -856,6 +878,10 @@ private class MacroExpansionServiceImplInner(
         releaseExpansionDirectory()
     }
 }
+
+private val GET_EXPANDED_FROM_KEY: Key<CachedValue<RsPossibleMacroCall?>> = Key.create("GET_EXPANDED_FROM_KEY")
+private val GET_CONTEXT_OF_MACRO_CALL_EXPANDED_FROM_KEY: Key<CachedValue<PsiElement?>> =
+    Key.create("GET_CONTEXT_OF_MACRO_CALL_EXPANDED_FROM_KEY")
 
 /**
  * Ensures that [MacroExpansionManager] service is loaded when [CargoProjectsService] is initialized.
