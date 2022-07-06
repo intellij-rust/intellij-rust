@@ -2,5 +2,13 @@
     <extensions defaultExtensionNs="com.intellij">
         <externalIconProvider key="Cargo"
                               implementationClass="org.rust.cargo.project.model.impl.CargoExternalSystemIconProvider"/>
+
+        <projectConfigurable instance="org.rust.cargo.project.configurable.CargoConfigurable"
+                             parentId="build.tools"
+                             id="language.rust.cargo"/>
+
+        <projectConfigurable instance="org.rust.cargo.project.configurable.CargoPlaceholderConfigurable"
+                             parentId="language.rust"
+                             id="language.rust.cargoPlaceholder"/>
     </extensions>
 </idea-plugin>
