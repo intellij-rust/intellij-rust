@@ -10,5 +10,10 @@
         <projectConfigurable instance="org.rust.cargo.project.configurable.CargoPlaceholderConfigurable"
                              parentId="language.rust"
                              id="language.rust.cargoPlaceholder"/>
+
+        <registryKey key="org.rust.cargo.new.auto.import"
+                     defaultValue="true"
+                     description="Enable new Cargo project model reloading"
+                     restartRequired="true"/>
     </extensions>
 </idea-plugin>
