@@ -997,6 +997,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test duplicate self import in use group E0430`() = checkErrors("""
+        use foo::{
+            <error descr="The `self` import appears more than once in the list [E0430]">self</error>,
+            <error descr="The `self` import appears more than once in the list [E0430]">self</error>
+        };
+        use foo::{self};
+        use foo::{self as foo1, self as foo2};
+        use self::mod1::{self};
+    """)
+
     fun `test self import in use group with empty prefix E0431`() = checkErrors("""
         use {<error descr="`self` import can only appear in an import list with a non-empty prefix [E0431]">self</error>};
         use {<error descr="`self` import can only appear in an import list with a non-empty prefix [E0431]">self</error> as a};
