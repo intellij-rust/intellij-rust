@@ -1,2 +1,7 @@
 <idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <projectConfigurable instance="org.rust.cargo.project.configurable.CargoConfigurable"
+                             parentId="language.rust"
+                             id="language.rust.cargo"/>
+    </extensions>
 </idea-plugin>
