@@ -5,15 +5,15 @@
 
 package org.rust.toml.crates.local
 
-import com.vdurmont.semver4j.Requirement
-import com.vdurmont.semver4j.Semver
+import io.github.z4kn4fein.semver.Version
+import io.github.z4kn4fein.semver.constraints.Constraint
+import io.github.z4kn4fein.semver.constraints.satisfiedBy
+import io.github.z4kn4fein.semver.constraints.toConstraintOrNull
 
-class CrateVersionRequirement private constructor(private val requirements: List<Requirement>) {
+class CrateVersionRequirement private constructor(private val requirements: List<Constraint>) {
     val isPinned: Boolean = requirements.any { it.toString().startsWith("=") }
 
-    fun matches(version: Semver): Boolean = requirements.all {
-        it.isSatisfiedBy(version)
-    }
+    fun matches(version: Version): Boolean = requirements.all { it satisfiedBy version }
 
     companion object {
         fun build(text: String): CrateVersionRequirement? {
@@ -21,11 +21,7 @@ class CrateVersionRequirement private constructor(private val requirements: List
             if (requirements.size > 1 && requirements.any { it.isEmpty() }) return null
 
             val parsed = requirements.mapNotNull {
-                try {
-                    Requirement.buildNPM(normalizeVersion(it))
-                } catch (e: Exception) {
-                    return@mapNotNull null
-                }
+                normalizeVersion(it).toConstraintOrNull()
             }
             if (parsed.size != requirements.size) return null
 
@@ -35,7 +31,7 @@ class CrateVersionRequirement private constructor(private val requirements: List
 }
 
 /**
- * Normalizes crate version requirements so that they are compatible with semver4j.
+ * Normalizes crate version requirements so that they are compatible with semver lib.
  *
  * 1) For exact (=x.y.z) and range-based (>x.y.z, <x.y.z) version requirements, the version requirement is padded by
  * zeros from the right side.
@@ -56,8 +52,7 @@ private fun normalizeVersion(version: String): String {
     if (version.isBlank()) return version
 
     // Exact and range-based version requirements need to be padded from right by zeros.
-    // Otherwise (if minor and/or patch version is missing), semver4j will match the requirement in a different way
-    // than Cargo.
+    // kotlin-semver treats non-specified parts as *, so =1.2 would be =1.2.*. We need to explicitly specify them.
     var normalized = version
     if (normalized[0] in listOf('<', '>', '=')) {
         while (normalized.count { it == '.' } < 2) {
@@ -67,6 +62,8 @@ private fun normalizeVersion(version: String): String {
 
     // Cargo treats version requirements like `1.2.3` as if they had a caret at the beginning.
     // If the version begins with a digit and it does not contain a wildcard, we thus prepend a caret to it.
+    // Also, kotlin-semver lib treats versions without any range modifiers as exact ones like `=1.2.3`, so
+    // we would like to avoid it.
     return if (normalized[0].isDigit() && !normalized.contains("*")) {
         "^$normalized"
     } else {

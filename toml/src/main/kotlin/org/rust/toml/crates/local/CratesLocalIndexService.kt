@@ -7,8 +7,8 @@ package org.rust.toml.crates.local
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.SemverException
+import io.github.z4kn4fein.semver.Version
+import io.github.z4kn4fein.semver.toVersionOrNull
 import org.jetbrains.annotations.TestOnly
 import org.rust.stdext.RsResult
 import java.nio.file.Path
@@ -73,10 +73,5 @@ data class CargoRegistryCrateVersion(
     val isYanked: Boolean,
     val features: List<String>
 ) {
-    val semanticVersion: Semver?
-        get() = try {
-            Semver(version, Semver.SemverType.NPM)
-        } catch (e: SemverException) {
-            null
-        }
+    val semanticVersion: Version? get() = version.toVersionOrNull()
 }

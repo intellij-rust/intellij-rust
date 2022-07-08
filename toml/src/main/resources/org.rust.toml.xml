@@ -44,19 +44,18 @@
                          level="WARNING"
                          implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"/>
 
-        <!-- Version-related inspections are disabled for now due to false-positives -->
         <localInspection language="TOML"
                          displayName="Invalid crate version"
                          groupPath="Rust"
                          groupName="Cargo.toml"
-                         enabledByDefault="false"
+                         enabledByDefault="true"
                          level="WARNING"
                          implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"/>
         <localInspection language="TOML"
                          displayName="New crate version available"
                          groupPath="Rust"
                          groupName="Cargo.toml"
-                         enabledByDefault="false"
+                         enabledByDefault="true"
                          level="WARNING"
                          implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"/>
 
