@@ -92,6 +92,18 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test extra extern crate without main function`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// extern crate test_package;
+        /// use test_package::foo;
+        /// foo();
+        /// //^ lib.rs
+        /// ```
+        pub fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test qualified macro call inside function`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
