@@ -43,6 +43,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
@@ -799,7 +800,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class DuplicateDefinitionError(
+    class DuplicateAssociatedItemError(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
@@ -814,34 +815,49 @@ sealed class RsDiagnostic(
         }
     }
 
-    class DuplicateItemError(
+    /**
+     * [E0428] - item            vs    item
+     * [E0255] - item            vs    import
+     * [E0260] - item            vs    extern crate
+     * [E0252] - import          vs    import
+     * [E0254] - import          vs    extern crate
+     * [E0259] - extern crate    vs    extern crate
+     */
+    class DuplicateDefinitionError private constructor(
         element: PsiElement,
         private val itemType: String,
-        private val fieldName: String,
-        private val scopeType: String
+        private val itemName: String,
+        private val scopeType: String,
+        private val errorCode: RsErrorCode,
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0428,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "A $itemType named `$fieldName` has already been defined in this $scopeType"
+        constructor(
+            element: PsiElement,
+            itemNamespace: Namespace,
+            itemName: String,
+            scope: PsiElement,
+            errorCode: RsErrorCode,
+        ) : this(element, itemNamespace.itemName, itemName, scope.formatScope(), errorCode)
+
+        override fun prepare() = PreparedAnnotation(ERROR, errorCode, errorText())
+
+        private fun errorText(): String = when {
+            element.ancestorOrSelf<RsUseSpeck>() != null ->
+                "A second item with name `$itemName` imported. Try to use an alias."
+            errorCode == E0259 ->
+                "A second extern crate with name `$itemName` imported"
+            else ->
+                "A $itemType named `$itemName` has already been defined in this $scopeType"
         }
-    }
 
-    class DuplicateImportError(
-        element: PsiElement
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0252,
-            errorText()
-        )
-
-        private fun errorText(): String {
-            return "A second item with name '${element.text}' imported. Try to use an alias."
+        companion object {
+            private fun PsiElement.formatScope(): String =
+                when (this) {
+                    is RsBlock -> "block"
+                    is RsMod, is RsForeignModItem -> "module"
+                    is RsTraitItem -> "trait"
+                    else -> "scope"
+                }
         }
     }
 
@@ -1529,7 +1545,7 @@ sealed class RsDiagnostic(
 enum class RsErrorCode {
     E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
-    E0200, E0201, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
+    E0200, E0201, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,

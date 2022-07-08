@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
+import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -41,8 +42,12 @@ import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.*
+import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
+import org.rust.lang.utils.RsErrorCode.*
+import org.rust.lang.utils.SUPPORTED_CALLING_CONVENTIONS
+import org.rust.lang.utils.addToHolder
+import org.rust.lang.utils.areUnstableFeaturesAvailable
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.openapiext.isUnitTestMode
 
@@ -222,11 +227,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkDuplicateImport(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
         if (checkDuplicateSelfInUseGroup(holder, useSpeck)) return
 
-        val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(useSpeck.containingMod, false)
-        if (useSpeck.namespaces.any { useSpeck in duplicates[it].orEmpty() }) {
-            val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
-            RsDiagnostic.DuplicateImportError(identifier).addToHolder(holder)
+        val scope = useSpeck.parentOfType<RsUseItem>()!!.parent
+        val duplicatesMap = holder.currentAnnotationSession.duplicatesByNamespace(scope, false)
+        val (namespace, name, duplicates) = duplicatesMap[useSpeck] ?: return
+        val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
+        val otherDuplicates = duplicates.filter { it != useSpeck }
+        val errorCode = when {
+            otherDuplicates.any { it is RsUseSpeck } -> E0252
+            otherDuplicates.any { it is RsExternCrateItem } -> E0254
+            else -> E0255
         }
+        RsDiagnostic.DuplicateDefinitionError(identifier, namespace, name, scope, errorCode).addToHolder(holder)
     }
 
     private fun checkDuplicateSelfInUseGroup(holder: RsAnnotationHolder, useSpeck: RsUseSpeck): Boolean {
@@ -559,7 +570,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 )
             }
             ref is RsMethodCall -> RsDiagnostic.AccessError(
-                highlightedElement, RsErrorCode.E0624, "Method",
+                highlightedElement, E0624, "Method",
                 MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
             )
             else -> {
@@ -569,7 +580,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 }
 
                 RsDiagnostic.AccessError(
-                    highlightedElement, RsErrorCode.E0603, itemType,
+                    highlightedElement, E0603, itemType,
                     MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
                 )
             }
@@ -1310,16 +1321,34 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
 
-    private fun checkExternCrate(holder: RsAnnotationHolder, el: RsExternCrateItem) {
-        if (el.self != null) {
-            EXTERN_CRATE_SELF.check(holder, el, "`extern crate self`")
-            if (el.alias == null) {
-                // The current version of rustc (1.33.0) prints
-                // "`extern crate self;` requires renaming" error message
-                // but it looks like quite unclear
-                holder.createErrorAnnotation(el, "`extern crate self` requires `as name`")
-            }
+    private fun checkExternCrate(holder: RsAnnotationHolder, externCrate: RsExternCrateItem) {
+        if (checkExternCrateSelf(holder, externCrate)) return
+        checkDuplicateExternCrate(holder, externCrate)
+    }
+
+    private fun checkExternCrateSelf(holder: RsAnnotationHolder, externCrate: RsExternCrateItem): Boolean {
+        if (externCrate.self == null) return false
+        EXTERN_CRATE_SELF.check(holder, externCrate, "`extern crate self`")
+        if (externCrate.alias == null) {
+            // The current version of rustc (1.33.0) prints
+            // "`extern crate self;` requires renaming" error message
+            // but it looks like quite unclear
+            holder.createErrorAnnotation(externCrate, "`extern crate self` requires `as name`")
         }
+        return true
+    }
+
+    private fun checkDuplicateExternCrate(holder: RsAnnotationHolder, externCrate: RsExternCrateItem) {
+        val scope = externCrate.parent
+        val duplicatesMap = holder.currentAnnotationSession.duplicatesByNamespace(scope, false)
+        val (namespace, name, duplicates) = duplicatesMap[externCrate] ?: return
+        val otherDuplicates = duplicates.filter { it != externCrate }
+        val errorCode = when {
+            otherDuplicates.any { it is RsExternCrateItem } -> E0259
+            otherDuplicates.any { it is RsUseSpeck } -> E0254
+            else -> E0260
+        }
+        RsDiagnostic.DuplicateDefinitionError(externCrate, namespace, name, scope, errorCode).addToHolder(holder)
     }
 
     private fun checkPolybound(holder: RsAnnotationHolder, o: RsPolybound) {
@@ -1477,10 +1506,8 @@ private fun checkDuplicates(
 ) {
     if (element.isCfgUnknown) return
     val owner = if (scope is RsMembers) scope.parent else scope
-    val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
-    val ns = element.namespacesForDuplicatesCheck.find { element in duplicates[it].orEmpty() }
-        ?: return
-    val name = element.name!!
+    val duplicatesMap = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
+    val (ns, name, duplicates) = duplicatesMap[element] ?: return
 
     val identifier = element.nameIdentifier ?: element
     val message = when {
@@ -1496,15 +1523,15 @@ private fun checkDuplicates(
             RsDiagnostic.DuplicateBindingError(identifier, name)
         }
         element is RsTypeParameter -> RsDiagnostic.DuplicateTypeParameterError(identifier, name)
-        owner is RsImplItem -> RsDiagnostic.DuplicateDefinitionError(identifier, name)
+        owner is RsImplItem -> RsDiagnostic.DuplicateAssociatedItemError(identifier, name)
         else -> {
-            val scopeType = when (owner) {
-                is RsBlock -> "block"
-                is RsMod, is RsForeignModItem -> "module"
-                is RsTraitItem -> "trait"
-                else -> "scope"
+            val otherDuplicates = duplicates.filter { it != element }
+            val errorCode = when {
+                otherDuplicates.all { it !is RsUseSpeck && it !is RsExternCrateItem } -> E0428
+                otherDuplicates.any { it is RsUseSpeck } -> E0255
+                else -> E0260
             }
-            RsDiagnostic.DuplicateItemError(identifier, ns.itemName, name, scopeType)
+            RsDiagnostic.DuplicateDefinitionError(identifier, ns, name, owner, errorCode)
         }
     }
     message.addToHolder(holder)
@@ -1573,65 +1600,67 @@ private fun checkParamAttrs(holder: RsAnnotationHolder, o: RsOuterAttributeOwner
     diagnostic.addToHolder(holder)
 }
 
-private fun PsiElement.nameOrImportedName(): String? =
-    when (this) {
-        is RsNamedElement -> name
-        is RsUseSpeck -> nameInScope
-        else -> null
-    }
-
 private val RsNamedElement.namespacesForDuplicatesCheck: Set<Namespace>
     get() = when (this) {
+        // technically const parameters has VALUES namespace,
+        // and type parameters has TYPES namespace,
+        // but still const and type parameter with same name are not allowed.
         is RsConstParameter -> TYPES_N_VALUES
+        is RsExternCrateItem -> TYPES
         else -> namespaces
     }
+
+private data class DuplicateInfo(
+    val namespace: Namespace,
+    val name: String,
+    /** all elements in scope with this [name] and [namespace] */
+    val elements: List<RsElement>,
+)
+
+private typealias DuplicatesMap = Map<RsElement, DuplicateInfo>
 
 private fun AnnotationSession.duplicatesByNamespace(
     owner: PsiElement,
     recursively: Boolean
-): Map<Namespace, Set<PsiElement>> {
+): DuplicatesMap {
     if (owner.parent is RsFnPointerType) return emptyMap()
-
-    fun PsiElement.namespaced(): Sequence<Pair<Namespace, PsiElement>> =
-        when (this) {
-            is RsNamedElement -> namespacesForDuplicatesCheck
-            is RsUseSpeck -> namespaces
-            else -> emptySet()
-        }.asSequence().map { Pair(it, this) }
 
     val fileMap = fileDuplicatesMap()
     fileMap[owner]?.let { return it }
 
-    val importedNames = (owner as? RsItemsOwner)
-        ?.expandedItemsCached
-        ?.namedImports
-        ?.asSequence()
-        ?.mapNotNull { it.path.parent as? RsUseSpeck }
-        .orEmpty()
-    val namedChildren = owner
-        .namedChildren(recursively, stopAt = RsFnPointerType::class.java)
-        .filter { it !is RsMacro }
-    val duplicates: Map<Namespace, Set<PsiElement>> =
-        (namedChildren + importedNames)
-            .filter { it !is RsExternCrateItem } // extern crates can have aliases.
-            .filter {
-                val name = it.nameOrImportedName()
-                name != null && name != "_"
+    @Suppress("ReplaceWithEnumMap")
+    val itemsAll: MutableMap<Namespace, MutableMap<String, MutableList<RsElement>>> = hashMapOf()
+    fun addItem(item: RsElement, namespaces: Set<Namespace>, name: String) {
+        if (!item.existsAfterExpansion || item.isCfgUnknown) return
+        for (namespace in namespaces) {
+            itemsAll.getOrPut(namespace, ::HashMap).getOrPut(name, ::SmartList).add(item)
+        }
+    }
+
+    if (owner is RsItemsOwner) {
+        for (import in owner.expandedItemsCached.namedImports) {
+            val useSpeck = import.path.parent as? RsUseSpeck ?: continue
+            val nameInScope = import.nameInScope.takeIf { it != "_" } ?: continue
+            addItem(useSpeck, useSpeck.namespaces, nameInScope)
+        }
+    }
+
+    for (item in owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)) {
+        if (item is RsMacro) continue
+        val name = (item as? RsExternCrateItem)?.nameWithAlias ?: item.name ?: continue
+        addItem(item, item.namespacesForDuplicatesCheck, name)
+    }
+
+    val duplicates = itemsAll
+        .flatMap { (namespace, itemsByName) ->
+            itemsByName.flatMap label@{ (name, items) ->
+                if (items.size == 1) return@label emptyList()
+                items.map { item ->
+                    item to DuplicateInfo(namespace, name, items)
+                }
             }
-            .filter { it.existsAfterExpansion && !it.isCfgUnknown }
-            .flatMap { it.namespaced() }
-            .groupBy { it.first }       // Group by namespace
-            .map { entry ->
-                val (namespace, items) = entry
-                namespace to items.asSequence()
-                    .map { it.second }
-                    .groupBy { it.nameOrImportedName() }
-                    .map { it.value }
-                    .filter { it.size > 1 }
-                    .flatten()
-                    .toSet()
-            }
-            .toMap()
+        }
+        .toMap(hashMapOf())
 
     fileMap[owner] = duplicates
     return duplicates
@@ -1652,9 +1681,9 @@ private fun PsiElement.namedChildren(recursively: Boolean, stopAt: Class<*>? = n
 
 private val DUPLICATES_BY_SCOPE = Key<MutableMap<
     PsiElement,
-    Map<Namespace, Set<PsiElement>>>>("org.rust.ide.annotator.RsErrorAnnotator.duplicates")
+    DuplicatesMap>>("org.rust.ide.annotator.RsErrorAnnotator.duplicates")
 
-private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Namespace, Set<PsiElement>>> {
+private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, DuplicatesMap> {
     var map = getUserData(DUPLICATES_BY_SCOPE)
     if (map == null) {
         map = mutableMapOf()
