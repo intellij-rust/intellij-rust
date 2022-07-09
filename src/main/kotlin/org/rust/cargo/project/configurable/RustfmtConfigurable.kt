@@ -12,11 +12,14 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.Label
-import com.intellij.ui.layout.panel
-import com.intellij.ui.layout.toBinding
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
 import org.rust.RsBundle
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.openapiext.fullWidthCell
 
 class RustfmtConfigurable(project: Project) : BoundConfigurable(RsBundle.message("settings.rust.rustfmt.name")) {
     private val settings = project.rustfmtSettings
@@ -33,36 +36,38 @@ class RustfmtConfigurable(project: Project) : BoundConfigurable(RsBundle.message
     private val environmentVariables = EnvironmentVariablesComponent()
 
     override fun createPanel(): DialogPanel = panel {
-        blockRow {
+        group(indent = false) {
             row(RsBundle.message("settings.rust.rustfmt.additional.arguments.label")) {
-                additionalArguments(pushX, growX)
+                fullWidthCell(additionalArguments)
+                    .resizableColumn()
                     .comment(RsBundle.message("settings.rust.rustfmt.additional.arguments.comment"))
-                    .withBinding(
+                    .bind(
                         componentGet = { it.text },
                         componentSet = { component, value -> component.text = value },
-                        modelBinding = settings.state::additionalArguments.toBinding()
+                        prop = settings.state::additionalArguments.toMutableProperty()
                     )
 
                 channelLabel.labelFor = channel
-                channelLabel()
-                channel().withBinding(
-                    componentGet = { it.item },
-                    componentSet = { component, value -> component.item = value },
-                    modelBinding = settings.state::channel.toBinding()
-                )
+                cell(channelLabel)
+                cell(channel)
+                    .bind(
+                        componentGet = { it.item },
+                        componentSet = { component, value -> component.item = value },
+                        prop = settings.state::channel.toMutableProperty()
+                    )
             }
 
             row(environmentVariables.label) {
-                environmentVariables(growX)
-                    .withBinding(
+                fullWidthCell(environmentVariables)
+                    .bind(
                         componentGet = { it.envs },
                         componentSet = { component, value -> component.envs = value },
-                        modelBinding = settings.state::envs.toBinding()
+                        prop = settings.state::envs.toMutableProperty()
                     )
             }
-        }
+        }.bottomGap(BottomGap.MEDIUM) // TODO: do we really need it?
 
-        row { checkBox(RsBundle.message("settings.rust.rustfmt.builtin.formatter.label"), settings.state::useRustfmt) }
-        row { checkBox(RsBundle.message("settings.rust.rustfmt.run.on.save.label"), settings.state::runRustfmtOnSave) }
+        row { checkBox(RsBundle.message("settings.rust.rustfmt.builtin.formatter.label")).bindSelected(settings.state::useRustfmt) }
+        row { checkBox(RsBundle.message("settings.rust.rustfmt.run.on.save.label")).bindSelected(settings.state::runRustfmtOnSave) }
     }
 }
