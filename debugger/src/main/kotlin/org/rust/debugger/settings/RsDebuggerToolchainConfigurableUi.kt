@@ -7,10 +7,11 @@ package org.rust.debugger.settings
 
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.Panel
 import org.rust.debugger.RsDebuggerBundle
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.pathToDirectoryTextField
 import javax.swing.AbstractButton
 import javax.swing.JComponent
@@ -51,13 +52,13 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
         settings.downloadAutomatically = downloadAutomaticallyCheckBox.isSelected
     }
 
-    override fun buildUi(builder: LayoutBuilder) {
+    override fun buildUi(panel: Panel) {
         lldbPathField.text = RsDebuggerSettings.getInstance().lldbPath.orEmpty()
         update()
-        with(builder) {
-            row(RsDebuggerBundle.message("settings.rust.debugger.toolchain.lldb.path.label")) { lldbPathField() }
-            row("") { downloadLink() }
-            row { downloadAutomaticallyCheckBox() }
+        with(panel) {
+            row(RsDebuggerBundle.message("settings.rust.debugger.toolchain.lldb.path.label")) { fullWidthCell(lldbPathField) }
+            row("") { cell(downloadLink) }
+            row { cell(downloadAutomaticallyCheckBox) }
         }
     }
 

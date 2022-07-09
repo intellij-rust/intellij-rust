@@ -6,7 +6,7 @@
 package org.rust.debugger.settings
 
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.Panel
 import org.rust.debugger.RsDebuggerBundle
 
 class RsBreakOnPanicConfigurableUi : RsDebuggerUiComponent() {
@@ -24,9 +24,9 @@ class RsBreakOnPanicConfigurableUi : RsDebuggerUiComponent() {
         settings.breakOnPanic = breakOnPanicCheckBox.isSelected
     }
 
-    override fun buildUi(builder: LayoutBuilder) {
-        with(builder) {
-            row { breakOnPanicCheckBox() }
+    override fun buildUi(panel: Panel) {
+        with(panel) {
+            row { cell(breakOnPanicCheckBox) }
         }
     }
 }

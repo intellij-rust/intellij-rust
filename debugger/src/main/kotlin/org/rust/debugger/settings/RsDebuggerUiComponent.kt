@@ -7,12 +7,12 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.ui.layout.LayoutBuilder
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 abstract class RsDebuggerUiComponent: ConfigurableUi<RsDebuggerSettings>, Disposable {
-    abstract fun buildUi(builder: LayoutBuilder)
+    abstract fun buildUi(panel: Panel)
 
     override fun getComponent(): JComponent {
         return panel {
