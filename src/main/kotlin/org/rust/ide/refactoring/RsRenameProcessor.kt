@@ -87,7 +87,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
             usages.forEach {
                 val field = it.element?.ancestorOrSelf<RsStructLiteralField>(RsBlock::class.java) ?: return@forEach
                 when {
-                    field.colon == null -> {
+                    field.isShorthand -> {
                         val newPatField = psiFactory.createStructLiteralField(element.text, newName)
                         field.replace(newPatField)
                     }
