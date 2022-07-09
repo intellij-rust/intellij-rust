@@ -20,7 +20,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.Link
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.tools.Cargo
@@ -32,6 +34,7 @@ import org.rust.ide.newProject.RsProjectTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.UiDebouncer
+import org.rust.openapiext.fullWidthCell
 import org.rust.stdext.unwrapOrThrow
 import javax.swing.DefaultListModel
 import javax.swing.JList
@@ -142,14 +145,19 @@ class RsNewProjectPanel(
 
     val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, selectedTemplate)
 
-    fun attachTo(layout: LayoutBuilder) = with(layout) {
+    fun attachTo(panel: Panel) = with(panel) {
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            titledRow("Project Template") {
-                subRowIndent = 0
-                row { templateToolbar.createPanel()(growX) }
-                row { downloadCargoGenerateLink() }
+            separator("Project Template")
+                .topGap(TopGap.MEDIUM)
+            row {
+                resizableRow()
+                fullWidthCell(templateToolbar.createPanel())
+                    .verticalAlign(VerticalAlign.FILL)
+            }
+            row {
+                cell(downloadCargoGenerateLink)
             }
         }
 

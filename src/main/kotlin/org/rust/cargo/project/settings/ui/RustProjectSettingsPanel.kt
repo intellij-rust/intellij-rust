@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
-import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.ui.dsl.builder.Panel
 import org.rust.RsBundle
 import org.rust.cargo.project.RsToolchainPathChoosingComboBox
 import org.rust.cargo.project.settings.RustProjectSettingsService
@@ -28,13 +28,11 @@ import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.openapiext.UiDebouncer
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.pathToDirectoryTextField
-import java.awt.BorderLayout
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 class RustProjectSettingsPanel(
     private val cargoProjectDir: Path = Paths.get("."),
@@ -95,7 +93,7 @@ class RustProjectSettingsPanel(
             update()
         }
 
-    fun attachTo(layout: LayoutBuilder) = with(layout) {
+    fun attachTo(panel: Panel) = with(panel) {
         data = Data(
             toolchain = ProjectManager.getInstance().defaultProject
                 // Don't use `Project.toolchain` or `Project.rustSettings` here because
@@ -108,10 +106,18 @@ class RustProjectSettingsPanel(
             explicitPathToStdlib = null
         )
 
-        row(RsBundle.message("settings.rust.toolchain.location.label")) { wrapComponent(pathToToolchainComboBox)(growX, pushX) }
-        row(RsBundle.message("settings.rust.toolchain.version.label")) { toolchainVersion() }
-        row(RsBundle.message("settings.rust.toolchain.standard.library.label")) { wrapComponent(pathToStdlibField)(growX, pushX) }
-        row("") { downloadStdlibLink() }
+        row(RsBundle.message("settings.rust.toolchain.location.label")) {
+            fullWidthCell(pathToToolchainComboBox)
+        }
+        row(RsBundle.message("settings.rust.toolchain.version.label")) {
+            cell(toolchainVersion)
+        }
+        row(RsBundle.message("settings.rust.toolchain.standard.library.label")) {
+            fullWidthCell(pathToStdlibField)
+        }
+        row {
+            cell(downloadStdlibLink)
+        }
 
         pathToToolchainComboBox.addToolchainsAsync {
             RsToolchainFlavor.getApplicableFlavors().flatMap { it.suggestHomePaths() }.distinct()
@@ -171,8 +177,3 @@ private fun isStdlibLocationCompatible(toolchainLocation: String, stdlibLocation
 }
 
 private fun String.blankToNull(): String? = ifBlank { null }
-
-private fun wrapComponent(component: JComponent): JComponent =
-    JPanel(BorderLayout()).apply {
-        add(component, BorderLayout.NORTH)
-    }

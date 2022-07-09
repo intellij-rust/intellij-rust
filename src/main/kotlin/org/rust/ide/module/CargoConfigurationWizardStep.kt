@@ -12,7 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
