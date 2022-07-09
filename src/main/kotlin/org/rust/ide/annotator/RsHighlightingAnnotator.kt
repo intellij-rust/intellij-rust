@@ -83,17 +83,23 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         val parent = element.parent as? RsElement ?: return null
 
         return when (elementType) {
-            DOLLAR -> RsColor.MACRO
+            DOLLAR -> macroGroupColor(parent) ?: if (parent is RsMacroBinding) {
+                RsColor.MACRO_METAVARIABLE
+            } else if (parent is RsMacroReference) {
+                RsColor.MACRO_METAVARIABLE
+            } else {
+                null
+            }
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD
             FLOAT_LITERAL -> RsColor.NUMBER
             Q -> if (parent is RsTryExpr) RsColor.Q_OPERATOR else macroGroupColor(parent)
-            COLON -> if (parent is RsMacroBinding) RsColor.MACRO else null
+            COLON -> if (parent is RsMacroBinding) RsColor.MACRO_METAVARIABLE else null
             MUL, PLUS, LPAREN, LBRACE, RPAREN, RBRACE -> macroGroupColor(parent)
-            EXCL -> if (parent is RsMacro || parent is RsMacroCall && shouldHighlightMacroCall(parent, holder)) {
-                RsColor.MACRO
+            EXCL -> if (parent is RsMacro || (parent is RsMacroCall && shouldHighlightMacroCall(parent, holder))) {
+                RsColor.MACRO_CALL
             } else {
                 null
             }
@@ -118,12 +124,21 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             }
             // Highlight `macro_rules`
             parent is RsMacro -> if (element == parent.identifier) {
-                RsColor.MACRO
+                RsColor.MACRO_CALL
             } else {
                 null
             }
-            parent is RsMetaVarIdentifier -> RsColor.FUNCTION // TODO FUNCTION?
-            parent is RsMacroBinding -> RsColor.MACRO
+            parent is RsMetaVarIdentifier -> {
+                val pparent = parent.parent as? RsElement
+                if (pparent is RsMacroBinding) {
+                    RsColor.MACRO_METAVARIABLE
+                } else if (pparent is RsMacroReference) {
+                    RsColor.MACRO_METAVARIABLE
+                } else {
+                    RsColor.MACRO_CALL // FUNCTION // TODO remove ?
+                }
+            }
+            parent is RsMacroBinding -> RsColor.MACRO_METAVARIABLE
             parent is RsNameIdentifierOwner && parent.nameIdentifier == element -> {
                 colorFor(parent)
             }
@@ -143,7 +158,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
         return when {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
-            parent is RsMacroCall -> if (shouldHighlightMacroCall(parent, holder)) RsColor.MACRO else null
+            parent is RsMacroCall -> if (shouldHighlightMacroCall(parent, holder)) RsColor.MACRO_CALL else null
             element is RsMethodCall -> RsColor.METHOD_CALL
             element is RsFieldLookup && element.identifier?.text == "await" && element.isAtLeastEdition2018 -> RsColor.KEYWORD
             element is RsPath && element.isCall() -> {
@@ -190,7 +205,13 @@ class RsHighlightingAnnotator : AnnotatorBase() {
     }
 
     private fun macroGroupColor(parent: RsElement): RsColor? {
-        return if (parent is RsMacroExpansionReferenceGroup || parent is RsMacroBindingGroup) RsColor.MACRO else null
+        if (parent is RsMacroExpansionReferenceGroup) {
+            return RsColor.MACRO_REPEATING;
+        } else if (parent is RsMacroBindingGroup) {
+            return RsColor.MACRO_REPEATING;
+        } else {
+            return null
+        }
     }
 
     companion object {
@@ -208,7 +229,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 // If possible, this should use only stubs because this will be called
 // on elements in other files when highlighting references.
 private fun colorFor(element: RsElement): RsColor? = when (element) {
-    is RsMacro -> RsColor.MACRO
+    is RsMacro -> RsColor.MACRO_CALL // TODO
     is RsSelfParameter -> RsColor.SELF_PARAMETER
     is RsEnumItem -> RsColor.ENUM
     is RsEnumVariant -> RsColor.ENUM_VARIANT

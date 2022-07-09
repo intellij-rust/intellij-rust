@@ -73,22 +73,22 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
 
     fun `test macro`() = checkByText("""
         fn <FUNCTION>main</FUNCTION>() {
-            <MACRO>println</MACRO><MACRO>!</MACRO>["Hello, World!"];
-            <MACRO>unreachable</MACRO><MACRO>!</MACRO>();
+            <MACRO_CALL>println</MACRO_CALL><MACRO_CALL>!</MACRO_CALL>["Hello, World!"];
+            <MACRO_CALL>unreachable</MACRO_CALL><MACRO_CALL>!</MACRO_CALL>();
         }
-        <MACRO>macro_rules</MACRO><MACRO>!</MACRO> foo {
-            (x => <MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode X: {}", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>));
-            (y => <MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO><MACRO>expr</MACRO>) => (println!("mode Y: {}", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>));
-            (z => <MACRO>$</MACRO><MACRO>(</MACRO><MACRO>$</MACRO> <FUNCTION>e</FUNCTION><MACRO>:</MACRO> <MACRO>expr</MACRO>,<MACRO>)</MACRO><MACRO>*</MACRO>) => {
+        <MACRO_CALL>macro_rules</MACRO_CALL><MACRO_CALL>!</MACRO_CALL> foo {
+            (x => <MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE><MACRO_METAVARIABLE>:</MACRO_METAVARIABLE><MACRO_METAVARIABLE>expr</MACRO_METAVARIABLE>) => (println!("mode X: {}", <MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE>));
+            (y => <MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE><MACRO_METAVARIABLE>:</MACRO_METAVARIABLE><MACRO_METAVARIABLE>expr</MACRO_METAVARIABLE>) => (println!("mode Y: {}", <MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE>));
+            (z => <MACRO_REPEATING>$</MACRO_REPEATING><MACRO_REPEATING>(</MACRO_REPEATING><MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE><MACRO_METAVARIABLE>:</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>expr</MACRO_METAVARIABLE>,<MACRO_REPEATING>)</MACRO_REPEATING><MACRO_REPEATING>*</MACRO_REPEATING>) => {
                 print!("mode Z:");
-                <MACRO>$</MACRO><MACRO>(</MACRO>
-                    print!(" {},", <MACRO>$</MACRO> <FUNCTION>e</FUNCTION>);
-                <MACRO>)</MACRO><MACRO>*</MACRO>
+                <MACRO_REPEATING>$</MACRO_REPEATING><MACRO_REPEATING>(</MACRO_REPEATING>
+                    print!(" {},", <MACRO_METAVARIABLE>$</MACRO_METAVARIABLE> <MACRO_METAVARIABLE>e</MACRO_METAVARIABLE>);
+                <MACRO_REPEATING>)</MACRO_REPEATING><MACRO_REPEATING>*</MACRO_REPEATING>
                 println!();
             }
         }
         impl T {
-            <MACRO>foo</MACRO><MACRO>!</MACRO>();
+            <MACRO_CALL>foo</MACRO_CALL><MACRO_CALL>!</MACRO_CALL>();
         }
     """)
 
@@ -223,7 +223,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     fun `test highlight todo macro when todo highlighting disabled`() = withoutTodoHighlighting {
         checkHighlighting("""
             fn main() {
-                <MACRO>todo</MACRO><MACRO>!</MACRO>("");
+                <MACRO_CALL>todo</MACRO_CALL><MACRO_CALL>!</MACRO_CALL>("");
             }
         """)
     }
@@ -231,7 +231,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test highlight macro in use item`() = checkByFileTree("""
     //- lib.rs
-        use <CRATE>dep_lib_target</CRATE>::<MACRO>foo</MACRO>; /*caret*/
+        use <CRATE>dep_lib_target</CRATE>::<MACRO_CALL>foo</MACRO_CALL>; /*caret*/
     //- dep-lib/lib.rs
         #[macro_export]
         macro_rules! foo {
