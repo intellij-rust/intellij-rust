@@ -7,6 +7,8 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -188,8 +190,20 @@ class MacroExpansionTask(
                         oldFile.move(TrustedRequestor, newFileParent)
                         oldFile.rename(TrustedRequestor, newName)
                     }
-                    oldFile.getOutputStream(TrustedRequestor).use {
-                        it.write(singleWrite.content.toByteArray())
+                    val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
+                    if (doc == null) {
+                        oldFile.getOutputStream(TrustedRequestor).use {
+                            it.write(singleWrite.content.toByteArray())
+                        }
+                    } else {
+                        UndoUtil.disableUndoFor(doc)
+                        CommandProcessor.getInstance().runUndoTransparentAction {
+                            doc.setText(singleWrite.content)
+                        }
+                        UndoUtil.enableUndoFor(doc)
+                        MacroExpansionFileSystem.withAllowedWriting(oldFile) {
+                            FileDocumentManager.getInstance().saveDocument(doc)
+                        }
                     }
                     oldFile.writeRangeMap(singleWrite.ranges)
                 } catch (e: IOException) {
