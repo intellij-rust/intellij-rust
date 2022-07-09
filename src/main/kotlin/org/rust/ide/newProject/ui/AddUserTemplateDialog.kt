@@ -7,18 +7,17 @@ package org.rust.ide.newProject.ui
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.rust.RsBundle
 import org.rust.ide.newProject.state.RsUserTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
 import org.rust.openapiext.addTextChangeListener
-import java.awt.Dimension
+import org.rust.openapiext.fullWidthCell
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 class AddUserTemplateDialog : DialogWrapper(null) {
     private val repoUrlField: JBTextField = JBTextField().apply {
-        preferredSize = Dimension(400, 0)
         addTextChangeListener(::suggestName)
     }
 
@@ -34,10 +33,11 @@ class AddUserTemplateDialog : DialogWrapper(null) {
 
     override fun createCenterPanel(): JComponent = panel {
         row(RsBundle.message("dialog.create.project.custom.add.template.url")) {
-            repoUrlField(comment = RsBundle.message("dialog.create.project.custom.add.template.url.description"))
+            fullWidthCell(repoUrlField)
+                .comment(RsBundle.message("dialog.create.project.custom.add.template.url.description"))
         }
         row(RsBundle.message("dialog.create.project.custom.add.template.name")) {
-            nameField()
+            fullWidthCell(nameField)
         }
     }
 
