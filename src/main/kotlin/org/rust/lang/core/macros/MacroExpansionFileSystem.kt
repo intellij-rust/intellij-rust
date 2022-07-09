@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity
@@ -237,7 +238,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         modStamp: Long,
         timeStamp: Long
     ): OutputStream {
-        if (requestor != TrustedRequestor) {
+        if (requestor != TrustedRequestor && !isWritingAllowed(file)) {
             throw UnsupportedOperationException()
         }
         return object : ByteArrayOutputStream() {
@@ -505,6 +506,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
     companion object {
         private const val PROTOCOL: String = "rust-macros"
+        private val RUST_MACROS_ALLOW_WRITING: Key<Boolean> = Key.create("RUST_MACROS_ALLOW_WRITING")
 
         fun getInstance(): MacroExpansionFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MacroExpansionFileSystem
@@ -564,6 +566,22 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
                 }
                 FSFile(parent!!, name, timestamp, length, content)
             }
+        }
+
+        fun <T> withAllowedWriting(file: VirtualFile, f: () -> T): T {
+            setAllowWriting(file, true)
+            try {
+                return f()
+            } finally {
+                setAllowWriting(file, false)
+            }
+        }
+
+        fun isWritingAllowed(file: VirtualFile): Boolean =
+            file.getUserData(RUST_MACROS_ALLOW_WRITING) == true
+
+        private fun setAllowWriting(file: VirtualFile, allow: Boolean) {
+            file.putUserData(RUST_MACROS_ALLOW_WRITING, if (allow) true else null)
         }
 
         private fun currentTimestamp() = System.currentTimeMillis()
