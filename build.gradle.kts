@@ -399,16 +399,16 @@ project(":") {
 
     dependencies {
         implementation("org.jetbrains:markdown:0.3.1") {
-            exclude(module = "kotlin-runtime")
-            exclude(module = "kotlin-stdlib")
-            exclude(module = "kotlin-stdlib-common")
+            excludeKotlinDeps()
         }
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
         }
-        api("io.github.z4kn4fein:semver:1.3.3")
+        api("io.github.z4kn4fein:semver:1.3.3") {
+            excludeKotlinDeps()
+        }
         testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
     }
 
@@ -878,4 +878,13 @@ fun File.isManifestFile(): Boolean {
         return false
     }
     return rootNode.name() == "idea-plugin"
+}
+
+fun <T : ModuleDependency> T.excludeKotlinDeps() {
+    exclude(module = "kotlin-reflect")
+    exclude(module = "kotlin-runtime")
+    exclude(module = "kotlin-stdlib")
+    exclude(module = "kotlin-stdlib-common")
+    exclude(module = "kotlin-stdlib-jdk8")
+    exclude(module = "kotlinx-serialization-core")
 }
