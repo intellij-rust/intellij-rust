@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.newProject.RsPackageNameValidator
 import org.rust.openapiext.isUnitTestMode
@@ -65,8 +65,8 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
     }
 
     override fun createCenterPanel(): JComponent = panel {
-        row("Name") { name() }
-        row("Type") { typeCombobox() }
+        row("Name") { cell(name) }
+        row("Type") { cell(typeCombobox) }
     }
 
     override fun getPreferredFocusedComponent(): JComponent = name
