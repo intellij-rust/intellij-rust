@@ -19,12 +19,13 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.Row
-import com.intellij.ui.layout.RowBuilder
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.Alarm
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsElement
+import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
@@ -105,20 +106,14 @@ fun JTextField.addTextChangeListener(listener: (DocumentEvent) -> Unit) {
     )
 }
 
-fun RowBuilder.row(
-    labelText: String,
-    toolTip: String,
-    separated: Boolean = false,
-    init: Row.() -> Unit
-): Row {
-    val label = Label(labelText)
-    label.toolTipText = toolTip.trimIndent()
-    return row(label, separated, init)
-}
-
 fun selectElement(element: RsElement, editor: Editor) {
     val start = element.textRange.startOffset
     editor.caretModel.moveToOffset(start)
     editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     editor.selectionModel.setSelection(start, element.textRange.endOffset)
+}
+
+fun <T : JComponent> Row.fullWidthCell(component: T): Cell<T> {
+    return cell(component)
+        .horizontalAlign(HorizontalAlign.FILL)
 }
