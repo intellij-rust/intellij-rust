@@ -1535,6 +1535,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test restricted visibility E0742`() = checkErrors("""
+        mod mod1 {
+            pub(in crate::mod1) struct S1;
+            pub(in super::mod1) struct S2;
+            pub(in <error descr="Visibilities can only be restricted to ancestor modules [E0742]">crate::mod2</error>) struct S3;
+            pub(in <error descr="Visibilities can only be restricted to ancestor modules [E0742]">super::mod2</error>) struct S4;
+            pub(in <error descr="Visibilities can only be restricted to ancestor modules [E0742]">self::mod3</error>) struct S5;
+            mod mod3 {}
+        }
+        pub mod mod2 {}
+
+        pub(in <error descr="Visibilities can only be restricted to ancestor modules [E0742]">crate::mod2</error>) struct S;
+    """)
+
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
         #[lang = "sized"] trait Sized {}
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
