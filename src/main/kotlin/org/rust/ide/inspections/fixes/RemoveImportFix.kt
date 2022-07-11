@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.intentions.RemoveCurlyBracesIntention
 import org.rust.lang.core.psi.RsUseGroup
+import org.rust.lang.core.psi.RsUseItem
+import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.deleteWithSurroundingCommaAndWhitespace
 import org.rust.lang.core.psi.ext.parentUseSpeck
@@ -25,14 +27,26 @@ class RemoveImportFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) 
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val element = startElement as? RsElement ?: return
+        deleteUseSpeckOrUseItem(element)
+    }
+}
 
-        val parent = element.parent
-        element.deleteWithSurroundingCommaAndWhitespace()
+private fun deleteUseSpeckOrUseItem(element: RsElement) {
+    val parent = element.parent
+    element.deleteWithSurroundingCommaAndWhitespace()
 
-        if (parent is RsUseGroup) {
-            val parentSpeck = parent.parentUseSpeck
+    if (parent is RsUseGroup) {
+        val parentSpeck = parent.parentUseSpeck
+        if (parent.useSpeckList.isEmpty()) {
+            deleteUseSpeck(parentSpeck)
+        } else {
             val ctx = RemoveCurlyBracesIntention.createContextIfCompatible(parentSpeck) ?: return
             RemoveCurlyBracesIntention.removeCurlyBracesFromUseSpeck(ctx)
         }
     }
+}
+
+fun deleteUseSpeck(useSpeck: RsUseSpeck) {
+    val element = (useSpeck.parent as? RsUseItem) ?: useSpeck
+    deleteUseSpeckOrUseItem(element)
 }
