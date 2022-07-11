@@ -145,7 +145,8 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: evcxr_repl --locked
+                  # BACKCOMPAT: Evcxr 0.13 requires at least stable-1.59
+                  args: evcxr_repl --locked --version 0.12.0
 
             - name: Install cargo-generate
               # BACKCOMPAT: kstring dependency requires Rust 1.59.0 or newer
