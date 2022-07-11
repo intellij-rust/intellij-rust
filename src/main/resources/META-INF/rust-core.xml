@@ -550,6 +550,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsDoubleMustUseInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Redundant semicolons"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsRedundantSemicolonsInspection"/>
+
         <localInspection language="Rust" groupName="Rust"
                          displayName="Assert Equal"
                          enabledByDefault="true" level="WEAK WARNING"
