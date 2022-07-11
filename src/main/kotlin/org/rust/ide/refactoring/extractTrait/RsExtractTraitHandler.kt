@@ -18,7 +18,9 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
@@ -32,6 +34,7 @@ import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.openapiext.addTextChangeListener
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -79,17 +82,20 @@ class RsExtractTraitDialog(
     }
 
     override fun createCenterPanel(): JComponent = panel {
-        blockRow {
-            cell(isFullWidth = true) {
-                label("Trait name:")
-            }
-            traitNameField().focused()
+        row {
+            label("Trait name:")
         }
         row {
+            fullWidthCell(traitNameField).focused()
+        }.bottomGap(BottomGap.MEDIUM)
+
+        row {
+            resizableRow()
             val members = RsMemberSelectionPanel("Members to form trait", memberInfos)
             members.minimumSize = JBUI.size(0, 200)
             members.table.addMemberInfoChangeListener { validateButtons() }
-            members()
+            fullWidthCell(members)
+                .verticalAlign(VerticalAlign.FILL)
         }
     }
 
