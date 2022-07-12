@@ -654,6 +654,26 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         }
     """)
 
+    fun `test do not offer to remove loop variable`() = checkFixIsUnavailable("Remove variable `a`", """
+        fn foo() {
+            for <warning>a/*caret*/</warning> in &[1, 2, 3] {}
+        }
+    """)
+
+    fun `test do not offer to remove condition variable`() = checkFixIsUnavailable("Remove variable `a`", """
+        fn foo() {
+            if let <warning>a/*caret*/</warning> = 1 {}
+        }
+    """)
+
+    fun `test do not offer to remove match arm variable`() = checkFixIsUnavailable("Remove variable `a`", """
+        fn foo() {
+            match 1 {
+                <warning>a/*caret*/</warning> => {}
+            }
+        }
+    """)
+
     fun `test function internally deny`() = checkByText("""
         fn foo() {
             #[deny(unused_variables)]
