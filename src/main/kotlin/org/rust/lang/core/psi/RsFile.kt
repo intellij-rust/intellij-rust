@@ -34,6 +34,7 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
+import org.rust.lang.core.macros.MacroExpansionFileSystem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
@@ -75,6 +76,7 @@ class RsFile(
     val crate: Crate? get() = cachedData.crate
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
+    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
 
     private val cachedData: CachedData
         get() {
@@ -93,10 +95,20 @@ class RsFile(
 
         if (project.isNewResolveEnabled) {
             // Note: `this` file can be not a module (can be included with `include!()` macro)
+            val virtualFile = virtualFile
             val modData = findModDataFor(this)
             if (modData != null) {
                 val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
-                return CachedData(crate.cargoProject, crate.cargoWorkspace, crate.rootMod, crate, modData.isDeeplyEnabledByCfg)
+                return CachedData(
+                    crate.cargoProject,
+                    crate.cargoWorkspace,
+                    crate.rootMod,
+                    crate,
+                    modData.isDeeplyEnabledByCfg,
+                    isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
+                        && virtualFile.id != modData.fileId
+                        && virtualFile.fileSystem !is MacroExpansionFileSystem
+                )
             }
             // Else try injected crate, included file, or fill file info with just project and workspace
         }
@@ -134,7 +146,10 @@ class RsFile(
         }
 
         val includingMod = RsIncludeMacroIndex.getIncludedFrom(possibleCrateRoot)?.containingMod
-        if (includingMod != null) return (includingMod.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+        if (includingMod != null) {
+            return (includingMod.contextualFile as? RsFile)?.cachedData?.copy(isIncludedByIncludeMacro = true)
+                ?: EMPTY_CACHED_DATA
+        }
 
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
@@ -265,7 +280,8 @@ private data class CachedData(
     val cargoWorkspace: CargoWorkspace? = null,
     val crateRoot: RsFile? = null,
     val crate: Crate? = null,
-    val isDeeplyEnabledByCfg: Boolean = true
+    val isDeeplyEnabledByCfg: Boolean = true,
+    val isIncludedByIncludeMacro: Boolean = false
 )
 
 private val EMPTY_CACHED_DATA: CachedData = CachedData()
