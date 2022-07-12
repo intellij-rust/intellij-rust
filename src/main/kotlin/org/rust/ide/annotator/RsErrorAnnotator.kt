@@ -220,10 +220,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkDuplicateImport(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
+        if (checkDuplicateSelfInUseGroup(holder, useSpeck)) return
+
         val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(useSpeck.containingMod, false)
         if (useSpeck.namespaces.any { useSpeck in duplicates[it].orEmpty() }) {
             val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
             RsDiagnostic.DuplicateImportError(identifier).addToHolder(holder)
+        }
+    }
+
+    private fun checkDuplicateSelfInUseGroup(holder: RsAnnotationHolder, useSpeck: RsUseSpeck): Boolean {
+        fun RsUseSpeck.isSelfImport(): Boolean = path?.referenceName == "self" && text == "self"
+        if (!useSpeck.isSelfImport()) return false
+        val useGroup = useSpeck.parent as? RsUseGroup ?: return false
+        val selfImports = useGroup.useSpeckList.filter { it.isSelfImport() }
+        return if (selfImports.size >= 2 && useSpeck in selfImports) {
+            RsDiagnostic.DuplicateSelfInUseGroup(useSpeck).addToHolder(holder)
+            true
+        } else {
+            false
         }
     }
 
