@@ -144,8 +144,14 @@ private fun doPrepareProcMacroCallBody(
         is ProcMacroAttribute.Attr -> {
             val attrIndex = attr.index
             val crate = explicitCrate ?: owner.containingCrate ?: return null
-            val body = doPrepareAttributeProcMacroCallBody(project, text, endOfAttrsOffset, crate, attrIndex)
-                ?: return null
+            val body = doPrepareAttributeProcMacroCallBody(
+                project,
+                text,
+                endOfAttrsOffset,
+                crate,
+                attrIndex,
+                fixupRustSyntaxErrors = owner is RsFunction
+            ) ?: return null
             PreparedProcMacroCallBody.Attribute(body, attr)
         }
         is ProcMacroAttribute.Derive -> {
@@ -221,7 +227,8 @@ fun doPrepareAttributeProcMacroCallBody(
     text: String,
     endOfAttrsOffset: Int,
     crate: Crate,
-    attrIndex: Int
+    attrIndex: Int,
+    fixupRustSyntaxErrors: Boolean,
 ): MacroCallBody.Attribute? {
     val item = createAttributeHolderPsi(project, text, endOfAttrsOffset) ?: return null
     val evaluator = CfgEvaluator.forCrate(crate)
@@ -266,7 +273,8 @@ fun doPrepareAttributeProcMacroCallBody(
     val b = theMacroCallAttr ?: return null
     return MacroCallBody.Attribute(
         sb.toMappedText(),
-        b.metaItemArgs?.let { MappedText.single(it.text, it.textOffset) } ?: MappedText.EMPTY
+        b.metaItemArgs?.let { MappedText.single(it.text, it.textOffset) } ?: MappedText.EMPTY,
+        fixupRustSyntaxErrors
     )
 }
 

@@ -30,7 +30,11 @@ sealed class MacroCallBody {
      * }
      * ```
      */
-    data class Attribute(val item: MappedText, val attr: MappedText) : MacroCallBody()
+    data class Attribute(
+        val item: MappedText,
+        val attr: MappedText,
+        val fixupRustSyntaxErrors: Boolean,
+    ) : MacroCallBody()
 
     val kind: RsProcMacroKind
         get() = when (this) {
