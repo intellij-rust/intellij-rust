@@ -53,7 +53,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3495912c9c1ccf2e18976439f4443f3fee0fd61f424ff99fde6a66b15ecb448f"
 dependencies = [
  "cfg-if",
- "hashbrown 0.12.1",
+ "hashbrown",
  "lock_api",
  "parking_lot_core",
 ]
@@ -66,30 +66,24 @@ checksum = "9bda8e21c04aca2ae33ffc2fd8c23134f3cac46db123ba97bd9d3f3b8a4a85e1"
 
 [[package]]
 name = "either"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
 
 [[package]]
 name = "hashbrown"
-version = "0.11.2"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
-
-[[package]]
-name = "hashbrown"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
+checksum = "607c8a29735385251a339424dd462993c0fed8fa09d378f259377df08c126022"
 
 [[package]]
 name = "indexmap"
-version = "1.8.2"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6012d540c5baa3589337a98ce73408de9b5a25ec9fc2c6fd6be8f0d39e0ca5a"
+checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
 dependencies = [
  "autocfg",
- "hashbrown 0.11.2",
+ "hashbrown",
 ]
 
 [[package]]
@@ -118,7 +112,7 @@ checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
 [[package]]
 name = "la-arena"
 version = "0.3.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 
 [[package]]
 name = "libc"
@@ -139,7 +133,7 @@ dependencies = [
 [[package]]
 name = "limit"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 
 [[package]]
 name = "lock_api"
@@ -163,7 +157,7 @@ dependencies = [
 [[package]]
 name = "mbe"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "cov-mark",
  "parser",
@@ -183,9 +177,9 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "memmap2"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5172b50c23043ff43dd53e51392f36519d9b35a8f3a410d30ece5d1aedd58ae"
+checksum = "3a79b39c93a7a5a27eeaf9a23b5ff43f1b9e0ad6b1cdd441140ae53c35613fc7"
 dependencies = [
  "libc",
 ]
@@ -210,18 +204,18 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.28.4"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e42c982f2d955fac81dd7e1d0e1426a7d702acd9c98d19ab01083a6a0328c424"
+checksum = "21158b2c33aa6d4561f1c0a6ea283ca92bc54802a93b263e910746d679a7eb53"
 dependencies = [
  "memchr",
 ]
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "parking_lot_core"
@@ -239,7 +233,7 @@ dependencies = [
 [[package]]
 name = "parser"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "drop_bomb",
  "limit",
@@ -249,7 +243,7 @@ dependencies = [
 [[package]]
 name = "paths"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 
 [[package]]
 name = "perf-event"
@@ -279,7 +273,7 @@ checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 [[package]]
 name = "proc-macro-api"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "memmap2",
  "object",
@@ -296,7 +290,7 @@ dependencies = [
 [[package]]
 name = "proc-macro-srv"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "libloading",
  "mbe",
@@ -309,9 +303,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.39"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
+checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
 dependencies = [
  "unicode-ident",
 ]
@@ -319,7 +313,7 @@ dependencies = [
 [[package]]
 name = "profile"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "cfg-if",
  "countme",
@@ -332,9 +326,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.18"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
+checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
 dependencies = [
  "proc-macro2",
 ]
@@ -350,12 +344,12 @@ dependencies = [
 
 [[package]]
 name = "rowan"
-version = "0.15.5"
+version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce1f383129e417a6265b16ed78e6e9307748f0863b2ba75f78ff14717db5b017"
+checksum = "cf980f4bf24d4ea266da37ce8f0e6bfd6eaf06120dcfba53c3e2ad6bdfe5f32b"
 dependencies = [
  "countme",
- "hashbrown 0.12.1",
+ "hashbrown",
  "memoffset",
  "rustc-hash",
  "text-size",
@@ -390,18 +384,18 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "serde"
-version = "1.0.137"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.137"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+checksum = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -410,9 +404,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
+checksum = "82c2c1fdcd807d1098552c5b9a36e425e42e9fbd7c6a37a8425f390f781f7fa7"
 dependencies = [
  "itoa",
  "ryu",
@@ -421,9 +415,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
+checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 
 [[package]]
 name = "smol_str"
@@ -443,7 +437,7 @@ checksum = "45456094d1983e2ee2a18fdfebce3189fa451699d0502cb8e3b49dba5ba41451"
 [[package]]
 name = "stdx"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "always-assert",
  "libc",
@@ -453,9 +447,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.96"
+version = "1.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
+checksum = "c50aef8a904de4c23c788f104b7dddc7d6f79c647c7c8ce4cc8f73eb0ca773dd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -465,7 +459,7 @@ dependencies = [
 [[package]]
 name = "syntax"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "cov-mark",
  "indexmap",
@@ -484,7 +478,7 @@ dependencies = [
 [[package]]
 name = "text-edit"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "itertools",
  "text-size",
@@ -510,9 +504,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.21"
+version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc6b8ad3567499f98a1db7a752b07a7c8c7c7c34c332ec00effb2b0027974b7c"
+checksum = "11c75893af559bc8e10716548bdef5cb2b983f8e637db9d0e15126b61b484ee2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -521,9 +515,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.27"
+version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
+checksum = "7b7358be39f2f274f322d2aaed611acc57f382e8eb1e5b48cb9ae30933495ce7"
 dependencies = [
  "once_cell",
 ]
@@ -531,7 +525,7 @@ dependencies = [
 [[package]]
 name = "tt"
 version = "0.0.0"
-source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=604b1c8409e850e738e0c211a11de0c42171a979#604b1c8409e850e738e0c211a11de0c42171a979"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=ebfbb314c03cd8e70198eebf5a96ece8a2f79e51#ebfbb314c03cd8e70198eebf5a96ece8a2f79e51"
 dependencies = [
  "smol_str",
  "stdx",
@@ -539,9 +533,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d22af068fba1eb5edcb4aea19d382b2a3deb4c8f9d475c589b6ada9e0fd493ee"
+checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
 
 [[package]]
 name = "unicode-xid"
