@@ -604,7 +604,7 @@ project(":ml-completion") {
 task("runPrettyPrintersTests") {
     doLast {
         // https://github.com/intellij-rust/intellij-rust/issues/8482
-        if (platformVersion >= 221) return@doLast
+        if (platformVersion == 221) return@doLast
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
@@ -627,6 +627,20 @@ task("runPrettyPrintersTests") {
             // Use UTF-8 to properly decode test output in `lldb_batchmode.py`
             "cmd /C set PYTHONIOENCODING=utf8 & $runCommand".execute("pretty_printers_tests")
         } else {
+            // TODO: Remove after CLion snapshot builds provide these files with required permissions
+            if (isFamily(FAMILY_UNIX)) {
+                val lldbLinuxBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/bin")
+                lldbLinuxBinDir.resolve("lldb").setExecutable(true)
+                lldbLinuxBinDir.resolve("LLDBFrontend").setExecutable(true)
+                lldbLinuxBinDir.resolve("lldb-argdumper").setExecutable(true)
+                lldbLinuxBinDir.resolve("lldb-server").setExecutable(true)
+            } else if (isFamily(FAMILY_MAC)) {
+                val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
+                lldbMacBinDir.resolve("lldb").setExecutable(true)
+                lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
+                lldbMacBinDir.resolve("LLDB.framework").resolve("LLDB").setExecutable(true)
+            }
+
             runCommand.execute("pretty_printers_tests")
         }
 
@@ -639,6 +653,9 @@ task("runPrettyPrintersTests") {
             }
             else -> error("Unsupported OS")
         }
+        // TODO: Remove after CLion snapshot builds provide this file with required permissions
+        File(gdbBinary).setExecutable(true)
+
         "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
     }
 }
