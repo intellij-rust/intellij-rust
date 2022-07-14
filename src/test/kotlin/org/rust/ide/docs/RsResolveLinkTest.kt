@@ -76,8 +76,15 @@ class RsResolveLinkTest : RsTestBase() {
         }
     """, "<Self as Foo1>::Bar")
 
-    fun `test struct fqn link`() = doTest("""
+    fun `test struct fqn link 1`() = doTest("""
         struct Foo;
+              //X
+        struct Bar;
+              //^
+    """, "test_package/struct.Foo.html")
+
+    fun `test struct fqn link 2`() = doTest("""
+        struct Foo {}
               //X
         struct Bar;
               //^
@@ -103,6 +110,13 @@ class RsResolveLinkTest : RsTestBase() {
         struct Bar;
               //^
     """, "test_package/fn.foo.html")
+
+    fun `test const fqn link`() = doTest("""
+        const FOO: i32 = 0;
+            //X
+        struct Bar;
+              //^
+    """, "test_package/constant.FOO.html")
 
     fun `test type alias fqn link`() = doTest("""
         type Foo = i32;
@@ -137,6 +151,7 @@ class RsResolveLinkTest : RsTestBase() {
     """, "test_package/foo/index.html")
 
     fun `test macro fqn link 1`() = doTest("""
+        #[macro_export]
         macro_rules! foo {
                     //X
             () => {};
@@ -148,6 +163,7 @@ class RsResolveLinkTest : RsTestBase() {
 
     fun `test macro fqn link 2`() = doTest("""
         mod foo {
+            #[macro_export]
             macro_rules! bar {
                        //X
                 () => {};
@@ -328,12 +344,28 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/foo/baz/struct.Baz.html")
 
+    fun `test struct vs function fqn link 1`() = doTest("""
+        struct foo {}
+              //X
+        fn foo() {}
+        struct Bar;
+              //^
+    """, "test_package/struct.foo.html")
+
+    fun `test struct vs function fqn link 2`() = doTest("""
+        struct foo {}
+        fn foo() {}
+          //X
+        struct Bar;
+              //^
+    """, "test_package/fn.foo.html")
+
     private fun doTest(@Language("Rust") code: String, link: String) {
-        InlineFile(code)
+        InlineFile(code, "lib.rs")
         val context = findElementInEditor<RsNamedElement>("^")
         val expectedElement = findElementInEditor<RsNamedElement>("X")
         val actualElement = RsDocumentationProvider()
             .getDocumentationElementForLink(PsiManager.getInstance(project), link, context)
-        check(actualElement == expectedElement)
+        assertEquals(expectedElement, actualElement)
     }
 }
