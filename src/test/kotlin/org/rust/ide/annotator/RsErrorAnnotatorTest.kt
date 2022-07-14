@@ -741,7 +741,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const  <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: u32 = 20;
             static <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
             fn     <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
-            struct <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error>;
+            struct <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
             trait  <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
             enum   <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
             mod    <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
@@ -783,7 +783,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         const <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
         static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
         fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-        struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error>;
+        struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
         trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
         enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
         mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
@@ -802,7 +802,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
             static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
             fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-            struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error>;
+            struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
             trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
             enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
             mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
@@ -917,24 +917,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test duplicates with import E0252`() = checkErrors("""
-        use bar::{<error descr="A second item with name 'test1' imported. Try to use an alias. [E0252]">test1</error>};
-        use baz::<error descr="A second item with name 'test2' imported. Try to use an alias. [E0252]">test2</error>;
-        use bar::<error descr="A second item with name 'test3' imported. Try to use an alias. [E0252]">test3</error>;
-        use baz::<error descr="A second item with name 'test3' imported. Try to use an alias. [E0252]">test3</error>;
-        use bar::A as <error descr="A second item with name 'Arc' imported. Try to use an alias. [E0252]">Arc</error>;
-        struct <error descr="A type named `Arc` has already been defined in this module [E0428]">Arc</error>{}
-        fn <error descr="A value named `test1` has already been defined in this module [E0428]">test1</error>(){}
-        fn <error descr="A value named `test2` has already been defined in this module [E0428]">test2</error>(){}
+        use bar::{<error descr="A second item with name `test1` imported. Try to use an alias. [E0255]">test1</error>};
+        fn <error descr="A value named `test1` has already been defined in this module [E0255]">test1</error>(){}
 
+        use baz::<error descr="A second item with name `test2` imported. Try to use an alias. [E0255]">test2</error>;
+        fn <error descr="A value named `test2` has already been defined in this module [E0255]">test2</error>(){}
 
-        mod bar{
-            pub struct A{}
-            pub mod test3{}
-            pub fn test1(){}
+        use bar::A as <error descr="A second item with name `Arc` imported. Try to use an alias. [E0255]">Arc</error>;
+        struct <error descr="A type named `Arc` has already been defined in this module [E0255]">Arc</error>{}
+
+        use bar::<error descr="A second item with name `test3` imported. Try to use an alias. [E0252]">test3</error>;
+        use baz::<error descr="A second item with name `test3` imported. Try to use an alias. [E0252]">test3</error>;
+
+        mod bar {
+            pub struct A {}
+            pub mod test3 {}
+            pub fn test1() {}
         }
-        mod baz{
-            pub struct test3{}
-            pub const test2:u8 = 0;
+        mod baz {
+            pub struct test3 {}
+            pub const test2: u8 = 0;
         }
     """)
 
@@ -981,6 +983,45 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         use mod1::foo;
         use mod2::foo;
+    """)
+
+    fun `test duplicates item vs import E0255`() = checkErrors("""
+        mod inner {
+            pub fn foo1() {}
+            pub fn foo2() {}
+        }
+
+        use inner::<error descr="A second item with name `foo1` imported. Try to use an alias. [E0255]">foo1</error>;
+        fn <error descr="A value named `foo1` has already been defined in this module [E0255]">foo1</error>() {}
+
+        use inner::foo2;
+        struct foo2 {}
+    """)
+
+    fun `test duplicates item vs extern crate E0260`() = checkErrors("""
+        <error descr="A type named `foo1` has already been defined in this module [E0260]">extern crate std as foo1;</error>
+        struct <error descr="A type named `foo1` has already been defined in this module [E0260]">foo1</error> {}
+
+        extern crate std as foo2;
+        fn foo2() {}
+    """)
+
+    fun `test duplicates import vs extern crate E0254`() = checkErrors("""
+        mod inner {
+            pub struct foo1 {}
+            pub fn foo2() {}
+        }
+
+        <error descr="A type named `foo1` has already been defined in this module [E0254]">extern crate std as foo1;</error>
+        use inner::<error descr="A second item with name `foo1` imported. Try to use an alias. [E0254]">foo1</error>;
+
+        extern crate std as foo2;
+        use inner::foo2;
+    """)
+
+    fun `test duplicates extern crate vs extern crate E0259`() = checkErrors("""
+        <error descr="A second extern crate with name `std` imported [E0259]">extern crate std;</error>
+        <error descr="A second extern crate with name `std` imported [E0259]">extern crate core as std;</error>
     """)
 
     fun `test self import not in use group E0429`() = checkErrors("""
@@ -1097,11 +1138,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test ignore use self with parens E0424`() = checkErrors("""
-        fn foo() {}
-        fn bat() {}
-        fn bar() {
-            use self::{foo};
-            use self::{foo,bat};
+        fn func1() {}
+        fn func2() {}
+        fn func3() {}
+        fn main() {
+            use self::{func1};
+            use self::{func2, func3};
         }
     """)
 
