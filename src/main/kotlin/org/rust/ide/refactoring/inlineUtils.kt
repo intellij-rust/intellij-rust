@@ -20,27 +20,18 @@ abstract class RsInlineDialog(
     element: RsNameIdentifierOwner,
     private val refElement: RsReference?,
     project: Project,
-    private val occurrencesNumber: Int
 ) : InlineOptionsWithSearchSettingsDialog(project, true, element) {
     private var searchInCommentsAndStrings = true
     private var searchInTextOccurrences = true
 
-    abstract fun getLabelText(occurrences: String): String
-
     fun shouldBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
 
-    override fun getNameLabelText(): String {
-        val occurrencesString =
-            if (occurrencesNumber < 0) {
-                ""
-            } else {
-                buildString {
-                    append("has $occurrencesNumber occurrence")
-                    if (occurrencesNumber != 1) append("s")
-                }
-            }
-        return getLabelText(occurrencesString)
-    }
+    protected fun getOccurrencesText(occurrences: Int): String =
+        when {
+            occurrences < 0 -> ""
+            occurrences == 1 -> "has 1 occurrence"
+            else -> "has $occurrences occurrences"
+        }
 
     override fun isInlineThis(): Boolean = false
 

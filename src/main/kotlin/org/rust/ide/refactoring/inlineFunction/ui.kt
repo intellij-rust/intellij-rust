@@ -6,10 +6,14 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiReference
 import com.intellij.refactoring.RefactoringBundle
 import org.rust.ide.refactoring.RsInlineDialog
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsUseItem
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.declaration
+import org.rust.lang.core.psi.ext.isMethod
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineFunctionDialog(
@@ -18,8 +22,10 @@ class RsInlineFunctionDialog(
     /** If true, we can't inline other usages */
     private val allowInlineThisOnly: Boolean,
     project: Project = function.project,
-    private val occurrencesNumber: Int = initOccurrencesNumber(function)
-) : RsInlineDialog(function, refElement, project, occurrencesNumber) {
+) : RsInlineDialog(function, refElement, project) {
+
+    private val occurrencesNumber: Int = getNumberOfOccurrences(function)
+
     init {
         init()
     }
@@ -27,6 +33,9 @@ class RsInlineFunctionDialog(
     override fun canInlineThisOnly(): Boolean = allowInlineThisOnly
 
     override fun allowInlineAll(): Boolean = true
+
+    override fun ignoreOccurrence(reference: PsiReference): Boolean =
+        reference.element.ancestorStrict<RsUseItem>() == null
 
     public override fun doAction() {
         val inlineThisOnly = allowInlineThisOnly || isInlineThisOnly
@@ -38,12 +47,9 @@ class RsInlineFunctionDialog(
     override fun getBorderTitle(): String =
         RefactoringBundle.message("inline.method.border.title")
 
-    override fun getLabelText(occurrences: String): String {
-        return RefactoringBundle.message(
-            "inline.method.method.label",
-            function.declaration,
-            occurrences
-        )
+    override fun getNameLabelText(): String {
+        val callableType = if (function.isMethod) "Method" else "Function"
+        return "$callableType ${function.declaration} ${getOccurrencesText(occurrencesNumber)}"
     }
 
     override fun getInlineAllText(): String {
