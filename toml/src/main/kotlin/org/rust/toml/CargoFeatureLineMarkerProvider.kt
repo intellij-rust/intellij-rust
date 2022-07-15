@@ -8,10 +8,11 @@ package org.rust.toml
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer.Alignment
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -166,16 +167,17 @@ private object ToggleFeatureAction : GutterIconNavigationHandler<PsiElement> {
 private object OpenSettingsAction : GutterIconNavigationHandler<PsiElement> {
     override fun navigate(e: MouseEvent, element: PsiElement) {
         val context = getContext(element) ?: return
-        createActionGroupPopup(context).show(RelativePoint(e))
+        val dataContext = DataManager.getInstance().getDataContext(e.component)
+
+        createActionGroupPopup(context, dataContext).show(RelativePoint(e))
     }
 
-    private fun createActionGroupPopup(context: Context): JBPopup {
+    private fun createActionGroupPopup(context: Context, dataContext: DataContext): JBPopup {
         val actions = listOf(
             FeaturesSettingsCheckboxAction(context, FeatureState.Enabled),
             FeaturesSettingsCheckboxAction(context, FeatureState.Disabled)
         )
         val group = DefaultActionGroup(actions)
-        val dataContext = SimpleDataContext.getProjectContext(context.cargoProject.project)
         return JBPopupFactory.getInstance()
             .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
     }
