@@ -21,21 +21,24 @@ import java.nio.charset.Charset
 class RsProcessHandler : KillableProcessHandler, AnsiEscapeDecoder.ColoredTextAcceptor {
     private val decoder: AnsiEscapeDecoder?
 
-    constructor(commandLine: GeneralCommandLine, processColors: Boolean = true) : super(commandLine) {
-        setHasPty(commandLine is PtyCommandLine)
+    init {
         setShouldDestroyProcessRecursively(!hasPty())
-        decoder = if (processColors && !hasPty()) RsAnsiEscapeDecoder() else null
+    }
+
+    constructor(
+        commandLine: GeneralCommandLine,
+        processColors: Boolean = commandLine !is PtyCommandLine
+    ) : super(commandLine) {
+        decoder = if (processColors) RsAnsiEscapeDecoder() else null
     }
 
     constructor(
         process: Process,
         commandRepresentation: String,
         charset: Charset,
-        processColors: Boolean = true
+        processColors: Boolean = process !is PtyProcess
     ) : super(process, commandRepresentation, charset) {
-        setHasPty(process is PtyProcess)
-        setShouldDestroyProcessRecursively(!hasPty())
-        decoder = if (processColors && !hasPty()) RsAnsiEscapeDecoder() else null
+        decoder = if (processColors) RsAnsiEscapeDecoder() else null
     }
 
     override fun notifyTextAvailable(text: String, outputType: Key<*>) {
