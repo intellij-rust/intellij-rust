@@ -7,9 +7,8 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import org.rust.debugger.RsDebuggerBundle
@@ -39,14 +38,13 @@ class RsDebuggerDataViewConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
     }
 
     override fun getComponent(): JComponent = panel {
-        row(RsDebuggerBundle.message("settings.rust.debugger.data.view.lldb.renderers.label")) { lldbRenderers() }
+        row(RsDebuggerBundle.message("settings.rust.debugger.data.view.lldb.renderers.label")) { cell(lldbRenderers) }
         // GDB support is available only in CLion for now
         if (PlatformUtils.isCLion()) {
-            row(RsDebuggerBundle.message("settings.rust.debugger.data.view.gdb.renderers.label")) { gdbRenderers() }
+            row(RsDebuggerBundle.message("settings.rust.debugger.data.view.gdb.renderers.label")) { cell(gdbRenderers) }
         }
         row {
-            label(RsDebuggerBundle.message("settings.rust.debugger.data.view.change.renderers.comment"), style = SMALL)
-                .withLargeLeftGap()
+            comment(RsDebuggerBundle.message("settings.rust.debugger.data.view.change.renderers.comment"))
         }
     }
 }

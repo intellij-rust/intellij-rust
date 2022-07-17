@@ -11,12 +11,12 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 
 private var MOCK: ExtractFunctionUi? = null
@@ -76,10 +76,10 @@ private class DialogExtractFunctionUi(
         }
 
         val panel = panel {
-            row("Name:") { functionNameField(CCFlags.grow) }
-            row("Visibility:") { visibilityBox() }
-            row("Parameters:") { parameterPanel() }
-            row("Signature:") { signatureComponent(CCFlags.grow) }
+            row("Name:") { fullWidthCell(functionNameField) }
+            row("Visibility:") { cell(visibilityBox) }
+            row("Parameters:") { fullWidthCell(parameterPanel) }
+            row("Signature:") { fullWidthCell(signatureComponent) }
         }
 
         val extractDialog = dialog(

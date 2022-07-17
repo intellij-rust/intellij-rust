@@ -9,7 +9,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.GeneratorPeerImpl
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.rust.ide.newProject.ui.RsNewProjectPanel
 import javax.swing.JComponent
 
