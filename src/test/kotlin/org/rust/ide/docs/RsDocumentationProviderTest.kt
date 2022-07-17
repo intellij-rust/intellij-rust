@@ -72,6 +72,8 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         configure(text)
 
         val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
+        // BACKCOMPAT: 2022.1
+        @Suppress("DEPRECATION")
         val element = DocumentationManager.getInstance(project)
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 

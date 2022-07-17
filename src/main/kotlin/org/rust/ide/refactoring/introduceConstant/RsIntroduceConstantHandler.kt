@@ -102,6 +102,8 @@ private fun replaceWithConstant(
     val const = factory.createConstant(name, expr)
 
     project.runWriteCommandAction {
+        // BACKCOMPAT: 2022.1
+        @Suppress("DEPRECATION", "UnstableApiUsage")
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
         val context = candidate.parent
         val insertedConstant = context.addBefore(const, candidate.anchor) as RsConstant

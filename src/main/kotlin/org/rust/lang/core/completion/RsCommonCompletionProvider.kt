@@ -193,7 +193,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         for (candidate in candidates) {
             val item = candidate.qualifiedNamedItem.item
-            val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName ?: continue, item)
+            val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName, item)
 
             if (item is RsEnumItem
                 && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {

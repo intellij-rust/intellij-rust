@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain.wsl
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.util.io.isDirectory
@@ -34,7 +35,7 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
         WSLUtil.isSystemCompatible() && isFeatureEnabled(WSL_TOOLCHAIN)
 
     override fun isValidToolchainPath(path: Path): Boolean =
-        WslDistributionManager.isWslPath(path.toString()) && super.isValidToolchainPath(path)
+        WslPath.isWslUncPath(path.toString()) && super.isValidToolchainPath(path)
 
     override fun hasExecutable(path: Path, toolName: String): Boolean = path.hasExecutableOnWsl(toolName)
 

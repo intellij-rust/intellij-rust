@@ -22,8 +22,8 @@ data class RsParameterAdditionalData(val isPatIdent: Boolean) : SuggestedRefacto
 class RsSuggestedRefactoringStateChanges(
     support: RsSuggestedRefactoringSupport
 ) : SuggestedRefactoringStateChanges(support) {
-    override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
-        val function = declaration as? RsFunction ?: return emptyList()
+    override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
+        val function = anchor as? RsFunction ?: return emptyList()
         val parameterColons: List<PsiElement?> = listOf(function.selfParameter?.colon) +
             function.rawValueParameters.map { parameter ->
                 parameter.childrenWithLeaves.firstOrNull { it.elementType == COLON }
@@ -32,10 +32,10 @@ class RsSuggestedRefactoringStateChanges(
     }
 
     override fun signature(
-        declaration: PsiElement,
+        anchor: PsiElement,
         prevState: SuggestedRefactoringState?
     ): SuggestedRefactoringSupport.Signature? {
-        val function = declaration as? RsFunction
+        val function = anchor as? RsFunction
         if (function != null) {
             val name = function.name ?: return null
             val returnType = function.retType?.text
@@ -58,10 +58,10 @@ class RsSuggestedRefactoringStateChanges(
             return if (prevState == null) {
                 signature
             } else {
-                matchParametersWithPrevState(signature, declaration, prevState)
+                matchParametersWithPrevState(signature, anchor, prevState)
             }
         } else {
-            val name = (declaration as? PsiNamedElement)?.name ?: return null
+            val name = (anchor as? PsiNamedElement)?.name ?: return null
             return SuggestedRefactoringSupport.Signature.create(
                 name, null, emptyList(), RsSignatureAdditionalData(false)
             )

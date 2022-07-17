@@ -388,9 +388,13 @@ class RsPsiFactory(
         createFromText("pub(crate) fn f() {}")
             ?: error("Failed to create `pub(crate)` element")
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createBlockComment(text: String): PsiComment =
         PsiParserFacade.SERVICE.getInstance(project).createBlockCommentFromText(RsLanguage, text)
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createLineComment(text: String): PsiComment =
         PsiParserFacade.SERVICE.getInstance(project).createLineCommentFromText(RsFileType, text)
 
@@ -415,6 +419,8 @@ class RsPsiFactory(
 
     fun createNewline(): PsiElement = createWhitespace("\n")
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createWhitespace(ws: String): PsiElement =
         PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
 

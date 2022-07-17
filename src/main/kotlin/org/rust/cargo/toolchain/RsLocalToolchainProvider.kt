@@ -5,13 +5,13 @@
 
 package org.rust.cargo.toolchain
 
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.util.SystemInfo
 import java.nio.file.Path
 
 class RsLocalToolchainProvider : RsToolchainProvider {
     override fun getToolchain(homePath: Path): RsToolchainBase? {
-        if (SystemInfo.isWindows && WslDistributionManager.isWslPath(homePath.toString())) return null
+        if (SystemInfo.isWindows && WslPath.isWslUncPath(homePath.toString())) return null
         return RsLocalToolchain(homePath)
     }
 }

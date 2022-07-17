@@ -148,6 +148,8 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
     private fun isTodoHighlightingEnabled(file: PsiFile, holder: AnnotationHolder): Boolean {
         return holder.currentAnnotationSession.getOrPut(IS_TODO_HIGHLIGHTING_ENABLED) {
+            // BACKCOMPAT: 2022.1
+            @Suppress("DEPRECATION")
             val helper = PsiTodoSearchHelper.SERVICE.getInstance(file.project) as? PsiTodoSearchHelperImpl
                 ?: return@getOrPut false
             if (!helper.shouldHighlightInEditor(file)) return@getOrPut false
