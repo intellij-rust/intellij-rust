@@ -35,6 +35,7 @@ enum class RsLint(
     UnusedMustUse("unused_must_use", listOf("unused")),
     RedundantSemicolons("redundant_semicolons", listOf("unused")),
     UnusedLabels("unused_labels", listOf("unused")),
+    PathStatements("path_statements", listOf("unused")),
     // errors
     UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
     // CLippy lints
