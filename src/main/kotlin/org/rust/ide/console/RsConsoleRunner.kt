@@ -14,14 +14,12 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.actions.CloseAction
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -125,13 +123,23 @@ class RsConsoleRunner(project: Project) :
         val consoleEditor = consoleView.consoleEditor
 
         val executeAction = super.createConsoleExecAction(consoleExecuteActionHandler)
-        executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, consoleEditor.component)
+        executeAction.registerCustomShortcutSet(getExecuteActionShortcut(), consoleEditor.component)
 
         val actionShortcutText = KeymapUtil.getFirstKeyboardShortcutText(executeAction)
         consoleEditor.setPlaceholder("<$actionShortcutText> to execute")
         consoleEditor.setShowPlaceholderWhenFocused(true)
 
         return executeAction
+    }
+
+    private fun getExecuteActionShortcut(): ShortcutSet {
+        val keymap = KeymapManager.getInstance().activeKeymap
+        val shortcuts = keymap.getShortcuts("Console.Execute.Multiline")
+        return if (shortcuts.isNotEmpty()) {
+            CustomShortcutSet(*shortcuts)
+        } else {
+            CommonShortcuts.CTRL_ENTER
+        }
     }
 
     fun runSync(requestEditorFocus: Boolean) {
