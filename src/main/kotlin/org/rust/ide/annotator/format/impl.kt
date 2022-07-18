@@ -3,25 +3,20 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.annotator.format
 
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.colors.RsColor
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.presentation.render
 import org.rust.lang.core.FORMAT_ARGS_CAPTURE
 import org.rust.lang.core.FeatureAvailability
-import org.rust.lang.core.macros.MacroExpansionMode
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
@@ -37,67 +32,14 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.parseRustStringCharacters
 import org.rust.openapiext.isUnitTestMode
 
-class RsFormatMacroAnnotator : AnnotatorBase() {
-    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
-        val formatMacro = element as? RsMacroCall ?: return
-        if (!formatMacro.existsAfterExpansion) return
+data class ParameterMatchInfo(val range: TextRange, val text: String)
 
-        val (macroPos, macroArgs) = getFormatMacroCtx(formatMacro) ?: return
-
-        val formatStr = macroArgs
-            .getOrNull(macroPos)
-            ?.expr as? RsLitExpr
-            ?: return
-
-        val parseCtx = parseParameters(formatStr) ?: return
-
-        val errors = checkSyntaxErrors(parseCtx)
-        for (error in errors) {
-            holder.newAnnotation(HighlightSeverity.ERROR, error.error).range(error.range).create()
-        }
-
-        if (!holder.isBatchMode) {
-            highlightParametersOutside(parseCtx, holder)
-        }
-
-        // skip advanced checks and highlighting if there are syntax errors
-        if (errors.isNotEmpty()) {
-            return
-        }
-
-        if (!holder.isBatchMode) {
-            highlightParametersInside(parseCtx, holder)
-        }
-
-        val suppressTraitErrors = !isUnitTestMode &&
-            (element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New
-                || element.isDoctestInjection)
-
-        val parameters = buildParameters(parseCtx)
-        val arguments = macroArgs
-            .drop(macroPos + 1)
-            .toList()
-        val ctx = FormatContext(parameters, arguments, formatMacro)
-
-        val annotations = checkParameters(ctx).toMutableList()
-        annotations += checkArguments(ctx)
-
-        for (annotation in annotations) {
-            if (suppressTraitErrors && annotation.isTraitError) continue
-
-            holder.newAnnotation(HighlightSeverity.ERROR, annotation.error).range(annotation.range).create()
-        }
-    }
-}
-
-private data class ParameterMatchInfo(val range: TextRange, val text: String)
-
-private sealed class ParameterLookup {
+sealed class ParameterLookup {
     data class Named(val name: String) : ParameterLookup()
     data class Positional(val position: Int) : ParameterLookup()
 }
 
-private sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val lookup: ParameterLookup) {
+sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val lookup: ParameterLookup) {
     override fun toString(): String {
         return this.matchInfo.text
     }
@@ -120,7 +62,7 @@ private sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val look
 }
 
 @Suppress("unused")
-private enum class FormatTraitType(
+enum class FormatTraitType(
     private val resolver: (KnownItems) -> RsTraitItem?,
     vararg val names: String
 ) {
@@ -145,7 +87,7 @@ private enum class FormatTraitType(
     }
 }
 
-private data class FormatContext(
+data class FormatContext(
     val parameters: List<FormatParameter>,
     val arguments: List<RsFormatMacroArg>,
     val macro: RsMacroCall
@@ -162,7 +104,7 @@ private data class FormatContext(
     val namedArguments: Map<String, RsFormatMacroArg> = arguments.mapNotNull { it.name()?.to(it) }.toMap()
 }
 
-private data class ParsedParameter(
+data class ParsedParameter(
     val completeMatch: MatchResult,
     val innerContentMatch: MatchResult? = null
 ) {
@@ -170,13 +112,13 @@ private data class ParsedParameter(
     val range: IntRange = completeMatch.range
 }
 
-private class ParseContext(val sourceMap: IntArray, val offset: Int, val parameters: List<ParsedParameter>) {
+class ParseContext(private val sourceMap: IntArray, val offset: Int, val parameters: List<ParsedParameter>) {
     fun toSourceRange(range: IntRange, additionalOffset: Int = 0): TextRange =
         TextRange(sourceMap[range.first + additionalOffset], sourceMap[range.last + additionalOffset] + 1)
             .shiftRight(offset)
 }
 
-private data class ErrorAnnotation(
+data class ErrorAnnotation(
     val range: TextRange,
     @InspectionMessage val error: String,
     val isTraitError: Boolean = false
@@ -196,7 +138,7 @@ private val formatParameterParser = Regex("""(?x) # enable comments
     (?<type>\w?\??)?
 )?\s*""")
 
-private fun parseParameters(formatStr: RsLitExpr): ParseContext? {
+fun parseParameters(formatStr: RsLitExpr): ParseContext? {
     val literalKind = (formatStr.kind as? RsLiteralKind.String) ?: return null
     if (literalKind.node.elementType in RS_BYTE_STRING_LITERALS) return null
 
@@ -226,7 +168,7 @@ private fun parseParameters(formatStr: RsLitExpr): ParseContext? {
     return ParseContext(sourceMap, formatStr.startOffset + rawTextRange.startOffset, parsed)
 }
 
-private fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
+fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
     val errors = mutableListOf<ErrorAnnotation>()
 
     for (parameter in ctx.parameters) {
@@ -261,7 +203,7 @@ private fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
     return errors
 }
 
-private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHolder) {
+fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHolder) {
     val key = RsColor.FORMAT_PARAMETER
     val highlightSeverity = if (isUnitTestMode) key.testSeverity else HighlightSeverity.INFORMATION
 
@@ -270,7 +212,7 @@ private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHold
     }
 }
 
-private fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
+fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
     fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.FORMAT_SPECIFIER) {
         if (range != null && !range.isEmpty()) {
             val highlightSeverity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
@@ -303,7 +245,7 @@ private fun buildLookup(value: String): ParameterLookup {
     }
 }
 
-private fun buildParameters(ctx: ParseContext): List<FormatParameter> {
+fun buildParameters(ctx: ParseContext): List<FormatParameter> {
     val ignored = setOf("{{", "}}")
     var implicitPositionCounter = 0
 
@@ -406,7 +348,7 @@ private fun checkParameter(
     return errors
 }
 
-private fun checkParameters(ctx: FormatContext): List<ErrorAnnotation> {
+fun checkParameters(ctx: FormatContext): List<ErrorAnnotation> {
     val implicitNamedArgsAvailable = FORMAT_ARGS_CAPTURE.availability(ctx.macro) == FeatureAvailability.AVAILABLE
 
     val errors = mutableListOf<ErrorAnnotation>()
@@ -492,7 +434,7 @@ private fun checkArgument(argument: RsFormatMacroArg, ctx: FormatContext): List<
     return errors
 }
 
-private fun checkArguments(ctx: FormatContext): List<ErrorAnnotation> {
+fun checkArguments(ctx: FormatContext): List<ErrorAnnotation> {
     val errors = mutableListOf<ErrorAnnotation>()
     for (arg in ctx.arguments) {
         for (error in checkArgument(arg, ctx)) {
@@ -502,7 +444,7 @@ private fun checkArguments(ctx: FormatContext): List<ErrorAnnotation> {
     return errors
 }
 
-private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg>>? {
+fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg>>? {
     val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return null
     val macroName = macro.name ?: return null
 
@@ -522,8 +464,8 @@ private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormat
         // panic macro handles any literal (even with `{}`) if it's single argument in 2015 and 2018 editions,
         // but starting with edition 2021 the first string literal is always format string
         "panic" -> {
-            val edition = formatMacro.containingCrate?.edition ?: Edition.DEFAULT
-            if (formatMacroArgs.size < 2 && edition < Edition.EDITION_2021) null else 0
+            val edition = formatMacro.containingCrate?.edition ?: CargoWorkspace.Edition.DEFAULT
+            if (formatMacroArgs.size < 2 && edition < CargoWorkspace.Edition.EDITION_2021) null else 0
         }
         "write",
         "writeln" -> 1

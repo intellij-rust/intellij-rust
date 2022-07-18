@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.annotator.format.RsFormatMacroAnnotator
 import org.rust.ide.colors.RsColor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
