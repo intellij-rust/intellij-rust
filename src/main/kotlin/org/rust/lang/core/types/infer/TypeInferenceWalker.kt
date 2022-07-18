@@ -1319,13 +1319,14 @@ class RsTypeInferenceWalker(
         = (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
 
     private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
+        val inferredTy = inferMacroAsExpr(macroCall)
         val name = macroCall.macroName
         return when {
             "print" in name -> TyUnit.INSTANCE
             name == "format" -> items.String.asTy()
             name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
-            name == "write" || name == "writeln" -> inferMacroAsExpr(macroCall)
+            name == "write" || name == "writeln" -> inferredTy
             else -> TyUnknown
         }
     }

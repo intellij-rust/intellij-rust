@@ -100,7 +100,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun expandMacroOrFail(call: RsPossibleMacroCall): MacroExpansion {
+    open fun expandMacroOrFail(call: RsPossibleMacroCall): MacroExpansion {
         require(call is RsMacroCall)
         call.resolveToMacroWithoutPsi()
         val def = call.resolveToMacroWithoutPsi().ok()?.data as? RsDeclMacroData
