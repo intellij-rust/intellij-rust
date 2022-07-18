@@ -67,4 +67,28 @@ class RsAwaitCompletionTest : RsCompletionTestBase() {
             foo().await/*caret*/;
         }
     """)
+
+    fun `test postfix await 2018 (into future)`() = checkCompletion("await", """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        #[lang = "core::future::into_future::IntoFuture"]
+        trait IntoFuture { type Output; }
+        struct S;
+        impl IntoFuture for S { type Output = i32; }
+        fn foo() -> S { unimplemented!() }
+        fn main() {
+            foo()./*caret*/;
+        }
+    """, """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        #[lang = "core::future::into_future::IntoFuture"]
+        trait IntoFuture { type Output; }
+        struct S;
+        impl IntoFuture for S { type Output = i32; }
+        fn foo() -> S { unimplemented!() }
+        fn main() {
+            foo().await/*caret*/;
+        }
+    """)
 }

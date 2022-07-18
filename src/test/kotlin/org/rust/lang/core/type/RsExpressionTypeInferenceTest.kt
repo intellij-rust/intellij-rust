@@ -724,6 +724,23 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test await postfix 2018 (into future)`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        #[lang = "core::future::into_future::IntoFuture"]
+        trait IntoFuture { type Output; }
+
+        struct S;
+        impl IntoFuture for S { type Output = i32; }
+        fn foo() -> S { unimplemented!() }
+        fn main() {
+            let x = foo().await;
+            x;
+          //^ i32
+        }
+    """)
+
     @MockEdition(Edition.EDITION_2015)
     fun `test await postfix 2015`() = testExpr("""
         struct S { await: i32 }
