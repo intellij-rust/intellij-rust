@@ -631,4 +631,19 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             dep_proc_macro::example_proc_macro!();
         }                 //^ dep-proc-macro/lib.rs
     """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test glob import item with identity proc macro`() = stubOnlyResolve("""
+    //- main.rs
+        mod inner {
+            #[test_proc_macros::attr_hardcoded_not_a_macro]
+            pub fn func() {}
+        }        //X
+        use inner::*;
+
+        fn main() {
+            func();
+        } //^ main.rs
+    """)
 }

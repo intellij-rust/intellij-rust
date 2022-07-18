@@ -332,7 +332,8 @@ class DefCollector(
         val (visItem, namespaces, procMacroKind) = call.originalItem
 
         /** See also [ModCollector.collectSimpleItem] */
-        call.containingMod.addVisibleItem(visItem.name, PerNs.from(visItem, namespaces))
+        val perNs = PerNs.from(visItem, namespaces)
+        update(call.containingMod, listOf(visItem.name to perNs), visItem.visibility, NAMED)
         if (procMacroKind != null) {
             call.containingMod.procMacros[visItem.name] = procMacroKind
         }
