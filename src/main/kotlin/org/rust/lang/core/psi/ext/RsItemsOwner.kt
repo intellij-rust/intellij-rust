@@ -21,6 +21,7 @@ import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.testAssert
 import org.rust.stdext.optimizeList
 import org.rust.stdext.replaceTrivialMap
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 interface RsItemsOwner : RsElement
 
@@ -62,31 +63,15 @@ private val EXPANDED_ITEMS_KEY: Key<CachedValue<RsCachedItems>> = Key.create("EX
 
 val RsItemsOwner.expandedItemsCached: RsCachedItems
     get() = CachedValuesManager.getCachedValue(this, EXPANDED_ITEMS_KEY) {
-        val namedImports = SmartList<CachedNamedImport>()
-        val starImports = SmartList<CachedStarImport>()
+        val imports = SmartList<RsUseItem>()
         val macros = SmartList<RsMacro>()
         val namedCfgEnabled: SmartListMap<String, RsItemElement> = SmartListMap()
         val namedCfgDisabled: SmartListMap<String, RsItemElement> = SmartListMap()
         processExpandedItemsInternal { it, isEnabledByCfgSelf ->
             when {
-                // Optimization: impls are not named elements, so we don't need them for name resolution
                 it is RsImplItem -> Unit
 
-                // Optimization: prepare use items to reduce PSI tree access in hotter code
-                isEnabledByCfgSelf && it is RsUseItem -> {
-                    val isPublic = it.isPublic
-                    it.useSpeck?.forEachLeafSpeck { speck ->
-                        if (speck.isStarImport) {
-                            starImports += CachedStarImport(isPublic, speck)
-                        } else {
-                            testAssert { speck.useGroup == null }
-                            val path = speck.path ?: return@forEachLeafSpeck
-                            val nameInScope = speck.nameInScope ?: return@forEachLeafSpeck
-                            val isAtom = speck.alias == null && path.isAtom
-                            namedImports += CachedNamedImport(isPublic, path, nameInScope, isAtom)
-                        }
-                    }
-                }
+                isEnabledByCfgSelf && it is RsUseItem -> imports.add(it)
 
                 isEnabledByCfgSelf && it is RsMacro -> macros.add(it)
 
@@ -116,8 +101,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         }
         CachedValueProvider.Result.create(
             RsCachedItems(
-                namedImports.optimizeList(),
-                starImports.optimizeList(),
+                lazy(PUBLICATION) { lowerImports(imports) },
                 macros.optimizeList(),
                 namedCfgEnabled.replaceTrivialMap(),
                 namedCfgDisabled.replaceTrivialMap()
@@ -126,18 +110,43 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         )
     }
 
+private fun lowerImports(imports: List<RsUseItem>): NamedAndStarImports {
+    val namedImports = SmartList<CachedNamedImport>()
+    val starImports = SmartList<CachedStarImport>()
+    for (use in imports) {
+        val isPublic = use.isPublic
+        use.useSpeck?.forEachLeafSpeck { speck ->
+            if (speck.isStarImport) {
+                starImports += CachedStarImport(isPublic, speck)
+            } else {
+                testAssert { speck.useGroup == null }
+                val path = speck.path ?: return@forEachLeafSpeck
+                val nameInScope = speck.nameInScope ?: return@forEachLeafSpeck
+                val isAtom = speck.alias == null && path.isAtom
+                namedImports += CachedNamedImport(isPublic, path, nameInScope, isAtom)
+            }
+        }
+    }
+    return NamedAndStarImports(
+        namedImports.optimizeList(),
+        starImports.optimizeList(),
+    )
+}
+
 /**
  * Used for optimization purposes, to reduce access to a cache and PSI tree in one very hot
  * place - [org.rust.lang.core.resolve.processItemDeclarations]
  */
 class RsCachedItems(
-    val namedImports: List<CachedNamedImport>,
-    val starImports: List<CachedStarImport>,
+    private val imports: Lazy<NamedAndStarImports>,
     /** [RsMacro2] are stored in [named] */
     val legacyMacros: List<RsMacro>,
     val named: Map<String, List<RsItemElement>>,
     val namedCfgDisabled: Map<String, List<RsItemElement>>,
 ) {
+    val namedImports: List<CachedNamedImport> get() = imports.value.namedImports
+    val starImports: List<CachedStarImport> get() = imports.value.starImports
+
     data class CachedNamedImport(
         val isPublic: Boolean,
         val path: RsPath,
@@ -147,6 +156,11 @@ class RsCachedItems(
 
     data class CachedStarImport(val isPublic: Boolean, val speck: RsUseSpeck)
 }
+
+class NamedAndStarImports(
+    val namedImports: List<CachedNamedImport>,
+    val starImports: List<CachedStarImport>,
+)
 
 @VisibleForTesting
 fun RsItemsOwner.processExpandedItemsInternal(
