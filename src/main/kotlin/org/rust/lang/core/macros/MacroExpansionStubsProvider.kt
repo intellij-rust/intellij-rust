@@ -20,7 +20,10 @@ class MacroExpansionStubsProvider : PrebuiltStubsProvider {
         val file = fileContent.file
         if (!MacroExpansionManager.isExpansionFile(file)) return null
         if (!MacroExpansionSharedCache.getInstance().isEnabled) return null
-        val hash = file.loadMixHash() ?: return null
+        val hash = file.extractMixHashAndMacroStorageVersion()
+            ?.takeIf { it.second == MACRO_STORAGE_VERSION }
+            ?.first
+            ?: return null
         return MacroExpansionSharedCache.getInstance().cachedBuildStub(fileContent, hash)
     }
 }

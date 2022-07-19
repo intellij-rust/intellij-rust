@@ -55,9 +55,17 @@ fun VirtualFile.loadRangeMap(): RangeMap? {
     return ranges
 }
 
-fun VirtualFile.loadMixHash(): HashCode? {
+/** The second part is a stored [MACRO_STORAGE_VERSION] value */
+fun VirtualFile.extractMixHashAndMacroStorageVersion(): Pair<HashCode, Int>? {
     val name = name
-    val underscoreIndex = name.indexOf('_')
-    if (underscoreIndex == -1) return null
-    return HashCode.fromHexString(name.substring(0, underscoreIndex))
+    val firstUnderscoreIndex = name.indexOf('_')
+    if (firstUnderscoreIndex == -1) return null
+    val lastUnderscoreIndex = name.indexOf('_', firstUnderscoreIndex + 1)
+    if (lastUnderscoreIndex == -1) return null
+    val mixHash = HashCode.fromHexString(name.substring(0, firstUnderscoreIndex))
+    val version = name.substring(
+        lastUnderscoreIndex + 1,
+        name.length - 3 // ".rs".length
+    ).toIntOrNull() ?: -1
+    return mixHash to version
 }
