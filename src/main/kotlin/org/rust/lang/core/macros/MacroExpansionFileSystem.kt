@@ -275,7 +275,6 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             timestamp = max(currentTimestamp(), timestamp + 1)
         }
 
-        @Synchronized
         fun delete() {
             parent?.removeChild(name, bump = true)
         }
