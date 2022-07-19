@@ -1232,7 +1232,7 @@
         />
         <advancedSetting
             id="org.rust.macros.maximum.recursion.limit"
-            default="0"
+            default="1000"
             groupKey="advanced.setting.rust.group"
         />
     </extensions>
