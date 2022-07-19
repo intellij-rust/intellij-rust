@@ -675,6 +675,17 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test enum variant in match pattern`() = checkByCode("""
+        pub enum E { A }
+                   //X
+        use E::*;
+        fn func(x: E) {
+            match x {
+                A { .. } => {}
+            } //^
+        }
+    """)
+
     fun `test enum variant with alias`() = checkByCode("""
         enum E { A }
                //X

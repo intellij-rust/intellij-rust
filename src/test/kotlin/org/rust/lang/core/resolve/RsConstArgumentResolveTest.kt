@@ -52,11 +52,11 @@ class RsConstArgumentResolveTest : RsResolveTestBase() {
     """)
 
     fun `test in the case of ambiguity const argument is resolved to a type 3`() = checkByCode("""
-        enum E { S, B }
+        mod inner { pub fn S() {} }
         struct S {}
              //X
 
-        use E::*;
+        use inner::*;
         struct Foo<const C: i32>();
         type Bar = Foo<S>;
                      //^

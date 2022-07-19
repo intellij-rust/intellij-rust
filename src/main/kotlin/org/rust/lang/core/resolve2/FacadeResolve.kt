@@ -602,7 +602,7 @@ fun VisItem.toPsi(info: RsModInfo, ns: Namespace): List<RsNamedElement> {
         val containingEnums = containingModData.toRsEnum(info)
         containingEnums.flatMap { containingEnum ->
             containingEnum.variants
-                .filter { it.name == name && ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
+                .filter { it.name == name && ns in ENUM_VARIANT_NS && matchesIsEnabledByCfg(it, this) }
         }
     } else {
         val containingMods = containingModData.toScope(info)
