@@ -67,7 +67,8 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
     override fun getNamedElement(element: PsiElement): PsiElement? {
         // This hack enables some actions (e.g. "find usages") when the [element] is inside a macro
         // call and this element expands to name identifier of some named element.
-        if (element.elementType == RsElementTypes.IDENTIFIER) {
+        val elementType = element.elementType
+        if (elementType == RsElementTypes.IDENTIFIER || elementType == RsElementTypes.QUOTE_IDENTIFIER) {
             val delegate = element.findExpansionElements()?.firstOrNull() ?: return null
             val delegateParent = delegate.parent
             if (delegateParent is RsNameIdentifierOwner && delegateParent.nameIdentifier == delegate) {

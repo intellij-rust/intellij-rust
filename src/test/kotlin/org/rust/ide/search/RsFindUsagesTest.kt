@@ -196,6 +196,16 @@ class RsFindUsagesTest : RsTestBase() {
         type T2 = X; // - type reference
     """)
 
+    fun `test lifetime defined in a macro call`() = doTestByText("""
+        macro_rules! foo { ($($ i:item)*) => { $( $ i )* }; }
+        foo! {
+            fn foo<'a>() {
+                  //^
+                let a: &'a i32; // - null
+            }
+        }
+    """)
+
     fun `test method from trait`() = doTestByText("""
         struct B1; struct B2;
         trait A { fn foo(self, x: i32); }
