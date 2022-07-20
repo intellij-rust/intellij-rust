@@ -25,10 +25,12 @@ val PsiElement.isEnabledByCfg: Boolean get() = isEnabledByCfgInner(null)
  * ```
  */
 val PsiElement.existsAfterExpansion: Boolean
-    get() {
-        val status = getCodeStatus(null)
-        return status == RsCodeStatus.CODE || status == RsCodeStatus.CFG_UNKNOWN
-    }
+    get() = existsAfterExpansion(null)
+
+fun PsiElement.existsAfterExpansion(crate: Crate?): Boolean {
+    val status = getCodeStatus(crate)
+    return status == RsCodeStatus.CODE || status == RsCodeStatus.CFG_UNKNOWN
+}
 
 fun PsiElement.isEnabledByCfg(crate: Crate): Boolean = isEnabledByCfgInner(crate)
 

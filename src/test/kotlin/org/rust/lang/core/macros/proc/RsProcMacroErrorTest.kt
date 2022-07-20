@@ -5,18 +5,12 @@
 
 package org.rust.lang.core.macros.proc
 
-import junit.framework.TestCase
-import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.macros.RsMacroExpansionErrorTestBase
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
-import org.rust.lang.core.psi.ext.RsPossibleMacroCall
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.expansionResult
-import org.rust.lang.core.psi.ext.isMacroCall
-import org.rust.stdext.RsResult
 
 /**
  * A test for [org.rust.lang.core.macros.errors.GetMacroExpansionError.toUserViewableMessage]
@@ -27,13 +21,52 @@ import org.rust.stdext.RsResult
 @ExpandMacros(MacroExpansionScope.WORKSPACE)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
-class RsProcMacroErrorTest : RsTestBase() {
+class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     @WithExperimentalFeatures()
     fun `test macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::attr_as_is;
 
         #[attr_as_is]
         //^ procedural macro expansion is not enabled
+        fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @WithExperimentalFeatures()
+    fun `test macro expansion is disabled with unsuccessfully compiled proc macro crate`() = checkErrorByTree<GetMacroExpansionError.ExpansionError>("""
+    //- dep-proc-macro-unsuccessfully-compiled/lib.rs
+        extern crate proc_macro;
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+           item
+        }
+        compile_error!("The crate with the macro is not compiled successfully");
+    //- main.rs
+        use dep_proc_macro_unsuccessfully_compiled::attr_as_is;
+
+        #[attr_as_is]
+        //^ procedural macro expansion is not enabled
+        fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test unsuccessfully compiled proc macro crate`() = checkErrorByTree<GetMacroExpansionError.NoProcMacroArtifact>("""
+    //- dep-proc-macro-unsuccessfully-compiled/lib.rs
+        extern crate proc_macro;
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+           item
+        }
+        compile_error!("The crate with the macro is not compiled successfully");
+    //- main.rs
+        use dep_proc_macro_unsuccessfully_compiled::attr_as_is;
+
+        #[attr_as_is]
+        //^ the procedural macro is not compiled successfully
         fn foo() {}
     """)
 
@@ -76,35 +109,4 @@ class RsProcMacroErrorTest : RsTestBase() {
         #[function_like_as_is]
         fn foo() {} //^ `FUNCTION_LIKE` proc macro can't be called as `ATTRIBUTE`
     """)
-
-    private inline fun <reified T : GetMacroExpansionError> checkError(
-        @Language("Rust") code: String
-    ) {
-        checkError(code, T::class.java)
-    }
-
-    private fun checkError(code: String, errorClass: Class<*>) {
-        InlineFile(code)
-        val markers = findElementsWithDataAndOffsetInEditor<RsPossibleMacroCall>()
-        val (macro, expectedErrorMessage) = if (markers.isEmpty()) {
-            myFixture.file
-                .descendantsOfType<RsPossibleMacroCall>()
-                .single { it.isMacroCall } to null
-        } else {
-            val (macro, message, _) = markers.single()
-            check(macro.isMacroCall)
-            macro to message
-        }
-
-        val err = when (val result = macro.expansionResult) {
-            is RsResult.Err -> result.err
-            is RsResult.Ok -> error("Expected a macro expansion error, got a successfully expanded macro")
-        }
-
-        check(errorClass.isInstance(err)) { "Expected error $errorClass, got $err" }
-
-        if (expectedErrorMessage != null) {
-            TestCase.assertEquals(expectedErrorMessage, err.toUserViewableMessage())
-        }
-    }
 }
