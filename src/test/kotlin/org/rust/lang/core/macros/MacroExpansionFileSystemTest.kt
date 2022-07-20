@@ -10,11 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.checkMacroExpansionFileSystemAfterTest
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class MacroExpansionFileSystemTest : BasePlatformTestCase() {
     fun `test simple`() {
         batch {

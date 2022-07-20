@@ -7,8 +7,6 @@ package org.rust.cargo.project
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.intellij.lang.annotations.Language
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl
 import org.rust.cargo.project.settings.impl.XML_FORMAT_VERSION
@@ -18,7 +16,6 @@ import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class RustProjectSettingsServiceTest : LightPlatformTestCase() {
 
     fun `test serialization`() {

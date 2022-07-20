@@ -14,8 +14,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.tools.rustc
@@ -30,7 +28,6 @@ import org.rust.stdext.RsResult
  * Unlike [org.rust.RsTestBase] it does not use in-memory temporary VFS
  * and instead copies real files.
  */
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
 
     protected lateinit var rustupFixture: RustupTestFixture

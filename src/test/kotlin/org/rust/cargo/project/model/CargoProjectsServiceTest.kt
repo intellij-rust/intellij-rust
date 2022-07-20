@@ -6,14 +6,11 @@
 package org.rust.cargo.project.model
 
 import com.intellij.testFramework.LightPlatformTestCase
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.cargo.project.model.impl.CargoProjectsServiceImpl
 import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class CargoProjectsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
         val service = CargoProjectsServiceImpl(project)
