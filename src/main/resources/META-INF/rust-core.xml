@@ -1025,6 +1025,14 @@
                              groupId="language"
                              id="language.rust"/>
 
+        <projectConfigurable provider="org.rust.cargo.project.configurable.CargoBuildToolConfigurableProvider"
+                             parentId="build.tools"
+                             id="language.rust.build.tool.cargo"/>
+
+        <projectConfigurable provider="org.rust.cargo.project.configurable.CargoProjectConfigurableProvider"
+                             parentId="language.rust"
+                             id="language.rust.cargo"/>
+
         <projectConfigurable instance="org.rust.cargo.project.configurable.RsExternalLinterConfigurable"
                              parentId="language.rust"
                              id="language.rust.cargo.check"/>
