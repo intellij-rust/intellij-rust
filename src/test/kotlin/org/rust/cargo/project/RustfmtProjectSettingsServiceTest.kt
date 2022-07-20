@@ -8,14 +8,11 @@ package org.rust.cargo.project
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import org.intellij.lang.annotations.Language
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.cargo.project.settings.RustfmtProjectSettingsService
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 class RustfmtProjectSettingsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
         val service = RustfmtProjectSettingsService(project)

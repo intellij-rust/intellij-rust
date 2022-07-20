@@ -6,7 +6,11 @@
 package org.rust.ide.console
 
 class RsConsoleFoldingTest : RsConsoleFoldingTestBase() {
-    override fun shouldRunTest(): Boolean = (System.getenv("CI") == null)
+
+    override fun shouldRunTest(): Boolean {
+        if (!super.shouldRunTest()) return false
+        return System.getenv("CI") == null
+    }
 
     fun `test do not fold unrelated text`() = doFoldingTest("""
         //- lib.rs

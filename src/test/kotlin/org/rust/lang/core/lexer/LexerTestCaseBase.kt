@@ -12,14 +12,11 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.annotations.NonNls
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.TestCase
 import org.rust.pathToGoldTestFile
 import org.rust.pathToSourceTestFile
 import java.io.IOException
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 abstract class LexerTestCaseBase : LexerTestCase(), TestCase {
     override fun getDirPath(): String = throw UnsupportedOperationException()
 

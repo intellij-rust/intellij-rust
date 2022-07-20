@@ -23,7 +23,10 @@ class RsCoverageTest : RunConfigurationTestBase() {
     private val coverageData: ProjectData?
         get() = CoverageDataManager.getInstance(project).currentSuitesBundle?.coverageData
 
-    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
+    override fun shouldRunTest(): Boolean {
+        if (!super.shouldRunTest()) return false
+        return System.getenv("CI") == null
+    }
 
     fun `test main`() = doTest {
         toml("Cargo.toml", """
