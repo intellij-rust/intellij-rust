@@ -46,7 +46,7 @@ import java.io.IOException
  * List of methods that rely on such path format:
  * - [DefCollector.recordExpansionFileName]
  * - [expansionNameToPath]
- * - [VirtualFile.loadMixHash]
+ * - [VirtualFile.extractMixHashAndMacroStorageVersion]
  * - [MacroExpansionServiceImplInner.getDefMapForExpansionFile]
  * - [MacroExpansionTask.collectExistingFiles]
  */

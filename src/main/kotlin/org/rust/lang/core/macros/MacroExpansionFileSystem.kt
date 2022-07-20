@@ -207,16 +207,21 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
     override fun setWritable(file: VirtualFile, writableFlag: Boolean) {}
 
+    @Suppress("IfThenToElvis")
     @Throws(IOException::class)
     override fun contentsToByteArray(file: VirtualFile): ByteArray {
         val fsItem = convert(file) ?: throw FileNotFoundException(file.path + " (No such file or directory)")
         if (fsItem !is FSFile) throw FileNotFoundException(file.path + " (Is a directory)")
         return fsItem.fetchAndRemoveContent() ?: run {
-            val cachedExpansion = file.loadMixHash()?.let {
-                MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)?.ok()
-            }
+            val (mixHash, storedVersion) = file.extractMixHashAndMacroStorageVersion() ?: (null to -1)
+            val cachedExpansion = mixHash
+                ?.takeIf { storedVersion == MACRO_STORAGE_VERSION }
+                ?.let { MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)?.ok() }
             if (cachedExpansion != null) {
                 cachedExpansion.text.toByteArray()
+            } else if (storedVersion != MACRO_STORAGE_VERSION) {
+                // Found old version -> the file will be deleted by `MacroExpansionTask`
+                ArrayUtil.EMPTY_BYTE_ARRAY
             } else {
                 fsItem.delete()
                 val e = FileNotFoundException(file.path + " (Content is not provided)")
