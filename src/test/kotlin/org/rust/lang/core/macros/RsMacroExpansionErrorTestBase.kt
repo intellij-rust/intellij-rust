@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.macros
 
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -24,6 +24,21 @@ abstract class RsMacroExpansionErrorTestBase : RsTestBase() {
 
     protected fun checkError(code: String, errorClass: Class<*>) {
         InlineFile(code)
+        doCheck(errorClass)
+    }
+
+    protected inline fun <reified T : GetMacroExpansionError> checkErrorByTree(
+        @Language("Rust") code: String
+    ) {
+        checkError(code, T::class.java)
+    }
+
+    protected fun checkErrorByTree(code: String, errorClass: Class<*>) {
+        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
+        doCheck(errorClass)
+    }
+
+    private fun doCheck(errorClass: Class<*>) {
         val markers = findElementsWithDataAndOffsetInEditor<RsPossibleMacroCall>()
         val (macro, expectedErrorMessage) = if (markers.isEmpty()) {
             myFixture.file
@@ -43,7 +58,7 @@ abstract class RsMacroExpansionErrorTestBase : RsTestBase() {
         check(errorClass.isInstance(err)) { "Expected error $errorClass, got $err" }
 
         if (expectedErrorMessage != null) {
-            TestCase.assertEquals(expectedErrorMessage, err.toUserViewableMessage())
+            assertEquals(expectedErrorMessage, err.toUserViewableMessage())
         }
     }
 }

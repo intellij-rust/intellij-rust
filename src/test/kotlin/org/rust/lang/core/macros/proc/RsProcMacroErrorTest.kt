@@ -31,6 +31,45 @@ class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
         fn foo() {}
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @WithExperimentalFeatures()
+    fun `test macro expansion is disabled with unsuccessfully compiled proc macro crate`() = checkErrorByTree<GetMacroExpansionError.ExpansionError>("""
+    //- dep-proc-macro-unsuccessfully-compiled/lib.rs
+        extern crate proc_macro;
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+           item
+        }
+        compile_error!("The crate with the macro is not compiled successfully");
+    //- main.rs
+        use dep_proc_macro_unsuccessfully_compiled::attr_as_is;
+
+        #[attr_as_is]
+        //^ procedural macro expansion is not enabled
+        fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test unsuccessfully compiled proc macro crate`() = checkErrorByTree<GetMacroExpansionError.NoProcMacroArtifact>("""
+    //- dep-proc-macro-unsuccessfully-compiled/lib.rs
+        extern crate proc_macro;
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+           item
+        }
+        compile_error!("The crate with the macro is not compiled successfully");
+    //- main.rs
+        use dep_proc_macro_unsuccessfully_compiled::attr_as_is;
+
+        #[attr_as_is]
+        //^ the procedural macro is not compiled successfully
+        fn foo() {}
+    """)
+
     fun `test unresolved function-like macro`() = checkError<GetMacroExpansionError.Unresolved>("""
         unresolved_macro! {}
     """)
