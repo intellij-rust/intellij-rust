@@ -26,9 +26,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -711,9 +711,9 @@ private class MacroExpansionServiceImplInner(
         val info = getModInfo(call.containingMod) as? RsModInfo
             ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
         val macroIndex = info.getMacroIndex(call, info.crate)
-            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.defMap, null)))
+            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
         val expansionFile = getExpansionFile(info.defMap, macroIndex)
-            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.defMap, macroIndex)))
+            ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, macroIndex)))
         val expansion = RsResult.Ok(getExpansionFromExpandedFile(MacroExpansionContext.ITEM, expansionFile)!!)
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, modificationTracker, call.modificationTracker)
@@ -805,17 +805,20 @@ private class MacroExpansionServiceImplInner(
 
     private fun getReasonWhyExpansionFileNotFound(
         call: RsPossibleMacroCall,
+        crate: Crate,
         defMap: CrateDefMap,
         callIndex: MacroIndex?
     ): GetMacroExpansionError {
-        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) || !isFeatureEnabled(RsExperiments.PROC_MACROS)) {
-            return GetMacroExpansionError.ExpansionError(ProcMacroExpansionError.ProcMacroExpansionIsDisabled)
-        }
-        if (!call.existsAfterExpansion) {
+        if (!call.existsAfterExpansion(crate)) {
             return GetMacroExpansionError.CfgDisabled
         }
-        call.resolveToMacroWithoutPsiWithErr()
+        val macroDef = call.resolveToMacroWithoutPsiWithErr()
             .unwrapOrElse { return it.toExpansionError() }
+
+        val procMacrosAreDisabled = !isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) || !isFeatureEnabled(RsExperiments.PROC_MACROS)
+        if (procMacrosAreDisabled && macroDef.data is RsProcMacroData) {
+            return GetMacroExpansionError.ExpansionError(ProcMacroExpansionError.ProcMacroExpansionIsDisabled)
+        }
 
         if (callIndex == null) {
             return GetMacroExpansionError.NoMacroIndex
