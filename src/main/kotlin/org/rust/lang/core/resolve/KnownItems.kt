@@ -101,6 +101,7 @@ class KnownItems(
     val Try: RsTraitItem? get() = findItem("core::ops::try_trait::Try") ?: findItem("core::ops::try::Try")
     val Generator: RsTraitItem? get() = findItem("core::ops::generator::Generator")
     val Future: RsTraitItem? get() = findItem("core::future::future::Future")
+    val IntoFuture: RsTraitItem? get() = findItem("core::future::into_future::IntoFuture")
     val Octal: RsTraitItem? get() = findItem("core::fmt::Octal")
     val LowerHex: RsTraitItem? get() = findItem("core::fmt::LowerHex")
     val UpperHex: RsTraitItem? get() = findItem("core::fmt::UpperHex")
