@@ -677,6 +677,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Unused labels"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedLabelsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
