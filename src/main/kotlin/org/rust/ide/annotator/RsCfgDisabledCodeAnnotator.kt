@@ -16,11 +16,16 @@ class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (holder.isBatchMode) return
 
-        if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelf) {
+        val crate = holder.currentCrate() ?: return
+
+        if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelfOrInAttrProcMacroBody(crate)) {
             holder.createCondDisabledAnnotation()
         }
 
-        if (element is RsAttr && element.isDisabledCfgAttrAttribute && element.owner?.isEnabledByCfgSelf == true) {
+        val isAttrDisabled = element is RsAttr
+            && element.isDisabledCfgAttrAttribute(crate)
+            && element.owner?.isEnabledByCfgSelfOrInAttrProcMacroBody(crate) == true
+        if (isAttrDisabled) {
             holder.createCondDisabledAnnotation()
         }
     }

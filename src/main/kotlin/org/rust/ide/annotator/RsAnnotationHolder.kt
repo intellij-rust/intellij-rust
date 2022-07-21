@@ -43,7 +43,7 @@ class RsAnnotationHolder(val holder: AnnotationHolder) {
         @InspectionMessage message: String?,
         vararg fixes: IntentionAction
     ): AnnotationBuilder? {
-        if (!element.existsAfterExpansion) return null
+        if (!element.existsAfterExpansion(currentAnnotationSession.currentCrate())) return null
         val builder = if (message == null) {
             holder.newSilentAnnotation(severity)
         } else {

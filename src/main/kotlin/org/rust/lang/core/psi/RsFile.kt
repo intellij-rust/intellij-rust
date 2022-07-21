@@ -314,8 +314,9 @@ val RsElement.isValidProjectMemberAndContainingCrate: Pair<Boolean, Crate?>
     get() {
         val file = contextualFile
         if (file !is RsFile) return true to null
-        if (!existsAfterExpansion || !file.isDeeplyEnabledByCfg) return false to null
+        if (!file.isDeeplyEnabledByCfg) return false to null
         val crate = file.crate ?: return false to null
+        if (!existsAfterExpansion(crate)) return false to null
 
         return true to crate
     }

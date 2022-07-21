@@ -73,15 +73,17 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
 
     override fun createSettings(): Settings = Settings()
 
-    override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector =
-        object : FactoryInlayHintsCollector(editor) {
+    override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector {
+        val project = file.project
+        val crate = (file as? RsFile)?.crate
+        
+        return object : FactoryInlayHintsCollector(editor) {
 
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, settings.showObviousTypes)
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-                if (file.project.service<DumbService>().isDumb) return true
+                if (project.service<DumbService>().isDumb) return true
                 if (element !is RsElement) return true
-                if (!element.existsAfterExpansion) return true
 
                 if (settings.showForVariables) {
                     presentVariable(element)
@@ -121,6 +123,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             }
 
             private fun presentTypePlaceholders(declaration: RsLetDecl) {
+                if (!declaration.existsAfterExpansion(crate)) return
                 val inferredType = declaration.pat?.type ?: return
                 val formalType = declaration.typeReference?.type ?: return
                 val placeholders = formalType.collectInferTys()
@@ -176,12 +179,13 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             }
 
             private fun presentTypeForBinding(binding: RsPatBinding) {
-                val project = binding.project
+                if (!binding.existsAfterExpansion(crate)) return
                 val presentation = typeHintsFactory.typeHint(binding.type)
                 val finalPresentation = presentation.withDisableAction(project)
                 sink.addInlineElement(binding.endOffset, false, finalPresentation, false)
             }
         }
+    }
 
     private fun InlayPresentation.withDisableAction(project: Project): InsetPresentation = InsetPresentation(
         MenuOnClickPresentation(this, project) {
