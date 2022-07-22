@@ -73,7 +73,7 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
         val info = getModInfo(crateRoot) as RsModInfo
 
         val expandedItems = mutableListOf<RsElement>()
-        crateRoot.processExpandedItemsInternal(withMacroCalls = true) { item, _ ->
+        crateRoot.processExpandedItemsInternal(withMacroCalls = true) { item ->
             expandedItems += item
             false
         }

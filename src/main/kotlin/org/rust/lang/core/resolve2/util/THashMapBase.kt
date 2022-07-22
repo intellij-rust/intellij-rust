@@ -141,10 +141,10 @@ abstract class THashMapBase<K : Any, V : Any> : TObjectHash<K>(), MutableMap<K, 
     }
 
     private inner class EntryView : AbstractSet<MutableMap.MutableEntry<K, V>>() {
-        override fun iterator(): MutableIterator<Entry<K, V>> {
-            return object : THashIterator<Entry<K, V>>() {
-                override fun objectAtIndex(index: Int): Entry<K, V> {
-                    return Entry(_set[index] as K, getValueAtIndex(index)!!)
+        override fun iterator(): MutableIterator<Entry> {
+            return object : THashIterator<Entry>() {
+                override fun objectAtIndex(index: Int): THashMapBase<K, V>.Entry {
+                    return Entry(index)
                 }
             }
         }
@@ -154,8 +154,14 @@ abstract class THashMapBase<K : Any, V : Any> : TObjectHash<K>(), MutableMap<K, 
         override fun contains(element: MutableMap.MutableEntry<K, V>): Boolean = throw UnsupportedOperationException()
     }
 
-    private class Entry<K : Any, V : Any>(override val key: K, override val value: V) : MutableMap.MutableEntry<K, V> {
-        override fun setValue(newValue: V): V = throw UnsupportedOperationException()
+    private inner class Entry(private val index: Int) : MutableMap.MutableEntry<K, V> {
+        override val key: K get() = _set[index] as K
+        override val value: V get() = getValueAtIndex(index)!!
+        override fun setValue(newValue: V): V {
+            val oldValue = value
+            setValueAtIndex(index, newValue)
+            return oldValue
+        }
     }
 
     private abstract inner class THashIterator<V> : MutableIterator<V> {
