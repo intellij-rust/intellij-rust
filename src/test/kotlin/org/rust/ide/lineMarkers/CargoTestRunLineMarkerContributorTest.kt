@@ -146,6 +146,67 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn no_icon() { assert(true) }
     """)
 
+    fun `test function doctest`() = doTestByText("""
+        /// Some documentation.
+        /// ```                 // - Doctest of foo at line 2
+        /// let a = 5;
+        /// ```
+        fn foo() {}
+    """.trimIndent())
+
+    fun `test module doctest`() = doTestByText("""
+        /// Some documentation.
+        /// ```                 // - Doctest of foo at line 2
+        /// let a = 5;
+        /// ```
+        mod foo {}
+    """.trimIndent())
+
+    fun `test multiple doctests`() = doTestByText("""
+        /// Some documentation.
+        /// ```                 // - Doctest of foo at line 2
+        /// let a = 5;
+        /// ```
+        ///
+        /// ```                 // - Doctest of foo at line 6
+        /// let a = 5;
+        /// ```
+        fn foo() {}
+    """.trimIndent())
+
+    fun `test function in module doctest`() = doTestByText("""
+        mod foo {
+            /// Some documentation.
+            /// ```                 // - Doctest of foo::bar at line 3
+            /// let a = 5;
+            /// ```
+            fn bar() {}
+        }
+    """.trimIndent())
+
+    fun `test top-level doctest`() = doTestByText("""
+        //! Some documentation.
+        //! ```                 // - Doctest of test-package at line 2
+        //! let a = 5;
+        //! ```
+    """.trimIndent())
+
+    fun `test code block with other language`() = doTestByText("""
+        /// Some documentation.
+        /// ```python
+        /// a = 5
+        /// ```
+        fn foo() {}
+    """.trimIndent())
+
+    fun `test code block with rust`() = doTestByText("""
+        /// Some documentation.
+        /// ```rust             // - Doctest of foo at line 2
+        /// let a = 5;
+        /// ```
+        fn foo() {}
+    """.trimIndent())
+
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)

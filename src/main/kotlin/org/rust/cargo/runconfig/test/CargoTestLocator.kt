@@ -82,6 +82,11 @@ object CargoTestLocator : SMTestLocator {
     fun getTestUrl(function: RsQualifiedNamedElement): String =
         getTestUrl(function.qualifiedName ?: "")
 
+    fun getTestUrl(ctx: DocTestContext): String {
+        val owner = ctx.owner.qualifiedName ?: ""
+        return getTestUrl("$owner#${ctx.lineNumber}")
+    }
+
     private fun toQualifiedName(path: String): Pair<String, Int?> {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
         if (NAME_SEPARATOR !in path) return targetName to null

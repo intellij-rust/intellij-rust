@@ -17,22 +17,39 @@ import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoBenchRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestLocator
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
+import org.rust.cargo.runconfig.test.getDoctestCtx
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.doc.psi.RsDocCodeFence
+import org.rust.lang.doc.psi.RsDocCodeFenceStartEnd
+import org.rust.lang.doc.psi.RsDocElementTypes.DOC_DATA
 import javax.swing.Icon
 
 class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
-        if (element.elementType != IDENTIFIER) return null
-        val parent = element.parent
-        if (parent !is RsNameIdentifierOwner || element != parent.nameIdentifier) return null
-        if (parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent)) return null
+        val target = when (element.elementType) {
+            DOC_DATA -> {
+                val parent = element.parent as? RsDocCodeFenceStartEnd ?: return null
+                val fence = parent.parent as? RsDocCodeFence ?: return null
+                if (fence.start != parent) return null
+                // Ignore invalid fences
+                if (fence.end == null) return null
+                fence
+            }
+            IDENTIFIER -> {
+                val parent = element.parent
+                if (parent !is RsNameIdentifierOwner || element != parent.nameIdentifier) return null
+                if (parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent)) return null
+                parent
+            }
+            else -> return null
+        }
 
-        val state = CargoTestRunConfigurationProducer().findTestConfig(listOf(parent), climbUp = false)
-            ?: CargoBenchRunConfigurationProducer().findTestConfig(listOf(parent), climbUp = false)
+        val state = CargoTestRunConfigurationProducer().findTestConfig(listOf(target), climbUp = false)
+            ?: CargoBenchRunConfigurationProducer().findTestConfig(listOf(target), climbUp = false)
             ?: return null
         val icon = if (state.commandName == "test") {
             getTestStateIcon(state.sourceElement)
@@ -48,8 +65,15 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
     companion object {
         fun getTestStateIcon(sourceElement: PsiElement): Icon? {
-            if (sourceElement !is RsQualifiedNamedElement) return null
-            val url = CargoTestLocator.getTestUrl(sourceElement)
+            val url = when (sourceElement) {
+                is RsQualifiedNamedElement -> CargoTestLocator.getTestUrl(sourceElement)
+                is RsDocCodeFence -> {
+                    val ctx = sourceElement.getDoctestCtx() ?: return null
+                    CargoTestLocator.getTestUrl(ctx)
+                }
+                else -> return null
+            }
+
             val project = sourceElement.project
             val magnitude = TestStateStorage.getInstance(project).getState(url)
                 ?.let { TestIconMapper.getMagnitude(it.magnitude) }

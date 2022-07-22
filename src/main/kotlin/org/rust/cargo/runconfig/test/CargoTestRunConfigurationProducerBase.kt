@@ -63,7 +63,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return true
     }
 
-    private fun registerConfigProvider(provider: TestConfigProvider) {
+    protected fun registerConfigProvider(provider: TestConfigProvider) {
         testConfigProviders.add(provider)
     }
 
@@ -137,7 +137,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         )
     }
 
-    private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
+    protected inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
         if (base is T) return base
         if (!climbUp) return null
         return base.ancestorOrSelf()
@@ -190,9 +190,10 @@ interface TestConfig {
     val sourceElement: PsiElement
     val originalElement: PsiElement get() = sourceElement
     val isIgnored: Boolean get() = false
+    val isDoctest: Boolean get() = false
 
     fun cargoCommandLine(): CargoCommandLine {
-        var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path))
+        var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path), isDoctest = isDoctest)
         if (exact) {
             commandLine = commandLine.withPositionalArgument("--exact")
         }
