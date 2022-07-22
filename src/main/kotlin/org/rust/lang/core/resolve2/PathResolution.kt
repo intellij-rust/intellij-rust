@@ -160,7 +160,12 @@ private fun CrateDefMap.doResolveNameInModule(modData: ModData, name: String, wi
  */
 private fun ModData.getFirstLegacyMacro(name: String): PerNs? {
     val def = legacyMacros[name]?.firstOrNull() ?: return null
-    val visibility = if (def is DeclMacroDefInfo && def.hasMacroExport) Visibility.Public else visibilityInSelf
+    val visibility = when {
+        // the macro was added from another crate using `#[macro_use] export crate ...`, it must be public
+        def !is DeclMacroDefInfo -> Visibility.Public
+        def.hasMacroExport -> Visibility.Public
+        else -> rootModData.visibilityInSelf
+    }
     val visItem = VisItem(def.path, visibility)
     return PerNs.macros(visItem)
 }
