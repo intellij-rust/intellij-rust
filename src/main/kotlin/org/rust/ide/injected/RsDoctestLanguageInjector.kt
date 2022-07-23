@@ -46,8 +46,9 @@ private val RUST_LANG_ALIASES = listOf(
     "no_run",
     "test_harness",
 //    "compile_fail", // don't highlight code that is expected to contain errors
+    "edition2015",
     "edition2018",
-    "edition2015"
+    "edition2021"
 )
 
 class RsDoctestLanguageInjector : MultiHostInjector {
