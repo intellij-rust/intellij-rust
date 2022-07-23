@@ -218,10 +218,10 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         /// Some documentation.
         /// ```                 // - Doctest of foo (line 2)
         /// let a = 5;
-        ///
+        //
         /// ```
         /// let b = 5;
-        /// ```                 // - Doctest of foo (line 7)
+        /// ```
         fn foo() {}
     """.trimIndent())
 
