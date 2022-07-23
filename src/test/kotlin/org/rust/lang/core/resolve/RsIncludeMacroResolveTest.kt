@@ -218,6 +218,16 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         gen_use!();
     """)
 
+    fun `test macro def in included file`() = checkResolve("""
+    //- main.rs
+        include!("foo.rs");
+        mod other {
+            foo!();
+        } //^ foo.rs
+    //- foo.rs
+        macro_rules! foo { () => {} }
+    """)
+
     fun `test concat in include 1`() = checkResolve("""
         //- main.rs
             include!(concat!("foo.rs"));

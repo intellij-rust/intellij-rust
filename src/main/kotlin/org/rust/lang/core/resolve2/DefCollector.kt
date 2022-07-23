@@ -407,7 +407,7 @@ class DefCollector(
         val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
         if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectScope(includingRsFile, call.containingMod, context, call.macroIndex)
+            collectScope(includingRsFile, call.containingMod, context, call.macroIndex, propagateLegacyMacros = true)
         } else if (!context.isHangingMode) {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)

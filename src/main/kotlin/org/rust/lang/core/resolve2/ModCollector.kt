@@ -58,12 +58,13 @@ fun collectScope(
     context: ModCollectorContext,
     modMacroIndex: MacroIndex = modData.macroIndex,
     dollarCrateHelper: DollarCrateHelper? = null,
+    propagateLegacyMacros: Boolean = false,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
         .takeIf { modData.isNormalCrate }
 
     val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper)
-    collector.collectMod(scope.getOrBuildStub() ?: return emptyMap())
+    collector.collectMod(scope.getOrBuildStub() ?: return emptyMap(), propagateLegacyMacros)
 
     if (hashCalculator != null && scope is RsFile) {
         val fileHash = hashCalculator.getFileHash()
