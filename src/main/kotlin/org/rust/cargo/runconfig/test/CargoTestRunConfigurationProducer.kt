@@ -14,6 +14,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.ide.injected.DoctestInfo
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocCodeFence
@@ -121,12 +122,17 @@ private val KNOWN_DOCTEST_ATTRIBUTES = setOf(
     "rust",
     "should_panic",
     "no_run",
+    "test_harness",
+    "allow_fail",
     "edition2015",
     "edition2018",
     "edition2021"
 )
 
 fun RsDocCodeFence.getDoctestCtx(): DocTestContext? {
+    if (containingCrate?.areDoctestsEnabled != true) return null
+    if (DoctestInfo.hasUnbalancedCodeFencesBefore(this)) return null
+
     val owner = containingDoc.owner as? RsQualifiedNamedElement ?: return null
 
     val containingFile = originalElement.containingFile
@@ -167,7 +173,7 @@ private class DocTestConfig(
     override val path: String
         get() = buildString {
             // `cargo test` uses a regex for matching the test names.
-            // doctests contain spaces in their name (e.g. `foo::bar (line X)`).
+            // Doctests contain spaces in their name (e.g. `foo::bar (line X)`).
             // To make test lookup work, we need to escape spaces in the test path.
             if (ownerPath.isNotEmpty()) {
                 append("${ownerPath}\\ ")
@@ -189,7 +195,8 @@ private class DocTestConfig(
                 val name = ctx.owner.containingCargoPackage?.name ?: ctx.owner.containingFile.name
                 append(name)
             }
-            append(" at line ")
+            append(" (line ")
             append(ctx.lineNumber)
+            append(")")
         }
 }

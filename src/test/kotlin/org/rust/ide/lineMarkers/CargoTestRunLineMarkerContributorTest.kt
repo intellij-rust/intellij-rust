@@ -148,7 +148,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test function doctest`() = doTestByText("""
         /// Some documentation.
-        /// ```                 // - Doctest of foo at line 2
+        /// ```                 // - Doctest of foo (line 2)
         /// let a = 5;
         /// ```
         fn foo() {}
@@ -156,7 +156,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test module doctest`() = doTestByText("""
         /// Some documentation.
-        /// ```                 // - Doctest of foo at line 2
+        /// ```                 // - Doctest of foo (line 2)
         /// let a = 5;
         /// ```
         mod foo {}
@@ -164,11 +164,11 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test multiple doctests`() = doTestByText("""
         /// Some documentation.
-        /// ```                 // - Doctest of foo at line 2
+        /// ```                 // - Doctest of foo (line 2)
         /// let a = 5;
         /// ```
         ///
-        /// ```                 // - Doctest of foo at line 6
+        /// ```                 // - Doctest of foo (line 6)
         /// let a = 5;
         /// ```
         fn foo() {}
@@ -177,7 +177,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test function in module doctest`() = doTestByText("""
         mod foo {
             /// Some documentation.
-            /// ```                 // - Doctest of foo::bar at line 3
+            /// ```                 // - Doctest of foo::bar (line 3)
             /// let a = 5;
             /// ```
             fn bar() {}
@@ -186,7 +186,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test top-level doctest`() = doTestByText("""
         //! Some documentation.
-        //! ```                 // - Doctest of test-package at line 2
+        //! ```                 // - Doctest of test-package (line 2)
         //! let a = 5;
         //! ```
     """.trimIndent())
@@ -201,9 +201,27 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test code block with rust`() = doTestByText("""
         /// Some documentation.
-        /// ```rust             // - Doctest of foo at line 2
+        /// ```rust             // - Doctest of foo (line 2)
         /// let a = 5;
         /// ```
+        fn foo() {}
+    """.trimIndent())
+
+    fun `test unterminated doctest`() = doTestByText("""
+        /// Some documentation.
+        /// ```                 // - Doctest of foo (line 2)
+        /// let a = 5;
+        fn foo() {}
+    """.trimIndent())
+
+    fun `test doctest with unterminated predecessor`() = doTestByText("""
+        /// Some documentation.
+        /// ```                 // - Doctest of foo (line 2)
+        /// let a = 5;
+        ///
+        /// ```
+        /// let b = 5;
+        /// ```                 // - Doctest of foo (line 7)
         fn foo() {}
     """.trimIndent())
 

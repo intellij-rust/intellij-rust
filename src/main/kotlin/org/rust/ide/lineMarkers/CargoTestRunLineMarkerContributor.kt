@@ -35,8 +35,6 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
                 val parent = element.parent as? RsDocCodeFenceStartEnd ?: return null
                 val fence = parent.parent as? RsDocCodeFence ?: return null
                 if (fence.start != parent) return null
-                // Ignore invalid fences
-                if (fence.end == null) return null
                 fence
             }
             IDENTIFIER -> {

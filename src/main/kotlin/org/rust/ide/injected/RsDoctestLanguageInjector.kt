@@ -239,7 +239,7 @@ class DoctestInfo private constructor(
             return DoctestInfo(docIndent, fenceIndent, contents, codeFence.text)
         }
 
-        private fun hasUnbalancedCodeFencesBefore(context: RsDocCodeFence): Boolean {
+        fun hasUnbalancedCodeFencesBefore(context: RsDocCodeFence): Boolean {
             val containingDoc = context.containingDoc
             val docOwner = containingDoc.owner ?: return false
             for (docElement in docOwner.docElements()) {

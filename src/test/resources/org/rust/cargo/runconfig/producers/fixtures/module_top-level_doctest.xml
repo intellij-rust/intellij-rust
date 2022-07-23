@@ -1,5 +1,5 @@
 <configurations>
-  <configuration name="Doctest of bar at line 3" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+  <configuration name="Doctest of bar (line 3)" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="test --package test-package --doc &quot;bar\ (line\ 3)&quot;" />
     <option name="workingDirectory" value="file:///my-crate" />
     <option name="channel" value="DEFAULT" />

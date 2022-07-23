@@ -1,5 +1,5 @@
 <configurations>
-  <configuration name="Doctest of foo at line 2" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+  <configuration name="Doctest of foo (line 2)" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="test --package test-package --doc &quot;foo\ (line\ 2)&quot; -- --ignored" />
     <option name="workingDirectory" value="file:///my-crate" />
     <option name="channel" value="DEFAULT" />
