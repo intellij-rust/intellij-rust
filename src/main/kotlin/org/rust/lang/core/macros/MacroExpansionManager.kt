@@ -926,7 +926,6 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
     val result = FunctionLikeMacroExpander.forCrate(crate).expandMacro(
         def,
         call,
-        RsPsiFactory(call.project, markGenerated = false),
         storeRangeMap,
         useCache = true
     ).map { expansion ->

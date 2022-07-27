@@ -8,7 +8,6 @@ package org.rust.lang.core.macros.decl
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
@@ -24,7 +23,6 @@ class RsBuiltinMacroExpansionTest : RsMacroExpansionTestBase() {
         val expansionResult = expander.expandMacro(
             RsMacroDataWithHash(def, null),
             call,
-            RsPsiFactory(project, markGenerated = false),
             storeRangeMap = true,
             useCache = false
         )

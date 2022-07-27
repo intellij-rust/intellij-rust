@@ -119,7 +119,6 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         val expansionResult = expander.expandMacro(
             RsMacroDataWithHash(def, null),
             call,
-            RsPsiFactory(project, markGenerated = false),
             storeRangeMap = true,
             useCache = false
         )
