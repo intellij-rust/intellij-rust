@@ -9,7 +9,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -1813,25 +1812,18 @@ private fun implicitStdlibCrate(scope: RsFile): ImplicitStdlibCrate? {
 }
 
 // There's already similar functions in TreeUtils, should use it
-private fun walkUp(
+private inline fun walkUp(
     start: PsiElement,
     stopAfter: (RsElement) -> Boolean,
-    stopAtFileBoundary: Boolean = true,
     processor: (cameFrom: PsiElement, scope: RsElement) -> Boolean
 ): Boolean {
     var cameFrom = start
     var scope = start.context as RsElement?
     while (scope != null) {
-        ProgressManager.checkCanceled()
         if (processor(cameFrom, scope)) return true
         if (stopAfter(scope)) break
         cameFrom = scope
         scope = scope.context as? RsElement
-        if (!stopAtFileBoundary) {
-            if (scope == null && cameFrom is RsFile) {
-                scope = cameFrom.`super`
-            }
-        }
     }
     return false
 }
