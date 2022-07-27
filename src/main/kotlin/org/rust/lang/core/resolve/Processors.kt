@@ -288,6 +288,10 @@ fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProce
     return elements.any { processor(it) }
 }
 
+fun processAllScopeEntries(elements: Array<ScopeEntry>, processor: RsResolveProcessor): Boolean {
+    return elements.any { processor(it) }
+}
+
 fun processAllWithSubst(
     elements: Collection<RsNamedElement>,
     subst: Substitution,

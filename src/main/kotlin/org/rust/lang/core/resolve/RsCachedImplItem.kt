@@ -9,11 +9,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.recursionSafeLazy
 import gnu.trove.THashMap
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTraitRef
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.isValidProjectMemberAndContainingCrate
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -30,12 +27,36 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class RsCachedImplItem(
     val impl: RsImplItem
 ) {
-    private val traitRef: RsTraitRef? = impl.traitRef
+    val traitRef: RsTraitRef?
+    val typeParameters: Array<ScopeEntry>
+    val constParameters: Array<ScopeEntry>
     val containingCrate: Crate?
     val isValid: Boolean
-    val isNegativeImpl: Boolean = impl.isNegativeImpl
+    val isNegativeImpl: Boolean
 
     init {
+        var typeParameterList: RsTypeParameterList? = null
+
+        val stub = impl.greenStub
+        if (stub != null) {
+            // This branch exists only for performance purposes
+            var traitRef: RsTraitRef? = null
+            for (child in stub.childrenStubs) {
+                when (child.stubType) {
+                    RsElementTypes.TRAIT_REF -> traitRef = child.psi as RsTraitRef
+                    RsElementTypes.TYPE_PARAMETER_LIST -> typeParameterList = child.psi as RsTypeParameterList
+                }
+            }
+            this.traitRef = traitRef
+            this.isNegativeImpl = stub.isNegativeImpl
+        } else {
+            typeParameterList = impl.typeParameterList
+            this.traitRef = impl.traitRef
+            this.isNegativeImpl = impl.isNegativeImpl
+        }
+        this.typeParameters = typeParameterList?.typeParameterList.orEmpty().mapToScopeEntries()
+        this.constParameters = typeParameterList?.constParameterList.orEmpty().mapToScopeEntries()
+
         val (isValid, crate) = impl.isValidProjectMemberAndContainingCrate
         this.containingCrate = crate
         this.isValid = isValid && !impl.isReservationImpl
@@ -70,8 +91,22 @@ class RsCachedImplItem(
     val explicitImpl: TraitImplSource.ExplicitImpl = TraitImplSource.ExplicitImpl(this)
 
     companion object {
+        private val EMPTY_SCOPE_ENTRY_ARRAY: Array<ScopeEntry> = emptyArray()
+
         fun forImpl(impl: RsImplItem): RsCachedImplItem {
             return (impl as RsImplItemImplMixin).cachedImplItem.value
+        }
+
+        private fun List<RsNamedElement>.mapToScopeEntries(): Array<ScopeEntry> {
+            val scopeEntries = mapNotNull {
+                val name = it.name ?: return@mapNotNull null
+                SimpleScopeEntry(name, it)
+            }
+            return if (scopeEntries.isEmpty()) {
+                EMPTY_SCOPE_ENTRY_ARRAY
+            } else {
+                scopeEntries.toTypedArray()
+            }
         }
     }
 }

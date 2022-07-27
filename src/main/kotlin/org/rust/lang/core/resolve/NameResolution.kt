@@ -1542,16 +1542,23 @@ private fun processLexicalDeclarations(
 
         is RsStructItem,
         is RsEnumItem,
-        is RsTraitOrImpl -> {
+        is RsTraitItem -> {
             scope as RsGenericDeclaration
-            if (processAll(scope.typeParameters, processor)) return true
-            if (Namespace.Values in ns && processAll(scope.constParameters, processor)) return true
             if (processor("Self", scope)) return true
-            if (scope is RsImplItem) {
-                scope.traitRef?.let { traitRef ->
-                    // really should be unnamed, but "_" is not a valid name in rust, so I think it's ok
-                    if (processor.lazy("_") { traitRef.resolveToTrait() }) return true
-                }
+            if (Namespace.Types in ns && processAll(scope.typeParameters, processor)) return true
+            if (Namespace.Values in ns && processAll(scope.constParameters, processor)) return true
+        }
+        is RsImplItem -> {
+            // A very hot path, highly optimized
+            val cached = RsCachedImplItem.forImpl(scope)
+            val seekingName = processor.name
+            if ((seekingName == null || seekingName == "Self") && processor("Self", scope)) return true
+            if (Namespace.Types in ns && processAllScopeEntries(cached.typeParameters, processor)) return true
+            if (Namespace.Values in ns && processAllScopeEntries(cached.constParameters, processor)) return true
+            val traitRef = cached.traitRef
+            if (seekingName == null && traitRef != null && cameFrom != traitRef) {
+                // really should be unnamed, but "_" is not a valid name in rust, so I think it's ok
+                if (processor.lazy("_") { traitRef.resolveToTrait() }) return true
             }
         }
 
