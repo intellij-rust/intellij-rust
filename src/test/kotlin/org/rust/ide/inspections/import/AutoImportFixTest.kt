@@ -3200,4 +3200,102 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     //- lib.rs
         <error descr="Unresolved reference: `attr_as_is`">attr_as_is/*caret*/</error>!();
     """)
+
+    @WithExcludedPath("crate::mod1::excluded_func")
+    fun `test don't import excluded item 1`() = checkAutoImportFixIsUnavailable("""
+        mod mod1 {
+            pub fn excluded_func() {}
+        }
+        fn main() {
+            /*error*//*caret*/excluded_func/*error**/();
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::excluded_func")
+    fun `test don't import excluded item 2`() = checkAutoImportFixIsUnavailable("""
+        mod mod1 {
+            mod inner {
+                pub fn excluded_func() {}
+            }
+            pub use inner::*;
+        }
+        fn main() {
+            /*error*//*caret*/excluded_func/*error**/();
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::excluded_func")
+    fun `test import other with prefix as excluded item path`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod mod1 {
+            pub fn excluded_func2() {}
+        }
+        fn main() {
+            /*caret*/excluded_func2();
+        }
+    """, """
+        use crate::mod1::excluded_func2;
+
+        mod mod1 {
+            pub fn excluded_func2() {}
+        }
+        fn main() {
+            excluded_func2();
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::excluded_func")
+    fun `test import excluded item with different path`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod mod1 {
+            pub fn excluded_func() {}
+        }
+        mod mod2 {
+            pub use crate::mod1::*;
+        }
+        fn main() {
+            /*caret*/excluded_func();
+        }
+    """, """
+        use crate::mod2::excluded_func;
+
+        mod mod1 {
+            pub fn excluded_func() {}
+        }
+        mod mod2 {
+            pub use crate::mod1::*;
+        }
+        fn main() {
+            excluded_func();
+        }
+    """)
+
+    @WithExcludedPath("crate::excluded_mod::*")
+    fun `test don't import item from excluded mod`() = checkAutoImportFixIsUnavailable("""
+        mod excluded_mod {
+            pub fn func() {}
+        }
+        fn main() {
+            /*error*//*caret*/func/*error**/();
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::ExcludedTrait", onlyMethods = true)
+    fun `test import excluded trait itself`() = checkAutoImportFixByTextWithoutHighlighting("""
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        type X = dyn /*caret*/ExcludedTrait;
+    """, """
+        use crate::mod1::ExcludedTrait;
+
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        type X = dyn /*caret*/ExcludedTrait;
+    """)
 }
