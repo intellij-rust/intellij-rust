@@ -614,6 +614,34 @@ class RenameTest : RsTestBase() {
         fn foo(value: u32) -> u32 { unimplemented!() }
     """)
 
+    fun `test can't use initialization shorthand after rename 3`() = doTest("value2", """
+        struct Foo { value: u32 }
+        fn bar() -> Foo {
+            const /*caret*/value: i32 = 1;
+            Foo { value }
+        }
+    """, """
+        struct Foo { value: u32 }
+        fn bar() -> Foo {
+            const value2: i32 = 1;
+            Foo { value: value2 }
+        }
+    """)
+
+    fun `test can't use initialization shorthand after rename 4`() = doTest("value2", """
+        struct Foo<T> { value: T }
+        fn bar() -> Foo {
+            fn /*caret*/value() {}
+            Foo { value }
+        }
+    """, """
+        struct Foo<T> { value: T }
+        fn bar() -> Foo {
+            fn value2() {}
+            Foo { value: value2 }
+        }
+    """)
+
     fun `test rename variable with variable conflict`() = doTestWithConflicts("a", """
         fn test() {
             let a = 1;

@@ -83,15 +83,15 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         listener: RefactoringElementListener?
     ) {
         val psiFactory = RsPsiFactory(element.project)
-        if (element is RsPatBinding) {
-            usages.forEach {
-                val field = it.element?.ancestorOrSelf<RsStructLiteralField>(RsBlock::class.java) ?: return@forEach
+        if (element !is RsNamedFieldDecl) {
+            for (usage in usages) {
+                val field = usage.element?.ancestorOrSelf<RsStructLiteralField>(RsBlock::class.java) ?: continue
                 when {
                     field.isShorthand -> {
-                        val newPatField = psiFactory.createStructLiteralField(element.text, newName)
+                        val newPatField = psiFactory.createStructLiteralField(field.referenceName, newName)
                         field.replace(newPatField)
                     }
-                    field.referenceName == newName && field.expr is RsPathExpr -> {
+                    field.referenceName == newName && (field.expr as? RsPathExpr)?.path == usage.element -> {
                         field.expr?.delete()
                         field.colon?.delete()
                     }
