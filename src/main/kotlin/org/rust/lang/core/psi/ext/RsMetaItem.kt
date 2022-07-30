@@ -13,8 +13,14 @@ import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsMetaItemStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
+
+data class RsDerivativeTraitItem(
+    val trait: RsTraitItem,
+    val args: RsMetaItemArgs?
+)
 
 /**
  * Returns identifier name if path inside meta item consists only of this identifier.
@@ -37,6 +43,9 @@ val RsMetaItem.id: String?
 /** Works only for [KNOWN_DERIVABLE_TRAITS] */
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
     path?.reference?.multiResolve()?.filterIsInstance<RsTraitItem>()?.singleOrNull()
+
+fun RsMetaItem.resolveToDerivativeTrait(knownItems: KnownItems): RsDerivativeTraitItem? =
+    path?.identifier?.let { KNOWN_DERIVABLE_TRAITS[id]?.findTrait(knownItems) }?.let { RsDerivativeTraitItem(it, metaItemArgs) }
 
 val RsMetaItem.owner: RsDocAndAttributeOwner?
     get() = ancestorStrict<RsAttr>()?.owner

@@ -386,6 +386,10 @@ class QueryAttributes<out T: RsMetaItemPsiOrStub>(
     val deriveAttributes: Sequence<T>
         get() = attrsByName("derive")
 
+    // #[derivative(Clone)], #[derive(Copy(bound = ""), Clone(bound = ""))]
+    val derivativeAttributes: Sequence<T>
+        get() = attrsByName("derivative")
+
     // #[repr(u16)], #[repr(C, packed)], #[repr(simd)], #[repr(align(8))]
     val reprAttributes: Sequence<T>
         get() = attrsByName("repr")

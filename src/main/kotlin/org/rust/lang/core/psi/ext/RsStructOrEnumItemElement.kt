@@ -10,6 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.mapQuery
@@ -26,6 +27,11 @@ val RsStructOrEnumItemElement.derivedTraits: Collection<RsTraitItem>
         .mapNotNull { it.resolveToDerivedTrait() }
         .toList()
 
+fun RsStructOrEnumItemElement.derivedDerivativeTraits(knownItems: KnownItems): Collection<RsDerivativeTraitItem> =
+    derivativeMetaItems
+        .mapNotNull { it.resolveToDerivativeTrait(knownItems) }
+        .toList()
+
 val RsStructOrEnumItemElement.derivedTraitsToMetaItems: Map<RsTraitItem, RsMetaItem>
     get() = deriveMetaItems
         .mapNotNull { meta -> (meta.resolveToDerivedTrait())?.let { it to meta } }
@@ -34,9 +40,17 @@ val RsStructOrEnumItemElement.derivedTraitsToMetaItems: Map<RsTraitItem, RsMetaI
 val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>
     get() = queryAttributes.deriveMetaItems
 
+val RsStructOrEnumItemElement.derivativeMetaItems: Sequence<RsMetaItem>
+    get() = queryAttributes.derivativeMetaItems
+
 @Suppress("UNCHECKED_CAST")
 val <T : RsMetaItemPsiOrStub> QueryAttributes<T>.deriveMetaItems: Sequence<T>
     get() = deriveAttributes
+        .flatMap { it.metaItemArgs?.metaItemList?.asSequence() as? Sequence<T> ?: emptySequence() }
+
+@Suppress("UNCHECKED_CAST")
+val <T : RsMetaItemPsiOrStub> QueryAttributes<T>.derivativeMetaItems: Sequence<T>
+    get() = derivativeAttributes
         .flatMap { it.metaItemArgs?.metaItemList?.asSequence() as? Sequence<T> ?: emptySequence() }
 
 val <T : RsMetaItemPsiOrStub> QueryAttributes<T>.customDeriveMetaItems: Sequence<T>

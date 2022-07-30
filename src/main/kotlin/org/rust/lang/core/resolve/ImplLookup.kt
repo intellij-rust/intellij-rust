@@ -99,6 +99,11 @@ sealed class TraitImplSource {
         override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
     }
 
+    /** Trait is implemented for item via ```#[derivative]``` attribute if ```#[derive(Derivative)]``` is specified. */
+    data class DerivedDerivative(override val value: RsTraitItem, val args: RsMetaItemArgs?) : TraitImplSource() {
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
+    }
+
     /** dyn/impl Trait or a closure */
     data class Object(override val value: RsTraitItem) : TraitImplSource() {
         override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazyTraitMembers(value)
@@ -295,6 +300,8 @@ class ImplLookup(
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
+                // TODO: Only if we have derive(Derivative)
+                implsAndTraits += findDerivedDerivativeTraits(ty).map { TraitImplSource.DerivedDerivative(it.trait, it.args) }
                 findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
                 if (ty is TyTuple || ty is TyUnit) {
                     listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
@@ -312,6 +319,13 @@ class ImplLookup(
             // select only std traits because we are sure
             // that they are resolved correctly
             .filter { it.isKnownDerivable }
+    }
+
+    private fun findDerivedDerivativeTraits(ty: Ty): Collection<RsDerivativeTraitItem> {
+        return (ty as? TyAdt)?.item?.derivedDerivativeTraits(items).orEmpty()
+            // select only std traits because we are sure
+            // that they are resolved correctly
+            .filter { it.trait.isKnownDerivable }
     }
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
@@ -794,6 +808,12 @@ class ImplLookup(
             .filter { it.isKnownDerivable }
             .filter { it == ref.trait.element }
             .mapTo(candidates.list) { ImplCandidate.DerivedTrait(it) }
+        (ref.selfTy as? TyAdt)?.item?.derivedDerivativeTraits(items).orEmpty()
+            // select only std traits because we are sure
+            // that they are resolved correctly
+            .filter { it.trait.isKnownDerivable }
+            .filter { it.trait == ref.trait.element }
+            .mapTo(candidates.list) { ImplCandidate.DerivedDerivativeTrait(it) }
     }
 
     // Mirrors rustc's `assemble_candidates_for_unsizing`
@@ -913,6 +933,8 @@ class ImplLookup(
         when (candidate) {
             is ImplCandidate.DerivedTrait ->
                 return confirmDerivedCandidate(ref, candidate, recursionDepth)
+            is ImplCandidate.DerivedDerivativeTrait ->
+                return confirmDerivativeCandidate(ref, candidate, recursionDepth)
             is ImplCandidate.ExplicitImpl -> Unit
         }
         testAssert { !candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java) }
@@ -938,6 +960,57 @@ class ImplLookup(
             Obligation(recursionDepth + 1, Predicate.Trait(TraitRef(it, BoundElement(candidate.item))))
         }
         return Selection(candidate.item, obligations)
+    }
+
+    private fun confirmDerivativeCandidate(
+        ref: TraitRef,
+        candidate: ImplCandidate.DerivedDerivativeTrait,
+        recursionDepth: Int
+    ): Selection {
+        val selfTy = ref.selfTy as TyAdt // Guaranteed by `assembleCandidates`
+
+        // Look for meta item `bound = "..."`. If found exlicitBound = "..."
+        val explicitBound = candidate.item.args?.metaItemList?.first { it.hasEq && it.firstChild.textMatches("bound") }?.value
+        val obligations = if (explicitBound == null) {
+            // For `#[derivative(Clone)] struct S<T>(T);` add `T: Clone` obligation
+            selfTy.typeArguments.map {
+                Obligation(recursionDepth + 1, Predicate.Trait(TraitRef(it, BoundElement(candidate.item.trait))))
+            }
+        } else {
+            // For `#[derivative(Clone(bound = "...")] struct S<T>(T);` parse and add obligations from `...` instead
+            //
+            // Bounds have the same format as a where clause, but they are stored in a literal string, so the idea is
+            // - a) split explicitBounds on ","
+            // - b) split each element on ":" into a pair,
+            // - c) parse the first element into Self, a type parameter, or an associated type of any
+            // - d) parse the second element of the pair into a trait bound
+            // currently we just handle the easy case where c) is a literal type parameter,
+            // and d) only works on hardcoded values (specifically, the traits derivative can auto-derive)
+            // Any other case and the bound will just be ignored.
+            explicitBound.split(',').map { it.trim() }.mapNotNull {
+                it.split(':').map { it.trim() }.takeIf { it.size == 2 }?.let { (tyStr, boundStr) ->
+                    val ty = selfTy.typeParameterValues.typeByName(tyStr)
+                    val bound = when (boundStr) {
+                        "Clone" -> items.Clone
+                        "Copy" -> items.Copy
+                        "Debug" -> items.Debug
+                        "Default" -> items.Default
+                        "Hash" -> items.Hash
+                        "PartialEq" -> items.PartialEq
+                        "PartialOrd" -> items.PartialOrd
+                        "Eq" -> items.Eq
+                        "Ord" -> items.Ord
+                        else -> null
+                    }
+                    if (ty != TyUnknown && bound != null) {
+                        Obligation(recursionDepth + 1, Predicate.Trait(TraitRef(ty, BoundElement(bound))))
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+        return Selection(candidate.item.trait, obligations)
     }
 
     private fun confirmProjectionCandidate(ref: TraitRef, candidate: ProjectionCandidate): Selection {
@@ -1383,6 +1456,8 @@ private sealed class SelectionCandidate {
         }
 
         data class DerivedTrait(val item: RsTraitItem) : ImplCandidate()
+
+        data class DerivedDerivativeTrait(val item: RsDerivativeTraitItem) : ImplCandidate()
     }
 
     // AutoImplCandidate

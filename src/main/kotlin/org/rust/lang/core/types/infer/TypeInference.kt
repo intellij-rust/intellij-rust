@@ -1065,7 +1065,7 @@ class RsInferenceContext(
     fun canEvaluateBounds(source: TraitImplSource, selfTy: Ty): Boolean {
         return when (source) {
             is TraitImplSource.ExplicitImpl -> canEvaluateBounds(source.value, selfTy)
-            is TraitImplSource.Derived, is TraitImplSource.Builtin -> {
+            is TraitImplSource.Derived, is TraitImplSource.DerivedDerivative, is TraitImplSource.Builtin -> {
                 if (source.value.typeParameters.isNotEmpty()) return true
                 lookup.canSelect(TraitRef(selfTy, BoundElement(source.value as RsTraitItem)))
             }
@@ -1124,7 +1124,7 @@ class RsInferenceContext(
             bound?.trait?.subst?.substituteInValues(subst) ?: emptySubstitution
         }
 
-        is TraitImplSource.Derived -> emptySubstitution
+        is TraitImplSource.Derived, is TraitImplSource.DerivedDerivative -> emptySubstitution
 
         is TraitImplSource.Object -> when (selfTy) {
             is TyAnon -> selfTy.getTraitBoundsTransitively()
