@@ -22,12 +22,13 @@ fun showStructMemberChooserDialog(
     project: Project,
     structItem: RsStructItem,
     fields: List<StructMember>,
-    @Suppress("UnstableApiUsage") @DialogTitle title: String
+    @Suppress("UnstableApiUsage") @DialogTitle title: String,
+    allowEmptySelection: Boolean
 ): List<StructMember>? {
     val chooser = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockStructMemberChooserUi`")
     } else {
-        DialogStructMemberChooserUi(title)
+        DialogStructMemberChooserUi(title, allowEmptySelection = allowEmptySelection)
     }
     val base = MemberChooserObjectBase(structItem.name, structItem.getIcon(0))
     val arguments = fields.map { RsStructMemberChooserObject(base, it) }
@@ -60,11 +61,15 @@ interface StructMemberChooserUi {
 }
 
 private class DialogStructMemberChooserUi(
-    @Suppress("UnstableApiUsage") @DialogTitle private val title: String
+    @Suppress("UnstableApiUsage") @DialogTitle private val title: String,
+    private val allowEmptySelection: Boolean
 ) : StructMemberChooserUi {
-    override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
+    override fun selectMembers(
+        project: Project,
+        all: List<RsStructMemberChooserObject>
+    ): List<RsStructMemberChooserObject>? {
         val dialogTitle = title
-        val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {
+        val chooser = MemberChooser(all.toTypedArray(), allowEmptySelection, true, project).apply {
             title = dialogTitle
             selectElements(all.toTypedArray())
             setCopyJavadocVisible(false)
