@@ -10,12 +10,8 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
@@ -23,8 +19,6 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
-import java.util.*
-import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
     project: Project
@@ -34,32 +28,17 @@ class RsProjectConfigurable(
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
-        row(RsBundle.message("settings.rust.toolchain.expand.macros.label")) {
-            comboBox(createMacroExpansionEngineModel(), createExpansionEngineListRenderer())
+        row {
+            checkBox(RsBundle.message("settings.rust.toolchain.expand.macros.checkbox"))
                 .comment(RsBundle.message("settings.rust.toolchain.expand.macros.comment"))
-                .bindItem(state::macroExpansionEngine.toNullableProperty())
+                .bindSelected(
+                    { state.macroExpansionEngine != MacroExpansionEngine.DISABLED },
+                    { state.macroExpansionEngine = if (it) MacroExpansionEngine.NEW else MacroExpansionEngine.DISABLED }
+                )
         }
         row {
             checkBox(RsBundle.message("settings.rust.toolchain.inject.rust.in.doc.comments.checkbox"))
                 .bindSelected(state::doctestInjectionEnabled)
-        }
-    }
-
-    private fun createMacroExpansionEngineModel(): EnumComboBoxModel<MacroExpansionEngine> {
-        return object : EnumComboBoxModel<MacroExpansionEngine>(MacroExpansionEngine::class.java) {
-            override fun createEnumSet(en: Class<MacroExpansionEngine>): EnumSet<MacroExpansionEngine> {
-                return EnumSet.of(MacroExpansionEngine.DISABLED, MacroExpansionEngine.NEW)
-            }
-        }
-    }
-
-    private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {
-        return SimpleListCellRenderer.create("") {
-            when (it) {
-                MacroExpansionEngine.DISABLED -> RsBundle.message("settings.rust.toolchain.expand.macros.disable.label")
-                MacroExpansionEngine.OLD, MacroExpansionEngine.NEW -> RsBundle.message("settings.rust.toolchain.expand.macros.new.engine.label")
-                null -> error("Unreachable")
-            }
         }
     }
 
