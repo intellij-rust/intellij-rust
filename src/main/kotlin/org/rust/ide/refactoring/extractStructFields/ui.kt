@@ -52,7 +52,7 @@ private class ExtractFieldsDialog(project: Project) : DialogWrapper(project, fal
 
     override fun doValidate(): ValidationInfo? {
         if (!isValidRustVariableIdentifier(input.text)) {
-            ValidationInfo(RsBundle.message("action.Rust.RsExtractStructFields.choose.name.dialog.invalid.name"), input)
+            return ValidationInfo(RsBundle.message("action.Rust.RsExtractStructFields.choose.name.dialog.invalid.name"), input)
         }
         return null
     }
