@@ -78,8 +78,9 @@ object RsImplTraitMemberCompletionProvider : RsCompletionProvider() {
             return
         }
 
-        val memberGenerator = MembersGenerator(RsPsiFactory(element.project), implBlock, trait)
         for (item in parentItems) {
+            // have to create new generator for each item, so that [MembersGenerator.itemsToImport] don't mix up
+            val memberGenerator = MembersGenerator(RsPsiFactory(element.project), implBlock, trait)
             val lookup = getCompletion(item, implBlock, subst, memberGenerator, keyword?.first)
             result.addElement(
                 lookup.toRsLookupElement(RsLookupElementProperties(isImplMemberFullLineCompletion = true))
