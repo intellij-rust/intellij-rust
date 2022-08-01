@@ -336,7 +336,7 @@ fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: 
     val ns = path.allowedNamespaces(isCompletion)
 
     // RsPathExpr can became a macro by adding a trailing `!`, so we add macros to completion
-    if (isCompletion && parent is RsPathExpr && qualifier?.path == null) {
+    if (isCompletion && parent is RsPathExpr && qualifier == null) {
         if (processMacroCallPathResolveVariants(path, true, processor)) return true
     }
 

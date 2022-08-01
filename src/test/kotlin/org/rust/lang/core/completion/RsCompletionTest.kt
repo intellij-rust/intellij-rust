@@ -647,7 +647,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod foo/*caret*/ {}
     """)
 
-    fun `test complete macro2`() = doSingleCompletion("""
+    fun `test complete macro2 unqualified`() = doSingleCompletion("""
         macro foo() {}
         fn main() {
             fo/*caret*/
@@ -656,6 +656,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         macro foo() {}
         fn main() {
             foo!(/*caret*/)
+        }
+    """)
+
+    fun `test complete macro2 qualified`() = doSingleCompletion("""
+        mod inner {
+            pub macro foo() {}
+        }
+        fn main() {
+            inner::fo/*caret*/
+        }
+    """, """
+        mod inner {
+            pub macro foo() {}
+        }
+        fn main() {
+            inner::foo!(/*caret*/)
         }
     """)
 
