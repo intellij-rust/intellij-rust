@@ -642,6 +642,11 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test macro don't suggests as mod name`() = checkNoCompletion("""
+        macro_rules! foo_bar { () => () }
+        mod foo/*caret*/ {}
+    """)
+
     fun `test complete macro2`() = doSingleCompletion("""
         macro foo() {}
         fn main() {

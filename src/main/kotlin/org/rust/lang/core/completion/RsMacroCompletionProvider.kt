@@ -19,6 +19,7 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.psiElement
@@ -45,6 +46,7 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
         val position = parameters.position
         val rsElement = position.ancestorStrict<RsElement>() ?: return
         val mod = rsElement.ancestorOrSelf<RsMod>()
+        if (mod is RsModItem && mod.identifier == position) return
 
         val leftSiblings = position.leftSiblings
             .filter { it !is PsiWhiteSpace && it !is PsiComment && it !is PsiErrorElement }
