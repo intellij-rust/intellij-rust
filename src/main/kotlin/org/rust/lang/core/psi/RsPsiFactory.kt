@@ -463,12 +463,22 @@ class RsPsiFactory(
         reference: Boolean = true,
         lifetime: RsLifetime? = null
     ): RsValueParameter {
+        return tryCreateValueParameter(name, type, mutable, reference, lifetime)
+            ?: error("Failed to create parameter element")
+    }
+
+    fun tryCreateValueParameter(
+        name: String,
+        type: RsTypeReference,
+        mutable: Boolean = false,
+        reference: Boolean = true,
+        lifetime: RsLifetime? = null
+    ): RsValueParameter? {
         val referenceText = if (reference) "&" else ""
         val lifetimeText = if (lifetime != null) "${lifetime.text} " else ""
         val mutText = if (mutable) "mut " else ""
         return createFromText<RsFunction>("fn main($name: $referenceText$lifetimeText$mutText${type.text}){}")
-            ?.valueParameterList?.valueParameterList?.get(0)
-            ?: error("Failed to create parameter element")
+            ?.valueParameterList?.valueParameterList?.getOrNull(0)
     }
 
     fun createPatFieldFull(name: String, value: String): RsPatFieldFull =

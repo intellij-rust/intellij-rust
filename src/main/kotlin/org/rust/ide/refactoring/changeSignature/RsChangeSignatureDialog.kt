@@ -354,7 +354,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         }
 
         for ((index, parameter) in config.parameters.withIndex()) {
-            if (parameter.parsePat() == null) {
+            if (!parameter.hasValidPattern()) {
                 return "Parameter $index has invalid pattern"
             }
             if (parameter.type is ParameterProperty.Empty) {
