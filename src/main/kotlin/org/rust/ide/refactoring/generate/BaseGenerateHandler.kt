@@ -45,6 +45,8 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
 
     override fun startInWriteAction() = false
 
+    open val allowEmptySelection: Boolean = false
+
     private fun getContext(editor: Editor, file: PsiFile): Context? {
         val element = file.findElementAt(editor.caretModel.offset) ?: return null
         val struct = element.ancestorOrSelf<RsStructItem>()
@@ -80,7 +82,8 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
             context.struct.project,
             context.struct,
             context.fields,
-            dialogTitle
+            dialogTitle,
+            allowEmptySelection
         ) ?: return
         runWriteAction {
             performRefactoring(context.struct, context.implBlock, chosenFields, context.substitution, editor)

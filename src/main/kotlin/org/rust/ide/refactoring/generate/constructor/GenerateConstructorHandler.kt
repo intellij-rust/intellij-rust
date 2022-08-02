@@ -27,6 +27,8 @@ class GenerateConstructorAction : BaseGenerateAction() {
 class GenerateConstructorHandler : BaseGenerateHandler() {
     override val dialogTitle: String = "Select constructor parameters"
 
+    override val allowEmptySelection: Boolean = true
+
     override fun isImplBlockValid(impl: RsImplItem): Boolean = super.isImplBlockValid(impl) &&
         impl.isSuitableForConstructor
 
