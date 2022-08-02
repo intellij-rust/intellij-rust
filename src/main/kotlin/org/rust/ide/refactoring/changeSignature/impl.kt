@@ -171,7 +171,7 @@ private fun changeParameters(factory: RsPsiFactory, function: RsFunction, config
         parametersCopy.selfParameter,
         parametersCopy.valueParameterList,
         config
-    ) { factory.createValueParameter(it.patText, it.typeReference, reference = false) }
+    ) { factory.tryCreateValueParameter(it.patText, it.typeReference, reference = false) }
 }
 
 private fun changeParametersNameAndType(parameters: List<RsValueParameter>, descriptors: List<Parameter>) {

@@ -1261,6 +1261,22 @@ Cannot change signature of function with cfg-disabled parameters""")
         returnTypeDisplay = foo
     }
 
+    fun `test add self parameter to function`() = doTest("""
+        fn foo/*caret*/(a: u32) {}
+
+        fn bar() {
+            foo(1);
+        }
+    """, """
+        fn foo(a: u32, ) {}
+
+        fn bar() {
+            foo(1, );
+        }
+    """) {
+        parameters.add(parameter("self", createType("u32")))
+    }
+
     private fun RsChangeFunctionSignatureConfig.swapParameters(a: Int, b: Int) {
         val param = parameters[a]
         parameters[a] = parameters[b]

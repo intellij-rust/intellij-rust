@@ -83,6 +83,18 @@ class Parameter(
     fun parseTypeReference(): RsTypeReference? = type.item
     fun parsePat(): RsPat? = factory.tryCreatePat(patText)
 
+    fun hasValidPattern(): Boolean {
+        if (parsePat() == null) {
+            return false
+        }
+
+        if (factory.tryCreateValueParameter(patText, parseTypeReference() ?: factory.createType("()")) == null) {
+            return false
+        }
+
+        return true
+    }
+
     val pat: RsPat
         get() = parsePat() ?: factory.createPat("_")
 }
