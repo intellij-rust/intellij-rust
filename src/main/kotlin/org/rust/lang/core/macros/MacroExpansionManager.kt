@@ -566,6 +566,10 @@ private class MacroExpansionServiceImplInner(
         if (!isExpansionModeNew) {
             cleanMacrosDirectoryAndStorage()
         }
+        project.runWriteCommandAction {
+            project.defMapService.scheduleRebuildAllDefMaps()
+            project.rustPsiManager.incRustStructureModificationCount()
+        }
         processUnprocessedMacros()
     }
 
