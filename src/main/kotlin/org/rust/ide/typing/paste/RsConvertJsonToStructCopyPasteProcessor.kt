@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
 import org.rust.ide.inspections.lints.toCamelCase
 import org.rust.ide.inspections.lints.toSnakeCase
+import org.rust.ide.statistics.RsConvertJsonToStructUsagesCollector
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
@@ -78,6 +79,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
         if (elementAtCaret != null && elementAtCaret.parent !is RsMod) return
 
         val structs = extractStructsFromJson(text) ?: return
+        RsConvertJsonToStructUsagesCollector.logJsonTextPasted()
         if (!shouldConvertJson(project)) return
 
         val factory = RsPsiFactory(project)
@@ -111,6 +113,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
         if (insertedItems.isNotEmpty()) {
             replacePlaceholders(editor, insertedItems, nameMap, file)
         }
+        RsConvertJsonToStructUsagesCollector.logPastedJsonConverted()
     }
 }
 
@@ -169,6 +172,9 @@ private fun shouldConvertJson(project: Project): Boolean {
                                     else -> StoredPreference.NO
                                 }
                                 AdvancedSettings.setEnum("org.rust.convert.json.to.struct", value)
+
+                                // `exitCode != Messages.CANCEL` is always true since we don't override `shouldSaveOptionsOnCancel`
+                                RsConvertJsonToStructUsagesCollector.logRememberChoiceResult(value == StoredPreference.YES)
                             }
                         }
                     })
