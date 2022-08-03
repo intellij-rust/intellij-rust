@@ -7,6 +7,8 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
+import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiComment
@@ -18,15 +20,11 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsExpressionCodeFragment
+import org.rust.lang.core.psi.RsFileBase
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.psiElement
-import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processMacroCallVariantsInScope
-import org.rust.lang.core.resolve.processMacrosExportedByCrateName
 import org.rust.lang.core.withPrevSiblingSkipping
 
 /**
@@ -45,32 +43,26 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
     ) {
         val position = parameters.position
         val rsElement = position.ancestorStrict<RsElement>() ?: return
-        val mod = rsElement.ancestorOrSelf<RsMod>()
+        val mod = rsElement.ancestorOrSelf<RsMod>() ?: return
         if (mod is RsModItem && mod.identifier == position) return
 
         val leftSiblings = position.leftSiblings
             .filter { it !is PsiWhiteSpace && it !is PsiComment && it !is PsiErrorElement }
-            .take(4).toList()
-        val is2segmentPath = leftSiblings.getOrNull(0)?.elementType == COLONCOLON &&
-            leftSiblings.getOrNull(1)?.elementType == IDENTIFIER && (
-            leftSiblings.getOrNull(2)?.elementType != COLONCOLON ||
-                leftSiblings.getOrNull(3)?.elementType != IDENTIFIER)
-        val context = RsCompletionContext(isSimplePath = !is2segmentPath)
+            .takeWhile { it.elementType in listOf(IDENTIFIER, COLONCOLON) }
+            .toList()
+        if (leftSiblings.size > MAXIMUM_SUPPORTED_SEGMENTS * 2) return
+        val leftSiblingsText = leftSiblings.asReversed().joinToString("") { it.text }
+        if (leftSiblings.isEmpty() && position.text == DUMMY_IDENTIFIER_TRIMMED) return
 
-        collectCompletionVariants(result, context) { originalProcessor ->
-            val processor = createProcessor(originalProcessor.name) { entry ->
-                val macro = entry.element
-                val hide = mod != null && macro is RsMacro && isHidden(macro, mod)
-                if (!hide) originalProcessor(entry) else false
-            }
+        // convert to macro call so that only macros are suggested
+        val text = leftSiblingsText + position.text + "!()"
+        val fragment = RsExpressionCodeFragment(position.project, text, mod)
+        fragment.putUserData(FORCE_OUT_OF_SCOPE_COMPLETION, true)
+        (mod.containingFile as? RsFileBase)?.let { fragment.originalFile = it }  // needed for paths "::dep::foo"
 
-            if (is2segmentPath) {
-                val firstSegmentText = leftSiblings[1].unescapedText
-                processMacrosExportedByCrateName(rsElement, firstSegmentText, processor)
-            } else {
-                processMacroCallVariantsInScope(position, isAttrOrDerive = false, processor)
-            }
-        }
+        val offset = leftSiblingsText.length + (parameters.offset - position.startOffset)
+        val element = fragment.findElementAt(offset) ?: return
+        rerunCompletion(parameters.withPosition(element, offset), result)
     }
 
     override val elementPattern: ElementPattern<PsiElement>
@@ -82,6 +74,7 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
                 .withParent(psiElement<RsMod>())
         }
 
-    private fun isHidden(macro: RsMacro, mod: RsMod): Boolean =
-        macro.queryAttributes.isDocHidden && macro.containingMod != mod
+    private const val MAXIMUM_SUPPORTED_SEGMENTS: Int = 10
 }
+
+val FORCE_OUT_OF_SCOPE_COMPLETION: Key<Boolean> = Key.create("FORCE_OUT_OF_SCOPE_COMPLETION")
