@@ -78,6 +78,10 @@
         <vfs.asyncListener implementation="org.rust.toml.crates.local.CratesLocalIndexVfsListener"/>
     </extensions>
 
+    <extensions defaultExtensionNs="JavaScript">
+        <JsonSchema.ProviderFactory implementation="org.rust.toml.jsonSchema.CargoTomlJsonSchemaProviderFactory"/>
+    </extensions>
+
     <projectListeners>
         <listener class="org.rust.toml.crates.local.CratesLocalIndexWaker"
                   topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
