@@ -2968,6 +2968,30 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test correctly transform unnamed import to use group`() = checkAutoImportFixByTextWithoutHighlighting("""
+        use crate::inner::Trait as _;
+
+        mod inner {
+            pub trait Trait {}
+            pub fn func() {}
+        }
+
+        fn main() {
+            /*caret*/func();
+        }
+    """, """
+        use crate::inner::{func, Trait as _};
+
+        mod inner {
+            pub trait Trait {}
+            pub fn func() {}
+        }
+
+        fn main() {
+            func();
+        }
+    """)
+
     fun `test import inside included file`() = checkAutoImportFixByFileTree("""
         //- foo.rs
         fn func() {

@@ -181,7 +181,7 @@ private val RsUseItem.importingNames: Set<String>?
         val path = pathAsList ?: return null
         val groupedNames = useSpeck?.useGroup?.useSpeckList?.asSequence()?.map { it.text }?.toSet()
         val lastName = path.lastOrNull()
-        val alias = useSpeck?.alias?.identifier?.text
+        val alias = useSpeck?.alias?.nameIdentifier?.text
         return when {
             groupedNames != null -> groupedNames
             lastName != null && alias != null -> setOf("$lastName as $alias")
