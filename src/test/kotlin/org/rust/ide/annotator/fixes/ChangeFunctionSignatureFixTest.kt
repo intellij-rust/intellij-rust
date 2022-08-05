@@ -522,4 +522,28 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             S::foo(&s, true, 1);
         }
     """)
+
+    fun `test add multiple additional parameters forward with normalizable associated types`() = checkFixByText("<html>Change signature to foo(i32, <b>bool</b>, i32, <b>i32</b>)</html>", """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        fn foo(a: <Struct as Trait>::Item, b: <Struct as Trait>::Item) {}
+
+        fn main() {
+            foo<error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">(0, false, <error>3/*caret*/</error>, <error>4</error>)</error>;
+            foo(0, 1);
+        }
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        fn foo(a: <Struct as Trait>::Item, b0: bool, b: <Struct as Trait>::Item, i: i32) {}
+
+        fn main() {
+            foo(0, false, 3, 4);
+            foo(0, , 1, );
+        }
+    """)
 }

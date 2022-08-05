@@ -391,6 +391,22 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
     """)
 
+    fun `test const arguments with associated type`() = checkErrors("""
+        struct S1;
+        trait T { type Item; }
+        impl T for S1 { type Item = i32; }
+
+        fn foo<T, const C: i32>() {}
+        const C1: <S1 as T>::Item = 1;
+        struct S;
+
+        fn main() {
+            foo::<i32, 1>;
+            foo::<i32, <error descr="mismatched types [E0308]expected `i32`, found `bool`">true</error>>;
+            foo::<S, C1>;
+        }
+    """)
+
     fun `test const arguments in path exprs`() = checkErrors("""
         struct S<const N: usize>;
 

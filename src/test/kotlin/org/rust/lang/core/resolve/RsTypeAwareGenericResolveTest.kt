@@ -1383,4 +1383,23 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             if let E::Foo(_) = a {}
         }           //^
     """)
+
+    fun `test impl for a type with an associated type`() = checkByCode("""
+        struct S;
+        trait T { type Item; }
+        impl T for S { type Item = u8; }
+
+        struct W<T>(T);
+
+        impl W<<S as T>::Item> {
+            fn foo(&self) {}
+        }    //X
+        impl W<u16> {
+            fn foo(&self) {}
+        }
+
+        fn main() {
+            W(1u8).foo();
+        }        //^
+    """)
 }

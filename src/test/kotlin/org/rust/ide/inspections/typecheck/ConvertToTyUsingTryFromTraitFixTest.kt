@@ -71,6 +71,44 @@ class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckIns
         }
     """)
 
+    fun `test B from A when impl TryFrom A for B is available and fn ret Result with Err match with normalizable associated type`() = checkFixByText("Convert to Bb using `TryFrom` trait", """
+        #![feature(try_from)]
+        use std::convert::TryFrom;
+
+        struct Aa;
+        struct Bb;
+        #[derive(Debug)] struct Ee;
+
+        impl TryFrom<Aa> for Bb { type Error = Ee; fn try_from(a: Aa) -> Result<Self, Self::Error> {Ok(Bb)} }
+
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = Result<B, Ee>; }
+
+        fn foo() -> <Struct as Trait>::Item {
+            let b: Bb = <error>Aa<caret></error>;
+            return Ok(b);
+        }
+    """, """
+        #![feature(try_from)]
+        use std::convert::TryFrom;
+
+        struct Aa;
+        struct Bb;
+        #[derive(Debug)] struct Ee;
+
+        impl TryFrom<Aa> for Bb { type Error = Ee; fn try_from(a: Aa) -> Result<Self, Self::Error> {Ok(Bb)} }
+
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = Result<B, Ee>; }
+
+        fn foo() -> <Struct as Trait>::Item {
+            let b: Bb = Bb::try_from(Aa)?;
+            return Ok(b);
+        }
+    """)
+
     fun `test B from A when impl TryFrom A for B is available and fn ret Result with Err mismatch`() = checkFixByText("Convert to Bb using `TryFrom` trait", """
         #![feature(try_from)]
         use std::convert::TryFrom;

@@ -406,6 +406,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test empty return in a function returning normalizable associated type E0069`() = checkErrors("""
+        struct Struct1;
+        struct Struct2;
+        trait Trait { type Item; }
+        impl Trait for Struct1 { type Item = (); }
+        impl Trait for Struct2 { type Item = bool; }
+
+        fn ok1() -> <Struct1 as Trait>::Item { return; }
+
+        fn err1() -> <Struct2 as Trait>::Item {
+            <error descr="`return;` in a function whose return type is not `()` [E0069]">return</error>;
+        }
+    """)
+
     @MockRustcVersion("1.33.0-nightly")
     fun `test type placeholder in signatures E0121`() = checkErrors("""
         fn ok(_: &'static str) {
@@ -1605,12 +1619,30 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[lang = "sized"] trait Sized {}
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
+
+        trait Trait { type Item; }
+        struct StructSized;
+        impl Trait for StructSized { type Item = i32; }
+        struct StructUnsized;
+        impl Trait for StructUnsized { type Item = [i32]; }
+
+        fn foo3(bar: <error><StructUnsized as Trait>::Item</error>) {}
+        fn foo4(bar: <StructSized as Trait>::Item) {}
     """)
 
     fun `test function return type should implement Sized trait E0277`() = checkErrors("""
         #[lang = "sized"] trait Sized {}
         fn foo1() -> <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error> { unimplemented!() }
         fn foo2() -> i32 { unimplemented!() }
+
+        trait Trait { type Item; }
+        struct StructSized;
+        impl Trait for StructSized { type Item = i32; }
+        struct StructUnsized;
+        impl Trait for StructUnsized { type Item = [i32]; }
+
+        fn foo3() -> <error><StructUnsized as Trait>::Item</error> { unimplemented!() }
+        fn foo4() -> <StructSized as Trait>::Item { unimplemented!() }
     """)
 
     fun `test type parameter with Sized bound on member function is Sized E0277`() = checkErrors("""
@@ -2554,6 +2586,29 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl Drop for Trait {}
     """)
 
+    fun `test impl for normalizable associated type referring to a struct E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        struct S;
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+        impl Drop for <Struct as Trait>::Item {}
+    """)
+
+    fun `test impl for normalizable associated type referring to a primitive E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = u8; }
+        impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for <Struct as Trait>::Item {}
+    """)
+
     fun `test impl Drop and derive Copy E0184`() = checkErrors("""
         #[lang = "copy"]
         trait Copy {}
@@ -2587,7 +2642,38 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for Foo<T> {}
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo<T> {}
-""")
+    """)
+
+    // TODO fix impl search for associated types
+    fun `test impl Drop and impl Copy for normalizable associated type E0184 1`() = expect<org.junit.ComparisonFailure> {
+    checkErrors("""
+        #[lang = "copy"] trait Copy {}
+        #[lang = "drop"] trait Drop {}
+
+        struct Foo;
+
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = Foo; }
+
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for <Struct as Trait>::Item {}
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for <Struct as Trait>::Item {}
+    """)
+    }
+
+    fun `test impl Drop and impl Copy for normalizable associated type E0184 2`() = checkErrors("""
+        #[lang = "copy"] trait Copy {}
+        #[lang = "drop"] trait Drop {}
+
+        struct Foo;
+
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = Foo; }
+
+        impl Copy for Foo {} // TODO should be an error too
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for <Struct as Trait>::Item {}
+    """)
 
     fun `test outer inline attr on function E0518`() = checkErrors("""
         #[inline]
@@ -2726,7 +2812,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![no_core]
         impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
     """)
-
 
     fun `test impl sized for struct E0322`() = checkErrors("""
         #[lang = "sized"]
@@ -3217,6 +3302,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![feature(start)]
         #[start]
         fn valid(_argc: isize, _argv: *const *const u8) -> isize { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test valid E0132 with normalizable associated type`() = checkErrors("""
+        #![feature(start)]
+
+        struct IsizeStruct;
+        struct ConstConstU8Struct;
+        trait Trait { type Item; }
+        impl Trait for IsizeStruct { type Item = isize; }
+        impl Trait for ConstConstU8Struct { type Item = *const *const u8; }
+
+        #[start]
+        fn valid(_argc: <IsizeStruct as Trait>::Item, _argv: <ConstConstU8Struct as Trait>::Item) -> <IsizeStruct as Trait>::Item { 0 }
     """)
 
 
