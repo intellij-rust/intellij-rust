@@ -67,13 +67,19 @@ fun Ty.suggestedNames(context: PsiElement, additionalNamesInScope: Set<String> =
 }
 
 fun freshenName(name: String, usedNames: Set<String>): String {
-    var newName = name
-    var i = 1
-    while (i < FRESHEN_LIMIT && usedNames.contains(newName)) {
-        newName = "$name$i"
-        ++i
+    if (name !in usedNames) return name
+
+    val numberSuffix = name.takeLastWhile { it in '0'..'9' }
+    val (nameWithoutNumber, startIndex) = if (numberSuffix.isEmpty()) {
+        name to 1
+    } else {
+        name.removeSuffix(numberSuffix) to numberSuffix.toInt()
     }
-    return newName
+
+    return generateSequence(startIndex) { it + 1 }
+        .take(FRESHEN_LIMIT)
+        .map { "$nameWithoutNumber$it" }
+        .first { it !in usedNames }
 }
 
 private fun finalizeNameSelection(

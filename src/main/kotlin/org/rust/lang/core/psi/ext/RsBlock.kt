@@ -110,7 +110,7 @@ fun RsBlock.singleStmt(): RsStmt? {
     return null
 }
 
-private val RsBlock.stmtsAndMacros: Sequence<RsElement>
+val RsBlock.stmtsAndMacros: Sequence<RsElement>
     get() {
         val stub = greenStub
 

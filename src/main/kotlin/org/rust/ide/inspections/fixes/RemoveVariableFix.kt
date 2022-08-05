@@ -10,7 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsLetDecl
+import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsPatIdent
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.hasSideEffects
 import org.rust.lang.core.psi.ext.topLevelPattern
 
 
@@ -45,16 +49,3 @@ private fun deleteVariable(pat: RsPatIdent) {
         decl.delete()
     }
 }
-
-private val RsExpr.hasSideEffects: Boolean
-    get() = when (this) {
-        is RsUnitExpr, is RsLitExpr, is RsPathExpr -> false
-        is RsParenExpr -> expr?.hasSideEffects ?: false
-        is RsCastExpr -> expr.hasSideEffects
-        is RsDotExpr -> expr.hasSideEffects || methodCall != null
-        is RsTupleExpr -> exprList.any { it.hasSideEffects }
-        is RsStructLiteral -> structLiteralBody.structLiteralFieldList.any { it.expr?.hasSideEffects ?: false }
-        is RsBinaryExpr -> exprList.any { it.hasSideEffects }
-        is RsUnaryExpr -> expr?.hasSideEffects ?: false
-        else -> true
-    }
