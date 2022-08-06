@@ -236,7 +236,8 @@ class Cargo(
             return Err(RsDeserializationException(e))
         }
 
-        val buildTarget = tree.at("/build/target").asText()
+        val buildTargetNode = tree.at("/build/target")
+        val buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
         val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
             // Value can be either string or object with additional `forced` and `relative` params.
             // https://doc.rust-lang.org/cargo/reference/config.html#env
