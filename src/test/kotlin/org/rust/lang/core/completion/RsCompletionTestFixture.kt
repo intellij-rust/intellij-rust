@@ -6,12 +6,12 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.rust.*
 
-class RsCompletionTestFixture(
+open class RsCompletionTestFixture(
     fixture: CodeInsightTestFixture,
     private val defaultFileName: String = "main.rs"
 ) : RsCompletionTestFixtureBase<String>(fixture) {
@@ -51,7 +51,7 @@ class RsCompletionTestFixture(
         doContainsCompletion(variants.toSet(), render)
     }
 
-    private fun checkAstNotLoaded(fileFilter: VirtualFileFilter) {
+    protected open fun checkAstNotLoaded(fileFilter: (VirtualFile) -> Boolean) {
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
 }

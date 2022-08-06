@@ -22,15 +22,16 @@ class CargoTomlJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware 
 // It's a temporarily hack not to use remote scheme for Cargo.toml from https://json.schemastore.org/cargo.json
 // by providing own empty embedded scheme (embedded schemes have more priority than remote ones)
 // because it suggests unexpected completion variants like `{}`
-private class CargoTomlJsonSchemaFileProvider : JsonSchemaFileProvider {
+class CargoTomlJsonSchemaFileProvider : JsonSchemaFileProvider {
     override fun isAvailable(file: VirtualFile): Boolean = file.name == "Cargo.toml"
     override fun getName(): String = "Cargo.toml schema"
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
     override fun isUserVisible(): Boolean = false
     override fun getSchemaFile(): VirtualFile? {
-        return JsonSchemaProviderFactory.getResourceFile(
-            CargoTomlJsonSchemaFileProvider::class.java,
-            "/jsonSchema/cargo.toml-schema.json"
-        )
+        return JsonSchemaProviderFactory.getResourceFile(CargoTomlJsonSchemaFileProvider::class.java, SCHEMA_PATH)
+    }
+
+    companion object {
+        const val SCHEMA_PATH: String = "/jsonSchema/cargo.toml-schema.json"
     }
 }
