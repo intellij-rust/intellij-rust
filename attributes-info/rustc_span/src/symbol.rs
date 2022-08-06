@@ -5,15 +5,15 @@
 use std::cmp::PartialEq;
 use std::fmt;
 use std::hash::Hash;
-use std::lazy::SyncLazy;
 use std::str;
+use std::sync::LazyLock;
 
 include!(concat!(env!("OUT_DIR"), "/symbol.rs"));
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Symbol(pub u32);
 
-static INTERNER: SyncLazy<Interner> = SyncLazy::new(|| Interner::fresh());
+static INTERNER: LazyLock<Interner> = LazyLock::new(|| Interner::fresh());
 
 impl Symbol {
     const fn new(n: u32) -> Self {
