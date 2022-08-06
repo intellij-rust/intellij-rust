@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml.schema
+package org.rust.js.toml.schema
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider

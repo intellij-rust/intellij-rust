@@ -9,6 +9,6 @@
     </extensions>
 
     <extensions defaultExtensionNs="JavaScript.JsonSchema">
-        <ProviderFactory implementation="org.rust.toml.schema.RsSchemaProviderFactory"/>
+        <ProviderFactory implementation="org.rust.js.toml.schema.RsSchemaProviderFactory"/>
     </extensions>
 </idea-plugin>

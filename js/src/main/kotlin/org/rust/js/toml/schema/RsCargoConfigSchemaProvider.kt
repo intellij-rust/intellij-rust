@@ -3,21 +3,21 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml.schema
+package org.rust.js.toml.schema
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 
-class RsCargoManifestSchemaProvider : JsonSchemaFileProvider {
+class RsCargoConfigSchemaProvider : JsonSchemaFileProvider {
     override fun isAvailable(file: VirtualFile): Boolean =
-        file.name == "Cargo.toml"
+        file.path.endsWith(".cargo/config.toml")
 
-    override fun getName(): String = "Cargo Manifest"
+    override fun getName(): String = "Cargo Config"
 
     override fun getSchemaFile(): VirtualFile? =
-        JsonSchemaProviderFactory.getResourceFile(this::class.java, "/jsonSchemas/cargo-manifest-schema.json")
+        JsonSchemaProviderFactory.getResourceFile(javaClass, "/jsonSchemas/cargo-config-schema.json")
 
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
 }
