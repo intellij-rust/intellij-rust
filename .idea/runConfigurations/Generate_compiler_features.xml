@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Generate compiler features" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="command" value="run --package attributes-info --bin attributes-info" />
+    <option name="command" value="run --manifest-path attributes-info/Cargo.toml --package attributes-info --bin attributes-info" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <option name="channel" value="NIGHTLY" />
     <option name="requiredFeatures" value="true" />
