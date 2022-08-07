@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFileBase
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.ENUM_VARIANT_NS
 import org.rust.lang.core.resolve.processModDeclResolveVariants
 import org.rust.lang.core.resolve2.util.DollarCrateHelper
 import org.rust.lang.core.resolve2.util.DollarCrateMap
@@ -300,7 +300,7 @@ private class ModCollector(
             val isVariantDeeplyEnabledByCfg = enumData.isDeeplyEnabledByCfg && variantPsi.isEnabledByCfgSelf(crate)
             val variantVisibility = if (isVariantDeeplyEnabledByCfg) Visibility.Public else Visibility.CfgDisabled
             val variant = VisItem(variantPath, variantVisibility)
-            val variantPerNs = PerNs.from(variant, variantPsi.namespaces)
+            val variantPerNs = PerNs.from(variant, ENUM_VARIANT_NS)
             enumData.addVisibleItem(variantName, variantPerNs)
         }
         return enumData
