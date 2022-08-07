@@ -293,7 +293,7 @@ class ModData(
     val name: String get() = path.name
     val isDeeplyEnabledByCfg: Boolean get() = isDeeplyEnabledByCfgOuter && isEnabledByCfgInner
     val parents: Sequence<ModData> get() = generateSequence(this) { it.parent }
-    private val rootModData: ModData = parent?.rootModData ?: this
+    val rootModData: ModData = parent?.rootModData ?: this
 
     // Optimization to reduce allocations
     val visibilityInSelf: Restricted = Restricted.create(this)

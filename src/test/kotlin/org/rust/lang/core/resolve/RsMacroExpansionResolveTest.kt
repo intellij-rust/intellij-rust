@@ -928,6 +928,21 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
+    fun `test legacy textual macro reexported as macro 2 (no macro_export)`() = checkByCode("""
+        mod inner {
+            macro_rules! as_is_ { ($ i:item) => { $ i } }
+            pub(crate) use as_is_ as as_is;
+        }
+
+        use inner::as_is;
+        as_is! { fn foo() {} }
+                         //X
+
+        fn main() {
+            foo();
+        } //^
+    """)
+
     fun `test macro call expanded to macro def and macro call 1`() = checkByCode("""
         macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
         as_is! {
