@@ -58,12 +58,13 @@ fun collectScope(
     context: ModCollectorContext,
     modMacroIndex: MacroIndex = modData.macroIndex,
     dollarCrateHelper: DollarCrateHelper? = null,
+    includeMacroFile: VirtualFile? = null,
     propagateLegacyMacros: Boolean = false,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
         .takeIf { modData.isNormalCrate }
 
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper)
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper, includeMacroFile)
     collector.collectMod(scope.getOrBuildStub() ?: return emptyMap(), propagateLegacyMacros)
 
     if (hashCalculator != null && scope is RsFile) {
@@ -80,7 +81,14 @@ fun collectExpandedElements(
     context: ModCollectorContext,
     dollarCrateHelper: DollarCrateHelper?
 ) {
-    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper)
+    val collector = ModCollector(
+        call.containingMod,
+        context,
+        call.macroIndex,
+        hashCalculator = null,
+        dollarCrateHelper,
+        includeMacroFile = null
+    )
     collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
@@ -98,6 +106,8 @@ private class ModCollector(
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
     private val dollarCrateHelper: DollarCrateHelper?,
+    /** containing file, if it is `include!`-ed */
+    private val includeMacroFile: VirtualFile?,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -255,7 +265,8 @@ private class ModCollector(
                     context,
                     childModData.macroIndex,
                     hashCalculator,
-                    dollarCrateHelper
+                    dollarCrateHelper,
+                    includeMacroFile
                 )
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
@@ -311,6 +322,7 @@ private class ModCollector(
             path,
             MacroCallBody.FunctionLike(call.body),
             bodyHash,
+            containingFileId = includeMacroFile?.fileId ?: modData.fileId,
             macroDepth,
             dollarCrateMap
         )
@@ -335,6 +347,7 @@ private class ModCollector(
             path,
             body,
             bodyHash,
+            containingFileId = null,  // will not be used
             macroDepth,
             dollarCrateMap,
             originalItem

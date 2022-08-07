@@ -399,21 +399,27 @@ class DefCollector(
     }
 
     private fun expandIncludeMacroCall(call: MacroCallInfo) {
-        val modData = call.containingMod
-        val containingFile = PersistentFS.getInstance().findFileById(modData.fileId ?: return) ?: return
+        val containingFile = PersistentFS.getInstance().findFileById(call.containingFileId ?: return) ?: return
         val includePath = (call.body as? MacroCallBody.FunctionLike)?.text ?: return
         val parentDirectory = containingFile.parent
         val includingFile = parentDirectory.findFileByMaybeRelativePath(includePath)
         val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
         if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectScope(includingRsFile, call.containingMod, context, call.macroIndex, propagateLegacyMacros = true)
+            collectScope(
+                includingRsFile,
+                call.containingMod,
+                context,
+                call.macroIndex,
+                includeMacroFile = includingFile,
+                propagateLegacyMacros = true
+            )
         } else if (!context.isHangingMode) {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
         }
         if (includingFile != null) {
-            recordChildFileInUnusualLocation(modData, includingFile.fileId)
+            recordChildFileInUnusualLocation(call.containingMod, includingFile.fileId)
         }
     }
 
@@ -528,6 +534,7 @@ class MacroCallInfo(
     val path: Array<String>,
     val body: MacroCallBody,
     val bodyHash: HashCode?,  // null for `include!` macro
+    val containingFileId: FileId?,  // needed only if this is `include!` macro
     val depth: Int,
     /**
      * `srcOffset` - [CratePersistentId]

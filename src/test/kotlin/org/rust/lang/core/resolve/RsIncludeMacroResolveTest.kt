@@ -136,6 +136,17 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                 //^ lib.rs
     """)
 
+    fun `test include file in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("inner/foo.rs");
+        fn foo(x: Foo) {}
+                //^ inner/bar.rs
+    //- inner/foo.rs
+        include!("bar.rs");
+    //- inner/bar.rs
+        struct Foo;
+    """)
+
     @ExpandMacros
     fun `test include macro in macro 1`() = checkResolve("""
     //- lib.rs
