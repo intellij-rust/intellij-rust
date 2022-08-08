@@ -13,23 +13,21 @@ jobs:
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
-            - name: Set up nightly Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: nightly
-                  components: rust-src, rustfmt, clippy # should be synchronized with `check` workflow
-                  default: true
-
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: 3.9
-
-            - name: Set up git user
-              run: |
-                  git config --local user.email "intellij.rust@gmail.com"
-                  git config --local user.name "intellij-rust-bot"
+            - name: Prepare for updates
+              uses: ./.github/actions/preparations-for-updates
 
             - name: Update nightly
               run: python scripts/update_nightly.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+    update-compiler-features:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+            - name: Prepare for updates
+              uses: ./.github/actions/preparations-for-updates
+
+            - name: Update compiler features
+              run: python scripts/update_compiler_features.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
