@@ -13,6 +13,7 @@ import com.intellij.util.indexing.LightDirectoryIndex
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.CargoWorkspace.Package
+import org.rust.cargo.project.workspace.additionalRoots
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import java.util.*
@@ -41,6 +42,9 @@ class CargoPackageIndex(
                     val info = Optional.of(pkg)
                     index.putInfo(pkg.contentRoot, info)
                     index.putInfo(pkg.outDir, info)
+                    for (additionalRoot in pkg.additionalRoots()) {
+                        index.putInfo(additionalRoot, info)
+                    }
                     for (target in pkg.targets) {
                         index.putInfo(target.crateRoot?.parent, info)
                     }

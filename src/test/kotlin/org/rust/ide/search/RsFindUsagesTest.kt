@@ -272,7 +272,7 @@ class RsFindUsagesTest : RsTestBase() {
     fun `test usage in child mod with path attribute`() = doTestByFileTree("""
     //- main.rs
         mod foo;
-    //- foo/main.rs
+    //- foo/mod.rs
         struct Foo;
              //^
         #[path = "../bar.rs"]
@@ -284,7 +284,7 @@ class RsFindUsagesTest : RsTestBase() {
     fun `test usage in included file`() = doTestByFileTree("""
     //- main.rs
         mod foo;
-    //- foo/main.rs
+    //- foo/mod.rs
         struct Foo;
              //^
         include!("../bar.rs");

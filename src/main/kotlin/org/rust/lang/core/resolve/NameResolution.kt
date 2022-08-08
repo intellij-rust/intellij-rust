@@ -1892,6 +1892,7 @@ object NameResolutionTestmarks {
     object ModRsFile : Testmark()
     object SelfRelatedTypeSpecialCase : Testmark()
     object SkipAssocTypeFromImpl : Testmark()
+    object UpdateDefMapsForAllCratesWhenFindingModData : Testmark()
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

@@ -19,6 +19,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.openapiext.pathAsPath
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
@@ -1146,6 +1147,36 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
         project.testCargoProjects.refreshAllProjectsSync()
         checkReferenceIsResolved<RsPath>("foo2/src/main.rs")
+    }
+
+    @CheckTestmarkHit(NameResolutionTestmarks.UpdateDefMapsForAllCratesWhenFindingModData::class)
+    fun `test file outside of a package root`() = buildProject {
+        dir("cargo-package") {
+            toml("Cargo.toml", """
+                [package]
+                name = "cargo-package"
+                version = "0.1.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    fn func() {}
+
+                    #[path = "../../outside/foo.rs"]
+                    mod foo;
+                """)
+            }
+        }
+        dir("outside") {
+            rust("foo.rs", """
+                fn main() {
+                    crate::func();
+                }        //^
+
+            """)
+        }
+    }.run {
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("cargo-package/Cargo.toml"))
+        checkReferenceIsResolved<RsPath>("outside/foo.rs")
     }
 
     private fun excludeDirectoryFromIndex(path: String) {

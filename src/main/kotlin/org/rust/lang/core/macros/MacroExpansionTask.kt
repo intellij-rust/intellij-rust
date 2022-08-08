@@ -22,10 +22,7 @@ import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.TrustedRequestor
 import org.rust.lang.core.psi.RsPsiManager
-import org.rust.lang.core.resolve2.CrateDefMap
-import org.rust.lang.core.resolve2.DefCollector
-import org.rust.lang.core.resolve2.MacroIndex
-import org.rust.lang.core.resolve2.updateDefMapForAllCrates
+import org.rust.lang.core.resolve2.*
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
@@ -59,6 +56,7 @@ class MacroExpansionTask(
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
     RsTask {
     private val expansionFileSystem: MacroExpansionFileSystem = MacroExpansionFileSystem.getInstance()
+    private val defMapService = project.defMapService
 
     override fun run(indicator: ProgressIndicator) {
         indicator.checkCanceled()
@@ -69,7 +67,7 @@ class MacroExpansionTask(
 
         val allDefMaps = try {
             indicator.text = "Preparing resolve data"
-            updateDefMapForAllCrates(project, subTaskIndicator)
+            defMapService.updateDefMapForAllCratesWithWriteActionPriority(subTaskIndicator)
         } catch (e: ProcessCanceledException) {
             throw e
         }

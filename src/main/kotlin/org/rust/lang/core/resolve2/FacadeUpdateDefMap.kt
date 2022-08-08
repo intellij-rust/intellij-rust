@@ -67,48 +67,56 @@ fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<Crat
 }
 
 /** Called from macro expansion task */
-fun updateDefMapForAllCrates(
-    project: Project,
+fun DefMapService.updateDefMapForAllCratesWithWriteActionPriority(
     indicator: ProgressIndicator,
     multithread: Boolean = true
 ): List<CrateDefMap> {
     return executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
-        doUpdateDefMapForAllCrates(project, wrappedIndicator, multithread)
+        doUpdateDefMapForAllCrates(wrappedIndicator, multithread)
     }
 }
 
-private fun doUpdateDefMapForAllCrates(
-    project: Project,
+fun DefMapService.updateDefMapForAllCrates(multithread: Boolean = true): List<CrateDefMap> {
+    val progressIndicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
+    return doUpdateDefMapForAllCrates(progressIndicator, multithread)
+}
+
+private fun DefMapService.doUpdateDefMapForAllCrates(
     indicator: ProgressIndicator,
     multithread: Boolean,
     rootCrateIds: List<CratePersistentId>? = null
 ): List<CrateDefMap> {
     val dumbService = DumbService.getInstance(project)
-    val defMapService = project.defMapService
     return runReadActionInSmartMode(dumbService) {
-        defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
-            check(defMapService.defMapsBuildLock.holdCount == 1)
-            DefMapUpdater(rootCrateIds, defMapService, indicator, multithread).run()
+        defMapsBuildLock.withLockAndCheckingCancelled {
+            check(defMapsBuildLock.holdCount == 1)
+            val result = DefMapUpdater(rootCrateIds, this, indicator, multithread).run()
+            if (rootCrateIds == null) {
+                setAllDefMapsUpToDate()
+            }
+            result
         }
     }
 }
 
 fun Project.forceRebuildDefMapForAllCrates(multithread: Boolean) {
+    val defMapService = defMapService
     runReadAction {
         defMapService.defMapsBuildLock.withLock {
             defMapService.scheduleRebuildAllDefMaps()
         }
     }
-    doUpdateDefMapForAllCrates(this, EmptyProgressIndicator(), multithread)
+    defMapService.doUpdateDefMapForAllCrates(EmptyProgressIndicator(), multithread)
 }
 
 fun Project.forceRebuildDefMapForCrate(crateId: CratePersistentId) {
+    val defMapService = defMapService
     runReadAction {
         defMapService.defMapsBuildLock.withLock {
             defMapService.scheduleRebuildDefMap(crateId)
         }
     }
-    doUpdateDefMapForAllCrates(this, EmptyProgressIndicator(), multithread = false, listOf(crateId))
+    defMapService.doUpdateDefMapForAllCrates(EmptyProgressIndicator(), multithread = false, listOf(crateId))
 }
 
 fun Project.getAllDefMaps(): List<CrateDefMap> = crateGraph.topSortedCrates.mapNotNull {
@@ -245,7 +253,7 @@ private fun List<Crate>.withReversedDependencies(): Set<Crate> {
 }
 
 private fun Set<Crate>.topSort(topSortedCrates: List<Crate>): List<Crate> =
-    topSortedCrates.filter { it in this }
+    if (size <= 1) toList() else topSortedCrates.filter { it in this }
 
 /** Does not persist order of elements */
 private fun <T> Collection<T>.filterAsync(pool: Executor, predicate: (T) -> Boolean): List<T> {

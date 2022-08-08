@@ -6,7 +6,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
@@ -17,6 +16,7 @@ import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
 import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.resolve2.defMapService
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
 import org.rust.openapiext.runWriteCommandAction
 
@@ -34,7 +34,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
 
     private fun checkModCount(op: TestAction, depsOp: TestAction = NOT_INC, action: () -> Unit) {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
-        updateDefMapForAllCrates(project, EmptyProgressIndicator(), multithread = false)
+        project.defMapService.updateDefMapForAllCrates(multithread = false)
         val modTracker = project.rustStructureModificationTracker
         val modTrackerInDeps = project.rustPsiManager.rustStructureModificationTrackerInDependencies
         val oldCount = modTracker.modificationCount
