@@ -41,6 +41,9 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_CSTR:
         return StdFFIStrSummaryProvider(valobj, dict, is_null_terminated=True)
 
+    if rust_type == RustType.STD_SLICE or rust_type == RustType.STD_MSVC_SLICE:
+        return SizeSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_VEC:
         return SizeSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
@@ -89,6 +92,9 @@ def synthetic_lookup(valobj, dict):
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
+
+    if rust_type == RustType.STD_SLICE or rust_type == RustType.STD_MSVC_SLICE:
+        return StdSliceSyntheticProvider(valobj, dict)
 
     if rust_type == RustType.STD_VEC:
         return StdVecSyntheticProvider(valobj, dict)
