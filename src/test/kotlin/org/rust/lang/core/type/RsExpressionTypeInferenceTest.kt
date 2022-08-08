@@ -1233,6 +1233,21 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test Self tuple struct init 4`() = testExpr("""
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        struct S(i32);
+        trait Foo { fn foo(); }
+        impl Foo for <Struct as Trait>::Item {
+            fn foo() {
+                let a = Self(1);
+                a;
+            } //^ S
+        }
+    """)
+
     fun `test Self as struct field type`() = testExpr("""
         pub struct S<'a> {
             field: &'a Self
@@ -1721,6 +1736,36 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = &raw mut a;
             b;
           //^ *mut i32
+        }
+    """)
+
+    fun `test normalizable associated type in function parameter`() = testExpr("""
+        struct S;
+        trait T { type Item; }
+        impl T for S { type Item = (u8, u8); }
+        fn foo((a, b): <S as T>::Item) {
+            a;
+        } //^ u8
+    """)
+
+    fun `test normalizable associated type in lambda parameter`() = testExpr("""
+        struct S;
+        trait T { type Item; }
+        impl T for S { type Item = (u8, u8); }
+        fn foo() {
+            let _ = |(a, b): <S as T>::Item| {
+                a;
+            };//^ u8
+        }
+    """)
+
+    fun `test normalizable associated type in cast expression`() = testExpr("""
+        struct S;
+        trait T { type Item; }
+        impl T for S { type Item = u8; }
+        fn main() {
+            let a = (1 as <S as T>::Item);
+                  //^ u8
         }
     """)
 }

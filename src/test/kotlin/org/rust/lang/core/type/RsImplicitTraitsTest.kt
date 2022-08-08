@@ -176,6 +176,21 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                   //^ !Sized
     """)
 
+    fun `test struct with DST field is not Sized with associated type projection`() = doTest("""
+        trait Trait {
+            type Item: ?Sized;
+        }
+        struct S<T: Trait> {
+            last: T::Item
+        }
+        struct X;
+        impl Trait for X {
+            type Item = [u8]; // !Sized
+        }
+        type T = S<X>;
+               //^ !Sized
+    """)
+
     fun `test derive for generic type`() = doTest("""
         struct X; // Not `Copy`
         #[derive(Copy, Clone)]
@@ -343,7 +358,11 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         val hasImpl = lookup.canSelect(TraitRef(typeRef.type, trait))
 
         check(mustHaveImpl == hasImpl) {
-            "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
+            if (mustHaveImpl) {
+                "The trait `$traitName` must be implemented for the type `${typeRef.type}`, but it actually doesn't"
+            } else {
+                "The trait `$traitName` must NOT be implemented for the type `${typeRef.type}`, but it is actually implemented"
+            }
         }
     }
 }

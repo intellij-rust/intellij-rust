@@ -295,4 +295,23 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S<42>
     """)
+
+    fun `test const with normalizable associated type`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        #![feature(const_generics)]
+        pub struct S<const N1: usize>;
+        pub fn bar<const N2: usize>() -> S<N2> { S }
+    //- lib.rs
+        mod foo;
+
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = usize; }
+
+        const C: <Struct as Trait>::Item = 42;
+        fn main() {
+            let a = foo::bar::<C>();
+            a;
+        } //^ S<42>
+    """)
 }

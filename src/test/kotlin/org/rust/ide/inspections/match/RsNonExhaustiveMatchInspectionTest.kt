@@ -442,6 +442,35 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    fun `test ignored fields with normalizable associated types`() = checkFixByText("Add remaining patterns", """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = bool; }
+
+        struct S { a: <Struct as Trait>::Item, b: <Struct as Trait>::Item, c: <Struct as Trait>::Item }
+
+        fn foo(s: S) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> s {
+                S { a: true, .. } => {}
+                S { b: true, .. } => {}
+            }
+        }
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = bool; }
+
+        struct S { a: <Struct as Trait>::Item, b: <Struct as Trait>::Item, c: <Struct as Trait>::Item }
+
+        fn foo(s: S) {
+            match s {
+                S { a: true, .. } => {}
+                S { b: true, .. } => {}
+                S { a: false, b: false, c: _ } => {}
+            }
+        }
+    """)
+
     fun `test import unresolved type`() = checkFixByText("Add remaining patterns", """
         use crate::a::E::A;
         use crate::a::foo;

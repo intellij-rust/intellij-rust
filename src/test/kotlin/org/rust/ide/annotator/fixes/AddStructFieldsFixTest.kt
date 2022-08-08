@@ -714,6 +714,54 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         }
     """)
 
+    fun `test struct with a field with normalizable associated type`() = checkBothQuickFix("""
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        struct S { foo: <Struct as Trait>::Item, bar: <Struct as Trait>::Item }
+
+        fn main() {
+            let bar = 1;
+            let _ = <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        struct S { foo: <Struct as Trait>::Item, bar: <Struct as Trait>::Item }
+
+        fn main() {
+            let bar = 1;
+            let _ = S { foo: 0/*caret*/, bar };
+        }
+    """)
+
+    fun `test tuple struct with a field with normalizable associated type`() = checkRecursiveQuickFix("""
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        struct S { foo: T }
+        struct T(<Struct as Trait>::Item);
+
+        fn main() {
+            let _ = <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = i32; }
+
+        struct S { foo: T }
+        struct T(<Struct as Trait>::Item);
+
+        fn main() {
+            let _ = S { foo: T(0)/*caret*/ };
+        }
+    """)
+
     private fun checkBothQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkFixByText("Add missing fields", before, after)
         checkFixByText("Recursively add missing fields", before, after)
