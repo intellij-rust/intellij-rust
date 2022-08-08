@@ -39,11 +39,13 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
                 }
                 schema.topLevelKeys(isArray)
             }
+
             is TomlKeyValue -> {
                 if (table !is TomlHeaderOwner) return
                 if (table.header.isDependencyListHeader) return
                 schema.keysForTable(table.name ?: return)
             }
+
             else -> return
         }
 
@@ -81,6 +83,14 @@ workspace = "path/to/workspace/root"
 edition = "2018"
 rust-version = "1.56"  # supported in the coming 1.56 release
 
+links = "..."
+default-run = "..."
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
+resolver = "..."
+
 description = "..."
 homepage = "..."
 repository = "..."
@@ -104,6 +114,8 @@ maintenance = { status = "..." }
 [profile.release]
 opt-level = 3
 debug = false
+split-debuginfo = "..."
+strip = "none"
 rpath = false
 lto = false
 debug-assertions = false
