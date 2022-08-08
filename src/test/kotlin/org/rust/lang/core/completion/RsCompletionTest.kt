@@ -1431,4 +1431,26 @@ class RsCompletionTest : RsCompletionTestBase() {
 
         fn foo<T: /*caret*/>() {}
     """)
+
+    fun `test complete the raw identifier in use`() = checkCompletion("break", """
+        mod foo {
+            pub fn r#break() {}
+        }
+
+        fn main() {
+            use self::foo::b/*caret*/
+
+            r#break();
+        }
+    """, """
+        mod foo {
+            pub fn r#break() {}
+        }
+
+        fn main() {
+            use self::foo::r#break;/*caret*/
+
+            r#break();
+        }
+    """)
 }
