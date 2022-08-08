@@ -171,8 +171,11 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         expectedTy: ExpectedType?
     ) {
         run {
+            val originalFile = position.containingFile.originalFile
             // true if delegated from RsPartialMacroArgumentCompletionProvider
-            if (position.containingFile.originalFile is RsExpressionCodeFragment) return
+            val ignoreCodeFragment = originalFile is RsExpressionCodeFragment
+                && originalFile.getUserData(FORCE_OUT_OF_SCOPE_COMPLETION) != true
+            if (ignoreCodeFragment) return
 
             // Not null if delegated from RsMacroCallBodyCompletionProvider
             val positionInMacroArgument = position.findElementExpandedFrom()

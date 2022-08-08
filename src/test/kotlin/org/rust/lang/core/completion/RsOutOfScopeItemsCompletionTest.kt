@@ -410,10 +410,8 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    // TODO parse top-level identifier as RsPath
     // e.g. `lazy_static`
-    fun `test macro with same name as dependency`() = expect<IllegalStateException> {
-        doTestByFileTree("""
+    fun `test macro with same name as dependency`() = doTestByFileTree("""
     //- lib.rs
         #[macro_export]
         macro_rules! test_package { () => {} }
@@ -421,10 +419,8 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         test_p/*caret*/
     """, """
         use test_package::test_package;
-
         test_package!()
     """)
-    }
 
     fun `test macro as type reference`() = doTestByFileTree("""
     //- lib.rs

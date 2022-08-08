@@ -346,7 +346,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test let not applied within nested mod`() = checkNoCompletion("""
+    fun `test let not applied within nested mod`() = checkNotContainsCompletion("let", """
         fn foo() {
             mod bar {
                 le/*caret*/
