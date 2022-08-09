@@ -152,12 +152,20 @@ class StdStrProvider:
         return "string"
 
 
-class StdVecProvider:
+class ArrayLikeProviderBase:
     def __init__(self, valobj):
         # type: (Value) -> None
         self.valobj = valobj
-        self.length = int(valobj["len"])
-        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
+        self.data_ptr = self.get_data_ptr()
+        self.length = self.get_length()
+
+    def get_data_ptr(self):
+        # type: () -> Value
+        pass
+
+    def get_length(self):
+        # type: () -> int
+        pass
 
     def to_string(self):
         return "size={}".format(self.length)
@@ -169,6 +177,26 @@ class StdVecProvider:
     @staticmethod
     def display_hint():
         return "array"
+
+
+class StdSliceProvider(ArrayLikeProviderBase):
+    def get_data_ptr(self):
+        # type: () -> Value
+        return self.valobj["data_ptr"]
+
+    def get_length(self):
+        # type: () -> int
+        return int(self.valobj["length"])
+
+
+class StdVecProvider(ArrayLikeProviderBase):
+    def get_data_ptr(self):
+        # type: () -> Value
+        return unwrap_unique_or_non_null(self.valobj["buf"]["ptr"])
+
+    def get_length(self):
+        # type: () -> int
+        return int(self.valobj["len"])
 
 
 class StdVecDequeProvider:

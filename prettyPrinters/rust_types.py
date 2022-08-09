@@ -19,6 +19,8 @@ class RustType(object):
     STD_OS_STRING = "StdOsString"
     STD_PATH_BUF = "StdPathBuf"
     STD_STR = "StdStr"
+    STD_SLICE = "StdSlice"
+    STD_MSVC_SLICE = "StdMsvcSlice"
     STD_OS_STR = "StdOsStr"
     STD_PATH = "StdPath"
     STD_CSTRING = "StdCString"
@@ -42,6 +44,9 @@ class RustType(object):
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
 # str, mut str, const str*, mut str* (vanilla LLDB); &str, &mut str, *const str, *mut str (Rust-enabled LLDB)
 STD_STR_REGEX = re.compile(r"^[&*]?(const |mut )?str\*?$")
+STD_SLICE_REGEX = re.compile(r"^&(mut )?\[.*\]$")
+STD_MSVC_SLICE_REGEX = re.compile(r"^(mut )?slice\$<.+>$")
+
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
 STD_OS_STR_REGEX = re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$")
 STD_PATH_BUF_REGEX = re.compile(r"^(std::([a-z_]+::)+)PathBuf$")
@@ -73,6 +78,8 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_PATH_BUF: STD_PATH_BUF_REGEX,
     RustType.STD_PATH: STD_PATH_REGEX,
     RustType.STD_STR: STD_STR_REGEX,
+    RustType.STD_SLICE: STD_SLICE_REGEX,
+    RustType.STD_MSVC_SLICE: STD_MSVC_SLICE_REGEX,
     RustType.STD_OS_STR: STD_OS_STR_REGEX,
     RustType.STD_CSTRING: STD_CSTRING_REGEX,
     RustType.STD_CSTR: STD_CSTR_REGEX,

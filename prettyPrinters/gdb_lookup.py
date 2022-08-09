@@ -67,6 +67,8 @@ def lookup(valobj):
         return StdOsStringProvider(valobj)
     if rust_type == RustType.STD_STR:
         return StdStrProvider(valobj)
+    if rust_type == RustType.STD_SLICE:
+        return StdSliceProvider(valobj)
 
     if rust_type == RustType.STD_VEC:
         return StdVecProvider(valobj)
