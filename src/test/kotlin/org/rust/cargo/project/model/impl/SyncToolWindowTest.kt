@@ -6,10 +6,12 @@
 package org.rust.cargo.project.model.impl
 
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
+import org.rust.MinRustcVersion
 import org.rust.WithExperimentalFeatures
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.CargoProject
@@ -313,7 +315,7 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
                 }
             """)
         }
-        checkSyncViewTree(        """
+        checkSyncViewTree("""
             -
              -finished
               -Sync ${project.root.name} project
@@ -323,6 +325,80 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
                  Compiling hello v0.1.0
                  -${project.root.name}
                   Failed to run custom build command for `hello v0.1.0 (${FileUtil.toSystemDependentName(project.root.path)})`
+                Build scripts evaluation failed
+               Getting Rust stdlib
+        """)
+    }
+
+    @MinRustcVersion("1.62.0")
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
+    fun `test Cargo continues build script evaluation after a compilation error in an independent crate`() {
+        if (SystemInfo.isWindows) return // It looks like error messages are a bit different on Windows
+                                         // TODO test it on windows using different expected output
+        val project = buildProject {
+            toml("Cargo.toml", """
+                [workspace]
+                members = [
+                    "with-build-script",
+                    "with-proc-macro"
+                ]
+            """)
+
+            dir("with-build-script") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "with-build-script"
+                    version = "0.1.0"
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        fn main() {}
+                    """)
+                }
+                rust("build.rs", """
+                    fn main() { panic!("Foo!"); }
+                """)
+            }
+
+            dir("with-proc-macro") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "with-proc-macro"
+                    version = "0.1.0"
+
+                    [lib]
+                    proc-macro = true
+                    path = "src/lib.rs"
+
+                    [[bin]]
+                    path = "src/main.rs"
+                    name = "with-proc-macro-bin"
+                """)
+
+                dir("src") {
+                    rust("main.rs", """
+                        fn main() {}
+                    """)
+                    rust("lib.rs", """
+                        fn foobar() { bar } // Compile error
+                    """)
+                }
+            }
+        }
+        checkSyncViewTree("""
+            -
+             -finished
+              -Sync ${project.root.name} project
+               Getting toolchain version
+               -Updating workspace info
+                -Build scripts evaluation
+                 Compiling with-build-script v0.1.0
+                 -Compiling with-proc-macro v0.1.0
+                  -lib.rs
+                   Cannot find value `bar` in this scope
+                 -${project.root.name}
+                  Failed to run custom build command for `with-build-script v0.1.0 (${FileUtil.toSystemDependentName(project.root.path)}/with-build-script)`
                 Build scripts evaluation failed
                Getting Rust stdlib
         """)
