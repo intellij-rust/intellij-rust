@@ -337,7 +337,7 @@ object CargoMetadata {
             }
             val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
             val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-            pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
+            pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages, project.workspace_root)
         }
 
         adjustFileSizeLimitForFilesInOutDirs(packages)
