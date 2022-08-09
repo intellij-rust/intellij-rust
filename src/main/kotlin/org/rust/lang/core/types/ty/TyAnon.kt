@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsTraitType
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.isImpl
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.HAS_TY_OPAQUE_MASK
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.mergeElementFlags
@@ -20,7 +21,7 @@ import org.rust.lang.core.types.mergeElementFlags
 data class TyAnon(
     val definition: RsTraitType?,
     val traits: List<BoundElement<RsTraitItem>>
-) : Ty(mergeElementFlags(traits)) {
+) : Ty(mergeElementFlags(traits) or HAS_TY_OPAQUE_MASK) {
 
     init {
         require(definition == null || definition.isImpl) {

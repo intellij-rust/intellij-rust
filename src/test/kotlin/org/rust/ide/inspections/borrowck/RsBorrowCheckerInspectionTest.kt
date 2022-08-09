@@ -285,4 +285,12 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             |x| &mut x;
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test box mut reborrow`() = checkByText("""
+        fn main() {
+            let mut a = Box::new(123);
+            let b = &mut *a;
+        }
+    """)
 }

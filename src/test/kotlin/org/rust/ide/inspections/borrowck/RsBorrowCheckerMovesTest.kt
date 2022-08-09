@@ -5,11 +5,13 @@
 
 package org.rust.ide.inspections.borrowck
 
+import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
     fun `test move by call`() = checkByText("""
@@ -272,6 +274,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move error E0382 on field getter`() = checkByText("""
         struct S {
             data: (u16, u16, u16)
@@ -333,6 +336,73 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    fun `test no move error E0507 when deref Rc with Copy type`() = checkByText("""
+        use std::rc::Rc;
+        fn main() {
+            let a = *Rc::new(1i32);
+            let (b, c) = *Rc::new((1i32, 1i32));
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 when partially move from Box`() = checkByText("""
+        struct NonCopy;
+        struct Foo {
+            f1: NonCopy,
+        }
+        fn foo(a: Box<Foo>) {
+            drop(a.f1);
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move Box deref twice`() = checkByText("""
+        struct S;
+        fn main() {
+            let x = Box::new(S);
+            *x;
+            <error descr="Use of moved value">*x</error>;
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move error when deref Rc`() = checkByText("""
+        use std::rc::Rc;
+        struct S;
+        fn main() {
+            let x = Rc::new(S);
+            <error descr="Cannot move">*x</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move custom overloaded deref`() = checkByText("""
+        #[lang = "deref"]
+        pub trait Deref {
+            #[lang = "deref_target"]
+            type Target: ?Sized;
+            fn deref(&self) -> &Self::Target;
+        }
+
+        struct S;
+        struct SmartPointer {
+            value: S
+        }
+        impl Deref for SmartPointer {
+            type Target = S;
+            
+            fn deref(&self) -> &S {
+                &self.value
+            }
+        }
+        
+        fn main() {
+            let x = SmartPointer { value: S };
+            <error descr="Cannot move">*x</error>;
+        }
+    """, checkWarn = false)
+
     /** Issue [#3062](https://github.com/intellij-rust/intellij-rust/issues/3062) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no move error E0507 when deref copyable self`() = checkByText("""
@@ -352,6 +422,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move error E0507 on copyable array`() = checkByText("""
         fn copy(arr: &[i32; 4]) -> [i32; 4] {
             *arr
@@ -553,6 +624,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
 
     /** Issue [#4307](https://github.com/intellij-rust/intellij-rust/issues/4307) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move error copy slice`() = checkByText("""
         fn main() {
             let v: Vec<i32> = vec![1, 2, 3];
@@ -633,6 +705,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move struct expr with base`() = checkByText("""
         struct S { x: i32, y: i32 }
 
@@ -644,6 +717,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move struct expr with base paren`() = checkByText("""
         struct S { x: i32, y: i32 }
 
@@ -655,6 +729,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move generic struct expr with base`() = checkByText("""
         struct S<T> { x: T, y: T }
 
@@ -677,6 +752,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move self struct expr with base`() = checkByText("""
         struct S { x: i32, y: i32 }
 
@@ -688,6 +764,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move self struct expr with complex base`() = checkByText("""
         struct A<T> { x: T }
         struct B<T> { a: A<T>, aa: i32 }
@@ -767,6 +844,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test no move when Copy is implemented for struct named as a primitive type`() = checkByText("""
         struct f64;
         impl Copy for f64 {}

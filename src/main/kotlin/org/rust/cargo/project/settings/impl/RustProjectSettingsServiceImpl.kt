@@ -61,10 +61,8 @@ class RustProjectSettingsServiceImpl(
     override val useOffline: Boolean get() = _state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
-    override val useRustfmt: Boolean get() = _state.useRustfmt
-    override val runRustfmtOnSave: Boolean get() = _state.runRustfmtOnSave
 
-    @Suppress("OverridingDeprecatedMember", "DEPRECATION")
+    @Suppress("OverridingDeprecatedMember", "DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun getToolchain(): RsToolchain? = _state.toolchain?.let(RsToolchain::from)
 
     override fun getState(): Element {
@@ -77,6 +75,10 @@ class RustProjectSettingsServiceImpl(
         val rawState = element.clone()
         rawState.updateToCurrentVersion()
         deserializeInto(_state, rawState)
+
+        if (_state.macroExpansionEngine == MacroExpansionEngine.OLD) {
+            _state.macroExpansionEngine = MacroExpansionEngine.NEW
+        }
     }
 
     override fun modify(action: (State) -> Unit) {
@@ -86,7 +88,7 @@ class RustProjectSettingsServiceImpl(
     @TestOnly
     override fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit) {
         val oldState = settingsState
-        settingsState = oldState.also(action)
+        settingsState = oldState.copy().also(action)
         Disposer.register(parentDisposable) {
             _state = oldState
         }

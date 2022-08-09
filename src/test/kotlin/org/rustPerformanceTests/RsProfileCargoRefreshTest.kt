@@ -8,7 +8,7 @@ package org.rustPerformanceTests
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.lang.core.resolve2.getAllDefMaps
 
-class RsProfileCargoRefreshTest : RsPerformanceTestBase() {
+class RsProfileCargoRefreshTest : RsPerfTestBase() {
 
     fun `test Cargo`() = profile(CARGO)
 

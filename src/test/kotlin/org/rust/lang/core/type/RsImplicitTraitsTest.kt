@@ -6,8 +6,16 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.TYPE
+import org.rust.lang.core.psi.RsCodeFragmentFactory
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -156,6 +164,33 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test RPIT is Sized`() = doTest("""
+        trait Foo {}
+        fn foo() -> impl Foo { todo!() }
+                  //^ Sized
+    """)
+
+    fun `test RPIT is not Sized if qSized unbound is present`() = doTest("""
+        trait Foo {}
+        fn foo() -> impl Foo+?Sized { todo!() }
+                  //^ !Sized
+    """)
+
+    fun `test struct with DST field is not Sized with associated type projection`() = doTest("""
+        trait Trait {
+            type Item: ?Sized;
+        }
+        struct S<T: Trait> {
+            last: T::Item
+        }
+        struct X;
+        impl Trait for X {
+            type Item = [u8]; // !Sized
+        }
+        type T = S<X>;
+               //^ !Sized
+    """)
+
     fun `test derive for generic type`() = doTest("""
         struct X; // Not `Copy`
         #[derive(Copy, Clone)]
@@ -164,25 +199,30 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ !Copy
     """)
 
+    fun `test associated type projection is Sized`() = doTest("""
+        trait Foo {
+            type Item;
+        }
+        fn foo<T: Foo>() -> T::Item { todo!() }
+                             //^ Sized
+    """)
+
+    fun `test associated type projection is not Sized when qSized bound is present`() = doTest("""
+        trait Foo {
+            type Item: ?Sized;
+        }
+        fn foo<T: Foo>() -> T::Item { todo!() }
+                             //^ !Sized
+    """)
+
     fun `test tuple of 'Copy' types is 'Copy'`() = doTest("""
-        type T = (i32, i32);
+        type T = ((), ());
                //^ Copy
     """)
 
     fun `test tuple of not 'Copy' types is not 'Copy'`() = doTest("""
         struct X;
         type T = (i32, X);
-               //^ !Copy
-    """)
-
-    fun `test array of 'Copy' type is 'Copy'`() = doTest("""
-        type T = [i32; 4];
-               //^ Copy
-    """)
-
-    fun `test array of non 'Copy' type is not 'Copy'`() = doTest("""
-        struct X;
-        type T = [X; 4];
                //^ !Copy
     """)
 
@@ -203,6 +243,83 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ Sized
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeArrayToSlice::class)
+    fun `test unsize array to slice`() = doTest("""
+        type T = [i32; 2];
+               //^ Unsize<[i32]>
+    """)
+
+    fun `test don't unsize array to slice if element types mismatch`() = doTest("""
+        type T = [i32; 2];
+               //^ !Unsize<[u8]>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeToTraitObject::class)
+    fun `test struct to trait object`() = doTest("""
+        struct S;
+        trait Foo {}
+        impl Foo for S {}
+        type T = S;
+               //^ Unsize<dyn Foo>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeTuple::class)
+    fun `test unsize tuple with unsize last field`() = doTest("""
+        type T = (i32, [i32; 2]);
+               //^ Unsize<(i32, [i32])>
+    """)
+
+    fun `test don't unsize tuple with different size`() = doTest("""
+        type T = (i32, i32, [i32; 2]);
+               //^ !Unsize<(i32, [i32])>
+    """)
+
+    fun `test don't unsize tuple with different types`() = doTest("""
+        type T = (i32, [i32; 2]);
+               //^ !Unsize<(u8, [i32])>
+    """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.UnsizeStruct::class)
+    fun `test unsize struct with unsize last field`() = doTest("""
+        struct S<T: ?Sized> {
+            head: i32,
+            tail: T,
+        }
+        type T = S<[i32; 2]>;
+               //^ Unsize<S<[i32]>>
+    """)
+
+    fun `test don't unsize struct with different types`() = doTest("""
+        struct S<H, T: ?Sized> {
+            head: H,
+            tail: T,
+        }
+        type T = S<i32, [i32; 2]>;
+               //^ !Unsize<u32, S<[i32]>>
+    """)
+
+    fun `test don't unsize struct with multiple fields affected`() = doTest("""
+        struct S<T: ?Sized> {
+            head: T,
+            tail: T,
+        }
+        type T = S<[i32; 2]>;
+               //^ !Unsize<S<[i32]>>
+    """)
+
+    fun `test a type is automatically Sync`() = doTest("""
+        struct S;
+        type T = S;
+               //^ Sync
+    """)
+
+    fun `test a type is not Sync if a negative impl present`() = doTest("""
+        struct S;
+        impl !Sync for S {}
+        type T = S;
+               //^ !Sync
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
@@ -216,8 +333,10 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
 
     private fun doTest(@Language("Rust") code: String) {
         val fullTestCode = """
-            #[lang = "sized"] pub trait Sized {}
-            #[lang = "copy"]  pub trait Copy {}
+            #[lang = "sized"]  pub trait Sized {}
+            #[lang = "copy"]   pub trait Copy {}
+            #[lang = "unsize"] pub trait Unsize<T: ?Sized> {}
+            #[lang = "sync"]   pub unsafe auto trait Sync {}
 
             $code
         """
@@ -232,14 +351,18 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
 
         val lookup = ImplLookup.relativeTo(typeRef)
-        val hasImpl = when (traitName) {
-            "Sized" -> lookup.isSized(typeRef.type)
-            "Copy" -> lookup.isCopy(typeRef.type)
-            else -> error("Unknown trait: $traitName")
-        }
+        val traitPath = RsCodeFragmentFactory(project).createPath(traitName, myFixture.file as RsFile, TYPE, TYPES)
+            ?: error("Cannot parse path `$traitName`")
+        val trait = traitPath.reference?.advancedResolve()?.downcast<RsTraitItem>()
+            ?: error("Cannot resolve path `traitName` to a trait")
+        val hasImpl = lookup.canSelect(TraitRef(typeRef.type, trait))
 
         check(mustHaveImpl == hasImpl) {
-            "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
+            if (mustHaveImpl) {
+                "The trait `$traitName` must be implemented for the type `${typeRef.type}`, but it actually doesn't"
+            } else {
+                "The trait `$traitName` must NOT be implemented for the type `${typeRef.type}`, but it is actually implemented"
+            }
         }
     }
 }

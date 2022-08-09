@@ -16,6 +16,7 @@ import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.completion.RsLookupElementProperties.ElementKind
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -29,10 +30,6 @@ import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.with
 
 object RsDeriveCompletionProvider : RsCompletionProvider() {
-
-    private const val DEFAULT_PRIORITY = 5.0
-    private const val GROUP_PRIORITY = DEFAULT_PRIORITY + 0.1
-
     override fun addCompletions(parameters: CompletionParameters,
                                 context: ProcessingContext,
                                 result: CompletionResultSet) {
@@ -61,11 +58,11 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
                         .withIcon(RsIcons.TRAIT.multiple())
-                    result.addElement(element.withPriority(GROUP_PRIORITY))
+                    result.addElement(element.toRsLookupElement(RsLookupElementProperties(elementKind = ElementKind.DERIVE_GROUP)))
                 }
                 val element = LookupElementBuilder.create(derivable.name)
                     .withIcon(RsIcons.TRAIT)
-                result.addElement(element.withPriority(DEFAULT_PRIORITY))
+                result.addElement(element.toRsLookupElement(RsLookupElementProperties(elementKind = ElementKind.DERIVE)))
             }
     }
 

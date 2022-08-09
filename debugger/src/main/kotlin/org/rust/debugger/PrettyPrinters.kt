@@ -5,19 +5,19 @@
 
 package org.rust.debugger
 
-import com.intellij.openapi.util.NlsContexts.ListItem
+import org.jetbrains.annotations.PropertyKey
 import org.rust.openapiext.RsPathManager
 
 val PP_PATH: String get() = RsPathManager.prettyPrintersDir().toString()
 const val LLDB_LOOKUP: String = "lldb_lookup"
 const val GDB_LOOKUP: String = "gdb_lookup"
 
-enum class LLDBRenderers(@Suppress("UnstableApiUsage") @ListItem private val description: String) {
-    NONE("No renderers"),
-    COMPILER("Rust compiler's renderers"),
-    BUNDLED("Bundled renderers");
+enum class LLDBRenderers(@PropertyKey(resourceBundle = BUNDLE) private val descriptionKey: String) {
+    NONE("rust.debugger.renderers.none.item"),
+    COMPILER("rust.debugger.renderers.compiler.item"),
+    BUNDLED("rust.debugger.renderers.bundled.item");
 
-    override fun toString(): String = description
+    override fun toString(): String = RsDebuggerBundle.message(descriptionKey)
 
     companion object {
         val DEFAULT: LLDBRenderers = BUNDLED
@@ -25,12 +25,12 @@ enum class LLDBRenderers(@Suppress("UnstableApiUsage") @ListItem private val des
     }
 }
 
-enum class GDBRenderers(private val description: String) {
-    NONE("No renderers"),
-    COMPILER("Rust compiler's renderers"),
-    BUNDLED("Bundled renderers");
+enum class GDBRenderers(@PropertyKey(resourceBundle = BUNDLE) private val descriptionKey: String) {
+    NONE("rust.debugger.renderers.none.item"),
+    COMPILER("rust.debugger.renderers.compiler.item"),
+    BUNDLED("rust.debugger.renderers.bundled.item");
 
-    override fun toString(): String = description
+    override fun toString(): String = RsDebuggerBundle.message(descriptionKey)
 
     companion object {
         val DEFAULT: GDBRenderers = BUNDLED

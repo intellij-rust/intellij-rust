@@ -5,6 +5,8 @@
 
 package org.rust.ide.actions.mover
 
+import org.rust.CheckTestmarkHit
+
 class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test function parameter`() = moveDownAndBackUp("""
         fn foo(
@@ -269,6 +271,7 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBlock::class)
     fun `test move up first vec argument`() = moveUp("""
         fn foo() {
             bar(
@@ -281,8 +284,9 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 ],
             );
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBlock)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfBlock::class)
     fun `test move down last vec argument`() = moveDown("""
         fn foo() {
             bar(
@@ -295,7 +299,7 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 ],
             );
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfBlock)
+    """)
 
     fun `test move vec adds comma 1`() = moveDown("""
         fn main() {

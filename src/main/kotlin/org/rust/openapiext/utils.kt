@@ -149,6 +149,15 @@ fun VirtualFile.findFileByMaybeRelativePath(path: String): VirtualFile? =
     else
         findFileByRelativePath(path)
 
+fun VirtualFile.findNearestExistingFile(path: String): Pair<VirtualFile, List<String>> {
+    var file = this
+    val segments = StringUtil.split(path, "/")
+    segments.forEachIndexed { i, segment ->
+        file = file.findChild(segment) ?: return file to segments.subList(i, segments.size)
+    }
+    return file to emptyList()
+}
+
 val VirtualFile.pathAsPath: Path get() = Paths.get(path)
 
 fun VirtualFile.toPsiFile(project: Project): PsiFile? =
@@ -305,8 +314,12 @@ fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(
     indicator: ProgressIndicator,
     action: (ProgressIndicator) -> T
 ): T {
-    checkReadAccessNotAllowed()
     indicator.checkCanceled()
+    if (isUnitTestMode && ApplicationManager.getApplication().isReadAccessAllowed) {
+        return action(indicator)
+    } else {
+        checkReadAccessNotAllowed()
+    }
     var result: T? = null
     do {
         val wrappedIndicator = SensitiveProgressWrapper(indicator)
@@ -382,7 +395,17 @@ val DataContext.elementUnderCaretInEditor: PsiElement?
         return psiFile.findElementAt(editor.caretModel.offset)
     }
 
-fun isFeatureEnabled(featureId: String): Boolean = Experiments.getInstance().isFeatureEnabled(featureId)
+fun isFeatureEnabled(featureId: String): Boolean {
+    // Hack to pass values of experimental features in headless IDE run
+    // Should help to configure IDE-based tools like Qodana
+    if (isHeadlessEnvironment) {
+        val value = System.getProperty(featureId)?.toBooleanStrictOrNull()
+        if (value != null) return value
+    }
+
+    return Experiments.getInstance().isFeatureEnabled(featureId)
+}
+
 fun setFeatureEnabled(featureId: String, enabled: Boolean) = Experiments.getInstance().setFeatureEnabled(featureId, enabled)
 
 fun <T> runWithEnabledFeatures(vararg featureIds: String, action: () -> T): T {

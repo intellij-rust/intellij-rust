@@ -6,11 +6,12 @@
 package org.rust.cargo.runconfig.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.util.WasmPackCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
+import org.rust.openapiext.fullWidthCell
 import javax.swing.JComponent
 
 class WasmPackCommandConfigurationEditor(project: Project)
@@ -22,11 +23,11 @@ class WasmPackCommandConfigurationEditor(project: Project)
 
     override fun createEditor(): JComponent = panel {
         row("Command:") {
-            command(growX, pushX)
+            fullWidthCell(command)
         }
 
         row(workingDirectory.label) {
-            workingDirectory(growX)
+            fullWidthCell(workingDirectory)
         }
     }
 }

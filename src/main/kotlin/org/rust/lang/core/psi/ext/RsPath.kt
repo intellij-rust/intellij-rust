@@ -85,7 +85,12 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
         //     ~~~~~~~~
         else -> TYPES_N_VALUES_N_MACROS
     }
-    is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
+    is RsPathExpr -> when {
+        isCompletion && qualifier != null -> TYPES_N_VALUES_N_MACROS
+        /** unqualified macros are special cased in [processPathResolveVariants] */
+        isCompletion && qualifier == null -> TYPES_N_VALUES
+        else -> VALUES
+    }
     is RsPatTupleStruct -> VALUES
     is RsMacroCall -> MACROS
     is RsPathCodeFragment -> parent.ns
@@ -105,12 +110,6 @@ val RsPath.resolveStatus: PathResolveStatus
 enum class PathResolveStatus {
     RESOLVED, UNRESOLVED, NO_REFERENCE
 }
-
-val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeArguments.orEmpty()
-
-val RsPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeArguments.orEmpty()
-
-val RsPath.constArguments: List<RsElement> get() = typeArgumentList?.constArguments.orEmpty()
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {

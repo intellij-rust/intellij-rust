@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import org.rust.ide.docs.getExternalDocumentationBaseUrl
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.containingCargoPackage
@@ -26,11 +27,13 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         val crate = parent.containingCargoPackage?.findDependency(crateName) ?: return null
         if (crate.pkg.source == null) return null
 
+        val baseUrl = getExternalDocumentationBaseUrl()
+
         return RsLineMarkerInfoUtils.create(
             element,
             element.textRange,
             RsIcons.DOCS_MARK,
-            { _, _ -> BrowserUtil.browse("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
+            { _, _ -> BrowserUtil.browse("$baseUrl${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
             GutterIconRenderer.Alignment.LEFT
         ) { "Open documentation for `${crate.pkg.normName}`" }
     }

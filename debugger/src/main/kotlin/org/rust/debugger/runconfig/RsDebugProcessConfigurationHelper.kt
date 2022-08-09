@@ -91,8 +91,6 @@ class RsDebugProcessConfigurationHelper(
         val rustcHash = "/rustc/$commitHash/".systemDependentAndEscaped()
         val rustcSources = "$sysroot/lib/rustlib/src/rust/".systemDependentAndEscaped()
         val fullCommand = """$sourceMapCommand "$rustcHash" "$rustcSources" """
-        // BACKCOMPAT: 2020.3
-        @Suppress("UnstableApiUsage", "DEPRECATION")
         executeInterpreterCommand(threadId, frameIndex, fullCommand)
     }
 

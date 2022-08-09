@@ -53,7 +53,9 @@ object RsTupleFieldCompletionProvider : RsCompletionProvider() {
         val elements = type.types.withIndex().map { (index, ty) ->
             createLookupElement(object : CompletionEntity {
                 override val ty: Ty get() = ty
-                override fun getBasePriority(context: RsCompletionContext): Double = FIELD_DECL_PRIORITY
+                override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties =
+                    RsLookupElementProperties(elementKind = RsLookupElementProperties.ElementKind.FIELD_DECL)
+
                 override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
                     return LookupElementBuilder
                         .create(index)

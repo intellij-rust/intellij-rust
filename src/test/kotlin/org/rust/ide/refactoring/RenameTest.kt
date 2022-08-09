@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring
 
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.testFramework.PsiTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.EmptyDescriptor
 import org.rust.ProjectDescriptor
@@ -269,7 +270,7 @@ class RenameTest : RsTestBase() {
     @ProjectDescriptor(EmptyDescriptor::class)
     fun `test do not invoke rename refactoring for directory outside of cargo project`() {
         val dir = myFixture.tempDirFixture.findOrCreateDir("dir").toPsiDirectory(project)!!
-        RsDirectoryRenameProcessor.Testmarks.rustDirRenameHandler.checkNotHit {
+        RsDirectoryRenameProcessor.Testmarks.RustDirRenameHandler.checkNotHit {
             myFixture.renameElement(dir, "dir2")
         }
     }
@@ -613,6 +614,34 @@ class RenameTest : RsTestBase() {
         fn foo(value: u32) -> u32 { unimplemented!() }
     """)
 
+    fun `test can't use initialization shorthand after rename 3`() = doTest("value2", """
+        struct Foo { value: u32 }
+        fn bar() -> Foo {
+            const /*caret*/value: i32 = 1;
+            Foo { value }
+        }
+    """, """
+        struct Foo { value: u32 }
+        fn bar() -> Foo {
+            const value2: i32 = 1;
+            Foo { value: value2 }
+        }
+    """)
+
+    fun `test can't use initialization shorthand after rename 4`() = doTest("value2", """
+        struct Foo<T> { value: T }
+        fn bar() -> Foo {
+            fn /*caret*/value() {}
+            Foo { value }
+        }
+    """, """
+        struct Foo<T> { value: T }
+        fn bar() -> Foo {
+            fn value2() {}
+            Foo { value: value2 }
+        }
+    """)
+
     fun `test rename variable with variable conflict`() = doTestWithConflicts("a", """
         fn test() {
             let a = 1;
@@ -664,6 +693,12 @@ class RenameTest : RsTestBase() {
         }
     """)
 
+    fun `test rename macro metavar`() = doTest("b", """
+        macro_rules! foo { ($ i/*caret*/:item) => { $ i }; }
+    """, """
+        macro_rules! foo { ($ b:item) => { $ b }; }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
@@ -673,6 +708,7 @@ class RenameTest : RsTestBase() {
         val element = myFixture.elementAtCaret
         myFixture.renameElement(element, newName, true, true)
         myFixture.checkResult(after)
+        PsiTestUtil.checkPsiStructureWithCommit(myFixture.file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
     }
 
     private fun doTestWithConflicts(

@@ -10,15 +10,24 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import java.util.function.Function
 
 abstract class RsNotificationProvider(
     protected val project: Project
-) : EditorNotifications.Provider<EditorNotificationPanel>() {
+) : EditorNotificationProvider {
 
     protected abstract val VirtualFile.disablingKey: String
 
-    abstract override fun createNotificationPanel(
+    final override fun collectNotificationData(
+        project: Project,
+        file: VirtualFile
+    ): Function<in FileEditor, out RsEditorNotificationPanel?> {
+        return Function { editor -> createNotificationPanel(file, editor, project) }
+    }
+
+    protected abstract fun createNotificationPanel(
         file: VirtualFile,
         editor: FileEditor,
         project: Project

@@ -46,6 +46,10 @@ fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
     val contextInfo = scope.getContextModInfo()
     if (contextInfo !is RsModInfo) return contextInfo
 
+    return getHangingModInfo(scope, contextInfo)
+}
+
+private fun getHangingModInfo(scope: RsItemsOwner, contextInfo: RsModInfo): RsModInfo {
     val (project, defMap, contextData) = contextInfo
     val modificationStamp = scope.stubAncestorStrict<RsFunction>()?.modificationTracker?.modificationCount
         ?: scope.containingFile.modificationStamp
@@ -55,6 +59,18 @@ fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
     }
     val dataPsiHelper = LocalScopeDataPsiHelper(scope, hangingModData, contextInfo.dataPsiHelper)
     return RsModInfo(project, defMap, hangingModData, contextInfo.crate, dataPsiHelper)
+}
+
+fun getLocalModInfo(scope: RsMod): RsModInfoBase {
+    val context = scope.context ?: return InfoNotFound
+    if (context !is RsBlock) return RsModInfoBase.CantUseNewResolve("local nested mod")
+    val contextInfo = getHangingModInfo(context)
+    if (contextInfo !is RsModInfo) return contextInfo
+    val (project, defMap, _, crate, _) = contextInfo
+
+    val modData = contextInfo.modData.childModules[scope.name] ?: return InfoNotFound
+    val dataPsiHelper = LocalScopeDataPsiHelper(scope, modData, contextInfo.dataPsiHelper)
+    return RsModInfo(project, defMap, modData, crate, dataPsiHelper)
 }
 
 fun getNearestAncestorModInfo(scope: RsItemsOwner): RsModInfoBase {
@@ -67,10 +83,11 @@ fun getNearestAncestorModInfo(scope: RsItemsOwner): RsModInfoBase {
 private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): ModData {
     val (project, defMap, contextData, crate) = contextInfo
 
+    val pathSegment = if (scope is RsModItem) "local#${scope.name}" else "#block"
     val hangingModData = ModData(
         parent = contextData.parent,
         crate = contextData.crate,
-        path = contextData.path.append("#block"),
+        path = contextData.path.append(pathSegment),
         /** Affects [resolveMacroCallToLegacyMacroDefInfo] */
         macroIndex = contextData.macroIndex.append(Int.MAX_VALUE),
         isDeeplyEnabledByCfgOuter = contextData.isDeeplyEnabledByCfgOuter,
@@ -82,10 +99,10 @@ private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): M
         hasMacroUse = false,
         isNormalCrate = false,
         context = contextData,
-        crateDescription = "block in ${contextData.crateDescription}",
+        crateDescription = "$pathSegment in ${contextData.crateDescription}",
     )
 
-    val collectorContext = CollectorContext(crate, project, isHangingMode = true)
+    val collectorContext = CollectorContext(crate, project, hangingModData)
     val modCollectorContext = ModCollectorContext(defMap, collectorContext)
     val dollarCrateHelper = createDollarCrateHelper(scope)
     collectScope(scope, hangingModData, modCollectorContext, dollarCrateHelper = dollarCrateHelper)
@@ -142,19 +159,22 @@ private class LocalScopeDataPsiHelper(
         return delegate?.dataToPsi(data)
     }
 
-    override fun findModData(path: ModPath): ModData? {
-        if (path == modData.path) return modData
-        path.getRelativePathTo(modData.path)?.let { relativePath ->
-            return modData.getChildModData(relativePath)
-        }
-        return delegate?.findModData(path)
-    }
-
-    /** 'mod1::mod2::#block::local1::local2'.getRelativePathTo('mod1::mod2::#block') == 'local1::local2' */
-    private fun ModPath.getRelativePathTo(parent: ModPath): Array<String>? =
-        if (parent.isSubPathOf(this)) {
-            segments.copyOfRange(parent.segments.size, segments.size)
-        } else {
-            null
-        }
+    override fun findModData(path: ModPath): ModData? =
+        findHangingModData(path, modData) ?: delegate?.findModData(path)
 }
+
+fun findHangingModData(path: ModPath, hangingModData: ModData): ModData? {
+    if (path == hangingModData.path) return hangingModData
+    path.getRelativePathTo(hangingModData.path)?.let { relativePath ->
+        return hangingModData.getChildModData(relativePath)
+    }
+    return null
+}
+
+/** 'mod1::mod2::#block::local1::local2'.getRelativePathTo('mod1::mod2::#block') == 'local1::local2' */
+private fun ModPath.getRelativePathTo(parent: ModPath): Array<String>? =
+    if (parent.isSubPathOf(this)) {
+        segments.copyOfRange(parent.segments.size, segments.size)
+    } else {
+        null
+    }

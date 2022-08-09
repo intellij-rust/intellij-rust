@@ -16,9 +16,6 @@ object RsExperiments {
 
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
 
-    @EnabledInStable
-    const val MACROS_NEW_ENGINE = "org.rust.macros.new.engine"
-
     const val PROC_MACROS = "org.rust.macros.proc"
 
     @EnabledInStable
@@ -29,6 +26,8 @@ object RsExperiments {
 
     @EnabledInStable
     const val WSL_TOOLCHAIN = "org.rust.wsl"
+
+    const val EMULATE_TERMINAL = "org.rust.cargo.emulate.terminal"
 }
 
 /**

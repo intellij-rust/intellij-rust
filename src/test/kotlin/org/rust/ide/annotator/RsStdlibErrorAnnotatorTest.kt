@@ -14,8 +14,7 @@ class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         extern crate core as core_alias;
         mod core {}
 
-        // FIXME: ideally we want to highlight these
-        extern crate alloc;
-        mod alloc {}
+        <error descr="A type named `alloc` has already been defined in this module [E0260]">extern crate alloc;</error>
+        mod <error descr="A type named `alloc` has already been defined in this module [E0260]">alloc</error> {}
     """)
 }

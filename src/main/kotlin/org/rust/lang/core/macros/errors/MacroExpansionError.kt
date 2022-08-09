@@ -21,6 +21,7 @@ sealed class MacroExpansionError
 sealed class DeclMacroExpansionError : MacroExpansionError() {
     data class Matching(val errors: List<MacroMatchingError>) : DeclMacroExpansionError()
     object DefSyntax : DeclMacroExpansionError()
+    object TooLargeExpansion : DeclMacroExpansionError()
 }
 
 sealed class MacroMatchingError {
@@ -107,6 +108,7 @@ fun DataOutput.writeMacroExpansionError(err: MacroExpansionError) {
         ProcMacroExpansionError.ExecutableNotFound -> 7
         ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> 8
         BuiltinMacroExpansionError -> 9
+        DeclMacroExpansionError.TooLargeExpansion -> 10
     }
     writeByte(ordinal)
 
@@ -133,11 +135,13 @@ fun DataInput.readMacroExpansionError(): MacroExpansionError = when (val ordinal
     1 -> DeclMacroExpansionError.DefSyntax
     2 -> ProcMacroExpansionError.ServerSideError(IOUtil.readUTF(this))
     3 -> ProcMacroExpansionError.ProcessAborted(readInt())
+    4 -> ProcMacroExpansionError.IOExceptionThrown
     5 -> ProcMacroExpansionError.Timeout(readLong())
     6 -> ProcMacroExpansionError.CantRunExpander
     7 -> ProcMacroExpansionError.ExecutableNotFound
     8 -> ProcMacroExpansionError.ProcMacroExpansionIsDisabled
     9 -> BuiltinMacroExpansionError
+    10 -> DeclMacroExpansionError.TooLargeExpansion
     else -> throw IOException("Unknown expansion error code $ordinal")
 }
 

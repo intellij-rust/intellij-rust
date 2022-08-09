@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFileBase
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.ENUM_VARIANT_NS
 import org.rust.lang.core.resolve.processModDeclResolveVariants
 import org.rust.lang.core.resolve2.util.DollarCrateHelper
 import org.rust.lang.core.resolve2.util.DollarCrateMap
@@ -58,12 +58,14 @@ fun collectScope(
     context: ModCollectorContext,
     modMacroIndex: MacroIndex = modData.macroIndex,
     dollarCrateHelper: DollarCrateHelper? = null,
+    includeMacroFile: VirtualFile? = null,
+    propagateLegacyMacros: Boolean = false,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
         .takeIf { modData.isNormalCrate }
 
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper)
-    collector.collectMod(scope.getOrBuildStub() ?: return emptyMap())
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper, includeMacroFile)
+    collector.collectMod(scope.getOrBuildStub() ?: return emptyMap(), propagateLegacyMacros)
 
     if (hashCalculator != null && scope is RsFile) {
         val fileHash = hashCalculator.getFileHash()
@@ -79,7 +81,14 @@ fun collectExpandedElements(
     context: ModCollectorContext,
     dollarCrateHelper: DollarCrateHelper?
 ) {
-    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper)
+    val collector = ModCollector(
+        call.containingMod,
+        context,
+        call.macroIndex,
+        hashCalculator = null,
+        dollarCrateHelper,
+        includeMacroFile = null
+    )
     collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
@@ -97,6 +106,8 @@ private class ModCollector(
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
     private val dollarCrateHelper: DollarCrateHelper?,
+    /** containing file, if it is `include!`-ed */
+    private val includeMacroFile: VirtualFile?,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -254,7 +265,8 @@ private class ModCollector(
                     context,
                     childModData.macroIndex,
                     hashCalculator,
-                    dollarCrateHelper
+                    dollarCrateHelper,
+                    includeMacroFile
                 )
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
@@ -288,7 +300,7 @@ private class ModCollector(
             val isVariantDeeplyEnabledByCfg = enumData.isDeeplyEnabledByCfg && variantPsi.isEnabledByCfgSelf(crate)
             val variantVisibility = if (isVariantDeeplyEnabledByCfg) Visibility.Public else Visibility.CfgDisabled
             val variant = VisItem(variantPath, variantVisibility)
-            val variantPerNs = PerNs.from(variant, variantPsi.namespaces)
+            val variantPerNs = PerNs.from(variant, ENUM_VARIANT_NS)
             enumData.addVisibleItem(variantName, variantPerNs)
         }
         return enumData
@@ -310,6 +322,7 @@ private class ModCollector(
             path,
             MacroCallBody.FunctionLike(call.body),
             bodyHash,
+            containingFileId = includeMacroFile?.fileId ?: modData.fileId,
             macroDepth,
             dollarCrateMap
         )
@@ -334,6 +347,7 @@ private class ModCollector(
             path,
             body,
             bodyHash,
+            containingFileId = null,  // will not be used
             macroDepth,
             dollarCrateMap,
             originalItem

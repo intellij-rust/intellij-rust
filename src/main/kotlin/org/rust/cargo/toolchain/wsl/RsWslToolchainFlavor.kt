@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain.wsl
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.util.io.isDirectory
@@ -34,7 +35,7 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
         WSLUtil.isSystemCompatible() && isFeatureEnabled(WSL_TOOLCHAIN)
 
     override fun isValidToolchainPath(path: Path): Boolean =
-        WslDistributionManager.isWslPath(path.toString()) && super.isValidToolchainPath(path)
+        WslPath.isWslUncPath(path.toString()) && super.isValidToolchainPath(path)
 
     override fun hasExecutable(path: Path, toolName: String): Boolean = path.hasExecutableOnWsl(toolName)
 
@@ -45,20 +46,21 @@ fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     @Suppress("UnstableApiUsage")
     val root = uncRootPath
     val environment = compute("Getting environment variables...") { environment }
+    if (environment != null) {
+        val home = environment["HOME"]
+        val remoteCargoPath = home?.let { "$it/.cargo/bin" }
+        val localCargoPath = remoteCargoPath?.let { root.resolve(it) }
+        if (localCargoPath?.isDirectory() == true) {
+            yield(localCargoPath)
+        }
 
-    val home = environment["HOME"]
-    val remoteCargoPath = home?.let { "$it/.cargo/bin" }
-    val localCargoPath = remoteCargoPath?.let { root.resolve(it) }
-    if (localCargoPath?.isDirectory() == true) {
-        yield(localCargoPath)
-    }
-
-    val sysPath = environment["PATH"]
-    for (remotePath in sysPath.orEmpty().split(":")) {
-        if (remotePath.isEmpty()) continue
-        val localPath = root.resolveOrNull(remotePath) ?: continue
-        if (!localPath.isDirectory()) continue
-        yield(localPath)
+        val sysPath = environment["PATH"]
+        for (remotePath in sysPath.orEmpty().split(":")) {
+            if (remotePath.isEmpty()) continue
+            val localPath = root.resolveOrNull(remotePath) ?: continue
+            if (!localPath.isDirectory()) continue
+            yield(localPath)
+        }
     }
 
     for (remotePath in listOf("/usr/local/bin", "/usr/bin")) {

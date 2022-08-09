@@ -42,7 +42,8 @@ class RsExtractStructFieldsAction : RsBaseEditorRefactoringAction() {
             project,
             struct,
             fields,
-            RsBundle.message("action.Rust.RsExtractStructFields.choose.fields.title")
+            RsBundle.message("action.Rust.RsExtractStructFields.choose.fields.title"),
+            allowEmptySelection = false
         ) ?: return
         if (chosenFields.isEmpty()) return
 

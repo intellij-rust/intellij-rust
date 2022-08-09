@@ -11,7 +11,7 @@ import com.fasterxml.jackson.core.io.JsonEOFException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -269,13 +269,13 @@ private class ProcMacroServerProcess private constructor(
 
     @Throws(IOException::class)
     private fun writeAndRead(request: Request): Response {
-        ProcMacroJsonParser.jackson.writeValue(stdin, request)
+        ProcMacroJsonParser.JSON_MAPPER.writeValue(stdin, request)
         stdin.write("\n")
         stdin.flush()
 
         stdout.skipUntilJsonObject()
 
-        return ProcMacroJsonParser.jackson.readValue(stdout, Response::class.java)
+        return ProcMacroJsonParser.JSON_MAPPER.readValue(stdout, Response::class.java)
     }
 
     /**
@@ -323,13 +323,16 @@ private class ProcMacroServerProcess private constructor(
         fun createAndRun(toolchain: RsToolchainBase, expanderExecutable: Path): ProcMacroServerProcess {
             MACRO_LOG.debug { "Starting proc macro expander process $expanderExecutable" }
 
+            val env = mapOf(
+                "INTELLIJ_RUST" to "1", // Let a proc macro know that it is run from intellij-rust
+                "RA_DONT_COPY_PROC_MACRO_DLL" to "1",
+            )
             val commandLine = toolchain.createGeneralCommandLine(
                 expanderExecutable,
                 workingDir,
                 null,
                 BacktraceMode.NO,
-                // Let a proc macro know that it is ran from intellij-rust
-                EnvironmentVariablesData.create(mapOf("INTELLIJ_RUST" to "1"), true),
+                EnvironmentVariablesData.create(env, true),
                 emptyList(),
                 emulateTerminal = false,
                 withSudo = false,
@@ -353,13 +356,13 @@ private class ProcMacroServerProcess private constructor(
 
 @VisibleForTesting
 object ProcMacroJsonParser {
-    val jackson: ObjectMapper = ObjectMapper()
+    val JSON_MAPPER: ObjectMapper = ObjectMapper()
         .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
         .configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
         .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
         .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .registerModule(KotlinModule())
+        .registerKotlinModule()
         .registerModule(
             SimpleModule()
                 .addSerializer(Request::class.java, RequestJsonSerializer())

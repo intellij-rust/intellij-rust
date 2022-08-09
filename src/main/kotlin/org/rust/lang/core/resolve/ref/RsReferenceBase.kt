@@ -12,8 +12,7 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.escapeIdentifierIfNeeded
 import org.rust.lang.core.psi.ext.RsElement
@@ -67,6 +66,7 @@ abstract class RsReferenceBase<T : RsReferenceElementBase>(
 
                 }
                 QUOTE_IDENTIFIER -> factory.createQuoteIdentifier(newName)
+                META_VAR_IDENTIFIER -> factory.createMetavarIdentifier(newName)
                 else -> error("Unsupported identifier type for `$newName` (${identifier.elementType})")
             }
             identifier.replace(newId)

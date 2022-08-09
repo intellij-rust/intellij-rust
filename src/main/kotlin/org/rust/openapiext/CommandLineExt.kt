@@ -58,9 +58,13 @@ fun GeneralCommandLine.execute(
     runner: CapturingProcessHandler.() -> ProcessOutput = { runProcessWithGlobalProgress(timeoutInMilliseconds = null) },
     listener: ProcessListener? = null
 ): RsProcessResult<ProcessOutput> {
+    LOG.info("Executing `$commandLineString`")
 
     val handler = RsCapturingProcessHandler.startProcess(this) // The OS process is started here
-        .unwrapOrElse { return Err(RsProcessExecutionException.Start(commandLineString, it)) }
+        .unwrapOrElse {
+            LOG.warn("Failed to run executable", it)
+            return Err(RsProcessExecutionException.Start(commandLineString, it))
+        }
 
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.

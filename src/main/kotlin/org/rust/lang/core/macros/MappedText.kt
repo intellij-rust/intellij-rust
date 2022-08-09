@@ -30,13 +30,15 @@ class MutableMappedText private constructor(
 ) {
     constructor(capacity: Int) : this(StringBuilder(capacity))
 
+    val length: Int get() = sb.length
+
     fun appendUnmapped(text: CharSequence) {
         sb.append(text)
     }
 
     fun appendMapped(text: CharSequence, srcOffset: Int) {
         if (text.isNotEmpty()) {
-            ranges += MappedTextRange(srcOffset, sb.length, text.length)
+            ranges.mergeAdd(MappedTextRange(srcOffset, sb.length, text.length))
             sb.append(text)
         }
     }

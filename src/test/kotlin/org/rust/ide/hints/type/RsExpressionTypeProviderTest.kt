@@ -69,10 +69,23 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "&BoxedS<T>")
 
+    fun `test field shorthand`() = doTest("""
+        struct S {
+            foo: i32,
+        }
+        fn main() {
+            let foo = 1;
+            let _ = S {
+                /*caret*/foo
+            };
+        }
+    """, "i32, S")
+
     private fun doTest(@Language("Rust") code: String, type: String) {
         InlineFile(code).withCaret()
 
-        val element = myFixture.elementAtCaret
+        val element = myFixture.file.findElementAt(myFixture.caretOffset)
+            ?: error("No element under the caret")
 
         val provider = RsExpressionTypeProvider()
         val expressions = provider.getExpressionsAt(element)

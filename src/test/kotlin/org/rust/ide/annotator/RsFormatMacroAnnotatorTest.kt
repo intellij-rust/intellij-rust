@@ -570,14 +570,30 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
     @ExpandMacros
     fun `test custom macro`() = checkErrors("""
-        $implDisplayI32
-
         macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
         fn main() {
             as_is! {
                 println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", 1);
                 println!("", <error descr="Argument never used">1</error>);
             }
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test no highlighting in cfg-disabled code`() = checkErrors("""
+        $implDisplayI32
+
+        #[cfg(not(intellij_rust))]
+        fn foo() {
+            println!("{}");
+            println!("{0}{1}", 1);
+            println!("{0}{1}{3}", 1, 1);
+            println!("Hello {:1${'$'}}", 1);
+        }
+
+        fn bar() {
+            #[cfg(not(intellij_rust))]
+            println!("{}");
         }
     """)
 }

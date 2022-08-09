@@ -38,12 +38,9 @@ import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.NameResolutionTestmarks.crateRootModule
-import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
-import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInInlineModule
-import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule
-import org.rust.lang.core.resolve.NameResolutionTestmarks.modRsFile
-import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
+import org.rust.lang.core.resolve.NameResolutionTestmarks.CrateRootModule
+import org.rust.lang.core.resolve.NameResolutionTestmarks.ModRsFile
+import org.rust.lang.core.resolve.NameResolutionTestmarks.SelfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
@@ -54,9 +51,12 @@ import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import org.rust.stdext.intersects
+import org.rust.stdext.withPrevious
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -113,10 +113,11 @@ fun processFieldExprResolveVariants(
     receiverType: Ty,
     originalProcessor: RsResolveProcessorBase<FieldResolveVariant>
 ): Boolean {
-    for ((i, ty) in lookup.coercionSequence(receiverType).withIndex()) {
+    val autoderef = lookup.coercionSequence(receiverType)
+    for (ty in autoderef) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
         val processor = createProcessor(originalProcessor.name) {
-            originalProcessor(FieldResolveVariant(it.name, it.element!!, ty, i))
+            originalProcessor(FieldResolveVariant(it.name, it.element!!, ty, autoderef.steps()))
         }
         if (processFieldDeclarations(ty.item, processor)) return true
     }
@@ -192,10 +193,8 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         // * owned directory when module declared in inline module
         // * parent of module declaration otherwise
         val dir = if (containingMod is RsFile) {
-            modDeclExplicitPathInNonInlineModule.hit()
             contextualFile.parent
         } else {
-            modDeclExplicitPathInInlineModule.hit()
             ownedDirectory
         } ?: return false
         val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath))
@@ -233,7 +232,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         // We shouldn't search possible module files in subdirectories
         // if module declaration is located in `mod.rs`
         if (inModRs) {
-            modRsFile.hit()
+            ModRsFile.hit()
             continue
         }
 
@@ -242,7 +241,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         // or in `mod.rs` of subdirectory of crate root dir (i.e. in `src/foo/mod.rs`)
         // Both cases are handled above
         if (inCrateRoot.value) {
-            crateRootModule.hit()
+            CrateRootModule.hit()
             continue
         }
 
@@ -291,10 +290,7 @@ fun processExternCrateResolveVariants(
     val explicitDepsFirst = crate.dependenciesWithCyclic.sortedBy {
         when (it.crate.origin) {
             PackageOrigin.WORKSPACE,
-            PackageOrigin.DEPENDENCY -> {
-                NameResolutionTestmarks.shadowingStdCrates.hit()
-                0
-            }
+            PackageOrigin.DEPENDENCY -> 0
             PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> 1
         }
     }
@@ -332,12 +328,15 @@ fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: 
     if (parent is RsMacroCall) {
         error("Tried to use `processPathResolveVariants` for macro path. See `RsMacroPathReferenceImpl`")
     }
+    if (parent is RsAssocTypeBinding) {
+        return processAssocTypeVariants(parent, processor)
+    }
     val qualifier = path.qualifier
     val typeQual = path.typeQual
     val ns = path.allowedNamespaces(isCompletion)
 
     // RsPathExpr can became a macro by adding a trailing `!`, so we add macros to completion
-    if (isCompletion && parent is RsPathExpr && qualifier?.path == null) {
+    if (isCompletion && parent is RsPathExpr && qualifier == null) {
         if (processMacroCallPathResolveVariants(path, true, processor)) return true
     }
 
@@ -445,7 +444,7 @@ private fun processQualifiedPathResolveVariants1(
     val (base, subst) = resolvedQualifier
 
     if (parent is RsUseSpeck && path.path == null) {
-        selfInGroup.hit()
+        SelfInGroup.hit()
         if (processor("self", base)) return true
     }
 
@@ -522,7 +521,7 @@ private fun processQualifiedPathResolveVariants1(
         // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
         // to only members of the current impl or implemented trait or its parent traits
         val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
-            NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
+            NameResolutionTestmarks.SelfRelatedTypeSpecialCase.hit()
             base.implementedTrait?.flattenHierarchy
         } else {
             null
@@ -630,7 +629,7 @@ private fun processUnqualifiedPathResolveVariants(
 }
 
 fun RsPath.resolveDollarCrateIdentifier(): Crate? {
-    NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
+    NameResolutionTestmarks.DollarCrateMagicIdentifier.hit()
     val dollarCrateSource = findMacroCallFromWhichLeafIsExpanded() ?: this
     return (dollarCrateSource.findMacroCallExpandedFromNonRecursive() as? RsMacroCall)
         ?.resolveToMacroAndGetContainingCrate()
@@ -648,7 +647,7 @@ private fun processTypeQualifiedPathResolveVariants(
     val (normBaseTy, _) = lookup.ctx.normalizeAssociatedTypesIn(baseTy, 0)
     val shadowingProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { e ->
         if (e.element is RsTypeAlias && baseTy is TyTypeParameter && e.source is TraitImplSource.ExplicitImpl) {
-            NameResolutionTestmarks.skipAssocTypeFromImpl.hit()
+            NameResolutionTestmarks.SkipAssocTypeFromImpl.hit()
             false
         } else {
             processor(e)
@@ -1017,7 +1016,6 @@ private class MacroResolver private constructor(
 
         val crateRoot = startElement.contextOrSelf<RsElement>()?.crateRoot as? RsFile
             ?: return MacroResolveResult.False
-        NameResolutionTestmarks.processSelfCrateExportedMacros.hit()
         return processAllScopeEntries(exportedMacrosAsScopeEntries(crateRoot), processor).toResult()
     }
 
@@ -1162,7 +1160,7 @@ private class MacroResolvingVisitor(
 
     override fun visitModItem(item: RsModItem) {
         if (ignoreLegacyMacros) return
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.existsAfterExpansionSelf) {
+        if (item.hasMacroUse && item.existsAfterExpansionSelf) {
             val elements = visibleMacros(item)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
         }
@@ -1170,7 +1168,7 @@ private class MacroResolvingVisitor(
 
     override fun visitModDeclItem(item: RsModDeclItem) {
         if (ignoreLegacyMacros) return
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.existsAfterExpansionSelf) {
+        if (item.hasMacroUse && item.existsAfterExpansionSelf) {
             val mod = item.reference.resolve() as? RsMod ?: return
             val elements = visibleMacros(mod)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
@@ -1180,7 +1178,7 @@ private class MacroResolvingVisitor(
     override fun visitExternCrateItem(item: RsExternCrateItem) {
         if (!item.existsAfterExpansionSelf) return
         val mod = item.reference.resolve() as? RsFile ?: return
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+        if (item.hasMacroUse) {
             // If extern crate has `#[macro_use]` attribute
             // we can use all exported macros from the corresponding crate
             visitorResult = processAll(exportedMacros(mod), processor)
@@ -1242,15 +1240,13 @@ private fun exportedMacrosAsScopeEntries(scope: RsFile): List<ScopeEntry> {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
     }
-    val cacheKey = if (scope.project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
-    return CachedValuesManager.getCachedValue(scope, cacheKey) {
+    return CachedValuesManager.getCachedValue(scope, EXPORTED_KEY) {
         val macros = exportedMacrosInternal(scope)
         CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
     }
 }
 
 private val EXPORTED_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_KEY")
-private val EXPORTED_MACROS_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_MACROS_KEY")
 
 private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
     // proc-macro crates are allowed to export only procedural macros.
@@ -1397,15 +1393,23 @@ private fun processMethodDeclarationsWithDeref(
     context: RsElement,
     processor: RsMethodResolveProcessor
 ): Boolean {
-    return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
-        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { (name, element, _, _, source) ->
+    return lookup.coercionSequence(receiver).withPrevious().withIndex().any { (i, tyWithPrev) ->
+        val (ty, prevTy) = tyWithPrev
+        val tyIsSuitableForMethodCall = ty != TyUnknown && ty !is TyInfer.TyVar
+        val withAutoBorrow = (prevTy !is TyReference || prevTy.mutability == MUTABLE) && tyIsSuitableForMethodCall
+        val withAutoBorrowMut = (prevTy !is TyReference || prevTy.mutability == IMMUTABLE) && tyIsSuitableForMethodCall
+        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { (name, element, _, selfTy, source) ->
+            val autoBorrow = selfTy is TyReference && selfTy.referenced === ty
             // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
             // it is an associated item and so if it is a function with self parameter - it is a method.
             // Also, this place is very hot and `hasSelfParameters` is cheaper than `isMethod`
-            element is RsFunction && element.hasSelfParameters &&
-                processor(MethodResolveVariant(name, element, ty, i, source))
+            element is RsFunction && element.hasSelfParameters
+                && (!autoBorrow || element.selfParameter?.isRef == false)
+                && processor(MethodResolveVariant(name, element, selfTy, i, source))
         }
         processAssociatedItems(lookup, ty, VALUES, context, methodProcessor)
+            || withAutoBorrow && processAssociatedItems(lookup, TyReference(ty, IMMUTABLE), VALUES, context, methodProcessor)
+            || withAutoBorrowMut && processAssociatedItems(lookup, TyReference(ty, MUTABLE), VALUES, context, methodProcessor)
     }
 }
 
@@ -1848,17 +1852,12 @@ private fun isSuperChain(path: RsPath): Boolean {
 
 
 object NameResolutionTestmarks {
-    val shadowingStdCrates = Testmark("shadowingStdCrates")
-    val missingMacroUse = Testmark("missingMacroUse")
-    val processSelfCrateExportedMacros = Testmark("processSelfCrateExportedMacros")
-    val dollarCrateMagicIdentifier = Testmark("dollarCrateMagicIdentifier")
-    val selfInGroup = Testmark("selfInGroup")
-    val crateRootModule = Testmark("crateRootModule")
-    val modRsFile = Testmark("modRsFile")
-    val modDeclExplicitPathInInlineModule = Testmark("modDeclExplicitPathInInlineModule")
-    val modDeclExplicitPathInNonInlineModule = Testmark("modDeclExplicitPathInNonInlineModule")
-    val selfRelatedTypeSpecialCase = Testmark("selfRelatedTypeSpecialCase")
-    val skipAssocTypeFromImpl = Testmark("skipAssocTypeFromImpl")
+    object DollarCrateMagicIdentifier : Testmark()
+    object SelfInGroup : Testmark()
+    object CrateRootModule : Testmark()
+    object ModRsFile : Testmark()
+    object SelfRelatedTypeSpecialCase : Testmark()
+    object SkipAssocTypeFromImpl : Testmark()
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

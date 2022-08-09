@@ -23,18 +23,18 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ui.JBUI
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.ide.docs.signature
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.openapiext.isUnitTestMode
-import org.rust.openapiext.pathToRsFileTextField
-import org.rust.openapiext.runWriteCommandAction
-import org.rust.openapiext.toPsiFile
+import org.rust.openapiext.*
 import org.rust.stdext.mapToSet
 import org.rust.stdext.toPath
 import java.awt.Dimension
@@ -51,7 +51,11 @@ class RsMoveTopLevelItemsDialog(
     private val sourceFilePath: String = sourceMod.containingFile.virtualFile.path
     private val sourceFileField: JBTextField = JBTextField(sourceFilePath).apply { isEnabled = false }
     private val targetFileChooser: TextFieldWithBrowseButton = createTargetFileChooser(project)
-    private val memberPanel: RsMoveMemberSelectionPanel = createMemberSelectionPanel()
+    private val memberPanel: RsMoveMemberSelectionPanel = createMemberSelectionPanel().apply {
+        // Small hack to make Kotlin UI DSL 2 use proper minimal size
+        // Actually, I don't know why it helps
+        preferredSize = JBUI.size(0, 0)
+    }
 
     private var searchForReferences: Boolean = true
 
@@ -97,18 +101,19 @@ class RsMoveTopLevelItemsDialog(
     override fun createCenterPanel(): JComponent {
         return panel {
             row("From:") {
-                sourceFileField(growX).withLargeLeftGap()
+                fullWidthCell(sourceFileField)
             }
             row("To:") {
-                targetFileChooser(growX).withLargeLeftGap().focused()
+                fullWidthCell(targetFileChooser).focused()
             }
             row {
-                memberPanel(grow, pushY)
+                resizableRow()
+                fullWidthCell(memberPanel)
+                    .verticalAlign(VerticalAlign.FILL)
             }
             row {
-                cell(isFullWidth = true) {
-                    checkBox(message("search.for.references"), ::searchForReferences)
-                }
+                checkBox(message("search.for.references"))
+                    .bindSelected(::searchForReferences)
             }
         }.also { it.preferredSize = Dimension(600, 400) }
     }

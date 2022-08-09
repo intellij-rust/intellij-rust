@@ -54,6 +54,14 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(x: &str) -> Box<Iterator<Item=&str>> { unimplemented!() }
     """)
 
+    fun `test all params and arguments`() = doTest("""
+        trait A<'a, T, const N: usize> { type Item; }
+        <weak_warning>fn <caret>foo<'a, T, const N: usize>(x: &'a str) -> Box<A<'a, T, { N + 1 }, Item=i32>></weak_warning> { unimplemented!() }
+    """, """
+        trait A<'a, T, const N: usize> { type Item; }
+        fn <caret>foo<T, const N: usize>(x: &str) -> Box<A<T, { N + 1 }, Item=i32>> { unimplemented!() }
+    """)
+
     fun `test check struct, enum, trait, alias`() = checkByText("""
         struct S<'a>;
         enum E<'a> {}

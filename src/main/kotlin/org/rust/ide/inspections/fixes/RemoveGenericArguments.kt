@@ -10,7 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.lang.core.psi.RsTypeArgumentList
-import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsMethodOrPath
 import org.rust.lang.core.psi.ext.deleteWithSurroundingComma
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.startOffset
@@ -22,7 +22,7 @@ class RemoveGenericArguments(
     override fun getFamilyName() = "Remove redundant generic arguments"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement as? RsElement ?: return
+        val element = descriptor.psiElement as? RsMethodOrPath ?: return
         val (typeArguments) = getTypeArgumentsAndDeclaration(element) ?: return
         typeArguments?.removeTypeParameters()
     }

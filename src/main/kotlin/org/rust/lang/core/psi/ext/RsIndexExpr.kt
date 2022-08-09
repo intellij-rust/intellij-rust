@@ -14,16 +14,16 @@ import org.rust.lang.core.resolve.ref.RsIndexExprReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
-val RsIndexExpr.containerExpr: RsExpr?
-    get() = exprList.getOrNull(0)
+val RsIndexExpr.containerExpr: RsExpr
+    get() = exprList[0]
 
 val RsIndexExpr.indexExpr: RsExpr?
     get() = exprList.getOrNull(1)
 
-abstract class RsIndexExprImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsIndexExpr {
+abstract class RsIndexExprImplMixin : RsStubbedElementImpl<RsPlaceholderStub<*>>, RsIndexExpr {
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val referenceNameElement: PsiElement? = null
 

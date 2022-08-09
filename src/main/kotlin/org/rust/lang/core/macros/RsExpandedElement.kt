@@ -33,7 +33,9 @@ interface RsExpandedElement : RsElement {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
                     project.macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
-                    RsIncludeMacroIndex.getIncludedFrom(parent)?.let { return it.containingMod }
+                    if (parent.isIncludedByIncludeMacro) {
+                        RsIncludeMacroIndex.getIncludedFrom(parent)?.let { return it.containingMod }
+                    }
                 }
             }
             return parent
@@ -69,7 +71,11 @@ val RsExpandedElement.expandedFromSequence: Sequence<RsMacroCall>
 val PsiElement.includedFrom: RsMacroCall?
     get() {
         val containingFile = stubParent as? RsFile ?: return null
-        return RsIncludeMacroIndex.getIncludedFrom(containingFile)
+        return if (containingFile.isIncludedByIncludeMacro) {
+            RsIncludeMacroIndex.getIncludedFrom(containingFile)
+        } else {
+            null
+        }
     }
 
 val RsExpandedElement.expandedOrIncludedFrom: RsPossibleMacroCall?

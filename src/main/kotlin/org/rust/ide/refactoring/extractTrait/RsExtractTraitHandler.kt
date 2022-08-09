@@ -18,7 +18,9 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
@@ -26,10 +28,13 @@ import org.rust.ide.refactoring.RsMemberInfo
 import org.rust.ide.refactoring.RsMemberSelectionPanel
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.openapiext.addTextChangeListener
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -38,15 +43,16 @@ class RsExtractTraitHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
         val offset = editor.caretModel.offset
         val element = file.findElementAt(offset) ?: return
-        val impl = element.ancestorOrSelf<RsImplItem>() ?: return
-        if (impl.traitRef != null) return
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, impl)) return
+        val traitOrImpl = element.ancestorOrSelf<RsTraitOrImpl>() ?: return
+        if (traitOrImpl is RsImplItem && traitOrImpl.traitRef != null) return
+        if (traitOrImpl is RsTraitItem && traitOrImpl.typeParameterList != null) return  // TODO
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, traitOrImpl)) return
 
-        val members = (impl.members ?: return).childrenOfType<RsItemElement>()
+        val members = (traitOrImpl.members ?: return).childrenOfType<RsItemElement>()
         if (members.isEmpty()) return
         val memberInfos = members.map { RsMemberInfo(it, false) }
 
-        val dialog = RsExtractTraitDialog(project, impl, memberInfos)
+        val dialog = RsExtractTraitDialog(project, traitOrImpl, memberInfos)
         if (isUnitTestMode) {
             dialog.doAction()
         } else {
@@ -61,7 +67,7 @@ class RsExtractTraitHandler : RefactoringActionHandler {
 
 class RsExtractTraitDialog(
     project: Project,
-    private val impl: RsImplItem,
+    private val traitOrImpl: RsTraitOrImpl,
     private val memberInfos: List<RsMemberInfo>,
 ) : RefactoringDialog(project, false) {
 
@@ -76,17 +82,20 @@ class RsExtractTraitDialog(
     }
 
     override fun createCenterPanel(): JComponent = panel {
-        blockRow {
-            cell(isFullWidth = true) {
-                label("Trait name:")
-            }
-            traitNameField().focused()
+        row {
+            label("Trait name:")
         }
         row {
+            fullWidthCell(traitNameField).focused()
+        }.bottomGap(BottomGap.MEDIUM)
+
+        row {
+            resizableRow()
             val members = RsMemberSelectionPanel("Members to form trait", memberInfos)
             members.minimumSize = JBUI.size(0, 200)
             members.table.addMemberInfoChangeListener { validateButtons() }
-            members()
+            fullWidthCell(members)
+                .verticalAlign(VerticalAlign.FILL)
         }
     }
 
@@ -115,13 +124,13 @@ class RsExtractTraitDialog(
 
     private fun doActionUndoCommand() {
         val (traitName, members) = getTraitNameAndSelectedMembers()
-        val processor = RsExtractTraitProcessor(impl, traitName, members)
+        val processor = RsExtractTraitProcessor(traitOrImpl, traitName, members)
         invokeRefactoring(processor)
     }
 
     private fun getTraitNameAndSelectedMembers(): Pair<String, List<RsItemElement>> {
         return if (isUnitTestMode) {
-            val members = impl.members
+            val members = traitOrImpl.members
                 ?.childrenOfType<RsItemElement>()
                 .orEmpty()
                 .filter { it.getUserData(RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED) != null }

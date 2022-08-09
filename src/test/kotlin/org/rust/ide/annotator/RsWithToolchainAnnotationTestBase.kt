@@ -10,7 +10,6 @@ import org.rust.FileTree
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.fileTree
-import org.rust.openapiext.Testmark
 
 abstract class RsWithToolchainAnnotationTestBase<C> : RsWithToolchainTestBase() {
 
@@ -35,11 +34,10 @@ abstract class RsWithToolchainAnnotationTestBase<C> : RsWithToolchainTestBase() 
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         ignoreExtraHighlighting: Boolean = false,
-        testmark: Testmark? = null,
         builder: FileTreeBuilder.() -> Unit
     ) {
         val file = configureProject(fileTree(builder), context)
-        annotationFixture.checkByFile(file, context, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, testmark)
+        annotationFixture.checkByFile(file, context, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
     }
 
     /**

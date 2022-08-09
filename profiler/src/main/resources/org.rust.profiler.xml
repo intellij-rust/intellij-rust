@@ -1,0 +1,20 @@
+<idea-plugin package="org.rust.profiler">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.clion"/>
+        <plugin id="com.intellij.cidr.base"/>
+
+        <module name="intellij.profiler.clion"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <programRunner implementation="org.rust.profiler.RsProfilerRunner"/>
+        <programRunner implementation="org.rust.profiler.legacy.RsProfilerRunnerLegacy"/>
+        <projectService serviceImplementation="org.rust.profiler.RsCachingStackElementReader"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.rust">
+        <runConfigurationExtension implementation="org.rust.profiler.perf.RsPerfConfigurationExtension"/>
+        <runConfigurationExtension implementation="org.rust.profiler.dtrace.RsDTraceConfigurationExtension"/>
+    </extensions>
+</idea-plugin>

@@ -9,7 +9,6 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
-import org.rust.ignoreInNewResolve
 
 @MockEdition(Edition.EDITION_2018)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -28,7 +27,7 @@ class RsStdlibResolveTestEdition2018 : RsResolveTestBase() {
         fn main() {
             let a = Vec::<i32>::new();
         }         //^ .../vec.rs|...vec/mod.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
+    """)
 
     fun `test resolve core crate without extern crate`() = stubOnlyResolve("""
     //- main.rs

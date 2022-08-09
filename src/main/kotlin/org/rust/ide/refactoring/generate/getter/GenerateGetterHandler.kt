@@ -46,9 +46,7 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
             val typeRef = it.field.typeReference ?: return@mapNotNull null
             val fieldType = typeRef.type.substitute(substitution)
 
-            val (borrow, type) = getBorrowAndType(fieldType, typeRef, it.field)
-            val typeStr = type.substAndGetText(substitution)
-
+            val (borrow, typeStr) = getBorrowAndType(fieldType, it.typeReferenceText, it.field)
             val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"
             val fnBody = "${borrow}self.$fieldName"
 
@@ -62,23 +60,22 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
 
 private fun getBorrowAndType(
     type: Ty,
-    typeReference: RsTypeReference,
+    typeReferenceText: String,
     context: RsElement
-): Pair<String, RsTypeReference> {
+): Pair<String, String> {
     return when {
-        type is TyPrimitive -> Pair("", typeReference)
+        type is TyPrimitive -> "" to typeReferenceText
         type is TyAdt -> {
             val item = type.item
             when {
                 item == item.knownItems.String -> {
-                    val factory = RsPsiFactory(context.project)
-                    Pair("&", factory.createType("str"))
+                    "&" to "str"
                 }
-                !type.isMovesByDefault(context.implLookup) -> Pair("", typeReference)
-                else -> Pair("&", typeReference)
+                !type.isMovesByDefault(context.implLookup) -> "" to typeReferenceText
+                else -> "&" to typeReferenceText
             }
         }
-        !type.isMovesByDefault(context.implLookup) -> Pair("", typeReference)
-        else -> Pair("&", typeReference)
+        !type.isMovesByDefault(context.implLookup) -> "" to typeReferenceText
+        else -> "&" to typeReferenceText
     }
 }

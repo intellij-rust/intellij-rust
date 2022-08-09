@@ -636,13 +636,80 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(){}
     """)
 
+    fun `test complete top-level unqualified macro from other module`() = doSingleCompletion("""
+        mod inner {
+            pub macro foo() {}
+        }
+        fo/*caret*/
+    """, """
+        use crate::inner::foo;
+
+        mod inner {
+            pub macro foo() {}
+        }
+        foo!(/*caret*/)
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete top-level unqualified macro from other crate`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        fo/*caret*/
+    //- lib.rs
+        pub macro foo() {}
+    """, """
+        use test_package::foo;
+        foo!(/*caret*/)
+    """)
+
+    fun `test complete top-level 3-segment macro from other module`() = doSingleCompletion("""
+        mod mod1 {
+            pub mod mod2 {
+                pub macro foo() {}
+            }
+        }
+        mod1::mod2::fo/*caret*/
+    """, """
+        mod mod1 {
+            pub mod mod2 {
+                pub macro foo() {}
+            }
+        }
+        mod1::mod2::foo!(/*caret*/)
+    """)
+
+    fun `test no items completion at top-level`() = checkNoCompletion("""
+        mod inner {
+            pub mod foo1 {}
+            pub fn foo2() {}
+        }
+        mod foo3 {}
+        fn foo4() {}
+
+        fo/*caret*/
+    """)
+
+    fun `test no unqualified macro completion at qualified position`() = checkNoCompletion("""
+        macro_rules! foo1 { () => {} }
+        mod mod1 {
+            pub macro foo2() {}
+            pub mod mod2 {}
+        }
+
+        mod1::mod2::fo/*caret*/
+    """)
+
     fun `test macro don't suggests as function name`() = checkNoCompletion("""
         macro_rules! foo_bar { () => () }
         fn foo/*caret*/() {
         }
     """)
 
-    fun `test complete macro2`() = doSingleCompletion("""
+    fun `test macro don't suggests as mod name`() = checkNoCompletion("""
+        macro_rules! foo_bar { () => () }
+        mod foo/*caret*/ {}
+    """)
+
+    fun `test complete macro2 unqualified`() = doSingleCompletion("""
         macro foo() {}
         fn main() {
             fo/*caret*/
@@ -651,6 +718,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         macro foo() {}
         fn main() {
             foo!(/*caret*/)
+        }
+    """)
+
+    fun `test complete macro2 qualified`() = doSingleCompletion("""
+        mod inner {
+            pub macro foo() {}
+        }
+        fn main() {
+            inner::fo/*caret*/
+        }
+    """, """
+        mod inner {
+            pub macro foo() {}
+        }
+        fn main() {
+            inner::foo!(/*caret*/)
         }
     """)
 
@@ -1047,6 +1130,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(f: &FnOnce(/*caret*/)) {}
     """)
 
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 1`() = checkCompletion("foo", """
         fn foo() {}
         fn foo2() {}
@@ -1059,8 +1143,9 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             foo()/*caret*/
         }
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 2`() = checkCompletion("V1", """
         enum E {
             V1(i32),
@@ -1077,16 +1162,17 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             E::V1(/*caret*/)
         }
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @CheckTestmarkHit(Testmarks.DoNotAddOpenParenCompletionChar::class)
     fun `test do not insert second parenthesis 3`() = checkCompletion("FnOnce", """
         struct FnOnceStruct;
         fn foo(f: FnOnce/*caret*/) {}
     """, """
         struct FnOnceStruct;
         fn foo(f: FnOnce(/*caret*/)) {}
-    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+    """, completionChar = '(')
 
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test completion cfg-disabled item 1`() = checkNoCompletionByFileTree("""

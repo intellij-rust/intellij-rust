@@ -16,8 +16,6 @@ import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
-import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Paths
 import kotlin.reflect.KProperty1
@@ -49,7 +47,9 @@ interface RustProjectSettingsService {
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
         var doctestInjectionEnabled: Boolean = true,
+        // BACKCOMPAT: 2022.1
         var useRustfmt: Boolean = false,
+        // BACKCOMPAT: 2022.1
         var runRustfmtOnSave: Boolean = false,
     ) {
         @get:Transient
@@ -68,7 +68,9 @@ interface RustProjectSettingsService {
     }
 
     enum class MacroExpansionEngine {
-        DISABLED, OLD, NEW
+        DISABLED,
+        OLD, // `OLD` can't be selected by a user anymore, it exists for backcompat with saved user settings
+        NEW
     }
 
     @Retention(AnnotationRetention.RUNTIME)
@@ -106,8 +108,6 @@ interface RustProjectSettingsService {
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
     val doctestInjectionEnabled: Boolean
-    val useRustfmt: Boolean
-    val runRustfmtOnSave: Boolean
 
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")
@@ -126,11 +126,7 @@ interface RustProjectSettingsService {
         )
 
         private val defaultMacroExpansionEngine: MacroExpansionEngine
-            get() = if (isFeatureEnabled(RsExperiments.MACROS_NEW_ENGINE)) {
-                MacroExpansionEngine.NEW
-            } else {
-                MacroExpansionEngine.OLD
-            }
+            get() = MacroExpansionEngine.NEW
     }
 
     interface RustSettingsListener {

@@ -124,7 +124,8 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
 private fun isApplicableForUseItem(item: RsUseItem): Boolean {
     if (!item.project.isNewResolveEnabled) return false
     if (item.visibility == RsVisibility.Public) return false
-    if (!item.isEnabledByCfg) return false
+    val crate = item.containingCrate ?: return false
+    if (!item.existsAfterExpansion(crate)) return false
     return true
 }
 

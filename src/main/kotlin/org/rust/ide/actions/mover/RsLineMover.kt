@@ -104,8 +104,8 @@ abstract class RsLineMover : LineMover() {
 }
 
 object UpDownMoverTestMarks {
-    val moveOutOfImpl = Testmark("moveOutOfImpl")
-    val moveOutOfMatch = Testmark("moveOutOfMatch")
-    val moveOutOfBody = Testmark("moveOutOfBody")
-    val moveOutOfBlock = Testmark("moveOutOfBlock")
+    object MoveOutOfImpl : Testmark()
+    object MoveOutOfMatch : Testmark()
+    object MoveOutOfBody : Testmark()
+    object MoveOutOfBlock : Testmark()
 }

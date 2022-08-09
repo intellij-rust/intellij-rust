@@ -20,9 +20,10 @@ import com.intellij.openapi.application.invokeLater
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.isActivateToolWindowBeforeRun
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 
@@ -32,9 +33,11 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultRunExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) return false
         val cleaned = profile.clean().ok ?: return false
-        return !profile.isBuildToolWindowEnabled &&
+        val isLocalRun = !profile.hasRemoteTarget || profile.buildTarget.isRemote
+        val isLegacyTestRun = !profile.isBuildToolWindowAvailable &&
             cleaned.cmd.command == "test" &&
             getBuildConfiguration(profile) != null
+        return isLocalRun && isLegacyTestRun
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {

@@ -11,6 +11,7 @@ import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -134,9 +135,9 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
             subst.variables + singletonMap("crate", MetaVarValue.Fragment(MACRO_DOLLAR_CRATE_IDENTIFIER, null, null, -1))
         )
 
-        val result = substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
+        val result = substituteMacro(macroExpansion, substWithGlobalVars).map { (text, ranges) ->
             text to loweringRanges.mapAll(ranges)
-        } ?: return Err(DeclMacroExpansionError.DefSyntax)
+        }.unwrapOrElse { return Err(it) }
 
         checkRanges(call, result.first, result.second)
 
@@ -173,11 +174,16 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     private data class MatchedPattern(val case: RsMacroCase, val subst: MacroSubstitution, val ranges: RangeMap)
 
-    private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): Pair<CharSequence, RangeMap>? {
+    private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): RsResult<Pair<CharSequence, RangeMap>, DeclMacroExpansionError> {
         val sb = StringBuilder()
         val ranges = SmartList<MappedTextRange>()
-        if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) return null
-        return sb to RangeMap.from(ranges)
+        if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) {
+            if (sb.length > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+                return Err(DeclMacroExpansionError.TooLargeExpansion)
+            }
+            return Err(DeclMacroExpansionError.DefSyntax)
+        }
+        return Ok(sb to RangeMap.from(ranges))
     }
 
     private fun substituteMacro(
@@ -187,6 +193,8 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
         subst: MacroSubstitution,
         nesting: MutableList<NestingState>
     ): Boolean {
+        if (sb.length > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return false
+
         root.forEachChild { child ->
             when (child.elementType) {
                 in RS_REGULAR_COMMENTS -> Unit
@@ -216,7 +224,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
                             }
                         }
                         VarLookupResult.None -> {
-                            MacroExpansionMarks.substMetaVarNotFound.hit()
+                            MacroExpansionMarks.SubstMetaVarNotFound.hit()
                             sb.safeAppend(child.text)
                             return@forEachChild
                         }
@@ -284,7 +292,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
     }
 
     companion object {
-        const val EXPANDER_VERSION = 15
+        const val EXPANDER_VERSION = 16
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
@@ -345,7 +353,7 @@ class MacroPattern private constructor(
     fun match(macroCallBody: PsiBuilder): MacroMatchingResult {
         return matchPartial(macroCallBody).andThen { result ->
             if (!macroCallBody.eof()) {
-                MacroExpansionMarks.failMatchPatternByExtraInput.hit()
+                MacroExpansionMarks.FailMatchPatternByExtraInput.hit()
                 err(::ExtraInput, macroCallBody)
             } else {
                 Ok(result)
@@ -370,7 +378,7 @@ class MacroPattern private constructor(
                     val lastOffset = macroCallBody.currentOffset
                     val parsed = kind.parse(macroCallBody)
                     if (!parsed || (lastOffset == macroCallBody.currentOffset && kind != FragmentKind.Vis)) {
-                        MacroExpansionMarks.failMatchPatternByBindingType.hit()
+                        MacroExpansionMarks.FailMatchPatternByBindingType.hit()
                         return err(::FragmentIsNotParsed, macroCallBody, name, kind)
                     }
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
@@ -399,7 +407,7 @@ class MacroPattern private constructor(
                 }
                 else -> {
                     if (!macroCallBody.isSameToken(node)) {
-                        MacroExpansionMarks.failMatchPatternByToken.hit()
+                        MacroExpansionMarks.FailMatchPatternByToken.hit()
                         val actualToken = macroCallBody.tokenType?.toString()
                         val actualTokenText = macroCallBody.tokenText
                         return if (actualToken != null && actualTokenText != null) {
@@ -432,7 +440,7 @@ class MacroPattern private constructor(
 
         while (true) {
             if (macroCallBody.eof()) {
-                MacroExpansionMarks.groupInputEnd1.hit()
+                MacroExpansionMarks.GroupInputEnd1.hit()
                 mark?.rollbackTo()
                 break
             }
@@ -441,25 +449,25 @@ class MacroPattern private constructor(
             val result = pattern.matchPartial(macroCallBody)
             if (result is Ok) {
                 if (macroCallBody.currentOffset == lastOffset) {
-                    MacroExpansionMarks.groupMatchedEmptyTT.hit()
+                    MacroExpansionMarks.GroupMatchedEmptyTT.hit()
                     return err(::EmptyGroup, macroCallBody)
                 }
                 groups += result.ok
             } else {
-                MacroExpansionMarks.groupInputEnd2.hit()
+                MacroExpansionMarks.GroupInputEnd2.hit()
                 mark?.rollbackTo()
                 break
             }
 
             if (macroCallBody.eof()) {
-                MacroExpansionMarks.groupInputEnd3.hit()
+                MacroExpansionMarks.GroupInputEnd3.hit()
                 // Don't need to roll the marker back: we just successfully parsed a group
                 break
             }
 
             if (group.q != null) {
                 // `$(...)?` means "0 or 1 occurrences"
-                MacroExpansionMarks.questionMarkGroupEnd.hit()
+                MacroExpansionMarks.QuestionMarkGroupEnd.hit()
                 break
             }
 
@@ -468,7 +476,7 @@ class MacroPattern private constructor(
 
             if (separator != null) {
                 if (!macroCallBody.isSameToken(separator)) {
-                    MacroExpansionMarks.failMatchGroupBySeparator.hit()
+                    MacroExpansionMarks.FailMatchGroupBySeparator.hit()
                     break
                 }
             }
@@ -476,7 +484,7 @@ class MacroPattern private constructor(
 
         val isExpectedAtLeastOne = group.plus != null
         if (isExpectedAtLeastOne && groups.isEmpty()) {
-            MacroExpansionMarks.failMatchGroupTooFewElements.hit()
+            MacroExpansionMarks.FailMatchGroupTooFewElements.hit()
             return err(::TooFewGroupElements, macroCallBody)
         }
 
@@ -541,16 +549,16 @@ fun PsiBuilder.isSameToken(node: ASTNode): Boolean {
 }
 
 object MacroExpansionMarks {
-    val failMatchPatternByToken = Testmark("failMatchPatternByToken")
-    val failMatchPatternByExtraInput = Testmark("failMatchPatternByExtraInput")
-    val failMatchPatternByBindingType = Testmark("failMatchPatternByBindingType")
-    val failMatchGroupBySeparator = Testmark("failMatchGroupBySeparator")
-    val failMatchGroupTooFewElements = Testmark("failMatchGroupTooFewElements")
-    val questionMarkGroupEnd = Testmark("questionMarkGroupEnd")
-    val groupInputEnd1 = Testmark("groupInputEnd1")
-    val groupInputEnd2 = Testmark("groupInputEnd2")
-    val groupInputEnd3 = Testmark("groupInputEnd3")
-    val groupMatchedEmptyTT = Testmark("groupMatchedEmptyTT")
-    val substMetaVarNotFound = Testmark("substMetaVarNotFound")
-    val docsLowering = Testmark("docsLowering")
+    object FailMatchPatternByToken : Testmark()
+    object FailMatchPatternByExtraInput : Testmark()
+    object FailMatchPatternByBindingType : Testmark()
+    object FailMatchGroupBySeparator : Testmark()
+    object FailMatchGroupTooFewElements : Testmark()
+    object QuestionMarkGroupEnd : Testmark()
+    object GroupInputEnd1 : Testmark()
+    object GroupInputEnd2 : Testmark()
+    object GroupInputEnd3 : Testmark()
+    object GroupMatchedEmptyTT : Testmark()
+    object SubstMetaVarNotFound : Testmark()
+    object DocsLowering : Testmark()
 }

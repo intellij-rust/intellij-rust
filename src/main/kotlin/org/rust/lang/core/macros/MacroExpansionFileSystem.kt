@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.readFSItem
@@ -28,7 +30,7 @@ import kotlin.math.max
  * An implementation of [com.intellij.openapi.vfs.VirtualFileSystem] used to store macro expansions.
  *
  * The problem is that we need to store tens of thousands of small files (with macro expansions).
- * A real filesystem is slow, and a lot small files consumes too much of diskspace.
+ * A real filesystem is slow, and a lot of small files consumes too much of diskspace.
  * [com.intellij.openapi.vfs.ex.temp.TempFileSystem] can't be used because these files should
  * persist between IDE restarts, and because `TempFileSystem` stores all files in the RAM.
  *
@@ -54,7 +56,7 @@ import kotlin.math.max
  * expensive, so on-demand solution is preferred.
  *
  * For macro expansions we use such directory layout:
- * "/rust_expanded_macros/<random_project_id>/a/b/<random_file_name>.rs", where "<random_project_id>" is a
+ * "/rust_expanded_macros/<random_project_id>/<crate_id>/a/b/<mix_hash>_<order>.rs", where "<random_project_id>" is a
  * project root that should be loaded/unloaded on-demand. Loading is trivial - it's just a combination of
  * [readFSItem] and [setDirectory] methods. More interesting is unloading. There is a problem with it:
  * [MacroExpansionFileSystem] still should say `last modified` and `length` to the platform for
@@ -100,8 +102,20 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         PathUtilRt.isValidFileName(name, PathUtilRt.Platform.UNIX, false, null)
 
     @Throws(IOException::class)
-    override fun createChildDirectory(requestor: Any?, parent: VirtualFile, dir: String): VirtualFile =
-        throw UnsupportedOperationException()
+    override fun createChildDirectory(requestor: Any?, parent: VirtualFile, dir: String): VirtualFile {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val parentFsDir = convert(parent) ?: throw FileNotFoundException("${parent.path} (No such file or directory)")
+        if (parentFsDir !is FSDir) throw IOException("${parent.path} is not a directory")
+        val existingDir = parentFsDir.findChild(dir)
+        if (existingDir == null) {
+            parentFsDir.addChildDir(dir, bump = true)
+        } else if (existingDir !is FSDir) {
+            throw IOException("Directory already contains a file named $dir")
+        }
+        return FakeVirtualFile(parent, dir)
+    }
 
     @Throws(IOException::class)
     override fun createChildFile(requestor: Any?, parent: VirtualFile, file: String): VirtualFile =
@@ -116,12 +130,33 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         throw UnsupportedOperationException()
 
     @Throws(IOException::class)
-    override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile): Unit =
-        throw UnsupportedOperationException()
+    override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val fsItem = convert(file) ?: throw FileNotFoundException("${file.path} (No such file or directory)")
+        val newParentFsDir = convert(newParent) ?: throw FileNotFoundException("${newParent.path} (No such file or directory)")
+        if (newParentFsDir !is FSDir) throw IOException("${newParent.path} is not a directory")
+        if (newParentFsDir.findChild(file.name) != null) {
+            throw IOException("Directory already contains a file named $file.name")
+        }
+        val oldParentFsDir = fsItem.parent ?: throw IOException("Can't move root (${file.path})")
+        oldParentFsDir.removeChild(fsItem.name, bump = true)
+        fsItem.parent = newParentFsDir
+        newParentFsDir.addChild(fsItem, bump = true)
+    }
 
     @Throws(IOException::class)
-    override fun renameFile(requestor: Any?, file: VirtualFile, newName: String): Unit =
-        throw UnsupportedOperationException()
+    override fun renameFile(requestor: Any?, file: VirtualFile, newName: String) {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val fsItem = convert(file) ?: throw FileNotFoundException("${file.path} (No such file or directory)")
+        val parent = fsItem.parent ?: throw IOException("Can't rename root (${file.path})")
+        parent.removeChild(fsItem.name)
+        fsItem.name = newName
+        parent.addChild(fsItem, bump = true)
+    }
 
     private fun convert(file: VirtualFile): FSItem? {
         val parentFile = file.parent ?: return root
@@ -172,16 +207,21 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
     override fun setWritable(file: VirtualFile, writableFlag: Boolean) {}
 
+    @Suppress("IfThenToElvis")
     @Throws(IOException::class)
     override fun contentsToByteArray(file: VirtualFile): ByteArray {
         val fsItem = convert(file) ?: throw FileNotFoundException(file.path + " (No such file or directory)")
         if (fsItem !is FSFile) throw FileNotFoundException(file.path + " (Is a directory)")
         return fsItem.fetchAndRemoveContent() ?: run {
-            val cachedExpansion = file.loadMixHash()?.let {
-                MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)?.ok()
-            }
+            val (mixHash, storedVersion) = file.extractMixHashAndMacroStorageVersion() ?: (null to -1)
+            val cachedExpansion = mixHash
+                ?.takeIf { storedVersion == MACRO_STORAGE_VERSION }
+                ?.let { MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)?.ok() }
             if (cachedExpansion != null) {
                 cachedExpansion.text.toByteArray()
+            } else if (storedVersion != MACRO_STORAGE_VERSION) {
+                // Found old version -> the file will be deleted by `MacroExpansionTask`
+                ArrayUtil.EMPTY_BYTE_ARRAY
             } else {
                 fsItem.delete()
                 val e = FileNotFoundException(file.path + " (Content is not provided)")
@@ -203,7 +243,19 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         modStamp: Long,
         timeStamp: Long
     ): OutputStream {
-        throw UnsupportedOperationException()
+        if (requestor != TrustedRequestor && !isWritingAllowed(file)) {
+            throw UnsupportedOperationException()
+        }
+        return object : ByteArrayOutputStream() {
+            @Throws(IOException::class)
+            override fun close() {
+                super.close()
+                val fsItem = convert(file)
+                if (fsItem !is FSFile) throw IOException("The file is a directory (${file.path}")
+                fsItem.length = size()
+                setTimeStamp(file, timeStamp)
+            }
+        }
     }
 
     override fun getLength(file: VirtualFile): Long {
@@ -220,7 +272,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     sealed class FSItem {
-        abstract val parent: FSDir?
+        abstract var parent: FSDir?
         abstract var name: String
         abstract var timestamp: Long
 
@@ -228,10 +280,29 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             timestamp = max(currentTimestamp(), timestamp + 1)
         }
 
+        fun delete() {
+            parent?.removeChild(name, bump = true)
+        }
+
+        fun absolutePath(): String =
+            buildString {
+                fun FSItem.go() {
+                    parent?.go()
+                    append('/')
+                    append(name)
+                }
+                go()
+            }
+
         override fun toString(): String = javaClass.simpleName + ": " + name
 
         open class FSDir(
+            @get:Synchronized
+            @set:Synchronized
             override var parent: FSDir?,
+
+            @get:Synchronized
+            @set:Synchronized
             override var name: String,
 
             @get:Synchronized
@@ -305,7 +376,12 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         }
 
         class FSFile(
-            override val parent: FSDir,
+            @get:Synchronized
+            @set:Synchronized
+            override var parent: FSDir?,
+
+            @get:Synchronized
+            @set:Synchronized
             override var name: String,
 
             @get:Synchronized
@@ -327,15 +403,17 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             }
 
             @Synchronized
+            fun setImplicitContent(fileSize: Int) {
+                tempContent = null
+                length = fileSize
+                bumpTimestamp()
+            }
+
+            @Synchronized
             fun fetchAndRemoveContent(): ByteArray? {
                 val tmp = tempContent
                 tempContent = null
                 return tmp
-            }
-
-            @Synchronized
-            fun delete() {
-                parent.removeChild(name, bump = true)
             }
         }
     }
@@ -349,12 +427,21 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     @Throws(FSException::class)
-    fun createFileWithContent(path: String, content: ByteArray, mkdirs: Boolean = false) {
+    fun createFileWithExplicitContent(path: String, content: ByteArray, mkdirs: Boolean = false) {
+        createFileWithoutContent(path, mkdirs).setContent(content)
+    }
+
+    @Throws(FSException::class)
+    fun createFileWithImplicitContent(path: String, fileSize: Int, mkdirs: Boolean = false) {
+        createFileWithoutContent(path, mkdirs).setImplicitContent(fileSize)
+    }
+
+    @Throws(FSException::class)
+    fun createFileWithoutContent(path: String, mkdirs: Boolean = false): FSFile {
         val (parentName, name) = splitFilenameAndParent(path)
         val parent = convert(parentName, mkdirs) ?: throw FSItemNotFoundException(parentName)
         if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
-        val item = parent.addChildFile(name)
-        item.setContent(content)
+        return parent.addChildFile(name)
     }
 
     @Throws(FSException::class)
@@ -419,8 +506,11 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     class FSItemAlreadyExistsException(path: String) : FSException(path)
     class IllegalPathException(path: String) : FSException(path)
 
+    object TrustedRequestor
+
     companion object {
-        private const val PROTOCOL: String = "rust_macros"
+        private const val PROTOCOL: String = "rust-macros"
+        private val RUST_MACROS_ALLOW_WRITING: Key<Boolean> = Key.create("RUST_MACROS_ALLOW_WRITING")
 
         fun getInstance(): MacroExpansionFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MacroExpansionFileSystem
@@ -480,6 +570,22 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
                 }
                 FSFile(parent!!, name, timestamp, length, content)
             }
+        }
+
+        fun <T> withAllowedWriting(file: VirtualFile, f: () -> T): T {
+            setAllowWriting(file, true)
+            try {
+                return f()
+            } finally {
+                setAllowWriting(file, false)
+            }
+        }
+
+        fun isWritingAllowed(file: VirtualFile): Boolean =
+            file.getUserData(RUST_MACROS_ALLOW_WRITING) == true
+
+        private fun setAllowWriting(file: VirtualFile, allow: Boolean) {
+            file.putUserData(RUST_MACROS_ALLOW_WRITING, if (allow) true else null)
         }
 
         private fun currentTimestamp() = System.currentTimeMillis()

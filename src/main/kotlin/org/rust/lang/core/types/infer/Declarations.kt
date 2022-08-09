@@ -10,6 +10,8 @@ import org.rust.lang.core.macros.calculateMacroExpansionDepth
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -105,8 +107,24 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
         }
 
         is RsTraitType -> {
-            val traitBounds = type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
-            if (type.isImpl) return TyAnon(type, traitBounds)
+            var hasSizedUnbound = false
+            val traitBounds = type.polyboundList.mapNotNull {
+                if (it.hasQ) {
+                    hasSizedUnbound = true
+                    null
+                } else {
+                    it.bound.traitRef?.resolveToBoundTrait()
+                }
+            }
+            if (type.isImpl) {
+                val sized = type.knownItems.Sized
+                val traitBoundsWithImplicitSized = if (!hasSizedUnbound && sized != null) {
+                    traitBounds + BoundElement(sized)
+                } else {
+                    traitBounds
+                }
+                return TyAnon(type, traitBoundsWithImplicitSized)
+            }
             if (traitBounds.isEmpty()) return TyUnknown
             val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
             val regionBound = lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic

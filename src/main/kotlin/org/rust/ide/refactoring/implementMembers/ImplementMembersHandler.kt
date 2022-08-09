@@ -21,7 +21,7 @@ class ImplementMembersHandler : LanguageCodeInsightActionHandler {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
         val classOrObject = elementAtCaret?.ancestorOrSelf<RsImplItem>()
         return if (classOrObject == null) {
-            ImplementMembersMarks.noImplInHandler.hit()
+            ImplementMembersMarks.NoImplInHandler.hit()
             false
         } else {
             true
@@ -40,6 +40,6 @@ class ImplementMembersHandler : LanguageCodeInsightActionHandler {
 }
 
 object ImplementMembersMarks {
-    val noImplInHandler = Testmark("noImplInHandler")
+    object NoImplInHandler : Testmark()
 }
 

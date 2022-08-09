@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.CheckTestmarkHit
 import org.rust.MockEdition
 import org.rust.UseOldResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -109,6 +110,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(NameResolutionTestmarks.SelfInGroup::class)
     fun `test view path glob self`() = checkByCode("""
         mod foo {
             use crate::bar::{self};
@@ -116,7 +118,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
         pub mod bar { }
                //X
-    """, NameResolutionTestmarks.selfInGroup)
+    """)
 
     fun `test view path glob self fn`() = checkByCode("""
         fn f() {}

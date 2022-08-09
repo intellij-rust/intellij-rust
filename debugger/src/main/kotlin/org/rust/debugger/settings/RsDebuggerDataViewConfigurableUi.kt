@@ -7,11 +7,11 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
+import org.rust.debugger.RsDebuggerBundle
 import javax.swing.JComponent
 
 class RsDebuggerDataViewConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
@@ -38,11 +38,13 @@ class RsDebuggerDataViewConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
     }
 
     override fun getComponent(): JComponent = panel {
-        row("LLDB renderers:") { lldbRenderers() }
+        row(RsDebuggerBundle.message("settings.rust.debugger.data.view.lldb.renderers.label")) { cell(lldbRenderers) }
         // GDB support is available only in CLion for now
         if (PlatformUtils.isCLion()) {
-            row("GDB renderers:") { gdbRenderers() }
+            row(RsDebuggerBundle.message("settings.rust.debugger.data.view.gdb.renderers.label")) { cell(gdbRenderers) }
         }
-        row { label("Changing these options will affect next debug session", style = SMALL).withLargeLeftGap() }
+        row {
+            comment(RsDebuggerBundle.message("settings.rust.debugger.data.view.change.renderers.comment"))
+        }
     }
 }

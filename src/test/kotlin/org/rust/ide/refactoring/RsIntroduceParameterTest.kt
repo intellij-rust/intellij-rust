@@ -21,6 +21,18 @@ class RsIntroduceParameterTest : RsTestBase() {
         }
     """)
 
+    fun `test non-extractable type`() = doTest("""
+        fn hello() {
+            foo(5 + /*caret*/10);
+        }
+        fn foo(_: i32) {}
+    """, listOf("10", "5 + 10"), 0, 0, """
+        fn hello(/*caret*/i: i32) {
+            foo(5 + i);
+        }
+        fn foo(_: i32) {}
+    """)
+
     fun `test method with params`() = doTest("""
         fn hello(param: i32) {
             let result = param + /*caret*/10;
@@ -320,7 +332,7 @@ class RsIntroduceParameterTest : RsTestBase() {
         withMockTargetExpressionChooser(object : ExtractExpressionUi {
             override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
                 shownTargetChooser = true
-                assertEquals(exprs.map { it.text }, expressions)
+                assertEquals(expressions, exprs.map { it.text })
                 return exprs[exprTarget]
             }
 

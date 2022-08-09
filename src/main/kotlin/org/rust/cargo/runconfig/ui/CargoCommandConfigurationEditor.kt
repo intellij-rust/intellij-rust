@@ -7,34 +7,36 @@ package org.rust.cargo.runconfig.ui
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
+import com.intellij.execution.impl.SingleConfigurationConfigurable
+import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.Label
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.LayoutBuilder
-import com.intellij.ui.layout.Row
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.nullize
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.runconfig.target.BuildTarget
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
 import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathTextField
 import javax.swing.JCheckBox
@@ -42,6 +44,7 @@ import javax.swing.JComponent
 
 class CargoCommandConfigurationEditor(project: Project)
     : RsCommandConfigurationEditor<CargoCommandConfiguration>(project) {
+    private var panel: JComponent? = null
 
     override val command = RsCommandLineEditor(
         project, CargoCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
@@ -93,7 +96,7 @@ class CargoCommandConfigurationEditor(project: Project)
     private val environmentVariables = EnvironmentVariablesComponent()
     private val requiredFeatures = CheckBox("Implicitly add required features if possible", true)
     private val allFeatures = CheckBox("Use all features in tests", false)
-    private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
+    private val emulateTerminal = CheckBox("Emulate terminal in output console", CargoCommandConfiguration.emulateTerminalDefault)
     private val withSudo = CheckBox(
         if (SystemInfo.isWindows) "Run with Administrator privileges" else "Run with root privileges",
         false
@@ -102,6 +105,7 @@ class CargoCommandConfigurationEditor(project: Project)
         // https://github.com/intellij-rust/intellij-rust/issues/7320
         isEnabled = isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)
     }
+    private val buildOnRemoteTarget = CheckBox("Build on remote target", true)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         super.resetEditorFrom(configuration)
@@ -111,6 +115,7 @@ class CargoCommandConfigurationEditor(project: Project)
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
         withSudo.isSelected = configuration.withSudo
+        buildOnRemoteTarget.isSelected = configuration.buildTarget.isRemote
         backtraceMode.selectedIndex = configuration.backtrace.index
         environmentVariables.envData = configuration.env
 
@@ -124,6 +129,8 @@ class CargoCommandConfigurationEditor(project: Project)
 
         isRedirectInput.isSelected = configuration.isRedirectInput
         redirectInput.text = configuration.redirectInputPath ?: ""
+
+        hideUnsupportedFieldsIfNeeded()
     }
 
     @Throws(ConfigurationException::class)
@@ -135,8 +142,9 @@ class CargoCommandConfigurationEditor(project: Project)
         configuration.channel = configChannel
         configuration.requiredFeatures = requiredFeatures.isSelected
         configuration.allFeatures = allFeatures.isSelected
-        configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
+        configuration.emulateTerminal = emulateTerminal.isSelected
         configuration.withSudo = withSudo.isSelected
+        configuration.buildTarget = if (buildOnRemoteTarget.isSelected) BuildTarget.REMOTE else BuildTarget.LOCAL
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.env = environmentVariables.envData
 
@@ -148,46 +156,49 @@ class CargoCommandConfigurationEditor(project: Project)
 
         configuration.isRedirectInput = isRedirectInput.isSelected
         configuration.redirectInputPath = redirectInputPath
+
+        hideUnsupportedFieldsIfNeeded()
     }
 
     override fun createEditor(): JComponent = panel {
-        labeledRow("&Command:", command) {
-            command(CCFlags.pushX, CCFlags.growX)
+        row("&Command:") {
+            fullWidthCell(command)
+                .resizableColumn()
             channelLabel.labelFor = channel
-            channelLabel()
-            channel()
+            cell(channelLabel)
+            cell(channel)
         }
 
-        row { requiredFeatures() }
-        row { allFeatures() }
-
-        if (!SystemInfo.isWindows) {
-            row { emulateTerminal() }
-        }
-        row { withSudo() }
+        row { cell(requiredFeatures) }
+        row { cell(allFeatures) }
+        row { cell(emulateTerminal) }
+        row { cell(withSudo) }
+        row { cell(buildOnRemoteTarget) }
 
         row(environmentVariables.label) {
-            environmentVariables(growX)
+            fullWidthCell(environmentVariables)
         }
         row(workingDirectory.label) {
-            workingDirectory(growX)
+            fullWidthCell(workingDirectory)
+                .resizableColumn()
             if (project.cargoProjects.allProjects.size > 1) {
-                cargoProject(growX)
+                cell(cargoProject)
             }
         }
         row {
-            cell(isFullWidth = true) {
-                isRedirectInput()
-                redirectInput()
-            }
+            layout(RowLayout.LABEL_ALIGNED)
+            cell(isRedirectInput)
+            fullWidthCell(redirectInput)
         }
-        labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
-    }
+        row("Back&trace:") {
+            cell(backtraceMode)
+        }
+    }.also { panel = it }
 
-    @Suppress("UnstableApiUsage")
-    private fun LayoutBuilder.labeledRow(@Label labelText: String, component: JComponent, init: Row.() -> Unit) {
-        val label = Label(labelText)
-        label.labelFor = component
-        row(label) { init() }
+    private fun hideUnsupportedFieldsIfNeeded() {
+        if (!ApplicationManager.getApplication().isDispatchThread) return
+        val localTarget = DataManager.getInstance().getDataContext(panel)
+            .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null
+        buildOnRemoteTarget.isVisible = !localTarget
     }
 }

@@ -11,8 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.unwrapReference
 
 class ReplaceWithStdMemDropFix(call: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(call) {
     override fun getFamilyName() = text
@@ -26,7 +25,7 @@ class ReplaceWithStdMemDropFix(call: PsiElement) : LocalQuickFixAndIntentionActi
                 val dropArgs = if (args.size == 1) {
                     // Change `Foo::drop(&mut x)` to `std::mem::drop(x)`
                     // Convert correct code to correct code without the user manually removing `&mut `
-                    val self = args[0].unwrapRef()
+                    val self = args[0].unwrapReference()
                     listOf(self)
                 } else {
                     // Change `Foo::drop(a, &b, &mut c)` to `std::mem::drop(a, &b, &mut c)`
@@ -58,13 +57,6 @@ class ReplaceWithStdMemDropFix(call: PsiElement) : LocalQuickFixAndIntentionActi
         }
 
         old.replace(createStdMemDropCall(project, args))
-    }
-
-    private fun RsExpr.unwrapRef(): RsExpr {
-        if (this !is RsUnaryExpr) return this
-        if (operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT)
-            return expr ?: this
-        return this
     }
 
     private fun createStdMemDropCall(project: Project, args: Iterable<RsExpr>) =

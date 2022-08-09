@@ -170,6 +170,7 @@ interface RsDocLinkDestination : RsDocElement
  */
 interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost, InjectionBackgroundSuppressor {
     val start: RsDocCodeFenceStartEnd
+    val end: RsDocCodeFenceStartEnd?
     val lang: RsDocCodeFenceLang?
 }
 

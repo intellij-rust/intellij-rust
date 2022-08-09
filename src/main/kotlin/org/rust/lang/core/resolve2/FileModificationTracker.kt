@@ -38,6 +38,9 @@ fun isFileChanged(file: RsFile, defMap: CrateDefMap, crate: Crate): Boolean {
         return false
     }
 
+    val isCrateRoot = file.virtualFile == crate.rootModFile
+    if (isCrateRoot && file.getRecursionLimit(crate) != defMap.recursionLimitRaw) return true
+
     val isEnabledByCfgInner = file.isEnabledByCfgSelf(crate)
     // Don't use `file.isDeeplyEnabledByCfg` - it can trigger resolve (and cause infinite recursion)
     val isDeeplyEnabledByCfg = fileInfo.modData.isDeeplyEnabledByCfgOuter && isEnabledByCfgInner
@@ -47,7 +50,7 @@ fun isFileChanged(file: RsFile, defMap: CrateDefMap, crate: Crate): Boolean {
         hashCalculator,
         fileRelativePath = "",
         collectChildModules = true,
-        stdlibAttributes = if (file.virtualFile == crate.rootModFile) file.getStdlibAttributes(crate) else null,
+        stdlibAttributes = if (isCrateRoot) file.getStdlibAttributes(crate) else null,
     )
     val fileStub = file.getOrBuildFileStub() ?: return false
     ModCollectorBase.collectMod(fileStub, isDeeplyEnabledByCfg, visitor, crate)

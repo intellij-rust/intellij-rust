@@ -32,7 +32,7 @@ class RsDirectoryRenameProcessor : RenamePsiFileProcessor() {
     }
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
-        Testmarks.rustDirRenameHandler.hit()
+        Testmarks.RustDirRenameHandler.hit()
         super.prepareRenaming(element, newName, allRenames)
         if (!RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY) return
 
@@ -48,6 +48,6 @@ class RsDirectoryRenameProcessor : RenamePsiFileProcessor() {
         ?: (this as PsiDirectory)
 
     object Testmarks {
-        val rustDirRenameHandler = Testmark("rustDirRename")
+        object RustDirRenameHandler : Testmark()
     }
 }

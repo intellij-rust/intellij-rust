@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.lang.core.resolve2.processItemDeclarations2
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
 import org.rust.stdext.intersects
 import java.util.*
@@ -116,7 +115,6 @@ fun processItemDeclarations(
             // Use items like `use foo;` or `use foo::{self}` are meaningful since 2018 edition
             // only if `foo` is a crate, and it is `pub use` item. Otherwise,
             // we should ignore it or it breaks resolve of such `foo` in other places.
-            ItemResolutionTestmarks.extraAtomUse.hit()
             if (!withPrivateImports) {
                 val crate = findDependencyCrateByName(path, name)
                 if (crate != null && processor(name, crate)) return true
@@ -236,8 +234,6 @@ fun processExternCrateItem(item: RsExternCrateItem, processor: RsResolveProcesso
         val nameWithAlias = item.nameWithAlias
         if (nameWithAlias != "self") {
             if (processor(nameWithAlias, mod)) return true
-        } else {
-            ItemResolutionTestmarks.externCrateSelfWithoutAlias.hit()
         }
     }
     return false
@@ -287,9 +283,4 @@ enum class ItemProcessingMode(val withExternCrates: Boolean) {
     WITH_PRIVATE_IMPORTS(false),
     WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
     WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION(true);
-}
-
-object ItemResolutionTestmarks {
-    val externCrateSelfWithoutAlias = Testmark("externCrateSelfWithoutAlias")
-    val extraAtomUse = Testmark("extraAtomUse")
 }

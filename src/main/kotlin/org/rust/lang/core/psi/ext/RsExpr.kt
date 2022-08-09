@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsPlaceholderStub
 import org.rust.lang.core.stubs.RsUnaryExprStub
+import org.rust.stdext.buildList
 
 enum class UnaryOperator {
     REF, // `&a`
@@ -45,6 +46,20 @@ val RsUnaryExpr.operatorType: UnaryOperator
         }
     }
 
+private val REF_OPERATORS: Set<UnaryOperator> = setOf(UnaryOperator.REF, UnaryOperator.REF_MUT)
+
+/**
+ * `x` => `x`
+ * `&x` => `x`
+ * `&mut x` => `x`
+ */
+fun RsExpr.unwrapReference(): RsExpr {
+    val unwrapped = (this as? RsUnaryExpr)
+        ?.takeIf { it.operatorType in REF_OPERATORS }
+        ?.expr
+    return unwrapped ?: this
+}
+
 interface OverloadableBinaryOperator {
     val traitName: String
     val itemName: String
@@ -58,6 +73,15 @@ interface OverloadableBinaryOperator {
 
     fun findTrait(items: KnownItems): RsTraitItem? =
         items.findLangItem(itemName)
+
+    companion object {
+        fun values(): List<OverloadableBinaryOperator> = buildList {
+            addAll(ArithmeticOp.values())
+            addAll(EqualityOp.values())
+            addAll(ComparisonOp.values())
+            addAll(ArithmeticAssignmentOp.values())
+        }
+    }
 }
 
 sealed class BinaryOperator
@@ -119,7 +143,7 @@ sealed class ComparisonOp(
     object GTEQ : ComparisonOp(">=") // `a >= b`
 
     override val traitName: String = "PartialOrd"
-    override val itemName: String = "ord"
+    override val itemName: String = "partial_ord"
     override val fnName: String = "partial_cmp"
 
     override fun findTrait(items: KnownItems): RsTraitItem? = items.PartialOrd
@@ -253,6 +277,9 @@ val RsBinaryOp.operatorType: BinaryOperator
 val RsBinaryExpr.operator: PsiElement get() = binaryOp.operator
 val RsBinaryExpr.operatorType: BinaryOperator get() = binaryOp.operatorType
 
+val RsExpr.isInConstContext: Boolean
+    get() = classifyConstContext != null
+
 val RsExpr.classifyConstContext: RsConstContextKind?
     get() {
         for (it in contexts) {
@@ -282,9 +309,35 @@ sealed class RsConstContextKind {
     object ConstGenericArgument : RsConstContextKind()
 }
 
-abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
+val RsExpr.isInUnsafeContext: Boolean
+    get() {
+        val parent = contexts.find {
+            when (it) {
+                is RsBlockExpr -> it.isUnsafe
+                is RsFunction -> true
+                else -> false
+            }
+        } ?: return false
+
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isActuallyUnsafe)
+    }
+
+val RsExpr.isInAsyncContext: Boolean
+    get() {
+        val parent = contexts.find {
+            when (it) {
+                is RsBlockExpr -> it.isAsync
+                is RsFunction -> true
+                else -> false
+            }
+        } ?: return false
+
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isAsync)
+    }
+
+abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub<*>>, RsExpr {
     constructor(node: ASTNode) : super(node)
-    constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
@@ -305,4 +358,17 @@ val RsExpr.isTailExpr: Boolean
     get() {
         val parent = parent
         return parent is RsExprStmt && parent.isTailStmt
+    }
+
+val RsExpr.hasSideEffects: Boolean
+    get() = when (this) {
+        is RsUnitExpr, is RsLitExpr, is RsPathExpr -> false
+        is RsParenExpr -> expr?.hasSideEffects ?: false
+        is RsCastExpr -> expr.hasSideEffects
+        is RsDotExpr -> expr.hasSideEffects || methodCall != null
+        is RsTupleExpr -> exprList.any { it.hasSideEffects }
+        is RsStructLiteral -> structLiteralBody.structLiteralFieldList.any { it.expr?.hasSideEffects ?: false }
+        is RsBinaryExpr -> exprList.any { it.hasSideEffects }
+        is RsUnaryExpr -> expr?.hasSideEffects ?: false
+        else -> true
     }

@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.CheckTestmarkHit
+
 class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTraitMembersInspection::class) {
 
     fun `test same order`() = checkFixIsUnavailable("Apply same member order", """
@@ -76,6 +78,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
     """)
 
+    @CheckTestmarkHit(RsSortImplTraitMembersInspection.Testmarks.ImplMemberNotInTrait::class)
     fun `test impl with unknown members`() = checkFixIsUnavailable("Apply same member order", """
         trait Foo {
             fn f();
@@ -86,7 +89,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn f() {}
             fn h() {}
         }
-    """, testmark = RsSortImplTraitMembersInspection.Testmarks.implMemberNotInTrait)
+    """)
 
     fun `test different order`() = checkFixByText("Apply same member order", """
         struct Struct {

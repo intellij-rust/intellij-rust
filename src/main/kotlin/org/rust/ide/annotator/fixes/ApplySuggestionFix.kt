@@ -10,12 +10,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.cargo.toolchain.impl.Applicability
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
 class ApplySuggestionFix(
     private val message: String,
     private val replacement: String,
+    val applicability: Applicability,
     startElement: PsiElement,
     endElement: PsiElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(startElement, endElement) {

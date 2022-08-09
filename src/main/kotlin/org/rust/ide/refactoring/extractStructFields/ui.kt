@@ -9,10 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 import javax.swing.JComponent
 
@@ -51,13 +52,15 @@ private class ExtractFieldsDialog(project: Project) : DialogWrapper(project, fal
 
     override fun doValidate(): ValidationInfo? {
         if (!isValidRustVariableIdentifier(input.text)) {
-            ValidationInfo(RsBundle.message("action.Rust.RsExtractStructFields.choose.name.dialog.invalid.name"), input)
+            return ValidationInfo(RsBundle.message("action.Rust.RsExtractStructFields.choose.name.dialog.invalid.name"), input)
         }
         return null
     }
 
     override fun createCenterPanel(): JComponent =
-        panel { row { input().focused() } }
+        panel {
+            row { fullWidthCell(input).focused() }
+        }
 
     override fun selectStructName(project: Project): String? =
         if (showAndGet()) input.text else null

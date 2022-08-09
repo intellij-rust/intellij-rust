@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
@@ -27,9 +26,6 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
-import org.rust.lang.core.stubs.index.ReexportKey
-import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.expectedTypeCoercable
 import org.rust.lang.core.types.implLookup
@@ -175,8 +171,11 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         expectedTy: ExpectedType?
     ) {
         run {
+            val originalFile = position.containingFile.originalFile
             // true if delegated from RsPartialMacroArgumentCompletionProvider
-            if (position.containingFile.originalFile is RsExpressionCodeFragment) return
+            val ignoreCodeFragment = originalFile is RsExpressionCodeFragment
+                && originalFile.getUserData(FORCE_OUT_OF_SCOPE_COMPLETION) != true
+            if (ignoreCodeFragment) return
 
             // Not null if delegated from RsMacroCallBodyCompletionProvider
             val positionInMacroArgument = position.findElementExpandedFrom()
@@ -189,39 +188,15 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         if (TyPrimitive.fromPath(path) != null) return
         // TODO: implement special rules paths in meta items
         if (path.parent is RsMetaItem) return
-        Testmarks.outOfScopeItemsCompletion.hit()
+        Testmarks.OutOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
-        val candidates = if (path.useAutoImportWithNewResolve) run {
-            val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return@run emptyList()
-            ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
-        } else {
-            val project = path.project
-            val keys = hashSetOf<String>().apply {
-                val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
-                val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project).mapNotNull {
-                    (it as? ReexportKey.ProducedNameKey)?.name
-                }
-
-                addAll(explicitNames)
-                addAll(reexportedNames)
-
-                // Filters out path names that have already been added to `result`
-                removeAll(processedPathElements.keySet())
-            }
-
-            val importContext = ImportContext.from(project, path, true)
-            result.prefixMatcher.sortMatching(keys)
-                .flatMap { elementName ->
-                    ImportCandidatesCollector.getImportCandidates(importContext, elementName, elementName) {
-                        !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
-                    }
-                }
-        }
+        val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return
+        val candidates = ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
         for (candidate in candidates) {
             val item = candidate.qualifiedNamedItem.item
-            val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName ?: continue, item)
+            val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName, item)
 
             if (item is RsEnumItem
                 && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
@@ -276,7 +251,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
     private fun createLookupElementWithImportCandidate(
         scopeEntry: ScopeEntry,
         context: RsCompletionContext,
-        candidate: ImportCandidateBase
+        candidate: ImportCandidate
     ): RsImportLookupElement {
         return createLookupElement(
             scopeEntry = scopeEntry,
@@ -307,7 +282,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
     object Testmarks {
-        val outOfScopeItemsCompletion = Testmark("outOfScopeItemsCompletion")
+        object OutOfScopeItemsCompletion : Testmark()
     }
 }
 
@@ -409,15 +384,15 @@ private fun filterMethodCompletionVariantsByTraitBounds(
     // Don't filter partially unknown types
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
 
-    val cache = mutableMapOf<TraitImplSource, Boolean>()
+    val cache = mutableMapOf<Pair<TraitImplSource, Int>, Boolean>()
     return createProcessor(processor.name) {
         // If not a method (actually a field) or a trait method - just process it
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         // Filter methods by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete methods
         // in the same impl and always have the same receiver type
-        val canEvaluate = cache.getOrPut(it.source) {
-            lookup.ctx.canEvaluateBounds(it.source, receiver)
+        val canEvaluate = cache.getOrPut(it.source to it.derefCount) {
+            lookup.ctx.canEvaluateBounds(it.source, it.selfTy)
         }
         if (canEvaluate) return@createProcessor processor(it)
 
@@ -484,16 +459,12 @@ private fun methodAndFieldCompletionProcessor(
     false
 }
 
-private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidateBase? {
+private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
     if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
-    val candidates = if (scope.useAutoImportWithNewResolve) {
-        ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
-    } else {
-        ImportCandidatesCollector.getImportCandidates(methodOrField.project, scope, listOf(resolveVariant))
-    }
+    val candidates = ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
     return candidates.orEmpty().singleOrNull()
 }
 
@@ -520,7 +491,7 @@ private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement
     return null
 }
 
-private fun LookupElement.withImportCandidate(candidate: ImportCandidateBase): RsImportLookupElement {
+private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
     return RsImportLookupElement(this, candidate)
 }
 
@@ -533,7 +504,7 @@ private fun LookupElement.withImportCandidate(candidate: ImportCandidateBase): R
  */
 private class RsImportLookupElement(
     delegate: LookupElement,
-    private val candidate: ImportCandidateBase
+    private val candidate: ImportCandidate
 ) : LookupElementDecorator<LookupElement>(delegate) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -558,7 +529,7 @@ fun collectVariantsForEnumCompletion(
     element: RsEnumItem,
     context: RsCompletionContext,
     substitution: Substitution,
-    candidate: ImportCandidateBase? = null
+    candidate: ImportCandidate? = null
 ): List<LookupElement> {
     val enumName = element.name ?: return emptyList()
 

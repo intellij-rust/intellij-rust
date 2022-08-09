@@ -56,22 +56,19 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun `test mod decl`() = doTestFromFile(
-        "lib.rs",
-        fileTree {
-            rust("tests.rs", """
-                #[bench]
-                fn bench() {}
-            """)
+    fun `test mod decl`() = doTestByFileTree("lib.rs") {
+        rust("tests.rs", """
+            #[bench]
+            fn bench() {}
+        """)
 
-            rust("no_tests.rs", "")
+        rust("no_tests.rs", "")
 
-            rust("lib.rs", """
-                mod tests; // - Bench lib::tests
-                mod no_tests;
-            """)
-        }
-    )
+        rust("lib.rs", """
+            mod tests; // - Bench lib::tests
+            mod no_tests;
+        """)
+    }
 
     fun `test function in a module with test function`() = doTestByText("""
         #[cfg(test)]

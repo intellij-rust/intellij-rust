@@ -5,11 +5,15 @@
 
 package org.rust.ide.inspections
 
+import org.rust.CheckTestmarkHit
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection::class) {
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test simple assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn main() {
             let x = 10;
@@ -24,6 +28,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test expr assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn answer() -> i32 {
             return 42
@@ -42,6 +47,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test simple assert_eq fix with format_args`() = checkFixByText("Convert to assert_eq!", """
         fn main() {
             let x = 10;
@@ -56,6 +62,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test simple assert_ne fix`() = checkFixByText("Convert to assert_ne!", """
         fn main() {
             let x = 10;
@@ -70,6 +77,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test expr assert_ne fix`() = checkFixByText("Convert to assert_ne!", """
         fn answer() -> i32 {
             return 42;
@@ -88,6 +96,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test simple assert_ne fix with format_args`() = checkFixByText("Convert to assert_ne!", """
         fn main() {
             let x = 10;
@@ -102,6 +111,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
+    @CheckTestmarkHit(RsAssertEqualInspection.Testmarks.DebugTraitIsNotImplemented::class)
     fun `test fix unavailable when arguments do not implement Debug`() = checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(PartialEq)]
         struct Number(u32);
@@ -111,8 +121,9 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
             let y = Number(10);
             assert!(x == y/*caret*/);
         }
-    """, checkWeakWarn = true, testmark = RsAssertEqualInspection.Testmarks.debugTraitIsNotImplemented)
+    """, checkWeakWarn = true)
 
+    @CheckTestmarkHit(RsAssertEqualInspection.Testmarks.PartialEqTraitIsNotImplemented::class)
     fun `test fix unavailable when arguments do not implement PartialEq`() = checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(Debug)]
         struct Number(u32);
@@ -122,7 +133,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
             let y = Number(10);
             assert!(x == y/*caret*/);
         }
-    """, checkWeakWarn = true, testmark = RsAssertEqualInspection.Testmarks.partialEqTraitIsNotImplemented)
+    """, checkWeakWarn = true)
 
     fun `test fix available when arguments derive PartialEq & Debug`() = checkFixByText("Convert to assert_ne!", """
         #[derive(Debug, PartialEq)]

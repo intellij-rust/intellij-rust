@@ -13,5 +13,5 @@ val CodeStyleSettings.rust: RsCodeStyleSettings
     get() = getCustomSettings(RsCodeStyleSettings::class.java)
 
 object RustfmtTestmarks {
-    val rustfmtUsed: Testmark = Testmark("rustfmtUsed")
+    object RustfmtUsed : Testmark()
 }

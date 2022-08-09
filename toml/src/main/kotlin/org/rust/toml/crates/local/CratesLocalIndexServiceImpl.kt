@@ -602,12 +602,15 @@ private class CratesLocalIndexUpdateTask(
             val objectIds = mutableListOf<Pair<ObjectId, String>>()
             while (treeWalk.next()) {
                 if (treeWalk.isSubtree) continue
-                val nameString = treeWalk.nameString
-                if (nameString == "config.json") continue
+
+                val path = treeWalk.pathString
+                // Ignore paths starting with dot (e.g. .github/) and config.json
+                if (path.startsWith(".") || path == "config.json") continue
+
                 indicator.checkCanceled()
 
                 val objectId = treeWalk.getObjectId(0)
-                objectIds.add(objectId to nameString)
+                objectIds.add(objectId to treeWalk.nameString)
             }
             objectIds
         }

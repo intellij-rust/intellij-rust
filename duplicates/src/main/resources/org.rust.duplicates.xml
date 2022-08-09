@@ -1,0 +1,10 @@
+<idea-plugin package="org.rust.ide.clones">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <plugin id="com.intellij.modules.duplicatesDetector"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <duplicateScope language="Rust" implementationClass="org.rust.ide.clones.RsDuplicateScope"/>
+    </extensions>
+</idea-plugin>

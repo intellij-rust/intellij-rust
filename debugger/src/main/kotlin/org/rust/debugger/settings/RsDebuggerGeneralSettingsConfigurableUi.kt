@@ -7,7 +7,7 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import javax.swing.JComponent

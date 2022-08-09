@@ -58,7 +58,7 @@ class CargoFeatureLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     """)
 
     private fun doTest(featureName: FeatureName, @Language("Toml") source: String) {
-        val fileTree = fileTree {
+        doTestByFileTree("Cargo.toml") {
             toml("Cargo.toml", source)
             dir("src") {
                 rust("lib.rs", "")
@@ -75,8 +75,6 @@ class CargoFeatureLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
                 }
             }
         }
-
-        doTestFromFile("Cargo.toml", fileTree)
 
         val beforeState = featureState(featureName)
         @Suppress("UNCHECKED_CAST")

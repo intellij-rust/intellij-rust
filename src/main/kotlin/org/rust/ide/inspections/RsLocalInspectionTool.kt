@@ -60,7 +60,7 @@ abstract class RsLocalInspectionTool : LocalInspectionTool() {
 
         return file.cargoWorkspace != null
             && file.crateRoot != null
-            && file.project.toolchain?.looksLikeValidToolchain() == true
+            && file.project.toolchain != null
     }
 }
 

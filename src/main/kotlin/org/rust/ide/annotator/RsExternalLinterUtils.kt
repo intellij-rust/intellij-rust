@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
@@ -31,10 +30,7 @@ import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RsToolchainBase
-import org.rust.cargo.toolchain.impl.CargoTopMessage
-import org.rust.cargo.toolchain.impl.ErrorCode
-import org.rust.cargo.toolchain.impl.RustcMessage
-import org.rust.cargo.toolchain.impl.RustcSpan
+import org.rust.cargo.toolchain.impl.*
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
@@ -174,7 +170,11 @@ fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
     return disposable
 }
 
-fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: RsExternalLinterResult) {
+fun AnnotationHolder.createAnnotationsForFile(
+    file: RsFile,
+    annotationResult: RsExternalLinterResult,
+    minApplicability: Applicability
+) {
     val cargoPackageOrigin = file.containingCargoPackage?.origin
     if (cargoPackageOrigin != PackageOrigin.WORKSPACE) return
 
@@ -195,7 +195,9 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
             .problemGroup { annotationMessage }
             .needsUpdateOnTyping(true)
 
-        message.quickFixes.forEach { f -> annotationBuilder.withFix(f) }
+        message.quickFixes
+            .singleOrNull { it.applicability <= minApplicability }
+            ?.let { f -> annotationBuilder.withFix(f) }
 
         annotationBuilder.create()
     }
@@ -289,7 +291,7 @@ private fun RustcMessage.collectQuickFixes(file: PsiFile, document: Document): L
     val quickFixes = mutableListOf<ApplySuggestionFix>()
 
     fun go(message: RustcMessage) {
-        val span = message.spans.firstOrNull { it.is_primary && it.isValid() }
+        val span = message.spans.singleOrNull { it.is_primary && it.isValid() }
         createQuickFix(file, document, span, message.message)?.let { quickFixes.add(it) }
         message.children.forEach(::go)
     }
@@ -303,7 +305,13 @@ private fun createQuickFix(file: PsiFile, document: Document, span: RustcSpan?, 
     val textRange = span.toTextRange(document) ?: return null
     val endElement = file.findElementAt(textRange.endOffset - 1) ?: return null
     val startElement = file.findElementAt(textRange.startOffset) ?: endElement
-    return ApplySuggestionFix(message, span.suggested_replacement, startElement, endElement)
+    return ApplySuggestionFix(
+        message,
+        span.suggested_replacement,
+        span.suggestion_applicability,
+        startElement,
+        endElement
+    )
 }
 
 private fun formatMessage(message: String): String {

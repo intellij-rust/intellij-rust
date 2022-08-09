@@ -13,4 +13,6 @@ class RsLocalDebugProcess(
     val runParameters: RsDebugRunParameters,
     debugSession: XDebugSession,
     consoleBuilder: TextConsoleBuilder
-) : CidrLocalDebugProcess(runParameters, debugSession, consoleBuilder)
+) : CidrLocalDebugProcess(runParameters, debugSession, consoleBuilder) {
+    override fun isLibraryFrameFilterSupported() = false
+}

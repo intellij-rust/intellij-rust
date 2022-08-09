@@ -44,13 +44,15 @@ val RsPat.isIrrefutable: Boolean
 private val RsPath.isIrrefutable: Boolean
     get() = when (val item = reference?.deepResolve()) {
         is RsStructItem -> true
-        is RsEnumVariant -> item.parentEnum.enumBody?.enumVariantList?.size == 1
+        is RsEnumVariant -> item.parentEnum.variants.size == 1
         else -> false
     }
 
 private val RsPatBinding.isIrrefutable: Boolean
-    get() = when (reference.resolve()) {
-        is RsStructItem, is RsEnumVariant, is RsConstant -> false
+    get() = when (val resolved = reference.resolve()) {
+        is RsConstant -> false
+        is RsStructItem -> true
+        is RsEnumVariant -> resolved.parentEnum.variants.size == 1
         else -> true
     }
 

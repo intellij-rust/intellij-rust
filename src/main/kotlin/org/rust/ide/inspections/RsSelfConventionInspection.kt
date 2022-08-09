@@ -10,7 +10,10 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.selfType
+import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.selfType
+import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
@@ -27,9 +30,17 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
                     m.identifier.text.startsWith(it.prefix) &&
                     m.identifier.text.endsWith(it.postfix ?: "")
                 } ?: return
-                if (m.selfSignature in convention.selfSignatures) return
 
-                if (m.selfSignature == SelfSignature.BY_VAL) {
+                val selfSignature = m.selfSignature
+                if (selfSignature in convention.selfSignatures) return
+
+                // Ignore the inspection if the self type is arbitrary
+                if (selfSignature is SelfSignature.ArbitrarySelfSignature &&
+                    convention.selfSignatures != listOf(SelfSignature.NO_SELF)) {
+                    return
+                }
+
+                if (selfSignature == SelfSignature.BY_VAL) {
                     val selfType = traitOrImpl.selfType
                     val implLookup = ImplLookup.relativeTo(traitOrImpl)
                     if (selfType is TyUnknown || implLookup.isCopy(selfType)) return
@@ -51,27 +62,55 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
     }
 }
 
-enum class SelfSignature(val description: String) {
-    NO_SELF("no self"),
-    BY_VAL("self by value"),
-    BY_REF("self by reference"),
-    BY_MUT_REF("self by mutable reference");
+sealed class SelfSignature {
+    object ArbitrarySelfSignature: SelfSignature()
+    class BasicSelfSignature(val description: String): SelfSignature()
+
+    companion object {
+        val NO_SELF: BasicSelfSignature = BasicSelfSignature("no self")
+        val BY_VAL: BasicSelfSignature = BasicSelfSignature("self by value")
+        val BY_REF: BasicSelfSignature = BasicSelfSignature("self by reference")
+        val BY_MUT_REF: BasicSelfSignature = BasicSelfSignature("self by mutable reference")
+    }
 }
 
 private val RsFunction.selfSignature: SelfSignature
     get() {
-        val self = selfParameter
-        return when {
-            self == null -> SelfSignature.NO_SELF
-            self.isRef && self.mutability.isMut -> SelfSignature.BY_MUT_REF
-            self.isRef -> SelfSignature.BY_REF
-            else -> SelfSignature.BY_VAL
+        val self = selfParameter ?: return SelfSignature.NO_SELF
+
+        // self: Self, self: &Self, self: Box<Self>, ...
+        return if (self.isExplicitType) {
+            val expectedSelfType = selfType ?: TyUnknown
+            val actualSelfType = self.typeOfValue
+
+            when {
+                expectedSelfType.isEquivalentTo(actualSelfType) -> SelfSignature.BY_VAL
+                actualSelfType is TyReference -> {
+                    val mutable = actualSelfType.mutability.isMut
+                    if (expectedSelfType.isEquivalentTo(actualSelfType.referenced)) {
+                        if (mutable) {
+                            SelfSignature.BY_MUT_REF
+                        } else {
+                            SelfSignature.BY_REF
+                        }
+                    } else {
+                        null
+                    }
+                }
+                else -> null
+            } ?: SelfSignature.ArbitrarySelfSignature
+        } else {
+            when {
+                self.isRef && self.mutability.isMut -> SelfSignature.BY_MUT_REF
+                self.isRef -> SelfSignature.BY_REF
+                else -> SelfSignature.BY_VAL
+            }
         }
     }
 
 data class SelfConvention(
     val prefix: String,
-    val selfSignatures: Collection<SelfSignature>,
+    val selfSignatures: Collection<SelfSignature.BasicSelfSignature>,
     val postfix: String? = null
 )
 

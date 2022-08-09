@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.lang.core.types.Substitution
 import org.rust.openapiext.checkWriteAccessAllowed
@@ -25,6 +26,8 @@ class GenerateConstructorAction : BaseGenerateAction() {
 
 class GenerateConstructorHandler : BaseGenerateHandler() {
     override val dialogTitle: String = "Select constructor parameters"
+
+    override val allowEmptySelection: Boolean = true
 
     override fun isImplBlockValid(impl: RsImplItem): Boolean = super.isImplBlockValid(impl) &&
         impl.isSuitableForConstructor
@@ -46,15 +49,15 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
 
         val anchor = impl.lastChild.lastChild
         val constructor = createConstructor(struct, chosenFields, psiFactory, substitution)
-        impl.lastChild.addBefore(constructor, anchor)
-        editor.caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
+        val inserted = impl.lastChild.addBefore(constructor, anchor)
+        editor.caretModel.moveToOffset(inserted.endOffset)
     }
 
     private fun createConstructor(
         structItem: RsStructItem,
         selectedFields: List<StructMember>,
         psiFactory: RsPsiFactory,
-        substitution: Substitution
+        substitution: Substitution,
     ): RsFunction {
         val arguments = selectedFields.joinToString(prefix = "(", postfix = ")", separator = ",") {
             "${it.argumentIdentifier}: ${it.typeReferenceText}"
@@ -67,14 +70,14 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
     private fun generateBody(
         structItem: RsStructItem,
         selectedFields: List<StructMember>,
-        substitution: Substitution
+        substitution: Substitution,
     ): String {
         val prefix = if (structItem.isTupleStruct) "(" else "{"
         val postfix = if (structItem.isTupleStruct) ")" else "}"
         val arguments = StructMember.fromStruct(structItem, substitution).joinToString(prefix = prefix, postfix = postfix, separator = ",") {
             if (it !in selectedFields) it.fieldIdentifier else it.argumentIdentifier
         }
-        return structItem.nameIdentifier?.text + arguments
+        return "Self$arguments"
     }
 }
 

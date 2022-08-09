@@ -1014,6 +1014,15 @@ Cannot change signature of function with cfg-disabled parameters""")
         name = "bar"
     }
 
+    fun `test name conflict extern`() = checkConflicts("""
+        extern "C" {
+            fn foo/*caret*/();
+            fn bar();
+        }
+    """, setOf("The name bar conflicts with an existing item in main.rs (in test_package)")) {
+        name = "bar"
+    }
+
     fun `test visibility conflict function call`() = checkConflicts("""
         mod foo {
             pub fn bar/*caret*/() {}
@@ -1250,6 +1259,22 @@ Cannot change signature of function with cfg-disabled parameters""")
         val foo = findElementInEditor<RsTypeReference>()
         parameters.add(parameter("a", foo))
         returnTypeDisplay = foo
+    }
+
+    fun `test add self parameter to function`() = doTest("""
+        fn foo/*caret*/(a: u32) {}
+
+        fn bar() {
+            foo(1);
+        }
+    """, """
+        fn foo(a: u32, ) {}
+
+        fn bar() {
+            foo(1, );
+        }
+    """) {
+        parameters.add(parameter("self", createType("u32")))
     }
 
     private fun RsChangeFunctionSignatureConfig.swapParameters(a: Int, b: Int) {

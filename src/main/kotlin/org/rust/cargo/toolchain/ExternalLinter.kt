@@ -5,9 +5,15 @@
 
 package org.rust.cargo.toolchain
 
-enum class ExternalLinter(val title: String) {
-    CARGO_CHECK("Cargo Check"),
-    CLIPPY("Clippy");
+import org.jetbrains.annotations.PropertyKey
+import org.rust.BUNDLE
+import org.rust.RsBundle
+
+enum class ExternalLinter(@PropertyKey(resourceBundle = BUNDLE) val titleKey: String) {
+    CARGO_CHECK("rust.external.linter.cargo.check.item"),
+    CLIPPY("rust.external.linter.clippy.item");
+
+    val title: String get() = RsBundle.message(titleKey)
 
     override fun toString(): String = title
 

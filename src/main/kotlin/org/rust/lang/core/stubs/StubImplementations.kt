@@ -52,6 +52,8 @@ class RsFileStub(
 
     val mayHaveStdlibAttributes: Boolean
         get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
+    val mayHaveRecursionLimitAttribute: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_RECURSION_LIMIT_MASK)
 
     override val rawMetaItems: Sequence<RsMetaItemStub>
         get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
@@ -72,7 +74,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 224
+        private const val STUB_VERSION = 227
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -91,6 +93,7 @@ class RsFileStub(
                 var flags = RsAttributeOwnerStub.extractFlags(rawAttributes)
                 val mayHaveStdlibAttributes = rawAttributes.hasAnyOfAttributes("no_std", "no_core")
                 flags = BitUtil.set(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK, mayHaveStdlibAttributes)
+                flags = BitUtil.set(flags, MAY_HAVE_RECURSION_LIMIT_MASK, rawAttributes.hasAttribute("recursion_limit"))
                 return RsFileStub(file, flags)
             }
 
@@ -135,6 +138,7 @@ class RsFileStub(
 
     companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
         private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = nextBitMask()
+        private val MAY_HAVE_RECURSION_LIMIT_MASK: Int = nextBitMask()
     }
 }
 
@@ -272,7 +276,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "FOR_LIFETIMES" -> RsPlaceholderStub.Type("FOR_LIFETIMES", ::RsForLifetimesImpl)
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
-    "ASSOC_TYPE_BINDING" -> RsAssocTypeBindingStub.Type
+    "ASSOC_TYPE_BINDING" -> RsPlaceholderStub.Type("ASSOC_TYPE_BINDING", ::RsAssocTypeBindingImpl)
 
     "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
     "POLYBOUND" -> RsPolyboundStub.Type
@@ -1980,27 +1984,27 @@ class RsLetDeclStub(
  * This is a fake stub type. The actual stub does not exist and can't be created because [shouldCreateStub]
  * always returns `false`. This fake stub is needed in order to conform [RsStmt] signature
  */
-object RsEmptyStmtType : RsStubElementType<RsPlaceholderStub, RsEmptyStmt>("EMPTY_STMT") {
+object RsEmptyStmtType : RsStubElementType<RsPlaceholderStub<RsEmptyStmt>, RsEmptyStmt>("EMPTY_STMT") {
 
     override fun shouldCreateStub(node: ASTNode): Boolean = false
 
-    override fun serialize(stub: RsPlaceholderStub, dataStream: StubOutputStream) {
+    override fun serialize(stub: RsPlaceholderStub<RsEmptyStmt>, dataStream: StubOutputStream) {
         error("EmptyStmtType stub must never be created")
     }
 
-    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsPlaceholderStub =
+    override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsPlaceholderStub<RsEmptyStmt> =
         error("EmptyStmtType stub must never be created")
 
-    override fun createStub(psi: RsEmptyStmt, parentStub: StubElement<out PsiElement>?): RsPlaceholderStub =
+    override fun createStub(psi: RsEmptyStmt, parentStub: StubElement<out PsiElement>?): RsPlaceholderStub<RsEmptyStmt> =
         error("EmptyStmtType stub must never be created")
 
-    override fun createPsi(stub: RsPlaceholderStub): RsEmptyStmt =
+    override fun createPsi(stub: RsPlaceholderStub<RsEmptyStmt>): RsEmptyStmt =
         error("EmptyStmtType stub must never be created")
 }
 
 class RsExprStubType<PsiT : RsElement>(
     debugName: String,
-    psiCtor: (RsPlaceholderStub, IStubElementType<*, *>) -> PsiT
+    psiCtor: (RsPlaceholderStub<*>, IStubElementType<*, *>) -> PsiT
 ) : RsPlaceholderStub.Type<PsiT>(debugName, psiCtor) {
     override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
 }
@@ -2008,7 +2012,7 @@ class RsExprStubType<PsiT : RsElement>(
 class RsBlockExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     private val flags: Int
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsBlockExpr>(parent, elementType) {
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
     val isTry: Boolean get() = BitUtil.isSet(flags, TRY_MASK)
@@ -2048,7 +2052,7 @@ class RsBlockExprStub(
 class RsLitExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val kind: RsStubLiteralKind?
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsLitExpr>(parent, elementType) {
     object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
@@ -2085,7 +2089,7 @@ private fun ASTNode.isFunctionBody() = this.elementType == BLOCK && treeParent?.
 class RsUnaryExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val operatorType: UnaryOperator
-) : RsPlaceholderStub(parent, elementType) {
+) : RsPlaceholderStub<RsUnaryExpr>(parent, elementType) {
     object Type : RsStubElementType<RsUnaryExprStub, RsUnaryExpr>("UNARY_EXPR") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
@@ -2152,31 +2156,6 @@ private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
             dataStream.writeDoubleAsNullable(value)
             dataStream.writeByte(ty?.ordinal ?: -1)
         }
-    }
-}
-
-class RsAssocTypeBindingStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String
-) : StubBase<RsAssocTypeBinding>(parent, elementType) {
-
-    object Type : RsStubElementType<RsAssocTypeBindingStub, RsAssocTypeBinding>("ASSOC_TYPE_BINDING") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(
-                parentStub, this,
-                dataStream.readNameAsString()!!
-            )
-
-        override fun serialize(stub: RsAssocTypeBindingStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.referenceName)
-            }
-
-        override fun createPsi(stub: RsAssocTypeBindingStub): RsAssocTypeBinding =
-            RsAssocTypeBindingImpl(stub, this)
-
-        override fun createStub(psi: RsAssocTypeBinding, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(parentStub, this, psi.referenceName)
     }
 }
 

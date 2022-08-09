@@ -5,24 +5,27 @@
 
 package org.rust.lang.core.macros.decl
 
-import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.expansion
+import org.rust.ExpandMacros
+import org.rust.MockAdditionalCfgOptions
+import org.rust.lang.core.macros.RsMacroExpansionErrorTestBase
+import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
-class RsMacroErrorTestBase : RsTestBase() {
-    private fun checkNotExpanded(@Language("Rust") code: String) {
-        InlineFile(code)
-        val calls = myFixture.file.descendantsOfType<RsMacroCall>()
-        check(calls.all { it.expansion == null })
-    }
-
+@ExpandMacros
+class RsMacroErrorTest : RsMacroExpansionErrorTestBase() {
     // https://github.com/intellij-rust/intellij-rust/pull/2583
-    fun `test empty group definition`() = checkNotExpanded("""
+    fun `test empty group definition`() = checkError<GetMacroExpansionError.ExpansionError>("""
         macro_rules! foo {
             ($()* $ i:tt) => {  }
         }
         foo! { bar baz }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg disabled top level macro call`() = checkError<GetMacroExpansionError.CfgDisabled>("""
+        macro_rules! foo {
+            () => { fn foo() {} }
+        }
+        #[cfg(not(intellij_rust))]
+        foo! {}
     """)
 }

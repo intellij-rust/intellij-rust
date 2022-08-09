@@ -18,7 +18,7 @@
 /// ###### Header 6
 /// ####### Not a header
 /// #not_a_header
-/// #	there is a tab here (not a header)
+/// #	there is a tab here
 /// \## not a header
 ///  # Header 1 (offset 1)
 ///   # Header 1 (offset 2)

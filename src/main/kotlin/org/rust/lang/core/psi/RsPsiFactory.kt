@@ -90,6 +90,10 @@ class RsPsiFactory(
         createFromText<RsLifetimeParameter>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
             ?: error("Failed to create quote identifier: `$text`")
 
+    fun createMetavarIdentifier(text: String): PsiElement =
+        createFromText<RsMetaVarIdentifier>("macro m { ($ $text) => () }")
+            ?: error("Failed to create metavar identifier: `$text`")
+
     fun createExpression(text: String): RsExpr =
         tryCreateExpression(text)
             ?: error("Failed to create expression from text: `$text`")
@@ -287,14 +291,16 @@ class RsPsiFactory(
     ): RsImplItem {
         val whereText = whereClause?.text ?: ""
         val typeParameterListText = typeParameterList?.text ?: ""
-        val typeArgumentListText = if (typeParameterList == null) {
-            ""
-        } else {
-            val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
-                typeParameterList.typeParameterList.map { it.name } +
-                typeParameterList.constParameterList.map { it.name }
-            parameterNames.joinToString(", ", "<", ">")
-        }
+        val typeArgumentListText = typeParameterList
+            ?.getGenericParameters()
+            ?.mapNotNull {
+                if (it is RsLifetimeParameter) {
+                    it.quoteIdentifier.text
+                } else {
+                    it.name
+                }
+            }?.joinToString(", ", "<", ">")
+            .orEmpty()
 
         return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an trait impl with text: `$text`")
@@ -346,6 +352,13 @@ class RsPsiFactory(
         return createFromText("type T = a$text") ?: error("Failed to create type argument from text: `$text`")
     }
 
+    fun createTypeParamBounds(bounds: String): RsTypeParamBounds =
+        createFromText<RsTraitItem>("trait T : $bounds {}")?.childOfType()
+            ?: error("Failed to create type bounds from text: `$bounds`")
+
+    fun createPolybound(bound: String): RsPolybound =
+        createTypeParamBounds(bound).polyboundList.single()
+
     fun createOuterAttr(text: String): RsOuterAttr =
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
@@ -375,9 +388,13 @@ class RsPsiFactory(
         createFromText("pub(crate) fn f() {}")
             ?: error("Failed to create `pub(crate)` element")
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createBlockComment(text: String): PsiComment =
         PsiParserFacade.SERVICE.getInstance(project).createBlockCommentFromText(RsLanguage, text)
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createLineComment(text: String): PsiComment =
         PsiParserFacade.SERVICE.getInstance(project).createLineCommentFromText(RsFileType, text)
 
@@ -393,12 +410,17 @@ class RsPsiFactory(
     fun createEq(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.eq!!
 
+    fun createPlus(): PsiElement =
+        (createFromText<RsConstant>("const C = 1 + 1;")!!.expr as RsBinaryExpr).binaryOp.plus!!
+
     fun createIn(): PsiElement =
         createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in`
             ?: error("Failed to create `in` element")
 
     fun createNewline(): PsiElement = createWhitespace("\n")
 
+    // BACKCOMPAT: 2022.1
+    @Suppress("DEPRECATION", "UnstableApiUsage")
     fun createWhitespace(ws: String): PsiElement =
         PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
 
@@ -441,12 +463,22 @@ class RsPsiFactory(
         reference: Boolean = true,
         lifetime: RsLifetime? = null
     ): RsValueParameter {
+        return tryCreateValueParameter(name, type, mutable, reference, lifetime)
+            ?: error("Failed to create parameter element")
+    }
+
+    fun tryCreateValueParameter(
+        name: String,
+        type: RsTypeReference,
+        mutable: Boolean = false,
+        reference: Boolean = true,
+        lifetime: RsLifetime? = null
+    ): RsValueParameter? {
         val referenceText = if (reference) "&" else ""
         val lifetimeText = if (lifetime != null) "${lifetime.text} " else ""
         val mutText = if (mutable) "mut " else ""
         return createFromText<RsFunction>("fn main($name: $referenceText$lifetimeText$mutText${type.text}){}")
-            ?.valueParameterList?.valueParameterList?.get(0)
-            ?: error("Failed to create parameter element")
+            ?.valueParameterList?.valueParameterList?.getOrNull(0)
     }
 
     fun createPatFieldFull(name: String, value: String): RsPatFieldFull =

@@ -18,12 +18,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.AssocItemScopeEntryBase
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.ScopeEntry
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -33,26 +31,13 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
+import org.rust.stdext.mapToSet
 
-const val KEYWORD_PRIORITY = 80.0
-const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
-const val FRAGMENT_SPECIFIER_PRIORITY = KEYWORD_PRIORITY
-const val VARIABLE_PRIORITY = 5.0
-const val ENUM_VARIANT_PRIORITY = 4.0
-const val FIELD_DECL_PRIORITY = 3.0
-const val ASSOC_FN_PRIORITY = 2.0
 const val DEFAULT_PRIORITY = 0.0
-const val MACRO_PRIORITY = -0.1
-const val DEPRECATED_PRIORITY = -1.0
-
-private const val EXPECTED_TYPE_PRIORITY_OFFSET = 40.0
-private const val MUT_METHOD_PRIORITY_OFFSET = -50.0
-private const val LOCAL_PRIORITY_OFFSET = 20.0
-private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 interface CompletionEntity {
     val ty: Ty?
-    fun getBasePriority(context: RsCompletionContext): Double
+    fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties
     fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
 }
 
@@ -62,35 +47,59 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
     override val ty: Ty? get() = element.asTy
 
-    override fun getBasePriority(context: RsCompletionContext): Double {
-        var priority = when {
-            element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
-            element is RsMacro -> MACRO_PRIORITY
-            element is RsPatBinding -> VARIABLE_PRIORITY
-            element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
-            element is RsFieldDecl -> FIELD_DECL_PRIORITY
-            element is RsFunction && element.isAssocFn -> ASSOC_FN_PRIORITY
-            else -> DEFAULT_PRIORITY
+    override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties {
+        val isMethodSelfTypeIncompatible = element is RsFunction && element.isMethod
+            && isMutableMethodOnConstReference(element, context.context)
+
+        // It's visible and can't be exported = it's local
+        val isLocal = context.isSimplePath && !element.canBeExported
+
+        val elementKind = when {
+            element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> {
+                RsLookupElementProperties.ElementKind.DEPRECATED
+            }
+            element is RsMacro -> RsLookupElementProperties.ElementKind.MACRO
+            element is RsPatBinding -> RsLookupElementProperties.ElementKind.VARIABLE
+            element is RsEnumVariant -> RsLookupElementProperties.ElementKind.ENUM_VARIANT
+            element is RsFieldDecl -> RsLookupElementProperties.ElementKind.FIELD_DECL
+            element is RsFunction && element.isAssocFn -> RsLookupElementProperties.ElementKind.ASSOC_FN
+            else -> RsLookupElementProperties.ElementKind.DEFAULT
         }
 
-        if (element is RsAbstractable && element.owner.isInherentImpl) {
-            priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
-        }
-        if (element is RsFunction && element.isMethod && isMutableMethodOnConstReference(element, context.context)) {
-            priority += MUT_METHOD_PRIORITY_OFFSET
+        val isInherentImplMember = element is RsAbstractable && element.owner.isInherentImpl
+
+        val isOperatorMethod = element is RsFunction
+            && scopeEntry is AssocItemScopeEntryBase<*>
+            && scopeEntry.source.implementedTrait?.element?.langAttribute in OPERATOR_TRAIT_LANG_ITEMS
+
+        val isBlanketImplMember = if (scopeEntry is AssocItemScopeEntryBase<*>) {
+            val source = scopeEntry.source
+            source is TraitImplSource.ExplicitImpl && source.type is TyTypeParameter
+        } else {
+            false
         }
 
-        if (context.isSimplePath && !element.canBeExported) {
-            // It's visible and can't be exported = it's local
-            priority += LOCAL_PRIORITY_OFFSET
-        }
-
-        return priority
+        return RsLookupElementProperties(
+            isSelfTypeCompatible = !isMethodSelfTypeIncompatible,
+            isLocal = isLocal,
+            elementKind = elementKind,
+            isInherentImplMember = isInherentImplMember,
+            isOperatorMethod = isOperatorMethod,
+            isBlanketImplMember = isBlanketImplMember,
+            isUnsafeFn = element is RsFunction && element.isActuallyUnsafe,
+            isAsyncFn = element is RsFunction && element.isAsync,
+            isConstFnOrConst = element is RsFunction && element.isConst || element is RsConstant && element.isConst,
+            isExternFn = element is RsFunction && element.isExtern,
+        )
     }
 
     override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
         val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
         return element.getLookupElementBuilder(scopeEntry.name, subst)
+    }
+
+    companion object {
+        private val OPERATOR_TRAIT_LANG_ITEMS = OverloadableBinaryOperator.values().mapToSet { it.itemName }
     }
 }
 
@@ -136,14 +145,14 @@ fun createLookupElement(
     val lookup = completionEntity.createBaseLookupElement(context)
         .withInsertHandler(insertHandler)
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
-    var priority = completionEntity.getBasePriority(context)
 
     val implLookup = context.lookup
-    if (implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)) {
-        priority += EXPECTED_TYPE_PRIORITY_OFFSET
-    }
+    val isCompatibleTypes = implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)
 
-    return lookup.withPriority(priority)
+    val properties = completionEntity.getBaseLookupElementProperties(context)
+        .copy(isReturnTypeConformsToExpectedType = isCompatibleTypes)
+
+    return lookup.toRsLookupElement(properties)
 }
 
 private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
@@ -172,6 +181,13 @@ private val RsElement.asTy: Ty?
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
+
+fun LookupElementBuilder.toRsLookupElement(properties: RsLookupElementProperties): LookupElement {
+    return RsLookupElement(this, properties)
+}
+
+fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind.KEYWORD): LookupElement =
+    toRsLookupElement(RsLookupElementProperties(keywordKind = keywordKind))
 
 private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
@@ -372,7 +388,7 @@ private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Do
 private fun InsertionContext.doNotAddOpenParenCompletionChar() {
     if (completionChar == '(') {
         setAddCompletionChar(false)
-        Testmarks.doNotAddOpenParenCompletionChar.hit()
+        Testmarks.DoNotAddOpenParenCompletionChar.hit()
     }
 }
 
@@ -451,5 +467,5 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: E
 }
 
 object Testmarks {
-    val doNotAddOpenParenCompletionChar = Testmark("doNotAddOpenParenCompletionChar")
+    object DoNotAddOpenParenCompletionChar : Testmark()
 }

@@ -47,5 +47,5 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
 }
 
 object IntroduceVariableTestmarks {
-    val invalidNamePart = Testmark("invalidNamePart")
+    object InvalidNamePart : Testmark()
 }

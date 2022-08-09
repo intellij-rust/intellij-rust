@@ -229,4 +229,66 @@ class RsUnreachableCodeInspectionTest : RsInspectionsTestBase(RsUnreachableCodeI
             <warning descr="Unreachable code">()</warning>
         }
     """)
+
+    fun `test incomplete match expr reachable`() = checkByText("""
+        fn main() {
+            let x = match 3 {
+
+            };
+            return;
+        }
+    """)
+
+    fun `test incomplete match stmt reachable`() = checkByText("""
+        enum Foo { A(u32), B }
+        fn main() {
+            match f() {
+
+            };
+            return;
+        }
+        fn f() -> Foo { loop {} }
+    """)
+
+    fun `test incomplete match with noreturn branch`() = checkByText("""
+        enum Foo { A(u32), B }
+        fn main() {
+            match f() {
+                Foo::B => loop {},
+            };
+            <warning descr="Unreachable code">return;</warning>
+        }
+        fn f() -> Foo { loop {} }
+    """)
+
+    fun `test incomplete match with noreturn discriminant 1`() = checkByText("""
+        fn main() {
+            <warning descr="Unreachable code">let x = match (loop {}) { };
+            return;</warning>
+        }
+    """)
+
+    fun `test incomplete match with noreturn discriminant 2`() = checkByText("""
+        fn main() {
+            <warning descr="Unreachable code">let x = match (return) { };
+            return;</warning>
+        }
+    """)
+
+    fun `test incomplete match with noreturn discriminant 3`() = checkByText("""
+        fn main() {
+            loop {
+                <warning descr="Unreachable code">let x = match (break) { };
+                return;</warning>
+            }
+        }
+    """)
+
+    fun `test incomplete match with noreturn discriminant 4`() = checkByText("""
+        fn f() -> ! { }
+        fn main() {
+            <warning descr="Unreachable code">let x = match f() { };
+            return;</warning>
+        }
+    """)
 }

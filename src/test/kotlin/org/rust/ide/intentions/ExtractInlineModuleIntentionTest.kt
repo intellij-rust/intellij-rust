@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import org.rust.CheckTestmarkHit
 import org.rust.FileTree
 import org.rust.fileTree
 
@@ -99,7 +100,8 @@ class ExtractInlineModuleIntentionTest : RsIntentionTestBase(ExtractInlineModule
         }
     )
 
-    fun `test extracting module preserves attributes and visibility`() = ExtractInlineModuleIntention.Testmarks.copyAttrs.checkHit {
+    @CheckTestmarkHit(ExtractInlineModuleIntention.Testmarks.CopyAttrs::class)
+    fun `test extracting module preserves attributes and visibility`() {
         doTest(
             fileTree {
                 rust("main.rs", """

@@ -6,13 +6,17 @@
 package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.render
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.infer.substitute
 import org.rust.stdext.dequeOf
 import java.util.*
 
@@ -76,6 +80,14 @@ enum class Mutability {
     }
 }
 
+enum class BorrowKind {
+    /** `&expr` or `&mut expr` */
+    REF,
+
+    /** `&raw const expr` or `&raw mut expr` */
+    RAW
+}
+
 fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.typeParameterByName(name)
 }
@@ -131,8 +143,9 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
     }
 }
 
-fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
+fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutability>? =
     when {
+        this is TyAdt && item == items.Box -> Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
         this is TyReference -> Pair(referenced, mutability)
         this is TyPointer && explicit -> Pair(referenced, mutability)
         else -> null
@@ -143,6 +156,28 @@ tailrec fun Ty.stripReferences(): Ty =
         is TyReference -> referenced.stripReferences()
         else -> this
     }
+
+fun Ty.structTail(): Ty? {
+    val ancestors = mutableSetOf(this)
+
+    fun structTailInner(ty: Ty): Ty? {
+        return when (ty) {
+            is TyAdt -> {
+                val item = ty.item as? RsStructItem ?: return ty
+                val typeRef = item.fields.lastOrNull()?.typeReference
+                val fieldTy = typeRef?.type?.substitute(ty.typeParameterValues) ?: return null
+                if (!ancestors.add(fieldTy)) return null
+                structTailInner(fieldTy)
+            }
+
+            is TyTuple -> structTailInner(ty.types.last())
+
+            else -> ty
+        }
+    }
+
+    return structTailInner(this)
+}
 
 /**
  * TODO:

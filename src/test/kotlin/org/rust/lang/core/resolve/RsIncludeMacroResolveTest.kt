@@ -99,7 +99,8 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                   //^ lib.rs
     """)
 
-    fun `test include in function local module`() = checkResolve("""
+    fun `test include in function local module`() = expect<IllegalStateException> {
+    checkResolve("""
     //- lib.rs
         fn foo() {
             mod foo {
@@ -111,6 +112,7 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     //- bar.rs
         struct Foo;
     """)
+    }
 
     fun `test include file in included file 1`() = checkResolve("""
     //- lib.rs
@@ -132,6 +134,17 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     //- bar.rs
         fn foo(x: Foo) {}
                 //^ lib.rs
+    """)
+
+    fun `test include file in included file 3`() = checkResolve("""
+    //- lib.rs
+        include!("inner/foo.rs");
+        fn foo(x: Foo) {}
+                //^ inner/bar.rs
+    //- inner/foo.rs
+        include!("bar.rs");
+    //- inner/bar.rs
+        struct Foo;
     """)
 
     @ExpandMacros
@@ -214,6 +227,16 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         } //^ main.rs
     //- foo.rs
         gen_use!();
+    """)
+
+    fun `test macro def in included file`() = checkResolve("""
+    //- main.rs
+        include!("foo.rs");
+        mod other {
+            foo!();
+        } //^ foo.rs
+    //- foo.rs
+        macro_rules! foo { () => {} }
     """)
 
     fun `test concat in include 1`() = checkResolve("""

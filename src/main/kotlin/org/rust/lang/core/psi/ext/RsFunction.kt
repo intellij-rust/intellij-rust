@@ -31,6 +31,15 @@ val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrai
 val RsFunction.isTest: Boolean
     get() = queryAttributes.isTest
 
+val RsFunction.isMain: Boolean get() {
+    if (name != "main") return false
+    val parent = parent
+    if (parent !is RsFile || !parent.isCrateRoot) return false
+    if (parent.queryAttributes.hasAttribute("no_main")) return false
+    val targetKind = containingCargoTarget?.kind ?: return false
+    return targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild
+}
+
 private val QueryAttributes<*>.isTest
     get() = metaItems.mapNotNull { it.path?.referenceName }.any { it.contains("test") } || hasAtomAttribute("quickcheck")
 
@@ -43,10 +52,15 @@ val RsFunction.isConst: Boolean
         return stub?.isConst ?: (const != null)
     }
 
+/** Returns `true` if the function has `extern` modifier or located inside a certain `extern {}` block */
+val RsFunction.isActuallyExtern: Boolean
+    get() = isExtern || stubParent is RsForeignModItem
+
+/** Returns `true` if the function has `extern` modifier */
 val RsFunction.isExtern: Boolean
     get() {
         val stub = greenStub
-        return stub?.isExtern ?: (abi != null)
+        return stub?.isExtern ?: (externAbi != null)
     }
 
 val RsFunction.isVariadic: Boolean
@@ -133,15 +147,58 @@ val RsFunction.isActuallyUnsafe: Boolean
         val context = context
         return if (context is RsForeignModItem) {
             // functions inside `extern` block are unsafe in most cases
-            //
-            // #[wasm_bindgen] is a procedural macro that removes the following
-            // extern block, so all function inside it become safe.
-            // See https://github.com/rustwasm/wasm-bindgen
-            !context.queryAttributes.hasAttribute("wasm_bindgen")
+            when {
+                // #[wasm_bindgen] is a procedural macro that removes the following
+                // extern block, so all function inside it become safe.
+                // See https://github.com/rustwasm/wasm-bindgen
+                context.queryAttributes.hasAttribute("wasm_bindgen") -> false
+                // Some Rust intrinsics are safe. This info is hardcoded in compiler
+                context.externAbi.litExpr?.stringValue == "rust-intrinsic" -> name !in SAFE_INTRINSICS
+                else -> true
+            }
         } else {
             false
         }
     }
+
+// Taken from https://github.com/rust-lang/rust/blob/6b4563bf93f4b103ed22507ed825008b89e4f5d9/compiler/rustc_typeck/src/check/intrinsic.rs#L65-L108
+private val SAFE_INTRINSICS: Set<String> = hashSetOf(
+    "abort",
+    "size_of",
+    "min_align_of",
+    "needs_drop",
+    "caller_location",
+    "add_with_overflow",
+    "sub_with_overflow",
+    "mul_with_overflow",
+    "wrapping_add",
+    "wrapping_sub",
+    "wrapping_mul",
+    "saturating_add",
+    "saturating_sub",
+    "rotate_left",
+    "rotate_right",
+    "ctpop",
+    "ctlz",
+    "cttz",
+    "bswap",
+    "bitreverse",
+    "discriminant_value",
+    "type_id",
+    "likely",
+    "unlikely",
+    "ptr_guaranteed_eq",
+    "ptr_guaranteed_ne",
+    "minnumf32",
+    "minnumf64",
+    "maxnumf32",
+    "rustc_peek",
+    "maxnumf64",
+    "type_name",
+    "forget",
+    "black_box",
+    "variant_count",
+)
 
 val RsFunction.isBangProcMacroDef: Boolean
     get() = queryAttributes.hasAtomAttribute("proc_macro")

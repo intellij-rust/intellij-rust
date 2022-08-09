@@ -12,13 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import gnu.trove.THashMap
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.body
-import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
@@ -62,12 +62,16 @@ class DefCollector(
     private val macroExpander = FunctionLikeMacroExpander.new(project)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
+    private val macroMixHashToOrder: MutableMap<HashCode /* mix hash */, Int> = THashMap()
+
     private val shouldExpandMacros: Boolean =
         when (val mode = project.macroExpansionManager.macroExpansionMode) {
             MacroExpansionMode.Disabled -> false
             is MacroExpansionMode.New -> mode.scope != MacroExpansionScope.NONE
             MacroExpansionMode.Old -> true
         }
+
+    private val recursionLimit: Int = defMap.recursionLimit
 
     fun collect() {
         do {
@@ -172,7 +176,8 @@ class DefCollector(
             if (isUnitTestMode) error("Glob import from not module or enum: $import")
             return false
         }
-        val targetMod = defMap.tryCastToModData(types) ?: return false
+
+        val targetMod = defMap.tryCastToModData(types, context.hangingModData) ?: return false
         val containingMod = import.containingMod
         when {
             import.isPrelude -> {
@@ -293,8 +298,9 @@ class DefCollector(
     private data class ExpansionOutput(
         val call: MacroCallInfo,
         val def: MacroDefInfo,
-        val expandedFile: RsFileStub,
-        val expansion: ExpansionResultOk
+        val expandedFile: RsFileStub?,
+        val expansion: ExpansionResultOk?,
+        val mixHash: HashCode,
     )
 
     private fun expandMacros(): Boolean {
@@ -311,6 +317,7 @@ class DefCollector(
             val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
                 ?: return@inPlaceRemoveIf false
 
+            if (call.body.kind != def.procMacroKind) return@inPlaceRemoveIf false
             if (tryTreatAsIdentityMacro(call, def)) return@inPlaceRemoveIf true
 
             macrosToExpandInParallel += ExpansionInput(call, def)
@@ -325,7 +332,8 @@ class DefCollector(
         val (visItem, namespaces, procMacroKind) = call.originalItem
 
         /** See also [ModCollector.collectSimpleItem] */
-        call.containingMod.addVisibleItem(visItem.name, PerNs.from(visItem, namespaces))
+        val perNs = PerNs.from(visItem, namespaces)
+        update(call.containingMod, listOf(visItem.name to perNs), visItem.visibility, NAMED)
         if (procMacroKind != null) {
             call.containingMod.procMacros[visItem.name] = procMacroKind
         }
@@ -361,41 +369,63 @@ class DefCollector(
     private fun expandMacro(call: MacroCallInfo, def: MacroDefInfo): ExpansionOutput? {
         val defData = RsMacroDataWithHash.fromDefInfo(def).ok() ?: return null
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
+        val mixHash = defData.mixHash(callData) ?: return null
         val (expandedFile, expansion) =
-            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return null
-        return ExpansionOutput(call, def, expandedFile, expansion)
+            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: (null to null)
+        return ExpansionOutput(call, def, expandedFile, expansion, mixHash)
     }
 
-    private fun recordExpansion(result: ExpansionOutput): Boolean {
-        val (call, def, expandedFile, expansion) = result
-        val dollarCrateHelper = createDollarCrateHelper(call, def, expansion)
+    private fun recordExpansion(result: ExpansionOutput) {
+        val (call, def, expandedFile, expansion, mixHash) = result
 
-        val context = getModCollectorContextForExpandedElements(call) ?: return true
+        /**
+         * If expansion is null, we still need to record `mixHash` <-> `macroIndex` mapping,
+         * in order to propagate proper error in [MacroExpansionServiceImplInner.getReasonWhyExpansionFileNotFound].
+        */
+        recordExpansionFileName(call, mixHash)
+        if (expandedFile == null || expansion == null) return
+
+        val dollarCrateHelper = createDollarCrateHelper(call, def, expansion)
+        val context = getModCollectorContextForExpandedElements(call) ?: return
         collectExpandedElements(expandedFile, call, context, dollarCrateHelper)
-        return true
+    }
+
+    private fun recordExpansionFileName(call: MacroCallInfo, mixHash: HashCode) {
+        if (context.isHangingMode) return
+        val order = macroMixHashToOrder.merge(mixHash, 1, Int::plus)!!
+        val expansionName = "${mixHash}_${order}_$MACRO_STORAGE_VERSION.rs"
+        val lightInfo = MacroCallLightInfo(call.containingMod, call.macroIndex, call.body.kind)
+        defMap.macroCallToExpansionName[call.macroIndex] = expansionName
+        defMap.expansionNameToMacroCall[expansionName] = lightInfo
     }
 
     private fun expandIncludeMacroCall(call: MacroCallInfo) {
-        val modData = call.containingMod
-        val containingFile = PersistentFS.getInstance().findFileById(modData.fileId ?: return) ?: return
+        val containingFile = PersistentFS.getInstance().findFileById(call.containingFileId ?: return) ?: return
         val includePath = (call.body as? MacroCallBody.FunctionLike)?.text ?: return
         val parentDirectory = containingFile.parent
         val includingFile = parentDirectory.findFileByMaybeRelativePath(includePath)
         val includingRsFile = includingFile?.toPsiFile(project)?.rustFile
         if (includingRsFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectScope(includingRsFile, call.containingMod, context, call.macroIndex)
+            collectScope(
+                includingRsFile,
+                call.containingMod,
+                context,
+                call.macroIndex,
+                includeMacroFile = includingFile,
+                propagateLegacyMacros = true
+            )
         } else if (!context.isHangingMode) {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
         }
         if (includingFile != null) {
-            recordChildFileInUnusualLocation(modData, includingFile.fileId)
+            recordChildFileInUnusualLocation(call.containingMod, includingFile.fileId)
         }
     }
 
     private fun getModCollectorContextForExpandedElements(call: MacroCallInfo): ModCollectorContext? {
-        if (call.depth >= DEFAULT_RECURSION_LIMIT) return null
+        if (call.depth >= recursionLimit) return null
         return ModCollectorContext(
             defMap = defMap,
             context = context,
@@ -454,6 +484,8 @@ sealed class PartialResolvedImport {
 sealed class MacroDefInfo {
     abstract val crate: CratePersistentId
     abstract val path: ModPath
+
+    open val procMacroKind: RsProcMacroKind get() = RsProcMacroKind.FUNCTION_LIKE
 }
 
 class DeclMacroDefInfo(
@@ -492,7 +524,7 @@ class DeclMacro2DefInfo(
 class ProcMacroDefInfo(
     override val crate: CratePersistentId,
     override val path: ModPath,
-    val procMacroKind: RsProcMacroKind,
+    override val procMacroKind: RsProcMacroKind,
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
     val kind: KnownProcMacroKind,
 ) : MacroDefInfo()
@@ -503,6 +535,7 @@ class MacroCallInfo(
     val path: Array<String>,
     val body: MacroCallBody,
     val bodyHash: HashCode?,  // null for `include!` macro
+    val containingFileId: FileId?,  // needed only if this is `include!` macro
     val depth: Int,
     /**
      * `srcOffset` - [CratePersistentId]
@@ -518,6 +551,12 @@ class MacroCallInfo(
 ) {
     override fun toString(): String = "${containingMod.path}:  ${path.joinToString("::")}! { $body }"
 }
+
+data class MacroCallLightInfo(
+    val containingMod: ModData,
+    val macroIndex: MacroIndex,
+    val kind: RsProcMacroKind,
+)
 
 /**
  * "Invalid" means it belongs to [ModData] which is no longer accessible from `defMap.root` using [ModData.childModules]

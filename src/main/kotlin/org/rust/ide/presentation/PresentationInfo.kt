@@ -51,7 +51,7 @@ val RsNamedElement.presentationInfo: PresentationInfo?
             is RsEnumItem -> Pair("enum", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
             is RsEnumVariant -> Pair("enum variant", createDeclarationInfo(this, identifier, false, listOf(tupleFields)))
             is RsTraitItem -> Pair("trait", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
-            is RsTypeAlias -> Pair("type alias", createDeclarationInfo(this, identifier, false, listOf(typeReference, typeParamBounds, whereClause), eq))
+            is RsTypeAlias -> Pair("type alias", createDeclarationInfo(this, identifier, false, listOf(typeReference, typeParamBounds, whereClause, typeParameterList), eq))
             is RsConstant -> Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference), eq))
             is RsSelfParameter -> Pair("parameter", createDeclarationInfo(this, self, false, listOf(typeReference)))
             is RsTypeParameter -> Pair("type parameter", createDeclarationInfo(this, identifier, true))

@@ -52,7 +52,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             struct /*caret*/S;
             impl T for S {}
         """)
-        ImplementMembersMarks.noImplInHandler.checkHit {
+        ImplementMembersMarks.NoImplInHandler.checkHit {
             val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
             check(!presentation.isEnabled)
         }
@@ -1157,6 +1157,40 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement assoc type binding`() = doTest("""
+        trait A {
+            type B;
+        }
+
+        trait C<D> {
+            fn e<F: A<B=D>>();
+        }
+
+        struct G;
+        struct H;
+
+        impl C<G> for H {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("e<F: A<B=D>>()", true)
+    ), """
+        trait A {
+            type B;
+        }
+
+        trait C<D> {
+            fn e<F: A<B=D>>();
+        }
+
+        struct G;
+        struct H;
+
+        impl C<G> for H {
+            fn e<F: A<B=G>>() {
+                todo!()
+            }
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
@@ -1789,6 +1823,38 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn foo() -> &(dyn T + 'static) {
                 todo!()
             }
+        }
+    """)
+
+    fun `test associated type`() = doTest("""
+        trait Foo {
+            type A<'a, T: 'a>;
+            type B<'a, T> where T: 'a;
+            type C: Sized;
+            type D = ();
+        }
+        struct S;
+        impl Foo for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("A<'a, T: 'a>", byDefault = true),
+        ImplementMemberSelection("B<'a, T> where T: 'a", byDefault = true),
+        ImplementMemberSelection("C: Sized", byDefault = true),
+        ImplementMemberSelection("D", byDefault = false, isSelected = true)
+    ), """
+        trait Foo {
+            type A<'a, T: 'a>;
+            type B<'a, T> where T: 'a;
+            type C: Sized;
+            type D = ();
+        }
+        struct S;
+        impl Foo for S {
+            type A<'a, T: 'a> = ();
+            type B<'a, T> where T: 'a = ();
+            type C = ();
+            type D = ();
         }
     """)
 

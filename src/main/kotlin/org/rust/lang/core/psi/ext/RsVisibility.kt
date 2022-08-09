@@ -96,6 +96,30 @@ fun RsVisibility.intersect(other: RsVisibility): RsVisibility = when (this) {
     }
 }
 
+fun RsVisibility.unite(other: RsVisibility): RsVisibility = when {
+    this is RsVisibility.Restricted && other is RsVisibility.Restricted -> {
+        val commonParent = commonParentMod(inMod, other.inMod)
+        if (commonParent != null) {
+            RsVisibility.Restricted(commonParent)
+        } else {
+            RsVisibility.Public
+        }
+    }
+    this == RsVisibility.Private && other is RsVisibility.Private -> RsVisibility.Private
+    else -> RsVisibility.Public
+}
+
+fun RsVisibility.format(): String = when (this) {
+    RsVisibility.Private -> ""
+    RsVisibility.Public -> "pub "
+    is RsVisibility.Restricted ->
+        if (inMod.isCrateRoot) {
+            "pub(crate) "
+        } else {
+            "pub(in crate${inMod.crateRelativePath}) "
+        }
+}
+
 val RsVis.visibility: RsVisibility
     get() = when (stubKind) {
         RsVisStubKind.PUB -> RsVisibility.Public

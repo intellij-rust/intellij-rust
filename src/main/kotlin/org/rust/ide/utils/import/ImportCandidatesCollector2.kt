@@ -6,22 +6,16 @@
 package org.rust.ide.utils.import
 
 import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.map2Array
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
-import org.rust.lang.core.psi.RsCodeFragmentFactory
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.TraitImplSource
@@ -31,10 +25,6 @@ import org.rust.lang.core.resolve2.*
 import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
-
-private val AUTO_IMPORT_USING_NEW_RESOLVE: RegistryValue = Registry.get("org.rust.auto.import.using.new.resolve")
-private val Project.useAutoImportWithNewResolve: Boolean get() = isNewResolveEnabled && AUTO_IMPORT_USING_NEW_RESOLVE.asBoolean()
-val RsElement.useAutoImportWithNewResolve: Boolean get() = project.useAutoImportWithNewResolve && !isDoctestInjection
 
 /**
  * ## High-level description
@@ -65,10 +55,10 @@ val RsElement.useAutoImportWithNewResolve: Boolean get() = project.useAutoImport
  * - Std
  * - Workspace
  * - Dependencies
- * See [ImportCandidate2.compareTo].
+ * See [ImportCandidate.compareTo].
  */
 object ImportCandidatesCollector2 {
-    fun getImportCandidates(context: ImportContext2, targetName: String): List<ImportCandidate2> {
+    fun getImportCandidates(context: ImportContext2, targetName: String): List<ImportCandidate> {
         val itemsPaths = context.getAllModPaths()
             .flatMap { context.getAllItemPathsInMod(it, targetName) }
         return context.convertToCandidates(itemsPaths)
@@ -78,7 +68,7 @@ object ImportCandidatesCollector2 {
         context: ImportContext2,
         prefixMatcher: PrefixMatcher,
         processedElements: MultiMap<String, RsElement>
-    ): List<ImportCandidate2> {
+    ): List<ImportCandidate> {
         val modPaths = context.getAllModPaths()
         val allNames = modPaths.flatMapTo(hashSetOf()) { it.mod.visibleItems.keys }
         val nameToPriority = prefixMatcher.sortMatching(allNames)
@@ -99,11 +89,11 @@ object ImportCandidatesCollector2 {
      * * given [resolvedMethods] don't refer to any trait
      * * if at least one trait related to [resolvedMethods] is already in scope
      */
-    fun getImportCandidates(scope: RsElement, resolvedMethods: List<MethodResolveVariant>): List<ImportCandidate2>? =
+    fun getImportCandidates(scope: RsElement, resolvedMethods: List<MethodResolveVariant>): List<ImportCandidate>? =
         getTraitImportCandidates(scope, resolvedMethods.map { it.source })
 
-    fun getTraitImportCandidates(scope: RsElement, sources: List<TraitImplSource>): List<ImportCandidate2>? {
-        val traits = ImportCandidatesCollector.collectTraitsToImport(scope, sources)
+    fun getTraitImportCandidates(scope: RsElement, sources: List<TraitImplSource>): List<ImportCandidate>? {
+        val traits = collectTraitsToImport(scope, sources)
             ?: return null
         val traitsPaths = traits.mapNotNullToSet { it.asModPath() }
 
@@ -113,7 +103,15 @@ object ImportCandidatesCollector2 {
         return context.convertToCandidates(itemsPaths)
     }
 
-    private fun getImportCandidates(context: ImportContext2, target: RsQualifiedNamedElement): List<ImportCandidate2> {
+    private fun collectTraitsToImport(scope: RsElement, sources: List<TraitImplSource>): List<RsTraitItem>? {
+        val traits = sources.mapNotNull { source ->
+            if (source.isInherent) return null
+            source.requiredTraitInScope
+        }
+        return if (traits.filterInScope(scope).isNotEmpty()) null else traits
+    }
+
+    private fun getImportCandidates(context: ImportContext2, target: RsQualifiedNamedElement): List<ImportCandidate> {
         val name = if (target is RsFile) {
             target.modName
         } else {
@@ -123,11 +121,11 @@ object ImportCandidatesCollector2 {
             .filter { it.qualifiedNamedItem.item == target }
     }
 
-    fun findImportCandidate(context: ImportContext2, target: RsQualifiedNamedElement): ImportCandidate2? =
+    fun findImportCandidate(context: ImportContext2, target: RsQualifiedNamedElement): ImportCandidate? =
         getImportCandidates(context, target).firstOrNull()
 }
 
-private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): List<ImportCandidate2> =
+private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): List<ImportCandidate> =
     itemsPaths
         .groupBy { it.toItemWithNamespace() }
         .mapValues { (item, paths) -> filterForSingleItem(paths, item) }
@@ -148,7 +146,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
                     val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
                     val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData, path.needExternCrate)
                     val isRootPathResolved = isRootPathResolved(importInfo.usePath)
-                    ImportCandidate2(qualifiedItem, importInfo, isRootPathResolved)
+                    ImportCandidate(qualifiedItem, importInfo, isRootPathResolved)
                 }
             }
         }
@@ -279,7 +277,7 @@ private fun ImportContext2.checkVisibility(visItem: VisItem, modData: ModData): 
         val isPrivate = visibility.inMod == modData && !visibility.inMod.isCrateRoot
         val isExplicitlyDeclared = !visItem.isCrateRoot && visItem.containingMod == modData.path
         if (isPrivate && !isExplicitlyDeclared) {
-            Testmarks.ignorePrivateImportInParentMod.hit()
+            Testmarks.IgnorePrivateImportInParentMod.hit()
             return false
         }
     }
@@ -399,6 +397,7 @@ private fun ImportContext2.createPathWithImportAdded(usePath: String): RsPath? {
 
 private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {
     val crateName = path.first()
+    val path = path.map2Array(String::escapeIdentifierIfNeeded)
     return if (crateName == "crate") {
         val usePath = path.joinToString("::").let {
             if (defMap.isAtLeastEdition2018) it else it.removePrefix("crate::")

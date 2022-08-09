@@ -5,6 +5,9 @@
 
 package org.rust.ide.actions.runAnything
 
+import com.intellij.execution.Executor
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.ide.actions.runAnything.RunAnythingAction
 import com.intellij.ide.actions.runAnything.RunAnythingContext
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.ide.actions.runAnything.getPath
@@ -25,7 +28,13 @@ abstract class RsRunAnythingProvider : RunAnythingProviderBase<String>() {
 
     abstract override fun getMainListItem(dataContext: DataContext, value: String): RunAnythingItem
 
-    abstract fun run(command: String, params: List<String>, workingDirectory: Path, cargoProject: CargoProject)
+    protected abstract fun run(
+        executor: Executor,
+        command: String,
+        params: List<String>,
+        workingDirectory: Path,
+        cargoProject: CargoProject
+    )
 
     abstract fun getCompletionProvider(project: Project, dataContext: DataContext) : RsCommandCompletionProvider
 
@@ -56,7 +65,8 @@ abstract class RsRunAnythingProvider : RunAnythingProviderBase<String>() {
         val params = ParametersListUtil.parse(trimStart(value, helpCommand))
         val executionContext = dataContext.getData(EXECUTING_CONTEXT) ?: RunAnythingContext.ProjectContext(project)
         val path = executionContext.getPath()?.toPath() ?: return
-        run(params.firstOrNull() ?: "--help", params.drop(1), path, cargoProject)
+        val executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY) ?: DefaultRunExecutor.getRunExecutorInstance()
+        run(executor, params.firstOrNull() ?: "--help", params.drop(1), path, cargoProject)
     }
 
     abstract override fun getHelpCommand(): String

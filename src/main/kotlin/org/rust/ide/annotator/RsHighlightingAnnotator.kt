@@ -34,34 +34,32 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             else -> null
         } ?: return
 
-        if (!element.existsAfterExpansion) return
-        if (element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute }) return
+        val crate = holder.currentCrate()
+        if (crate != null && !element.existsAfterExpansion(crate)) return
+        if (crate != null && element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute(crate) }) return
 
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
 
         holder.newSilentAnnotation(severity).textAttributes(color.textAttributesKey).create()
     }
 
+    private fun macroGroupColor(parent: RsElement): RsColor? {
+        return if (parent is RsMacroExpansionReferenceGroup || parent is RsMacroBindingGroup) RsColor.MACRO else null
+    }
+
     private fun highlightLeaf(element: PsiElement, holder: AnnotationHolder): RsColor? {
         val parent = element.parent as? RsElement ?: return null
 
-        if (parent is RsMetaVarIdentifier) {
-            val metavarParent = parent.parent as? RsElement ?: return null
-            return highlightIdentifier(parent, metavarParent, holder)
-        }
-
         return when (element.elementType) {
+            DOLLAR -> RsColor.MACRO
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD
             FLOAT_LITERAL -> RsColor.NUMBER
-
-            Q -> if (parent is RsTryExpr) {
-                RsColor.Q_OPERATOR
-            } else {
-                null
-            }
+            Q -> if (parent is RsTryExpr) RsColor.Q_OPERATOR else macroGroupColor(parent)
+            COLON -> if (parent is RsMacroBinding) RsColor.MACRO else null
+            MUL, PLUS, LPAREN, LBRACE, RPAREN, RBRACE -> macroGroupColor(parent)
             EXCL -> if (parent is RsMacro || parent is RsMacroCall && shouldHighlightMacroCall(parent, holder)) {
                 RsColor.MACRO
             } else {
@@ -92,6 +90,8 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             } else {
                 null
             }
+            parent is RsMetaVarIdentifier -> RsColor.FUNCTION // TODO FUNCTION?
+            parent is RsMacroBinding -> RsColor.MACRO
             parent is RsNameIdentifierOwner && parent.nameIdentifier == element -> {
                 colorFor(parent)
             }
@@ -149,6 +149,8 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
     private fun isTodoHighlightingEnabled(file: PsiFile, holder: AnnotationHolder): Boolean {
         return holder.currentAnnotationSession.getOrPut(IS_TODO_HIGHLIGHTING_ENABLED) {
+            // BACKCOMPAT: 2022.1
+            @Suppress("DEPRECATION")
             val helper = PsiTodoSearchHelper.SERVICE.getInstance(file.project) as? PsiTodoSearchHelperImpl
                 ?: return@getOrPut false
             if (!helper.shouldHighlightInEditor(file)) return@getOrPut false
@@ -189,6 +191,5 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
     is RsConstParameter -> RsColor.CONST_PARAMETER
-    is RsMacroBinding -> RsColor.FUNCTION // TODO FUNCTION?
     else -> null
 }

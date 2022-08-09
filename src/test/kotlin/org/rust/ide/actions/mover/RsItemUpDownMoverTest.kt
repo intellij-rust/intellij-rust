@@ -6,6 +6,7 @@
 package org.rust.ide.actions.mover
 
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
 
 class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test step nowhere`() = doTest("""
@@ -48,6 +49,7 @@ class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         fn /*caret*/foo() {}
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfImpl::class)
     fun `test impl prevent step out`() = moveDownAndBackUp("""
         struct S;
         impl S {
@@ -55,13 +57,14 @@ class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 test!();
             }
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfImpl)
+    """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfImpl::class)
     fun `test trait prevent step out`() = moveDownAndBackUp("""
         trait T {
             type /*caret*/Foo;
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfImpl)
+    """)
 
     fun `test can move items inside impl`() {
         moveDownAndBackUp("""

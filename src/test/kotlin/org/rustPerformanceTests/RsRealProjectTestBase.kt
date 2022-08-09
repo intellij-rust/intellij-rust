@@ -6,6 +6,7 @@
 package org.rustPerformanceTests
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.UIUtil
 import org.rust.WithExperimentalFeatures
@@ -13,7 +14,11 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
+import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.toPsiFile
 
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
@@ -111,6 +116,11 @@ fun VirtualFile.findDescendants(filter: (VirtualFile) -> Boolean): ArrayList<Vir
         })
     return result
 }
+
+fun VirtualFile.findDescendantRustFiles(project: Project): List<RsFile> =
+    findDescendants { it.fileType == RsFileType }
+        .mapNotNull { it.toPsiFile(project)?.rustFile }
+        .filter { it.crateRoot != null && it.cargoWorkspace != null }
 
 fun fullyRefreshDirectoryInUnitTests(directory: VirtualFile) {
     // It's very weird, but real refresh occurs only if

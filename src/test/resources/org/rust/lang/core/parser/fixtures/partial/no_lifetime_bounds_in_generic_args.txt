@@ -19,7 +19,7 @@ FILE
               PsiElement(<)('<')
               RsLifetimeImpl(LIFETIME)
                 PsiElement(QUOTE_IDENTIFIER)(''static')
-              PsiErrorElement:'+', ',', '::', <expr>, <type>, '>', QUOTE_IDENTIFIER, identifier or '{' expected, got ':'
+              PsiErrorElement:'+', ',', '::', <expr>, <path start>, <type>, '>', QUOTE_IDENTIFIER or '{' expected, got ':'
                 <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')

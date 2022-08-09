@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.ProcessingContext
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 
 class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(
@@ -20,8 +21,8 @@ class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>(
         result: CompletionResultSet
     ) {
         val items = listOf(
-            "pub" to 3,
-            "pub(crate)" to 2
+            "pub" to KeywordKind.PUB,
+            "pub(crate)" to KeywordKind.PUB_CRATE
         )
         for ((name, priority) in items) {
             result.addElement(
@@ -31,7 +32,7 @@ class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>(
                         insertSpaceIfNeeded(ctx)
                         ctx.editor.caretModel.moveToOffset(ctx.selectionEndOffset)
                     }
-                    .withPriority(KEYWORD_PRIORITY + priority)
+                    .toKeywordElement(priority)
             )
         }
         result.addElement(
@@ -45,7 +46,7 @@ class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>(
                     // Trigger auto-completion for vis restriction
                     AutoPopupController.getInstance(ctx.project).scheduleAutoPopup(ctx.editor)
                 }
-                .withPriority(KEYWORD_PRIORITY + 1)
+                .toKeywordElement(KeywordKind.PUB_PARENS)
         )
     }
 }

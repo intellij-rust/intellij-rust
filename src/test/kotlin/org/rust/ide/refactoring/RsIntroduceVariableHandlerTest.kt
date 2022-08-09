@@ -6,12 +6,10 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsExpr
-import org.rust.openapiext.Testmark
 
 
 class RsIntroduceVariableHandlerTest : RsTestBase() {
@@ -86,6 +84,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences forward`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
@@ -100,6 +99,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward`() = doTest("""
         fn main() {
             let a = 1;
@@ -116,6 +116,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward for expr stmt`() = doTest("""
         fn main() {
             let a = 1;
@@ -132,6 +133,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward for returned expr`() = doTest("""
         fn main() {
             let _ = {
@@ -222,6 +224,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(IntroduceVariableTestmarks.InvalidNamePart::class)
     fun `test tuple struct`() = doTest("""
         pub struct NodeType(pub u32);
 
@@ -243,7 +246,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             let node_type = t.ty;
             foo(node_type)
         }
-    """, mark = IntroduceVariableTestmarks.invalidNamePart)
+    """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/2919
     fun `test issue2919`() = doTest("""
@@ -477,7 +480,6 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         target: Int,
         @Language("Rust") after: String,
         replaceAll: Boolean = false,
-        mark: Testmark? = null
     ) {
         var shownTargetChooser = false
         withMockTargetExpressionChooser(object : ExtractExpressionUi {
@@ -490,7 +492,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             override fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr> =
                 if (replaceAll) occurrences else listOf(expr)
         }) {
-            checkEditorAction(before, after, "IntroduceVariable", testmark = mark)
+            checkEditorAction(before, after, "IntroduceVariable")
             check(expressions.isEmpty() || shownTargetChooser) {
                 "Chooser isn't shown"
             }

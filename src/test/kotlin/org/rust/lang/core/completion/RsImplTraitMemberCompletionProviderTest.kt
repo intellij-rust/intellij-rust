@@ -295,6 +295,38 @@ class RsImplTraitMemberCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test auto import only completed function types`() = doFirstCompletion("""
+        mod foo {
+            pub struct S;
+            pub struct T;
+
+            pub trait Foo {
+                fn foo1();
+                fn foo2(s: S);
+            }
+        }
+
+        impl foo::Foo for () {
+            /*caret*/
+        }
+    """, """
+        mod foo {
+            pub struct S;
+            pub struct T;
+
+            pub trait Foo {
+                fn foo1();
+                fn foo2(s: S);
+            }
+        }
+
+        impl foo::Foo for () {
+            fn foo1() {
+                todo!()/*caret*/
+            }
+        }
+    """)
+
     fun `test complete full function signature`() = doFirstCompletion("""
         trait T1 {}
         trait T2 {

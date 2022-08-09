@@ -214,3 +214,16 @@ private class WithNextIterator<T : Any>(private val iterator: Iterator<T>) : Ite
         return WithNextValue(next, nextNext)
     }
 }
+
+/**
+ * Removes an element from the list.
+ * The removed element is replaced by the last element of the list.
+ * Like [MutableList.removeAt], but `O(1)` at the cost of not preserving the list order
+ */
+fun <T> MutableList<T>.swapRemoveAt(index: Int) {
+    if (index == lastIndex) {
+        removeLast()
+    } else {
+        set(index, removeLast())
+    }
+}

@@ -7,14 +7,15 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
 import org.rust.RsTestBase
 import org.rust.checkedResolve
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.resolve.ref.RsResolveCache.Testmarks
-import org.rust.openapiext.Testmark
 
 class RsResolveCacheTest : RsTestBase() {
+    @CheckTestmarkHit(Testmarks.RustStructureDependentCacheCleared::class)
     fun `test cache invalidated on rust structure change`() = checkResolvedToXY("""
         mod a { pub struct S; }
                          //X
@@ -23,8 +24,9 @@ class RsResolveCacheTest : RsTestBase() {
         use a/*caret*/::S;
         type T = S;
                //^
-    """, "\bb", Testmarks.rustStructureDependentCacheCleared)
+    """, "\bb")
 
+    @CheckTestmarkHit(Testmarks.RemoveChangedElement::class)
     fun `test resolve correctly without global cache invalidation 1`() = checkResolvedToXY("""
         struct S1;
              //X
@@ -33,8 +35,9 @@ class RsResolveCacheTest : RsTestBase() {
         fn main() {
             let a: S1/*caret*/;
         }        //^
-    """, "\b2", Testmarks.removeChangedElement)
+    """, "\b2")
 
+    @CheckTestmarkHit(Testmarks.RemoveChangedElement::class)
     fun `test resolve correctly without global cache invalidation 2`() = checkResolvedToXY("""
         mod a { pub struct S; }
                          //X
@@ -45,8 +48,9 @@ class RsResolveCacheTest : RsTestBase() {
                 ::S;
                 //^
         }
-    """, "\bb", Testmarks.removeChangedElement)
+    """, "\bb")
 
+    @CheckTestmarkHit(Testmarks.RemoveChangedElement::class)
     fun `test resolve correctly without global cache invalidation 3`() = checkResolvedToXY("""
         struct S;
         trait Trait1 { type Item; }
@@ -60,7 +64,7 @@ class RsResolveCacheTest : RsTestBase() {
                 ::Item;
                 //^
         }
-    """, "\b2", Testmarks.removeChangedElement)
+    """, "\b2")
 
     fun `test resolve correctly without global cache invalidation 4`() = checkResolvedToXY("""
         mod really_long_name { pub struct S; }
@@ -244,10 +248,6 @@ class RsResolveCacheTest : RsTestBase() {
         check(refElement.isValid)
 
         refElement.checkResolvedTo("Y", offset)
-    }
-
-    private fun checkResolvedToXY(@Language("Rust") code: String, textToType: String, mark: Testmark) = mark.checkHit {
-        checkResolvedToXY(code, textToType)
     }
 
     private fun checkResolvedAndThenUnresolved(@Language("Rust") code: String, textToType: String) {

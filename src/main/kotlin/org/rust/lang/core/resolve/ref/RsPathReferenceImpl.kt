@@ -18,6 +18,7 @@ import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.stdext.buildMap
@@ -37,6 +38,11 @@ class RsPathReferenceImpl(
 
         if (target is RsAbstractable) {
             val owner = target.owner
+
+            if (target is RsTypeAlias && owner.isImplOrTrait && path.parent is RsAssocTypeBinding) {
+                return super.isReferenceTo(target)
+            }
+
             if (owner.isImplOrTrait && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
                 return false
             }
@@ -175,10 +181,11 @@ fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWith
             0 -> emptyList()
             1 -> result
             else -> {
-                val withoutConstants = result.filter {
-                    it.inner.element !is RsConstant && it.inner.element !is RsConstParameter
+                val types = result.filter {
+                    val element = it.inner.element as? RsNamedElement ?: return@filter false
+                    Namespace.Types in element.namespaces
                 }
-                withoutConstants.ifEmpty { result }
+                types.ifEmpty { result }
             }
         }
     } else {
@@ -252,7 +259,13 @@ fun <T : RsElement> instantiatePathGenerics(
 
     val psiSubst = pathPsiSubst(path, element)
     val newSubst = psiSubst.toSubst(resolver)
-    return BoundElement(resolved.element, subst + newSubst, psiSubst.assoc.mapValues { it.value.type })
+    val assoc = psiSubst.assoc.mapValues {
+        when (val value = it.value) {
+            is AssocValue.Present -> value.value.type
+            AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
+        }
+    }
+    return BoundElement(resolved.element, subst + newSubst, assoc)
 }
 
 fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
@@ -315,24 +328,27 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
                         // resolving of an assoc type depends on a parent path resolve,
                         // so we coming back here and entering the infinite recursion
                         resolveAssocTypeBinding(resolved, binding)?.let { assoc ->
-                            binding.typeReference?.let { put(assoc, it) }
+                            binding.typeReference?.let { put(assoc, AssocValue.Present(it)) }
                         }
 
                     }
                 }
                 // Fn() -> T
                 is RsPsiPathParameters.FnSugar -> buildMap {
-                    if (args.outputArg != null) {
-                        val outputParam = path.knownItems.FnOnce?.findAssociatedType("Output")
-                        if (outputParam != null) {
-                            put(outputParam, args.outputArg)
+                    val outputParam = path.knownItems.FnOnce?.findAssociatedType("Output")
+                    if (outputParam != null) {
+                        val value = if (args.outputArg != null) {
+                            AssocValue.Present(args.outputArg)
+                        } else {
+                            AssocValue.FnSugarImplicitRet
                         }
+                        put(outputParam, value)
                     }
                 }
                 null -> emptyMap()
             }
         } else {
-            emptyMap<RsTypeAlias, RsTypeReference>()
+            emptyMap<RsTypeAlias, AssocValue>()
         }
     }
 
@@ -406,7 +422,7 @@ private fun pathTypeParameters(path: RsPath): RsPsiPathParameters? {
 }
 
 private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
-    collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
+    collectResolveVariants(binding.path.referenceName) { processAssocTypeVariants(trait, it) }
         .singleOrNull() as? RsTypeAlias?
 
 /** Resolves a reference through type aliases */

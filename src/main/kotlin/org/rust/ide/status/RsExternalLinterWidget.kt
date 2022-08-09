@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ClickListener
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.configurable.RsExternalLinterConfigurable
 import org.rust.cargo.project.model.CargoProject
@@ -60,7 +61,7 @@ class RsExternalLinterWidget(private val project: Project) : TextPanel.WithIconA
 
     init {
         setTextAlignment(CENTER_ALIGNMENT)
-        border = StatusBarWidget.WidgetBorder.WIDE
+        border = JBUI.CurrentTheme.StatusBar.Widget.border()
     }
 
     override fun ID(): String = ID

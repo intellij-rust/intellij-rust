@@ -107,6 +107,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
+    @CheckTestmarkHit(AutoImportFix.Testmarks.NameInScope::class)
     fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
         use foo::Foo;
 
@@ -117,7 +118,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         fn main() {
             Foo
         }
-    """, testmark = AutoImportFix.Testmarks.nameInScope)
+    """)
 
     fun `test do not highlight unresolved method of trait bound if multiple defs (invalid code)`() = checkByText("""
         mod foo {
@@ -336,6 +337,18 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             use trans_lib::<error descr="Unresolved reference: `bar`">bar</error>;
         }
     """, false)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/8962
+    fun `test no unresolved reference for explicit type-qualified associated member path`() = checkByText("""
+        struct S;
+        mod module {
+            pub trait Trait { fn convert(self); }
+            impl Trait for super::S { fn convert(self) {} }
+        }
+        fn main() {
+            <S as module::Trait>::convert(S);
+        }
+    """)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         withIgnoreWithoutQuickFix(ignoreWithoutQuickFix) { checkByText(text) }

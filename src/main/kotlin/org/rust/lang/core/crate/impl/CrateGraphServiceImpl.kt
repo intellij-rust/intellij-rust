@@ -288,7 +288,7 @@ private class CrateGraphBuilder {
                 lowerPackage(ProjectPackage(pkg.project, dep.pkg))?.let { Crate.Dependency(dep.name, it) }
             } catch (ignored: CyclicGraphException) {
                 // This can occur because `dev-dependencies` can cyclic depends on this package
-                CrateGraphTestmarks.cyclicDevDependency.hit()
+                CrateGraphTestmarks.CyclicDevDependency.hit()
                 cyclic += dep
                 null
             }

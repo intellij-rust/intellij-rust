@@ -19,6 +19,8 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.stdext.zipValues
 
 /**
  * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`,
@@ -56,6 +58,17 @@ data class BoundElement<out E : RsElement>(
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         assoc.values.any { visitor.visitTy(it) } || subst.visitValues(visitor)
+
+    /** @see Ty.isEquivalentTo */
+    fun <T: RsElement> isEquivalentTo(other: BoundElement<T>): Boolean {
+        if (element != other.element) return false
+
+        if (!subst.zipTypeValues(other.subst).all { it.first.isEquivalentTo(it.second) }) return false
+        if (subst.constSubst != other.subst.constSubst) return false
+        if (!zipValues(assoc, other.assoc).all { it.first.isEquivalentTo(it.second) }) return false
+
+        return true
+    }
 }
 
 val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
@@ -63,6 +76,9 @@ val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
 
 val BoundElement<RsGenericDeclaration>.positionalConstArguments: List<Const>
     get() = element.constParameters.map { subst[it] ?: CtConstParameter(it) }
+
+val BoundElement<RsGenericDeclaration>.singleParamValue: Ty
+    get() = element.typeParameters.singleOrNull()?.let { subst[it] } ?: TyUnknown
 
 data class BoundElementWithVisibility<T : RsElement>(
     val inner: BoundElement<T>,

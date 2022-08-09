@@ -10,47 +10,35 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
-import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
     project: Project
-) : RsConfigurableBase(project, "Rust"), Configurable.NoScroll {
+) : RsConfigurableBase(project, RsBundle.message("settings.rust.toolchain.name")), Configurable.NoScroll {
     private val projectDir = project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     private val rustProjectSettings = RustProjectSettingsPanel(projectDir)
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros:") {
-            comboBox(
-                EnumComboBoxModel(MacroExpansionEngine::class.java),
-                state::macroExpansionEngine,
-                createExpansionEngineListRenderer()
-            ).comment(
-                "Allow plugin to process declarative macro invocations to extract information for name resolution and type inference"
-            )
+        row {
+            checkBox(RsBundle.message("settings.rust.toolchain.expand.macros.checkbox"))
+                .comment(RsBundle.message("settings.rust.toolchain.expand.macros.comment"))
+                .bindSelected(
+                    { state.macroExpansionEngine != MacroExpansionEngine.DISABLED },
+                    { state.macroExpansionEngine = if (it) MacroExpansionEngine.NEW else MacroExpansionEngine.DISABLED }
+                )
         }
         row {
-            checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
-        }
-    }
-
-    private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {
-        return SimpleListCellRenderer.create("") {
-            when (it) {
-                MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
-                MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
-                MacroExpansionEngine.NEW -> "Use new engine"
-                null -> error("Unreachable")
-            }
+            checkBox(RsBundle.message("settings.rust.toolchain.inject.rust.in.doc.comments.checkbox"))
+                .bindSelected(state::doctestInjectionEnabled)
         }
     }
 

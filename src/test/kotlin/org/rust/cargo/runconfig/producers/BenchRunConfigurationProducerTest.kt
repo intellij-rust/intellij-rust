@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig.producers
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.psi.PsiElement
+import org.rust.cargo.runconfig.target.BuildTarget
 import org.rust.cargo.runconfig.test.CargoBenchRunConfigurationProducer
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
@@ -205,6 +206,7 @@ class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             allFeatures = true
             emulateTerminal = true
             withSudo = true
+            buildTarget = BuildTarget.LOCAL
             isRedirectInput = true
             backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)

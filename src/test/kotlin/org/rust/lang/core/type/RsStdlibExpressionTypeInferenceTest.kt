@@ -567,6 +567,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iter take`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -603,6 +604,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator cloned`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -906,5 +908,112 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
           //^ *mut i32
         }
+    """)
+
+    fun `test iter map using std identity`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = vec![1, 2]
+                .into_iter()
+                .map(std::convert::identity)
+                .next()
+                .unwrap();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer reference`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo(f: &fn() -> i32) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer 2-reference`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo(f: &&fn() -> i32) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call an fn pointer under Rc`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::rc::Rc;
+        fn foo(f: Rc<fn() -> i32>) {
+            let a = f();
+            a;
+        } //^ i32
+    """)
+
+    fun `test call type parameter with FnOnce with implicit return type`() = stubOnlyTypeInfer("""
+    //- main.rs
+        pub fn foo<F: FnOnce(i32)>(f: F) -> Self {
+            let a = f(1);
+            a;
+        } //^ ()
+    """)
+
+    fun `test box unsizing`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            foo(Box::new([1, 2, 3]));
+        }             //^ Box<[u8; 3], Global>|Box<[u8; 3]>
+
+        fn foo(a: Box<[u8]>) {}
+    """)
+
+    fun `test infer lambda parameter type 1`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo(_: fn(i32)) {}
+    """)
+
+    fun `test infer lambda parameter type 2`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = |b| {
+                b;
+            };//^ i32
+            foo(a);
+        }
+
+        fn foo<T: FnOnce(i32)>(_: T) {}
+    """)
+
+    fun `test try-poll`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::task::Poll;
+        fn foo(p: Poll<Result<i32, ()>>) -> Result<(), ()> {
+            let a = p?;
+            a;
+          //^ Poll<i32>
+            Ok(())
+        }
+    """)
+
+    fun `test for loop over type parameter implementing Iterator`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo<I: Iterator<Item = i32>>(a: I) {
+            for b in a {
+                b;
+            } //^ i32
+        }
+    """)
+
+    fun `test Option clone method`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = Some(String::new());
+            let b = a.clone();
+            b;
+        } //^ Option<String>
     """)
 }

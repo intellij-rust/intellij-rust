@@ -90,8 +90,10 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
     open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(testCargoPackage(contentRoot))
-        return CargoWorkspace.deserialize(Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+        return CargoWorkspace.deserialize(
+            Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot),
+        )
     }
 
     protected open fun externalPackage(
@@ -363,18 +365,21 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         val transLib = externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib")
         val transLib2 = externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2")
         val transCommonLib = externalPackage("$contentRoot/trans-common-lib", "lib.rs", "trans-common-lib")
+        val rawIdentifierLib = externalPackage("$contentRoot/loop", "lib.rs", "loop")
         val depProcMacro = externalPackage(
             "$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO,
             procMacroArtifact = testProcMacroArtifact1
         )
         val depProcMacro2 = externalPackage("$contentRoot/dep-proc-macro-2", "lib.rs", "dep-proc-macro-2", libKind = LibKind.PROC_MACRO,
             procMacroArtifact = testProcMacroArtifact2)
+        val depProcMacro3 = externalPackage("$contentRoot/dep-proc-macro-unsuccessfully-compiled", "lib.rs", "dep-proc-unsuccessfully-compiled", libKind = LibKind.PROC_MACRO,
+            procMacroArtifact = null)
         val cyclicDepLibDevDep = externalPackage("$contentRoot/cyclic-dep-lib-dev-dep", "lib.rs", "cyclic-dep-lib-dev-dep")
 
         val packages = listOf(
             testPackage, depLib, depLibNew, depLib2, depLibWithCyclicDep, depLibToBeRenamed,
-            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, depProcMacro, depProcMacro2,
-            cyclicDepLibDevDep
+            noSrcLib, noSourceLib, transLib, transLib2, transCommonLib, rawIdentifierLib, depProcMacro, depProcMacro2,
+            depProcMacro3, cyclicDepLibDevDep
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
@@ -386,6 +391,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 dep(noSourceLib.id),
                 dep(depProcMacro.id),
                 dep(depProcMacro2.id),
+                dep(depProcMacro3.id),
+                dep(rawIdentifierLib.id),
             ),
             depLib.id to setOf(
                 dep(transLib.id),
@@ -404,7 +411,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             cyclicDepLibDevDep.id to setOf(
                 dep(depLibWithCyclicDep.id),
             )
-        ), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+        ), emptyMap(), contentRoot))
     }
 
     private fun dep(id: PackageId, name: String? = null, depKind: DepKind = DepKind.Normal): Dependency =
@@ -421,7 +428,8 @@ private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescrip
         )
         return CargoWorkspace.deserialize(
             Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot),
+        )
     }
 }
 

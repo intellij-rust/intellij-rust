@@ -10,12 +10,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.presentation.ImportingPsiRenderer
-import org.rust.ide.presentation.PsiRenderingOptions
-import org.rust.ide.presentation.renderFunctionSignature
-import org.rust.ide.presentation.renderTypeReference
+import org.rust.ide.presentation.*
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.ide.utils.import.ImportCandidateBase
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
@@ -197,7 +194,7 @@ class MembersGenerator(
         listOf(pathPsiSubst(impl.traitRef!!.path, trait.element)),
         impl.members!!
     )
-    val itemsToImport: Set<ImportCandidateBase> get() = renderer.itemsToImport
+    val itemsToImport: Set<ImportCandidate> get() = renderer.itemsToImport
 
     fun createTraitMembers(members: Collection<RsAbstractable>): RsMembers {
         val body = members.joinToString(separator = "\n", transform = {
@@ -216,7 +213,7 @@ class MembersGenerator(
                 "const ${element.nameLikeElement.text}: ${element.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
             }
             is RsTypeAlias ->
-                "type ${element.escapedName} = ();"
+                "${element.renderTypeAliasSignature()} = ();"
             is RsFunction ->
                 "${element.renderFunctionSignature()} {\n        todo!()\n    }"
             else ->
@@ -225,5 +222,6 @@ class MembersGenerator(
     }
 
     private fun RsFunction.renderFunctionSignature(): String = renderer.renderFunctionSignature(this)
+    private fun RsTypeAlias.renderTypeAliasSignature(): String = renderer.renderTypeAliasSignature(this, renderBounds = false)
     private fun RsTypeReference.renderTypeReference(): String = renderer.renderTypeReference(this)
 }

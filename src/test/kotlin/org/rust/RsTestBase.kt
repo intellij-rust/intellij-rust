@@ -22,8 +22,6 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
@@ -34,7 +32,6 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
@@ -42,7 +39,6 @@ import org.rust.stdext.RsResult
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.full.createInstance
 
-@RunWith(JUnit38ClassRunner::class) // TODO: drop the annotation when issue with Gradle test scanning go away
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     // Needed for assertion that the directory doesn't accidentally renamed during the test
@@ -207,15 +203,17 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             }
         }
 
+        val testmark = collectTestmarksFromAnnotations()
+
         if (findAnnotationInstance<BothEditions>() != null) {
             if (findAnnotationInstance<MockEdition>() != null) {
                 error("Can't mix `BothEditions` and `MockEdition` annotations")
             }
             // These functions exist to simplify stacktrace analyzing
-            runTestEdition2015(testRunnable)
-            runTestEdition2018(testRunnable)
+            testmark.checkHit { runTestEdition2015(testRunnable) }
+            testmark.checkHit { runTestEdition2018(testRunnable) }
         } else {
-            super.runTestRunnable(testRunnable)
+            testmark.checkHit { super.runTestRunnable(testRunnable) }
         }
     }
 
@@ -328,16 +326,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         @Language("Rust") after: String,
         actionId: String,
         trimIndent: Boolean = true,
-        testmark: Testmark? = null
     ) {
         fun String.trimIndentIfNeeded(): String = if (trimIndent) trimIndent() else this
 
-        val action = {
-            checkByText(before.trimIndentIfNeeded(), after.trimIndentIfNeeded()) {
-                myFixture.performEditorAction(actionId)
-            }
+        checkByText(before.trimIndentIfNeeded(), after.trimIndentIfNeeded()) {
+            myFixture.performEditorAction(actionId)
         }
-        testmark?.checkHit { action() } ?: action()
     }
 
     protected fun openFileInEditor(path: String) {

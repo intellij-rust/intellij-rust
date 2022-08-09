@@ -39,6 +39,9 @@ import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.ParsedCommand
+import org.rust.cargo.runconfig.command.hasRemoteTarget
+import org.rust.cargo.runconfig.target.localBuildArgsForRemoteRun
 import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -63,20 +66,26 @@ object CargoBuildManager {
 
     val RsCommandConfiguration.isBuildToolWindowEnabled: Boolean
         get() {
-            if (!project.isBuildToolWindowEnabled) return false
+            if (!project.isBuildToolWindowAvailable) return false
             return beforeRunTasks.any { task ->
                 task is CargoBuildTaskProvider.BuildTask ||
                     task is WasmPackBuildTaskProvider.BuildTask
             }
         }
 
-    val Project.isBuildToolWindowEnabled: Boolean
+    val Project.isBuildToolWindowAvailable: Boolean
         get() {
             if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
             val minVersion = cargoProjects.allProjects
                 .mapNotNull { it.rustcInfo?.version?.semver }
                 .minOrNull() ?: return false
             return minVersion >= MIN_RUSTC_VERSION
+        }
+
+    val CargoCommandConfiguration.isBuildToolWindowAvailable: Boolean
+        get() {
+            if (!project.isBuildToolWindowAvailable) return false
+            return !hasRemoteTarget || buildTarget.isLocal
         }
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
@@ -206,12 +215,11 @@ object CargoBuildManager {
     }
 
     fun isBuildConfiguration(configuration: CargoCommandConfiguration): Boolean {
-        val args = ParametersListUtil.parse(configuration.command)
-        return when (val command = args.firstOrNull()) {
+        val parsed = ParsedCommand.parse(configuration.command) ?: return false
+        return when (val command = parsed.command) {
             "build", "check", "clippy" -> true
             "test" -> {
-                val additionalArguments = args.drop(1)
-                val (commandArguments, _) = parseArgs(command, additionalArguments)
+                val (commandArguments, _) = parseArgs(command, parsed.additionalArguments)
                 "--no-run" in commandArguments
             }
             else -> false
@@ -221,26 +229,29 @@ object CargoBuildManager {
     fun getBuildConfiguration(configuration: CargoCommandConfiguration): CargoCommandConfiguration? {
         if (isBuildConfiguration(configuration)) return configuration
 
-        val args = ParametersListUtil.parse(configuration.command)
-        val command = args.firstOrNull() ?: return null
-        if (command !in BUILDABLE_COMMANDS) return null
-        val additionalArguments = args.drop(1)
-        val (commandArguments, _) = parseArgs(command, additionalArguments)
+        val parsed = ParsedCommand.parse(configuration.command) ?: return null
+        if (parsed.command !in BUILDABLE_COMMANDS) return null
+        val commandArguments = parseArgs(parsed.command, parsed.additionalArguments).commandArguments.toMutableList()
+        commandArguments.addAll(configuration.localBuildArgsForRemoteRun)
 
         // https://github.com/intellij-rust/intellij-rust/issues/3707
-        if (command == "test" && commandArguments.contains("--doc")) return null
+        if (parsed.command == "test" && commandArguments.contains("--doc")) return null
 
         val buildConfiguration = configuration.clone() as CargoCommandConfiguration
         buildConfiguration.name = "Build `${buildConfiguration.name}`"
-        buildConfiguration.command = when (command) {
-            "run" -> ParametersListUtil.join("build", *commandArguments.toTypedArray())
-            "test" -> ParametersListUtil.join("test", "--no-run", *commandArguments.toTypedArray())
+        buildConfiguration.command = ParametersListUtil.join(when (parsed.command) {
+            "run" -> listOfNotNull(parsed.toolchain, "build", *commandArguments.toTypedArray())
+            "test" -> listOfNotNull(parsed.toolchain, "test", "--no-run", *commandArguments.toTypedArray())
             else -> return null
-        }
+        })
 
+        buildConfiguration.emulateTerminal = false
         // building does not require root privileges and redirect input anyway
         buildConfiguration.withSudo = false
         buildConfiguration.isRedirectInput = false
+
+        buildConfiguration.defaultTargetName = buildConfiguration.defaultTargetName
+            .takeIf { buildConfiguration.buildTarget.isRemote }
 
         return buildConfiguration
     }

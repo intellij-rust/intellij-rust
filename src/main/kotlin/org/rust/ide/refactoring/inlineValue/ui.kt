@@ -12,8 +12,10 @@ import org.rust.ide.refactoring.RsInlineDialog
 class RsInlineValueDialog(
     private val context: InlineValueContext,
     project: Project = context.element.project,
-    occurrencesNumber: Int = initOccurrencesNumber(context.element)
-) : RsInlineDialog(context.element, context.reference, project, occurrencesNumber) {
+) : RsInlineDialog(context.element, context.reference, project) {
+
+    private val occurrencesNumber: Int = initOccurrencesNumber(context.element)
+
     init {
         init()
     }
@@ -35,9 +37,8 @@ class RsInlineValueDialog(
     override fun getBorderTitle(): String =
         RefactoringBundle.message("inline.field.border.title")
 
-    override fun getLabelText(occurrences: String): String {
-        return "${context.type.capitalize()} ${context.name} $occurrences"
-    }
+    override fun getNameLabelText(): String =
+        "${context.type.capitalize()} ${context.name} ${getOccurrencesText(occurrencesNumber)}"
 
     override fun getInlineAllText(): String {
         val text =

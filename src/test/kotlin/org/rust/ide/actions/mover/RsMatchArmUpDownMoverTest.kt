@@ -5,6 +5,8 @@
 
 package org.rust.ide.actions.mover
 
+import org.rust.CheckTestmarkHit
+
 class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test step over match arm single line expr`() = moveDownAndBackUp("""
         fn main() {
@@ -46,6 +48,7 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(UpDownMoverTestMarks.MoveOutOfMatch::class)
     fun `test prevent step out match body`() = moveDownAndBackUp("""
         fn main() {
             match test {
@@ -54,7 +57,7 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
                 }
             }
         }
-    """, testmark = UpDownMoverTestMarks.moveOutOfMatch)
+    """)
 
     fun `test can move several arms`() = moveDownAndBackUp("""
         fn main() {

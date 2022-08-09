@@ -5,12 +5,14 @@
 
 package org.rust.lang.core.macros
 
+import org.rust.CheckTestmarkHit
 import org.rust.ExpandMacros
 import org.rust.lang.core.resolve.RsResolveTestBase
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl.Testmarks
 
 @ExpandMacros
 class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test item context`() = checkByCode("""
         struct X;
              //X
@@ -18,8 +20,9 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = X;
         }          //^
-    """, Testmarks.touched)
+    """)
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test statement context`() = checkByCode("""
         struct X;
              //X
@@ -29,8 +32,9 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 type T = X;
             };         //^
         }
-    """, Testmarks.touched)
+    """)
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test expression context`() = checkByCode("""
         struct X;
              //X
@@ -38,17 +42,19 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         fn main () {
             let a = foo!(X);
         }              //^
-    """, Testmarks.touched)
+    """)
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test type context`() = checkByCode("""
         struct X;
              //X
         macro_rules! foo { ($($ i:tt)*) => { $( $ i )* }; }
         type T = foo!(X);
                     //^
-    """, Testmarks.touched)
+    """)
 
     // TODO implement `getContext()` in all RsPat PSI elements
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test pattern context`() = expect<IllegalStateException> {
         checkByCode("""
         const X: i32 = 0;
@@ -61,9 +67,10 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 _ => {}
             }
         }
-    """, Testmarks.touched)
+    """)
     }
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test lifetime`() = checkByCode("""
         macro_rules! foo {
             ($ i:item) => { $ i };
@@ -75,8 +82,9 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 fn foo(&self) -> &'a u8 {}
             }                    //^
         }
-    """, Testmarks.touched)
+    """)
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test 2-segment path 1`() = checkByCode("""
         mod foo {
           //X
@@ -86,8 +94,9 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = foo::X;
         }          //^
-    """, Testmarks.touched)
+    """)
 
+    @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test 2-segment path 2`() = checkByCode("""
         mod foo {
             pub struct X;
@@ -96,5 +105,5 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = foo::X;
         }               //^
-    """, Testmarks.touched)
+    """)
 }

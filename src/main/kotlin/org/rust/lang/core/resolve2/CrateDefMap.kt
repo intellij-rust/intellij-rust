@@ -13,6 +13,8 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
+import gnu.trove.TObjectHashingStrategy
+import org.rust.cargo.project.settings.getMaximumRecursionLimit
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.*
@@ -29,6 +31,7 @@ import java.io.DataOutput
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import kotlin.math.min
 
 class CrateDefMap(
     val crate: CratePersistentId,
@@ -44,6 +47,8 @@ class CrateDefMap(
     val rootModMacroIndex: Int,
     /** Attributes of root module */
     val stdlibAttributes: RsFile.Attributes,
+    // https://doc.rust-lang.org/reference/attributes/limits.html#the-recursion_limit-attribute
+    val recursionLimitRaw: Int,
     /** Only for debug */
     val crateDescription: String,
 ) {
@@ -78,21 +83,33 @@ class CrateDefMap(
 
     val globImportGraph: GlobImportGraph = GlobImportGraph()
 
+    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = THashMap()
+    val macroCallToExpansionName: MutableMap<MacroIndex, String> = THashMap(object : TObjectHashingStrategy<MacroIndex> {
+        override fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = MacroIndex.equals(index1, index2)
+        override fun computeHashCode(index: MacroIndex): Int = MacroIndex.hashCode(index)
+    })
+
     val isAtLeastEdition2018: Boolean
         get() = metaData.edition >= Edition.EDITION_2018
+
+    val recursionLimit: Int get() = min(recursionLimitRaw, getMaximumRecursionLimit())
 
     fun getDefMap(crate: CratePersistentId): CrateDefMap? =
         if (crate == this.crate) this else allDependenciesDefMaps[crate]
 
-    fun getModData(path: ModPath): ModData? {
-        val defMap = getDefMap(path.crate) ?: error("Can't find ModData for path $path")
-        return defMap.root.getChildModData(path.segments)
+    fun getModData(path: ModPath, hangingModData: ModData? = null): ModData? {
+        return if (hangingModData == null) {
+            val defMap = getDefMap(path.crate) ?: error("Can't find ModData for path $path")
+            defMap.root.getChildModData(path.segments)
+        } else {
+            findHangingModData(path, hangingModData)
+                ?: getModData(path, hangingModData.context)
+        }
     }
 
-    // TODO: Possible optimization - store in [CrateDefMap] map from [String] (mod path) to [ModData]
-    fun tryCastToModData(types: VisItem): ModData? {
+    fun tryCastToModData(types: VisItem, hangingModData: ModData? = null): ModData? {
         if (!types.isModOrEnum) return null
-        return getModData(types.path)
+        return getModData(types.path, hangingModData)
     }
 
     fun getModData(mod: RsMod): ModData? {
@@ -202,6 +219,10 @@ class FileInfo(
  */
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+
+    val parent: MacroIndex get() = MacroIndex(indices.copyOfRange(0, indices.size - 1))
+    val last: Int get() = indices.last()
+
     fun append(index: Int): MacroIndex = MacroIndex(indices + index)
     fun append(index: MacroIndex): MacroIndex = MacroIndex(indices + index.indices)
 
@@ -227,6 +248,8 @@ inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> 
         }
 
         fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = index1.indices.contentEquals(index2.indices)
+
+        fun hashCode(index: MacroIndex): Int = index.indices.contentHashCode()
     }
 
     override fun toString(): String = indices.contentToString()
@@ -270,7 +293,7 @@ class ModData(
     val name: String get() = path.name
     val isDeeplyEnabledByCfg: Boolean get() = isDeeplyEnabledByCfgOuter && isEnabledByCfgInner
     val parents: Sequence<ModData> get() = generateSequence(this) { it.parent }
-    private val rootModData: ModData = parent?.rootModData ?: this
+    val rootModData: ModData = parent?.rootModData ?: this
 
     // Optimization to reduce allocations
     val visibilityInSelf: Restricted = Restricted.create(this)

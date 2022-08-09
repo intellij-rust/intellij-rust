@@ -53,7 +53,23 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
         fun dfs(boundTrait: BoundElement<RsTraitItem>) {
             if (!visited.add(boundTrait.element)) return
             result += boundTrait
-            boundTrait.element.superTraits.forEach { dfs(it.substitute(boundTrait.subst)) }
+            boundTrait.element.superTraits.forEach { superTrait ->
+                run {
+                    // infer associated types on supertraits if possible
+                    if (boundTrait.assoc.isNotEmpty()) {
+                        val inferredAssoc = mutableMapOf<RsTypeAlias, Ty>()
+                        val superTraitAssocTypes = superTrait.element.expandedMembers.types
+                        boundTrait.assoc.filterTo(inferredAssoc) { it.key in superTraitAssocTypes }
+                        if (inferredAssoc.isNotEmpty()) {
+                            inferredAssoc.putAll(superTrait.assoc)
+                            return@run superTrait.copy(assoc = inferredAssoc)
+                        }
+                    }
+                    superTrait
+                }.let {
+                    dfs(it.substitute(boundTrait.subst))
+                }
+            }
         }
         dfs(this)
 

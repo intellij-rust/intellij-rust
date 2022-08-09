@@ -8,79 +8,82 @@ package org.rust.ide.colors
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.util.NlsContexts.AttributeDescriptor
+import org.rust.RsBundle
+import java.util.function.Supplier
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
 @Suppress("UnstableApiUsage")
-enum class RsColor(@AttributeDescriptor humanName: String, default: TextAttributesKey? = null) {
-    VARIABLE("Variables//Default", Default.IDENTIFIER),
-    MUT_BINDING("Variables//Mutable binding", Default.IDENTIFIER),
-    FIELD("Variables//Field", Default.INSTANCE_FIELD),
-    CONSTANT("Variables//Constant", Default.CONSTANT),
+enum class RsColor(humanName: Supplier<@AttributeDescriptor String>, default: TextAttributesKey? = null) {
+    VARIABLE(RsBundle.messagePointer("settings.rust.color.variables.default"), Default.IDENTIFIER),
+    MUT_BINDING(RsBundle.messagePointer("settings.rust.color.mutable.binding"), Default.IDENTIFIER),
+    FIELD(RsBundle.messagePointer("settings.rust.color.field"), Default.INSTANCE_FIELD),
+    CONSTANT(RsBundle.messagePointer("settings.rust.color.constant"), Default.CONSTANT),
 
-    FUNCTION("Functions//Function declaration", Default.FUNCTION_DECLARATION),
-    METHOD("Functions//Method declaration", Default.INSTANCE_METHOD),
-    ASSOC_FUNCTION("Functions//Associated function declaration", Default.STATIC_METHOD),
-    FUNCTION_CALL("Functions//Function call", Default.FUNCTION_CALL),
-    METHOD_CALL("Functions//Method call", Default.FUNCTION_CALL),
-    ASSOC_FUNCTION_CALL("Functions//Associated function call", Default.STATIC_METHOD),
-    MACRO("Functions//Macro", Default.IDENTIFIER),
+    FUNCTION(RsBundle.messagePointer("settings.rust.color.function.declaration"), Default.FUNCTION_DECLARATION),
+    METHOD(RsBundle.messagePointer("settings.rust.color.method.declaration"), Default.INSTANCE_METHOD),
+    ASSOC_FUNCTION(RsBundle.messagePointer("settings.rust.color.associated.function.declaration"), Default.STATIC_METHOD),
+    FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.function.call"), Default.FUNCTION_CALL),
+    METHOD_CALL(RsBundle.messagePointer("settings.rust.color.method.call"), Default.FUNCTION_CALL),
+    ASSOC_FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.associated.function.call"), Default.STATIC_METHOD),
+    MACRO(RsBundle.messagePointer("settings.rust.color.macro"), Default.IDENTIFIER),
 
-    PARAMETER("Parameters//Parameter", Default.PARAMETER),
-    MUT_PARAMETER("Parameters//Mutable parameter", Default.PARAMETER),
-    SELF_PARAMETER("Parameters//Self parameter", Default.KEYWORD),
-    LIFETIME("Parameters//Lifetime", Default.IDENTIFIER),
-    TYPE_PARAMETER("Parameters//Type parameter", Default.IDENTIFIER),
-    CONST_PARAMETER("Parameters//Const parameter", Default.CONSTANT),
+    PARAMETER(RsBundle.messagePointer("settings.rust.color.parameter"), Default.PARAMETER),
+    MUT_PARAMETER(RsBundle.messagePointer("settings.rust.color.mutable.parameter"), Default.PARAMETER),
+    SELF_PARAMETER(RsBundle.messagePointer("settings.rust.color.self.parameter"), Default.KEYWORD),
+    LIFETIME(RsBundle.messagePointer("settings.rust.color.lifetime"), Default.IDENTIFIER),
+    TYPE_PARAMETER(RsBundle.messagePointer("settings.rust.color.type.parameter"), Default.IDENTIFIER),
+    CONST_PARAMETER(RsBundle.messagePointer("settings.rust.color.const.parameter"), Default.CONSTANT),
 
-    PRIMITIVE_TYPE("Types//Primitive", Default.KEYWORD),
-    STRUCT("Types//Struct", Default.CLASS_NAME),
-    UNION("Types//Union", Default.CLASS_NAME),
-    TRAIT("Types//Trait", Default.INTERFACE_NAME),
-    ENUM("Types//Enum", Default.CLASS_NAME),
-    ENUM_VARIANT("Types//Enum variant", Default.STATIC_FIELD),
-    TYPE_ALIAS("Types//Type alias", Default.CLASS_NAME),
-    CRATE("Types//Crate", Default.IDENTIFIER),
-    MODULE("Types//Module", Default.IDENTIFIER),
+    PRIMITIVE_TYPE(RsBundle.messagePointer("settings.rust.color.primitive"), Default.KEYWORD),
+    STRUCT(RsBundle.messagePointer("settings.rust.color.struct"), Default.CLASS_NAME),
+    UNION(RsBundle.messagePointer("settings.rust.color.union"), Default.CLASS_NAME),
+    TRAIT(RsBundle.messagePointer("settings.rust.color.trait"), Default.INTERFACE_NAME),
+    ENUM(RsBundle.messagePointer("settings.rust.color.enum"), Default.CLASS_NAME),
+    ENUM_VARIANT(RsBundle.messagePointer("settings.rust.color.enum.variant"), Default.STATIC_FIELD),
+    TYPE_ALIAS(RsBundle.messagePointer("settings.rust.color.type.alias"), Default.CLASS_NAME),
+    CRATE(RsBundle.messagePointer("settings.rust.color.crate"), Default.IDENTIFIER),
+    MODULE(RsBundle.messagePointer("settings.rust.color.module"), Default.IDENTIFIER),
 
-    KEYWORD("Keywords//Keyword", Default.KEYWORD),
-    KEYWORD_UNSAFE("Keywords//Unsafe", Default.KEYWORD),
+    KEYWORD(RsBundle.messagePointer("settings.rust.color.keyword"), Default.KEYWORD),
+    KEYWORD_UNSAFE(RsBundle.messagePointer("settings.rust.color.keyword.unsafe"), Default.KEYWORD),
 
-    CHAR("Literals//Char", Default.STRING),
-    NUMBER("Literals//Number", Default.NUMBER),
-    STRING("Literals//Strings//String", Default.STRING),
-    VALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Valid", Default.VALID_STRING_ESCAPE),
-    INVALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Invalid", Default.INVALID_STRING_ESCAPE),
-    FORMAT_PARAMETER("Literals//Strings//Format parameter", Default.VALID_STRING_ESCAPE),
-    FORMAT_SPECIFIER("Literals//Strings//Format specifier inside format parameter", HighlighterColors.TEXT),
+    CHAR(RsBundle.messagePointer("settings.rust.color.char"), Default.STRING),
+    NUMBER(RsBundle.messagePointer("settings.rust.color.number"), Default.NUMBER),
+    STRING(RsBundle.messagePointer("settings.rust.color.string"), Default.STRING),
+    VALID_STRING_ESCAPE(RsBundle.messagePointer("settings.rust.color.valid.escape.sequence"), Default.VALID_STRING_ESCAPE),
+    INVALID_STRING_ESCAPE(RsBundle.messagePointer("settings.rust.color.invalid.escape.sequence"), Default.INVALID_STRING_ESCAPE),
+    FORMAT_PARAMETER(RsBundle.messagePointer("settings.rust.color.format.parameter"), Default.VALID_STRING_ESCAPE),
+    FORMAT_SPECIFIER(RsBundle.messagePointer("settings.rust.color.format.specifier"), HighlighterColors.TEXT),
 
-    BLOCK_COMMENT("Comments//Block comment", Default.BLOCK_COMMENT),
-    EOL_COMMENT("Comments//Line comment", Default.LINE_COMMENT),
+    BLOCK_COMMENT(OptionsBundle.messagePointer("options.language.defaults.block.comment"), Default.BLOCK_COMMENT),
+    EOL_COMMENT(OptionsBundle.messagePointer("options.language.defaults.line.comment"), Default.LINE_COMMENT),
 
-    DOC_COMMENT("Rustdoc//Comment", Default.DOC_COMMENT),
-    DOC_HEADING("Rustdoc//Heading", Default.DOC_COMMENT_TAG),
-    DOC_LINK("Rustdoc//Link", Default.DOC_COMMENT_TAG_VALUE),
-    DOC_EMPHASIS("Rustdoc//Italic text"),
-    DOC_STRONG("Rustdoc//Bold text"),
-    DOC_CODE("Rustdoc//Code", Default.DOC_COMMENT_MARKUP),
+    DOC_COMMENT(RsBundle.messagePointer("settings.rust.color.rustdoc.comment"), Default.DOC_COMMENT),
+    DOC_HEADING(RsBundle.messagePointer("settings.rust.color.rustdoc.heading"), Default.DOC_COMMENT_TAG),
+    DOC_LINK(RsBundle.messagePointer("settings.rust.color.rustdoc.link"), Default.DOC_COMMENT_TAG_VALUE),
+    DOC_EMPHASIS(RsBundle.messagePointer("settings.rust.color.rustdoc.italic")),
+    DOC_STRONG(RsBundle.messagePointer("settings.rust.color.rustdoc.bold")),
+    DOC_CODE(RsBundle.messagePointer("settings.rust.color.rustdoc.code"), Default.DOC_COMMENT_MARKUP),
 
-    BRACES("Braces and Operators//Braces", Default.BRACES),
-    BRACKETS("Braces and Operators//Brackets", Default.BRACKETS),
-    OPERATORS("Braces and Operators//Operation sign", Default.OPERATION_SIGN),
-    Q_OPERATOR("Braces and Operators//? operator", Default.KEYWORD),
-    SEMICOLON("Braces and Operators//Semicolon", Default.SEMICOLON),
-    DOT("Braces and Operators//Dot", Default.DOT),
-    COMMA("Braces and Operators//Comma", Default.COMMA),
-    PARENTHESES("Braces and Operators//Parentheses", Default.PARENTHESES),
+    BRACES(OptionsBundle.messagePointer("options.language.defaults.braces"), Default.BRACES),
+    BRACKETS(OptionsBundle.messagePointer("options.language.defaults.brackets"), Default.BRACKETS),
+    OPERATORS(RsBundle.messagePointer("settings.rust.color.operation.sign"), Default.OPERATION_SIGN),
+    Q_OPERATOR(RsBundle.messagePointer("settings.rust.color.question.mark"), Default.KEYWORD),
+    SEMICOLON(OptionsBundle.messagePointer("options.language.defaults.semicolon"), Default.SEMICOLON),
+    DOT(OptionsBundle.messagePointer("options.language.defaults.dot"), Default.DOT),
+    COMMA(OptionsBundle.messagePointer("options.language.defaults.comma"), Default.COMMA),
+    PARENTHESES(OptionsBundle.messagePointer("options.language.defaults.parentheses"), Default.PARENTHESES),
 
-    ATTRIBUTE("Attribute", Default.METADATA),
-    UNSAFE_CODE("Unsafe code"),
-    CFG_DISABLED_CODE("Conditionally disabled code"),
-    GENERATED_ITEM("Items generated by macros"),
+    ATTRIBUTE(RsBundle.messagePointer("settings.rust.color.attribute"), Default.METADATA),
+    UNSAFE_CODE(RsBundle.messagePointer("settings.rust.color.unsafe.code")),
+    CFG_DISABLED_CODE(RsBundle.messagePointer("settings.rust.color.conditionally.disabled.code")),
+    GENERATED_ITEM(RsBundle.messagePointer("settings.rust.color.generated.items")),
     ;
 
     val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.$name", default)

@@ -63,6 +63,8 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         val owner = config.function.owner
 
         val function = psiFactory.createFunction(config.functionText)
+        // BACKCOMPAT: 2022.1
+        @Suppress("DEPRECATION", "UnstableApiUsage")
         val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
         return when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
@@ -91,7 +93,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             ?.firstOrNull { impl ->
                 val cachedImpl = RsCachedImplItem.forImpl(impl)
                 val (_, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@firstOrNull false
-                cachedImpl.isInherent && cachedImpl.isValid
+                cachedImpl.isInherent && cachedImpl.isValid && !cachedImpl.isNegativeImpl
                     && generics.isEmpty() && constGenerics.isEmpty()  // TODO: Support generics
                     && cachedImpl.typeAndGenerics == cachedTraitImpl.typeAndGenerics
             }

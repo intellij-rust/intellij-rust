@@ -10,7 +10,6 @@ import com.intellij.util.Urls
 import org.rust.ProjectDescriptor
 import org.rust.RustProjectDescriptorBase
 import org.rust.WithRustup
-import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import java.nio.file.Paths
@@ -284,7 +283,8 @@ private object WithWorkspaceProjectDescriptor : RustProjectDescriptorBase() {
         )
         return CargoWorkspace.deserialize(
             Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot), CfgOptions.DEFAULT)
+            CargoWorkspaceData(packages, emptyMap(), emptyMap(), contentRoot),
+        )
     }
 }
 

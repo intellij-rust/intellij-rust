@@ -5,8 +5,12 @@
 
 package org.rust.cargo.toolchain.tools
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.JacksonException
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.toml.TomlMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
@@ -23,6 +27,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -32,7 +37,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoPackage
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
@@ -141,7 +146,7 @@ class Cargo(
         projectDirectory: Path,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData = fetchMetadata(owner, projectDirectory, listenerProvider(CargoCallType.METADATA))
+        val rawData = fetchMetadata(owner, projectDirectory, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
@@ -160,10 +165,11 @@ class Cargo(
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
+        toolchainOverride: String? = null,
         listener: ProcessListener? = null
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
-        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        val additionalArgs = listOf("--verbose", "--format-version", "1", "--all-features")
+        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
             .execute(owner, listener = listener)
             .unwrapOrElse { return Err(it) }
             .stdout
@@ -173,11 +179,11 @@ class Cargo(
                 if (isBazelPath(path)) { bazelPathToProjectPath(path, projectDirectory.parent.toString()) }
                 else toolchain.toLocalPath(path)
             }
-            val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
+            val project = JSON_MAPPER.readValue(json, CargoMetadata.Project::class.java)
                 .convertPaths(toolchain::toLocalPath, srcPathConverter)
             Ok(project)
-        } catch (e: JsonSyntaxException) {
-            Err(JsonDeserializationException(e))
+        } catch (e: JacksonException) {
+            Err(RsDeserializationException(e))
         }
     }
 
@@ -185,9 +191,16 @@ class Cargo(
         owner: Project,
         projectDirectory: Path,
         dstPath: Path,
+        toolchainOverride: String? = null,
         listener: ProcessListener? = null
     ): RsProcessResult<Unit> {
-        val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
+        val additionalArgs = listOf("--respect-source-config", dstPath.toString())
+        val commandLine = CargoCommandLine(
+            "vendor",
+            projectDirectory,
+            additionalArgs,
+            toolchain = toolchainOverride
+        )
         commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
         return Ok(Unit)
     }
@@ -207,15 +220,59 @@ class Cargo(
         ).execute(owner).map { output -> CfgOptions.parse(output.stdoutLines) }
     }
 
+    /**
+     * Execute `cargo config get <path>` to and parse output as Jackson Tree ([JsonNode]).
+     * Use [JsonNode.at] to get properties by path (in `/foo/bar` format)
+     */
+    fun getConfig(
+        owner: Project,
+        projectDirectory: Path?
+    ): RsResult<CargoConfig, RsProcessExecutionOrDeserializationException> {
+        val parameters = mutableListOf("-Z", "unstable-options", "config", "get")
+
+        val output = createBaseCommandLine(
+            parameters,
+            workingDirectory = projectDirectory,
+            environment = mapOf(RUSTC_BOOTSTRAP to "1")
+        ).execute(owner).unwrapOrElse { return Err(it) }.stdout
+
+        val tree = try {
+            TOML_MAPPER.readTree(output)
+        } catch (e: JacksonException) {
+            return Err(RsDeserializationException(e))
+        }
+
+        val buildTargetNode = tree.at("/build/target")
+        val buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
+        val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
+            // Value can be either string or object with additional `forced` and `relative` params.
+            // https://doc.rust-lang.org/cargo/reference/config.html#env
+            if (field.value.isTextual) {
+                field.key to CargoConfig.EnvValue(field.value.asText())
+            } else if (field.value.isObject) {
+                val valueParams = try {
+                    TOML_MAPPER.treeToValue(field.value, CargoConfig.EnvValue::class.java)
+                } catch (e: JacksonException) {
+                    return Err(RsDeserializationException(e))
+                }
+                field.key to CargoConfig.EnvValue(valueParams.value, valueParams.isForced, valueParams.isRelative)
+            } else {
+                null
+            }
+        }.toMap()
+
+        return Ok(CargoConfig(buildTarget, env))
+    }
+
     private fun fetchBuildScriptsInfo(
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
     ): BuildMessages {
-        // `--tests` is needed here to compile dev dependencies during build script evaluation.
-        // `--all-targets` also can help to build dev dependencies,
-        // but it may force unnecessary compilation of examples, benches and other targets
-        val additionalArgs = listOf("--message-format", "json", "--workspace", "--tests")
+        // `--all-targets` is needed here to compile:
+        //   - build scripts even if a crate doesn't contain library or binary targets
+        //   - dev dependencies during build script evaluation
+        val additionalArgs = listOf("--message-format", "json", "--workspace", "--all-targets")
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
             EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
@@ -384,8 +441,9 @@ class Cargo(
     private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
         with(commandLine.patchArgs(project, colors)) {
             val parameters = buildList<String> {
-                if (channel != RustChannel.DEFAULT) {
-                    add("+$channel")
+                when {
+                    channel != RustChannel.DEFAULT -> add("+$channel")
+                    toolchain != null -> add("+$toolchain")
                 }
                 if (project.rustSettings.useOffline) {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory)
@@ -397,8 +455,8 @@ class Cargo(
                 add(command)
                 addAll(additionalArguments)
             }
-            val rustcExecutable = toolchain.rustc().executable.toString()
-            toolchain.createGeneralCommandLine(
+            val rustcExecutable = this@Cargo.toolchain.rustc().executable.toString()
+            this@Cargo.toolchain.createGeneralCommandLine(
                 executable,
                 workingDirectory,
                 redirectInputFrom,
@@ -408,7 +466,7 @@ class Cargo(
                 emulateTerminal,
                 // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
                 // https://github.com/intellij-rust/intellij-rust/issues/7320
-                if (project.isBuildToolWindowEnabled) withSudo else false,
+                if (project.isBuildToolWindowAvailable) withSudo else false,
                 http = http
             ).withEnvironment("RUSTC", rustcExecutable)
         }
@@ -419,7 +477,7 @@ class Cargo(
         stdIn: ByteArray? = null,
         listener: ProcessListener? = null
     ): RsProcessResult<ProcessOutput> {
-        return toGeneralCommandLine(project, this).execute(owner, stdIn, listener = listener)
+        return toGeneralCommandLine(project, copy(emulateTerminal = false)).execute(owner, stdIn, listener = listener)
     }
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener): RsResult<Unit, RsProcessExecutionException.Start> {
@@ -453,6 +511,11 @@ class Cargo(
 
     companion object {
         private val LOG: Logger = logger<Cargo>()
+
+        private val JSON_MAPPER: ObjectMapper = ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .registerKotlinModule()
+        private val TOML_MAPPER = TomlMapper()
 
         @JvmStatic
         val TEST_NOCAPTURE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.cargo.test.nocapture")

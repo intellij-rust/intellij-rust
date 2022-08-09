@@ -32,6 +32,7 @@ import com.intellij.util.ui.update.Update
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.impl.Applicability
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.ide.notifications.RsExternalLinterSlowRunNotifier
 import org.rust.lang.core.psi.RsFile
@@ -82,7 +83,9 @@ class RsExternalLinterPass(
             return
         }
 
-        val update = object : Update(file) {
+        class RsUpdate: Update(file) {
+            val updateFile: RsFile = file
+
             override fun setRejected() {
                 super.setRejected()
                 doFinish(highlights)
@@ -101,9 +104,10 @@ class RsExternalLinterPass(
                 })
             }
 
-            override fun canEat(update: Update?): Boolean = true
+            override fun canEat(update: Update?): Boolean = updateFile == (update as? RsUpdate)?.updateFile
         }
 
+        val update = RsUpdate()
         if (isUnitTestMode) {
             update.run()
         } else {
@@ -116,7 +120,7 @@ class RsExternalLinterPass(
         try {
             @Suppress("UnstableApiUsage")
             annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                holder.createAnnotationsForFile(file, annotationResult)
+                holder.createAnnotationsForFile(file, annotationResult, Applicability.UNSPECIFIED)
             }
         } catch (t: Throwable) {
             if (t is ProcessCanceledException) throw t

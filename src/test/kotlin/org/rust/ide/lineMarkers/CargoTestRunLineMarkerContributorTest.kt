@@ -64,22 +64,19 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun `test mod decl`() = doTestFromFile(
-        "lib.rs",
-        fileTree {
-            rust("tests.rs", """
-                #[test]
-                fn test() {}
-            """)
+    fun `test mod decl`() = doTestByFileTree("lib.rs") {
+        rust("tests.rs", """
+            #[test]
+            fn test() {}
+        """)
 
-            rust("no_tests.rs", "")
+        rust("no_tests.rs", "")
 
-            rust("lib.rs", """
-                mod tests; // - Test lib::tests
-                mod no_tests;
-            """)
-        }
-    )
+        rust("lib.rs", """
+            mod tests; // - Test lib::tests
+            mod no_tests;
+        """)
+    }
 
     fun `test show a test mark as default for test function`() = checkElement<RsFunction>("""
         #[test]

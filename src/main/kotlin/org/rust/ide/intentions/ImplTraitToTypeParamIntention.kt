@@ -38,7 +38,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         // can't convert outer `impl Trait` because inner one
         // will appear in type parameter constrains which is invalid
         if (argType.descendantsOfType<RsTraitType>().any { it.impl != null }) {
-            outerImplTestMark.hit()
+            OuterImplTestMark.hit()
             HintManager.getInstance().showErrorHint(
                 editor,
                 "Please convert innermost `impl Trait` first",
@@ -92,6 +92,6 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
     )
 
     companion object {
-        val outerImplTestMark = Testmark("called on outer impl Trait")
+        object OuterImplTestMark : Testmark()
     }
 }

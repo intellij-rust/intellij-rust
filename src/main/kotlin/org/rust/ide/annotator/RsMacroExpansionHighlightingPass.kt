@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
@@ -93,11 +94,16 @@ class RsMacroExpansionHighlightingPass(
 
         if (macros.isEmpty()) return
 
+        val crate = (file as? RsFile)?.crate
         val annotators = createAnnotators()
+
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
+            val annotationSession = AnnotationSession(macro.expansion.file)
+                .apply { setCurrentCrate(crate) }
+
             @Suppress("DEPRECATION")
-            val holder = AnnotationHolderImpl(AnnotationSession(macro.expansion.file), false)
+            val holder = AnnotationHolderImpl(annotationSession, false)
 
             for (element in macro.elementsForHighlighting) {
                 for (ann in annotators) {

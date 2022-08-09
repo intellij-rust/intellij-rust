@@ -21,6 +21,7 @@ import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
@@ -39,6 +40,7 @@ import org.rust.openapiext.isUnitTestMode
 class RsFormatMacroAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val formatMacro = element as? RsMacroCall ?: return
+        if (!formatMacro.existsAfterExpansion) return
 
         val (macroPos, macroArgs) = getFormatMacroCtx(formatMacro) ?: return
 

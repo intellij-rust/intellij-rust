@@ -16,11 +16,8 @@ import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
-import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.lang.core.psi.RsFile
-import org.rust.openapiext.toPsiFile
 
 open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
@@ -59,13 +56,9 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
         val baseDirToCheck = if (info.name == STDLIB) rustupFixture.stdlib!! else base
 
-        val filesToCheck = baseDirToCheck.findDescendants {
-            it.fileType == RsFileType && run {
-                val file = it.toPsiFile(project)
-                file is RsFile && file.crateRoot != null && file.cargoWorkspace != null
-            }
-        }
-        for (file in filesToCheck) {
+        val filesToCheck = baseDirToCheck.findDescendantRustFiles(project)
+        for (rsFile in filesToCheck) {
+            val file = rsFile.virtualFile
             val path = if (VfsUtil.isAncestor(base, file, true)) {
                 file.path.substring(base.path.length + 1)
             } else {

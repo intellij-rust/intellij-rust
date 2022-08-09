@@ -532,6 +532,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.QuestionOperator::class)
     fun `test try operator with option`() = checkByCode("""
         struct S { field: u32 }
                     //X
@@ -542,7 +543,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             s.field;
             //^
         }
-    """, TypeInferenceMarks.questionOperator)
+    """)
 
     fun `test try! macro with aliased Result`() = checkByCode("""
         mod io {
@@ -563,6 +564,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(TypeInferenceMarks.MethodPickTraitScope::class)
     fun `test method defined in out of scope trait from prelude`() = stubOnlyResolve("""
     //- a.rs
         use super::S;
@@ -578,7 +580,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let _: u8 = S.into();
         }               //^ a.rs
-    """, TypeInferenceMarks.methodPickTraitScope)
+    """)
 
     fun `test &str into String`() = stubOnlyResolve("""
     //- main.rs
@@ -753,4 +755,19 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                         //^ ...libstd/sys/windows/ext/mod.rs|...std/src/sys/windows/ext/mod.rs|...std/src/os/windows/mod.rs
         """)
     }
+
+    fun `test pick method by self type`() = checkByCode("""
+        struct S<T>(T);
+
+        trait T1 { fn foo(self: Box<Self>); }
+        trait T2 { fn foo(self: Rc<Self>); }
+
+        impl<T> T1 for S<T> { fn foo(self: Box<Self>) {} }
+                               //X
+        impl<T> T2 for S<T> { fn foo(self: Rc<Self>) {} }
+
+        fn main() {
+            Box::new(S(0i32)).foo();
+        }                    //^
+    """)
 }

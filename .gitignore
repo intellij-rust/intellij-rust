@@ -11,3 +11,4 @@ testData
 .DS_Store
 /pretty_printers_tests/target
 /native-helper/target
+/attributes-info/target

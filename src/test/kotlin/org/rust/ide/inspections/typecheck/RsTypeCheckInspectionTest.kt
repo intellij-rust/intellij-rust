@@ -391,6 +391,22 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
     """)
 
+    fun `test const arguments with associated type`() = checkErrors("""
+        struct S1;
+        trait T { type Item; }
+        impl T for S1 { type Item = i32; }
+
+        fn foo<T, const C: i32>() {}
+        const C1: <S1 as T>::Item = 1;
+        struct S;
+
+        fn main() {
+            foo::<i32, 1>;
+            foo::<i32, <error descr="mismatched types [E0308]expected `i32`, found `bool`">true</error>>;
+            foo::<S, C1>;
+        }
+    """)
+
     fun `test const arguments in path exprs`() = checkErrors("""
         struct S<const N: usize>;
 
@@ -403,5 +419,27 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             S::<"">::foo(); // TODO: issue https://github.com/intellij-rust/intellij-rust/issues/8150
             S::<<error descr="mismatched types [E0308]expected `usize`, found `&str`">""</error>>.bar();
         }
+    """)
+
+    fun `test no errors about unsizing`() = checkErrors("""
+        #![feature(unsized_tuple_coercion)]
+
+        #[lang = "sized"]  pub trait Sized {}
+        #[lang = "unsize"] pub trait Unsize<T: ?Sized> {}
+        #[lang = "coerce_unsized"] pub trait CoerceUnsized<T: ?Sized> {}
+        impl<'a, T: ?Sized + Unsize<U>, U: ?Sized> CoerceUnsized<&'a U> for &'a T {}
+
+        struct S<T: ?Sized> {
+            head: i32,
+            tail: T,
+        }
+
+        fn main() {
+            let _: &S<[i32]> = &S { head: 0, tail: [1, 2] };
+            let _: &(i32, [u8]) = &(1, [2, 3]);
+            foo(&bar([1, 2, 3]));
+        }
+        fn foo(_: &[u8]) {}
+        fn bar<T>(t: T) -> T { t }
     """)
 }

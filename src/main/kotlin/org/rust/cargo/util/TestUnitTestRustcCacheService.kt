@@ -18,11 +18,11 @@ class TestUnitTestRustcCacheService : UnitTestRustcCacheService {
     @Suppress("UNCHECKED_CAST")
     override fun <T> cachedInner(
         rustcVersion: RustcVersion?,
-        cls: Class<T>,
         cacheIf: () -> Boolean,
         computation: () -> T
     ): T {
         if (rustcVersion == null || !cacheIf()) return computation()
+        val cls = computation.javaClass
         return cache.getOrPut(rustcVersion to cls) { Optional.ofNullable(computation()) }.orNull() as T
     }
 }

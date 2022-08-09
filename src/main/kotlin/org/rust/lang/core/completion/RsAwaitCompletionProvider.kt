@@ -14,6 +14,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.ext.findAssociatedType
@@ -55,13 +56,26 @@ object RsAwaitCompletionProvider : RsCompletionProvider() {
             .create("await")
             .bold()
             .withTypeText(awaitTy.toString())
-        result.addElement(awaitBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
+        result.addElement(awaitBuilder.toKeywordElement(KeywordKind.AWAIT))
     }
 
     private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
+        val outputTy = this.lookupRawFutureOutputTy(lookup)
+        if (outputTy !is TyUnknown) return outputTy
+        return this.lookupIntoFutureOutputTy(lookup)
+    }
+
+    private fun Ty.lookupRawFutureOutputTy(lookup: ImplLookup): Ty {
         val futureTrait = lookup.items.Future ?: return TyUnknown
         val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
         val selection = lookup.selectProjectionStrict(TraitRef(this, futureTrait.withSubst()), outputType)
+        return selection.ok()?.value ?: TyUnknown
+    }
+
+    private fun Ty.lookupIntoFutureOutputTy(lookup: ImplLookup): Ty {
+        val intoFutureTrait = lookup.items.IntoFuture ?: return TyUnknown
+        val outputType = intoFutureTrait.findAssociatedType("Output") ?: return TyUnknown
+        val selection = lookup.selectProjectionStrict(TraitRef(this, intoFutureTrait.withSubst()), outputType)
         return selection.ok()?.value ?: TyUnknown
     }
 }

@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import org.rust.MockRustcVersion
-import org.rust.ignoreInNewResolve
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
@@ -676,6 +675,17 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test enum variant in match pattern`() = checkByCode("""
+        pub enum E { A }
+                   //X
+        use E::*;
+        fn func(x: E) {
+            match x {
+                A { .. } => {}
+            } //^
+        }
+    """)
+
     fun `test enum variant with alias`() = checkByCode("""
         enum E { A }
                //X
@@ -1287,6 +1297,30 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test pattern constant binding ambiguity enum variant`() = checkByCode("""
+        enum Enum { Var1, Var2 }
+                  //X
+        use Enum::Var1;
+        fn main() {
+            match Enum::Var1 {
+                Var1 => {}
+                //^
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test pattern constant binding ambiguity unit struct`() = checkByCode("""
+        struct Foo;
+             //X
+        fn main() {
+            match Foo {
+                Foo => {}
+                //^
+            }
+        }
+    """)
+
     fun `test match enum path`() = checkByCode("""
         enum Enum { Var1, Var2 }
                   //X
@@ -1456,7 +1490,7 @@ class RsResolveTest : RsResolveTestBase() {
 
         use self::Foo;
                 //^
-    """, ItemResolutionTestmarks.externCrateSelfWithoutAlias.ignoreInNewResolve(project))
+    """)
 
     fun `test const generic in fn`() = checkByCode("""
         fn f<const AAA: usize>() {

@@ -54,13 +54,8 @@ private fun createMethodCall(
     return factory.tryCreateMethodCall(parenthesesExpr, name, restArguments)
 }
 
-fun normalizeSelf(selfArgument: RsExpr, function: RsFunction): RsExpr {
+private fun normalizeSelf(selfArgument: RsExpr, function: RsFunction): RsExpr {
     val isRef = function.selfParameter?.isRef ?: false
-    val normalized = when {
-        isRef && selfArgument is RsUnaryExpr && selfArgument.operatorType in REF_OPERATORS -> selfArgument.expr
-        else -> null
-    }
-    return normalized ?: selfArgument
+    if (!isRef) return selfArgument
+    return selfArgument.unwrapReference()
 }
-
-private val REF_OPERATORS = setOf(UnaryOperator.REF, UnaryOperator.REF_MUT)

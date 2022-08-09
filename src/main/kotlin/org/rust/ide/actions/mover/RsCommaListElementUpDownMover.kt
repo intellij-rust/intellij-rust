@@ -56,7 +56,7 @@ class RsCommaListElementUpDownMover : RsLineMover() {
             isMovingOutOfBraceBlock(sibling, down) ||
             isMovingOutOfBracketBlock(sibling, down)
         ) {
-            UpDownMoverTestMarks.moveOutOfBlock.hit()
+            UpDownMoverTestMarks.MoveOutOfBlock.hit()
             return null
         }
         return sibling

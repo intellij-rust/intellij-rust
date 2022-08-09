@@ -9,6 +9,18 @@ if version_info[0] >= 3:
 ZERO_FIELD = "__0"
 FIRST_FIELD = "__1"
 
+
+def unwrap_unique_or_non_null(unique_or_nonnull):
+    # type: (Value) -> Value
+    """
+    rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
+    rust 1.62.0: struct Unique<T: ?Sized> { pointer: NonNull<T>, ... }
+    struct NonNull<T> { pointer: *const T }
+    """
+    ptr = unique_or_nonnull["pointer"]
+    return ptr if ptr.type.code == gdb.TYPE_CODE_PTR else ptr["pointer"]
+
+
 class StructProvider:
     def __init__(self, valobj):
         # type: (Value) -> None
@@ -96,7 +108,7 @@ class StdStringProvider:
         self.valobj = valobj
         vec = valobj["vec"]
         self.length = int(vec["len"])
-        self.data_ptr = vec["buf"]["ptr"]["pointer"]
+        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
@@ -115,7 +127,7 @@ class StdOsStringProvider:
         vec = buf[ZERO_FIELD] if is_windows else buf
 
         self.length = int(vec["len"])
-        self.data_ptr = vec["buf"]["ptr"]["pointer"]
+        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
@@ -145,7 +157,7 @@ class StdVecProvider:
         # type: (Value) -> None
         self.valobj = valobj
         self.length = int(valobj["len"])
-        self.data_ptr = valobj["buf"]["ptr"]["pointer"]
+        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
 
     def to_string(self):
         return "size={}".format(self.length)
@@ -166,7 +178,7 @@ class StdVecDequeProvider:
         self.head = int(valobj["head"])
         self.tail = int(valobj["tail"])
         self.cap = int(valobj["buf"]["cap"])
-        self.data_ptr = valobj["buf"]["ptr"]["pointer"]
+        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
         if self.head >= self.tail:
             self.size = self.head - self.tail
         else:
@@ -188,7 +200,7 @@ class StdRcProvider:
     def __init__(self, valobj, is_atomic=False):
         # type: (Value, bool) -> None
         self.valobj = valobj
-        self.ptr = valobj["ptr"]["pointer"]
+        self.ptr = unwrap_unique_or_non_null(valobj["ptr"])
         self.value = self.ptr["data" if is_atomic else "value"]
         self.strong = self.ptr["strong"]["v" if is_atomic else "value"]["value"]
         self.weak = self.ptr["weak"]["v" if is_atomic else "value"]["value"] - 1
@@ -266,7 +278,7 @@ def children_of_btree_map(map):
         if node_ptr.type.name.startswith("alloc::collections::btree::node::BoxedNode<"):
             node_ptr = node_ptr["ptr"]
 
-        node_ptr = node_ptr["pointer"]
+        node_ptr = unwrap_unique_or_non_null(node_ptr)
         leaf = node_ptr.dereference()
         keys = leaf["keys"]
         vals = leaf["vals"]

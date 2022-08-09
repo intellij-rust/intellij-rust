@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
+import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.ProcessProgressListener
 import org.rust.cargo.project.model.RustcInfo
@@ -71,6 +72,7 @@ class CargoSyncTask(
     override fun run(indicator: ProgressIndicator) {
         LOG.info("CargoSyncTask started")
         indicator.isIndeterminate = true
+        val start = System.currentTimeMillis()
 
         val syncProgress = SyncViewManager.createBuildProgress(project)
 
@@ -94,6 +96,9 @@ class CargoSyncTask(
             throw e
         }
         result.complete(refreshedProjects)
+
+        val elapsed = System.currentTimeMillis() - start
+        LOG.debug("Finished Cargo sync task in $elapsed ms")
     }
 
     private fun doRun(
@@ -306,9 +311,12 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
         val sysroot = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getSysroot(workingDirectory) }
             ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+        val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
+            childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
+        }
         val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getTargets(workingDirectory) }
 
-        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustcTargets))
+        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
     }
 }
 
@@ -321,6 +329,25 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         }
         val projectDirectory = childContext.oldCargoProject.workingDirectory
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
+        val rustcVersion = rustcInfo?.version?.semver
+
+        val cargoConfig = if (rustcVersion == null || rustcVersion >= RUST_1_53) {
+            val cargoConfigResult = UnitTestRustcCacheService.cached(
+                rustcInfo?.version,
+                cacheIf = { !projectDirectory.resolve(".cargo").exists() }
+            ) { cargo.getConfig(childContext.project, projectDirectory) }
+
+            when (cargoConfigResult) {
+                is RsResult.Ok -> cargoConfigResult.ok
+                is RsResult.Err -> {
+                    val message = "Fetching Cargo Config failed.\n\n" + cargoConfigResult.err.message.orEmpty()
+                    childContext.warning("Fetching Cargo Config", message)
+                    CargoConfig.DEFAULT
+                }
+            }
+        } else {
+            CargoConfig.DEFAULT
+        }
 
         CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
         val (projectDescriptionData, status) = cargo.fullProjectDescription(
@@ -351,23 +378,24 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
 
         val manifestPath = projectDirectory.resolve("Cargo.toml")
 
-        val result = UnitTestRustcCacheService.cached(rustcInfo?.version, cacheIf = { !projectDirectory.resolve(".cargo").exists() }) {
-            cargo.getCfgOption(childContext.project, projectDirectory)
-        }
-        val cfgOptions = when (result) {
-            is RsResult.Ok -> result.ok
+        val cfgOptionsResult = UnitTestRustcCacheService.cached(
+            rustcInfo?.version,
+            cacheIf = { !projectDirectory.resolve(".cargo").exists() }
+        ) { cargo.getCfgOption(childContext.project, projectDirectory) }
+
+        val cfgOptions = when (cfgOptionsResult) {
+            is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {
-                val rustcVersion = rustcInfo?.version?.semver
                 if (rustcVersion == null || rustcVersion > RUST_1_51) {
                     val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n" +
-                        result.err.message.orEmpty()
+                        cfgOptionsResult.err.message.orEmpty()
                     childContext.warning("Fetching target specific `cfg` options", message)
                 }
                 toolchain.rustc().getCfgOptions(projectDirectory)
             }
         }
 
-        val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
+        val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions, cargoConfig)
         TaskResult.Ok(ws)
     }
 }
@@ -518,3 +546,4 @@ private fun CargoSyncTask.SyncContext.warning(
 }
 
 private val RUST_1_51: SemVer = "1.51.0".parseSemVer()
+private val RUST_1_53: SemVer = "1.53.0".parseSemVer()

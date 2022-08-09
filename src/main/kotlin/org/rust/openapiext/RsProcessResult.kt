@@ -5,7 +5,7 @@
 
 package org.rust.openapiext
 
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.JacksonException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutput
 import org.rust.stdext.RsResult
@@ -17,7 +17,7 @@ sealed class RsProcessExecutionOrDeserializationException : RuntimeException {
     constructor(message: String) : super(message)
 }
 
-class JsonDeserializationException(cause: JsonSyntaxException) : RsProcessExecutionOrDeserializationException(cause)
+class RsDeserializationException(cause: JacksonException) : RsProcessExecutionOrDeserializationException(cause)
 
 sealed class RsProcessExecutionException : RsProcessExecutionOrDeserializationException {
     constructor(message: String) : super(message)

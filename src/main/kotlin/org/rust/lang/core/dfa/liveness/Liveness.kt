@@ -18,25 +18,40 @@ enum class DeclarationKind { Parameter, Variable }
 
 data class DeadDeclaration(val binding: RsPatBinding, val kind: DeclarationKind)
 
-data class Liveness(val deadDeclarations: List<DeadDeclaration>)
+data class Liveness(
+    val deadDeclarations: List<DeadDeclaration>,
+
+    /**
+     * For each local binding, [lastUsages] provides the locations after which the binding
+     * is certainly not accessed during any execution flow of the program.
+     * See [org.rust.lang.core.dfa.RsLivenessTest] for examples
+     */
+    val lastUsages: Map<RsPatBinding, List<RsElement>>
+)
 
 class LivenessContext private constructor(
     val inference: RsInferenceResult,
     val body: RsBlock,
     val cfg: ControlFlowGraph,
     val implLookup: ImplLookup = ImplLookup.relativeTo(body),
-    private val deadDeclarations: MutableList<DeadDeclaration> = mutableListOf()
+    private val deadDeclarations: MutableList<DeadDeclaration> = mutableListOf(),
+    private val lastUsages: MutableMap<RsPatBinding, MutableList<RsElement>> = mutableMapOf()
 ) {
-    fun reportDeadDeclaration(binding: RsPatBinding, kind: DeclarationKind) {
+    fun registerDeadDeclaration(binding: RsPatBinding, kind: DeclarationKind) {
         deadDeclarations.add(DeadDeclaration(binding, kind))
+    }
+
+    fun registerLastUsage(binding: RsPatBinding, usageElement: RsElement) {
+        lastUsages.getOrPut(binding, ::mutableListOf).add(usageElement)
     }
 
     fun check(): Liveness {
         val gatherLivenessContext = GatherLivenessContext(this)
         val livenessData = gatherLivenessContext.gather()
         val flowedLiveness = FlowedLivenessData.buildFor(this, livenessData, cfg)
-        flowedLiveness.check()
-        return Liveness(deadDeclarations)
+        flowedLiveness.collectDeadDeclarations()
+        flowedLiveness.collectLastUsages()
+        return Liveness(deadDeclarations, lastUsages)
     }
 
     companion object {
@@ -60,27 +75,39 @@ class FlowedLivenessData(
     private val livenessData: LivenessData,
     private val dfcxLivePaths: LivenessDataFlow
 ) {
-    private fun isDead(usagePath: UsagePath): Boolean {
-        var isDead = true
-        return dfcxLivePaths.eachBitOnEntry(usagePath.declaration) { index ->
-            val path = livenessData.paths[index]
-            // declaration/assignment of `a`, use of `a`
-            if (usagePath == path) {
-                isDead = false
-            } else {
-                // declaration/assignment of `a`, use of `a.b.c`
-                val isEachExtensionDead = livenessData.eachBasePath(path) { it != usagePath }
-                if (!isEachExtensionDead) isDead = false
+    fun collectDeadDeclarations() {
+        val basePaths = livenessData.paths.filterIsInstance<UsagePath.Base>()
+        for (usagePath in basePaths) {
+            val usageDeclaration = usagePath.declaration
+            if (usagePath.isDeadOnEntry(usageDeclaration)) {
+                ctx.registerDeadDeclaration(usageDeclaration, usagePath.declarationKind)
             }
-            isDead
         }
     }
 
-    fun check() {
-        for (path in livenessData.paths) {
-            if (path is UsagePath.Base && isDead(path)) {
-                ctx.reportDeadDeclaration(path.declaration, path.declarationKind)
+    fun collectLastUsages() {
+        for (usage in livenessData.usages) {
+            val usagePath = usage.path
+            val usageElement = usage.element
+            if (usagePath.isDeadOnEntry(usageElement)) {
+                ctx.registerLastUsage(usagePath.declaration, usageElement)
             }
+        }
+    }
+
+    private fun UsagePath.isDeadOnEntry(element: RsElement): Boolean {
+        var isDead = true
+        return dfcxLivePaths.eachBitOnEntry(element) { index ->
+            val path = livenessData.paths[index]
+            // declaration/assignment of `a`, use of `a`
+            if (this == path) {
+                isDead = false
+            } else {
+                // declaration/assignment of `a`, use of `a.b.c`
+                val isEachExtensionDead = livenessData.eachBasePath(path) { it != this }
+                if (!isEachExtensionDead) isDead = false
+            }
+            isDead
         }
     }
 

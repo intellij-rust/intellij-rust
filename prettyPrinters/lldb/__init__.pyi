@@ -294,6 +294,8 @@ class SBTarget:
 
     def GetBasicType(self, basic_type: BasicType) -> SBBasicType: ...
 
+    def FindTypes(self, type: str) -> SBTypeList: ...
+
     ...
 
 
@@ -312,6 +314,8 @@ class SBProcess:
 class SBBasicType(SBType):
     ...
 
+class SBTypeList:
+    def GetTypeAtIndex(self, index: int) -> SBType: ...
 
 BasicType = int
 TypeClass = int
@@ -322,7 +326,6 @@ SBTypeMemberFunction = Any
 SBTypeSynthetic = Any
 SBTypeSummary = Any
 SBTypeNameSpecifier = Any
-SBTypeList = Any
 Format = Any
 ValueType = Any
 DynamicValueType = Any

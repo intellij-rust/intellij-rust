@@ -49,13 +49,13 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             val lookup = ImplLookup.relativeTo(expr)
             // The `assert_eq!` macro, as opposed to `assert!`, requires both arguments to implement `core::fmt::Debug`.
             if (!lookup.isDebug(leftType) || !lookup.isDebug(rightType)) {
-                Testmarks.debugTraitIsNotImplemented.hit()
+                Testmarks.DebugTraitIsNotImplemented.hit()
                 return false
             }
             // Don't try to convert `assert!` macro into `assert_eq!/assert_ne!`
             // if expressions can't be compared at all
             if (!lookup.isPartialEq(leftType, rightType)) {
-                Testmarks.partialEqTraitIsNotImplemented.hit()
+                Testmarks.PartialEqTraitIsNotImplemented.hit()
                 return false
             }
             return true
@@ -95,7 +95,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
     }
 
     object Testmarks {
-        val partialEqTraitIsNotImplemented = Testmark("partialEqTraitIsNotImplemented")
-        val debugTraitIsNotImplemented = Testmark("debugTraitIsNotImplemented")
+        object PartialEqTraitIsNotImplemented : Testmark()
+        object DebugTraitIsNotImplemented : Testmark()
     }
 }

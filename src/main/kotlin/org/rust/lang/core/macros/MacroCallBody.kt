@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.macros
 
+import org.rust.lang.core.psi.RsProcMacroKind
+
 sealed class MacroCallBody {
     data class FunctionLike(val text: String) : MacroCallBody()
     data class Derive(val item: String) : MacroCallBody()
@@ -28,5 +30,16 @@ sealed class MacroCallBody {
      * }
      * ```
      */
-    data class Attribute(val item: MappedText, val attr: MappedText) : MacroCallBody()
+    data class Attribute(
+        val item: MappedText,
+        val attr: MappedText,
+        val fixupRustSyntaxErrors: Boolean,
+    ) : MacroCallBody()
+
+    val kind: RsProcMacroKind
+        get() = when (this) {
+            is Attribute -> RsProcMacroKind.ATTRIBUTE
+            is Derive -> RsProcMacroKind.DERIVE
+            is FunctionLike -> RsProcMacroKind.FUNCTION_LIKE
+        }
 }

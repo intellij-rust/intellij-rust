@@ -18,13 +18,15 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
+import org.rust.lang.core.crate.crateGraph
+import org.rust.lang.core.macros.MacroExpansionFileSystem
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsPsiManager.Companion.isIgnorePsiEvents
@@ -33,6 +35,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 import org.rust.lang.core.psi.ext.isTopLevelExpansion
+import org.rust.lang.core.resolve2.defMapService
 
 /** Don't subscribe directly or via plugin.xml lazy listeners. Use [RsPsiManager.subscribeRustStructureChange] */
 private val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
@@ -55,6 +58,14 @@ interface RsPsiManager {
      * PSI element excluding function bodies (expressions and statements)
      */
     val rustStructureModificationTracker: ModificationTracker
+
+    /**
+     * Similar to [rustStructureModificationTracker], but it is not incremented by changes in
+     * workspace rust files.
+     *
+     * @see PackageOrigin.WORKSPACE
+     */
+    val rustStructureModificationTrackerInDependencies: SimpleModificationTracker
 
     fun incRustStructureModificationCount()
 
@@ -84,9 +95,6 @@ interface RsPsiManager {
             psi.getUserData(IGNORE_PSI_EVENTS) == true
 
         private fun setIgnorePsiEvents(psi: PsiFile, ignore: Boolean) {
-            val virtualFile = psi.virtualFile ?: return
-            check(virtualFile is LightVirtualFile)
-
             psi.putUserData(IGNORE_PSI_EVENTS, if (ignore) true else null)
         }
     }
@@ -103,6 +111,7 @@ interface RustPsiChangeListener {
 class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
 
     override val rustStructureModificationTracker = SimpleModificationTracker()
+    override val rustStructureModificationTrackerInDependencies = SimpleModificationTracker()
 
     init {
         PsiManager.getInstance(project).addPsiTreeChangeListener(CacheInvalidator(), this)
@@ -145,8 +154,9 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
 
             // if file is null, this is an event about VFS changes
             if (file == null) {
-                if (element is RsFile ||
-                    element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null) {
+                val isStructureModification = element is RsFile && !isIgnorePsiEvents(element)
+                    || element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null
+                if (isStructureModification) {
                     incRustStructureModificationCount(element as? RsFile, element as? RsFile)
                 }
             } else {
@@ -218,7 +228,26 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
 
     private fun incRustStructureModificationCount(file: PsiFile? = null, psi: PsiElement? = null) {
         rustStructureModificationTracker.incModificationCount()
+        if (!isWorkspaceFile(file)) {
+            rustStructureModificationTrackerInDependencies.incModificationCount()
+        }
         project.messageBus.syncPublisher(RUST_STRUCTURE_CHANGE_TOPIC).rustStructureChanged(file, psi)
+    }
+
+    private fun isWorkspaceFile(file: PsiFile?): Boolean {
+        if (file !is RsFile) return false
+        val virtualFile = file.virtualFile ?: return false
+        val crates = if (virtualFile.fileSystem is MacroExpansionFileSystem) {
+            val crateId = project.macroExpansionManagerIfCreated?.getCrateForExpansionFile(virtualFile) ?: return false
+            listOf(crateId)
+        } else {
+            project.defMapService.findCrates(file)
+        }
+        if (crates.isEmpty()) return false
+        val crateGraph =  project.crateGraph
+        if (crates.any { crateGraph.findCrateById(it)?.origin != PackageOrigin.WORKSPACE }) return false
+
+        return true
     }
 }
 

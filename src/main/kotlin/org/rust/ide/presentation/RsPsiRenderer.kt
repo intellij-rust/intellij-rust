@@ -5,7 +5,9 @@
 
 package org.rust.ide.presentation
 
-import org.rust.ide.utils.import.*
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidatesCollector2
+import org.rust.ide.utils.import.ImportContext2
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -57,6 +59,9 @@ fun RsPsiRenderer.renderValueParameterList(list: RsValueParameterList): String =
 fun RsPsiRenderer.renderFunctionSignature(fn: RsFunction): String =
     buildString { appendFunctionSignature(this, fn) }
 
+fun RsPsiRenderer.renderTypeAliasSignature(ta: RsTypeAlias, renderBounds: Boolean): String =
+    buildString { appendTypeAliasSignature(this, ta, renderBounds) }
+
 data class PsiRenderingOptions(
     val renderLifetimes: Boolean = true,
     /** Related to [RsPsiRenderer.appendFunctionSignature] */
@@ -83,7 +88,7 @@ open class RsPsiRenderer(
         if (fn.isUnsafe) {
             sb.append("unsafe ")
         }
-        if (fn.isExtern) {
+        if (fn.isActuallyExtern) {
             sb.append("extern ")
             val abiName = fn.abiName
             if (abiName != null) {
@@ -112,10 +117,24 @@ open class RsPsiRenderer(
         }
         val whereClause = fn.whereClause
         if (whereClause != null && renderGenericsAndWhere) {
-            sb.append(" where ")
-            whereClause.wherePredList.joinToWithBuffer(sb, separator = ", ") {
-                appendWherePred(sb, this)
-            }
+            appendWhereClause(sb, whereClause)
+        }
+    }
+
+    open fun appendTypeAliasSignature(sb: StringBuilder, ta: RsTypeAlias, renderBounds: Boolean) {
+        sb.append("type ")
+        sb.append(ta.escapedName ?: "")
+        val typeParameterList = ta.typeParameterList
+        if (typeParameterList != null && renderGenericsAndWhere) {
+            appendTypeParameterList(sb, typeParameterList)
+        }
+        val whereClause = ta.whereClause
+        if (whereClause != null && renderGenericsAndWhere) {
+            appendWhereClause(sb, whereClause)
+        }
+        val typeParamBounds = ta.typeParamBounds
+        if (typeParamBounds != null && renderBounds) {
+            appendTypeParamBounds(sb, typeParamBounds)
         }
     }
 
@@ -136,11 +155,22 @@ open class RsPsiRenderer(
             appendTypeReference(sb, type)
             val typeParamBounds = pred.typeParamBounds
             if (typeParamBounds != null) {
-                sb.append(": ")
-                typeParamBounds.polyboundList.joinToWithBuffer(sb, " + ") {
-                    appendPolybound(sb, this)
-                }
+                appendTypeParamBounds(sb, typeParamBounds)
             }
+        }
+    }
+
+    private fun appendWhereClause(sb: StringBuilder, whereClause: RsWhereClause) {
+        sb.append(" where ")
+        whereClause.wherePredList.joinToWithBuffer(sb, separator = ", ") {
+            appendWherePred(sb, this)
+        }
+    }
+
+    private fun appendTypeParamBounds(sb: StringBuilder, bounds: RsTypeParamBounds) {
+        sb.append(": ")
+        bounds.polyboundList.joinToWithBuffer(sb, " + ") {
+            appendPolybound(sb, this)
         }
     }
 
@@ -427,7 +457,7 @@ open class RsPsiRenderer(
                     }
                 }
                 assocTypeBindings.joinToWithBuffer(sb, ", ") { sb ->
-                    sb.append(referenceName)
+                    appendPath(sb, this.path)
                     sb.append("=")
                     typeReference?.let { appendTypeReference(sb, it) }
                 }
@@ -681,8 +711,7 @@ class ImportingPsiRenderer(
     private val context: RsElement
 ) : PsiSubstitutingPsiRenderer(options, substitutions) {
 
-    private val importContext = ImportContext.from(context.project, context)
-    private val importContext2 = ImportContext2.from(context, ImportContext2.Type.OTHER)
+    private val importContext = ImportContext2.from(context, ImportContext2.Type.OTHER)
 
     private val visibleNames: Pair<MutableMap<Pair<String, Namespace>, RsElement>, MutableMap<RsElement, String>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
@@ -702,12 +731,13 @@ class ImportingPsiRenderer(
     private val visibleNameToElement: MutableMap<Pair<String, Namespace>, RsElement> get() = visibleNames.first
     private val visibleElementToName: MutableMap<RsElement, String> get() = visibleNames.second
 
-    private val itemsToImportMut: MutableSet<ImportCandidateBase> = mutableSetOf()
-    val itemsToImport: Set<ImportCandidateBase> get() = itemsToImportMut
+    private val itemsToImportMut: MutableSet<ImportCandidate> = mutableSetOf()
+    val itemsToImport: Set<ImportCandidate> get() = itemsToImportMut
 
     override fun appendPathWithoutArgs(sb: StringBuilder, path: RsPath) {
         val pathReferenceName = path.referenceName
         val tryImportPath1 = path.parent !is RsPath &&
+            path.parent !is RsAssocTypeBinding &&
             TyPrimitive.fromPath(path) == null &&
             path.basePath().referenceName != "Self" &&
             path.basePath().typeQual == null
@@ -722,10 +752,8 @@ class ImportingPsiRenderer(
                 if (visibleElementName != null) {
                     sb.append(visibleElementName)
                 } else {
-                    val importCandidate = if (path.useAutoImportWithNewResolve && importContext2 != null) {
-                        ImportCandidatesCollector2.findImportCandidate(importContext2, resolved)
-                    } else {
-                        ImportCandidatesCollector.findImportCandidate(importContext, resolved)
+                    val importCandidate = importContext?.let {
+                        ImportCandidatesCollector2.findImportCandidate(it, resolved)
                     }
                     if (importCandidate == null) {
                         val resolvedCrate = resolved.containingCrate

@@ -47,9 +47,9 @@ private class RsBlockStubBuilder : DefaultStubBuilder() {
     private fun shouldCreateStub(parentType: IElementType, nodeType: IElementType): Boolean =
         when (nodeType) {
             BLOCK -> parentType is IStubFileElementType<*>
-            MACRO_CALL -> parentType == BLOCK
-            PATH, USE_GROUP, USE_SPECK, ALIAS, ENUM_BODY, ENUM_VARIANT -> true
-            else -> parentType == BLOCK && nodeType in RS_ITEMS_AND_MACRO
+            MACRO_CALL -> parentType.isBlockOrLocalMod()
+            PATH, USE_GROUP, USE_SPECK, ALIAS, ENUM_BODY, ENUM_VARIANT, VIS, VIS_RESTRICTION -> true
+            else -> parentType.isBlockOrLocalMod() && nodeType in RS_ITEMS_AND_MACRO
         }
 
     companion object {
@@ -61,3 +61,5 @@ private class RsBlockStubBuilder : DefaultStubBuilder() {
 }
 
 fun RsBlock.buildStub(): StubElement<RsBlock>? = RsBlockStubBuilder().buildStubTreeFor(this)
+
+private fun IElementType.isBlockOrLocalMod(): Boolean = this == BLOCK || this == MOD_ITEM

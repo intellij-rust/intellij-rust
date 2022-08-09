@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.cargoWorkspace
+import org.rust.lang.core.psi.ext.isMain
 import org.rust.openapiext.toPsiFile
 
 class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() {
@@ -55,8 +56,9 @@ class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() 
 
     companion object {
         fun isMainFunction(fn: RsFunction): Boolean {
+            if (!fn.isMain) return false
             val ws = fn.cargoWorkspace ?: return false
-            return fn.parent is RsFile && fn.name == "main" && findBinaryTarget(ws, fn.containingFile.virtualFile) != null
+            return findBinaryTarget(ws, fn.containingFile.virtualFile) != null
         }
 
         private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {

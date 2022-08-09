@@ -42,6 +42,12 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         fn foo<'a>(p: &/*caret*/'a i32) -> &'a i32 { p }
     """)
 
+    fun `test all generics`() = doAvailableTest("""
+        fn foo<T, const N: usize, U>(p: &/*caret*/ i32) -> & i32 { p }
+    """, """
+        fn foo<'a, T, const N: usize, U>(p: &/*caret*/'a i32) -> &'a i32 { p }
+    """)
+
     fun `test mut ref`() = doAvailableTest("""
         fn foo(p: &/*caret*/mut i32) -> & i32 { p }
     """, """
@@ -101,6 +107,15 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         fn foo(p1: &i32,/*caret*/ p2: &i32) -> &i32 { p2 }
     """, """
         fn foo<'a, 'b>(p1: &'a i32, p2: &'b i32) -> &'<selection>_</selection> i32 { p2 }
+    """)
+
+    // TODO: support nested types
+    fun `test nested adt`() = doAvailableTest("""
+        struct S<'a, T>(&'a T);
+        fn /*caret*/foo(s: S<S<i32>>) -> S<S<i32>> { s }
+    """, """
+        struct S<'a, T>(&'a T);
+        fn /*caret*/foo<'a>(s: S<'a, S<i32>>) -> S<'a, S<i32>> { s }
     """)
 
     fun `test method decl`() = doAvailableTest("""

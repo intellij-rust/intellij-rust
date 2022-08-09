@@ -15,8 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.cargoProjects
@@ -30,6 +29,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.toPsiFile
 
 /**
@@ -128,7 +128,7 @@ private fun selectModule(file: RsFile, availableModules: List<RsFile>): RsFile? 
     }
 
     val dialog = dialog("Select a Module", panel {
-        row { box(CCFlags.growX) }
+        row { fullWidthCell(box) }
     }, focusedComponent = box)
 
     return if (dialog.showAndGet()) {

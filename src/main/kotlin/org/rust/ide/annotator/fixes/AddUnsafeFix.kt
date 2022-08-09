@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.isMain
 
 class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     private val _text = run {
@@ -48,7 +49,11 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
                 RsFunction::class.java,
                 RsImplItem::class.java
             ) ?: return null
-            return AddUnsafeFix(parent)
+
+            return when {
+                parent is RsFunction && parent.isMain -> null
+                else -> AddUnsafeFix(parent)
+            }
         }
     }
 }

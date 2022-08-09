@@ -8,10 +8,8 @@ package org.rust.ide.notifications
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.LinkLabel
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationPanel
 import org.rust.RsBundle
 import org.rust.cargo.project.model.AttachCargoProjectAction
 import org.rust.cargo.project.model.CargoProjectsService
@@ -80,14 +78,10 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
             }
         }
 
-    override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
-
     companion object {
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideNoCargoProjectNotifications"
 
         const val NO_CARGO_PROJECTS = "NoCargoProjects"
         const val FILE_NOT_IN_CARGO_PROJECT = "FileNotInCargoProject"
-
-        private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("No Cargo project")
     }
 }

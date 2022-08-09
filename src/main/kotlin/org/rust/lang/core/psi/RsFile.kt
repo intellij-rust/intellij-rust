@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -35,8 +34,9 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
-import org.rust.lang.core.macros.macroExpansionManagerIfCreated
+import org.rust.lang.core.macros.MacroExpansionFileSystem
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
 import org.rust.lang.core.resolve2.isNewResolveEnabled
@@ -76,22 +76,19 @@ class RsFile(
     val crate: Crate? get() = cachedData.crate
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
+    // TODO a hotfix for https://github.com/intellij-rust/intellij-rust/issues/9110
+    val isIncludedByIncludeMacro: Boolean get() = true
+//    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
 
     private val cachedData: CachedData
         get() {
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
-            val state = project.macroExpansionManagerIfCreated?.expansionState
-            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-            val (key, cacheDependency) = if (state != null) {
-                CACHED_DATA_MACROS_KEY to state.stepModificationTracker
-            } else {
-                CACHED_DATA_KEY to ModificationTracker.NEVER_CHANGED
-            }
+            val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
                 val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
-                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker, cacheDependency)
+                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
             }
         }
 
@@ -100,27 +97,34 @@ class RsFile(
 
         if (project.isNewResolveEnabled) {
             // Note: `this` file can be not a module (can be included with `include!()` macro)
+            val virtualFile = virtualFile
             val modData = findModDataFor(this)
             if (modData != null) {
                 val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
-                return CachedData(crate.cargoProject, crate.cargoWorkspace, crate.rootMod, crate, modData.isDeeplyEnabledByCfg)
+                return CachedData(
+                    crate.cargoProject,
+                    crate.cargoWorkspace,
+                    crate.rootMod,
+                    crate,
+                    modData.isDeeplyEnabledByCfg,
+                    isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
+                        && virtualFile.id != modData.fileId
+                        && virtualFile.fileSystem !is MacroExpansionFileSystem
+                )
             }
             // Else try injected crate, included file, or fill file info with just project and workspace
         }
 
-        // if new resolve is enabled and we are called not from macro expansion engine,
-        // then [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
+        // [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
         // so we have to fallback to use [declaration]
-        if (!project.isNewResolveEnabled || project.macroExpansionManagerIfCreated?.expansionState == null) {
-            val declaration = declaration
-            if (declaration != null) {
-                val declarationFile = declaration.contextualFile
-                val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-                val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
-                    && declaration.existsAfterExpansion
-                    && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
-                return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
-            }
+        val declaration = declaration
+        if (declaration != null) {
+            val declarationFile = declaration.contextualFile
+            val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
+            val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
+                && declaration.existsAfterExpansion
+                && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
+            return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
         }
 
         val possibleCrateRoot = this
@@ -144,7 +148,10 @@ class RsFile(
         }
 
         val includingMod = RsIncludeMacroIndex.getIncludedFrom(possibleCrateRoot)?.containingMod
-        if (includingMod != null) return (includingMod.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+        if (includingMod != null) {
+            return (includingMod.contextualFile as? RsFile)?.cachedData?.copy(isIncludedByIncludeMacro = true)
+                ?: EMPTY_CACHED_DATA
+        }
 
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
@@ -228,6 +235,14 @@ class RsFile(
         return getQueryAttributes(crate, stub).hasAtomAttribute("macro_use")
     }
 
+    fun getRecursionLimit(crate: Crate?): Int {
+        val stub = greenStub as RsFileStub?
+        if (stub?.mayHaveRecursionLimitAttribute == false) return DEFAULT_RECURSION_LIMIT
+        val attributes = getQueryAttributes(crate, stub)
+        val recursionLimit = attributes.lookupStringValueForKey("recursion_limit")
+        return recursionLimit?.toIntOrNull() ?: DEFAULT_RECURSION_LIMIT
+    }
+
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()
 
     val declarations: List<RsModDeclItem>
@@ -237,20 +252,9 @@ class RsFile(
             // the key PSI element
             val originalFile = originalFile as? RsFile ?: return emptyList()
 
-            val state = project.macroExpansionManagerIfCreated?.expansionState
-            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-            val (key, cacheDependency) = if (state != null) {
-                MOD_DECL_MACROS_KEY to state.stepModificationTracker
-            } else {
-                MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
-            }
-            return CachedValuesManager.getCachedValue(originalFile, key) {
+            return CachedValuesManager.getCachedValue(originalFile, MOD_DECL_KEY) {
                 val decl = if (originalFile.isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
-                CachedValueProvider.Result.create(
-                    decl,
-                    originalFile.rustStructureOrAnyPsiModificationTracker,
-                    cacheDependency
-                )
+                CachedValueProvider.Result.create(decl, originalFile.rustStructureOrAnyPsiModificationTracker)
             }
         }
 
@@ -278,7 +282,8 @@ private data class CachedData(
     val cargoWorkspace: CargoWorkspace? = null,
     val crateRoot: RsFile? = null,
     val crate: Crate? = null,
-    val isDeeplyEnabledByCfg: Boolean = true
+    val isDeeplyEnabledByCfg: Boolean = true,
+    val isIncludedByIncludeMacro: Boolean = false
 )
 
 private val EMPTY_CACHED_DATA: CachedData = CachedData()
@@ -305,10 +310,17 @@ private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("C
  */
 @Suppress("KDocUnresolvedReference")
 val RsElement.isValidProjectMember: Boolean
+    get() = isValidProjectMemberAndContainingCrate.first
+
+val RsElement.isValidProjectMemberAndContainingCrate: Pair<Boolean, Crate?>
     get() {
         val file = contextualFile
-        if (file !is RsFile) return true
-        return existsAfterExpansion && file.isDeeplyEnabledByCfg && file.crateRoot != null
+        if (file !is RsFile) return true to null
+        if (!file.isDeeplyEnabledByCfg) return false to null
+        val crate = file.crate ?: return false to null
+        if (!existsAfterExpansion(crate)) return false to null
+
+        return true to crate
     }
 
 /** Usually used to filter out test/bench non-workspace crates */

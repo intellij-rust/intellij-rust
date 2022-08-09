@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.isShorthand
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineValueProcessor(
@@ -41,7 +42,7 @@ class RsInlineValueProcessor(
             val reference = it.reference as? RsReference ?: return@loop
             when (val element = reference.element) {
                 is RsStructLiteralField -> {
-                    if (element.colon == null) {
+                    if (element.isShorthand) {
                         element.addAfter(factory.createColon(), element.referenceNameElement)
                     }
                     if (element.expr == null) {
@@ -49,10 +50,10 @@ class RsInlineValueProcessor(
                     }
                 }
                 is RsPath -> when (val parent = element.parent) {
-                    is RsPathExpr -> replaceExpr(factory, parent, context.expr)
+                    is RsPathExpr -> parent.replaceWithAddingParentheses(context.expr, factory)
                     else -> Unit // Can't replace RsPath to RsExpr
                 }
-                else -> replaceExpr(factory, element, context.expr)
+                else -> element.replaceWithAddingParentheses(context.expr, factory)
             }
         }
         if (mode is InlineValueMode.InlineAllAndRemoveOriginal) {
@@ -67,8 +68,9 @@ class RsInlineValueProcessor(
     }
 }
 
-private fun replaceExpr(factory: RsPsiFactory, element: RsElement, expr: RsExpr) {
-    val parent = element.parent
+/** Replaces [this] either with `expr` or `(expr)`, depending on context */
+fun RsElement.replaceWithAddingParentheses(expr: RsElement, factory: RsPsiFactory): PsiElement {
+    val parent = parent
     val needsParentheses = when {
         expr is RsBinaryExpr && (parent is RsBinaryExpr || parent.requiresSingleExpr) -> true
         expr.isBlockLikeExpr && parent.requiresSingleExpr -> true
@@ -80,7 +82,7 @@ private fun replaceExpr(factory: RsPsiFactory, element: RsElement, expr: RsExpr)
     } else {
         expr
     }
-    element.replace(newExpr)
+    return replace(newExpr)
 }
 
 private val PsiElement.isBlockLikeExpr: Boolean

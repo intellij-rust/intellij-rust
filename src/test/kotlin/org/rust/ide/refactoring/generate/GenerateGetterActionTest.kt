@@ -5,8 +5,10 @@
 
 package org.rust.ide.refactoring.generate
 
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class GenerateGetterActionTest : RsGenerateBaseTest() {
     override val generateId: String = "Rust.GenerateGetter"
@@ -219,6 +221,7 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test tuple copy`() = doTest("""
         struct S {
             a: (u32, u32)
@@ -411,6 +414,7 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test type alias 2`() = doTest("""
         type Alias = (u32, u32);
         struct S {
@@ -451,6 +455,51 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
             pub fn b(&self) -> bool {
                 self.b
+            }
+        }
+    """)
+
+    fun `test field with qualified path`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S/*caret*/
+        }
+    """, listOf(MemberSelection("s: foo::S", true)), """
+        mod foo {
+            pub struct S;
+        }
+
+        struct System {
+            s: foo::S
+        }
+
+        impl System {
+            pub fn s(&self) -> &foo::S {
+                &self.s
+            }
+        }
+    """)
+
+    fun `test reuse impl block`() = doTest("""
+        struct System {
+            s: u32/*caret*/
+        }
+
+        impl System {
+            fn foo(&self) {}
+        }
+    """, listOf(MemberSelection("s: u32", true)), """
+        struct System {
+            s: u32
+        }
+
+        impl System {
+            fn foo(&self) {}
+            pub fn s(&self) -> u32 {
+                self.s
             }
         }
     """)

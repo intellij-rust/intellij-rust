@@ -72,21 +72,24 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
         editor: Editor,
         settings: Settings,
         sink: InlayHintsSink
-    ): InlayHintsCollector =
-        object : FactoryInlayHintsCollector(editor) {
+    ): InlayHintsCollector {
+        val project = file.project
+        val crate = (file as? RsFile)?.crate
+
+        return object : FactoryInlayHintsCollector(editor) {
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, true)
 
             private val lookupAndIteratorTrait: Pair<ImplLookup?, BoundElement<RsTraitItem>?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-                val (lookup, items) = (file as? RsFile)?.implLookupAndKnownItems ?: null to null
+                val (lookup, items) = (file as? RsFile)?.implLookupAndKnownItems ?: (null to null)
                 val iterator = items?.Iterator?.let { BoundElement(it) }
                 lookup to iterator
             }
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-                if (DumbService.isDumb(element.project)) return true
+                if (DumbService.isDumb(project)) return true
                 if (element !is RsMethodCall) return true
                 if (!element.isLastInChain) return true
-                if (!element.existsAfterExpansion) return true
+                if (!element.existsAfterExpansion(crate)) return true
 
                 val (lookup, iterator) = lookupAndIteratorTrait
 
@@ -106,7 +109,6 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
             }
 
             private fun presentTypeForMethodCall(call: RsMethodCall, type: Ty) {
-                val project = call.project
                 val presentation = typeHintsFactory.typeHint(type)
                 val finalPresentation = presentation.withDisableAction(project)
                 sink.addInlineElement(call.endOffset, true, finalPresentation, false)
@@ -123,6 +125,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 return TyAnon(null, listOf(iteratorTrait.copy(assoc = assoc)))
             }
         }
+    }
 
     private fun InlayPresentation.withDisableAction(project: Project): InsetPresentation = InsetPresentation(
         MenuOnClickPresentation(this, project) {

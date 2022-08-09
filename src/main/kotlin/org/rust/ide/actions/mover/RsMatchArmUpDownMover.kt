@@ -9,8 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.BLOCK
+import org.rust.lang.core.psi.RsElementTypes.COMMA
+import org.rust.lang.core.psi.RsMatchArm
+import org.rust.lang.core.psi.RsMatchBody
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.elementType
@@ -31,7 +34,7 @@ class RsMatchArmUpDownMover : RsLineMover() {
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfBraceBlock(sibling, down)) {
-            UpDownMoverTestMarks.moveOutOfMatch.hit()
+            UpDownMoverTestMarks.MoveOutOfMatch.hit()
             return null
         }
         return sibling

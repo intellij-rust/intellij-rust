@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.RsTypeAliasImplMixin
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.isValidProjectMember
+import org.rust.lang.core.psi.isValidProjectMemberAndContainingCrate
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
 import org.rust.lang.core.types.infer.generics
@@ -27,14 +27,16 @@ class RsCachedTypeAlias(
 ) {
     val name: String? = alias.name
 
-    val isFreeAndValid: Boolean by lazy(PUBLICATION) {
-        name != null
-            && alias.owner is RsAbstractableOwner.Free
-            && alias.isValidProjectMember
-    }
+    val isFreeAndValid: Boolean
 
-    val containingCrate: Crate? by lazy(PUBLICATION) {
-        alias.containingCrate
+    val containingCrate: Crate?
+
+    init {
+        val (isValid, crate) = alias.isValidProjectMemberAndContainingCrate
+        this.containingCrate = crate
+        this.isFreeAndValid = isValid
+            && name != null
+            && alias.owner is RsAbstractableOwner.Free
     }
 
     val typeAndGenerics: Triple<Ty, List<TyTypeParameter>, List<CtConstParameter>> by lazy(PUBLICATION) {
