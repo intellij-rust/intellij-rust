@@ -34,6 +34,16 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
 import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.*
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.HAS_ATTRS
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.HAS_CFG_ATTR
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.MAY_HAVE_CFG
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.MAY_HAVE_CUSTOM_ATTRS
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.MAY_HAVE_CUSTOM_DERIVE
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.FileStubAttrFlags.MAY_HAVE_RECURSION_LIMIT
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.FileStubAttrFlags.MAY_HAVE_STDLIB_ATTRIBUTES
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.ModStubAttrFlags.MAY_HAVE_MACRO_USE
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.UseItemStubAttrFlags.MAY_HAVE_PRELUDE_IMPORT
 import org.rust.lang.core.stubs.RsEmptyStmtType.shouldCreateStub
 import org.rust.lang.core.stubs.common.RsMetaItemArgsPsiOrStub
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
@@ -51,21 +61,21 @@ class RsFileStub(
 ) : PsiFileStubImpl<RsFile>(file), RsAttributeOwnerStub {
 
     val mayHaveStdlibAttributes: Boolean
-        get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
+        get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES)
     val mayHaveRecursionLimitAttribute: Boolean
-        get() = BitUtil.isSet(flags, MAY_HAVE_RECURSION_LIMIT_MASK)
+        get() = BitUtil.isSet(flags, MAY_HAVE_RECURSION_LIMIT)
 
     override val rawMetaItems: Sequence<RsMetaItemStub>
         get() = RsInnerAttributeOwnerRegistry.rawMetaItems(this)
 
     override val hasAttrs: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
+        get() = BitUtil.isSet(flags, HAS_ATTRS)
     override val mayHaveCfg: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_MASK)
+        get() = BitUtil.isSet(flags, MAY_HAVE_CFG)
     override val hasCfgAttr: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
-    override val mayHaveMacroUse: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
+        get() = BitUtil.isSet(flags, HAS_CFG_ATTR)
+    val mayHaveMacroUse: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_MACRO_USE)
     override val mayHaveCustomDerive: Boolean
         get() = false
     override val mayHaveCustomAttrs: Boolean
@@ -74,7 +84,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 227
+        private const val STUB_VERSION = 229
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -89,11 +99,7 @@ class RsFileStub(
                 }
 
                 check(file is RsFile)
-                val rawAttributes = file.getTraversedRawAttributes(withCfgAttrAttribute = true)
-                var flags = RsAttributeOwnerStub.extractFlags(rawAttributes)
-                val mayHaveStdlibAttributes = rawAttributes.hasAnyOfAttributes("no_std", "no_core")
-                flags = BitUtil.set(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK, mayHaveStdlibAttributes)
-                flags = BitUtil.set(flags, MAY_HAVE_RECURSION_LIMIT_MASK, rawAttributes.hasAttribute("recursion_limit"))
+                val flags = RsAttributeOwnerStub.extractFlags(file, FileStubAttrFlags)
                 return RsFileStub(file, flags)
             }
 
@@ -134,11 +140,6 @@ class RsFileStub(
 //            }
 //            return super.doParseContents(chameleon, psi)
 //        }
-    }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
-        private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = nextBitMask()
-        private val MAY_HAVE_RECURSION_LIMIT_MASK: Int = nextBitMask()
     }
 }
 
@@ -356,17 +357,15 @@ abstract class RsAttributeOwnerStubBase<T : RsElement>(
         get() = RsInnerAttributeOwnerRegistry.rawOuterMetaItems(this)
 
     override val hasAttrs: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
+        get() = BitUtil.isSet(flags, HAS_ATTRS)
     override val mayHaveCfg: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_MASK)
+        get() = BitUtil.isSet(flags, MAY_HAVE_CFG)
     override val hasCfgAttr: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
-    override val mayHaveMacroUse: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
+        get() = BitUtil.isSet(flags, HAS_CFG_ATTR)
     override val mayHaveCustomDerive: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_DERIVE)
+        get() = BitUtil.isSet(flags, MAY_HAVE_CUSTOM_DERIVE)
     override val mayHaveCustomAttrs: Boolean
-        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_CUSTOM_ATTRS)
+        get() = BitUtil.isSet(flags, MAY_HAVE_CUSTOM_ATTRS)
     protected abstract val flags: Int
 }
 
@@ -390,6 +389,9 @@ class RsExternCrateItemStub(
     override val procMacroInfo: RsProcMacroStubInfo?,
 ) : RsAttrProcMacroOwnerStubBase<RsExternCrateItem>(parent, elementType),
     RsNamedStub {
+
+    val mayHaveMacroUse: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_MACRO_USE)
 
     val alias: RsAliasStub?
         get() = findChildStubByType(RsAliasStub.Type)
@@ -416,7 +418,7 @@ class RsExternCrateItemStub(
             RsExternCrateItemImpl(stub, this)
 
         override fun createStub(psi: RsExternCrateItem, parentStub: StubElement<*>?): RsExternCrateItemStub {
-            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val flags = RsAttributeOwnerStub.extractFlags(psi, ModStubAttrFlags)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsExternCrateItemStub(parentStub, this, psi.referenceName, flags, procMacroInfo)
         }
@@ -437,7 +439,7 @@ class RsUseItemStub(
 
     // stored in stub as an optimization
     val mayHavePreludeImport: Boolean
-        get() = BitUtil.isSet(flags, HAS_PRELUDE_IMPORT_MASK)
+        get() = BitUtil.isSet(flags, MAY_HAVE_PRELUDE_IMPORT)
 
     object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
 
@@ -459,15 +461,10 @@ class RsUseItemStub(
             RsUseItemImpl(stub, this)
 
         override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?): RsUseItemStub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, HAS_PRELUDE_IMPORT_MASK, HAS_PRELUDE_IMPORT_PROP.getDuringIndexing(psi))
+            val flags = RsAttributeOwnerStub.extractFlags(psi, UseItemStubAttrFlags)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsUseItemStub(parentStub, this, flags, procMacroInfo)
         }
-    }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
-        private val HAS_PRELUDE_IMPORT_MASK: Int = nextBitMask()
     }
 }
 
@@ -561,7 +558,7 @@ class RsStructItemStub(
         override fun indexStub(stub: RsStructItemStub, sink: IndexSink) = sink.indexStructItem(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(CommonStubAttrFlags, BYTE) {
         private val IS_UNION_MASK: Int = nextBitMask()
     }
 }
@@ -656,6 +653,9 @@ class RsModDeclItemStub(
 ) : RsAttributeOwnerStubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub {
 
+    val mayHaveMacroUse: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_MACRO_USE)
+
     object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModDeclItemStub(
@@ -675,7 +675,7 @@ class RsModDeclItemStub(
             RsModDeclItemImpl(stub, this)
 
         override fun createStub(psi: RsModDeclItem, parentStub: StubElement<*>?): RsModDeclItemStub =
-            RsModDeclItemStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+            RsModDeclItemStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi, ModStubAttrFlags))
 
         override fun indexStub(stub: RsModDeclItemStub, sink: IndexSink) = sink.indexModDeclItem(stub)
     }
@@ -690,6 +690,9 @@ class RsModItemStub(
     override val procMacroInfo: RsProcMacroStubInfo?,
 ) : RsAttrProcMacroOwnerStubBase<RsModItem>(parent, elementType),
     RsNamedStub {
+
+    val mayHaveMacroUse: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_MACRO_USE)
 
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
@@ -713,7 +716,7 @@ class RsModItemStub(
             RsModItemImpl(stub, this)
 
         override fun createStub(psi: RsModItem, parentStub: StubElement<*>?): RsModItemStub {
-            val flags = RsAttributeOwnerStub.extractFlags(psi)
+            val flags = RsAttributeOwnerStub.extractFlags(psi, ModStubAttrFlags)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsModItemStub(parentStub, this, psi.name, flags, procMacroInfo)
         }
@@ -769,7 +772,7 @@ class RsTraitItemStub(
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(CommonStubAttrFlags, BYTE) {
         private val UNSAFE_MASK: Int = nextBitMask()
         private val AUTO_MASK: Int = nextBitMask()
     }
@@ -781,6 +784,9 @@ class RsImplItemStub(
     override val flags: Int,
     override val procMacroInfo: RsProcMacroStubInfo?,
 ) : RsAttrProcMacroOwnerStubBase<RsImplItem>(parent, elementType) {
+
+    val mayBeReservationImpl: Boolean
+        get() = BitUtil.isSet(flags, ImplStubAttrFlags.MAY_BE_RESERVATION_IMPL)
 
     val isNegativeImpl: Boolean
         get() = BitUtil.isSet(flags, NEGATIVE_IMPL_MASK)
@@ -803,7 +809,7 @@ class RsImplItemStub(
             RsImplItemImpl(stub, this)
 
         override fun createStub(psi: RsImplItem, parentStub: StubElement<*>?): RsImplItemStub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
+            var flags = RsAttributeOwnerStub.extractFlags(psi, ImplStubAttrFlags)
             flags = BitUtil.set(flags, NEGATIVE_IMPL_MASK, psi.isNegativeImpl)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsImplItemStub(parentStub, this, flags, procMacroInfo)
@@ -812,7 +818,7 @@ class RsImplItemStub(
         override fun indexStub(stub: RsImplItemStub, sink: IndexSink) = sink.indexImplItem(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(ImplStubAttrFlags, BYTE) {
         private val NEGATIVE_IMPL_MASK: Int = nextBitMask()
     }
 }
@@ -876,7 +882,7 @@ class RsFunctionStub(
 
     // Method resolve optimization: stub field access is much faster than PSI traversing
     val hasSelfParameters: Boolean get() = BitUtil.isSet(flags, HAS_SELF_PARAMETER_MASK)
-    val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, IS_PROC_MACRO_DEF)
+    val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, FunctionStubAttrFlags.MAY_BE_PROC_MACRO_DEF)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -916,7 +922,7 @@ class RsFunctionStub(
                 )
             }
 
-            var flags = RsAttributeOwnerStub.extractFlags(attrs)
+            var flags = RsAttributeOwnerStub.extractFlags(attrs, FunctionStubAttrFlags)
             flags = BitUtil.set(flags, ABSTRACT_MASK, block == null)
             flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
@@ -924,7 +930,6 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, VARIADIC_MASK, psi.isVariadic)
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, HAS_SELF_PARAMETER_MASK, psi.hasSelfParameters)
-            flags = BitUtil.set(flags, IS_PROC_MACRO_DEF, attrs.isProcMacroDef)
 
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
 
@@ -941,7 +946,7 @@ class RsFunctionStub(
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
+    companion object : BitFlagsBuilder(FunctionStubAttrFlags, INT) {
         private val ABSTRACT_MASK: Int = nextBitMask()
         private val CONST_MASK: Int = nextBitMask()
         private val UNSAFE_MASK: Int = nextBitMask()
@@ -949,7 +954,6 @@ class RsFunctionStub(
         private val VARIADIC_MASK: Int = nextBitMask()
         private val ASYNC_MASK: Int = nextBitMask()
         private val HAS_SELF_PARAMETER_MASK: Int = nextBitMask()
-        private val IS_PROC_MACRO_DEF: Int = nextBitMask()
     }
 }
 
@@ -1000,7 +1004,7 @@ class RsConstantStub(
         override fun indexStub(stub: RsConstantStub, sink: IndexSink) = sink.indexConstant(stub)
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(CommonStubAttrFlags, BYTE) {
         private val IS_MUT_MASK: Int = nextBitMask()
         private val IS_CONST_MASK: Int = nextBitMask()
     }
@@ -1307,7 +1311,7 @@ class RsSelfParameterStub(
         }
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
+    companion object : BitFlagsBuilder(CommonStubAttrFlags, BYTE) {
         private val IS_MUT_MASK: Int = nextBitMask()
         private val IS_REF_MASK: Int = nextBitMask()
         private val IS_EXPLICIT_TYPE_MASK: Int = nextBitMask()
@@ -1397,7 +1401,7 @@ class RsFnPointerTypeStub(
         }
     }
 
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+    companion object : BitFlagsBuilder(CommonStubAttrFlags, BYTE) {
         private val UNSAFE_MASK: Int = nextBitMask()
         private val EXTERN_MASK: Int = nextBitMask()
     }
@@ -1555,15 +1559,15 @@ class RsMacroStub(
 
     // stored in stub as an optimization
     val mayHaveMacroExport: Boolean
-        get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT)
+        get() = BitUtil.isSet(flags, MacroStubAttrFlags.MAY_HAVE_MACRO_EXPORT)
 
     // stored in stub as an optimization
     val mayHaveMacroExportLocalInnerMacros: Boolean
-        get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS)
+        get() = BitUtil.isSet(flags, MacroStubAttrFlags.MAY_HAVE_MACRO_EXPORT_LOCAL_INNER_MACROS)
 
     // stored in stub as an optimization
     val mayHaveRustcBuiltinMacro: Boolean
-        get() = BitUtil.isSet(flags, HAS_RUSTC_BUILTIN_MACRO)
+        get() = BitUtil.isSet(flags, MacroStubAttrFlags.MAY_HAVE_RUSTC_BUILTIN_MACRO)
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -1592,10 +1596,7 @@ class RsMacroStub(
             RsMacroImpl(stub, this)
 
         override fun createStub(psi: RsMacro, parentStub: StubElement<*>?): RsMacroStub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, HAS_MACRO_EXPORT, HAS_MACRO_EXPORT_PROP.getDuringIndexing(psi))
-            flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getDuringIndexing(psi))
-            flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
+            val flags = RsAttributeOwnerStub.extractFlags(psi, MacroStubAttrFlags)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
             return RsMacroStub(
                 parentStub,
@@ -1611,12 +1612,6 @@ class RsMacroStub(
 
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
     }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
-        private val HAS_MACRO_EXPORT: Int = nextBitMask()
-        private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = nextBitMask()
-        private val HAS_RUSTC_BUILTIN_MACRO: Int = nextBitMask()
-    }
 }
 
 class RsMacro2Stub(
@@ -1631,7 +1626,7 @@ class RsMacro2Stub(
     RsNamedStub {
 
     val mayHaveRustcBuiltinMacro: Boolean
-        get() = BitUtil.isSet(flags, HAS_RUSTC_BUILTIN_MACRO)
+        get() = BitUtil.isSet(flags, Macro2StubAttrFlags.MAY_HAVE_RUSTC_BUILTIN_MACRO)
 
     object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -1660,8 +1655,7 @@ class RsMacro2Stub(
             RsMacro2Impl(stub, this)
 
         override fun createStub(psi: RsMacro2, parentStub: StubElement<*>?): RsMacro2Stub {
-            var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, MACRO2_HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
+            val flags = RsAttributeOwnerStub.extractFlags(psi, Macro2StubAttrFlags)
             val preferredBraces = psi.preferredBraces
             val body = psi.prepareMacroBody()
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
@@ -1678,10 +1672,6 @@ class RsMacro2Stub(
         }
 
         override fun indexStub(stub: RsMacro2Stub, sink: IndexSink) = sink.indexMacroDef(stub)
-    }
-
-    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
-        private val HAS_RUSTC_BUILTIN_MACRO: Int = nextBitMask()
     }
 }
 

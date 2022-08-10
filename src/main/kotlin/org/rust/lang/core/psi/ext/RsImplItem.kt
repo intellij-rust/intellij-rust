@@ -36,7 +36,10 @@ val RsImplItem.isNegativeImpl: Boolean
     get() = greenStub?.isNegativeImpl ?: (node.findChildByType(EXCL) != null)
 
 val RsImplItem.isReservationImpl: Boolean
-    get() = queryAttributes.hasAttribute("rustc_reservation_impl")
+    get() = IMPL_ITEM_IS_RESERVATION_IMPL_PROP.getByPsi(this)
+
+val IMPL_ITEM_IS_RESERVATION_IMPL_PROP: StubbedAttributeProperty<RsImplItem, RsImplItemStub> =
+    StubbedAttributeProperty({ it.hasAttribute("rustc_reservation_impl") }, RsImplItemStub::mayBeReservationImpl)
 
 val RsImplItem.implementingType: TyAdt?
     get() = typeReference?.type as? TyAdt

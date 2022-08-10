@@ -313,6 +313,7 @@ class StubbedAttributeProperty<P, S>(
         }
     }
 
+    @Suppress("unused")
     fun getDuringIndexing(psi: P): Boolean =
         fromQuery(psi.getTraversedRawAttributes())
 }
