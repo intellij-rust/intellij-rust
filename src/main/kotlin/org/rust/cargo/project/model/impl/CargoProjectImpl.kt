@@ -48,6 +48,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.*
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -56,6 +57,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.proc.ProcMacroServerPool
 import org.rust.openapiext.TaskResult
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.modules
@@ -501,6 +503,11 @@ data class CargoProjectImpl(
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
     override val project get() = projectService.project
+
+    override val procMacroExpanderPath: Path? = rustcInfo?.sysroot?.let { sysroot ->
+        val toolchain = project.toolchain ?: return@let null
+        ProcMacroServerPool.findExpanderExecutablePath(toolchain, sysroot)
+    }
 
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null

@@ -42,7 +42,7 @@ class DefCollector(
     private val defMap: CrateDefMap,
     private val context: CollectorContext,
     private val pool: ExecutorService?,
-    private val indicator: ProgressIndicator,
+    private val indicator: ProgressIndicator
 ) {
 
     /**
@@ -58,8 +58,7 @@ class DefCollector(
 
     private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
 
-    /** Created once as optimization */
-    private val macroExpander = FunctionLikeMacroExpander.new(project)
+    private val macroExpander = FunctionLikeMacroExpander.forCrate(context.crate)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
     private val macroMixHashToOrder: MutableMap<HashCode /* mix hash */, Int> = THashMap()

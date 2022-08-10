@@ -28,9 +28,7 @@ import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.isRustupAvailable
-import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
-import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -116,6 +114,7 @@ interface CargoProject : UserDataHolderEx {
     val workspace: CargoWorkspace?
 
     val rustcInfo: RustcInfo?
+    val procMacroExpanderPath: Path?
 
     val workspaceStatus: UpdateStatus
     val stdlibStatus: UpdateStatus
