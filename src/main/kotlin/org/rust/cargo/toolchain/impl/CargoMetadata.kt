@@ -361,12 +361,17 @@ object CargoMetadata {
         )
     }
 
-    fun isBazelPath(path: String) = "/bazel-out/" in path
+    fun isBazelOutPath(path: String) = "/bazel-out/" in path
 
-    fun bazelPathToProjectPath(bazelPath: String, projectRoot: String): String {
+    fun isBazelBinPath(path: String) = "/bazel-bin/" in path || path.endsWith("bazel-bin")
+
+    fun bazelPathToProjectPath(bazelPath: String, workspaceRoot: String): String {
         val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
         if (projectRelativePathStartIndex == -1) return bazelPath
         val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
+        val projectRoot = if (isBazelBinPath(workspaceRoot)) {
+            workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
+        } else workspaceRoot
         // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
         return Path.of(projectRoot, projectRelativePath).toString()
     }
@@ -413,12 +418,12 @@ object CargoMetadata {
         buildMessages: List<CompilerMessage>,
         workspaceRoot: String
     ): CargoWorkspaceData.Package {
-        val rootPath = if (isBazelPath(manifest_path)) {
+        val rootPath = if (isBazelOutPath(manifest_path)) {
             bazelPathToProjectPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
         } else PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (could not find `$rootPath`; workspaceRoot is `$workspaceRoot`)")
 
         val features = features.toMutableMap()
 
