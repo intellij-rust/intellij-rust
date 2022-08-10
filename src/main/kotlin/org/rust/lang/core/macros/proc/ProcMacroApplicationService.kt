@@ -13,16 +13,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import java.nio.file.Path
 
 @Service
 class ProcMacroApplicationService : Disposable {
-    private val servers: MutableMap<String, ProcMacroServerPool?> = hashMapOf()
+    private val servers: MutableMap<DistributionIdAndExpanderPath, ProcMacroServerPool?> = hashMapOf()
 
     init {
         val connect = ApplicationManager.getApplication().messageBus.connect(this)
@@ -43,29 +45,41 @@ class ProcMacroApplicationService : Disposable {
     }
 
     @Synchronized
-    fun getServer(toolchain: RsToolchainBase): ProcMacroServerPool? {
+    fun getServer(toolchain: RsToolchainBase, procMacroExpanderPath: Path): ProcMacroServerPool? {
         if (!isEnabled()) return null
 
         val id = toolchain.distributionId
-        var server = servers[id]
+        val key = DistributionIdAndExpanderPath(id, procMacroExpanderPath)
+        var server = servers[key]
         if (server == null) {
-            server = ProcMacroServerPool.tryCreate(toolchain, this)
-            servers[id] = server
+            server = ProcMacroServerPool.new(toolchain, procMacroExpanderPath, this)
+            servers[key] = server
         }
         return server
     }
 
     @Synchronized
     private fun removeUnusableSevers() {
-        val distributionIds = ProjectManager.getInstance().openProjects
-            .mapNotNull { it.rustSettings.toolchain?.distributionId }
+        val distributionIds = mutableSetOf<String>()
+        val procMacroExpanderPaths = mutableSetOf<Path>()
+        for (project in ProjectManager.getInstance().openProjects) {
+            project.rustSettings.toolchain?.distributionId?.let { distributionIds.add(it) }
+            for (cargoProject in project.cargoProjects.allProjects) {
+                cargoProject.procMacroExpanderPath?.let { procMacroExpanderPaths.add(it) }
+            }
+        }
         servers.keys
-            .filterNot { it in distributionIds }
+            .filter { it.distributionId !in distributionIds || it.procMacroExpanderPath !in procMacroExpanderPaths }
             .mapNotNull { servers.remove(it) }
             .forEach { Disposer.dispose(it) }
     }
 
     override fun dispose() {}
+
+    private data class DistributionIdAndExpanderPath(
+        val distributionId: String,
+        val procMacroExpanderPath: Path,
+    )
 
     companion object {
         fun getInstance(): ProcMacroApplicationService = service()

@@ -42,7 +42,7 @@ abstract class RsToolchainBase(val location: Path) {
 
     abstract fun expandUserHome(remotePath: String): String
 
-    protected abstract fun getExecutableName(toolName: String): String
+    abstract fun getExecutableName(toolName: String): String
 
     // for executables from toolchain
     abstract fun pathToExecutable(toolName: String): Path

@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.SmartList
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError.ExecutableNotFound
@@ -32,10 +33,10 @@ import org.rust.stdext.unwrapOrElse
 import java.io.IOException
 import java.util.concurrent.TimeoutException
 
-class ProcMacroExpander(
+class ProcMacroExpander private constructor(
     private val project: Project,
-    private val toolchain: RsToolchainBase? = project.toolchain,
-    private val server: ProcMacroServerPool? = toolchain?.let { ProcMacroApplicationService.getInstance().getServer(it) },
+    private val toolchain: RsToolchainBase?,
+    private val server: ProcMacroServerPool?,
     private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
 ) : MacroExpander<RsProcMacroData, ProcMacroExpansionError>() {
     private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isEnabled()
@@ -206,5 +207,21 @@ class ProcMacroExpander(
 
     companion object {
         const val EXPANDER_VERSION: Int = 5
+
+        fun forCrate(crate: Crate): ProcMacroExpander {
+            val project = crate.project
+            val toolchain = project.toolchain
+            val procMacroExpanderPath = crate.cargoProject?.procMacroExpanderPath
+            val server = if (toolchain != null && procMacroExpanderPath != null) {
+                ProcMacroApplicationService.getInstance().getServer(toolchain, procMacroExpanderPath)
+            } else {
+                null
+            }
+            return ProcMacroExpander(project, toolchain, server)
+        }
+
+        fun new(project: Project, server: ProcMacroServerPool?): ProcMacroExpander {
+            return ProcMacroExpander(project, project.toolchain, server)
+        }
     }
 }
