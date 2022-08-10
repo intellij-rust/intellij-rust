@@ -31,6 +31,7 @@ class MutableMappedText private constructor(
     constructor(capacity: Int) : this(StringBuilder(capacity))
 
     val length: Int get() = sb.length
+    val text: CharSequence get() = sb
 
     fun appendUnmapped(text: CharSequence) {
         sb.append(text)

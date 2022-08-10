@@ -324,7 +324,14 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsVecMacroArgument -> argument.exprList.forEach(::walkExpr)
 
             is RsFormatMacroArgument -> {
-                argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+                val expansion = macroCall.expansion
+                if (expansion != null) {
+                    for (expandedElement in expansion.elements) {
+                        walk(expandedElement)
+                    }
+                } else {
+                    argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+                }
             }
             is RsAssertMacroArgument -> {
                 argument.expr?.let(::walkExpr)
