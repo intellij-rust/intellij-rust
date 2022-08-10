@@ -734,7 +734,9 @@ fun CargoWorkspace.Package.additionalRoots(): List<VirtualFile> {
             CORE -> contentRoot?.parent?.let {
                 listOfNotNull(
                     it.findFileByRelativePath("stdarch/crates/core_arch"),
-                    it.findFileByRelativePath("stdarch/crates/std_detect")
+                    it.findFileByRelativePath("stdarch/crates/std_detect"),
+                    it.findFileByRelativePath("portable-simd/crates/core_simd"),
+                    it.findFileByRelativePath("portable-simd/crates/std_float"),
                 )
             } ?: emptyList()
             else -> emptyList()
