@@ -21,7 +21,6 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsExpressionCodeFragment
-import org.rust.lang.core.psi.RsFileBase
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -58,7 +57,6 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
         val text = leftSiblingsText + position.text + "!()"
         val fragment = RsExpressionCodeFragment(position.project, text, mod)
         fragment.putUserData(FORCE_OUT_OF_SCOPE_COMPLETION, true)
-        (mod.containingFile as? RsFileBase)?.let { fragment.originalFile = it }  // needed for paths "::dep::foo"
 
         val offset = leftSiblingsText.length + (parameters.offset - position.startOffset)
         val element = fragment.findElementAt(offset) ?: return
