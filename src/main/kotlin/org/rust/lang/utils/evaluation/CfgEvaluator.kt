@@ -5,11 +5,16 @@
 
 package org.rust.lang.utils.evaluation
 
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.lang.core.stubs.index.RsCfgNotTestIndex
 import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
@@ -160,7 +165,19 @@ class CfgEvaluator(
             "target_vendor"
         )
 
+        private val CRATE_CFG_EVALUATOR_KEY: Key<CachedValue<CfgEvaluator>> = Key.create("CRATE_CFG_EVALUATOR_KEY")
+
         fun forCrate(crate: Crate): CfgEvaluator {
+            val project = crate.project
+            return CachedValuesManager.getManager(project).getCachedValue(crate, CRATE_CFG_EVALUATOR_KEY, {
+                CachedValueProvider.Result.create(
+                    forCrateInner(crate),
+                    project.rustStructureModificationTracker
+                )
+            }, false)
+        }
+
+        private fun forCrateInner(crate: Crate): CfgEvaluator {
             // `cfg(test)` evaluates to true only if there are no `cfg(not(test))` in the package
             val cfgTest = when (crate.origin) {
                 PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> False

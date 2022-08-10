@@ -586,6 +586,8 @@ private fun MacroDefInfo.legacyMacroToPsi(containingScope: RsItemsOwner, info: R
         is DeclMacroDefInfo -> items.legacyMacros.singleOrNull {
             val crate = info.project.crateGraph.findCrateById(crate) ?: return@singleOrNull false
             val defIndex = info.getMacroIndex(it, crate) ?: return@singleOrNull false
+            // Note that if macro indices are equal, the result macro is cfg-enabled
+            // since cfg-enabled and cfg-disabled macros have different macro indices
             MacroIndex.equals(defIndex, macroIndex)
         }
         is ProcMacroDefInfo -> items.named[path.name]?.firstOrNull { it is RsFunction }
@@ -693,11 +695,8 @@ private fun ModData.toRsModNullable(project: Project): List<RsMod> {
         }
 }
 
-private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> {
-    val itemsCfgEnabled = expandedItemsCached.named[name]?.filterIsInstance<T>()
-    if (itemsCfgEnabled != null && itemsCfgEnabled.isNotEmpty()) return itemsCfgEnabled
-    return expandedItemsCached.namedCfgDisabled[name]?.filterIsInstance<T>() ?: emptyList()
-}
+private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
+    expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
 
 /**
  * If all def maps are up-to-date, then returns correct result
