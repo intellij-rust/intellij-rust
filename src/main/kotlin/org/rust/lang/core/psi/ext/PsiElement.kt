@@ -240,7 +240,7 @@ fun PsiElement.stubChildOfElementType(elementType: IElementType): PsiElement? {
 val PsiElement.contextualFile: PsiFile
     get() {
         val file = contextOrSelf<PsiFile>() ?: error("Element outside of file: $text")
-        return if (file is RsReplCodeFragment) {
+        return if (file is RsCodeFragment) {
             file.context.contextualFile
         } else {
             file
