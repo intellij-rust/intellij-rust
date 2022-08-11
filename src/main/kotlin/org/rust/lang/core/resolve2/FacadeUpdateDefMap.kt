@@ -39,7 +39,6 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? =
     getOrUpdateIfNeeded(listOf(crate))[crate]
 
 fun DefMapService.getOrUpdateIfNeeded(crates: List<CratePersistentId>): Map<CratePersistentId, CrateDefMap?> {
-    check(project.isNewResolveEnabled)
     val holders = crates.map(::getDefMapHolder)
 
     fun List<DefMapHolder>.defMaps() = associate { it.crateId to it.defMap }
@@ -73,7 +72,6 @@ fun updateDefMapForAllCrates(
     indicator: ProgressIndicator,
     multithread: Boolean = true
 ): List<CrateDefMap> {
-    if (!project.isNewResolveEnabled) return emptyList()
     return executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
         doUpdateDefMapForAllCrates(project, wrappedIndicator, multithread)
     }
@@ -162,7 +160,6 @@ private class DefMapUpdater(
     }
 
     private fun doRun() {
-        check(defMapService.project.isNewResolveEnabled)
         indicator.checkCanceled()
 
         val cratesToCheck = findCratesToCheck()

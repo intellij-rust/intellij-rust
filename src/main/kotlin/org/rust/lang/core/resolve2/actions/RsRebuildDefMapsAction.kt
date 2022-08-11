@@ -14,17 +14,12 @@ import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve2.forceRebuildDefMapForAllCrates
 import org.rust.lang.core.resolve2.forceRebuildDefMapForCrate
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.psiFile
 import kotlin.system.measureTimeMillis
 
 class RsRebuildAllDefMapsAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        if (!project.isNewResolveEnabled) {
-            project.showBalloon("New name resolution engine is not enabled", NotificationType.WARNING)
-            return
-        }
 
         ApplicationManager.getApplication().executeOnPooledThread {
             val time = measureTimeMillis {
@@ -38,7 +33,6 @@ class RsRebuildAllDefMapsAction : AnAction() {
 class RsRebuildCurrentDefMapAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        if (!project.isNewResolveEnabled) return
         val file = e.dataContext.psiFile as? RsFile ?: return
         val crate = file.crate ?: return
         val crateId = crate.id ?: return

@@ -22,7 +22,6 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.experiments.EnabledInStable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.isRustFile
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
 import kotlin.reflect.full.hasAnnotation
@@ -46,7 +45,6 @@ class CreateNewGithubIssue : DumbAwareAction() {
         val ideNameAndVersion = ideNameAndVersion
         val os = SystemInfo.getOsNameAndVersion()
         val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
-        val resolveEngine = if (project.isNewResolveEnabled) "new" else "old"
         val additionalExperimentalFeatures = additionalExperimentalFeatures
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample.orEmpty()
 
@@ -56,7 +54,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
             ideNameAndVersion,
             os,
             macroEngine,
-            resolveEngine,
+            "new",
             additionalExperimentalFeatures
         )
         val body = ISSUE_TEMPLATE.format(environmentInfo, codeSnippet)
@@ -103,7 +101,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
             * **Operating system:** $os
             * **Macro expansion engine:** $macroEngine
             * **Name resolution engine:** $resolveEngine
-            ${additionalExperimentalFeatures?.let { "* **Additional experimental features:** $it" }.orEmpty()}    
+            ${additionalExperimentalFeatures?.let { "* **Additional experimental features:** $it" }.orEmpty()}
         """.trimEnd().trimIndent()
 
         private val ideNameAndVersion: String

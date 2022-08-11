@@ -37,7 +37,6 @@ import org.rust.lang.core.psi.ext.resolveToMacroWithoutPsi
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve.ref.RsDeriveTraitReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.setFeatureEnabled
 import kotlin.math.min
@@ -125,7 +124,7 @@ private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElemen
 }
 
 private fun checkProcMacroResolve(reference: PsiReference, resolved: PsiElement) {
-    if ((reference is RsDeriveTraitReferenceImpl) && reference.element.project.isNewResolveEnabled) {
+    if (reference is RsDeriveTraitReferenceImpl) {
         val macroCall = reference.element.parent as RsPossibleMacroCall
         assertEquals(
             "different procedural macros resolved using PSI reference and CrateDefMap-based resolution without PSI",

@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 
 class RsMacroBracketCompletionTest : RsCompletionTestBase() {
 
@@ -132,11 +131,8 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
 
         // macro 1.0
         doTest("macro_rules! foo { () => {}; }")
-        // macro 2.0 completion works only with new name resolution engine
-        if (project.isNewResolveEnabled) {
-            // macro 2.0
-            doTest("macro foo() {}")
-        }
+        // macro 2.0
+        doTest("macro foo() {}")
     }
 
     companion object {
