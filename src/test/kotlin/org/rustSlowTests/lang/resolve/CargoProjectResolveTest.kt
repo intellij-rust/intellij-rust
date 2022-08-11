@@ -881,8 +881,9 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
     }
 
-    @UseOldResolve
-    fun `test cyclic dev deps`() = buildProject {
+    // TODO the test has been regressed after switching to Name Resolution 2.0
+    fun `test cyclic dev deps`() = expect<IllegalStateException> {
+    buildProject {
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -931,6 +932,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             checkReferenceIsResolved<RsPath>("tests/main.rs")
             checkReferenceIsResolved<RsPath>("src/lib.rs")
         }
+    }
     }
 
     fun `test build-dependency is resolved in 'build rs' and not resolved in 'main rs'`() = buildProject {

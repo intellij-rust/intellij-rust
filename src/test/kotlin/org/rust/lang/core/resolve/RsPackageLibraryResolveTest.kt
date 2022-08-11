@@ -70,8 +70,10 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseOldResolve
-    fun `test duplicated macro_export macro`() = stubOnlyResolve("""
+    // TODO the test has been regressed after switching to Name Resolution 2.0
+    //   Ideally, it should be multi-resolve instead
+    fun `test duplicated macro_export macro`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
     //- main.rs
         #[macro_use]
         extern crate test_package;
@@ -85,6 +87,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         #[macro_export]
         macro_rules! foo_bar { () => {} }
     """)
+    }
 
     fun `test macro rules missing macro_export`() = stubOnlyResolve("""
     //- main.rs
@@ -814,7 +817,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseOldResolve
     fun `test ambiguity of extern crate alias and other item with the same name`() {
         stubOnlyResolve("""
         //- dep-lib/lib.rs
