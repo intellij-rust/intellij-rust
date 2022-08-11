@@ -35,6 +35,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.MacroExpansionFileSystem
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
@@ -79,14 +80,22 @@ class RsFile(
     val isIncludedByIncludeMacro: Boolean get() = true
 //    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
 
+    /** Used for in-memory macro expansions */
+    @Volatile
+    private var forcedCachedData: (() -> CachedData)? = null
+
     private val cachedData: CachedData
         get() {
+            forcedCachedData?.let { return it() }
+
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
             val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
                 val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
+                // Note: if the cached result is invalidated, then the cached result from `memExpansionResult`
+                // must also be invalidated, so keep them in sync
                 CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
             }
         }
@@ -94,8 +103,23 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
+        val virtualFile: VirtualFile? = virtualFile
+
+        if (virtualFile?.fileSystem is MacroExpansionFileSystem) {
+            val crateId = project.macroExpansionManager.getCrateForExpansionFile(virtualFile)
+                ?: return EMPTY_CACHED_DATA // Possibly an expansion file from another IDEA project
+            val crate = project.crateGraph.findCrateById(crateId) ?: return EMPTY_CACHED_DATA
+            return CachedData(
+                crate.cargoProject,
+                crate.cargoWorkspace,
+                crate.rootMod,
+                crate,
+                isDeeplyEnabledByCfg = true, // Macros are ony expanded in cfg-enabled mods
+                isIncludedByIncludeMacro = false // An expansion file obviously can't be included
+            )
+        }
+
         // Note: `this` file can be not a module (can be included with `include!()` macro)
-        val virtualFile = virtualFile
         val modData = findModDataFor(this)
         if (modData != null) {
             val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
@@ -156,6 +180,16 @@ class RsFile(
         val cargoProject = project.cargoProjects.findProjectForFile(crateRootVFile) ?: return EMPTY_CACHED_DATA
         val workspace = cargoProject.workspace ?: return CachedData(cargoProject)
         return CachedData(cargoProject, workspace)
+    }
+
+    /** Very internal utility, do not use */
+    fun inheritCachedDataFrom(other: RsFile, lazy: Boolean) {
+        forcedCachedData = if (lazy) {
+            { other.cachedData }
+        } else {
+            val cachedData = other.cachedData
+            { cachedData }
+        }
     }
 
     override fun setName(name: String): PsiElement {
@@ -307,8 +341,7 @@ val RsElement.isValidProjectMember: Boolean
 
 val RsElement.isValidProjectMemberAndContainingCrate: Pair<Boolean, Crate?>
     get() {
-        val file = contextualFile
-        if (file !is RsFile) return true to null
+        val file = containingRsFileSkippingCodeFragments ?: return true to null
         if (!file.isDeeplyEnabledByCfg) return false to null
         val crate = file.crate ?: return false to null
         if (!existsAfterExpansion(crate)) return false to null

@@ -235,7 +235,7 @@ fun PsiElement.stubChildOfElementType(elementType: IElementType): PsiElement? {
 }
 
 /**
- * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].
+ * Similar to [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].
  */
 val PsiElement.contextualFile: PsiFile
     get() {
@@ -245,6 +245,20 @@ val PsiElement.contextualFile: PsiFile
         } else {
             file
         }
+    }
+
+/**
+ * Similar to [PsiElement.getContainingFile], but return a "fake" file if real file is
+ * [com.intellij.psi.impl.source.DummyHolder] or [org.rust.lang.core.psi.RsCodeFragment].
+ */
+val PsiElement.containingRsFileSkippingCodeFragments: RsFile?
+    get() {
+        var containingFile = containingFile.originalFile
+        /** Unwrap possible [com.intellij.psi.impl.source.DummyHolder]s and [org.rust.lang.core.psi.RsCodeFragment]s */
+        while (containingFile !is RsFile) {
+            containingFile = containingFile.context?.containingFile?.originalFile ?: break
+        }
+        return containingFile as? RsFile
     }
 
 /** Finds first sibling that is neither comment, nor whitespace before given element */

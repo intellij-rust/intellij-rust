@@ -30,7 +30,7 @@ abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type),
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override val containingDoc: RsDocComment
         get() = ancestorStrict()
