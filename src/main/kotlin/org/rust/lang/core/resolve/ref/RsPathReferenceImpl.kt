@@ -165,7 +165,7 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
     }
 }
 
-fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWithVisibility<RsElement>> {
+private fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWithVisibility<RsElement>> {
     val result = collectPathResolveVariants(path) {
         processPathResolveVariants(lookup, path, false, it)
     }.let { rawResult ->
