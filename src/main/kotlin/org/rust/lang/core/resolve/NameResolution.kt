@@ -827,7 +827,6 @@ fun resolveStringPath(
     val el = pkg.targets.asSequence()
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(crateRelativePath, it) }
         .filter {
-            if (!project.isNewResolveEnabled) return@filter true
             val crateRoot = it.containingFile.context as RsFile
             val crateId = crateRoot.containingCrate?.id ?: return@filter false
             // ignore e.g. test/bench non-workspace crates
@@ -939,7 +938,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
         }
     } else {
         val call = path.parent
-        if (path.project.isNewResolveEnabled && call is RsPossibleMacroCall && call.canBeMacroCall) {
+        if (call is RsPossibleMacroCall && call.canBeMacroCall) {
             if (isCompletion) {
                 /** Note: here we don't have to handle [MACRO_DOLLAR_CRATE_IDENTIFIER] */
                 processQualifiedPathResolveVariants(null, isCompletion, MACROS, qualifier, path, call, processor)
@@ -1108,7 +1107,6 @@ private class MacroResolver private constructor(
 
     /** Try using new resolve if [element] is top-level item or expanded from top-level macro call. */
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement, isAttrOrDerive: Boolean): MacroResolveResult? {
-        if (!project.isNewResolveEnabled) return null
         if (element !is RsElement) return null
         val scope = element.context as? RsItemsOwner ?: return null // we are interested only in top-level elements
         val result = processMacros(scope, processor, macroPath, isAttrOrDerive)

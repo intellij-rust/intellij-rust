@@ -7,8 +7,6 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
@@ -34,12 +32,6 @@ import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
-
-val IS_NEW_RESOLVE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.resolve.new.engine")
-
-@Suppress("unused")
-val Project.isNewResolveEnabled: Boolean
-    get() = IS_NEW_RESOLVE_ENABLED_KEY.asBoolean()
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(
@@ -266,11 +258,8 @@ private fun <T> RsPossibleMacroCall.resolveToMacroAndThen(
 fun RsMetaItem.resolveToProcMacroWithoutPsi(checkIsMacroAttr: Boolean = true): ProcMacroDefInfo? {
     val owner = owner as? RsAttrProcMacroOwner ?: return null
 
-    val info = when {
-        !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
-        RsProcMacroPsiUtil.canBeProcMacroCall(this) -> getModInfo(owner.containingMod)
-        else -> CantUseNewResolve("not a proc macro")
-    } as? RsModInfo ?: return null
+    if (!RsProcMacroPsiUtil.canBeProcMacroCall(this)) return null
+    val info = getModInfo(owner.containingMod) as? RsModInfo ?: return null
 
     if (checkIsMacroAttr && !isMacroCall) return null
 
@@ -473,7 +462,6 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     val scope = scope0.originalElement as? RsItemsOwner ?: scope0
     if (scope !is RsMod) return getHangingModInfo(scope)
     val project = scope.project
-    if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
     if (scope.isLocal) return getLocalModInfo(scope)
     val crate = when (val crate = scope.containingCrate) {
@@ -704,7 +692,6 @@ private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWit
  */
 fun findModDataFor(file: RsFile): ModData? {
     val project = file.project
-    check(project.isNewResolveEnabled)
     val defMapService = project.defMapService
     val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
     // TODO Ensure def maps are up-to-date (`findCrates` may return old crate of def maps haven't updated).

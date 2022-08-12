@@ -39,7 +39,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.resolve2.toRsMod
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
@@ -95,25 +94,23 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        if (project.isNewResolveEnabled) {
-            // Note: `this` file can be not a module (can be included with `include!()` macro)
-            val virtualFile = virtualFile
-            val modData = findModDataFor(this)
-            if (modData != null) {
-                val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
-                return CachedData(
-                    crate.cargoProject,
-                    crate.cargoWorkspace,
-                    crate.rootMod,
-                    crate,
-                    modData.isDeeplyEnabledByCfg,
-                    isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
-                        && virtualFile.id != modData.fileId
-                        && virtualFile.fileSystem !is MacroExpansionFileSystem
-                )
-            }
-            // Else try injected crate, included file, or fill file info with just project and workspace
+        // Note: `this` file can be not a module (can be included with `include!()` macro)
+        val virtualFile = virtualFile
+        val modData = findModDataFor(this)
+        if (modData != null) {
+            val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
+            return CachedData(
+                crate.cargoProject,
+                crate.cargoWorkspace,
+                crate.rootMod,
+                crate,
+                modData.isDeeplyEnabledByCfg,
+                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
+                    && virtualFile.id != modData.fileId
+                    && virtualFile.fileSystem !is MacroExpansionFileSystem
+            )
         }
+        // Else try injected crate, included file, or fill file info with just project and workspace
 
         // [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
         // so we have to fallback to use [declaration]
@@ -169,12 +166,10 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            if (project.isNewResolveEnabled) {
-                val modData = findModDataFor(this)
-                if (modData != null) {
-                    val parenModData = modData.parent ?: return null
-                    return parenModData.toRsMod(project).firstOrNull()
-                }
+            val modData = findModDataFor(this)
+            if (modData != null) {
+                val parenModData = modData.parent ?: return null
+                return parenModData.toRsMod(project).firstOrNull()
             }
 
             val includedFrom = RsIncludeMacroIndex.getIncludedFrom(this) ?: return declaration?.containingMod
@@ -299,10 +294,8 @@ val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
 
 private val MOD_DECL_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_KEY")
-private val MOD_DECL_MACROS_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_MACROS_KEY")
 
 private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_KEY")
-private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
 
 /**
  * @return true if containing crate root is known for this element and this element is not excluded from

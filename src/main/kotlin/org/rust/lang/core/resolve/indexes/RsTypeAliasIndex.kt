@@ -16,7 +16,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.RsCachedTypeAlias
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTypeAliasStub
 import org.rust.lang.core.types.TyFingerprint
@@ -41,7 +40,7 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
             // This is basically a hack to make some crates (winapi 0.2) work in a reasonable amount of time.
             // If the number of aliases exceeds the threshold, we prefer ones from stdlib and a workspace over
             // aliases from dependencies
-            val threshold = getThreshold(project)
+            val threshold = ALIAS_COUNT_THRESHOLD_NEW_RESOLVE.asInteger()
             val filteredAliases = if (aliases.size <= threshold) {
                 aliases
             } else {
@@ -74,15 +73,6 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
                 .forEach { sink.occurrence(KEY, it) }
         }
 
-        private fun getThreshold(project: Project): Int {
-            return if (project.isNewResolveEnabled) {
-                ALIAS_COUNT_THRESHOLD_NEW_RESOLVE.asInteger()
-            } else {
-                ALIAS_COUNT_THRESHOLD_OLD_RESOLVE.asInteger()
-            }
-        }
-
-        private val ALIAS_COUNT_THRESHOLD_OLD_RESOLVE: RegistryValue = Registry.get("org.rust.lang.type.alias.threshold")
         private val ALIAS_COUNT_THRESHOLD_NEW_RESOLVE: RegistryValue = Registry.get("org.rust.lang.type.alias.threshold.new.resolve")
         private val KEY: StubIndexKey<TyFingerprint, RsTypeAlias> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RsTypeAliasIndex")

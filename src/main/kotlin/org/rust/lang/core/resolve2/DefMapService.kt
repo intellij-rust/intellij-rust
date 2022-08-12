@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -28,7 +27,6 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.openapiext.checkWriteAccessAllowed
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.mapToSet
 import java.nio.file.Path
@@ -148,9 +146,6 @@ class DefMapService(val project: Project) : Disposable {
 
     init {
         setupListeners()
-        if (System.getenv("INTELLIJ_RUST_FORCE_USE_OLD_RESOLVE") != null) {
-            IS_NEW_RESOLVE_ENABLED_KEY.setValue(false)
-        }
     }
 
     /**
@@ -224,7 +219,6 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     fun onFileChanged(file: RsFile) {
-        if (!project.isNewResolveEnabled) return
         checkWriteAccessAllowed()
         for (crate in findCrates(file)) {
             getDefMapHolder(crate).addChangedFile(file)
@@ -273,7 +267,6 @@ class DefMapService(val project: Project) : Disposable {
 
     private inner class DefMapPsiTreeChangeListener : RsPsiTreeChangeAdapter() {
         override fun handleEvent(event: RsPsiTreeChangeEvent) {
-            if (!project.isNewResolveEnabled) return
             // events for file addition/deletion have null `event.file` and not-null `event.child`
             if (event.file != null) return
             when (event) {
@@ -301,12 +294,6 @@ class DefMapService(val project: Project) : Disposable {
                 else -> Unit
             }
         }
-    }
-
-    @TestOnly
-    fun setNewResolveEnabled(disposable: Disposable, value: Boolean) {
-        check(isUnitTestMode)
-        IS_NEW_RESOLVE_ENABLED_KEY.setValue(value, disposable)
     }
 
     companion object {

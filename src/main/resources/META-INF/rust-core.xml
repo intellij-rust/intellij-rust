@@ -1176,8 +1176,6 @@
 
         <!-- Registry keys -->
 
-        <registryKey key="org.rust.lang.type.alias.threshold" defaultValue="10" restartRequired="false"
-                     description="Maximum number of type aliases to take into account during `impl`s search (old resolve)"/>
         <registryKey key="org.rust.lang.type.alias.threshold.new.resolve" defaultValue="2147483647" restartRequired="false"
                      description="Maximum number of type aliases to take into account during `impl`s search (new resolve)"/>
         <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
@@ -1195,8 +1193,6 @@
                      Run Tool Window instead of raw console"/>
         <registryKey key="org.rust.macros.proc.timeout" defaultValue="5000" restartRequired="false"
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
-        <registryKey key="org.rust.resolve.new.engine" defaultValue="true" restartRequired="true"
-                     description="Enables new name resolution engine"/>
         <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="true" restartRequired="false"
                      description="Expand macros in parallel"/>
         <registryKey key="org.rust.external.linter.max.duration" defaultValue="3000" restartRequired="false"
@@ -1498,11 +1494,6 @@
                 class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
                 internal="true">
             <add-to-group group-id="Internal"/>
-        </action>
-
-        <action id="Rust.ToggleNewResolve"
-                class="org.rust.lang.core.resolve2.actions.RsToggleNewResolveAction"
-                internal="true">
         </action>
 
     </actions>

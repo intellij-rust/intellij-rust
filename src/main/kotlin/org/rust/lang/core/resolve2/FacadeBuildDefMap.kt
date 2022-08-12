@@ -36,7 +36,6 @@ fun buildDefMap(
 ): CrateDefMap? {
     checkReadAccessAllowed()
     val project = crate.project
-    check(project.isNewResolveEnabled)
     val context = CollectorContext(crate, project)
     val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps, isNormalCrate)
         ?: return null
