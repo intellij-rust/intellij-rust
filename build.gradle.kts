@@ -78,13 +78,6 @@ allprojects {
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
-    configurations {
-        all {
-            // Allows using project dependencies instead of IDE dependencies during compilation and test running
-            resolutionStrategy.sortArtifacts(ResolutionStrategy.SortOrder.DEPENDENCY_FIRST)
-        }
-    }
-
     idea {
         module {
             generatedSourceDirs.add(file("src/gen"))
