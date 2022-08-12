@@ -68,7 +68,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockCargoFeatures()
         setupExperimentalFeatures()
         setupInspections()
-        setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)

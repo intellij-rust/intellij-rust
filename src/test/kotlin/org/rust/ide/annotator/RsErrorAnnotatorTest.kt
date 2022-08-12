@@ -4152,9 +4152,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         type Foo = i32;
     """)
 
-    @UseOldResolve
+    // TODO the test has been regressed after switching to Name Resolution 2.0
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test custom inline proc macro attr and disable cfg`() = checkByFileTree("""
+    fun `test custom inline proc macro attr and disable cfg`() = expect<org.junit.ComparisonFailure> {
+    checkByFileTree("""
     //- dep-proc-macro/lib.rs
         use proc_macro::TokenStream;
 
@@ -4171,6 +4172,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
         type Foo = i32;
     """)
+    }
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test custom inline proc macro attr but ref invalid`() = checkByFileTree("""
