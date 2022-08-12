@@ -396,6 +396,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         }
 
         val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions, cargoConfig)
+        println("Synced Cargo workspace: ${ws.workspaceRoot?.name}")
         TaskResult.Ok(ws)
     }
 }

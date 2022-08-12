@@ -87,6 +87,7 @@ class AttachFileToModuleFix(
                     }
                 }
             } else {
+                println("finding available modules for file ${file.name}; pkg = $pkg")
                 // mod.rs in the same directory
                 modules.addIfNotNull(findModule(file, project, directory.findFileByRelativePath(RsConstants.MOD_RS_FILE)))
 
@@ -97,6 +98,7 @@ class AttachFileToModuleFix(
 
                 // package target roots in the same directory
                 for (target in pkg.targets) {
+                    println("finding available modules for file $file: checking target $target")
                     val crateRoot = target.crateRoot ?: continue
                     if (crateRoot.parent == directory) {
                         modules.addIfNotNull(crateRoot.toPsiFile(project)?.rustFile)

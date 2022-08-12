@@ -17,6 +17,7 @@ import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.workspace.PackageOrigin.*
+import org.rust.cargo.toolchain.impl.CargoMetadata.bazelBinPathToProjectPath
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.openapiext.CachedVirtualFile
@@ -749,6 +750,7 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
     CargoWorkspaceData.Package(
         id = id,
         contentRootUrl = contentRootUrl,
+//        contentRootUrl = mapContentRootUrl(contentRootUrl),
         name = name,
         version = version,
         targets = targets.map {
@@ -770,4 +772,6 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         env = env,
         outDirUrl = outDirUrl,
         procMacroArtifact = procMacroArtifact
-    )
+    ).also { if ("typeql/rust" in contentRootUrl) println("PackageImpl: $this, targets = $targets") }
+
+//private fun mapContentRootUrl(value: String) = bazelBinPathToProjectPath(value)

@@ -99,6 +99,7 @@ class RsFile(
             // Note: `this` file can be not a module (can be included with `include!()` macro)
             val virtualFile = virtualFile
             val modData = findModDataFor(this)
+            if ("database.rs" in name) println("doGetCachedData ($name): modData = $modData")
             if (modData != null) {
                 val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
                 return CachedData(
@@ -110,7 +111,7 @@ class RsFile(
                     isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
                         && virtualFile.id != modData.fileId
                         && virtualFile.fileSystem !is MacroExpansionFileSystem
-                )
+                ).also { if ("database.rs" in name) println("doGetCachedData ($name): found modData and returned $it") }
             }
             // Else try injected crate, included file, or fill file info with just project and workspace
         }
@@ -135,6 +136,7 @@ class RsFile(
             // `possibleCrateRoot` is a "real" crate root only if we're able to find a `crate` for it
             val isEnabledByCfg = possibleCrateRoot.isEnabledByCfgSelf(crate)
             return CachedData(crate.cargoProject, crate.cargoWorkspace, possibleCrateRoot, crate, isEnabledByCfg)
+                .also { if ("database.rs" in name) println("doGetCachedData ($name): found crate by root mod and returned $it") }
         }
 
         val injectedFromFile = crateRootVFile.getInjectedFromIfDoctestInjection(project)
@@ -159,6 +161,7 @@ class RsFile(
         val cargoProject = project.cargoProjects.findProjectForFile(crateRootVFile) ?: return EMPTY_CACHED_DATA
         val workspace = cargoProject.workspace ?: return CachedData(cargoProject)
         return CachedData(cargoProject, workspace)
+            .also { if ("database.rs" in name) println("doGetCachedData ($name): couldn't find any useful info for $this, returned $it") }
     }
 
     override fun setName(name: String): PsiElement {

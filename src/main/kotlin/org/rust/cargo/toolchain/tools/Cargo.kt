@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
@@ -48,7 +49,9 @@ import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.impl.CargoMetadata.bazelPathToProjectPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.bazelBinPathToProjectPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.bazelOutPathToProjectPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.isBazelBinPath
 import org.rust.cargo.toolchain.impl.CargoMetadata.isBazelOutPath
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
@@ -72,6 +75,7 @@ import org.rust.stdext.unwrapOrElse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.Path
 
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
 
@@ -176,9 +180,11 @@ class Cargo(
             .dropWhile { it != '{' }
         return try {
             val srcPathConverter: (String) -> String = { path ->
-                if (isBazelOutPath(path)) { bazelPathToProjectPath(path, projectDirectory.parent.toString()) }
+                if (isBazelOutPath(path)) { bazelOutPathToProjectPath(path, projectDirectory.parent.toString()) }
+//                else if (isBazelBinPath(path)) { bazelBinPathToProjectPath(path) }
                 else toolchain.toLocalPath(path)
             }
+            println("Cargo.fetchMetadata: calling convertPaths")
             val project = JSON_MAPPER.readValue(json, CargoMetadata.Project::class.java)
                 .convertPaths(toolchain::toLocalPath, srcPathConverter)
             Ok(project)
