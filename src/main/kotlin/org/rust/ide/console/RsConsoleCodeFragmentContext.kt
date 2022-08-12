@@ -14,10 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.expandedTailExpr
-import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.findPrelude
-import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.lang.core.resolve.*
 import org.rust.openapiext.toPsiFile
 
 class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
@@ -47,7 +44,7 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
             preludeItemsNames += it.name
             false
         }
-        processNestedScopesUpwards(prelude, TYPES_N_VALUES_N_MACROS, processor)
+        processItemDeclarations(prelude, TYPES_N_VALUES_N_MACROS, processor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
         itemsNames += preludeItemsNames
         hasAddedNamesFromPrelude = true
     }
