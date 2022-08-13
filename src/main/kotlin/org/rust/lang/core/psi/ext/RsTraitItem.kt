@@ -18,6 +18,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -92,7 +93,15 @@ fun BoundElement<RsTraitItem>.substAssocType(assocName: String, ty: Ty?): BoundE
 }
 
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
+    @Suppress("UnstableApiUsage")
     return ReferencesSearch.search(this, this.useScope)
+        .transforming {
+            if (it is RsMacroBodyReferenceDelegateImpl) {
+                it.delegates
+            } else {
+                listOf(it)
+            }
+        }
         .mapQuery { it.element.parent?.parent }
         .filterIsInstanceQuery<RsImplItem>()
         .filterQuery { it.typeReference != null }

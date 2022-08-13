@@ -8,9 +8,9 @@ package org.rust.ide.refactoring
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.testFramework.PsiTestUtil
 import org.intellij.lang.annotations.Language
-import org.rust.EmptyDescriptor
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope.WORKSPACE
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.openapiext.toPsiDirectory
@@ -697,6 +697,110 @@ class RenameTest : RsTestBase() {
         macro_rules! foo { ($ i/*caret*/:item) => { $ i }; }
     """, """
         macro_rules! foo { ($ b:item) => { $ b }; }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    fun `test rename function expanded from declarative macro`() = doTest("bar", """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn foo() {}
+        }
+        fn main() {
+            foo/*caret*/();
+        }
+    """, """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn bar() {}
+        }
+        fn main() {
+            bar();
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    fun `test rename lifetime in function expanded from declarative macro`() = doTest("'b", """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn foo<'a/*caret*/>() { let a: &'a i32; }
+        }
+    """, """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn foo<'b>() { let a: &'b i32; }
+        }
+    """)
+
+    fun `test base function expanded from declarative macro`() = doTest("spam", """
+        macro_rules! foo { ($($ i:item)*) => { $($ i)* }; }
+        struct S;
+        foo! {
+            trait T {
+                fn foo/*caret*/();
+            }
+            impl T for S {
+                fn foo() {}
+            }
+        }
+    """, """
+        macro_rules! foo { ($($ i:item)*) => { $($ i)* }; }
+        struct S;
+        foo! {
+            trait T {
+                fn spam();
+            }
+            impl T for S {
+                fn spam() {}
+            }
+        }
+    """)
+
+    @MinRustcVersion("1.46.0")
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename function expanded from attr proc macro`() = doTest("bar", """
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        fn foo() {}
+
+        fn main() {
+            foo/*caret*/();
+        }
+    """, """
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        fn bar() {}
+
+        fn main() {
+            bar();
+        }
+    """)
+
+    @MinRustcVersion("1.46.0")
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename struct expanded from attr proc macro (the name in the attr)`() = doTest("Bar", """
+        use test_proc_macros::attr_declare_struct_with_name;
+
+        #[attr_declare_struct_with_name(Foo)]
+        fn foo() {}
+
+        fn main() {
+            let _: Foo/*caret*/;
+        }
+    """, """
+        use test_proc_macros::attr_declare_struct_with_name;
+
+        #[attr_declare_struct_with_name(Bar)]
+        fn foo() {}
+
+        fn main() {
+            let _: Bar;
+        }
     """)
 
     private fun doTest(
