@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
 import org.rust.ExpandMacros
 import org.rust.TestProject
 import org.rust.fileTreeFromText
@@ -66,7 +67,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         vararg names: String,
         allowDumbMode: Boolean = true,
     ) {
-        InlineFile(code).withCaret()
+        InlineFile(code.trimIndent()).withCaret()
         val oldStamps = myFixture.file.collectMacros().collectStamps()
         val dumbModeCounter = countDumbModeEnters()
         action()
@@ -268,6 +269,15 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         struct S2;
         struct S3;
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/9023, we're checking there are no exceptions
+    @CheckTestmarkHit(MacroExpansionTask.MoveToTheSameDir::class)
+    fun `test a macro change that leaves the first 2 letters of mixHash the same as before the change`() = checkReExpanded(type("\b"), """
+        macro_rules! foo {
+            (${'$'}l:literal) => {fn foo() { ${'$'}l; }};
+        }
+        foo!(18/*caret*/);
+    """, "foo", allowDumbMode = false)
 
     private class DumbModeCounter : HeavyProcessLatch.HeavyProcessListener {
         var count = 0

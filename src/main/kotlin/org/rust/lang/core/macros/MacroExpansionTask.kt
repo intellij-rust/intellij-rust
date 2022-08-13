@@ -186,7 +186,11 @@ class MacroExpansionTask(
                         newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
                     }
                     RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
-                        oldFile.move(TrustedRequestor, newFileParent)
+                        if (newFileParent != oldFile.parent) {
+                            oldFile.move(TrustedRequestor, newFileParent)
+                        } else {
+                            MoveToTheSameDir.hit()
+                        }
                         oldFile.rename(TrustedRequestor, newName)
                     }
                     val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
@@ -289,6 +293,8 @@ class MacroExpansionTask(
 
     override val runSyncInUnitTests: Boolean
         get() = true
+
+    object MoveToTheSameDir: Testmark()
 }
 
 // "<mixHash>_<order>.rs" → "<mixHash>"

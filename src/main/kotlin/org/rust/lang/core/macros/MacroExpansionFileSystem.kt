@@ -134,11 +134,14 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         if (requestor != TrustedRequestor) {
             throw UnsupportedOperationException()
         }
+        if (file.parent == newParent) {
+            throw IOException("Cannot move file `${file.path}` to the same directory where it is already located")
+        }
         val fsItem = convert(file) ?: throw FileNotFoundException("${file.path} (No such file or directory)")
         val newParentFsDir = convert(newParent) ?: throw FileNotFoundException("${newParent.path} (No such file or directory)")
         if (newParentFsDir !is FSDir) throw IOException("${newParent.path} is not a directory")
         if (newParentFsDir.findChild(file.name) != null) {
-            throw IOException("Directory already contains a file named $file.name")
+            throw IOException("Directory already contains a file named ${file.name}")
         }
         val oldParentFsDir = fsItem.parent ?: throw IOException("Can't move root (${file.path})")
         oldParentFsDir.removeChild(fsItem.name, bump = true)
