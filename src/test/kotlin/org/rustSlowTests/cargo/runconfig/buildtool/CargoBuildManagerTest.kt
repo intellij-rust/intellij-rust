@@ -79,7 +79,11 @@ class CargoBuildManagerTest : CargoBuildTest() {
 
             dir("src") {
                 rust("lib.rs", """
-                    fn foo() {}
+                    pub fn foo() {
+                        if (1 > 2) {
+                            println!("Hello!");
+                        }
+                    }
                 """)
             }
         }.create()
@@ -102,7 +106,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
             eventTree {
                 startEvent(message = "Compiling project v0.1.0")
                 messageEvent(
-                    message = "Function is never used: `foo`",
+                    message = "Unnecessary parentheses around `if` condition",
                     kind = MessageEvent.Kind.WARNING
                 )
                 finishEvent(
@@ -794,7 +798,11 @@ class CargoBuildManagerTest : CargoBuildTest() {
 
             dir("src") {
                 rust("lib.rs", """
-                    fn foo() {}
+                    pub fn foo() {
+                        if (1 > 2) {
+                            println!("Hello!");
+                        }
+                    }
                 """)
             }
         }.create()
@@ -817,7 +825,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
             eventTree {
                 startEvent(message = "Checking project v0.1.0")
                 messageEvent(
-                    message = "Function is never used: `foo`",
+                    message = "Unnecessary parentheses around `if` condition",
                     kind = MessageEvent.Kind.WARNING
                 )
                 finishEvent(

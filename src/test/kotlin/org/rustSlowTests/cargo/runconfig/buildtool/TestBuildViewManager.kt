@@ -127,7 +127,10 @@ class TestBuildViewManager(project: Project) : BuildViewManager(project) {
             for (child in children) {
                 when (child) {
                     is ParentEventNode -> child.treeRepresentation(builder, level + 2)
-                    is SingleEventNode -> child.treeRepresentation(builder, level)
+                    is SingleEventNode -> {
+                        child.treeRepresentation(builder, level)
+                        builder.appendLine()
+                    }
                 }
             }
         }

@@ -849,14 +849,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test standard 'vec!'`() {
-        val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver
-        // BACKCOMPAT: Rust 1.50
-        val expansion = if (rustcVersion != null && rustcVersion < "1.51.0".parseSemVer()) {
-            // language=Rust
-            "<[_]>::into_vec(box [1, 2, 3])"
-        } else {
-            // language=Rust
-            "(<[_]>::into_vec(box [1, 2, 3]))"
+        val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver!!
+        // language=Rust
+        val expansion = when {
+            rustcVersion < RUST_1_51 -> "<[_]>::into_vec(box [1, 2, 3])"
+            rustcVersion < RUST_1_63 -> "(<[_]>::into_vec(box [1, 2, 3]))"
+            else -> """(<[_]>::into_vec(
+                #[rustc_box]
+                    IntellijRustDollarCrate::boxed::Box::new([1, 2, 3])
+            ))"""
         }
         checkSingleMacro("""
             fn main() {
@@ -1197,4 +1198,11 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """
         fn bar() {}
     """)
+
+    companion object {
+        // BACKCOMPAT: Rust 1.50
+        private val RUST_1_51 = "1.51.0".parseSemVer()
+        // BACKCOMPAT: Rust 1.62
+        private val RUST_1_63 = "1.63.0".parseSemVer()
+    }
 }
