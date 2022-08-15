@@ -51,7 +51,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.7.10"
-    id("org.jetbrains.intellij") version "1.7.0"
+    id("org.jetbrains.intellij") version "1.8.0"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.0"
@@ -76,13 +76,6 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
-    }
-
-    configurations {
-        all {
-            // Allows using project dependencies instead of IDE dependencies during compilation and test running
-            resolutionStrategy.sortArtifacts(ResolutionStrategy.SortOrder.DEPENDENCY_FIRST)
-        }
     }
 
     idea {
@@ -398,9 +391,6 @@ project(":") {
     }
 
     dependencies {
-        implementation("org.jetbrains:markdown:0.3.1") {
-            excludeKotlinDeps()
-        }
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
