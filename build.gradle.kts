@@ -391,9 +391,6 @@ project(":") {
     }
 
     dependencies {
-        implementation("org.jetbrains:markdown:0.3.1") {
-            excludeKotlinDeps()
-        }
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
