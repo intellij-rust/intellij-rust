@@ -32,7 +32,9 @@ class RustType(object):
     STD_HASH_MAP = "StdHashMap"
     STD_HASH_SET = "StdHashSet"
     STD_RC = "StdRc"
+    STD_RC_WEAK = "StdRcWeak"
     STD_ARC = "StdArc"
+    STD_ARC_WEAK = "StdArcWeak"
     STD_CELL = "StdCell"
     STD_REF = "StdRef"
     STD_REF_MUT = "StdRefMut"
@@ -59,8 +61,10 @@ STD_BTREE_SET_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)BTreeSet<.+>$")
 STD_BTREE_MAP_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)BTreeMap<.+>$")
 STD_HASH_MAP_REGEX = re.compile(r"^(std::collections::([a-z_]+::)+)HashMap<.+>$")
 STD_HASH_SET_REGEX = re.compile(r"^(std::collections::([a-z_]+::)+)HashSet<.+>$")
-STD_RC_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)Rc<.+>$")
-STD_ARC_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)Arc<.+>$")
+STD_RC_REGEX = re.compile(r"^alloc::rc::Rc<.+>$")
+STD_RC_WEAK_REGEX = re.compile(r"^alloc::rc::Weak<.+>$")
+STD_ARC_REGEX = re.compile(r"^alloc::(sync|arc)::Arc<.+>$")
+STD_ARC_WEAK_REGEX = re.compile(r"^alloc::(sync|arc)::Weak<.+>$")
 STD_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)Cell<.+>$")
 STD_REF_REGEX = re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$")
 STD_REF_MUT_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$")
@@ -90,7 +94,9 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_BTREE_SET: STD_BTREE_SET_REGEX,
     RustType.STD_BTREE_MAP: STD_BTREE_MAP_REGEX,
     RustType.STD_RC: STD_RC_REGEX,
+    RustType.STD_RC_WEAK: STD_RC_WEAK_REGEX,
     RustType.STD_ARC: STD_ARC_REGEX,
+    RustType.STD_ARC_WEAK: STD_ARC_WEAK_REGEX,
     RustType.STD_REF: STD_REF_REGEX,
     RustType.STD_REF_MUT: STD_REF_MUT_REGEX,
     RustType.STD_REF_CELL: STD_REF_CELL_REGEX,

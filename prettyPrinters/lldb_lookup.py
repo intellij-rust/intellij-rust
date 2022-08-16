@@ -54,9 +54,9 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_HASH_SET:
         return SizeSummaryProvider(valobj, dict)
 
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcSummaryProvider(valobj, dict)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcSummaryProvider(valobj, dict)
 
     if rust_type == RustType.STD_REF:
@@ -105,9 +105,9 @@ def synthetic_lookup(valobj, dict):
         return StdHashMapSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_HASH_SET:
         return StdHashMapSyntheticProvider(valobj, dict, show_values=False)
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcSyntheticProvider(valobj, dict)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcSyntheticProvider(valobj, dict, is_atomic=True)
 
     if rust_type == RustType.STD_CELL:

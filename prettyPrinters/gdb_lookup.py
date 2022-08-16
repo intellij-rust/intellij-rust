@@ -82,9 +82,9 @@ def lookup(valobj):
         return StdHashMapProvider(valobj)
     if rust_type == RustType.STD_HASH_SET:
         return StdHashMapProvider(valobj, show_values=False)
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcProvider(valobj)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcProvider(valobj, is_atomic=True)
 
     if rust_type == RustType.STD_CELL:
