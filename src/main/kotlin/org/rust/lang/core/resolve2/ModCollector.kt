@@ -203,10 +203,11 @@ private class ModCollector(
     private fun tryCollectChildModule(item: ModOrEnumItemLight, stub: RsNamedStub, index: Int): ModData? {
         if (stub is RsEnumItemStub) return collectEnumAsModData(item, stub)
 
+        val parentOwnedDirectory = includeMacroFile?.parent ?: modData.getOwnedDirectory()
         val childMod = when (stub) {
             is RsModItemStub -> ChildMod.Inline(stub, item.name, item.hasMacroUse)
             is RsModDeclItemStub -> {
-                val childModPsi = resolveModDecl(item.name, item.pathAttribute) ?: return null
+                val childModPsi = resolveModDecl(item.name, item.pathAttribute, parentOwnedDirectory) ?: return null
                 val hasMacroUse = item.hasMacroUse || childModPsi.hasMacroUseInner(crate)
                 ChildMod.File(childModPsi, item.name, hasMacroUse)
             }
@@ -215,8 +216,14 @@ private class ModCollector(
 
         val isDeeplyEnabledByCfgOuter = item.isDeeplyEnabledByCfg
         val isEnabledByCfgInner = childMod !is ChildMod.File || childMod.file.isEnabledByCfgSelf(crate)
-        val (childModData, childModLegacyMacros) =
-            collectChildModule(childMod, isDeeplyEnabledByCfgOuter, isEnabledByCfgInner, item.pathAttribute, index)
+        val (childModData, childModLegacyMacros) = collectChildModule(
+            childMod,
+            isDeeplyEnabledByCfgOuter,
+            isEnabledByCfgInner,
+            item.pathAttribute,
+            index,
+            parentOwnedDirectory
+        )
         if (childMod.hasMacroUse && childModData.isDeeplyEnabledByCfg) {
             modData.addLegacyMacros(childModLegacyMacros)
             legacyMacros += childModLegacyMacros
@@ -232,7 +239,8 @@ private class ModCollector(
         isDeeplyEnabledByCfgOuter: Boolean,
         isEnabledByCfgInner: Boolean,
         pathAttribute: String?,
-        index: Int
+        index: Int,
+        parentOwnedDirectory: VirtualFile?
     ): Pair<ModData, LegacyMacros> {
         ProgressManager.checkCanceled()
         val childModPath = modData.path.append(childMod.name)
@@ -249,7 +257,7 @@ private class ModCollector(
             isEnabledByCfgInner = isEnabledByCfgInner,
             fileId = fileId,
             fileRelativePath = fileRelativePath,
-            ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
+            ownedDirectoryId = childMod.getOwnedDirectory(modData, parentOwnedDirectory, pathAttribute)?.fileId,
             hasPathAttribute = pathAttribute != null,
             hasMacroUse = childMod.hasMacroUse,
             crateDescription = defMap.crateDescription
@@ -436,11 +444,11 @@ private class ModCollector(
     }
 
     /** See also [processModDeclResolveVariants] */
-    private fun resolveModDecl(name: String, pathAttribute: String?): RsFile? {
+    private fun resolveModDecl(name: String, pathAttribute: String?, parentOwnedDirectory: VirtualFile?): RsFile? {
         val (parentDirectory, fileNames) = if (pathAttribute == null) {
-            val parentDirectory = modData.getOwnedDirectory() ?: return null
             val fileNames = arrayOf("$name.rs", "$name/mod.rs")
-            parentDirectory to fileNames
+            if (parentOwnedDirectory == null) return null
+            parentOwnedDirectory to fileNames
         } else {
             // https://doc.rust-lang.org/reference/items/modules.html#the-path-attribute
             val parentDirectory = if (modData.isRsFile) {
@@ -451,7 +459,7 @@ private class ModCollector(
             } else {
                 // Paths for path attributes inside inline module blocks are relative to
                 // the directory of file including the inline module components as directories.
-                modData.getOwnedDirectory()
+                parentOwnedDirectory
             } ?: return null
             val explicitPath = FileUtil.toSystemIndependentName(pathAttribute)
             parentDirectory to arrayOf(explicitPath)
@@ -535,17 +543,21 @@ private sealed class ChildMod(val name: String, val hasMacroUse: Boolean) {
  * Have to pass [pathAttribute], because [RsFile.pathAttribute] triggers resolve.
  * See also: [RsMod.getOwnedDirectory]
  */
-private fun ChildMod.getOwnedDirectory(parentMod: ModData, pathAttribute: String?): VirtualFile? {
+private fun ChildMod.getOwnedDirectory(
+    parentMod: ModData,
+    parentOwnedDirectory: VirtualFile?,
+    pathAttribute: String?
+): VirtualFile? {
     if (this is ChildMod.File && name == RsConstants.MOD_RS_FILE) return file.virtualFile.parent
 
     val (parentDirectory, path) = if (pathAttribute != null) {
         when {
             this is ChildMod.File -> return file.virtualFile.parent
             parentMod.isRsFile -> parentMod.asVirtualFile()?.parent to pathAttribute
-            else -> parentMod.getOwnedDirectory() to pathAttribute
+            else -> parentOwnedDirectory to pathAttribute
         }
     } else {
-        parentMod.getOwnedDirectory() to name
+        parentOwnedDirectory to name
     }
     if (parentDirectory == null) return null
 

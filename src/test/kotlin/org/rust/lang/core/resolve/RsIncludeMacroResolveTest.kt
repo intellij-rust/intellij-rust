@@ -147,6 +147,17 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         struct Foo;
     """)
 
+    fun `test mod decl in included file`() = checkResolve("""
+    //- lib.rs
+        include!("inner/foo.rs");
+        fn foo(x: bar::Struct) {}
+                     //^ inner/bar.rs
+    //- inner/foo.rs
+        mod bar;
+    //- inner/bar.rs
+        pub struct Struct;
+    """)
+
     @ExpandMacros
     fun `test include macro in macro 1`() = checkResolve("""
     //- lib.rs
