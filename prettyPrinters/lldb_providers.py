@@ -630,7 +630,14 @@ class StdRefSyntheticProvider:
         else:
             self.borrow = borrow.GetChildMemberWithName("borrow").GetChildMemberWithName(
                 "value").GetChildMemberWithName("value")
-            self.value = value.Dereference()
+            # BACKCOMPAT: Rust 1.62.0. Drop `else`-branch
+            if value.GetChildMemberWithName("pointer"):
+                # Since Rust 1.63.0, `Ref` and `RefMut` use `value: NonNull<T>` instead of `value: &T`
+                # https://github.com/rust-lang/rust/commit/d369045aed63ac8b9de1ed71679fac9bb4b0340a
+                # https://github.com/rust-lang/rust/commit/2b8041f5746bdbd7c9f6ccf077544e1c77e927c0
+                self.value = unwrap_unique_or_non_null(value).Dereference()
+            else:
+                self.value = value.Dereference()
 
         self.value_builder = ValueBuilder(valobj)
 

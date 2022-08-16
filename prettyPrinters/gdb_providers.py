@@ -253,7 +253,15 @@ class StdCellProvider:
 class StdRefProvider:
     def __init__(self, valobj):
         # type: (Value) -> None
-        self.value = valobj["value"].dereference()
+        # BACKCOMPAT: Rust 1.62.0. Drop `else`-branch
+        value = valobj["value"]
+        if value["pointer"]:
+            # Since Rust 1.63.0, `Ref` and `RefMut` use `value: NonNull<T>` instead of `value: &T`
+            # https://github.com/rust-lang/rust/commit/d369045aed63ac8b9de1ed71679fac9bb4b0340a
+            # https://github.com/rust-lang/rust/commit/2b8041f5746bdbd7c9f6ccf077544e1c77e927c0
+            self.value = unwrap_unique_or_non_null(value).dereference()
+        else:
+            self.value = value.dereference()
         self.borrow = valobj["borrow"]["borrow"]["value"]["value"]
 
     def to_string(self):
