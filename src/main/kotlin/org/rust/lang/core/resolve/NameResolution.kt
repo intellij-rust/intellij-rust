@@ -33,6 +33,7 @@ import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.IN_BAND_LIFETIMES
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
@@ -1669,29 +1670,55 @@ fun processNestedScopesUpwards(
         { true }
     }
     val prevScope = hashMapOf<String, Set<Namespace>>()
-    val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
-        processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
-            val ipm = when {
-                scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
-                isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
-                else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
+    return walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
+        if (scope !is RsMod) {
+            processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
+                val ipm = ItemProcessingMode.WITH_PRIVATE_IMPORTS
+                processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
             }
-            processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
+        } else {
+            val modInfo = when (val info = getModInfo(scope)) {
+                is RsModInfoBase.CantUseNewResolve -> null
+                RsModInfoBase.InfoNotFound -> return@walkUp false
+                is RsModInfo -> info
+            }
+            val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
+                val ipm = when {
+                    isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
+                    else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
+                }
+                if (modInfo != null) {
+                    processItemDeclarationsUsingModInfo(scopeIsMod = true, modInfo, ns, shadowingProcessor, ipm)
+                } else {
+                    // Old name resolution
+                    processItemDeclarations1(scope, ns, shadowingProcessor, ipm)
+                }
+            }
+            if (stop) return@walkUp true
+
+            // Prelude is injected via implicit star import `use std::prelude::v1::*;`
+            if (processor(ScopeEvent.STAR_IMPORTS)) return@walkUp false
+
+            if (modInfo != null) {
+                val preludeModInfo = findPreludeUsingModInfo(modInfo)
+                if (preludeModInfo != null) {
+                    return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+                        processItemDeclarationsUsingModInfo(scopeIsMod = true, preludeModInfo, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
+                    }
+                }
+            } else {
+                // Old name resolution
+                val prelude = findPreludeUsingOldResolve(scopeStart)
+                if (prelude != null) {
+                    return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+                        processItemDeclarations(prelude, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
+                    }
+                }
+            }
+
+            false
         }
     }
-    if (stop) return true
-
-    // Prelude is injected via implicit star import `use std::prelude::v1::*;`
-    if (processor(ScopeEvent.STAR_IMPORTS)) return false
-
-    val prelude = findPrelude(scopeStart)
-    if (prelude != null) {
-        return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
-            processItemDeclarations(prelude, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
-        }
-    }
-
-    return false
 }
 
 /**
@@ -1772,8 +1799,10 @@ inline fun processWithShadowing(
 
 fun findPrelude(element: RsElement): RsMod? {
     findPreludeUsingNewResolve(element)?.let { return it }
+    return findPreludeUsingOldResolve(element)
+}
 
-    // TODO: Always use new resolve to find prelude
+private fun findPreludeUsingOldResolve(element: RsElement): RsFile? {
     val crateRoot = element.crateRoot as? RsFile ?: return null
     val cargoPackage = crateRoot.containingCargoPackage
     val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB && !element.isDoctestInjection
@@ -1798,6 +1827,13 @@ private fun findPreludeUsingNewResolve(element: RsElement): RsMod? {
     val info = getModInfo(element.containingMod) as? RsModInfo ?: return null
     val prelude = info.defMap.prelude ?: return null
     return prelude.toRsMod(info).singleOrNull()
+}
+
+private fun findPreludeUsingModInfo(info: RsModInfo): RsModInfo? {
+    val preludeModData = info.defMap.prelude ?: return null
+    val preludeCrate = info.project.crateGraph.findCrateById(preludeModData.crate) ?: return null
+    val preludeDefMap = info.defMap.getDefMap(preludeModData.crate) ?: return null
+    return RsModInfo(info.project, preludeDefMap, preludeModData, preludeCrate)
 }
 
 // Implicit extern crate from stdlib

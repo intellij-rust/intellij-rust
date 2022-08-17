@@ -63,7 +63,15 @@ fun processItemDeclarations(
     ipm: ItemProcessingMode
 ): Boolean {
     processItemDeclarations2(scope, ns, originalProcessor, ipm)?.let { return it }
+    return processItemDeclarations1(scope, ns, originalProcessor, ipm)
+}
 
+fun processItemDeclarations1(
+    scope: RsItemsOwner,
+    ns: Set<Namespace>,
+    originalProcessor: RsResolveProcessor,
+    ipm: ItemProcessingMode
+): Boolean {
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 
     val directlyDeclaredNames = HashMap<String, Set<Namespace>>()

@@ -40,13 +40,22 @@ fun processItemDeclarations2(
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
 ): Boolean? {
-    val info = getModInfo(scope)
-    val (_, defMap, modData) = when (info) {
+    val info = when (val info = getModInfo(scope)) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
     }
+    return processItemDeclarationsUsingModInfo(scopeIsMod = scope is RsMod, info, ns, processor, ipm)
+}
 
+fun processItemDeclarationsUsingModInfo(
+    scopeIsMod: Boolean,
+    info: RsModInfo,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor,
+    ipm: ItemProcessingMode
+): Boolean {
+    val (_, defMap, modData) = info
     for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
         // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
         // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
@@ -75,7 +84,7 @@ fun processItemDeclarations2(
         }
     }
 
-    if (ipm.withExternCrates && Namespace.Types in ns && scope is RsMod) {
+    if (ipm.withExternCrates && Namespace.Types in ns && scopeIsMod) {
         for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
