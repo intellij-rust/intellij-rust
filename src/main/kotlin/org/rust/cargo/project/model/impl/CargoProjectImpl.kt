@@ -461,9 +461,12 @@ open class CargoProjectsServiceImpl(
         // instead of `modifyProjects` for this reason
         projects.updateSync { loaded }
             .whenComplete { _, _ ->
-                invokeLater {
-                    if (project.isDisposed) return@invokeLater
-                    refreshAllProjects()
+                val disableRefresh = System.getProperty(CARGO_DISABLE_PROJECT_REFRESH_ON_CREATION, "false").toBooleanStrictOrNull()
+                if (disableRefresh != true) {
+                    invokeLater {
+                        if (project.isDisposed) return@invokeLater
+                        refreshAllProjects()
+                    }
                 }
             }
     }
@@ -489,6 +492,10 @@ open class CargoProjectsServiceImpl(
 
     override fun toString(): String =
         "CargoProjectsService(projects = $allProjects)"
+
+    companion object {
+        const val CARGO_DISABLE_PROJECT_REFRESH_ON_CREATION: String = "cargo.disable.project.refresh.on.creation"
+    }
 }
 
 data class CargoProjectImpl(

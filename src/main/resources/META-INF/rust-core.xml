@@ -317,6 +317,8 @@
 
         <lang.inspectionSuppressor language="Rust"
                                    implementationClass="org.rust.ide.inspections.RsInspectionSuppressor"/>
+        <commandLineInspectionProjectConfigurator
+            implementation="org.rust.ide.inspections.CargoCommandLineInspectionProjectConfigurator"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Implicit trait objects are deprecated"
