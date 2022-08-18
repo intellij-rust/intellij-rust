@@ -300,6 +300,53 @@ class StdNonZeroNumberProvider:
         return self.value
 
 
+class StdRangeProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "{}..{}".format(self.start, self.end)
+
+
+class StdRangeFromProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+
+    def to_string(self):
+        return "{}..".format(self.start)
+
+
+class StdRangeInclusiveProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "{}..={}".format(self.start, self.end)
+
+
+class StdRangeToProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "..{}".format(self.end)
+
+
+class StdRangeToInclusiveProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "..={}".format(self.end)
+
+
 # Yields children (in a provider's sense of the word) for a BTreeMap.
 def children_of_btree_map(map):
     # Yields each key/value pair in the node and in any child nodes.

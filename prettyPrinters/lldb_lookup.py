@@ -69,6 +69,17 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_NONZERO_NUMBER:
         return StdNonZeroNumberSummaryProvider(valobj, dict)
 
+    if rust_type == RustType.STD_RANGE:
+        return StdRangeSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_FROM:
+        return StdRangeFromSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_INCLUSIVE:
+        return StdRangeInclusiveSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_TO:
+        return StdRangeToSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
+        return StdRangeToInclusiveSummaryProvider(valobj, dict)
+
     return ""
 
 

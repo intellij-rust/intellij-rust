@@ -678,3 +678,30 @@ def StdNonZeroNumberSummaryProvider(valobj, _dict):
     field = objtype.GetFieldAtIndex(0)
     element = valobj.GetChildMemberWithName(field.name)
     return element.GetValue()
+
+
+def StdRangeSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..{}".format(valobj.GetChildMemberWithName("start").GetValueAsSigned(),
+                           valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeFromSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..".format(valobj.GetChildMemberWithName("start").GetValueAsSigned())
+
+
+def StdRangeInclusiveSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..={}".format(valobj.GetChildMemberWithName("start").GetValueAsSigned(),
+                            valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeToSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "..{}".format(valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeToInclusiveSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "..={}".format(valobj.GetChildMemberWithName("end").GetValueAsSigned())

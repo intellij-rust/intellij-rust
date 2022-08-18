@@ -224,7 +224,8 @@ class RsDebugProcessConfigurationHelper(
             "^(core::([a-z_]+::)+)Ref<.+>$",
             "^(core::([a-z_]+::)+)RefMut<.+>$",
             "^(core::([a-z_]+::)+)RefCell<.+>$",
-            "^core::num::([a-z_]+::)*NonZero.+$"
+            "^core::num::([a-z_]+::)*NonZero.+$",
+            "^core::ops::range::Range(From|Inclusive|To|ToInclusive)?<.+>$"
         )
     }
 }
