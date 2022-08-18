@@ -429,8 +429,9 @@ class RsTypeInferenceWalker(
 
         val subst = instantiatePathGenerics(
             path,
-            BoundElement(element, scopeEntry.subst),
-            PathExprResolver.fromContext(ctx)
+            element,
+            scopeEntry.subst,
+            PathExprResolver.fromContext(ctx),
         ).subst
 
         val typeParameters = when {

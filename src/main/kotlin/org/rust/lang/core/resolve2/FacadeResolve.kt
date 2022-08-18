@@ -52,7 +52,7 @@ fun processItemDeclarationsUsingModInfo(
     ipm: ItemProcessingMode
 ): Boolean {
     val (_, defMap, modData) = info
-    for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
+    for ((name, perNs) in modData.visibleItems.entriesWithNames(processor.names)) {
         // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
         // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
         val elements = hashSetOf<RsNamedElement>()
@@ -70,7 +70,7 @@ fun processItemDeclarationsUsingModInfo(
         }
     }
 
-    if (processor.name == null && Namespace.Types in ns) {
+    if (processor.names == null && Namespace.Types in ns) {
         for ((traitPath, traitVisibility) in modData.unnamedTraitImports) {
             val trait = VisItem(traitPath, traitVisibility)
             val visibilityFilter = traitVisibility.createFilter(info)
@@ -81,7 +81,7 @@ fun processItemDeclarationsUsingModInfo(
     }
 
     if (ipm.withExternCrates && Namespace.Types in ns && scopeIsMod) {
-        for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
+        for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithNames(processor.names)) {
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
@@ -135,7 +135,7 @@ private fun ModData.processMacros(
     if (!isQualified) {
         check(macroPath != null)
         val macroIndex = info.getMacroIndex(macroPath, info.crate)
-        for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
+        for ((name, macroInfos) in legacyMacros.entriesWithNames(processor.names)) {
             val macroInfo = if (!isAttrOrDerive) {
                 filterMacrosByIndex(macroInfos, macroIndex)
             } else {
@@ -160,7 +160,7 @@ private fun ModData.processScopedMacros(
     info: RsModInfo,
     filter: (name: String) -> Boolean = { true },
 ): Boolean {
-    for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
+    for ((name, perNs) in visibleItems.entriesWithNames(processor.names)) {
         for (visItem in perNs.macros) {
             if (!filter(name)) continue
             val macro = visItem.scopedMacroToPsi(info) ?: continue
@@ -475,12 +475,15 @@ private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData, crate: Crate):
     }
 }
 
-private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
-    if (name == null) {
-        return this
+private fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String, T> {
+    return if (names.isNullOrEmpty()) {
+        this
+    } else if (names.size == 1) {
+        val single = names.single()
+        val value = this[single] ?: return emptyMap()
+        mapOf(single to value)
     } else {
-        val value = this[name] ?: return emptyMap()
-        return mapOf(name to value)
+        names.mapNotNull { name -> this[name]?.let { name to it } }.toMap()
     }
 }
 

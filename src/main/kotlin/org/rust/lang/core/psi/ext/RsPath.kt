@@ -64,9 +64,9 @@ val RsPath.qualifier: RsPath?
         return (ctx as? RsUseSpeck)?.qualifier
     }
 
-fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = parent) {
+fun RsPath.allowedNamespaces(isCompletion: Boolean = false, parent: PsiElement? = this.parent): Set<Namespace> = when (parent) {
     is RsPath, is RsTraitRef, is RsStructLiteral, is RsPatStruct -> TYPES
-    is RsTypeReference -> when (parent.parent) {
+    is RsTypeReference -> when (parent.stubParent) {
         is RsTypeArgumentList -> when {
             // type A = Foo<T>
             //              ~ `T` can be either type or const argument

@@ -126,6 +126,19 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     filtered = filter(element, filtered)
                 }
 
+                // RsPathExpr can become a macro by adding a trailing `!`, so we add macros to completion
+                if (element.parent is RsPathExpr && element.qualifier == null) {
+                    processMacroCallPathResolveVariants(element, isCompletion = true, filtered)
+                }
+
+                val possibleTypeArgs = parent?.parent
+                if (possibleTypeArgs is RsTypeArgumentList) {
+                    val trait = (possibleTypeArgs.parent as? RsPath)?.reference?.resolve() as? RsTraitItem
+                    if (trait != null) {
+                        processAssocTypeVariants(trait, filtered)
+                    }
+                }
+
                 processPathResolveVariants(
                     lookup,
                     element,
@@ -309,7 +322,7 @@ private fun filterVisRestrictionPaths(
 ): RsResolveProcessor {
     return if (path.parent is RsVisRestriction) {
         val allowedModules = path.containingMod.superMods
-        createProcessor(processor.name) {
+        createProcessor(processor.names) {
             when (it.element) {
                 !is RsMod -> false
                 !in allowedModules -> false
@@ -332,7 +345,7 @@ private fun filterTraitRefPaths(
 ): RsResolveProcessor {
     val parent = path.parent
     return if (parent is RsTraitRef) {
-        createProcessor(processor.name) {
+        createProcessor(processor.names) {
             if (it.element is RsTraitItem || it.element is RsMod) {
                 processor(it)
             } else {
@@ -351,7 +364,7 @@ private fun filterAssocTypes(
     val qualifier = path.path
     val allAssocItemsAllowed =
         qualifier == null || qualifier.hasCself || qualifier.reference?.resolve() is RsTypeParameter
-    return if (allAssocItemsAllowed) processor else createProcessor(processor.name) {
+    return if (allAssocItemsAllowed) processor else createProcessor(processor.names) {
         if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) false
         else processor(it)
     }
@@ -362,7 +375,7 @@ private fun filterPathCompletionVariantsByTraitBounds(
     lookup: ImplLookup
 ): RsResolveProcessor {
     val cache = hashMapOf<TraitImplSource, Boolean>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         if (it !is AssocItemScopeEntry) return@createProcessor processor(it)
 
         val receiver = it.subst[TyTypeParameter.self()] ?: return@createProcessor processor(it)
@@ -389,7 +402,7 @@ private fun filterMethodCompletionVariantsByTraitBounds(
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
 
     val cache = mutableMapOf<Pair<TraitImplSource, Int>, Boolean>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         // If not a method (actually a field) or a trait method - just process it
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         // Filter methods by trait bounds (try to select all obligations for each impl)
@@ -416,7 +429,7 @@ private fun filterMethodCompletionVariantsByTraitBounds(
  */
 private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): RsResolveProcessor {
     val processedNamesAndTraits = mutableSetOf<Pair<String, RsTraitItem?>>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         val shouldProcess = processedNamesAndTraits.add(it.name to it.source.implementedTrait?.element)
         if (shouldProcess) return@createProcessor processor(it)
@@ -475,7 +488,7 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
 private fun addProcessedPathName(
     processor: RsResolveProcessor,
     processedPathElements: MultiMap<String, RsElement>
-): RsResolveProcessor = createProcessor(processor.name) {
+): RsResolveProcessor = createProcessor(processor.names) {
     val element = it.element
     if (element != null) {
         processedPathElements.putValue(it.name, element)

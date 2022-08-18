@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.BoundElementWithVisibility
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.ty.Ty
@@ -62,11 +61,11 @@ interface RsResolveProcessorBase<in T : ScopeEntry> {
     operator fun invoke(entry: T): Boolean
 
     /**
-     * Indicates that processor is interested only in [ScopeEntry]s with specified [name].
+     * Indicates that processor is interested only in [ScopeEntry]s with specified [names].
      * Improves performance for Resolve2.
      * `null` in completion
      */
-    val name: String?
+    val names: Set<String>?
 }
 
 typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
@@ -74,45 +73,88 @@ typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
 fun createProcessor(name: String? = null, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
     createProcessorGeneric(name, processor)
 
+fun createProcessor(names: Set<String>?, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
+    createProcessorGeneric(names, processor)
+
 fun <T : ScopeEntry> createProcessorGeneric(
     name: String? = null,
+    processor: (T) -> Boolean
+): RsResolveProcessorBase<T> = createProcessorGeneric(name?.let { setOf(it) }, processor)
+
+fun <T : ScopeEntry> createProcessorGeneric(
+    names: Set<String>? = null,
     processor: (T) -> Boolean
 ): RsResolveProcessorBase<T> {
     return object : RsResolveProcessorBase<T> {
         override fun invoke(entry: T): Boolean = processor(entry)
-        override val name: String? = name
-        override fun toString(): String = "Processor(name=$name)"
+        override val names: Set<String>? = names
+        override fun toString(): String = "Processor(name=$names)"
     }
 }
 
 typealias RsMethodResolveProcessor = RsResolveProcessorBase<MethodResolveVariant>
 
 fun collectPathResolveVariants(
+    ctx: PathResolutionContext,
     path: RsPath,
     f: (RsResolveProcessor) -> Unit
-): List<BoundElementWithVisibility<RsElement>> {
+): List<RsPathResolveResult<RsElement>> {
     val referenceName = path.referenceName ?: return emptyList()
-    val result = SmartList<BoundElementWithVisibility<RsElement>>()
+    val result = SmartList<RsPathResolveResult<RsElement>>()
     val processor = createProcessor(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
             return@createProcessor true
         }
 
         if (e.name == referenceName) {
-            val element = e.element ?: return@createProcessor false
-            if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
-                val boundElement = BoundElement(element, e.subst)
-                val visibilityStatus = e.getVisibilityStatusFrom(path)
-                if (visibilityStatus != VisibilityStatus.CfgDisabled) {
-                    val isVisible = visibilityStatus == VisibilityStatus.Visible
-                    result += BoundElementWithVisibility(boundElement, isVisible)
-                }
-            }
+            collectPathScopeEntry(ctx, result, e)
         }
         false
     }
     f(processor)
     return result
+}
+
+fun collectMultiplePathResolveVariants(
+    ctx: PathResolutionContext,
+    paths: List<RsPath>,
+    f: (RsResolveProcessor) -> Unit
+): Map<RsPath, SmartList<RsPathResolveResult<RsElement>>> {
+    val result: MutableMap<RsPath, SmartList<RsPathResolveResult<RsElement>>> = hashMapOf()
+    val resultByName: MutableMap<String, SmartList<RsPathResolveResult<RsElement>>> = hashMapOf()
+    for (path in paths) {
+        val name = path.referenceName ?: continue
+        val list = resultByName.getOrPut(name) { SmartList() }
+        result[path] = list
+    }
+    val processor = createProcessor(resultByName.keys) { e ->
+        if ((e == ScopeEvent.STAR_IMPORTS) && result.values.all { it.isNotEmpty() }) {
+            return@createProcessor true
+        }
+
+        val list = resultByName[e.name]
+        if (list != null) {
+            collectPathScopeEntry(ctx, list, e)
+        }
+        false
+    }
+    f(processor)
+    return result
+}
+
+private fun collectPathScopeEntry(
+    ctx: PathResolutionContext,
+    result: MutableList<RsPathResolveResult<RsElement>>,
+    e: ScopeEntry
+) {
+    val element = e.element ?: return
+    if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
+        val visibilityStatus = e.getVisibilityStatusFrom(ctx.context)
+        if (visibilityStatus != VisibilityStatus.CfgDisabled) {
+            val isVisible = visibilityStatus == VisibilityStatus.Visible
+            result += RsPathResolveResult(element, e.subst, isVisible)
+        }
+    }
 }
 
 fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Unit): List<RsElement> {
@@ -300,7 +342,7 @@ fun processAllWithSubst(
 }
 
 fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {
-    return createProcessor(processor.name) { e ->
+    return createProcessor(processor.names) { e ->
         val element = e.element ?: return@createProcessor false
         if (element is RsFunction && element.isTest) return@createProcessor false
         if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
@@ -315,7 +357,7 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
         return processor
     }
     val mod = context.containingMod
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         val element = it.element
         if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
         if (!it.isVisibleFrom(context)) return@createProcessor false
@@ -329,7 +371,7 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
 }
 
 fun filterAttributeProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
-    createProcessor(processor.name) { e ->
+    createProcessor(processor.names) { e ->
         val function = e.element as? RsFunction ?: return@createProcessor false
         if (!function.isAttributeProcMacroDef) return@createProcessor false
         processor(e)
