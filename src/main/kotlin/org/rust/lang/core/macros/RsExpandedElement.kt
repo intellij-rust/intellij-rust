@@ -44,7 +44,21 @@ interface RsExpandedElement : RsElement {
 }
 
 fun RsExpandedElement.setContext(context: RsElement) {
+    (containingFile as? RsFile)?.setRsFileContext(context, lazy = true)
+    setExpandedElementContext(context)
+}
+
+/** Internal. Use [setContext] */
+fun RsExpandedElement.setExpandedElementContext(context: RsElement) {
     putUserData(RS_EXPANSION_CONTEXT, context)
+}
+
+/** Internal. Use [setContext] */
+fun RsFile.setRsFileContext(context: RsElement, lazy: Boolean) {
+    val contextContainingFile = context.containingRsFileSkippingCodeFragments
+    if (contextContainingFile != null) {
+        inheritCachedDataFrom(contextContainingFile, lazy)
+    }
 }
 
 /**
@@ -355,5 +369,4 @@ fun PsiElement.findNavigationTargetIfMacroExpansion(): PsiElement? {
     return element.findElementExpandedFrom() ?: findMacroCallExpandedFrom()?.path
 }
 
-private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
-
+private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_CONTEXT")

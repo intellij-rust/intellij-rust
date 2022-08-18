@@ -38,10 +38,10 @@ interface RsElement : PsiElement {
 }
 
 val RsElement.cargoProject: CargoProject?
-    get() = (contextualFile.originalFile as? RsFile)?.cargoProject
+    get() = containingRsFileSkippingCodeFragments?.cargoProject
 
 val RsElement.cargoWorkspace: CargoWorkspace?
-    get() = (contextualFile.originalFile as? RsFile)?.cargoWorkspace
+    get() = containingRsFileSkippingCodeFragments?.cargoWorkspace
 
 fun PsiFileSystemItem.findCargoProject(): CargoProject? {
     if (this is RsFile) return this.cargoProject
@@ -59,7 +59,7 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() = containingCrate?.cargoTarget
 
 val RsElement.containingCrate: Crate?
-    get() = (contextualFile.originalFile as? RsFile)?.crate
+    get() = containingRsFileSkippingCodeFragments?.crate
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
@@ -100,7 +100,7 @@ abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElem
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
@@ -118,7 +118,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()

@@ -930,12 +930,16 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
         storeRangeMap,
         useCache = true
     ).map { expansion ->
+        val context = call.context as? RsElement
         expansion.elements.forEach {
             it.setExpandedFrom(call)
-            val context = call.context as? RsElement
             if (context != null) {
-                it.setContext(context)
+                it.setExpandedElementContext(context)
             }
+        }
+        if (context != null) {
+            // `lazy = false` in order to prevent deep stack overflow if the expansion is deep
+            expansion.file.setRsFileContext(context, lazy = false)
         }
         expansion
     }.mapErr {
@@ -956,6 +960,7 @@ private fun memExpansionResult(
     call: RsPossibleMacroCall,
     result: RsResult<MacroExpansion, GetMacroExpansionError>
 ): MacroExpansionCachedResult {
+    // Note: the cached result must be invalidated when `RsFile.cachedData` is invalidated
     return if (call is RsMacroCall) {
         CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
     } else {
