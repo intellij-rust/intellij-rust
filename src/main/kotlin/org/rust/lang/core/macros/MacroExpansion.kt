@@ -129,7 +129,20 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
 fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacro(
     def: RsMacroDataWithHash<T>,
     call: RsPossibleMacroCall,
-    factory: RsPsiFactory,
+    storeRangeMap: Boolean,
+    useCache: Boolean,
+): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
+    val context = call.expansionContext
+    return if (useCache && context == MacroExpansionContext.ITEM) {
+        expandMacroWithStub(def, call, storeRangeMap)
+    } else {
+        expandMacroWithoutStub(def, call, storeRangeMap, useCache)
+    }
+}
+
+private fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacroWithoutStub(
+    def: RsMacroDataWithHash<T>,
+    call: RsPossibleMacroCall,
     storeRangeMap: Boolean,
     useCache: Boolean,
 ): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
@@ -144,10 +157,38 @@ fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacro(
     }.unwrapOrElse { return Err(ExpansionError(it)) }
 
     val context = call.expansionContext
+    val factory = RsPsiFactory(call.project, markGenerated = false)
     val expansion = parseExpandedTextWithContext(context, factory, expandedText)
         ?: return Err(ParsingError(expandedText, context))
     if (storeRangeMap) {
         expansion.file.putUserData(MACRO_RANGE_MAP_KEY, ranges)
+    }
+    return Ok(expansion)
+}
+
+private fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expandMacroWithStub(
+    def: RsMacroDataWithHash<T>,
+    call: RsPossibleMacroCall,
+    storeRangeMap: Boolean,
+): RsResult<MacroExpansion, MacroExpansionAndParsingError<E>> {
+    val callData = RsMacroCallData.fromPsi(call) ?: return Err(MacroCallSyntaxError)
+    val callDataWithHash = RsMacroCallDataWithHash(callData, call.bodyHash)
+    val mixHash = def.mixHash(callDataWithHash) ?: return Err(MacroCallSyntaxError)
+    val (stub, expansionResult) = MacroExpansionSharedCache.getInstance()
+        .createExpansionStub(call.project, this, def.data, callData, mixHash)
+        .unwrapOrElse { return Err(MacroCallSyntaxError) }
+    val expandedText = expansionResult.text
+
+    val factory = RsPsiFactory(call.project, markGenerated = false, eventSystemEnabled = stub != null)
+    val file = factory.createPsiFile(expandedText) as? RsFile
+        ?: return Err(ParsingError(expandedText, MacroExpansionContext.ITEM))
+    if (stub != null) {
+        file.forceSetStubTree(stub)
+    }
+    val expansion = getExpansionFromExpandedFile(MacroExpansionContext.ITEM, file)
+        ?: return Err(ParsingError(expandedText, MacroExpansionContext.ITEM))
+    if (storeRangeMap) {
+        expansion.file.putUserData(MACRO_RANGE_MAP_KEY, expansionResult.ranges)
     }
     return Ok(expansion)
 }

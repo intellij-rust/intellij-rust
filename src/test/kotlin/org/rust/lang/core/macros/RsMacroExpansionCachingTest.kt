@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.intellij.lang.annotations.Language
 import org.rust.CheckTestmarkHit
@@ -18,11 +19,10 @@ import org.rust.ExpandMacros
 import org.rust.TestProject
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.stubChildrenOfType
-import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
+import org.rust.lang.core.psi.RsMembers
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
 @ExpandMacros
@@ -278,6 +278,32 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         }
         foo!(18/*caret*/);
     """, "foo", allowDumbMode = false)
+
+    fun `test macro call inside an impl is expanded using a stub`() {
+        InlineFile("""
+            macro_rules! foo {
+                () => { fn bar(&self) {} };
+            }
+            struct S;
+            impl S {
+                foo!();
+            }
+        """.trimIndent())
+
+        val macroCall = myFixture.file.descendantsOfType<RsMacroCall>().single()
+        check(macroCall.parent is RsMembers) { macroCall.parent }
+        val expansion = macroCall.expansion ?: error("The macro has not been expanded")
+        check(expansion.file.stub != null) { "The macro expansion does not use a stub" }
+        val expandedElement = expansion.elements.single()
+        check(expandedElement is RsFunction)
+        check(expandedElement.stub != null)
+        check(expandedElement.greenStub != null)
+
+        expandedElement.text // Switch to AST
+
+        check(expandedElement.stub == null)
+        check(expansion.file.stub == null)
+    }
 
     private class DumbModeCounter : HeavyProcessLatch.HeavyProcessListener {
         var count = 0

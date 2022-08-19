@@ -18,9 +18,12 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.FileElement
+import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.testFramework.LightVirtualFile
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -83,6 +86,7 @@ class RsFile(
     /** Used for in-memory macro expansions */
     @Volatile
     private var forcedCachedData: (() -> CachedData)? = null
+    private var hasForcedStubTree: Boolean = false
 
     private val cachedData: CachedData
         get() {
@@ -286,6 +290,23 @@ class RsFile(
                 CachedValueProvider.Result.create(decl, originalFile.rustStructureOrAnyPsiModificationTracker)
             }
         }
+
+    /** Very internal utility, do not use it */
+    fun forceSetStubTree(stub: PsiFileStub<*>) {
+        check(virtualFile is LightVirtualFile)
+        hasForcedStubTree = true
+        if (!RsPsiFileInternals.setStubTree(this, stub)) {
+            hasForcedStubTree = false
+        }
+    }
+
+    override fun getTreeElement(): FileElement? {
+        return if (hasForcedStubTree && !isContentsLoaded) {
+            return null
+        } else {
+            super.getTreeElement()
+        }
+    }
 
     enum class Attributes {
         NO_CORE, NO_STD, NONE;

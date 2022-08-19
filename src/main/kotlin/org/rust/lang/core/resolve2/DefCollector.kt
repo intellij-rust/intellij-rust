@@ -370,7 +370,8 @@ class DefCollector(
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val mixHash = defData.mixHash(callData) ?: return null
         val (expandedFile, expansion) =
-            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: (null to null)
+            macroExpanderShared.createExpansionStub(project, macroExpander, defData.data, callData.data, mixHash).ok()
+                ?: (null to null)
         return ExpansionOutput(call, def, expandedFile, expansion, mixHash)
     }
 
