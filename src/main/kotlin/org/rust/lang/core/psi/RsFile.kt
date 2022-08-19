@@ -23,10 +23,12 @@ import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.LightVirtualFile
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.injected.isDoctestInjection
@@ -98,7 +100,13 @@ class RsFile(
                 val value = doGetCachedData()
                 // Note: if the cached result is invalidated, then the cached result from `memExpansionResult`
                 // must also be invalidated, so keep them in sync
-                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
+                val modificationTracker: Any = when {
+                    /** See [rustStructureOrAnyPsiModificationTracker] */
+                    virtualFile is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
+                    value.crate?.origin == PackageOrigin.WORKSPACE -> project.rustStructureModificationTracker
+                    else -> project.rustPsiManager.rustStructureModificationTrackerInDependencies
+                }
+                CachedValueProvider.Result(value, modificationTracker)
             }
         }
 

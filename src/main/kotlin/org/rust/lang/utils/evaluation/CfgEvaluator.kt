@@ -172,7 +172,7 @@ class CfgEvaluator(
             return CachedValuesManager.getManager(project).getCachedValue(crate, CRATE_CFG_EVALUATOR_KEY, {
                 CachedValueProvider.Result.create(
                     forCrateInner(crate),
-                    project.rustStructureModificationTracker
+                    crate.rustStructureModificationTracker
                 )
             }, false)
         }
