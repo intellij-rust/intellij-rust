@@ -1,0 +1,10 @@
+mod inner {
+    pub const C: i32 = 0;
+}
+
+fn main() {
+    match 0 {
+        <spot>C</spot> => {}
+        _ => {}
+    }
+}

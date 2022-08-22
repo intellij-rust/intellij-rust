@@ -46,7 +46,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         invoke(project)
     }
 
-    private fun invoke(project: Project) {
+    fun invoke(project: Project) {
         val element = startElement as? RsElement ?: return
         val candidates = context.candidates
         if (candidates.size == 1) {
@@ -135,6 +135,13 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return null
             val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
 
+            return Context(GENERAL_PATH, candidates)
+        }
+
+        fun findApplicableContext(pat: RsPatBinding): Context? {
+            val importContext = ImportContext2.from(pat, ImportContext2.Type.AUTO_IMPORT) ?: return null
+            val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, pat.referenceName)
+            if (candidates.isEmpty()) return null
             return Context(GENERAL_PATH, candidates)
         }
 
