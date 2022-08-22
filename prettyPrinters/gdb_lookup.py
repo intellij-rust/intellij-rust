@@ -99,4 +99,15 @@ def lookup(valobj):
     if rust_type == RustType.STD_NONZERO_NUMBER:
         return StdNonZeroNumberProvider(valobj)
 
+    if rust_type == RustType.STD_RANGE:
+        return StdRangeProvider(valobj)
+    if rust_type == RustType.STD_RANGE_FROM:
+        return StdRangeFromProvider(valobj)
+    if rust_type == RustType.STD_RANGE_INCLUSIVE:
+        return StdRangeInclusiveProvider(valobj)
+    if rust_type == RustType.STD_RANGE_TO:
+        return StdRangeToProvider(valobj)
+    if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
+        return StdRangeToInclusiveProvider(valobj)
+
     return None

@@ -40,6 +40,11 @@ class RustType(object):
     STD_REF_MUT = "StdRefMut"
     STD_REF_CELL = "StdRefCell"
     STD_NONZERO_NUMBER = "StdNonZeroNumber"
+    STD_RANGE = "StdRange"
+    STD_RANGE_FROM = "StdRangeFrom"
+    STD_RANGE_INCLUSIVE = "StdRangeInclusive"
+    STD_RANGE_TO = "StdRangeTo"
+    STD_RANGE_TO_INCLUSIVE = "StdRangeToInclusive"
 
 
 # Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
@@ -70,6 +75,11 @@ STD_REF_REGEX = re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$")
 STD_REF_MUT_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$")
 STD_REF_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefCell<.+>$")
 STD_NONZERO_NUMBER_REGEX = re.compile(r"^core::num::([a-z_]+::)*NonZero.+$")
+STD_RANGE_REGEX = re.compile(r"^core::ops::range::Range<.+>$")
+STD_RANGE_FROM_REGEX = re.compile(r"^core::ops::range::RangeFrom<.+>$")
+STD_RANGE_INCLUSIVE_REGEX = re.compile(r"^core::ops::range::RangeInclusive<.+>$")
+STD_RANGE_TO_REGEX = re.compile(r"^core::ops::range::RangeTo<.+>$")
+STD_RANGE_TO_INCLUSIVE_REGEX = re.compile(r"^core::ops::range::RangeToInclusive<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
@@ -101,7 +111,12 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_REF_MUT: STD_REF_MUT_REGEX,
     RustType.STD_REF_CELL: STD_REF_CELL_REGEX,
     RustType.STD_CELL: STD_CELL_REGEX,
-    RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX
+    RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX,
+    RustType.STD_RANGE: STD_RANGE_REGEX,
+    RustType.STD_RANGE_FROM: STD_RANGE_FROM_REGEX,
+    RustType.STD_RANGE_INCLUSIVE: STD_RANGE_INCLUSIVE_REGEX,
+    RustType.STD_RANGE_TO: STD_RANGE_TO_REGEX,
+    RustType.STD_RANGE_TO_INCLUSIVE: STD_RANGE_TO_INCLUSIVE_REGEX,
 }
 
 
