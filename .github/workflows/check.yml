@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
     calculate-git-info:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             is_bors_branch: ${{ steps.calculate-git-info.outputs.is_bors_branch }}
             is_master_branch: ${{ steps.calculate-git-info.outputs.is_master_branch }}
@@ -50,7 +50,7 @@ jobs:
                   echo "checked: ${{ steps.calculate-git-info.outputs.checked }}"
 
     check-license:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
 
@@ -80,7 +80,7 @@ jobs:
             # `fromJSON` is used here to convert string output to boolean
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
-                os: [ ubuntu-18.04, windows-latest ]
+                os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.63.0, nightly-2022-09-10 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 221, 222 ]
@@ -88,7 +88,7 @@ jobs:
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
                 include:
-                    - os: ubuntu-18.04
+                    - os: ubuntu-latest
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.41.0
                       base-ide: idea
@@ -226,7 +226,7 @@ jobs:
 
     check:
         needs: [ check-license, check-plugin ]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - name: Finish check
               run: echo "Check finished successfully!"

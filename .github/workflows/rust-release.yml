@@ -15,7 +15,7 @@ on:
 
 jobs:
     generate-build-number:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             build_number: ${{ steps.buildnumber.outputs.build_number }}
         steps:
@@ -27,7 +27,7 @@ jobs:
                   prefix: rust
 
     get-release-branch:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             release-branch: ${{ steps.get-release-branch.outputs.release-branch }}
         steps:
@@ -45,7 +45,7 @@ jobs:
                   echo "::set-output name=release-branch::$branch"
 
     update-changelog-link:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -69,7 +69,7 @@ jobs:
               run: python scripts/update_changelog_link.py
 
     get-channel:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             channel: ${{ steps.get-channel.outputs.channel }}
         steps:
@@ -83,7 +83,7 @@ jobs:
                 fi
 
     fetch-latest-changes:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         needs: [ get-release-branch, update-changelog-link, get-channel ]
         outputs:
             rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
@@ -122,7 +122,7 @@ jobs:
     build:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
         needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel, fetch-latest-changes, build-native-code ]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: true
             matrix:
@@ -156,7 +156,7 @@ jobs:
 
     save-commit:
         needs: [ get-channel, fetch-latest-changes, build ]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v2
