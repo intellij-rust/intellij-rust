@@ -1263,10 +1263,6 @@
         <consoleHistoryModelProvider implementation="org.rust.ide.console.RsConsoleHistoryModelProvider"/>
         <scratch.rootType implementation="org.rust.ide.console.RsConsoleRootType"/>
 
-        <!-- Listeners -->
-
-        <fileDocumentManagerListener implementation="org.rust.cargo.RustfmtWatcher$RustfmtListener"/>
-
         <!-- Statistics -->
         <fileTypeStatisticProvider implementation="org.rust.ide.statistics.RsFileTypeStatisticProvider"/>
         <!--suppress PluginXmlValidity -->

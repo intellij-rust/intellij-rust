@@ -5,13 +5,13 @@
 
 package org.rust.cargo.project
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.settings.RustfmtProjectSettingsService
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.elementFromXmlString
-import org.rust.openapiext.toXmlString
 
 class RustfmtProjectSettingsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
@@ -34,13 +34,12 @@ class RustfmtProjectSettingsServiceTest : LightPlatformTestCase() {
         service.loadState(stateFromXmlString(text))
 
         val actual = service.state
-        assertEquals(text, XmlSerializer.serialize(actual).toXmlString())
-
         assertEquals("--unstable-features", actual.additionalArguments)
         assertEquals(RustChannel.NIGHTLY, actual.channel)
         assertEquals(mapOf("ABC" to "123"), actual.envs)
         assertEquals(true, actual.useRustfmt)
-        assertEquals(true, actual.runRustfmtOnSave)
+        assertEquals(false, actual.runRustfmtOnSave)
+        assertEquals(true, PropertiesComponent.getInstance(project).getBoolean("format.on.save"))
     }
 
     companion object {

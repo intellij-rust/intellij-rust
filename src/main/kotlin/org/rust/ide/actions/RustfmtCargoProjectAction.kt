@@ -31,7 +31,7 @@ class RustfmtCargoProjectAction : DumbAwareAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val (cargoProject, rustfmt) = getContext(e) ?: return
-        saveAllDocumentsAsTheyAre(reformatLater = false)
+        saveAllDocumentsAsTheyAre()
         if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
         rustfmt.reformatCargoProject(cargoProject).unwrapOrElse {
             // Just easy way to know that something wrong happened

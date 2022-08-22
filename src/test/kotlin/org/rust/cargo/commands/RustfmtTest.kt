@@ -6,6 +6,8 @@
 package org.rust.cargo.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -349,7 +351,8 @@ class RustfmtTest : RsWithToolchainTestBase() {
         }
     }) {
         myFixture.type("\n\n\n")
-        project.rustfmtSettings.modifyTemporary(testRootDisposable) { it.runRustfmtOnSave = true }
+        project.rustfmtSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
+        PropertiesComponent.getInstance(project).setValue("format.on.save", true)
         saveAllDocuments()
     }
 

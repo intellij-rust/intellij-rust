@@ -6,7 +6,9 @@
 package org.rust.cargo.project.configurable
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
+import com.intellij.ide.DataManager
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -67,7 +69,19 @@ class RustfmtConfigurable(project: Project) : BoundConfigurable(RsBundle.message
             }
         }.bottomGap(BottomGap.MEDIUM) // TODO: do we really need it?
 
-        row { checkBox(RsBundle.message("settings.rust.rustfmt.builtin.formatter.label")).bindSelected(settings.state::useRustfmt) }
-        row { checkBox(RsBundle.message("settings.rust.rustfmt.run.on.save.label")).bindSelected(settings.state::runRustfmtOnSave) }
+        row {
+            checkBox(RsBundle.message("settings.rust.rustfmt.builtin.formatter.label"))
+                .comment(RsBundle.message("settings.rust.rustfmt.builtin.formatter.label.comment"))
+                .bindSelected(settings.state::useRustfmt)
+        }
+
+        row {
+            link(RsBundle.message("settings.rust.rustfmt.actions.on.save")) {
+                DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+                    val settings = Settings.KEY.getData(context)
+                    settings?.select(settings.find("actions.on.save"))
+                }
+            }
+        }
     }
 }
