@@ -80,11 +80,11 @@ class RsImplIndexAndTypeAliasCache(private val project: Project) : Disposable {
     override fun dispose() {}
 
     companion object {
-         fun getInstance(project: Project): RsImplIndexAndTypeAliasCache =
+        fun getInstance(project: Project): RsImplIndexAndTypeAliasCache =
             project.service()
 
         @JvmStatic
-        private fun <T: Any> AtomicReference<ConcurrentMap<TyFingerprint, T>?>.getOrCreateMap(): ConcurrentMap<TyFingerprint, T> {
+        private fun <T : Any> AtomicReference<ConcurrentMap<TyFingerprint, T>?>.getOrCreateMap(): ConcurrentMap<TyFingerprint, T> {
             while (true) {
                 get()?.let { return it }
                 val map = ContainerUtil.createConcurrentSoftValueMap<TyFingerprint, T>()

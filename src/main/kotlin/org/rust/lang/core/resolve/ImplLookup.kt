@@ -8,7 +8,8 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
-import org.rust.cargo.project.model.CargoProject
+import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.hasTransitiveDependencyOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.SelectionCandidate.*
@@ -20,7 +21,6 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateLoses
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateWins
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.CargoProjectCache
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
 import org.rust.stdext.buildList
@@ -180,7 +180,7 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
                 1 -> return ParamEnv(rawBounds)
             }
 
-            val lookup = ImplLookup(decl.project, decl.cargoProject, decl.knownItems, ParamEnv(rawBounds))
+            val lookup = ImplLookup(decl.project, decl.containingCrate, decl.knownItems, ParamEnv(rawBounds))
             val ctx = lookup.ctx
             val bounds2 = rawBounds.map {
                 val (bound, obligations) = ctx.normalizeAssociatedTypesIn(it)
@@ -196,7 +196,7 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
 
 class ImplLookup(
     private val project: Project,
-    cargoProject: CargoProject?,
+    private val containingCrate: Crate?,
     val items: KnownItems,
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
@@ -305,7 +305,7 @@ class ImplLookup(
     }
 
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
-        val impls = indexCache.findPotentialImpls(tyf)
+        val impls = findPotentialImpls(tyf)
         return impls.any { cachedImpl ->
             if (cachedImpl.isNegativeImpl) return@any false
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@any false
@@ -322,7 +322,7 @@ class ImplLookup(
         if (fingerprint != null) {
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
-            val aliases = indexCache.findPotentialAliases(fingerprint)
+            val aliases = findPotentialAliases(fingerprint)
             val result = aliases.any {
                 val name = it.name ?: return@any false
                 val aliasFingerprint = TyFingerprint(name)
@@ -336,6 +336,19 @@ class ImplLookup(
         }
         return processor(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
+
+    private fun findPotentialImpls(tyf: TyFingerprint): Sequence<RsCachedImplItem> =
+        indexCache.findPotentialImpls(tyf)
+            .asSequence()
+            .filter { useImplsFromCrate(it.containingCrates) }
+
+    private fun findPotentialAliases(tyf: TyFingerprint) =
+        indexCache.findPotentialAliases(tyf)
+            .asSequence()
+            .filter { useImplsFromCrate(it.containingCrates) }
+
+    private fun useImplsFromCrate(crates: List<Crate>): Boolean =
+        containingCrate == null || crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
 
     private fun canCombineTypes(
         ty1: Ty,
@@ -363,8 +376,8 @@ class ImplLookup(
     }
 
     /** return impls for a generic type `impl<T> Trait for T {}` */
-    private fun findBlanketImpls(): List<RsCachedImplItem> {
-        return indexCache.findPotentialImpls(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
+    private fun findBlanketImpls(): Sequence<RsCachedImplItem> {
+        return findPotentialImpls(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
 
     /**
@@ -747,7 +760,7 @@ class ImplLookup(
     }
 
     private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
-        val impls = indexCache.findPotentialImpls(tyf)
+        val impls = findPotentialImpls(tyf)
         return impls.any {
             val candidate = it.trySelectCandidate(ref)
             candidate != null && processor(candidate)
@@ -1268,14 +1281,8 @@ class ImplLookup(
             } else {
                 ParamEnv.EMPTY
             }
-            return ImplLookup(psi.project, psi.cargoProject, psi.knownItems, paramEnv)
+            return ImplLookup(psi.project, psi.containingCrate, psi.knownItems, paramEnv)
         }
-
-        private val cargoProjectGlobalFindImplsAndTraitsCache =
-            CargoProjectCache<Ty, List<TraitImplSource>>("cargoProjectGlobalFindImplsAndTraitsCache")
-
-        private val cargoProjectGlobalTraitSelectionCache =
-            CargoProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("cargoProjectGlobalTraitSelectionCache")
     }
 }
 
