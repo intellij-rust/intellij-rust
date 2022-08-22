@@ -12,8 +12,6 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.SelectionCandidate.*
-import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtInferVar
@@ -25,7 +23,6 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.CargoProjectCache
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
-import org.rust.stdext.Cache
 import org.rust.stdext.buildList
 import org.rust.stdext.exhaustive
 import org.rust.stdext.swapRemoveAt
@@ -204,22 +201,9 @@ class ImplLookup(
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
-    private val traitSelectionCache: Cache<TraitRef, SelectionResult<SelectionCandidate>> =
-        if (paramEnv.isEmpty() && cargoProject != null) {
-            cargoProjectGlobalTraitSelectionCache.getCache(cargoProject)
-        } else {
-            // function-local cache is used when [paramEnv] is not empty, i.e. if there are trait bounds
-            // that affect trait selection
-            Cache.new()
-        }
-    private val findImplsAndTraitsCache: Cache<Ty, List<TraitImplSource>> =
-        if (cargoProject != null) {
-            cargoProjectGlobalFindImplsAndTraitsCache.getCache(cargoProject)
-        } else {
-            Cache.new()
-        }
-    private val implIndexCache: Cache<TyFingerprint, List<RsCachedImplItem>> = Cache.new()
-    private val typeAliasIndexCache: Cache<TyFingerprint, List<RsCachedTypeAlias>> = Cache.new()
+    private val traitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>> = hashMapOf()
+    private val findImplsAndTraitsCache: MutableMap<Ty, List<TraitImplSource>> = hashMapOf()
+    private val indexCache = RsImplIndexAndTypeAliasCache.getInstance(project)
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = items.FnOnce ?: return@lazy null
@@ -321,7 +305,7 @@ class ImplLookup(
     }
 
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
-        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        val impls = indexCache.findPotentialImpls(tyf)
         return impls.any { cachedImpl ->
             if (cachedImpl.isNegativeImpl) return@any false
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@any false
@@ -338,9 +322,7 @@ class ImplLookup(
         if (fingerprint != null) {
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
-            val aliases = typeAliasIndexCache.getOrPut(fingerprint) {
-                RsTypeAliasIndex.findPotentialAliases(project, fingerprint)
-            }
+            val aliases = indexCache.findPotentialAliases(fingerprint)
             val result = aliases.any {
                 val name = it.name ?: return@any false
                 val aliasFingerprint = TyFingerprint(name)
@@ -382,9 +364,7 @@ class ImplLookup(
 
     /** return impls for a generic type `impl<T> Trait for T {}` */
     private fun findBlanketImpls(): List<RsCachedImplItem> {
-        return implIndexCache.getOrPut(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT) {
-            RsImplIndex.findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
-        }
+        return indexCache.findPotentialImpls(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
 
     /**
@@ -767,7 +747,7 @@ class ImplLookup(
     }
 
     private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
-        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        val impls = indexCache.findPotentialImpls(tyf)
         return impls.any {
             val candidate = it.trySelectCandidate(ref)
             candidate != null && processor(candidate)
