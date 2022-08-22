@@ -233,6 +233,7 @@ class Cargo(
         val tree = try {
             TOML_MAPPER.readTree(output)
         } catch (e: JacksonException) {
+            LOG.error(e)
             return Err(RsDeserializationException(e))
         }
 
@@ -247,6 +248,7 @@ class Cargo(
                 val valueParams = try {
                     TOML_MAPPER.treeToValue(field.value, CargoConfig.EnvValue::class.java)
                 } catch (e: JacksonException) {
+                    LOG.error(e)
                     return Err(RsDeserializationException(e))
                 }
                 field.key to CargoConfig.EnvValue(valueParams.value, valueParams.isForced, valueParams.isRelative)

@@ -49,8 +49,9 @@ class CargoConfigTest : RsWithToolchainTestBase() {
                 toml("config.toml", """
                     [env]
                     foo = "42"
-                    bar = { value = "24", forced = true }
+                    bar = { value = "24", force = true }
                     baz = { value = "hello/world", relative = true }
+                    qwe = { value = "value", unknown_field = 123 }
                 """)
             }
             file("Cargo.toml", CARGO_TOML)
@@ -62,6 +63,7 @@ class CargoConfigTest : RsWithToolchainTestBase() {
         assertEquals(CargoConfig.EnvValue("42"), env["foo"])
         assertEquals(CargoConfig.EnvValue("24", isForced = true), env["bar"])
         assertEquals(CargoConfig.EnvValue("hello/world", isRelative = true), env["baz"])
+        assertEquals(CargoConfig.EnvValue("value"), env["qwe"])
     }
 
     companion object {
