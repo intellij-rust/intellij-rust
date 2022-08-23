@@ -744,6 +744,71 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
+    fun `test duplicate dependency with and without rename with different cargo features`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            edition = "2018"
+
+            [dependencies]
+            foo = { path = "./foo", features = ["bar-renamed"] }
+        """)
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    let _ = foo::bar();
+                               //^
+                }
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                edition = "2018"
+
+                [dependencies.bar] # Disabled
+                path = "../bar"
+                features = ["bar_feature"]
+                optional = true
+
+                [dependencies.bar-renamed] # Enabled
+                package = "bar"
+                path = "../bar"
+                optional = true
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature="bar-renamed")]
+                    pub use bar_renamed::bar;
+                """)
+            }
+        }
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "1.0.0"
+
+                [features]
+                bar_feature = [] # Disabled
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(feature="bar_feature"))]
+                    pub fn bar() -> u32 { 42 }
+                """)
+            }
+        }
+    }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("bar-renamed")
+        project.cargoProjects.singlePackage("foo").checkFeatureDisabled("bar")
+        project.cargoProjects.singlePackage("bar").checkFeatureDisabled("bar_feature")
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
     fun `test enabled cfg feature with changed target name`() = buildProject {
         toml("Cargo.toml", """
             [package]

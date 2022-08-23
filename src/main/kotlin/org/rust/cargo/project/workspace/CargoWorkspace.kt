@@ -657,16 +657,18 @@ private fun PackageImpl.addDependencies(workspaceData: CargoWorkspaceData, packa
     dependencies += pkgDeps.mapNotNull { dep ->
         val dependencyPackage = packagesMap[dep.id] ?: return@mapNotNull null
 
+        val depTargetName = dependencyPackage.libTarget?.normName ?: dependencyPackage.normName
+        val depName = dep.name ?: depTargetName
+        val rename = if (depName != depTargetName) depName else null
+
         // There can be multiple appropriate raw dependencies because a dependency can be mentioned
         // in `Cargo.toml` in different sections, e.g. [dev-dependencies] and [build-dependencies]
         val rawDeps = pkgRawDeps.filter { rawDep ->
-            rawDep.name == dependencyPackage.name && dep.depKinds.any {
+            rawDep.name == dependencyPackage.name && rawDep.rename?.replace('-', '_') == rename && dep.depKinds.any {
                 it.kind == CargoWorkspace.DepKind.Unclassified ||
                     it.target == rawDep.target && it.kind.cargoName == rawDep.kind
             }
         }
-
-        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
 
         DependencyImpl(
             dependencyPackage,

@@ -144,6 +144,7 @@ object CargoMetadata {
     data class RawDependency(
         /** A `package` name (non-normalized) of the dependency */
         val name: String,
+        /** Non-null if renamed. Non-normalized (i.e. can contain "-") */
         val rename: String?,
         val kind: String?,
         val target: String?,
