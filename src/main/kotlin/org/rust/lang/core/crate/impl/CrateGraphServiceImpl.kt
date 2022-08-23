@@ -133,9 +133,6 @@ private class CrateGraphBuilder {
         topSortedCrates.addIfNotNull(customBuildCrate)
 
         val flatNormalAndNonCyclicDevDeps = normalAndNonCyclicDevDeps.flattenTopSortedDeps()
-        if (pkg.pkg.libTarget == null) {
-            println("CrateGraphService: package $pkg has no libTarget! all targets: ${pkg.pkg.targets}")
-        }
         val libCrate = pkg.pkg.libTarget?.let { libTarget ->
             CargoBasedCrate(
                 pkg.project,
@@ -152,7 +149,6 @@ private class CrateGraphBuilder {
 
         states[pkg.rootDirectory] = newState
         topSortedCrates.addIfNotNull(libCrate)
-        libCrate?.let { if ("type" in it.presentableName) println("CrateGraphService: added lib crate $it") }
 
         lowerNonLibraryCratesLater(
             NonLibraryCrates(
@@ -355,7 +351,6 @@ private class CrateGraphBuilder {
         }
 
         topSortedCrates.assertTopSorted()
-        println("CrateGraph.build: topSortedCrates (filtered) = ${topSortedCrates.filter { "type" in it.presentableName }}")
 
         val idToCrate = TIntObjectHashMap<Crate>()
         for (crate in topSortedCrates) {
@@ -364,7 +359,6 @@ private class CrateGraphBuilder {
             val id = crate.id
             if (id != null) {
                 idToCrate.put(id, crate)
-                if ("type" in crate.presentableName) println("CrateGraph.build: added $crate with id $id")
             }
         }
         return CrateGraph(topSortedCrates, idToCrate)

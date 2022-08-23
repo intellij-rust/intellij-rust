@@ -237,10 +237,7 @@ open class CargoProjectsServiceImpl(
         project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull {
-                println("suggestManifests: found module with path ${it.path}")
-                it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE)
-            }
+            .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].

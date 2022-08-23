@@ -28,7 +28,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
-import kotlin.io.path.Path
 
 private val LOG: Logger = logger<CargoMetadata>()
 
@@ -237,9 +236,7 @@ object CargoMetadata {
                 }
             }
 
-        fun convertPaths(converter: PathConverter): Target = copy(
-            src_path = converter(src_path)
-        ).also { if ("typeql_lang" in it.name) println("CargoMetadata.Target.convertPaths: converted $it") }
+        fun convertPaths(converter: PathConverter): Target = copy(src_path = converter(src_path))
     }
 
     enum class TargetKind {
@@ -364,35 +361,23 @@ object CargoMetadata {
 
     fun isBazelOutPath(path: String) = "/bazel-out/" in path
 
-    fun isBazelBinPath(path: String) = "/bazel-bin/" in path || path.endsWith("bazel-bin")
+    private fun isBazelBinPath(path: String) = "/bazel-bin/" in path || path.endsWith("bazel-bin")
 
-    fun bazelOutPathToProjectPath(bazelPath: String, workspaceRoot: String): String {
-        val projectRelativePathStartIndex = bazelPath.indexOf("/bin", startIndex = bazelPath.indexOf("/bazel-out/")) + 4
-        if (projectRelativePathStartIndex == -1) return bazelPath
-        val projectRelativePath = bazelPath.substring(projectRelativePathStartIndex).trim('/')
+    fun bazelOutPathToProjectPath(path: String, workspaceRoot: String): String {
+        val projectRelativePathStartIndex = path.indexOf("/bin", startIndex = path.indexOf("/bazel-out/")) + 4
+        if (projectRelativePathStartIndex == -1) return path
+        val projectRelativePath = path.substring(projectRelativePathStartIndex).trim('/')
         val projectRoot = if (isBazelBinPath(workspaceRoot)) {
-            println("workspaceRoot $workspaceRoot is a bazel-bin path")
-            val projectPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
-            if (
-                Path.of(projectPath, projectRelativePath).exists()
-                    .also { println("checking if ${Path.of(projectPath, projectRelativePath)} exists: $it") }
-            ) {
-                projectPath
+            val bazelBinPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
+            if (Path.of(bazelBinPath, projectRelativePath).exists()) {
+                bazelBinPath
             } else {
-                val projectPath2 = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin"))
-                if (Path.of(projectPath2, projectRelativePath).exists()) projectPath2 else workspaceRoot
+                val projectPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin"))
+                if (Path.of(projectPath, projectRelativePath).exists()) projectPath else workspaceRoot
             }
         } else workspaceRoot
         // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
-        return Path.of(projectRoot, projectRelativePath).toString().also {
-            if ("typeql_lang" in bazelPath) println("bazelOutPathToProjectPath: converted $bazelPath to $it")
-        }
-    }
-
-    fun bazelBinPathToProjectPath(bazelPath: String): String {
-        if (Path(bazelPath).endsWith("bazel-bin")) return Path(bazelPath).parent.toString()
-        if ("/bazel-bin/" in bazelPath) return bazelPath.replace("/bazel-bin/", "/").also { println("bazelBinBathToProjectPath: converted $bazelPath to $it") }
-        return bazelPath
+        return Path.of(projectRoot, projectRelativePath).toString()
     }
 
     /**
