@@ -341,7 +341,7 @@ project(":plugin") {
 
         withType<RunIdeTask> {
             // Default args for IDEA installation
-            jvmArgs("-Xmx768m", "-XX:+UseConcMarkSweepGC", "-XX:SoftRefLRUPolicyMSPerMB=50")
+            jvmArgs("-Xmx768m", "-XX:+UseG1GC", "-XX:SoftRefLRUPolicyMSPerMB=50")
             // Disable plugin auto reloading. See `com.intellij.ide.plugins.DynamicPluginVfsListener`
             jvmArgs("-Didea.auto.reload.plugins=false")
             // Don't show "Tip of the Day" at startup
