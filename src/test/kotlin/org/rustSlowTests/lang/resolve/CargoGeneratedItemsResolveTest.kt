@@ -972,6 +972,91 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
+    fun `test rustc invoked from a build script is not always succeed during sync`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+            rust("build.rs", """
+                use std::env;
+                use std::fs;
+                use std::fs::File;
+                use std::io::Write;
+                use std::path::Path;
+                use std::process::{Command, ExitStatus, Stdio};
+                use std::str;
+
+                const PROBE: &str = r#"
+                    pub fn foo() { There is a syntax error here. }
+                "#;
+
+                fn main() {
+                    match compile_probe() {
+                        Some(status) if status.success() => panic!("The probe must not succeed"),
+                        None => panic!("Unknown failure"),
+                        _ => {}
+                    }
+
+                    let out_dir = env::var("OUT_DIR").unwrap();
+                    let dest_path = Path::new(&out_dir).join("hello.rs");
+                    let mut f = File::create(&dest_path).unwrap();
+
+                    f.write_all(b"
+                        pub fn message() -> &'static str {
+                            \"Hello, World!\"
+                        }",
+                    ).unwrap();
+                }
+
+                fn compile_probe() -> Option<ExitStatus> {
+                    let rustc = env::var_os("RUSTC")?;
+                    let out_dir = env::var_os("OUT_DIR")?;
+                    let probefile = Path::new(&out_dir).join("probe.rs");
+                    fs::write(&probefile, PROBE).ok()?;
+
+                    // Make sure to pick up Cargo rustc configuration.
+                    let mut cmd = if let Some(wrapper) = env::var_os("RUSTC_WRAPPER") {
+                        let mut cmd = Command::new(wrapper);
+                        // The wrapper's first argument is supposed to be the path to rustc.
+                        cmd.arg(rustc);
+                        cmd
+                    } else {
+                        Command::new(rustc)
+                    };
+
+                    cmd.stderr(Stdio::null())
+                        .arg("--crate-name=probe")
+                        .arg("--crate-type=lib")
+                        .arg("--emit=metadata")
+                        .arg("--out-dir")
+                        .arg(out_dir)
+                        .arg(probefile);
+
+                    if let Some(target) = env::var_os("TARGET") {
+                        cmd.arg("--target").arg(target);
+                    }
+
+                    // If Cargo wants to set RUSTFLAGS, use that.
+                    if let Ok(rustflags) = env::var("CARGO_ENCODED_RUSTFLAGS") {
+                        if !rustflags.is_empty() {
+                            for arg in rustflags.split('\x1f') {
+                                cmd.arg(arg);
+                            }
+                        }
+                    }
+
+                    cmd.status().ok()
+                }
+            """)
+            dir("src") {
+                rust("main.rs", MAIN_RS)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
     companion object {
         @Language("Rust")
         private const val MAIN_RS = """
