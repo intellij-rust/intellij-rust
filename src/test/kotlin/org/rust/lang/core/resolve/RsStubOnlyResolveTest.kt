@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.CheckTestmarkHit
+import org.rust.MockAdditionalCfgOptions
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun `test child mod`() = stubOnlyResolve("""
@@ -195,6 +196,27 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/mod.rs
         fn foo() {
+            crate::quux();
+       }         //^ main.rs
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve in cfg disabled mod`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(intellij_rust)]
+        #[path = "cfg_enabled/mod.rs"]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        #[path = "cfg_disabled/mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- cfg_enabled/mod.rs
+        fn bar() {
+            crate::quux();
+       }
+    //- cfg_disabled/mod.rs
+        fn baz() {
             crate::quux();
        }         //^ main.rs
     """)

@@ -29,11 +29,13 @@ import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.mapToSet
+import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
 /** Stores [CrateDefMap] and data needed to determine whether [defMap] is up-to-date. */
@@ -141,8 +143,15 @@ class DefMapService(val project: Project) : Disposable {
     /** Merged map of [CrateDefMap.missedFiles] for all crates */
     private val missedFiles: ConcurrentHashMap<Path, CratePersistentId> = ConcurrentHashMap()
 
+    /** Used as an optimization in [removeStaleDefMaps] */
+    private val lastCheckedTopSortedCrates: AtomicReference<WeakReference<List<Crate>>?> = AtomicReference(null)
+
     private val structureModificationTracker: ModificationTracker =
         project.rustPsiManager.rustStructureModificationTracker
+
+    /** The last value of [structureModificationTracker] when *all* def maps has been updated */
+    @Volatile
+    private var allDefMapsUpdatedStamp: Long = -1
 
     init {
         setupListeners()
@@ -252,6 +261,10 @@ class DefMapService(val project: Project) : Disposable {
 
     /** Removes DefMaps for crates not in crate graph */
     fun removeStaleDefMaps(allCrates: List<Crate>) {
+        // Optimization: proceed only if the list of crates has been changed since a previous check. We can compare
+        // the list by reference because the list is immutable (it refers to `CrateGraphService.topSortedCrates`)
+        if (lastCheckedTopSortedCrates.getAndSet(WeakReference(allCrates))?.get() === allCrates) return
+
         val allCrateIds = allCrates.mapToSet { it.id }
         val staleCrates = hashSetOf<CratePersistentId>()
         defMaps.keys.removeIf { crate ->
@@ -262,6 +275,12 @@ class DefMapService(val project: Project) : Disposable {
         fileIdToCrateId.values().removeIf { it in staleCrates }
         missedFiles.values.removeIf { it in staleCrates }
     }
+
+    fun setAllDefMapsUpToDate() {
+        allDefMapsUpdatedStamp = structureModificationTracker.modificationCount
+    }
+
+    fun areAllDefMapsUpToDate(): Boolean = allDefMapsUpdatedStamp == structureModificationTracker.modificationCount
 
     override fun dispose() {}
 

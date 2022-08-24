@@ -45,9 +45,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
 import org.rust.lang.core.resolve2.toRsMod
 import org.rust.lang.core.stubs.RsFileStub
-import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
-import org.rust.openapiext.recursionGuard
 import org.rust.openapiext.toPsiFile
 
 /**
@@ -97,7 +95,7 @@ class RsFile(
 
             val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
-                val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
+                val value = doGetCachedData()
                 // Note: if the cached result is invalidated, then the cached result from `memExpansionResult`
                 // must also be invalidated, so keep them in sync
                 CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
@@ -107,9 +105,9 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        val virtualFile: VirtualFile? = virtualFile
+        val virtualFile = virtualFile ?: return EMPTY_CACHED_DATA
 
-        if (virtualFile?.fileSystem is MacroExpansionFileSystem) {
+        if (virtualFile.fileSystem is MacroExpansionFileSystem) {
             val crateId = project.macroExpansionManager.getCrateForExpansionFile(virtualFile)
                 ?: return EMPTY_CACHED_DATA // Possibly an expansion file from another IDEA project
             val crate = project.crateGraph.findCrateById(crateId) ?: return EMPTY_CACHED_DATA
@@ -119,7 +117,7 @@ class RsFile(
                 crate.rootMod,
                 crate,
                 isDeeplyEnabledByCfg = true, // Macros are ony expanded in cfg-enabled mods
-                isIncludedByIncludeMacro = false // An expansion file obviously can't be included
+                isIncludedByIncludeMacro = false, // An expansion file obviously can't be included
             )
         }
 
@@ -133,55 +131,28 @@ class RsFile(
                 crate.rootMod,
                 crate,
                 modData.isDeeplyEnabledByCfg,
-                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
-                    && virtualFile.id != modData.fileId
-                    && virtualFile.fileSystem !is MacroExpansionFileSystem
+                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId && virtualFile.id != modData.fileId,
             )
         }
-        // Else try injected crate, included file, or fill file info with just project and workspace
 
-        // [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
-        // so we have to fallback to use [declaration]
-        val declaration = declaration
-        if (declaration != null) {
-            val declarationFile = declaration.contextualFile
-            val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-            val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
-                && declaration.existsAfterExpansion
-                && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
-            return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
-        }
-
-        val possibleCrateRoot = this
-        val crateRootVFile = possibleCrateRoot.virtualFile ?: return EMPTY_CACHED_DATA
-
-        val crate = project.crateGraph.findCrateByRootMod(crateRootVFile)
-        if (crate != null) {
-            // `possibleCrateRoot` is a "real" crate root only if we're able to find a `crate` for it
-            val isEnabledByCfg = possibleCrateRoot.isEnabledByCfgSelf(crate)
-            return CachedData(crate.cargoProject, crate.cargoWorkspace, possibleCrateRoot, crate, isEnabledByCfg)
-        }
-
-        val injectedFromFile = crateRootVFile.getInjectedFromIfDoctestInjection(project)
+        val injectedFromFile = virtualFile.getInjectedFromIfDoctestInjection(project)
         if (injectedFromFile != null) {
             val cached = injectedFromFile.cachedData
             // Doctest injection file should be a crate root to resolve absolute paths inside injection.
             // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
             // we should be able to resolve it by an absolute path
-            val doctestCrate = cached.crate?.let { DoctestCrate.inCrate(it, possibleCrateRoot) }
-            return cached.copy(crateRoot = possibleCrateRoot, crate = doctestCrate)
-        }
-
-        val includingMod = RsIncludeMacroIndex.getIncludedFrom(possibleCrateRoot)?.containingMod
-        if (includingMod != null) {
-            return (includingMod.contextualFile as? RsFile)?.cachedData?.copy(isIncludedByIncludeMacro = true)
-                ?: EMPTY_CACHED_DATA
+            val doctestCrate = cached.crate?.let { DoctestCrate.inCrate(it, this) }
+            return cached.copy(
+                crateRoot = this,
+                crate = doctestCrate,
+                isIncludedByIncludeMacro = false,
+            )
         }
 
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
         // (usually lib.rs or main.rs). It's anyway useful to know cargoProject&workspace in this case
-        val cargoProject = project.cargoProjects.findProjectForFile(crateRootVFile) ?: return EMPTY_CACHED_DATA
+        val cargoProject = project.cargoProjects.findProjectForFile(virtualFile) ?: return EMPTY_CACHED_DATA
         val workspace = cargoProject.workspace ?: return CachedData(cargoProject)
         return CachedData(cargoProject, workspace)
     }
@@ -204,14 +175,9 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            val modData = findModDataFor(this)
-            if (modData != null) {
-                val parenModData = modData.parent ?: return null
-                return parenModData.toRsMod(project).firstOrNull()
-            }
-
-            val includedFrom = RsIncludeMacroIndex.getIncludedFrom(this) ?: return declaration?.containingMod
-            return includedFrom.containingMod.`super`
+            val modData = findModDataFor(this) ?: return null
+            val parenModData = modData.parent ?: return null
+            return parenModData.toRsMod(project).firstOrNull()
         }
 
     // We can't just return file name here because
@@ -333,7 +299,7 @@ private data class CachedData(
     val crateRoot: RsFile? = null,
     val crate: Crate? = null,
     val isDeeplyEnabledByCfg: Boolean = true,
-    val isIncludedByIncludeMacro: Boolean = false
+    val isIncludedByIncludeMacro: Boolean = false,
 )
 
 private val EMPTY_CACHED_DATA: CachedData = CachedData()

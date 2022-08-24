@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
 import org.jetbrains.annotations.VisibleForTesting
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.completion.RsMacroCompletionProvider
@@ -695,15 +696,29 @@ private fun ModData.toRsModNullable(project: Project): List<RsMod> {
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
     expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
 
-/**
- * If all def maps are up-to-date, then returns correct result
- * Otherwise may return null even if [file] has correct [ModData]
- */
 fun findModDataFor(file: RsFile): ModData? {
     val project = file.project
     val defMapService = project.defMapService
-    val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
-    // TODO Ensure def maps are up-to-date (`findCrates` may return old crate of def maps haven't updated).
+    val virtualFile = file.virtualFile ?: return null
+    if (virtualFile !is VirtualFileWithId) return null
+
+    if (!defMapService.areAllDefMapsUpToDate()) {
+        // Ensure def maps are up-to-date (`findCrates` may return an old crate if def maps haven't updated)
+        val pkg = project.cargoProjects.findPackageForFile(virtualFile)
+        if (pkg != null) {
+            val crateGraph = project.crateGraph
+            val crateIds = pkg.targets.asSequence()
+                .mapNotNull { it.crateRoot }
+                .mapNotNull { crateGraph.findCrateByRootMod(it)?.id }
+                .toList()
+            defMapService.getOrUpdateIfNeeded(crateIds)
+        } else {
+            // A file outside a cargo package can still be included by an `include!()` macro or `#[path = ]` attribute
+            NameResolutionTestmarks.UpdateDefMapsForAllCratesWhenFindingModData.hit()
+            defMapService.updateDefMapForAllCrates()
+        }
+    }
+
     return defMapService
         .findCrates(file)
         .mapNotNull { crateId ->
