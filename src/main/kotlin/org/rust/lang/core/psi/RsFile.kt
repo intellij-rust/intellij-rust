@@ -77,9 +77,7 @@ class RsFile(
     val crate: Crate? get() = cachedData.crate
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
-    // TODO a hotfix for https://github.com/intellij-rust/intellij-rust/issues/9110
-    val isIncludedByIncludeMacro: Boolean get() = true
-//    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
+    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
 
     /** Used for in-memory macro expansions */
     @Volatile
