@@ -425,7 +425,6 @@ object CargoMetadata {
         val rootPath = if (isBazelOutPath(manifest_path)) {
             bazelOutPathToProjectPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
         } else PathUtil.getParentPath(manifest_path)
-        if ("grammar" in rootPath) println("Package.clean: manifest_path = ${manifest_path}, workspaceRoot = $workspaceRoot, rootPath = $rootPath")
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
             ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (could not find `$rootPath`; workspaceRoot is `$workspaceRoot`)")
@@ -488,7 +487,7 @@ object CargoMetadata {
             env = env,
             outDirUrl = outDir?.url,
             procMacroArtifact = procMacroArtifact
-        ).also { if ("type" in root.url) println("CargoMetadata.Package.clean: returning $it") }
+        )
     }
 
     private fun getProcMacroArtifact(buildMessages: List<CompilerMessage>): CargoWorkspaceData.ProcMacroArtifact? {
