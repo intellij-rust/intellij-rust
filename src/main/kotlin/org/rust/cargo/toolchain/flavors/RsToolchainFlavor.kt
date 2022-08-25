@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.flavors
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.io.isDirectory
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Rustc
 import org.rust.cargo.util.hasExecutable
@@ -23,12 +24,11 @@ abstract class RsToolchainFlavor {
 
     protected abstract fun getHomePathCandidates(): Sequence<Path>
 
-    protected fun getProjectPathCandidates(projectPath: Path): Sequence<Path> {
-        if (projectPath.getFileName().toString() == ".ijwb") { // Bazel project root
+    private fun getProjectPathCandidates(projectPath: Path): Sequence<Path> {
+        if (projectPath.fileName.toString() == ".ijwb") { // Bazel project root
             val sourcesRoot = projectPath.parent
-            val projectName = sourcesRoot.getFileName()
-            // TODO: this depends on OS
-            return listOf(sourcesRoot.resolve("bazel-$projectName/external/rust_darwin_x86_64/bin")).asSequence()
+            val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(sourcesRoot.toFile()) ?: return emptySequence()
+            return listOf(Path.of("$toolchainRoot/bin")).asSequence()
         } else {
             return emptySequence()
         }

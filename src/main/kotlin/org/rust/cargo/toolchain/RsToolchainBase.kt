@@ -5,9 +5,11 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
+import com.intellij.execution.process.ScriptRunnerUtil
 import com.intellij.execution.wsl.WslPath
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
@@ -142,6 +144,30 @@ abstract class RsToolchainBase(val location: Path) {
                 .flatMap { it.suggestProjectPaths(projectDir) + it.suggestHomePaths() }
                 .mapNotNull { RsToolchainProvider.getToolchain(it.toAbsolutePath()) }
                 .let { toolchains -> toolchains.firstOrNull { "bazel" in it.presentableLocation } ?: toolchains.firstOrNull() }
+        }
+
+        fun findToolchainInBazelProject(projectRoot: File): Path? {
+            // @rules_rust >= 0.8.0
+            var queryOutput = runCommand(listOf("bazel", "query", "kind(rust_toolchain_tools_repository, //external:*)"), projectRoot) ?: return null
+            if ("//external:" !in queryOutput) {
+                // @rules_rust <= 0.7.0
+                queryOutput = runCommand(listOf("bazel", "query", "kind(rust_toolchain_repository, //external:*)"), projectRoot) ?: return null
+            }
+            val projectName = projectRoot.name
+            return queryOutput.split("\n")
+                .filter { ":" in it }
+                .map { Path.of(projectRoot.toString(), "bazel-$projectName", "external", it.split(":")[1]) }
+                .firstOrNull { it.exists() }
+        }
+
+        private fun runCommand(command: List<String>, workingDir: File): String? {
+            val commandLine = GeneralCommandLine(command).withWorkDirectory(workingDir)
+            return try {
+                ScriptRunnerUtil.getProcessOutput(commandLine)
+            } catch (e: ExecutionException) {
+                e.printStackTrace()
+                null
+            }
         }
     }
 }
