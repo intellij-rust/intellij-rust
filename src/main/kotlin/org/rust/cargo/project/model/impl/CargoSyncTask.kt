@@ -417,11 +417,13 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
-        cargoProject.findStdlibInBazelWorkspace()?.let {
-            val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
-            return@runWithChildProgress when (std) {
-                null -> TaskResult.Err("invalid standard library: ${it.path}")
-                else -> TaskResult.Ok(std)
+        if (isBazelProject(workingDirectory)) {
+            cargoProject.stdlibPathBazel()?.let {
+                val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
+                return@runWithChildProgress when (std) {
+                    null -> TaskResult.Err("invalid standard library: ${it.path}")
+                    else -> TaskResult.Ok(std)
+                }
             }
         }
 
@@ -476,6 +478,10 @@ private fun <T, R> BuildProgress<BuildProgressDescriptor>.runWithChildProgress(
         }
         throw e
     }
+}
+
+private fun isBazelProject(workingDirectory: Path): Boolean {
+    return "bazel-bin" in workingDirectory.toString()
 }
 
 private class SyncProcessAdapter(

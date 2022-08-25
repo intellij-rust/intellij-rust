@@ -48,8 +48,8 @@ import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.impl.CargoMetadata.bazelPathToProjectPath
-import org.rust.cargo.toolchain.impl.CargoMetadata.isBazelPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.bazelOutPathToProjectPath
+import org.rust.cargo.toolchain.impl.CargoMetadata.isBazelOutPath
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
 import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR
@@ -176,7 +176,7 @@ class Cargo(
             .dropWhile { it != '{' }
         return try {
             val srcPathConverter: (String) -> String = { path ->
-                if (isBazelPath(path)) { bazelPathToProjectPath(path, projectDirectory.parent.toString()) }
+                if (isBazelOutPath(path)) { bazelOutPathToProjectPath(path, projectDirectory.parent.toString()) }
                 else toolchain.toLocalPath(path)
             }
             val project = JSON_MAPPER.readValue(json, CargoMetadata.Project::class.java)

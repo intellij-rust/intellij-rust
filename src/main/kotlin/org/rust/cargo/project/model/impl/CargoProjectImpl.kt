@@ -66,7 +66,6 @@ import org.rust.stdext.exhaustive
 import org.rust.stdext.mapNotNullToSet
 import org.rust.taskQueue
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -224,20 +223,31 @@ open class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
-        val guessManifest = suggestManifests().firstOrNull()
-            ?: return CompletableFuture.completedFuture(projects.currentState)
+        val guessManifests = suggestManifests()
 
         return modifyProjects { projects ->
-            if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
-            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
+            doRefresh(project, guessManifests.map { CargoProjectImpl(it.pathAsPath, this) }.toList())
         }
     }
 
-    override fun suggestManifests(): Sequence<VirtualFile> =
-        project.modules
-            .asSequence()
-            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
+    override fun suggestManifests(): Sequence<VirtualFile> {
+        return sequence {
+            for (module in project.modules) {
+                for (contentRoot in ModuleRootManager.getInstance(module).contentRoots.asSequence()) {
+                    contentRoot.findChild("bazel-bin")?.let {
+                        yieldAll(it.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
+                    }
+                    yieldAll(contentRoot.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
+                }
+            }
+        }
+    }
+
+    private fun VirtualFile.findChildrenRecursively(name: String, excludeDirs: Set<Regex>): Collection<VirtualFile> {
+        return listOfNotNull(findChild(name)) + children
+            .filterNot { excludeDirs.any { regex -> regex.matches(it.name) } }
+            .flatMap { it.findChildrenRecursively(name, excludeDirs) }
+    }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
@@ -547,16 +557,12 @@ data class CargoProjectImpl(
             possiblePackages.any { workspace.findPackageByName(it) != null }
     }
 
-    fun findStdlibInBazelWorkspace(): File? {
-        val stdlibPath = stdlibPathBazel()
-        return if (stdlibPath != null && Files.exists(stdlibPath)) stdlibPath.toFile() else null
-    }
-
-    fun stdlibPathBazel(): Path? {
-        val workspaceRoot: CargoWorkspace.Package = rawWorkspace?.findRootPackage() ?: return null
-        val projectName = workspaceRoot.rootDirectory.fileName.toString()
-        // TODO: fragile + OS dependent
-        return Path.of(workspaceRoot.rootDirectory.toString(), "bazel-$projectName/external/rust_darwin_x86_64/lib/rustlib/src/library")
+    fun stdlibPathBazel(): File? {
+        var workspaceRoot: Path = rawWorkspace?.findRootPackage()?.rootDirectory ?: return null
+        while ("bazel-bin" in workspaceRoot.toString()) workspaceRoot = workspaceRoot.parent
+        val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(workspaceRoot.toFile())
+        return Path.of(toolchainRoot.toString(), "lib/rustlib/src/library").toFile()
+            .let { if (it.exists()) it else null }
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
@@ -661,6 +667,8 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
         }
     }
 }
+
+private val PROJECT_SEARCH_EXCLUDES = setOf(Regex("bazel-.*"), Regex("external"))
 
 private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.(VirtualFile) -> Unit) {
     val packageModule = ModuleUtilCore.findModuleForFile(this, project) ?: return

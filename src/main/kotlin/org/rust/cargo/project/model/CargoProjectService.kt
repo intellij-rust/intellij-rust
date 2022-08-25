@@ -161,11 +161,8 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
         discoverToolchain(project)
         return true
     }
-    if (!project.cargoProjects.hasAtLeastOneValidProject) {
-        project.cargoProjects.discoverAndRefresh()
-        return true
-    }
-    return false
+    project.cargoProjects.discoverAndRefresh()
+    return true
 }
 
 private fun discoverToolchain(project: Project) {
