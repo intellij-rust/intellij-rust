@@ -147,9 +147,11 @@ abstract class RsToolchainBase(val location: Path) {
         }
 
         fun findToolchainInBazelProject(projectRoot: File): Path? {
-            val projectName = projectRoot.name
-
-            return projectRoot.resolve("bazel-$projectName").resolve("external").listFiles()
+            var file = projectRoot
+            while (!file.resolve("bazel-${file.name}").exists()) {
+                file = file.parentFile ?: return null
+            }
+            return file.resolve("bazel-${file.name}").resolve("external").listFiles()
                 ?.firstOrNull { it.name.startsWith("rust_darwin") || it.name.startsWith("rust_windows")
                     || it.name.startsWith("rust_linux") || it.name.startsWith("rust_freebsd") }
                 ?.toPath()

@@ -557,8 +557,8 @@ data class CargoProjectImpl(
             possiblePackages.any { workspace.findPackageByName(it) != null }
     }
 
-    fun stdlibPathBazel(): File? {
-        var workspaceRoot: Path = rawWorkspace?.findRootPackage()?.rootDirectory ?: return null
+    fun stdlibPathBazel(workingDirectory: Path): File? {
+        var workspaceRoot: Path = workingDirectory
         while ("bazel-bin" in workspaceRoot.toString()) workspaceRoot = workspaceRoot.parent
         val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(workspaceRoot.toFile())
         return Path.of(toolchainRoot.toString(), "lib/rustlib/src/library").toFile()

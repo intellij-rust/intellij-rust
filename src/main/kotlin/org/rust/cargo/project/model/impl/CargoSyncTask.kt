@@ -418,7 +418,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
         }
 
         if (isBazelProject(workingDirectory)) {
-            cargoProject.stdlibPathBazel()?.let {
+            cargoProject.stdlibPathBazel(workingDirectory)?.let {
                 val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
                 return@runWithChildProgress when (std) {
                     null -> TaskResult.Err("invalid standard library: ${it.path}")
