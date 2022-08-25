@@ -276,15 +276,18 @@ private class WorkspaceImpl(
 
                 val wrappedDeps = deps.flatMap { featureDep ->
                     when {
+                        featureDep.startsWith("dep:") -> emptyList()
                         featureDep in pkgFeatures -> listOf(PackageFeature(pkg, featureDep))
                         "/" in featureDep -> {
-                            val (crateName, name) = featureDep.split('/', limit = 2)
+                            val (firstSegment, name) = featureDep.split('/', limit = 2)
+                            val optional = firstSegment.endsWith("?")
+                            val depName = firstSegment.removeSuffix("?")
 
-                            val dep = pkg.dependencies.find { it.cargoFeatureDependencyPackageName == crateName }
+                            val dep = pkg.dependencies.find { it.cargoFeatureDependencyPackageName == depName }
                                 ?: return@flatMap emptyList()
 
                             if (name in dep.pkg.rawFeatures) {
-                                if (dep.isOptional) {
+                                if (!optional && dep.isOptional) {
                                     listOf(PackageFeature(pkg, dep.cargoFeatureDependencyPackageName), PackageFeature(dep.pkg, name))
                                 } else {
                                     listOf(PackageFeature(dep.pkg, name))

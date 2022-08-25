@@ -30,6 +30,7 @@ import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
+import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
@@ -177,6 +178,12 @@ fun CargoProjectsService.singleWorkspace(): CargoWorkspace = singleProject().wor
 
 fun CargoProjectsService.singlePackage(name: String): CargoWorkspace.Package =
     singleWorkspace().packages.singleOrNull { it.name == name } ?: error("Package with name `$name` does not exists")
+
+fun CargoProjectsService.enableCargoFeature(packageName: String, featureName: FeatureName) =
+    modifyFeatures(singleProject(), setOf(PackageFeature(singlePackage(packageName), featureName)), FeatureState.Enabled)
+
+fun CargoProjectsService.disableCargoFeature(packageName: String, featureName: FeatureName) =
+    modifyFeatures(singleProject(), setOf(PackageFeature(singlePackage(packageName), featureName)), FeatureState.Disabled)
 
 fun CargoWorkspace.Package.checkFeatureEnabled(featureName: FeatureName) =
     checkFeatureState(featureName, FeatureState.Enabled)
