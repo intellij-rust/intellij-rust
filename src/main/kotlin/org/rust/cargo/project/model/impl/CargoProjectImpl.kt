@@ -223,20 +223,31 @@ open class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
-        val guessManifest = suggestManifests().firstOrNull()
-            ?: return CompletableFuture.completedFuture(projects.currentState)
+        val guessManifests = suggestManifests()
 
         return modifyProjects { projects ->
-            if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
-            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
+            doRefresh(project, guessManifests.map { CargoProjectImpl(it.pathAsPath, this) }.toList())
         }
     }
 
-    override fun suggestManifests(): Sequence<VirtualFile> =
-        project.modules
-            .asSequence()
-            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild("bazel-bin")?.findChild(CargoConstants.MANIFEST_FILE) ?: it.findChild(CargoConstants.MANIFEST_FILE) }
+    override fun suggestManifests(): Sequence<VirtualFile> {
+        return sequence {
+            for (module in project.modules) {
+                for (contentRoot in ModuleRootManager.getInstance(module).contentRoots.asSequence()) {
+                    contentRoot.findChild("bazel-bin")?.let {
+                        yieldAll(it.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
+                    }
+                    yieldAll(contentRoot.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
+                }
+            }
+        }
+    }
+
+    private fun VirtualFile.findChildrenRecursively(name: String, excludeDirs: Set<Regex>): Collection<VirtualFile> {
+        return listOfNotNull(findChild(name)) + children
+            .filterNot { excludeDirs.any { regex -> regex.matches(it.name) } }
+            .flatMap { it.findChildrenRecursively(name, excludeDirs) }
+    }
 
     /**
      * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
@@ -552,7 +563,6 @@ data class CargoProjectImpl(
         val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(workspaceRoot.toFile())
         return Path.of(toolchainRoot.toString(), "lib/rustlib/src/library").toFile()
             .let { if (it.exists()) it else null }
-            .also { println("stdlibPathBazel returned $it") }
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
@@ -657,6 +667,8 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
         }
     }
 }
+
+private val PROJECT_SEARCH_EXCLUDES = setOf(Regex("bazel-.*"), Regex("external"))
 
 private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.(VirtualFile) -> Unit) {
     val packageModule = ModuleUtilCore.findModuleForFile(this, project) ?: return
