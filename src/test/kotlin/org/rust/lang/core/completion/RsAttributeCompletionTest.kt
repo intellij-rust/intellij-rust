@@ -310,4 +310,30 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         #[function_like_/*caret*/]
         fn func() {}
     """)
+
+    fun `test target_feature on function`() = doSingleAttributeCompletion("""
+        #[target_f/*caret*/]
+        fn foo() {}
+    """, """
+        #[target_feature(/*caret*/)]
+        fn foo() {}
+    """)
+
+    fun `test no target_feature on type`() = checkNoCompletion("""
+        #[target_f/*caret*/]
+        type Foo = bool;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test proc_macro completions on function in proc-macro crate`() = checkAttributeCompletionByFileTree(
+        listOf("proc_macro", "proc_macro_derive", "proc_macro_attribute"), """
+        //- dep-proc-macro/lib.rs
+        #[proc_ma/*caret*/]
+        fn mac() {}
+    """)
+
+    fun `test no proc_macro attributes on function in non-proc-macro crate`() = checkNoCompletion("""
+        #[proc_ma/*caret*/]
+        fn mac() {}
+    """)
 }
