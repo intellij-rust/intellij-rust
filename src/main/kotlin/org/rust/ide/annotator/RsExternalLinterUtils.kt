@@ -262,7 +262,10 @@ private data class RsExternalLinterFilteredMessage(
                     .forEach { add(it) }
 
                 joinToString("<br>") { formatMessage(it) }
-                    .replace(URL_REGEX) { url -> "<a href='${url.value}'>${url.value}</a>" }
+                    .replace(URL_REGEX) {
+                        val url = it.groupValues[1]
+                        "&lt;<a href='$url'>$url</a>&gt;"
+                    }
             }
 
             return RsExternalLinterFilteredMessage(
@@ -280,7 +283,7 @@ fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)
 
 private val ERROR_REGEX: Regex = """E\d{4}""".toRegex()
-private val URL_REGEX: Regex = URLUtil.URL_PATTERN.toRegex()
+private val URL_REGEX: Regex = "&lt;(${URLUtil.URL_PATTERN})&gt;".toRegex()
 
 private fun ErrorCode?.formatAsLink(): String? {
     if (this?.code?.matches(ERROR_REGEX) != true) return null
