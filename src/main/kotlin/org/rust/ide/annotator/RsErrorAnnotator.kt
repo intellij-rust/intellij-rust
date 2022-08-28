@@ -120,6 +120,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatTup(o: RsPatTup) = checkRsPatTup(rsHolder, o)
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
             override fun visitMetaItem(o: RsMetaItem) = checkMetaItem(rsHolder, o)
+            override fun visitFieldLookup(o: RsFieldLookup) = checkFieldLookup(rsHolder, o)
         }
 
         element.accept(visitor)
@@ -1474,6 +1475,19 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val compilerFeature = SUPPORTED_CALLING_CONVENTIONS[abiName]
             compilerFeature?.check(holder, litExpr, "$abiName ABI")
         }
+    }
+
+    private fun checkFieldLookup(holder: RsAnnotationHolder, field: RsFieldLookup) {
+        if (field.isAsync) {
+            checkIsAsyncContext(holder, field)
+        }
+    }
+
+    private fun checkIsAsyncContext(holder: RsAnnotationHolder, element: RsElement) {
+        if (element.isInAsyncContext) return
+        val function = element.ancestorStrict<RsFunctionOrLambda>() ?: return
+        val fix = MakeAsyncFix(function)
+        RsDiagnostic.AwaitOutsideAsyncContext(element, fix).addToHolder(holder)
     }
 
     private fun isInTrait(o: RsVis): Boolean =
