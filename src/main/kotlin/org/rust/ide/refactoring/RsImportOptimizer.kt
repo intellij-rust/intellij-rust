@@ -9,8 +9,10 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.inspections.lints.PathUsageMap
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
 import org.rust.ide.inspections.lints.isUsed
+import org.rust.ide.inspections.lints.pathUsage
 import org.rust.ide.utils.import.COMPARATOR_FOR_SPECKS_IN_USE_GROUP
 import org.rust.ide.utils.import.UseItemWrapper
 import org.rust.lang.core.psi.*
@@ -42,28 +44,26 @@ class RsImportOptimizer : ImportOptimizer {
         externCrateItems.forEach { it.delete() }
     }
 
-    private fun optimizeAndReorderUseItems(mod: RsMod) {
-        val uses = mod.childrenOfType<RsUseItem>()
-        if (uses.isNotEmpty()) {
-            replaceOrderOfUseItems(mod, uses)
+    private fun optimizeAndReorderUseItems(file: RsFile) {
+        file.forEachMod { mod, pathUsage ->
+            val uses = mod.childrenOfType<RsUseItem>()
+            replaceOrderOfUseItems(mod, uses, pathUsage)
         }
-        val mods = mod.childrenOfType<RsMod>()
-        mods.forEach { optimizeAndReorderUseItems(it) }
     }
 
     companion object {
 
-        fun optimizeUseItems(mod: RsMod) {
-            val psiFactory = RsPsiFactory(mod.project)
-            val uses = mod.childrenOfType<RsUseItem>()
-            uses.forEach { optimizeUseItem(psiFactory, it) }
-            val mods = mod.childrenOfType<RsMod>()
-            mods.forEach { optimizeUseItems(it) }
+        fun optimizeUseItems(file: RsFile) {
+            val factory = RsPsiFactory(file.project)
+            file.forEachMod { mod, pathUsage ->
+                val uses = mod.childrenOfType<RsUseItem>()
+                uses.forEach { optimizeUseItem(it, factory, pathUsage) }
+            }
         }
 
-        private fun optimizeUseItem(psiFactory: RsPsiFactory, useItem: RsUseItem) {
+        private fun optimizeUseItem(useItem: RsUseItem, factory: RsPsiFactory, pathUsage: PathUsageMap?) {
             val useSpeck = useItem.useSpeck ?: return
-            val used = optimizeUseSpeck(psiFactory, useSpeck)
+            val used = optimizeUseSpeck(useSpeck, factory, pathUsage)
             if (!used) {
                 (useItem.nextSibling as? PsiWhiteSpace)?.delete()
                 useItem.delete()
@@ -72,24 +72,24 @@ class RsImportOptimizer : ImportOptimizer {
 
         /** Returns false if [useSpeck] is empty and should be removed */
         private fun optimizeUseSpeck(
-            psiFactory: RsPsiFactory,
             useSpeck: RsUseSpeck,
-            checkUnusedImports: Boolean = RsUnusedImportInspection.isEnabled(useSpeck.project),
+            factory: RsPsiFactory,
+            // PSI changes during optimizing increments modification tracker
+            // So we pass [pathUsage] so it will not be recalculated
+            pathUsage: PathUsageMap?,
         ): Boolean {
             val useGroup = useSpeck.useGroup
             if (useGroup == null) {
-                if (!checkUnusedImports) return true
-
-                return if (!useSpeck.isUsed()) {
+                return if (pathUsage != null && !useSpeck.isUsed(pathUsage)) {
                     useSpeck.deleteWithSurroundingComma()
                     false
                 } else {
                     true
                 }
             } else {
-                useGroup.useSpeckList.forEach { optimizeUseSpeck(psiFactory, it, checkUnusedImports) }
+                useGroup.useSpeckList.forEach { optimizeUseSpeck(it, factory, pathUsage) }
                 if (removeUseSpeckIfEmpty(useSpeck)) return false
-                if (removeCurlyBracesIfPossible(psiFactory, useSpeck)) return true
+                if (removeCurlyBracesIfPossible(factory, useSpeck)) return true
                 useGroup.sortUseSpecks()
                 return true
             }
@@ -126,7 +126,7 @@ class RsImportOptimizer : ImportOptimizer {
             return true
         }
 
-        private fun replaceOrderOfUseItems(mod: RsMod, uses: Collection<RsUseItem>) {
+        private fun replaceOrderOfUseItems(mod: RsMod, uses: Collection<RsUseItem>, pathUsage: PathUsageMap?) {
             // We should ignore all items before `{` in inline modules
             val offset = if (mod is RsModItem) mod.lbrace.textOffset + 1 else 0
             val first = mod.childrenOfType<RsElement>()
@@ -137,7 +137,7 @@ class RsImportOptimizer : ImportOptimizer {
                 .map { UseItemWrapper(it) }
                 .filter {
                     val useSpeck = it.useItem.useSpeck ?: return@filter false
-                    optimizeUseSpeck(psiFactory, useSpeck)
+                    optimizeUseSpeck(useSpeck, psiFactory, pathUsage)
                 }
                 .sorted()
 
@@ -154,4 +154,26 @@ class RsImportOptimizer : ImportOptimizer {
             }
         }
     }
+}
+
+private fun RsFile.forEachMod(callback: (RsMod, PathUsageMap?) -> Unit) {
+    getAllModulesInFile()
+        .filter { it.childOfType<RsUseItem>() != null }
+        .map { it to getPathUsage(it) }
+        .forEach { (mod, pathUsage) -> callback(mod, pathUsage) }
+}
+
+private fun RsFile.getAllModulesInFile(): List<RsMod> {
+    val result = mutableListOf<RsMod>()
+    fun go(mod: RsMod) {
+        result += mod
+        mod.childrenOfType<RsModItem>().forEach(::go)
+    }
+    go(this)
+    return result
+}
+
+private fun getPathUsage(mod: RsMod): PathUsageMap? {
+    if (!RsUnusedImportInspection.isEnabled(mod.project)) return null
+    return mod.pathUsage
 }

@@ -148,12 +148,10 @@ private fun isApplicableForUseItem(item: RsUseItem): Boolean {
  * A usage can be either a path that uses the import of the use speck or a method call/associated item available through
  * a trait that is imported by this use speck.
  */
-fun RsUseSpeck.isUsed(): Boolean {
+fun RsUseSpeck.isUsed(pathUsage: PathUsageMap): Boolean {
     val useItem = ancestorStrict<RsUseItem>() ?: return true
     if (!isApplicableForUseItem(useItem)) return true
-    val owner = useItem.parent as? RsItemsOwner ?: return true
-    val usage = owner.pathUsage
-    return isUseSpeckUsed(this, usage)
+    return isUseSpeckUsed(this, pathUsage)
 }
 
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
