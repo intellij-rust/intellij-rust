@@ -4883,4 +4883,31 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn main() {}
     """)
+
+    fun `test recursive async function E0733`() = checkErrors("""
+        async fn func1() {
+            func1().<error descr="Recursion in an `async fn` requires boxing [E0733]">await</error>;
+            func1();
+        }
+        async fn func2() {
+            func1().await;
+        }
+        async fn func3() {
+            let _ = async || {
+                func3().await;
+            };
+            async fn inner() {
+                func3().await;
+            }
+        }
+
+        #[async_recursion]
+        async fn func4() {
+            func4().await;
+        }
+        #[async_recursion::async_recursion]
+        async fn func5() {
+            func5().await;
+        }
+    """)
 }
