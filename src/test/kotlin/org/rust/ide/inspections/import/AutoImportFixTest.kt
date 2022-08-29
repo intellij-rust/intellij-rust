@@ -3074,4 +3074,27 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             foo();
         }
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test filter single mod when root path resolves to same item`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Foo;
+        }
+    //- lib.rs
+        pub mod foo {
+            pub use dep_lib_target::foo::Foo;
+        }
+    //- main.rs
+        fn main() {
+            let _ = foo/*caret*/::Foo;
+        }
+    """, """
+    //- main.rs
+        use dep_lib_target::foo;
+
+        fn main() {
+            let _ = foo::Foo;
+        }
+    """)
 }
