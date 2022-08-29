@@ -118,6 +118,14 @@ class CargoSyncTask(
                     createContext = { it },
                     action = { childProgress ->
                         if (!cargoProject.workingDirectory.exists()) {
+                            childProgress.message(
+                                "Project directory does not exist",
+                                "Project directory `${cargoProject.workingDirectory}` does not exist.\n" +
+                                    "Consider detaching the project `${cargoProject.presentableName}` " +
+                                    "from the Cargo tool window",
+                                MessageEvent.Kind.ERROR,
+                                null
+                            )
                             val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
                             CargoProjectWithStdlib(cargoProject.copy(stdlibStatus = stdlibStatus), null)
                         } else {

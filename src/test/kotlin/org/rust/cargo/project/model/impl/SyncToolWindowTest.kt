@@ -13,10 +13,12 @@ import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import org.rust.WithExperimentalFeatures
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.launchAction
+import java.nio.file.Path
 
 class SyncToolWindowTest : RsWithToolchainTestBase() {
 
@@ -31,6 +33,16 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
     override fun tearDown() {
         buildViewTestFixture.tearDown()
         super.tearDown()
+    }
+
+    fun `test non-existing project`() {
+        project.cargoProjects.attachCargoProject(Path.of("/non-existing-project/Cargo.toml"))
+        checkSyncViewTree("""
+            -
+             -failed
+              -Sync non-existing-project project
+               Project directory does not exist
+        """)
     }
 
     fun `test single project`() {
