@@ -327,3 +327,10 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
         processor(it)
     }
 }
+
+fun filterAttributeProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
+    createProcessor(processor.name) { e ->
+        val function = e.element as? RsFunction ?: return@createProcessor false
+        if (!function.isAttributeProcMacroDef) return@createProcessor false
+        processor(e)
+    }

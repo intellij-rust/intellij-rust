@@ -18,7 +18,9 @@ class RsAttributeProcMacroReferenceImpl(
     RsPathReference {
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.referenceName) { processProcMacroResolveVariants(element, it) }
+        collectResolveVariants(element.referenceName) {
+            processProcMacroResolveVariants(element, it, isCompletion = false)
+        }
 
     override fun isReferenceTo(element: PsiElement): Boolean =
         element is RsFunction && super.isReferenceTo(element)

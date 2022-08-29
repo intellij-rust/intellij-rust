@@ -855,7 +855,11 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
     return simple.any { processor(it) }
 }
 
-fun processProcMacroResolveVariants(path: RsPath, originalProcessor: RsResolveProcessor): Boolean {
+fun processProcMacroResolveVariants(
+    path: RsPath,
+    originalProcessor: RsResolveProcessor,
+    isCompletion: Boolean
+): Boolean {
     val qualifier = path.qualifier
 
     val processor = createProcessor(originalProcessor.name) {
@@ -868,7 +872,7 @@ fun processProcMacroResolveVariants(path: RsPath, originalProcessor: RsResolvePr
     return if (qualifier == null) {
         processMacroCallVariantsInScope(path, isAttrOrDerive = true, processor)
     } else {
-        processMacroCallPathResolveVariants(path, isCompletion = false, processor)
+        processMacroCallPathResolveVariants(path, isCompletion, processor)
     }
 }
 

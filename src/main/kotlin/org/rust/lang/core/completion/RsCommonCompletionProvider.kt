@@ -101,8 +101,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val parent = element.parent
         when {
             parent is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
-            // Handled by [RsDeriveCompletionProvider]
-            parent is RsMetaItem -> return
+            parent is RsMetaItem -> {
+                // Derive is handled by [RsDeriveCompletionProvider]
+                if (!RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
+                val filtered = filterAttributeProcMacros(processor)
+                processProcMacroResolveVariants(element, filtered, isCompletion = true)
+            }
             // Handled by [RsVisRestrictionCompletionProvider]
             parent is RsVisRestriction && parent.`in` == null -> return
             else -> {

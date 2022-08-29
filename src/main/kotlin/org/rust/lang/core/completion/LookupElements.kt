@@ -294,7 +294,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     appendSemicolon(context, curUseItem)
                 } else {
                     val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
-                    if (!context.alreadyHasCallParens) {
+                    if (!context.alreadyHasCallParens && !context.isInMetaItem) {
                         document.insertString(context.selectionEndOffset, "()")
                         context.doNotAddOpenParenCompletionChar()
                     }
@@ -397,6 +397,9 @@ inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Bo
 
 private val InsertionContext.isInUseGroup: Boolean
     get() = getElementOfType<RsUseGroup>() != null
+
+private val InsertionContext.isInMetaItem: Boolean
+    get() = getElementOfType<RsMetaItem>() != null
 
 val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
