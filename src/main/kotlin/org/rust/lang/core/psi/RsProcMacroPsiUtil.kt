@@ -48,7 +48,7 @@ object RsProcMacroPsiUtil {
     fun canBeCustomDeriveWithoutContextCheck(metaItem: RsMetaItemPsiOrStub) =
         KNOWN_DERIVABLE_TRAITS[metaItem.name]?.isStd != true
 
-    private fun canBeProcMacroAttributeCall(
+    fun canBeProcMacroAttributeCall(
         metaItem: RsMetaItem,
         customAttrs: CustomAttributes = CustomAttributes.EMPTY
     ): Boolean {

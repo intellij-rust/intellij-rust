@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
+
 class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
     fun `test derive on struct`() = doSingleAttributeCompletion("""
         #[der/*caret*/]
@@ -267,5 +270,44 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
     fun `test no non_exhaustive on function`() = checkNoCompletion("""
         #[non_/*caret*/]
         fn foo() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test attribute proc macro (unqualified)`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        use dep_proc_macro::attr_as_is;
+        #[attr_as_/*caret*/]
+        fn func() {}
+    """, """
+        use dep_proc_macro::attr_as_is;
+        #[attr_as_is]/*caret*/
+        fn func() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test attribute proc macro (qualified)`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[dep_proc_macro::attr_as_/*caret*/]
+        fn func() {}
+    """, """
+        #[dep_proc_macro::attr_as_is]/*caret*/
+        fn func() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no function like proc macro`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { return input; }
+    //- lib.rs
+        use dep_proc_macro::function_like_as_is;
+        #[function_like_/*caret*/]
+        fn func() {}
     """)
 }
