@@ -105,12 +105,25 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
-    fun `test ignore public reexport`() = checkByText("""
+    fun `test public reexport in lib crate`() = checkByFileTree("""
+    //- lib.rs
+        /*caret*/
         pub mod foo {
             pub struct S {}
         }
 
         pub use foo::S;
+        <warning descr="Unused import: `foo::S`">pub(crate) use foo::S;</warning>
+    """)
+
+    fun `test public reexport in bin crate`() = checkByFileTree("""
+    //- main.rs
+        /*caret*/
+        pub mod foo {
+            pub struct S {}
+        }
+
+        <warning descr="Unused import: `foo::S`">pub use foo::S;</warning>
         <warning descr="Unused import: `foo::S`">pub(crate) use foo::S;</warning>
     """)
 
@@ -601,7 +614,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             pub fn foo() {}
         }
         mod mod2 {
-            pub use crate::mod1::foo;
+            <warning descr="Unused import: `crate::mod1::foo`">pub use crate::mod1::foo;</warning>
             pub fn bar() {}
         }
         mod test {
