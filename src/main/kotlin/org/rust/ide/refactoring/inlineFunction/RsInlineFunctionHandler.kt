@@ -8,7 +8,6 @@ package org.rust.ide.refactoring.inlineFunction
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -20,6 +19,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.isUnitTestMode
 
 class RsInlineFunctionHandler : InlineActionHandler() {
     override fun isEnabledOnElement(element: PsiElement): Boolean = canInlineElement(element)
@@ -55,7 +55,7 @@ class RsInlineFunctionHandler : InlineActionHandler() {
         }
 
         val dialog = RsInlineFunctionDialog(function, reference as RsReference?, allowInlineThisOnly)
-        if (!ApplicationManager.getApplication().isUnitTestMode && dialog.shouldBeShown()) {
+        if (!isUnitTestMode) {
             dialog.show()
             if (!dialog.isOK) {
                 val statusBar = WindowManager.getInstance().getStatusBar(function.project)

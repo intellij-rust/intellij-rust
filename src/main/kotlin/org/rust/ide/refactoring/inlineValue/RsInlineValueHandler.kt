@@ -35,7 +35,7 @@ class RsInlineValueHandler : InlineActionHandler() {
         val context = getContext(project, editor, element, reference) ?: return
 
         val dialog = RsInlineValueDialog(context)
-        if (!isUnitTestMode && dialog.shouldBeShown()) {
+        if (!isUnitTestMode) {
             dialog.show()
             if (!dialog.isOK) {
                 val statusBar = WindowManager.getInstance().getStatusBar(project)
