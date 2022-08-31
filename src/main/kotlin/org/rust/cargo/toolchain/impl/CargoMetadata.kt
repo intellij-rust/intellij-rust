@@ -23,6 +23,7 @@ import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
+import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -363,17 +364,22 @@ object CargoMetadata {
 
     private fun isBazelBinPath(path: String) = "/bazel-bin/" in path || path.endsWith("bazel-bin")
 
-    fun bazelOutPathToProjectPath(path: String, workspaceRoot: String): String {
+    fun bazelPathToSourcesPath(path: String, workspaceRoot: String): String {
         val projectRelativePathStartIndex = path.indexOf("/bin", startIndex = path.indexOf("/bazel-out/")) + 4
         if (projectRelativePathStartIndex == -1) return path
         val projectRelativePath = path.substring(projectRelativePathStartIndex).trim('/')
         val projectRoot = if (isBazelBinPath(workspaceRoot)) {
-            val bazelBinPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
-            if (Path.of(bazelBinPath, projectRelativePath).exists()) {
-                bazelBinPath
+            if ("bin/external" in path) {
+                val repoRoot = Path.of(workspaceRoot.substring(0, workspaceRoot.indexOf("bazel-bin")))
+                repoRoot.resolve("bazel-${repoRoot.fileName}").toString()
             } else {
-                val projectPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin"))
-                if (Path.of(projectPath, projectRelativePath).exists()) projectPath else workspaceRoot
+                val bazelBinPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
+                if (Path.of(bazelBinPath, projectRelativePath).exists()) {
+                    bazelBinPath
+                } else {
+                    val projectPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin"))
+                    if (Path.of(projectPath, projectRelativePath).exists()) projectPath else workspaceRoot
+                }
             }
         } else workspaceRoot
         // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
@@ -423,7 +429,7 @@ object CargoMetadata {
         workspaceRoot: String
     ): CargoWorkspaceData.Package {
         val rootPath = if (isBazelOutPath(manifest_path)) {
-            bazelOutPathToProjectPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
+            bazelPathToSourcesPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
         } else PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
@@ -544,7 +550,7 @@ object CargoMetadata {
     private val DYNAMIC_LIBRARY_EXTENSIONS: List<String> = listOf(".dll", ".so", ".dylib")
 
     private fun Target.clean(root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
-        val mainFile = root.findFileByMaybeRelativePath(src_path)
+        val mainFile = root.findFileByMaybeRelativePath(collapseDoubleDots(src_path))
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
         return mainFile?.let {
@@ -557,6 +563,22 @@ object CargoMetadata {
                 requiredFeatures = required_features.orEmpty()
             )
         }
+    }
+
+    private fun collapseDoubleDots(path: String): String {
+        // Double dots don't behave as intended when we're in a symlink, such as the Bazel sandbox
+        val components = path.split(File.separator).toMutableList()
+        var i = 0
+        while (i < components.size) {
+            if (components[i] == ".." && i > 0) {
+                components.removeAt(i)
+                components.removeAt(i - 1)
+                i--
+            } else {
+                i++
+            }
+        }
+        return components.joinToString(File.separator)
     }
 
     private fun makeTargetKind(target: TargetKind, crateTypes: List<CrateType>): CargoWorkspace.TargetKind {
