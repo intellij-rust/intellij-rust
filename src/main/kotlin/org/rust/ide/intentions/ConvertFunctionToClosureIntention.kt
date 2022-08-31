@@ -36,20 +36,22 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
         return Context(possibleTarget)
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: Context) {
+    override fun invoke(project: Project, editor: Editor, ctx: Context) = doInvoke(project, editor, ctx.targetFunction)
+
+    fun doInvoke(project: Project, editor: Editor?, function: RsFunction) {
         val factory = RsPsiFactory(project)
 
-        val parametersText = ctx.targetFunction.rawValueParameters.joinToString(", ", transform = RsValueParameter::getText)
-        val returnText = ctx.targetFunction.retType?.text ?: ""
+        val parametersText = function.rawValueParameters.joinToString(", ", transform = RsValueParameter::getText)
+        val returnText = function.retType?.text ?: ""
 
-        val bodyText = ctx.targetFunction.block?.text ?: return
+        val bodyText = function.block?.text ?: return
 
         val lambda = factory.createLambda("|$parametersText| $returnText $bodyText")
-        val declaration = factory.createLetDeclaration(ctx.targetFunction.identifier.text, lambda)
+        val declaration = factory.createLetDeclaration(function.identifier.text, lambda)
 
-        val replaced = ctx.targetFunction.replace(declaration) as RsLetDecl
+        val replaced = function.replace(declaration) as RsLetDecl
         replaced.semicolon?.endOffset?.let {
-            editor.caretModel.moveToOffset(it)
+            editor?.caretModel?.moveToOffset(it)
         }
     }
 
