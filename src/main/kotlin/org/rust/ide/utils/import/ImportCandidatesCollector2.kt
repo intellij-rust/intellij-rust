@@ -127,6 +127,7 @@ object ImportCandidatesCollector2 {
 
 private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): List<ImportCandidate> =
     itemsPaths
+        .filterForSingleRootItem(this)
         .groupBy { it.toItemWithNamespace() }
         .mapValues { (item, paths) -> filterForSingleItem(paths, item) }
         .flatMap { (item, paths) ->
@@ -343,7 +344,7 @@ private fun ItemWithNamespace.toPsi(info: RsModInfo): List<RsNamedElement> =
     VisItem(path, Visibility.Public, isModOrEnum).toPsi(info, namespace)
 
 private fun filterForSingleItem(paths: List<ItemUsePath>, item: ItemWithNamespace): List<ItemUsePath> =
-    filterForSingleCrate(paths, item)
+    filterForSingleCrate(paths, item.path.crate)
         .groupBy { it.crate }
         .mapValues { filterShortestPath(it.value) }
         .flatMap { it.value }
@@ -352,10 +353,10 @@ private fun filterForSingleItem(paths: List<ItemUsePath>, item: ItemWithNamespac
  * If we can access crate of item ⇒ ignore paths through other crates.
  * Exception: when item is declared in `core` and reexported in `std`, we should use `std` path.
  */
-private fun filterForSingleCrate(paths: List<ItemUsePath>, item: ItemWithNamespace): List<ItemUsePath> {
+private fun filterForSingleCrate(paths: List<ItemUsePath>, itemCrate: CratePersistentId): List<ItemUsePath> {
     return paths.filter { it.crate.normName == AutoInjectedCrates.STD }
         .ifEmpty {
-            paths.filter { it.crate.id == item.path.crate }
+            paths.filter { it.crate.id == itemCrate }
         }
         .ifEmpty {
             paths
@@ -366,6 +367,43 @@ private fun filterForSingleCrate(paths: List<ItemUsePath>, item: ItemWithNamespa
 private fun filterShortestPath(paths: List<ItemUsePath>): List<ItemUsePath> {
     val minPathSize = paths.minOf { it.path.size }
     return paths.filter { it.path.size == minPathSize }
+}
+
+/**
+ * error::Error
+ * ~~~~~ this = [std::error, core::error]
+ * ~~~~~~~~~~~~ root path - same item for both, so keep only `std::error`
+ */
+private fun List<ItemUsePath>.filterForSingleRootItem(context: ImportContext2): List<ItemUsePath> {
+    if (size <= 1 || !all { it.item.isModOrEnum }) return this
+    if (context.type == ImportContext2.Type.COMPLETION) return this
+    val segments = context.pathInfo?.nextSegments ?: return this
+    return groupBy { resolveRootPath(context.rootDefMap, it, segments) ?: return this }
+        .mapValues { (perNs, paths) ->
+            val crate = perNs.singleCrate() ?: return this
+            filterForSingleCrate(paths, crate)
+        }
+        .flatMap { it.value }
+}
+
+private fun PerNs.singleCrate(): CratePersistentId? =
+    (types + values + macros)
+        .mapTo(hashSetOf()) { it.crate }
+        .singleOrNull()
+
+/**
+ * mod1::mod2::Item
+ *       ~~~~~~~~~~ segments
+ * ~~~~ path
+ */
+private fun resolveRootPath(defMap: CrateDefMap, path: ItemUsePath, segments: List<String>): PerNs? {
+    var perNs = PerNs.types(path.item)
+    for (segment in segments) {
+        val visItem = perNs.types.singleOrNull { !it.visibility.isInvisible } ?: return null
+        val modData = defMap.tryCastToModData(visItem) ?: return null
+        perNs = modData.getVisibleItem(segment)
+    }
+    return perNs
 }
 
 private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {

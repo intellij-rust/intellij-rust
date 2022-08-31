@@ -157,7 +157,7 @@ class PerNsHashMap<K : Any>(
         }
 }
 
-private fun PerNs.asSingleVisItem(): Pair<VisItem, Namespace>? {
+fun PerNs.asSingleVisItem(): Pair<VisItem, Namespace>? {
     if (types.size + values.size + macros.size != 1) return null
     types.singleOrNull()?.let { return it to Namespace.Types }
     values.singleOrNull()?.let { return it to Namespace.Values }

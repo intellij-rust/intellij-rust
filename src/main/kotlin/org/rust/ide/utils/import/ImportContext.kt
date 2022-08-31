@@ -46,10 +46,11 @@ class ImportContext2 private constructor(
         OTHER,
     }
 
-    class PathInfo(
+    class PathInfo private constructor(
         val rootPathText: String?,
         val rootPathParsingMode: RustParserUtil.PathParsingMode?,
         val rootPathAllowedNamespaces: Set<Namespace>?,
+        val nextSegments: List<String>?,
         val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
     ) {
         companion object {
@@ -59,8 +60,20 @@ class ImportContext2 private constructor(
                     rootPathText = rootPath?.text,
                     rootPathParsingMode = rootPath?.pathParsingMode,
                     rootPathAllowedNamespaces = rootPath?.allowedNamespaces(isCompletion),
+                    nextSegments = path.getNextSegments(),
                     namespaceFilter = path.namespaceFilter(isCompletion),
                 )
+            }
+
+            /**
+             * foo1::foo2::foo3::foo4
+             * ~~~~~~~~~~ this
+             *             ~~~~~~~~~~ next segments
+             */
+            private fun RsPath.getNextSegments(): List<String>? {
+                val parent = parent as? RsPath ?: return null
+                return generateSequence(parent) { it.parent as? RsPath }
+                    .mapTo(mutableListOf()) { it.referenceName ?: return null }
             }
         }
     }
