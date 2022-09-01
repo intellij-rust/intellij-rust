@@ -104,7 +104,7 @@ val RsPossibleMacroCall.shouldSkipMacroExpansion: Boolean
 val RsPossibleMacroCall.isTopLevelExpansion: Boolean
     get() = when (val kind = kind) {
         is MacroCall -> kind.call.isTopLevelExpansion
-        is MetaItem -> kind.meta.canBeMacroCall
+        is MetaItem -> kind.meta.canBeMacroCall && kind.meta.owner?.parent is RsMod
     }
 
 val RsPossibleMacroCall.macroBody: MacroCallBody?
