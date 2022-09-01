@@ -395,7 +395,6 @@ private class WorkspaceImpl(
     }
 
     override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace {
-        checkFeaturesInference()
         val featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
 
         return WorkspaceImpl(
