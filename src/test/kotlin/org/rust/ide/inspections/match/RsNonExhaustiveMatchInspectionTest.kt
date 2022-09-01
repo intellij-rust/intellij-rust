@@ -778,6 +778,90 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    // https://github.com/rust-lang/rust/pull/45394
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test E0638 non-exhaustive enum variant match in different crate`() = checkByFileTree("""
+        //- dep-lib/lib.rs
+        pub enum NonExhaustiveVariants {
+            #[non_exhaustive] Struct { field: i32 }
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::NonExhaustiveVariants;
+
+        fn main() {
+            let s = NonExhaustiveVariants::Struct { field: 42 };
+
+            match s {
+                <error descr="`..` required with variant marked as non-exhaustive [E0638]">NonExhaustiveVariants::Struct { field }/*caret*/</error> => {}
+            };
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no E0638 non-exhaustive enum variant match in different crate`() = checkByFileTree("""
+        //- dep-lib/lib.rs
+        pub enum NonExhaustiveVariants {
+            #[non_exhaustive] Struct { field: i32 }
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::NonExhaustiveVariants;
+
+        fn main() {
+            let s = NonExhaustiveVariants::Struct { field: 42 };
+
+            match s {
+                NonExhaustiveVariants::Struct { field, .. }/*caret*/ => {}
+            };
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test E0638 non-exhaustive struct match in different crate`() = checkByFileTree("""
+        //- dep-lib/lib.rs
+        #[non_exhaustive]
+        pub struct NonExhaustiveStruct {
+            pub field: i32
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::NonExhaustiveStruct;
+
+        fn main() {
+            let s = NonExhaustiveStruct { field: 42 };
+
+            match s {
+                <error descr="`..` required with struct marked as non-exhaustive [E0638]">NonExhaustiveStruct { field }/*caret*/</error> => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no E0638 non-exhaustive struct match in different crate E0638`() = checkByFileTree("""
+        //- dep-lib/lib.rs
+        #[non_exhaustive]
+        pub struct NonExhaustiveStruct {
+            pub field: i32
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::NonExhaustiveStruct;
+
+        fn main() {
+            let s = NonExhaustiveStruct { field: 42 };
+
+            match s {
+                NonExhaustiveStruct { field, .. }/*caret*/ => {}
+            }
+        }
+    """)
+
     fun `test empty match simple enum variants`() = checkFixByText("Add remaining patterns", """
         enum FooBar { Foo, Bar }
 

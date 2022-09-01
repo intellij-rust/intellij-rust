@@ -17,10 +17,10 @@ sealed class PatternKind {
     data class Binding(val ty: Ty, val name: String) : PatternKind()
 
     /** Foo(...) or Foo{...} or Foo, where `Foo` is a variant name from an adt with >1 variants (only enums) */
-    data class Variant(val item: RsEnumItem, val variant: RsEnumVariant, val subPatterns: List<Pattern>) : PatternKind()
+    data class Variant(val item: RsEnumItem, val variant: RsEnumVariant, val subPatterns: List<Pattern>, val rest: Boolean = false) : PatternKind()
 
     /** (...), Foo(...), Foo{...}, or Foo, where `Foo` is a variant name from an adt with 1 variant (structs or enums) */
-    data class Leaf(val subPatterns: List<Pattern>) : PatternKind()
+    data class Leaf(val subPatterns: List<Pattern>, val rest: Boolean = false) : PatternKind()
 
     /** &P, &mut P, etc */
     data class Deref(val subPattern: Pattern) : PatternKind()

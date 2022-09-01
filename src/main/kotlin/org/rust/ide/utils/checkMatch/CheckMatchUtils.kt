@@ -134,14 +134,16 @@ private val RsPat.kind: PatternKind
                 subPatterns.add(pattern)
             }
 
-            getLeafOrVariant(item, subPatterns)
+            val hasRest = patRest != null
+
+            getLeafOrVariant(item, subPatterns, hasRest)
         }
 
         is RsPatTupleStruct -> {
             val item = path.reference?.resolve() ?: throw CheckMatchException("Can't resolve ${path.text}")
             val subPatterns = patList.map { it.lower }
 
-            getLeafOrVariant(item, subPatterns)
+            getLeafOrVariant(item, subPatterns, false)
         }
 
         is RsPatConst -> {
@@ -184,10 +186,10 @@ private fun createPatternForField(patField: RsPatField?, field: RsFieldDecl): Pa
     }
 
 // lower_variant_or_leaf
-private fun getLeafOrVariant(item: RsElement, subPatterns: List<Pattern>): PatternKind =
+private fun getLeafOrVariant(item: RsElement, subPatterns: List<Pattern>, rest: Boolean): PatternKind =
     when (item) {
-        is RsEnumVariant -> PatternKind.Variant(item.parentEnum, item, subPatterns)
-        is RsStructItem -> PatternKind.Leaf(subPatterns)
+        is RsEnumVariant -> PatternKind.Variant(item.parentEnum, item, subPatterns, rest)
+        is RsStructItem -> PatternKind.Leaf(subPatterns, rest)
         else -> throw CheckMatchException("Impossible case $item")
     }
 
