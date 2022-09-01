@@ -7,6 +7,8 @@ package org.rust.ide.inspections.import
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.utils.import.Testmarks
 
 class AutoImportFixTest : AutoImportFixTestBase() {
@@ -3096,5 +3098,26 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let _ = foo::Foo;
         }
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import attr proc macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[attr_as_is/*caret*/]
+        fn func() {}
+
+        mod attr_as_is {}
+    """, """
+    //- lib.rs
+        use dep_proc_macro::attr_as_is;
+
+        #[attr_as_is]
+        fn func() {}
+
+        mod attr_as_is {}
     """)
 }
