@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
@@ -640,6 +641,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
         if (!checkSelfImport(holder, path)) return
+        if (!checkCaptureVariableFromOuterFunction(holder, path)) return
 
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
@@ -705,6 +707,22 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun RsPath.isSelfImport(): Boolean {
         val parent = parent
         return self != null && parent is RsUseSpeck && parent.useGroup == null
+    }
+
+    private fun checkCaptureVariableFromOuterFunction(holder: RsAnnotationHolder, path: RsPath): Boolean {
+        if (path.hasColonColon || path.parent is RsPath) return true
+        val declaration = path.reference?.resolve() as? RsPatBinding ?: return true
+        val innerFunction = path.ancestorStrict<RsFunctionOrLambda>() as? RsFunction ?: return true
+        val function = declaration.ancestorStrict<RsFunctionOrLambda>() ?: return true
+        if (!function.isAncestor(innerFunction, strict = true)) return true
+        val fix = run {
+            if (innerFunction.ancestorStrict<RsFunctionOrLambda>() != function) return@run null
+            if (innerFunction.typeParameterList != null) return@run null
+            if (innerFunction.parent !is RsBlock) return@run null
+            ConvertFunctionToClosureFix(innerFunction)
+        }
+        RsDiagnostic.CannotCaptureDynamicEnvironment(path, fix).addToHolder(holder)
+        return false
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
