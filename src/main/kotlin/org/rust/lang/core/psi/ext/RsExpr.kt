@@ -322,19 +322,6 @@ val RsExpr.isInUnsafeContext: Boolean
         return parent is RsBlockExpr || (parent is RsFunction && parent.isActuallyUnsafe)
     }
 
-val RsExpr.isInAsyncContext: Boolean
-    get() {
-        val parent = contexts.find {
-            when (it) {
-                is RsBlockExpr -> it.isAsync
-                is RsFunction -> true
-                else -> false
-            }
-        } ?: return false
-
-        return parent is RsBlockExpr || (parent is RsFunction && parent.isAsync)
-    }
-
 abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub<*>>, RsExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub<*>, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
