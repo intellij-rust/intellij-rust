@@ -140,6 +140,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             testTarget("$contentRoot/bin/a.rs", name, TargetKind.Bin),
             testTarget("$contentRoot/bin/a/main.rs", name, TargetKind.Bin),
             testTarget("$contentRoot/tests/a.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/tests/b.rs", name, TargetKind.Test),
             testTarget("$contentRoot/tests/a/main.rs", name, TargetKind.Test),
             testTarget("$contentRoot/bench/a.rs", name, TargetKind.Bench),
             testTarget("$contentRoot/bench/a/main.rs", name, TargetKind.Bench),

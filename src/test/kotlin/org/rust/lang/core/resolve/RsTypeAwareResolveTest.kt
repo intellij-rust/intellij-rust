@@ -923,4 +923,40 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             s.foo();
         }   //^
     """)
+
+    fun `test resolve impl from a file included into multiple crates 1`() = stubOnlyResolve("""
+    //- tests/foo.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn foo(&self) {}
+        }
+    //- tests/a.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }          //^ tests/foo.rs
+    //- tests/b.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }
+    """)
+
+    fun `test resolve impl from a file included into multiple crates 2`() = stubOnlyResolve("""
+    //- tests/foo.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn foo(&self) {}
+        }
+    //- tests/a.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }
+    //- tests/b.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }          //^ tests/foo.rs
+    """)
 }
