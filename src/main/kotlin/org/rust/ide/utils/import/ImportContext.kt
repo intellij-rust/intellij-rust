@@ -79,7 +79,7 @@ class ImportContext2 private constructor(
     }
 }
 
-private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
+private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (val context = context) {
     is RsTypeReference -> { e ->
         when (e) {
             is RsEnumItem,
@@ -119,6 +119,11 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
     }
     is RsPath -> { e -> Namespace.Types in e.namespaces }
     is RsMacroCall -> { e -> Namespace.Macros in e.namespaces }
+    is RsMetaItem -> if (context.isRootMetaItem()) {
+        { e -> e is RsFunction && e.isAttributeProcMacroDef }
+    } else {
+        { _ -> true }
+    }
     else -> { _ -> true }
 }
 

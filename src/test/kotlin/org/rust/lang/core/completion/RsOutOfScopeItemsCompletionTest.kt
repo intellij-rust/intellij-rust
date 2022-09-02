@@ -525,6 +525,31 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test attribute proc macro in attribute`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[attr_as_/*caret*/]
+        fn func() {}
+    """, """
+        use dep_proc_macro::attr_as_is;
+
+        #[attr_as_is]/*caret*/
+        fn func() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no function like proc macro in attribute`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { return input; }
+    //- lib.rs
+        #[function_like_/*caret*/]
+        fn func() {}
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

@@ -31,6 +31,7 @@ import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
+import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
 
@@ -472,24 +473,27 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     val scope = scope0.originalElement as? RsItemsOwner ?: scope0
     if (scope !is RsMod) return getHangingModInfo(scope)
     val project = scope.project
-    if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
-    if (scope.isLocal) return getLocalModInfo(scope)
+    if (scope is RsModItem) {
+        if (scope.modName == TMP_MOD_NAME) return getTmpModInfo(scope)
+        if (scope.isLocal) return getLocalModInfo(scope)
+    }
     val crate = when (val crate = scope.containingCrate) {
         is CargoBasedCrate -> crate
         is DoctestCrate -> return project.getDoctestModInfo(scope, crate)
         null -> return project.getDetachedModInfo(scope)
         else -> error("unreachable")
     }
-    if (crate.rootModFile != null && !shouldIndexFile(project, crate.rootModFile)) {
-        return CantUseNewResolve("crate root isn't indexed")
-    }
+    testAssert { crate.rootModFile == null || shouldIndexFile(project, crate.rootModFile) }
 
     val defMap = project.getDefMap(crate) ?: return InfoNotFound
     val modData = defMap.getModData(scope) ?: return InfoNotFound
 
-    if (isModShadowedByOtherMod(scope, modData, crate)) return CantUseNewResolve("mod shadowed by other mod")
+    if (isModShadowedByOtherMod(scope, modData, crate)) {
+        val contextInfo = RsModInfo(project, defMap, modData.parent ?: return InfoNotFound, crate)
+        return getHangingModInfo(scope, contextInfo)
+    }
 
-    return RsModInfo(project, defMap, modData, crate, null)
+    return RsModInfo(project, defMap, modData, crate)
 }
 
 private fun Project.getDefMap(crate: Crate): CrateDefMap? {
@@ -513,10 +517,13 @@ private val RsMod.isLocal: Boolean
 
 /** "shadowed by other mod" means that [ModData] is not accessible from [CrateDefMap.root] through [ModData.childModules] */
 private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData, crate: Crate): Boolean {
-    val isDeeplyEnabledByCfg = (mod.containingFile as RsFile).isDeeplyEnabledByCfg && mod.isEnabledByCfg(crate)
-    val isShadowedByOtherInlineMod = isDeeplyEnabledByCfg != modData.isDeeplyEnabledByCfg
-
-    return modData.isShadowedByOtherFile || isShadowedByOtherInlineMod
+    return if (mod is RsFile) {
+        modData.isShadowedByOtherFile
+    } else {
+        // shadowed by other inline mod
+        val isDeeplyEnabledByCfg = (mod.containingFile as RsFile).isDeeplyEnabledByCfg && mod.isEnabledByCfg(crate)
+        isDeeplyEnabledByCfg != modData.isDeeplyEnabledByCfg
+    }
 }
 
 private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {

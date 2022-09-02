@@ -190,8 +190,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             }
         }
         if (TyPrimitive.fromPath(path) != null) return
-        // TODO: implement special rules paths in meta items
-        if (path.parent is RsMetaItem) return
+        val parent = path.parent
+        if (parent is RsMetaItem && !RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
         Testmarks.OutOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)

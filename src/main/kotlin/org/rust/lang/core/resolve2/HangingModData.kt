@@ -41,6 +41,7 @@ import java.lang.ref.SoftReference
  * [scope] is [RsBlock] or [RsCodeFragment].
  */
 fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
+    check(scope is RsBlock || scope is RsCodeFragment)
     if (!shouldCreateHangingModInfo(scope)) return InfoNotFound
 
     val contextInfo = scope.getContextModInfo()
@@ -49,7 +50,13 @@ fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
     return getHangingModInfo(scope, contextInfo)
 }
 
-private fun getHangingModInfo(scope: RsItemsOwner, contextInfo: RsModInfo): RsModInfo {
+fun getTmpModInfo(scope: RsModItem): RsModInfoBase {
+    val context = scope.context as? RsMod ?: return InfoNotFound
+    val contextInfo = getModInfo(context) as? RsModInfo ?: return InfoNotFound
+    return getHangingModInfo(scope, contextInfo)
+}
+
+fun getHangingModInfo(scope: RsItemsOwner, contextInfo: RsModInfo): RsModInfo {
     val (project, defMap, contextData) = contextInfo
     val modificationStamp = scope.stubAncestorStrict<RsFunction>()?.modificationTracker?.modificationCount
         ?: scope.containingFile.modificationStamp
@@ -63,7 +70,7 @@ private fun getHangingModInfo(scope: RsItemsOwner, contextInfo: RsModInfo): RsMo
 
 fun getLocalModInfo(scope: RsMod): RsModInfoBase {
     val context = scope.context ?: return InfoNotFound
-    if (context !is RsBlock) return RsModInfoBase.CantUseNewResolve("local nested mod")
+    if (context !is RsBlock) return InfoNotFound  // local nested mods not supported
     val contextInfo = getHangingModInfo(context)
     if (contextInfo !is RsModInfo) return contextInfo
     val (project, defMap, _, crate, _) = contextInfo

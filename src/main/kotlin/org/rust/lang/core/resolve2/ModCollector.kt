@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.psi.PsiAnchor
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
@@ -21,6 +22,7 @@ import org.rust.lang.core.macros.MacroCallBody
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFileBase
+import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ENUM_VARIANT_NS
 import org.rust.lang.core.resolve.processModDeclResolveVariants
@@ -487,6 +489,13 @@ private fun RsItemsOwner.getOrBuildStub(): StubElement<out RsItemsOwner>? {
      */
     (this as? StubBasedPsiElement<*>)?.greenStub?.let { return it as StubElement<out RsItemsOwner> }
     if (this is RsBlock) return buildStub()
+    if (this is RsModItem) {
+        val containingFile = containingFile as? RsFile ?: return null
+        // In theory `greenStub` can be null after `calcStubTree` (it is linked to PSI with soft references)
+        val stubIndex = PsiAnchor.calcStubIndex(this)
+        if (stubIndex == -1) return null
+        return containingFile.calcStubTree().plainList[stubIndex] as StubElement<out RsItemsOwner>
+    }
     return null
 }
 
