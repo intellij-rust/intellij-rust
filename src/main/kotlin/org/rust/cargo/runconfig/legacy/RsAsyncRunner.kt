@@ -71,7 +71,7 @@ abstract class RsAsyncRunner(
         val (commandArguments, executableArguments) = parseArgs(commandLine.command, commandLine.additionalArguments)
         val additionalBuildArgs = state.runConfiguration.localBuildArgsForRemoteRun
 
-        val isTestRun = commandLine.command == "test"
+        val isTestRun = commandLine.command in listOf("test", "bench")
         val cmdHasNoRun = "--no-run" in commandLine.additionalArguments
         val buildCommand = if (isTestRun) {
             if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
@@ -190,7 +190,7 @@ abstract class RsAsyncRunner(
                                             // TODO: support cases when crate types list contains not only binary
                                             target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
                                         }
-                                        CargoMetadata.TargetKind.TEST -> true
+                                        CargoMetadata.TargetKind.TEST, CargoMetadata.TargetKind.BENCH -> true
                                         CargoMetadata.TargetKind.LIB -> profile.test
                                         else -> false
                                     }

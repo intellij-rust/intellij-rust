@@ -90,7 +90,7 @@ abstract class RsExecutableRunner(
 
         val runCargoCommand = state.prepareCommandLine().copy(emulateTerminal = false)
         val workingDirectory = pkg?.rootDirectory
-            ?.takeIf { runCargoCommand.command == "test" }
+            ?.takeIf { runCargoCommand.command in listOf("test", "bench") }
             ?: runCargoCommand.workingDirectory
         val environmentVariables = runCargoCommand.environmentVariables.run { with(envs + pkg?.env.orEmpty()) }
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
@@ -100,7 +100,7 @@ abstract class RsExecutableRunner(
             runCargoCommand.redirectInputFrom,
             runCargoCommand.backtraceMode,
             environmentVariables,
-            executableArguments,
+            executableArguments.let { if (runCargoCommand.command == "bench") it + "--bench" else it },
             runCargoCommand.emulateTerminal,
             runCargoCommand.withSudo,
             patchToRemote = false // patching is performed for debugger/profiler/valgrind on CLion side if needed

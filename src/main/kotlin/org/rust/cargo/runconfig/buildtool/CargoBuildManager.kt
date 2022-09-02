@@ -50,7 +50,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
 object CargoBuildManager {
-    private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test")
+    private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test", "bench")
 
     private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         CompletableFuture.completedFuture(CargoBuildResult(succeeded = false, canceled = true, started = 0))
@@ -90,7 +90,7 @@ object CargoBuildManager {
             environment = environment,
             taskName = "Build",
             progressTitle = "Building...",
-            isTestBuild = state.commandLine.command == "test",
+            isTestBuild = state.commandLine.command in listOf("test", "bench"),
             buildId = buildId,
             parentId = buildId
         )) {
@@ -196,7 +196,7 @@ object CargoBuildManager {
         val parsed = ParsedCommand.parse(configuration.command) ?: return false
         return when (val command = parsed.command) {
             "build", "check", "clippy" -> true
-            "test" -> {
+            "test", "bench" -> {
                 val (commandArguments, _) = parseArgs(command, parsed.additionalArguments)
                 "--no-run" in commandArguments
             }
@@ -220,6 +220,7 @@ object CargoBuildManager {
         buildConfiguration.command = ParametersListUtil.join(when (parsed.command) {
             "run" -> listOfNotNull(parsed.toolchain, "build", *commandArguments.toTypedArray())
             "test" -> listOfNotNull(parsed.toolchain, "test", "--no-run", *commandArguments.toTypedArray())
+            "bench" -> listOfNotNull(parsed.toolchain, "bench", "--no-run", *commandArguments.toTypedArray())
             else -> return null
         })
 

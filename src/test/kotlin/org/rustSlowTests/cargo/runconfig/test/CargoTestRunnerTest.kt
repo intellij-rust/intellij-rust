@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.rust.TestProject
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.toPsiDirectory
 
 class CargoTestRunnerTest : CargoTestRunnerTestBase() {
@@ -48,6 +49,51 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             ..test_ignored(~)
             ..test_should_fail(-)
             ..test_should_pass(+)
+        """, sourceElement)
+    }
+
+    fun `test bench statuses`() {
+        if (channel != RustChannel.NIGHTLY) return
+
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #![feature(test)]
+                    /*caret*/
+
+                    extern crate test;
+
+                    use test::Bencher;
+
+                    #[bench]
+                    fn bench_should_pass(b: &mut Bencher) {}
+
+                    #[bench]
+                    fn bench_should_fail(b: &mut Bencher) {
+                        assert_eq!(1, 2)
+                    }
+
+                    #[bench]
+                    #[ignore]
+                    fn bench_ignored(b: &mut Bencher) {}
+                """)
+            }
+        }
+        val sourceElement = myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+
+        checkBenchTree("""
+            [root](-)
+            .sandbox(-)
+            ..bench_ignored(~)
+            ..bench_should_fail(-)
+            ..bench_should_pass(+)
         """, sourceElement)
     }
 
@@ -864,6 +910,15 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         }
         val root = executeAndGetTestRoot(configuration)
         assertEquals(expectedFormattedTestTree.trimIndent(), getFormattedTestTree(root))
+    }
+
+    private fun checkBenchTree(
+        expectedFormattedBenchTree: String,
+        sourceElement: PsiElement? = null
+    ) {
+        val configuration = createBenchRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
+        val root = executeAndGetTestRoot(configuration)
+        assertEquals(expectedFormattedBenchTree.trimIndent(), getFormattedTestTree(root))
     }
 
     private fun checkTestLocation(testName: String, testProject: TestProject) {
