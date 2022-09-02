@@ -403,6 +403,9 @@ class RsPsiFactory(
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
+    fun createColonColon(): PsiElement =
+        tryCreatePath("::x")!!.coloncolon!!
+
     fun createEq(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.eq!!
 

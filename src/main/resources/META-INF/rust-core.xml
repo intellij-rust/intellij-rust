@@ -1124,6 +1124,7 @@
 
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineFunction.RsInlineFunctionHandler"/>
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineValue.RsInlineValueHandler"/>
+        <inlineActionHandler implementation="org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasHandler"/>
 
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"

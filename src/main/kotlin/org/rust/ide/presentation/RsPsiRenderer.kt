@@ -31,8 +31,12 @@ import org.rust.stdext.joinToWithBuffer
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsTypeReference.getStubOnlyText(
     subst: Substitution = emptySubstitution,
-    renderLifetimes: Boolean = true
-): String = TypeSubstitutingPsiRenderer(PsiRenderingOptions(renderLifetimes), subst).renderTypeReference(this)
+    renderLifetimes: Boolean = true,
+    shortPaths: Boolean = true,
+): String {
+    val options = PsiRenderingOptions(renderLifetimes, shortPaths = shortPaths)
+    return TypeSubstitutingPsiRenderer(options, subst).renderTypeReference(this)
+}
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsValueParameterList.getStubOnlyText(
