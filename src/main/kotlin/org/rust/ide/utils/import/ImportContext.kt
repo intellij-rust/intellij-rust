@@ -13,12 +13,12 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve2.CrateDefMap
 import org.rust.lang.core.resolve2.ModData
-import org.rust.lang.core.resolve2.RsModInfoBase
+import org.rust.lang.core.resolve2.RsModInfo
 import org.rust.lang.core.resolve2.getModInfo
 
 class ImportContext2 private constructor(
     /** Info of mod in which auto-import or completion is called */
-    val rootInfo: RsModInfoBase.RsModInfo,
+    val rootInfo: RsModInfo,
     /** Mod in which auto-import or completion is called */
     val rootMod: RsMod,
     val type: Type,
@@ -35,7 +35,7 @@ class ImportContext2 private constructor(
 
         fun from(context: RsElement, type: Type = Type.AUTO_IMPORT, pathInfo: PathInfo? = null): ImportContext2? {
             val rootMod = context.containingMod
-            val info = getModInfo(rootMod) as? RsModInfoBase.RsModInfo ?: return null
+            val info = getModInfo(rootMod) ?: return null
             return ImportContext2(info, rootMod, type, pathInfo)
         }
     }

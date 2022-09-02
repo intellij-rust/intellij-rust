@@ -96,10 +96,6 @@ val RsMacro.hasMacroExport: Boolean
 val QueryAttributes<*>.hasMacroExport: Boolean
     get() = hasAttribute("macro_export")
 
-/** `#[macro_export(local_inner_macros)]` */
-val RsMacro.hasMacroExportLocalInnerMacros: Boolean
-    get() = HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getByPsi(this)
-
 val QueryAttributes<*>.hasMacroExportLocalInnerMacros: Boolean
     get() = hasAttributeWithArg("macro_export", "local_inner_macros")
 

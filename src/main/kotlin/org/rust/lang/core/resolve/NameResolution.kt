@@ -46,7 +46,6 @@ import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.resolve2.*
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
@@ -463,12 +462,7 @@ private fun processQualifiedPathResolveVariants1(
 
         val containingMod = path.containingMod
         if (Namespace.Macros in ns) {
-            val resultWithNewResolve = processMacros(base, processor, null, isAttrOrDerive = false)
-            if (resultWithNewResolve == true) return true
-            if (resultWithNewResolve == null && base is RsFile && base.isCrateRoot &&
-                containingMod is RsFile && containingMod.isCrateRoot) {
-                if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
-            }
+            if (processMacros(base, processor, null, isAttrOrDerive = false)) return true
         }
 
         // Proc macro crates are not allowed to export anything but procedural macros,
@@ -926,13 +920,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 // 2. we expand macros step-by-step, so the result of such resolution should be cached already
                 val expandedFrom = path.findMacroCallExpandedFromNonRecursive() as? RsMacroCall
                 expandedFrom
-                    ?.resolveToMacroAndProcessLocalInnerMacros(processor) {
-                        /* this code will be executed if new resolve can't be used */
-                        val def = expandedFrom.resolveToMacro() ?: return@resolveToMacroAndProcessLocalInnerMacros null
-                        if (def !is RsMacro || !def.hasMacroExportLocalInnerMacros) return@resolveToMacroAndProcessLocalInnerMacros null
-                        val crateRoot = def.crateRoot as? RsFile ?: return@resolveToMacroAndProcessLocalInnerMacros false
-                        processAll(exportedMacros(crateRoot), processor)
-                    }
+                    ?.resolveToMacroAndProcessLocalInnerMacros(processor)
                     ?.let { return it }
             }
 
@@ -948,16 +936,9 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 /** Note: here we don't have to handle [MACRO_DOLLAR_CRATE_IDENTIFIER] */
                 processQualifiedPathResolveVariants(null, isCompletion, MACROS, qualifier, path, call, processor)
             } else {
-                call.resolveToMacroUsingNewResolveAndThen(
-                    withNewResolve = { def ->
-                        if (def == null) return@resolveToMacroUsingNewResolveAndThen false
-                        val name = processor.name ?: def.name ?: return@resolveToMacroUsingNewResolveAndThen false
-                        processor(name, def)
-                    },
-                    withoutNewResolve = {
-                        processMacrosExportedByCratePath(path, qualifier, processor)
-                    }
-                ) ?: false
+                val def = call.resolveToMacroUsingNewResolve() ?: return false
+                val name = processor.name ?: def.name ?: return false
+                processor(name, def)
             }
         } else {
             // Allowed only 1 or 2-segment paths: `foo!()` or `foo::bar!()`, but not foo::bar::baz!();
@@ -969,11 +950,6 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
 
 private fun processMacrosExportedByCratePath(context: RsElement, crateName: RsPath, processor: RsResolveProcessor): Boolean {
     val crateRoot = findDependencyCrateByNamePath(context, crateName) ?: return false
-    return processMacrosExportedByCrate(crateRoot, processor)
-}
-
-fun processMacrosExportedByCrateName(context: RsElement, crateName: String, processor: RsResolveProcessor): Boolean {
-    val crateRoot = findDependencyCrateByName(context, crateName) ?: return false
     return processMacrosExportedByCrate(crateRoot, processor)
 }
 
@@ -1010,7 +986,6 @@ private class MacroResolver private constructor(
     private val macroPath: PsiElement,
 ) : RsVisitor() {
     private val visitor = MacroResolvingVisitor(reverse = true, ignoreLegacyMacros = isAttrOrDerive) { processor(it) }
-    private val project: Project = macroPath.project
 
     private fun processMacrosInLexicalOrderUpward(startElement: PsiElement): MacroResolveResult {
         val result = processScopesInLexicalOrderUpward(startElement)
@@ -1115,8 +1090,8 @@ private class MacroResolver private constructor(
         if (element !is RsElement) return null
         val scope = element.context as? RsItemsOwner ?: return null // we are interested only in top-level elements
         val result = processMacros(scope, processor, macroPath, isAttrOrDerive)
-        if (scope !is RsMod && result == false) return null  // we should search in parent scopes
-        return result?.toResult(usedNewResolve = true)
+        if (scope !is RsMod && !result) return null  // we should search in parent scopes
+        return result.toResult(usedNewResolve = true)
     }
 
     private fun processRemainedExportedMacros(): Boolean {
@@ -1681,42 +1656,23 @@ fun processNestedScopesUpwards(
                 processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
             }
         } else {
-            val modInfo = when (val info = getModInfo(scope)) {
-                is RsModInfoBase.CantUseNewResolve -> null
-                RsModInfoBase.InfoNotFound -> return@walkUp false
-                is RsModInfo -> info
-            }
+            val modInfo = getModInfo(scope) ?: return@walkUp false
             val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
                 val ipm = when {
                     isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
                     else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
                 }
-                if (modInfo != null) {
-                    processItemDeclarationsUsingModInfo(scopeIsMod = true, modInfo, ns, shadowingProcessor, ipm)
-                } else {
-                    // Old name resolution
-                    processItemDeclarations1(scope, ns, shadowingProcessor, ipm)
-                }
+                processItemDeclarationsUsingModInfo(scopeIsMod = true, modInfo, ns, shadowingProcessor, ipm)
             }
             if (stop) return@walkUp true
 
             // Prelude is injected via implicit star import `use std::prelude::v1::*;`
             if (processor(ScopeEvent.STAR_IMPORTS)) return@walkUp false
 
-            if (modInfo != null) {
-                val preludeModInfo = findPreludeUsingModInfo(modInfo)
-                if (preludeModInfo != null) {
-                    return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
-                        processItemDeclarationsUsingModInfo(scopeIsMod = true, preludeModInfo, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
-                    }
-                }
-            } else {
-                // Old name resolution
-                val prelude = findPreludeUsingOldResolve(scopeStart)
-                if (prelude != null) {
-                    return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
-                        processItemDeclarations(prelude, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
-                    }
+            val preludeModInfo = findPreludeUsingModInfo(modInfo)
+            if (preludeModInfo != null) {
+                return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
+                    processItemDeclarationsUsingModInfo(scopeIsMod = true, preludeModInfo, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
                 }
             }
 
@@ -1828,7 +1784,7 @@ private fun findPreludeUsingOldResolve(element: RsElement): RsFile? {
 }
 
 private fun findPreludeUsingNewResolve(element: RsElement): RsMod? {
-    val info = getModInfo(element.containingMod) as? RsModInfo ?: return null
+    val info = getModInfo(element.containingMod) ?: return null
     val prelude = info.defMap.prelude ?: return null
     return prelude.toRsMod(info).singleOrNull()
 }

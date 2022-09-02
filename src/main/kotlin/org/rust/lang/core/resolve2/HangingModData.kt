@@ -14,8 +14,6 @@ import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.ranges
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve2.RsModInfoBase.InfoNotFound
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.lang.core.resolve2.util.DollarCrateHelper
 import org.rust.openapiext.getCachedOrCompute
 import java.lang.ref.SoftReference
@@ -40,19 +38,17 @@ import java.lang.ref.SoftReference
  *
  * [scope] is [RsBlock] or [RsCodeFragment].
  */
-fun getHangingModInfo(scope: RsItemsOwner): RsModInfoBase {
+fun getHangingModInfo(scope: RsItemsOwner): RsModInfo? {
     check(scope is RsBlock || scope is RsCodeFragment)
-    if (!shouldCreateHangingModInfo(scope)) return InfoNotFound
+    if (!shouldCreateHangingModInfo(scope)) return null
 
-    val contextInfo = scope.getContextModInfo()
-    if (contextInfo !is RsModInfo) return contextInfo
-
+    val contextInfo = scope.getContextModInfo() ?: return null
     return getHangingModInfo(scope, contextInfo)
 }
 
-fun getTmpModInfo(scope: RsModItem): RsModInfoBase {
-    val context = scope.context as? RsMod ?: return InfoNotFound
-    val contextInfo = getModInfo(context) as? RsModInfo ?: return InfoNotFound
+fun getTmpModInfo(scope: RsModItem): RsModInfo? {
+    val context = scope.context as? RsMod ?: return null
+    val contextInfo = getModInfo(context) ?: return null
     return getHangingModInfo(scope, contextInfo)
 }
 
@@ -68,22 +64,21 @@ fun getHangingModInfo(scope: RsItemsOwner, contextInfo: RsModInfo): RsModInfo {
     return RsModInfo(project, defMap, hangingModData, contextInfo.crate, dataPsiHelper)
 }
 
-fun getLocalModInfo(scope: RsMod): RsModInfoBase {
-    val context = scope.context ?: return InfoNotFound
-    if (context !is RsBlock) return InfoNotFound  // local nested mods not supported
-    val contextInfo = getHangingModInfo(context)
-    if (contextInfo !is RsModInfo) return contextInfo
+fun getLocalModInfo(scope: RsMod): RsModInfo? {
+    val context = scope.context ?: return null
+    if (context !is RsBlock) return null  // local nested mods not supported
+    val contextInfo = getHangingModInfo(context) ?: return null
     val (project, defMap, _, crate, _) = contextInfo
 
-    val modData = contextInfo.modData.childModules[scope.name] ?: return InfoNotFound
+    val modData = contextInfo.modData.childModules[scope.name] ?: return null
     val dataPsiHelper = LocalScopeDataPsiHelper(scope, modData, contextInfo.dataPsiHelper)
     return RsModInfo(project, defMap, modData, crate, dataPsiHelper)
 }
 
-fun getNearestAncestorModInfo(scope: RsItemsOwner): RsModInfoBase {
+fun getNearestAncestorModInfo(scope: RsItemsOwner): RsModInfo? {
     if (scope !is RsBlock) return getModInfo(scope)
 
-    return getHangingModInfo(scope) as? RsModInfo
+    return getHangingModInfo(scope)
         ?: scope.getContextModInfo()
 }
 
@@ -121,8 +116,8 @@ private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): M
 
 private val HANGING_MOD_DATA_KEY: Key<SoftReference<Pair<ModData, List<Long>>>> = Key.create("HANGING_MOD_DATA_KEY")
 
-private fun RsElement.getContextModInfo(): RsModInfoBase {
-    val context = contextStrict<RsItemsOwner>() ?: return InfoNotFound
+private fun RsElement.getContextModInfo(): RsModInfo? {
+    val context = contextStrict<RsItemsOwner>() ?: return null
     return when {
         context is RsMod -> getModInfo(context)
         context is RsBlock && shouldCreateHangingModInfo(context) -> getHangingModInfo(context)

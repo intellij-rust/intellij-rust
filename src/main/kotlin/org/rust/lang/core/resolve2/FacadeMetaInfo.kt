@@ -15,14 +15,13 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 
 data class NamedItem(val name: String, val item: RsNamedElement)
 
 /** List of items added to [context] by glob import to [this] */
 fun RsMod.exportedItems(context: RsMod): List<NamedItem> {
-    val info = getModInfo(this) as? RsModInfo ?: return emptyList()
-    val contextInfo = getModInfo(context) as? RsModInfo ?: return emptyList()
+    val info = getModInfo(this) ?: return emptyList()
+    val contextInfo = getModInfo(context) ?: return emptyList()
     return info.modData
         .getVisibleItems { it.isVisibleFromMod(contextInfo.modData) }
         .flatMap { (name, perNs) ->
@@ -34,7 +33,7 @@ fun RsMod.exportedItems(context: RsMod): List<NamedItem> {
 }
 
 fun RsMod.allScopeItemNames(): Set<String> {
-    val info = getModInfo(this) as? RsModInfo ?: return emptySet()
+    val info = getModInfo(this) ?: return emptySet()
     return info.modData.visibleItems.keys
 }
 
@@ -49,7 +48,7 @@ private fun PerNs.allVisItems(): Array<Pair<VisItem, Namespace>> =
  * Note that this directory may not contain [this]
  */
 fun RsMod.getDirectoryContainedAllChildFiles(): VirtualFile? {
-    val (_, _, modData) = getModInfo(this) as? RsModInfo ?: return null
+    val (_, _, modData) = getModInfo(this) ?: return null
     return PersistentFS.getInstance().findFileById(modData.directoryContainedAllChildFiles ?: return null)
 }
 
@@ -61,6 +60,6 @@ fun CrateDefMap.hasTransitiveGlobImport(source: RsMod, target: RsMod): Boolean {
 
 fun getRecursionLimit(element: PsiElement): Int {
     val mod = element.ancestorOrSelf<RsElement>()?.containingMod ?: return DEFAULT_RECURSION_LIMIT
-    val (_, defMap, _) = getModInfo(mod) as? RsModInfo ?: return DEFAULT_RECURSION_LIMIT
+    val (_, defMap, _) = getModInfo(mod) ?: return DEFAULT_RECURSION_LIMIT
     return defMap.recursionLimit
 }
