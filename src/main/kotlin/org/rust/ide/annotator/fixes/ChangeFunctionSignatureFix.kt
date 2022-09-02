@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.ext.isMethod
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -67,7 +68,7 @@ class ChangeFunctionSignatureFix private constructor(
                 when (action) {
                     is SignatureAction.InsertArgument -> "<b>${renderType(arguments[action.argumentIndex].type)}</b>"
                     is SignatureAction.KeepParameter -> renderType(
-                        function.valueParameters[action.parameterIndex].typeReference?.type ?: TyUnknown
+                        function.valueParameters[action.parameterIndex].typeReference?.normType ?: TyUnknown
                     )
                     is SignatureAction.ChangeParameterType -> "<b>${renderType(arguments[action.argumentIndex].type)}</b>"
                     SignatureAction.RemoveParameter -> error("unreachable")
@@ -256,7 +257,7 @@ private fun calculateSignatureWithInsertion(
         val parameter = parameterIterator.value
         val argument = argumentIterator.value ?: break
 
-        if (parameter != null && ctx.combineTypes(parameter.typeReference?.type ?: TyUnknown, argument.type).isOk) {
+        if (parameter != null && ctx.combineTypes(parameter.typeReference?.normType(ctx) ?: TyUnknown, argument.type).isOk) {
             insertions.add(SignatureAction.KeepParameter(parameters.indexOf(parameter)))
             parameterIterator.advance()
             argumentIterator.advance()

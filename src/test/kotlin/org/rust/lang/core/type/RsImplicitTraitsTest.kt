@@ -16,8 +16,8 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.TypeInferenceMarks
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 class RsImplicitTraitsTest : RsTypificationTestBase() {
 
@@ -355,13 +355,13 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
             ?: error("Cannot parse path `$traitName`")
         val trait = traitPath.reference?.advancedResolve()?.downcast<RsTraitItem>()
             ?: error("Cannot resolve path `traitName` to a trait")
-        val hasImpl = lookup.canSelect(TraitRef(typeRef.type, trait))
+        val hasImpl = lookup.canSelect(TraitRef(typeRef.rawType, trait))
 
         check(mustHaveImpl == hasImpl) {
             if (mustHaveImpl) {
-                "The trait `$traitName` must be implemented for the type `${typeRef.type}`, but it actually doesn't"
+                "The trait `$traitName` must be implemented for the type `${typeRef.rawType}`, but it actually doesn't"
             } else {
-                "The trait `$traitName` must NOT be implemented for the type `${typeRef.type}`, but it is actually implemented"
+                "The trait `$traitName` must NOT be implemented for the type `${typeRef.rawType}`, but it is actually implemented"
             }
         }
     }

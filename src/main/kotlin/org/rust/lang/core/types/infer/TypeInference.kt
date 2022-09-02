@@ -207,7 +207,8 @@ class RsInferenceContext(
     fun infer(element: RsInferenceContextOwner): RsInferenceResult {
         when (element) {
             is RsFunction -> {
-                val fctx = RsTypeInferenceWalker(this, element.returnType)
+                val retTy = normalizeAssociatedTypesIn(element.rawReturnType).value
+                val fctx = RsTypeInferenceWalker(this, retTy)
                 fctx.extractParameterBindings(element)
                 element.block?.let { fctx.inferFnBody(it) }
             }
@@ -240,8 +241,8 @@ class RsInferenceContext(
             }
             else -> {
                 val (retTy, expr) = when (element) {
-                    is RsConstant -> element.typeReference?.type to element.expr
-                    is RsConstParameter -> element.typeReference?.type to element.expr
+                    is RsConstant -> element.typeReference?.rawType to element.expr
+                    is RsConstParameter -> element.typeReference?.rawType to element.expr
                     is RsArrayType -> TyInteger.USize.INSTANCE to element.expr
                     is RsVariantDiscriminant -> {
                         val enum = element.contextStrict<RsEnumItem>()
@@ -882,6 +883,12 @@ class RsInferenceContext(
 
     fun constVarForParam(const: CtConstParameter): Const = CtInferVar(const)
 
+    fun <T : TypeFoldable<T>> fullyNormalizeAssociatedTypesIn(ty: T): T {
+        return ty.foldTyProjectionWith {
+            optNormalizeProjectionType(it, 0)?.value ?: TyUnknown
+        }
+    }
+
     /** Deeply normalize projection types. See [normalizeProjectionType] */
     fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T, recursionDepth: Int = 0): TyWithObligations<T> {
         val obligations = mutableListOf<Obligation>()
@@ -1082,7 +1089,7 @@ class RsInferenceContext(
         )
         return probe {
             instantiateBounds(impl.predicates, subst).forEach(ff::registerPredicateObligation)
-            impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
+            impl.typeReference?.rawType?.substitute(subst)?.let { combineTypes(selfTy, it) }
             ff.selectUntilError()
         }
     }
@@ -1229,7 +1236,7 @@ val RsGenericDeclaration.predicates: List<Predicate>
 private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
     val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
-            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<PsiPredicate>()
+            val selfTy = it.typeReference?.rawType ?: return@flatMap emptySequence<PsiPredicate>()
             it.typeParamBounds?.polyboundList.toPredicates(selfTy)
         }
     val bounds = typeParameters.asSequence().flatMap {
@@ -1281,7 +1288,7 @@ private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<PsiPredicate> 
                 if (typeRef != null) {
                     // T: Iterator<Item = Foo>
                     //             ~~~~~~~~~~ expands to predicate `T::Item = Foo`
-                    sequenceOf(PsiPredicate.Bound(Predicate.Equate(projectionTy, typeRef.type)))
+                    sequenceOf(PsiPredicate.Bound(Predicate.Equate(projectionTy, typeRef.rawType)))
                 } else {
                     // T: Iterator<Item: Debug>
                     //             ~~~~~~~~~~~ equivalent to `T::Item: Debug`

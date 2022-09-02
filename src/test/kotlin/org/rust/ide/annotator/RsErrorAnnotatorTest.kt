@@ -2813,6 +2813,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
     """)
 
+    fun `test E0118 impl for normalizable associated type 1`() = checkErrors("""
+        struct S;
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><Struct as Trait>::Item</error> {}
+    """)
+
+    fun `test E0118 impl for normalizable associated type 2`() = checkErrors("""
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = u8; }
+
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><Struct as Trait>::Item</error> {}
+    """)
+
     fun `test impl sized for struct E0322`() = checkErrors("""
         #[lang = "sized"]
         trait Sized {}

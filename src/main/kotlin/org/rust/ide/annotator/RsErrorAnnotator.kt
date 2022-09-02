@@ -923,7 +923,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val traitRef = impl.traitRef ?: return
         val typeRef = impl.typeReference ?: return
-        val type = typeRef.type
+        val type = typeRef.normType
         // If type is not fully known, the plugin should produce some another error, like E0412
         if (type.containsTyOfClass(TyUnknown::class.java)) return
         val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
@@ -968,7 +968,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (impl.`for` != null) return
         val typeRef = impl.typeReference ?: return
         if (typeRef.skipParens() is RsTraitType) return
-        val type = typeRef.type
+        val type = typeRef.rawType
         if (impl.queryAttributes.langAttribute != null) {
             // There are some special rules for #[lang] items, see:
             // https://doc.rust-lang.org/unstable-book/language-features/lang-items.html)
@@ -1000,13 +1000,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     ) {
         if (trait != trait.knownItems.Drop) return
 
-        if (impl.typeReference?.type is TyAdt?) return
+        if (impl.typeReference?.normType is TyAdt?) return
 
         RsDiagnostic.ImplDropForNonAdtError(traitRef).addToHolder(holder)
     }
 
     private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
-        checkImplBothCopyAndDrop(holder, impl.typeReference?.type ?: return, impl.traitRef ?: return, trait)
+        checkImplBothCopyAndDrop(holder, impl.typeReference?.normType ?: return, impl.traitRef ?: return, trait)
     }
 
     private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, attr: RsAttr) {
@@ -1033,11 +1033,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ImplBothCopyAndDropError(element).addToHolder(holder)
     }
 
-    // E0116: Cannot define inherent `impl` for a type outside of the crate where the type is defined
+    // E0116: Cannot define inherent `impl` for a type outside the crate where the type is defined
     private fun checkInherentImplSameCrate(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.traitRef != null) return  // checked in [checkTraitImplOrphanRules]
         val typeReference = impl.typeReference ?: return
-        val element = when (val type = typeReference.type) {
+        val element = when (val type = typeReference.rawType) {
             is TyAdt -> type.item
             is TyTraitObject -> type.traits.first().element
             else -> return
@@ -1243,7 +1243,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             is RsFunction -> {
                 // Check if signature matches `fn(isize, *const *const u8) -> isize`
                 val params = owner.valueParameters
-                if (owner.returnType !is TyInteger.ISize) {
+                if (owner.normReturnType !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.ReturnMismatch(owner.retType?.typeReference ?: owner.identifier)
                         .addToHolder(holder)
                 }
@@ -1254,11 +1254,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     // with errors
                     return
                 }
-                if (params[0].typeReference?.type !is TyInteger.ISize) {
+                if (params[0].typeReference?.normType !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
                         .addToHolder(holder)
                 }
-                if (params[1].typeReference?.type?.isEquivalentTo(TyPointer(
+                if (params[1].typeReference?.normType?.isEquivalentTo(TyPointer(
                         TyPointer(TyInteger.U8.INSTANCE, Mutability.IMMUTABLE),
                         Mutability.IMMUTABLE
                     )) == false
@@ -1333,9 +1333,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkRetExpr(holder: RsAnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
         val fn = ret.ancestors.find {
-            it is RsFunction || it is RsLambdaExpr || it is RsBlockExpr && it.isAsync
+            it is RsFunctionOrLambda || it is RsBlockExpr && it.isAsync
         } as? RsFunction ?: return
-        val retType = fn.retType?.typeReference?.type ?: return
+        val retType = fn.retType?.typeReference?.normType ?: return
         if (retType is TyUnit) return
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
@@ -1575,7 +1575,8 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     checkConstArguments(holder, listOfNotNull(constParameter.expr))
 
     val typeReference = constParameter.typeReference
-    val ty = typeReference?.type ?: return
+    // Currently, associated type projections can't be used as a const parameter type, so `rawType` is fine here
+    val ty = typeReference?.rawType ?: return
     if (ty !is TyInteger && ty !is TyBool && ty !is TyChar) {
         ADT_CONST_PARAMS.check(holder, typeReference, "adt const params")
     }
@@ -1803,14 +1804,14 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
 
     for (arg in arguments) {
         val typeReference = arg.typeReference ?: continue
-        val ty = typeReference.type
+        val ty = typeReference.normType
         if (isError(ty)) {
             RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
         }
     }
 
     val typeReference = retType?.typeReference ?: return
-    val ty = typeReference.type
+    val ty = typeReference.normType
     if (isError(ty)) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
     }
@@ -1819,7 +1820,7 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
 private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunction) {
     val block = fn.block ?: return
     val rbrace = block.rbrace ?: return
-    val returnType = fn.returnType
+    val returnType = fn.normReturnType
     if (returnType is TyInfer.TyVar ||
         returnType is TyUnit ||
         returnType is TyAnon ||

@@ -12,9 +12,9 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.type
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 
@@ -98,7 +98,7 @@ val RsAbstractable.canBeAccessedByTraitName: Boolean
                 if (selfParameter != null) return true
                 type
             }
-            is RsConstant -> typeReference?.type ?: return false
+            is RsConstant -> typeReference?.rawType ?: return false
             else -> return false
         }
         return type.visitWith(object : TypeVisitor {

@@ -21,8 +21,8 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.checkWriteAccessNotAllowed
@@ -209,7 +209,7 @@ class MembersGenerator(
         return when (element) {
             is RsConstant -> {
                 val initialValue = RsDefaultValueBuilder(element.knownItems, element.containingMod, factory, true)
-                    .buildFor(element.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
+                    .buildFor(element.typeReference?.normType?.substitute(subst) ?: TyUnknown, emptyMap())
                 "const ${element.nameLikeElement.text}: ${element.typeReference?.renderTypeReference() ?: "_"} = ${initialValue.text};"
             }
             is RsTypeAlias ->

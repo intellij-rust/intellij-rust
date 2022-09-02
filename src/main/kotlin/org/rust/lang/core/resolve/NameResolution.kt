@@ -501,7 +501,7 @@ private fun processQualifiedPathResolveVariants1(
         val baseTy = if (qualifier.hasCself) {
             when (base) {
                 // impl S { fn foo() { Self::bar() } }
-                is RsImplItem -> base.typeReference?.type ?: TyUnknown
+                is RsImplItem -> base.typeReference?.rawType ?: TyUnknown
                 is RsTraitItem -> TyTypeParameter.self(base)
                 else -> TyUnknown
             }
@@ -552,7 +552,7 @@ private fun processExplicitTypeQualifiedPathResolveVariants(
         // TODO this is a hack to fix completion test `test associated type in explicit UFCS form`.
         // Looks like we should use getOriginalOrSelf during resolve
         ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
-    val baseTy = typeQual.typeReference.type
+    val baseTy = typeQual.typeReference.rawType
     return if (trait != null) {
         processTypeAsTraitUFCSQualifiedPathResolveVariants(ns, baseTy, listOf(trait), processor)
     } else {
@@ -1897,6 +1897,7 @@ object NameResolutionTestmarks {
     object SelfRelatedTypeSpecialCase : Testmark()
     object SkipAssocTypeFromImpl : Testmark()
     object UpdateDefMapsForAllCratesWhenFindingModData : Testmark()
+    object TypeAliasToImpl : Testmark()
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

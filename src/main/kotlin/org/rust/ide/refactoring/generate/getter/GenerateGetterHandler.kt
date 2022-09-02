@@ -11,14 +11,20 @@ import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.rawType
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.lang.core.types.ty.isMovesByDefault
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class GenerateGetterAction : BaseGenerateAction() {
@@ -44,7 +50,7 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
         return chosenFields.mapNotNull {
             val fieldName = it.argumentIdentifier
             val typeRef = it.field.typeReference ?: return@mapNotNull null
-            val fieldType = typeRef.type.substitute(substitution)
+            val fieldType = typeRef.rawType.substitute(substitution)
 
             val (borrow, typeStr) = getBorrowAndType(fieldType, it.typeReferenceText, it.field)
             val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"

@@ -20,10 +20,10 @@ import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsRetExpr
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 
 class ChangeReturnTypeFix(
     element: RsElement,
@@ -73,7 +73,7 @@ class ChangeReturnTypeFix(
             return
         }
 
-        val oldTy = oldRetType?.typeReference?.type ?: TyUnknown
+        val oldTy = oldRetType?.typeReference?.rawType ?: TyUnknown
         val (_, useQualifiedName) = getTypeReferencesInfoFromTys(owner, actualTy, oldTy)
         val text = actualTy.renderInsertionSafe(
             context = startElement as? RsElement,

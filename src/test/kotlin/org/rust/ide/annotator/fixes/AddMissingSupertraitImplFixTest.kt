@@ -356,6 +356,64 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         impl foo::B/*caret*/ for S {}
     """)
+
+    fun `test empty supertrait with an impl for normalizable associated type`() = checkFixByText("Implement missing supertrait(s)", """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        trait A {}
+        trait B: A {}
+
+        struct S;
+
+        <error>impl <error>B/*caret*/</error> for <Struct as Trait>::Item</error> {}
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        trait A {}
+        trait B: A {}
+
+        struct S;
+
+        impl A for <Struct as Trait>::Item {}
+
+        impl B/*caret*/ for <Struct as Trait>::Item {}
+    """)
+
+    fun `test grandparent supertrait with an impl for normalizable associated type`() = checkFixByText("Implement missing supertrait(s)", """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        trait A {}
+        trait B: A {}
+        trait C: B {}
+
+        struct S;
+
+        impl A for S {}
+
+        <error>impl <error>C/*caret*/</error> for <Struct as Trait>::Item</error> {}
+    """, """
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        trait A {}
+        trait B: A {}
+        trait C: B {}
+
+        struct S;
+
+        impl A for S {}
+
+        impl B for <Struct as Trait>::Item {}
+
+        impl C/*caret*/ for <Struct as Trait>::Item {}
+    """)
 }
 
 // TODO: all kinds of bounds and generics

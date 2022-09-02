@@ -13,10 +13,10 @@ import org.rust.ide.intentions.UnElideLifetimesIntention.PotentialLifetimeRef
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.hasReEarlyBounds
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.type
 import org.rust.lang.doc.psi.ext.isInDocComment
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>() {
@@ -94,7 +94,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
         data class RefLike(val ref: RsRefLikeType) : PotentialLifetimeRef(ref)
         data class BaseType(val baseType: RsBaseType, val type: Ty) : PotentialLifetimeRef(baseType) {
             val typeLifetimes: List<Region>
-                get() = when (val type = baseType.type) {
+                get() = when (val type = baseType.rawType) {
                     is TyAdt -> type.regionArguments.filter { it.hasReEarlyBounds }
                     else -> emptyList()
                 }
@@ -114,7 +114,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
 }
 
 private fun isPotentialLifetimeAdt(ref: RsTypeReference): Boolean {
-    return when (val type = ref.type) {
+    return when (val type = ref.rawType) {
         is TyAdt -> type.regionArguments.all { it.hasReEarlyBounds }
         else -> false
     }
@@ -123,7 +123,7 @@ private fun isPotentialLifetimeAdt(ref: RsTypeReference): Boolean {
 private fun parsePotentialLifetimeType(ref: RsTypeReference): PotentialLifetimeRef? {
     return when {
         ref is RsRefLikeType -> PotentialLifetimeRef.RefLike(ref)
-        ref is RsBaseType && isPotentialLifetimeAdt(ref) -> PotentialLifetimeRef.BaseType(ref, ref.type)
+        ref is RsBaseType && isPotentialLifetimeAdt(ref) -> PotentialLifetimeRef.BaseType(ref, ref.rawType)
         else -> null
     }
 }

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.CharArrayUtil
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
 import org.rust.lang.core.types.ty.Ty
@@ -34,7 +34,7 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
         if (params.isEmpty()) {
             return null
         }
-        val returnType = targetFunc.returnType
+        val returnType = targetFunc.rawReturnType
         return Context(targetFunc, params, returnType)
     }
 

@@ -15,9 +15,9 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.type
 
 /**
  * This class just holds [config].
@@ -129,7 +129,7 @@ class RsChangeFunctionSignatureConfig private constructor(
     private val originalName: String = function.name.orEmpty()
 
     val returnType: Ty
-        get() = returnTypeDisplay?.type ?: TyUnit.INSTANCE
+        get() = returnTypeDisplay?.rawType ?: TyUnit.INSTANCE
 
     private val parametersText: String
         get() {

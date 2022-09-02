@@ -168,8 +168,6 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
 private fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWithVisibility<RsElement>> {
     val result = collectPathResolveVariants(path) {
         processPathResolveVariants(lookup, path, false, it)
-    }.let { rawResult ->
-        tryRefineAssocTypePath(path, lookup, rawResult) ?: rawResult
     }
 
     // type A = Foo<T>
@@ -199,57 +197,6 @@ private fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundEle
     }
 }
 
-/**
- * Consider this code:
- *
- * ```rust
- * trait Trait {
- *     type Type;
- * }
- * struct S;
- * impl Trait for S {
- *     type Type = ();
- * }
- * type A = <S as Trait>::Type;
- * ```
- *
- * On a lower level (in `processPathResolveVariants`/`resolvePathRaw`) we always resolve
- * `<S as Trait>::Type` to the trait (`trait Trait { type Type; }`). Such behavior is handy
- * for type inference, but unhandy for users (that most likely want to go to declaration in the `impl`)
- * and for other clients of name resolution (like intention actions).
- *
- * Here we're trying to find concrete `impl` for resolved associated type.
- */
-private fun tryRefineAssocTypePath(
-    path: RsPath,
-    lookup: ImplLookup?,
-    rawResult: List<BoundElementWithVisibility<RsElement>>
-): List<BoundElementWithVisibility<RsElement>>? {
-    // 1. Check that we're resolved to an associated type inside a trait:
-    // trait Trait {
-    //     type Item;
-    // }      //^ resolved here
-    val resolvedBoundElement = rawResult.singleOrNull() ?: return null
-    val resolved = resolvedBoundElement.inner.element as? RsTypeAlias ?: return null
-    if (resolved.owner !is RsAbstractableOwner.Trait) return null
-
-    // 2. Check that we resolve a `Self`-qualified path or explicit type-qualified path:
-    //    `Self::Type` or `<Foo as Trait>::Type`
-    val typeQual = path.typeQual
-    if (path.path?.hasCself != true && (typeQual == null || typeQual.traitRef == null)) return null
-
-    // 3. Try to select a concrete impl for the associated type
-    @Suppress("NAME_SHADOWING")
-    val lookup = lookup ?: ImplLookup.relativeTo(path)
-    val selection = lookup.selectStrict(
-        (TyProjection.valueOf(resolved).substitute(resolvedBoundElement.inner.subst) as TyProjection).traitRef
-    ).ok()
-    if (selection?.impl !is RsImplItem) return null
-    val element = selection.impl.expandedMembers.types.find { it.name == resolved.name } ?: return null
-    val newSubst = lookup.ctx.fullyResolveWithOrigins(selection.subst)
-    return listOf(resolvedBoundElement.copy(inner = BoundElement(element, newSubst)))
-}
-
 fun <T : RsElement> instantiatePathGenerics(
     path: RsPath,
     resolved: BoundElement<T>,
@@ -261,7 +208,7 @@ fun <T : RsElement> instantiatePathGenerics(
     val newSubst = psiSubst.toSubst(resolver)
     val assoc = psiSubst.assoc.mapValues {
         when (val value = it.value) {
-            is AssocValue.Present -> value.value.type
+            is AssocValue.Present -> value.value.rawType
             AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
         }
     }
@@ -297,7 +244,7 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
         val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
             val pred = parent.ancestorStrict<RsWherePred>()
             if (pred != null) {
-                pred.typeReference?.type
+                pred.typeReference?.rawType
             } else {
                 parent.ancestorStrict<RsTypeParameter>()?.declaredType
             } ?: TyUnknown
@@ -461,4 +408,65 @@ private fun resolveThroughTypeAliases(boundElement: BoundElement<RsElement>): Bo
         base = resolved.substitute(base.subst)
     }
     return base
+}
+
+/**
+ * Consider this code:
+ *
+ * ```rust
+ * trait Trait {
+ *     type Type;
+ * }
+ * struct S;
+ * impl Trait for S {
+ *     type Type = ();
+ * }
+ * type A = <S as Trait>::Type;
+ * ```
+ *
+ * Usual `path.reference.resolve()` always resolves `<S as Trait>::Type` path
+ * to the associated type in the trait (`trait Trait { type Type; }`). Such behavior is handy
+ * for type inference, but unhandy for users (that most likely want to go to declaration in the `impl`)
+ * and for other clients of name resolution (like intention actions).
+ *
+ * Here we're trying to find concrete `impl` for resolved associated type.
+ */
+private fun RsPathReference.tryAdvancedResolveTypeAliasToImpl(): BoundElement<RsElement>? {
+    val resolvedBoundElement = advancedResolve() ?: return null
+
+    // 1. Check that we're resolved to an associated type inside a trait:
+    // trait Trait {
+    //     type Item;
+    // }      //^ resolved here
+    val resolved = resolvedBoundElement.element as? RsTypeAlias ?: return null
+    if (resolved.owner !is RsAbstractableOwner.Trait) return null
+
+    // 2. Check that we resolve a `Self`-qualified path or explicit type-qualified path:
+    //    `Self::Type` or `<Foo as Trait>::Type`
+    val typeQual = element.typeQual
+    if (element.path?.hasCself != true && (typeQual == null || typeQual.traitRef == null)) return null
+
+    // 3. Try to select a concrete impl for the associated type
+    val lookup = ImplLookup.relativeTo(element)
+    val selection = lookup.selectStrict(
+        (TyProjection.valueOf(resolved).substitute(resolvedBoundElement.subst) as TyProjection).traitRef
+    ).ok()
+    if (selection?.impl !is RsImplItem) return null
+    val element = selection.impl.expandedMembers.types.find { it.name == resolved.name } ?: return null
+    val newSubst = lookup.ctx.fullyResolveWithOrigins(selection.subst)
+    NameResolutionTestmarks.TypeAliasToImpl.hit()
+    return BoundElement(element, newSubst)
+}
+
+/** @see tryAdvancedResolveTypeAliasToImpl */
+fun RsPathReference.advancedResolveTypeAliasToImpl(): BoundElement<RsElement>? =
+    tryAdvancedResolveTypeAliasToImpl() ?: advancedResolve()
+
+/** @see tryAdvancedResolveTypeAliasToImpl */
+fun RsPathReference.tryResolveTypeAliasToImpl(): RsElement? =
+    tryAdvancedResolveTypeAliasToImpl()?.element
+
+/** @see tryAdvancedResolveTypeAliasToImpl */
+fun RsPathReference.resolveTypeAliasToImpl(): RsElement? {
+    return tryResolveTypeAliasToImpl() ?: resolve()
 }

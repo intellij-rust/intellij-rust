@@ -13,11 +13,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.stubs.RsStubLiteralKind
-import org.rust.lang.core.types.RsPsiSubstitution
-import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtValue
-import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
@@ -25,7 +23,6 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.escapeRust
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.exhaustive
@@ -599,7 +596,7 @@ open class TypeSubstitutingPsiRenderer(
     private val subst: Substitution
 ) : RsPsiRenderer(options) {
     override fun appendTypeReference(sb: StringBuilder, ref: RsTypeReference) {
-        val ty = ref.type
+        val ty = ref.rawType
         if (ty is TyTypeParameter && subst[ty] != null) {
             sb.append(ty.substAndGetText(subst))
         } else {

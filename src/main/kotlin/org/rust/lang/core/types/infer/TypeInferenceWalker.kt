@@ -41,7 +41,7 @@ import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 
 class RsTypeInferenceWalker(
-    private val ctx: RsInferenceContext,
+    val ctx: RsInferenceContext,
     private val returnTy: Ty
 ) {
     private var tryTy: Ty? = returnTy
@@ -50,7 +50,7 @@ class RsTypeInferenceWalker(
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
-    private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.type ?: TyUnknown
+    private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.rawType ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
         if (!ty.needsInfer) return ty
@@ -136,7 +136,7 @@ class RsTypeInferenceWalker(
     // returns true if expr is always diverging
     private fun processStatement(psi: RsStmt): Boolean = when (psi) {
         is RsLetDecl -> {
-            val explicitTy = psi.typeReference?.type
+            val explicitTy = psi.typeReference?.rawType
                 ?.let { normalizeAssociatedTypesIn(it) }
             val expr = psi.expr
             val pat = psi.pat
@@ -410,11 +410,11 @@ class RsTypeInferenceWalker(
         pathExpr: RsPathExpr
     ): Ty {
         if (element is RsImplItem) {
-            val implForTy = element.typeReference?.type ?: TyUnknown
+            val implForTy = element.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown
             val tupleFields = ((implForTy as? TyAdt)?.item as? RsFieldsOwner)?.tupleFields
             return if (tupleFields != null) {
                 // Treat tuple constructor as a function
-                TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, implForTy)
+                TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy)
                     .substitute(implForTy.typeParameterValues)
             } else {
                 implForTy
@@ -439,7 +439,7 @@ class RsTypeInferenceWalker(
                 val (typeParameters, selfTy) = when (owner) {
                     is RsAbstractableOwner.Impl -> {
                         val typeParameters = ctx.instantiateBounds(owner.impl)
-                        val selfTy = owner.impl.typeReference?.type?.substitute(typeParameters) ?: TyUnknown
+                        val selfTy = owner.impl.typeReference?.rawType?.substitute(typeParameters) ?: TyUnknown
                         subst[TyTypeParameter.self()]?.let { ctx.combineTypes(selfTy, it) }
                         typeParameters to selfTy
                     }
@@ -486,15 +486,15 @@ class RsTypeInferenceWalker(
             is RsTypeDeclarationElement -> element.declaredType
             is RsEnumVariant -> element.parentEnum.declaredType
             is RsFunction -> element.type
-            is RsConstant -> element.typeReference?.type ?: TyUnknown
-            is RsConstParameter -> element.typeReference?.type ?: TyUnknown
+            is RsConstant -> element.typeReference?.rawType ?: TyUnknown
+            is RsConstParameter -> element.typeReference?.rawType ?: TyUnknown
             is RsSelfParameter -> element.typeOfValue
             else -> return TyUnknown
         }
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
-            TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, type)
+            TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, type)
         } else {
             type
         }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
@@ -598,7 +598,7 @@ class RsTypeInferenceWalker(
 
     private fun inferCastExprType(expr: RsCastExpr): Ty {
         expr.expr.inferType()
-        return expr.typeReference.type
+        return normalizeAssociatedTypesIn(expr.typeReference.rawType)
     }
 
     private fun inferCallExprType(expr: RsCallExpr, expected: Expectation): Ty {
@@ -689,13 +689,13 @@ class RsTypeInferenceWalker(
         newSubst = ctx.instantiateBounds(callee.element, callee.formalSelfTy, newSubst)
 
         val typeParameters = callee.element.typeParameters.map { TyTypeParameter.named(it) }
-        val typeArguments = methodCall.typeArguments.map { it.type }
+        val typeArguments = methodCall.typeArguments.map { it.rawType }
         val typeSubst = typeParameters.zip(typeArguments).toMap()
 
         val constParameters = callee.element.constParameters.map { CtConstParameter(it) }
         val resolver = PathExprResolver.fromContext(ctx)
         val constSubst = constParameters.zip(methodCall.constArguments).associate { (param, psiValue) ->
-            val expectedTy = param.parameter.typeReference?.type ?: TyUnknown
+            val expectedTy = param.parameter.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown
             val value = psiValue.toConst(expectedTy, resolver)
             param to value
         }
@@ -859,7 +859,7 @@ class RsTypeInferenceWalker(
 
     fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsElement>) {
         val argDefs = constParameters.asSequence()
-            .map { it.typeReference?.type ?: TyUnknown }
+            .map { it.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown }
             .infiniteWithTyUnknown()
         for ((type, expr) in argDefs.zip(constArguments.asSequence())) {
             when (expr) {
@@ -870,7 +870,7 @@ class RsTypeInferenceWalker(
                         is RsConstParameter -> def.typeReference
                         else -> null
                     }
-                    coerce(expr, typeReference?.type ?: TyUnknown, type)
+                    coerce(expr, typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown, type)
                 }
             }
         }
@@ -899,7 +899,7 @@ class RsTypeInferenceWalker(
 
         val fieldElement = field.element
 
-        val raw = (fieldElement as? RsFieldDecl)?.typeReference?.type ?: TyUnknown
+        val raw = (fieldElement as? RsFieldDecl)?.typeReference?.rawType ?: TyUnknown
         return raw.substitute(field.selfTy.typeParameterValues).foldWith(associatedTypeNormalizer)
     }
 
@@ -1350,11 +1350,12 @@ class RsTypeInferenceWalker(
             ?: TyFunction(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown)
         val extendedArgs = expectedFnTy.paramTypes.asSequence().infiniteWithTyUnknown()
         val paramTypes = extendedArgs.zip(params.asSequence()).map { (expectedArg, actualArg) ->
-            val paramTy = actualArg.typeReference?.type ?: expectedArg
+            val paramTy = actualArg.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: expectedArg
             actualArg.pat?.extractBindings(paramTy)
             paramTy
         }.toList()
-        val expectedRetTy = expr.retType?.typeReference?.type
+        val expectedRetTy = expr.retType?.typeReference?.rawType
+            ?.let { normalizeAssociatedTypesIn(it) }
             ?: expectedFnTy.retType.takeIf { it != TyUnknown }
         val isFreshRetTy = expectedRetTy == null
         val retTy = expectedRetTy ?: TyInfer.TyVar()
@@ -1486,7 +1487,7 @@ class RsTypeInferenceWalker(
 
     fun extractParameterBindings(fn: RsFunction) {
         for (param in fn.valueParameters) {
-            param.pat?.extractBindings(param.typeReference?.type ?: TyUnknown)
+            param.pat?.extractBindings(param.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown)
         }
     }
 
@@ -1582,8 +1583,8 @@ val RsSelfParameter.typeOfValue: Ty
 private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
     if (isExplicitType) {
         // self: Self, self: &Self, self: &mut Self, self: Box<Self>
-        val formalSelfTy = this.typeReference?.type ?: TyUnknown
-        val ownerImplTy = (parentFunction.owner as? RsAbstractableOwner.Impl)?.impl?.typeReference?.type
+        val formalSelfTy = this.typeReference?.rawType ?: TyUnknown
+        val ownerImplTy = (parentFunction.owner as? RsAbstractableOwner.Impl)?.impl?.typeReference?.rawType
         return if (ownerImplTy != null) {
             // In `impl`s, `Self` type has already been replaced with `impl`'s formal self ty.
             // Let's replace it to the actual receiver type
@@ -1615,9 +1616,9 @@ val RsFunction.type: TyFunction
             paramTypes += self.typeOfValue
         }
 
-        paramTypes += valueParameters.map { it.typeReference?.type ?: TyUnknown }
+        paramTypes += valueParameters.map { it.typeReference?.rawType ?: TyUnknown }
 
-        return TyFunction(paramTypes, if (isAsync) knownItems.makeFuture(returnType) else returnType)
+        return TyFunction(paramTypes, if (isAsync) knownItems.makeFuture(rawReturnType) else rawReturnType)
     }
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
@@ -1656,7 +1657,7 @@ private fun <T> T?.makeTy(typeParamName: String, innerTy: Ty): Ty where T : RsTy
             val typeReference = param.typeReference ?: continue
             if (name != typeParamName) {
                 val typeParam = itemTy.getTypeParameter(name) ?: continue
-                substitutionMap[typeParam] = typeReference.type
+                substitutionMap[typeParam] = typeReference.rawType
             }
         }
     }

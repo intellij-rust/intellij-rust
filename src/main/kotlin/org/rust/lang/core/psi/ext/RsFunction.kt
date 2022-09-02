@@ -17,10 +17,11 @@ import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
+import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 import javax.swing.Icon
 
 val RsFunction.block: RsBlock? get() = PsiTreeUtil.getChildOfType(this, RsBlock::class.java)
@@ -111,10 +112,16 @@ val RsFunction.title: String
             if (isAssocFn) "Associated function `$name`" else "Method `$name`"
     }
 
-val RsFunction.returnType: Ty
+val RsFunction.rawReturnType: Ty
     get() {
         val retType = retType ?: return TyUnit.INSTANCE
-        return retType.typeReference?.type ?: TyUnknown
+        return retType.typeReference?.rawType ?: TyUnknown
+    }
+
+val RsFunction.normReturnType: Ty
+    get() {
+        val retType = retType ?: return TyUnit.INSTANCE
+        return retType.typeReference?.normType ?: TyUnknown
     }
 
 val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi

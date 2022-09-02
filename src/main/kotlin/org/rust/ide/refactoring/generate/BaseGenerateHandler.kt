@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.rawType
 import org.rust.openapiext.checkWriteAccessNotAllowed
 
 abstract class BaseGenerateAction : CodeInsightAction() {
@@ -63,7 +63,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         }
 
         if (!isStructValid(structItem)) return null
-        val substitution = impl?.typeReference?.type?.typeParameterValues ?: emptySubstitution
+        val substitution = impl?.typeReference?.rawType?.typeParameterValues ?: emptySubstitution
         val fields = StructMember.fromStruct(structItem, substitution).filter { isFieldValid(it, impl) }
         if (fields.isEmpty() && !allowEmptyFields()) return null
 

@@ -14,6 +14,7 @@ import org.rust.lang.core.types.consts.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.needsEval
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.ty.TyInteger
@@ -34,7 +35,7 @@ fun RsElement.toConst(
         is RsConstParameter -> CtConstParameter(resolved)
         is RsConstant -> when {
             resolved.isConst -> {
-                val type = resolved.typeReference?.type ?: TyUnknown
+                val type = resolved.typeReference?.normType ?: TyUnknown
                 resolved.expr?.evaluate(type, resolver) ?: CtUnknown
             }
             else -> CtUnknown

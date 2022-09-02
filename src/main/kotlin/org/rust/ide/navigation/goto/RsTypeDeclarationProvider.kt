@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.parentFunction
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -19,13 +20,13 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
 
     override fun getSymbolTypeDeclarations(element: PsiElement): Array<PsiElement>? {
         val type = when (element) {
-            is RsFunction -> element.retType?.typeReference?.type
-            is RsNamedFieldDecl -> element.typeReference?.type
-            is RsConstant -> element.typeReference?.type
+            is RsFunction -> element.retType?.typeReference?.normType
+            is RsNamedFieldDecl -> element.typeReference?.normType
+            is RsConstant -> element.typeReference?.normType
             is RsPatBinding -> element.type
             is RsSelfParameter -> when (val owner = element.parentFunction.owner) {
                 is RsAbstractableOwner.Trait -> owner.trait.declaredType
-                is RsAbstractableOwner.Impl -> owner.impl.typeReference?.type
+                is RsAbstractableOwner.Impl -> owner.impl.typeReference?.normType
                 else -> null
             }
             else -> null

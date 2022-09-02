@@ -47,15 +47,15 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
         val paramTy = TyTypeParameter.named(param)
         val valueTy = when (value) {
             is RsPsiSubstitution.Value.DefaultValue -> if (value.value.selfTy != null) {
-                value.value.value.type.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
+                value.value.value.rawType.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
             } else {
-                value.value.value.type
+                value.value.value.rawType
             }
             is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
             is RsPsiSubstitution.Value.Present -> when (value.value) {
-                is RsPsiSubstitution.TypeValue.InAngles -> value.value.value.type
+                is RsPsiSubstitution.TypeValue.InAngles -> value.value.value.rawType
                 is RsPsiSubstitution.TypeValue.FnSugar -> if (value.value.inputArgs.isNotEmpty()) {
-                    TyTuple(value.value.inputArgs.map { it?.type ?: TyUnknown })
+                    TyTuple(value.value.inputArgs.map { it?.rawType ?: TyUnknown })
                 } else {
                     TyUnit.INSTANCE
                 }
@@ -82,11 +82,11 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             RsPsiSubstitution.Value.OptionalAbsent -> param
             RsPsiSubstitution.Value.RequiredAbsent -> CtUnknown
             is RsPsiSubstitution.Value.Present -> {
-                val expectedTy = psiParam.typeReference?.type ?: TyUnknown
+                val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                 psiValue.value.toConst(expectedTy, resolver)
             }
             is RsPsiSubstitution.Value.DefaultValue -> {
-                val expectedTy = psiParam.typeReference?.type ?: TyUnknown
+                val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                 psiValue.value.toConst(expectedTy, resolver)
             }
         }

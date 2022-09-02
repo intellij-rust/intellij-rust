@@ -18,9 +18,9 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
 import org.rust.lang.core.types.infer.generics
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 /**
@@ -45,7 +45,7 @@ class RsCachedImplItem(
 
     val implementedTrait: BoundElement<RsTraitItem>? by recursionSafeLazy { traitRef?.resolveToBoundTrait() }
     val typeAndGenerics: Triple<Ty, List<TyTypeParameter>, List<CtConstParameter>>? by lazy(PUBLICATION) {
-        impl.typeReference?.type?.let { Triple(it, impl.generics, impl.constGenerics) }
+        impl.typeReference?.rawType?.let { Triple(it, impl.generics, impl.constGenerics) }
     }
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */

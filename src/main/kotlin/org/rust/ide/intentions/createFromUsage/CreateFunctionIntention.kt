@@ -18,6 +18,7 @@ import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.expectedType
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.createSmartPointer
@@ -80,7 +81,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                     val parentImpl = methodCall.parentOfType<RsImplItem>()
                     return when {
                         // creating a method inside the same impl
-                        (parentImpl?.typeReference?.type as? TyAdt)?.item == item && parentImpl.traitRef == null -> ""
+                        (parentImpl?.typeReference?.rawType as? TyAdt)?.item == item && parentImpl.traitRef == null -> ""
                         methodCall.containingCrate != item.containingCrate -> "pub "
                         else -> "pub(crate)"
                     }
@@ -256,7 +257,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val owner = sourceFunction.owner
         if (owner is RsAbstractableOwner.Impl) {
             val impl = owner.impl
-            if (impl.traitRef == null && (impl.typeReference?.type as? TyAdt)?.item == item) {
+            if (impl.traitRef == null && (impl.typeReference?.rawType as? TyAdt)?.item == item) {
                 return impl
             }
         }

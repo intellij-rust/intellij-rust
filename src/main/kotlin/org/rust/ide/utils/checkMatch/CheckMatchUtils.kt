@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.infer.containsTyOfClass
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
@@ -179,7 +180,7 @@ private fun createPatternForField(patField: RsPatField?, field: RsFieldDecl): Pa
         val binding = patField.patBinding ?: throw CheckMatchException("Invalid RsPatField")
         Pattern(binding.type, PatternKind.Binding(binding.type, binding.name.orEmpty()))
     } else {
-        val fieldType = field.typeReference?.type ?: throw CheckMatchException("Field type = null")
+        val fieldType = field.typeReference?.normType ?: throw CheckMatchException("Field type = null")
         Pattern(fieldType, PatternKind.Wild)
     }
 
