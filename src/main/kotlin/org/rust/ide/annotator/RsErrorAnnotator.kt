@@ -199,17 +199,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
         val parent = orPat.context
 
-        if (parent is RsPat) {
-            val firstChild = orPat.firstChild
-            if (firstChild?.elementType == RsElementTypes.OR) {
-                holder.createErrorAnnotation(
-                    firstChild,
-                    "a leading `|` is only allowed in a top-level pattern",
-                    RemoveElementFix(firstChild)
-                )
-            }
-        }
-
         if (parent !is RsCondition && parent !is RsMatchArm) {
             OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
         }

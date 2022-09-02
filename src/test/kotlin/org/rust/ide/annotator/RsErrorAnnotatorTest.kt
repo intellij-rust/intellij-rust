@@ -2217,8 +2217,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.53.0")
+    fun `test non top level or patterns E0658 3`() = checkErrors("""
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            if let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            while let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            match y {
+                Option::Some(V::V1(x) | V::V2(x)) => {},
+                _ => {}
+            }
+        }
+    """)
+
     @MockRustcVersion("1.38.0-nightly")
-    fun `test leading vertical bar in or patterns 1`() = checkErrors("""
+    fun `test leading vertical bar in toplevel or patterns`() = checkErrors("""
         #![feature(or_patterns)]
         enum V { V1(i32), V2(i32) }
         fn foo(y: V, z: V) {
@@ -2229,20 +2243,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockRustcVersion("1.38.0-nightly")
-    fun `test leading vertical bar in or patterns 2`() = checkFixByText("Remove `|`", """
-        #![feature(or_patterns)]
+    @MockRustcVersion("1.53.0")
+    fun `test leading vertical bar in nested or patterns`() = checkErrors("""
         enum Option<T> { None, Some(T) }
         enum V { V1(i32), V2(i32) }
         fn foo(y: Option<V>) {
-            while let Option::Some(<error descr="a leading `|` is only allowed in a top-level pattern">|/*caret*/</error> V::V1(x) | V::V2(x)) = y {}
-        }
-    """, """
-        #![feature(or_patterns)]
-        enum Option<T> { None, Some(T) }
-        enum V { V1(i32), V2(i32) }
-        fn foo(y: Option<V>) {
-            while let Option::Some(/*caret*/V::V1(x) | V::V2(x)) = y {}
+            while let Option::Some(|/*caret*/ V::V1(x) | V::V2(x)) = &y {}
+            if let (| Option::None | Option::Some(_), _) = (&y, &y) {}
+            match &[y] {
+                [.., | Option::None | Option::Some(_)] => {},
+                _ => {}
+            }
         }
     """)
 
