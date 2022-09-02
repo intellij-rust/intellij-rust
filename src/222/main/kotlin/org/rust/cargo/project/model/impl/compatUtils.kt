@@ -23,7 +23,9 @@ fun registerProjectAware(project: Project, disposable: Disposable) {
         .subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
             override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
                 if (e.affectsCargoMetadata) {
-                    AutoImportProjectTracker.getInstance(project).markDirty(cargoProjectAware.projectId)
+                    val tracker = AutoImportProjectTracker.getInstance(project)
+                    tracker.markDirty(cargoProjectAware.projectId)
+                    tracker.scheduleProjectRefresh()
                 }
             }
         })
