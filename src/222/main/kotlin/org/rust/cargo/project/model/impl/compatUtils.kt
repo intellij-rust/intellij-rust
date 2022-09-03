@@ -14,6 +14,10 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsCh
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 
 fun registerProjectAware(project: Project, disposable: Disposable) {
+    // There is no sense to register `CargoExternalSystemProjectAware` for default project.
+    // Moreover, it may break searchable options building
+    if (project.isDefault) return
+
     val cargoProjectAware = CargoExternalSystemProjectAware(project)
     val projectTracker = ExternalSystemProjectTracker.getInstance(project)
     projectTracker.register(cargoProjectAware, disposable)
