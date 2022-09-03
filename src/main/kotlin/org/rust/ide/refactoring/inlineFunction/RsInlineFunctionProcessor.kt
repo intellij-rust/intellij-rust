@@ -195,7 +195,7 @@ class RsInlineFunctionProcessor(
         returnExpr.replace(returnValue)
     }
 
-    override fun getCommandName(): String = "Inline function ${originalFunction.declaration}"
+    override fun getCommandName(): String = "Inline function ${originalFunction.name}"
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
         RsInlineUsageViewDescriptor(originalFunction, "Function to inline")

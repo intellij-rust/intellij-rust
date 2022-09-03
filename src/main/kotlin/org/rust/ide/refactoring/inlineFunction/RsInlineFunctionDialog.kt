@@ -12,7 +12,6 @@ import org.rust.ide.refactoring.RsInlineDialog
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.declaration
 import org.rust.lang.core.psi.ext.isMethod
 import org.rust.lang.core.resolve.ref.RsReference
 
@@ -25,6 +24,7 @@ class RsInlineFunctionDialog(
 ) : RsInlineDialog(function, refElement, project) {
 
     private val occurrencesNumber: Int = getNumberOfOccurrences(function)
+    private val callableType: String = if (function.isMethod) "Method" else "Function"
 
     init {
         init()
@@ -44,13 +44,10 @@ class RsInlineFunctionDialog(
         invokeRefactoring(processor)
     }
 
-    override fun getBorderTitle(): String =
-        RefactoringBundle.message("inline.method.border.title")
+    override fun getBorderTitle(): String = "Inline $callableType"
 
-    override fun getNameLabelText(): String {
-        val callableType = if (function.isMethod) "Method" else "Function"
-        return "$callableType ${function.declaration} ${getOccurrencesText(occurrencesNumber)}"
-    }
+    override fun getNameLabelText(): String =
+        "$callableType ${function.name} ${getOccurrencesText(occurrencesNumber)}"
 
     override fun getInlineAllText(): String {
         val text = if (function.isWritable) {

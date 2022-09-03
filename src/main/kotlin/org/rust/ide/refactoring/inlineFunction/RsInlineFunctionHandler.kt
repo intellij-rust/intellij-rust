@@ -30,7 +30,7 @@ class RsInlineFunctionHandler : InlineActionHandler() {
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
 
         if (RsInlineFunctionProcessor.doesFunctionHaveMultipleReturns(function)) {
-            errorHint(project, editor, "cannot inline function with more than one exit points")
+            errorHint(project, editor, "Cannot inline function with more than one exit points")
             return
         }
 
@@ -39,13 +39,13 @@ class RsInlineFunctionHandler : InlineActionHandler() {
             if (reference != null) {
                 allowInlineThisOnly = true
             } else {
-                errorHint(project, editor, "cannot inline function with recursive calls")
+                errorHint(project, editor, "Cannot inline function with recursive calls")
                 return
             }
         }
 
         if (reference != null && RsInlineFunctionProcessor.checkIfLoopCondition(function, reference.element)) {
-            errorHint(project, editor, "cannot inline multiline function into \"while\" loop condition")
+            errorHint(project, editor, "Cannot inline multiline function into \"while\" loop condition")
             return
         }
 
