@@ -64,12 +64,15 @@ class RsInlineFunctionDialog(
     override fun getInlineThisText(): String =
         RefactoringBundle.message("this.invocation.only.and.keep.the.method")
 
-    override fun getKeepTheDeclarationText(): String? =
-        if (function.isWritable && (occurrencesNumber > 1 || !myInvokedOnReference)) {
+    override fun getKeepTheDeclarationText(): String? {
+        // `occurrencesNumber` can be negative if calculating it takes too long
+        val mightHaveMultipleOccurrences = occurrencesNumber < 0 || occurrencesNumber > 1
+        return if (function.isWritable && (mightHaveMultipleOccurrences || !myInvokedOnReference)) {
             "Inline all and keep the method"
         } else {
             null
         }
+    }
 
     override fun getHelpId(): String =
         "refactoring.inlineMethod"
