@@ -1561,6 +1561,15 @@ sealed class RsDiagnostic(
             fixes = listOfNotNull(fix)
         )
     }
+
+    class RecursiveAsyncFunction(element: PsiElement, private val fix: LocalQuickFix?) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0733,
+            "Recursion in an `async fn` requires boxing",
+            fixes = listOfNotNull(fix)
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -1571,7 +1580,7 @@ enum class RsErrorCode {
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
-    E0703, E0704, E0728, E0732, E0741, E0742, E0747;
+    E0703, E0704, E0728, E0732, E0733, E0741, E0742, E0747;
 
     val code: String
         get() = toString()

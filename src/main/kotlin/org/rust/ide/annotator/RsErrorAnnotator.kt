@@ -1192,6 +1192,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
         checkEmptyFunctionReturnType(holder, fn)
+        checkRecursiveAsyncFunction(holder, fn)
 
         fn.innerAttrList.forEach { checkStartAttribute(holder, it) }
         fn.outerAttrList.forEach { checkStartAttribute(holder, it) }
@@ -1819,6 +1820,34 @@ private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunct
     if (stmts.isEmpty() && expr == null) {
         RsDiagnostic.TypeError(rbrace, returnType, TyUnit.INSTANCE).addToHolder(holder)
     }
+}
+
+private fun checkRecursiveAsyncFunction(holder: RsAnnotationHolder, fn: RsFunction) {
+    if (!fn.isAsync) return
+    val recursiveCalls = fn
+        .descendantsOfType<RsFieldLookup>()
+        .filter {
+            if (!it.isAsync) return@filter false
+            val dotExpr = it.parent as? RsDotExpr
+            val callExpr = dotExpr?.expr as? RsCallExpr
+            val pathExpr = callExpr?.expr as? RsPathExpr ?: return@filter false
+            val path = pathExpr.path
+            !path.hasColonColon && path.reference?.resolve() == fn
+                && dotExpr.ancestorStrict<RsFunctionOrLambda>() == fn
+        }
+        .ifEmpty { return }
+    if (fn.hasAsyncRecursionProcMacro()) return
+    val fix = AddAsyncRecursionAttributeFix.createIfCompatible(fn)
+    for (recursiveCall in recursiveCalls) {
+        RsDiagnostic.RecursiveAsyncFunction(recursiveCall, fix).addToHolder(holder)
+    }
+}
+
+private fun RsFunction.hasAsyncRecursionProcMacro(): Boolean {
+    val attr = ProcMacroAttribute
+        .getProcMacroAttributeWithoutResolve(this, ignoreProcMacrosDisabled = true)
+        as? ProcMacroAttribute.Attr ?: return false
+    return attr.attr.path?.referenceName == "async_recursion"
 }
 
 private fun RsAttr.isBuiltinWithName(target: String): Boolean {
