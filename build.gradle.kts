@@ -109,7 +109,7 @@ allprojects {
         }
 
         // All these tasks don't make sense for non-root subprojects
-        // Root project (i.e. `:plugin`) enables them itlsef if needed
+        // Root project (i.e. `:plugin`) enables them itself if needed
         runIde { enabled = false }
         prepareSandbox { enabled = false }
         buildSearchableOptions { enabled = false }
@@ -321,6 +321,10 @@ project(":plugin") {
             enabled = true
         }
         buildSearchableOptions {
+            // Force `mergePluginJarTask` be executed before `buildSearchableOptions`
+            // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
+            // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
+            dependsOn(mergePluginJarTask)
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
 
