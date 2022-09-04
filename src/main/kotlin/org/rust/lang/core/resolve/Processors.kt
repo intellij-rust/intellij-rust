@@ -357,3 +357,10 @@ fun filterAttributeProcMacros(processor: RsResolveProcessor): RsResolveProcessor
         if (!function.isAttributeProcMacroDef) return@createProcessor false
         processor(e)
     }
+
+fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
+    createProcessor(processor.names) { e ->
+        val function = e.element as? RsFunction ?: return@createProcessor false
+        if (!function.isCustomDeriveProcMacroDef) return@createProcessor false
+        processor(e)
+    }

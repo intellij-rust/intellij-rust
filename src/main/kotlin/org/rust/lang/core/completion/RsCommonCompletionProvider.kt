@@ -282,10 +282,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     item: LookupElement
                 ) {
                     super.handleInsert(element, scopeName, context, item)
-                    if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
-                        context.commitDocument()
-                        context.getElementOfType<RsElement>()?.let { candidate.import(it) }
-                    }
+                    context.import(candidate)
                 }
             }
         ).withImportCandidate(candidate)
@@ -508,7 +505,7 @@ private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement
     return null
 }
 
-private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
+fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
     return RsImportLookupElement(this, candidate)
 }
 
@@ -519,7 +516,7 @@ private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImp
  *
  * See [#5415](https://github.com/intellij-rust/intellij-rust/issues/5415)
  */
-private class RsImportLookupElement(
+class RsImportLookupElement(
     delegate: LookupElement,
     private val candidate: ImportCandidate
 ) : LookupElementDecorator<LookupElement>(delegate) {
@@ -576,5 +573,12 @@ fun collectVariantsForEnumCompletion(
                 }
             }
         ).let { if (candidate != null) it.withImportCandidate(candidate) else it }
+    }
+}
+
+fun InsertionContext.import(candidate: ImportCandidate) {
+    if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+        commitDocument()
+        getElementOfType<RsElement>()?.let { candidate.import(it) }
     }
 }
