@@ -21,20 +21,20 @@ import org.rust.lang.core.psi.ext.getChildModule
 import org.rust.openapiext.getCachedOrCompute
 import java.lang.ref.SoftReference
 
-fun Project.getDetachedModInfo(scope: RsMod): RsModInfoBase {
-    val rootMod = scope.containingFile as? RsFile ?: return RsModInfoBase.InfoNotFound
+fun Project.getDetachedModInfo(scope: RsMod): RsModInfo? {
+    val rootMod = scope.containingFile as? RsFile ?: return null
     val crate = FakeDetachedCrate(rootMod, DefMapService.getNextNonCargoCrateId(), dependencies = emptyList())
     return getModInfoInDetachedCrate(scope, crate)
 }
 
-fun Project.getDoctestModInfo(scope: RsMod, crate: DoctestCrate): RsModInfoBase =
+fun Project.getDoctestModInfo(scope: RsMod, crate: DoctestCrate): RsModInfo? =
     getModInfoInDetachedCrate(scope, crate)
 
-private fun Project.getModInfoInDetachedCrate(scope: RsMod, crate: Crate): RsModInfoBase {
-    val defMap = defMapService.cachedGetDefMapForNonCargoCrate(crate) ?: return RsModInfoBase.InfoNotFound
-    val dataPsiHelper = DetachedFileDataPsiHelper(crate.rootMod ?: return RsModInfoBase.InfoNotFound, defMap)
-    val modData = dataPsiHelper.psiToData(scope) ?: return RsModInfoBase.InfoNotFound
-    return RsModInfoBase.RsModInfo(this, defMap, modData, crate, dataPsiHelper)
+private fun Project.getModInfoInDetachedCrate(scope: RsMod, crate: Crate): RsModInfo? {
+    val defMap = defMapService.cachedGetDefMapForNonCargoCrate(crate) ?: return null
+    val dataPsiHelper = DetachedFileDataPsiHelper(crate.rootMod ?: return null, defMap)
+    val modData = dataPsiHelper.psiToData(scope) ?: return null
+    return RsModInfo(this, defMap, modData, crate, dataPsiHelper)
 }
 
 private class DetachedFileDataPsiHelper(

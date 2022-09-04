@@ -14,7 +14,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.expandedTailExpr
-import org.rust.lang.core.resolve.*
+import org.rust.lang.core.resolve.ItemProcessingMode
+import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
+import org.rust.lang.core.resolve.createProcessor
+import org.rust.lang.core.resolve.findPrelude
+import org.rust.lang.core.resolve2.processItemDeclarations
 import org.rust.openapiext.toPsiFile
 
 class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {

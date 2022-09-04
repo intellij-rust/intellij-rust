@@ -30,23 +30,17 @@ import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
-import org.rust.lang.core.resolve2.RsModInfoBase.*
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
 
-/** null return value means that new resolve can't be used */
-fun processItemDeclarations2(
+fun processItemDeclarations(
     scope: RsItemsOwner,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
-): Boolean? {
-    val info = when (val info = getModInfo(scope)) {
-        is CantUseNewResolve -> return null
-        InfoNotFound -> return false
-        is RsModInfo -> info
-    }
+): Boolean {
+    val info = getModInfo(scope) ?: return false
     return processItemDeclarationsUsingModInfo(scopeIsMod = scope is RsMod, info, ns, processor, ipm)
 }
 
@@ -102,7 +96,6 @@ fun processItemDeclarationsUsingModInfo(
     return false
 }
 
-/** null return value means that new resolve can't be used. */
 fun processMacros(
     scope: RsItemsOwner,
     processor: RsResolveProcessor,
@@ -113,13 +106,8 @@ fun processMacros(
      */
     macroPath: PsiElement?,
     isAttrOrDerive: Boolean,
-): Boolean? {
-    val info = when (val info = getModInfo(scope)) {
-        is CantUseNewResolve -> return null
-        InfoNotFound -> return false
-        is RsModInfo -> info
-    }
-
+): Boolean {
+    val info = getModInfo(scope) ?: return false
     return info.modData.processMacros(macroPath, isAttrOrDerive, processor, info)
 }
 
@@ -189,88 +177,65 @@ private fun filterMacrosByIndex(macroInfos: List<MacroDefInfo>, macroIndex: Macr
         else -> macroInfos.last()  // this is kind of error, can choose anything here
     }
 
-fun <T> RsPossibleMacroCall.resolveToMacroUsingNewResolveAndThen(
-    withNewResolve: (RsNamedElement?) -> T,
-    withoutNewResolve: () -> T
-): T? =
-    resolveToMacroAndThen(withoutNewResolve) { defInfo, info ->
-        val visItem = VisItem(defInfo.path, Visibility.Public)
-        val def = visItem.scopedMacroToPsi(info)
-        withNewResolve(def)
-    }
+fun RsPossibleMacroCall.resolveToMacroUsingNewResolve(): RsNamedElement? {
+    val (defInfo, info) = resolveToMacroInfo() ?: return null
+    val visItem = VisItem(defInfo.path, Visibility.Public)
+    return visItem.scopedMacroToPsi(info)
+}
 
 /**
  * Resolve without PSI is needed to prevent caching incomplete result in [expandedItemsCached].
  * Consider:
  * - Macro expansion task wants to expand some macro
  * - Firstly we resolve macro path
- * - It can trigger items resolve [processItemDeclarations2].
+ * - It can trigger items resolve [processItemDeclarations].
  *   E.g. if macro path is two segment - we need to resolve first segment as mod
- * - [processItemDeclarations2] uses [expandedItemsCached] which will try to expand all macros in scope,
+ * - [processItemDeclarations] uses [expandedItemsCached] which will try to expand all macros in scope,
  *   which results in recursion,
  *   which is prevented by returning null from macro expansion,
  *   therefore result of [expandedItemsCached] is incomplete (and cached)
  */
-fun RsMacroCall.resolveToMacroWithoutPsi(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> =
-    resolveToMacroAndThen(
-        withNewResolve = { def, _ -> RsMacroDataWithHash.fromDefInfo(def) },
-        withoutNewResolve = {
-            val psi = path.reference?.resolve() as? RsNamedElement
-            psi?.let { RsMacroDataWithHash.fromPsi(it) }?.let { RsResult.Ok(it) }
-        }
-    ) ?: RsResult.Err(ResolveMacroWithoutPsiError.Unresolved)
+fun RsMacroCall.resolveToMacroWithoutPsi(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> {
+    val (def, _) = resolveToMacroInfo()
+        ?: return RsResult.Err(ResolveMacroWithoutPsiError.Unresolved)
+    return RsMacroDataWithHash.fromDefInfo(def)
+}
 
 /** See [resolveToMacroWithoutPsi] */
-fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? =
-    resolveToMacroAndThen(
-        withNewResolve = { def, _ -> project.crateGraph.findCrateById(def.crate) },
-        withoutNewResolve = { resolveToMacro()?.containingCrate }
+fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? {
+    val (def, _) = resolveToMacroInfo() ?: return null
+    return project.crateGraph.findCrateById(def.crate)
+}
+
+/** See [resolveToMacroWithoutPsi] */
+fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(processor: RsResolveProcessor): Boolean? {
+    val (def, info) = resolveToMacroInfo() ?: return null
+    if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return null
+    val project = info.project
+    val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return null
+    return defMap.root.processMacros(
+        macroPath = null,  // null because we resolve qualified macro path
+        isAttrOrDerive = false,
+        processor = processor,
+        info = info,
     )
+}
 
-/** See [resolveToMacroWithoutPsi] */
-fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
-    processor: RsResolveProcessor,
-    withoutNewResolve: () -> Boolean?
-): Boolean? =
-    resolveToMacroAndThen(withoutNewResolve) { def, info ->
-        if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return@resolveToMacroAndThen null
-        val project = info.project
-        val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
-        defMap.root.processMacros(
-            macroPath = null,  // null because we resolve qualified macro path
-            isAttrOrDerive = false,
-            processor = processor,
-            info = info,
-        )
-    }
-
-/**
- * If new resolve can be used, computes result using [withNewResolve].
- * Otherwise fallbacks to [withoutNewResolve].
- */
-private fun <T> RsPossibleMacroCall.resolveToMacroAndThen(
-    withoutNewResolve: () -> T?,
-    withNewResolve: (MacroDefInfo, RsModInfo) -> T?
-): T? {
+private fun RsPossibleMacroCall.resolveToMacroInfo(): Pair<MacroDefInfo, RsModInfo>? {
     val scope = contextStrict<RsItemsOwner>() ?: return null
-    return when (val info = getNearestAncestorModInfo(scope)) {
-        is CantUseNewResolve -> withoutNewResolve()
-        InfoNotFound -> null
-        is RsModInfo -> {
-            val def = when (val kind = kind) {
-                is RsPossibleMacroCallKind.MacroCall -> kind.call.resolveToMacroDefInfo(info)
-                is RsPossibleMacroCallKind.MetaItem -> kind.meta.resolveToProcMacroWithoutPsi()
-            } ?: return null
-            withNewResolve(def, info)
-        }
-    }
+    val info = getNearestAncestorModInfo(scope) ?: return null
+    val def = when (val kind = kind) {
+        is RsPossibleMacroCallKind.MacroCall -> kind.call.resolveToMacroDefInfo(info)
+        is RsPossibleMacroCallKind.MetaItem -> kind.meta.resolveToProcMacroWithoutPsi()
+    } ?: return null
+    return def to info
 }
 
 fun RsMetaItem.resolveToProcMacroWithoutPsi(checkIsMacroAttr: Boolean = true): ProcMacroDefInfo? {
     val owner = owner as? RsAttrProcMacroOwner ?: return null
 
     if (!RsProcMacroPsiUtil.canBeProcMacroCall(this)) return null
-    val info = getModInfo(owner.containingMod) as? RsModInfo ?: return null
+    val info = getModInfo(owner.containingMod) ?: return null
 
     if (checkIsMacroAttr && !isMacroCall) return null
 
@@ -408,23 +373,12 @@ private val RsPath.pathSegmentsAdjusted: List<String>?
         val segments = pathSegments ?: return null
 
         val callExpandedFrom = findMacroCallExpandedFromNonRecursive() as? RsMacroCall ?: return segments
-        val (defExpandedFromHasLocalInnerMacros, defExpandedFromCrateId) =
-            when (val info = getModInfo(callExpandedFrom.containingMod)) {
-                is CantUseNewResolve -> {
-                    val expandedFrom = callExpandedFrom.resolveToMacro() ?: return segments
-                    val crateId = expandedFrom.containingCrate?.id ?: return segments
-                    val hasMacroExportLocalInnerMacros = expandedFrom is RsMacro && expandedFrom.hasMacroExportLocalInnerMacros
-                    hasMacroExportLocalInnerMacros to crateId
-                }
-                InfoNotFound -> return segments
-                is RsModInfo -> {
-                    val def = callExpandedFrom.resolveToMacroDefInfo(info) ?: return segments
-                    (def is DeclMacroDefInfo && def.hasLocalInnerMacros) to def.crate
-                }
-            }
+        val info = getModInfo(callExpandedFrom.containingMod) ?: return segments
+        val def = callExpandedFrom.resolveToMacroDefInfo(info) ?: return segments
+        val defExpandedFromHasLocalInnerMacros = def is DeclMacroDefInfo && def.hasLocalInnerMacros
         return when {
             segments.size == 1 && !cameFromMacroCall() && defExpandedFromHasLocalInnerMacros -> {
-                listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, defExpandedFromCrateId.toString()) + segments
+                listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, def.crate.toString()) + segments
             }
             segments.first() == MACRO_DOLLAR_CRATE_IDENTIFIER -> {
                 val crate = resolveDollarCrateIdentifier()?.id ?: return segments
@@ -449,18 +403,13 @@ private val RsPath.pathSegmentsAdjustedForAttrMacro: List<String>?
         }
     }
 
-sealed class RsModInfoBase {
-    /** [reason] is only for debug */
-    class CantUseNewResolve(val reason: String) : RsModInfoBase()
-    object InfoNotFound : RsModInfoBase()
-    data class RsModInfo(
-        val project: Project,
-        val defMap: CrateDefMap,
-        val modData: ModData,
-        val crate: Crate,
-        val dataPsiHelper: DataPsiHelper? = null,
-    ) : RsModInfoBase()
-}
+data class RsModInfo(
+    val project: Project,
+    val defMap: CrateDefMap,
+    val modData: ModData,
+    val crate: Crate,
+    val dataPsiHelper: DataPsiHelper? = null,
+)
 
 interface DataPsiHelper {
     fun psiToData(scope: RsItemsOwner): ModData?
@@ -469,7 +418,7 @@ interface DataPsiHelper {
 }
 
 /** See also [getNearestAncestorModInfo] */
-fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
+fun getModInfo(scope0: RsItemsOwner): RsModInfo? {
     val scope = scope0.originalElement as? RsItemsOwner ?: scope0
     if (scope !is RsMod) return getHangingModInfo(scope)
     val project = scope.project
@@ -485,11 +434,11 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfoBase {
     }
     testAssert { crate.rootModFile == null || shouldIndexFile(project, crate.rootModFile) }
 
-    val defMap = project.getDefMap(crate) ?: return InfoNotFound
-    val modData = defMap.getModData(scope) ?: return InfoNotFound
+    val defMap = project.getDefMap(crate) ?: return null
+    val modData = defMap.getModData(scope) ?: return null
 
     if (isModShadowedByOtherMod(scope, modData, crate)) {
-        val contextInfo = RsModInfo(project, defMap, modData.parent ?: return InfoNotFound, crate)
+        val contextInfo = RsModInfo(project, defMap, modData.parent ?: return null, crate)
         return getHangingModInfo(scope, contextInfo)
     }
 

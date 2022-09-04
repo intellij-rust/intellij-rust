@@ -59,7 +59,6 @@ import org.rust.lang.core.psi.RsProcMacroKind.FUNCTION_LIKE
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.*
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
@@ -711,7 +710,7 @@ private class MacroExpansionServiceImplInner(
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
-        val info = getModInfo(call.containingMod) as? RsModInfo
+        val info = getModInfo(call.containingMod)
             ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
         val macroIndex = info.getMacroIndex(call, info.crate)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))

@@ -22,7 +22,6 @@ import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.resolve2.*
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
 
@@ -463,6 +462,6 @@ private fun CrateDefMap.hasExternCrateInCrateRoot(externCrateName: String): Bool
 
 private fun RsNamedElement.asModPath(): ModPath? {
     val name = name ?: return null
-    val modInfo = getModInfo(containingMod) as? RsModInfo ?: return null
+    val modInfo = getModInfo(containingMod) ?: return null
     return modInfo.modData.path.append(name)
 }

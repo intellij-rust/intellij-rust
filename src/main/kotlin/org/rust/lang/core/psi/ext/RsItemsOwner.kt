@@ -142,7 +142,7 @@ private fun lowerImports(imports: List<RsUseItem>): NamedAndStarImports {
 
 /**
  * Used for optimization purposes, to reduce access to a cache and PSI tree in one very hot
- * place - [org.rust.lang.core.resolve.processItemDeclarations]
+ * place - [org.rust.lang.core.resolve2.processItemDeclarations]
  */
 class RsCachedItems(
     private val imports: Lazy<NamedAndStarImports>,
