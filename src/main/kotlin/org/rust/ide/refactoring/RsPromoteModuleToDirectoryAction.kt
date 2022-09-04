@@ -17,6 +17,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
@@ -48,11 +49,18 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            WriteCommandAction.runWriteCommandAction(project) {
-                for (element in elements.filterIsInstance<RsFile>()) {
-                    expandModule(element)
-                }
-            }
+            val files = elements.filterIsInstance<RsFile>()
+            WriteCommandAction.runWriteCommandAction(
+                project,
+                RsBundle.message("action.Rust.RsPromoteModuleToDirectoryAction.text"),
+                "action.Rust.RsPromoteModuleToDirectoryAction",
+                {
+                    for (element in files) {
+                        expandModule(element)
+                    }
+                },
+                *files.toTypedArray()
+            )
         }
     }
 
