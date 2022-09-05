@@ -111,6 +111,11 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         fun findApplicableContext(path: RsPath): Context? {
             if (path.reference == null) return null
 
+            // `impl Future<Output=i32>`
+            //              ~~~~~~ path
+            val parent = path.parent
+            if (parent is RsAssocTypeBinding && parent.eq != null && parent.path == path) return null
+
             val basePath = path.basePath()
             if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
