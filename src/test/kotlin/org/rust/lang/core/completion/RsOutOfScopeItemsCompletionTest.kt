@@ -536,7 +536,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
     """, """
         use dep_proc_macro::attr_as_is;
 
-        #[attr_as_is]/*caret*/
+        #[attr_as_is/*caret*/]
         fn func() {}
     """)
 

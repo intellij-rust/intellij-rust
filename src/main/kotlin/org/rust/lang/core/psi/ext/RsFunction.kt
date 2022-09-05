@@ -305,7 +305,11 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override fun getIcon(flags: Int): Icon {
         val baseIcon = when (val owner = owner) {
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
-                if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
+                when {
+                    isTest -> RsIcons.FUNCTION.addTestMark()
+                    isProcMacroDef -> RsIcons.MACRO
+                    else -> RsIcons.FUNCTION
+                }
 
             is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
                 val icon = when {

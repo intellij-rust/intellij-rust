@@ -191,6 +191,7 @@ fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind
     toRsLookupElement(RsLookupElementProperties(keywordKind = keywordKind))
 
 private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
+    val isProcMacroDef = this is RsFunction && isProcMacroDef
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
         .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
@@ -211,10 +212,15 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsTraitItem -> base
 
-        is RsFunction -> base
-            .withTypeText(retType?.typeReference?.getStubOnlyText(subst) ?: "()")
-            .withTailText(valueParameterList?.getStubOnlyText(subst) ?: "()")
-            .appendTailText(getExtraTailText(subst), true)
+        is RsFunction -> when {
+            !isProcMacroDef -> base
+                .withTypeText(retType?.typeReference?.getStubOnlyText(subst) ?: "()")
+                .withTailText(valueParameterList?.getStubOnlyText(subst) ?: "()")
+                .appendTailText(getExtraTailText(subst), true)
+            isBangProcMacroDef -> base
+                .withTailText("!")
+            else -> base  // attr proc macro
+        }
 
         is RsStructItem -> base
             .withTailText(getFieldsOwnerTailText(this, subst))
@@ -290,12 +296,19 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
             is RsTraitItem -> appendSemicolon(context, curUseItem)
             is RsStructItem -> appendSemicolon(context, curUseItem)
 
-            is RsFunction -> {
-                if (curUseItem != null) {
+            is RsFunction -> when {
+                curUseItem != null -> {
                     appendSemicolon(context, curUseItem)
-                } else {
+                }
+                element.isProcMacroDef -> {
+                    if (element.isBangProcMacroDef && !context.nextCharIs('!')) {
+                        document.insertString(context.selectionEndOffset, "!()")
+                        EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                    }
+                }
+                else -> {
                     val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
-                    if (!context.alreadyHasCallParens && !context.isInMetaItem) {
+                    if (!context.alreadyHasCallParens) {
                         document.insertString(context.selectionEndOffset, "()")
                         context.doNotAddOpenParenCompletionChar()
                     }
@@ -398,9 +411,6 @@ inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Bo
 
 private val InsertionContext.isInUseGroup: Boolean
     get() = getElementOfType<RsUseGroup>() != null
-
-private val InsertionContext.isInMetaItem: Boolean
-    get() = getElementOfType<RsMetaItem>() != null
 
 val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
