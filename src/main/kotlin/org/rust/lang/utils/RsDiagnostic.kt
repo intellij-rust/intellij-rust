@@ -1541,12 +1541,12 @@ sealed class RsDiagnostic(
         )
     }
 
-    class AwaitOutsideAsyncContext(element: PsiElement, private val fix: LocalQuickFix) : RsDiagnostic(element) {
+    class AwaitOutsideAsyncContext(element: PsiElement, private val fix: LocalQuickFix?) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0728,
             "`await` is only allowed inside `async` functions and blocks",
-            fixes = listOf(fix)
+            fixes = listOfNotNull(fix)
         )
     }
 

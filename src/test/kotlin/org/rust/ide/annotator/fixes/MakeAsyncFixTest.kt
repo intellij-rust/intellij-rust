@@ -55,4 +55,14 @@ class MakeAsyncFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             };
         }
     """)
+
+    fun `test await inside function returns impl Future`() = checkFixIsUnavailable("Make function async", """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        async fn get() {}
+        fn func() -> impl Future<Output = ()> {
+            get().<error descr="`await` is only allowed inside `async` functions and blocks [E0728]">await</error>;
+            async {}
+        }
+    """)
 }
