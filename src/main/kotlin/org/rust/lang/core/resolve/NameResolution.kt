@@ -1758,32 +1758,6 @@ inline fun processWithShadowing(
 }
 
 fun findPrelude(element: RsElement): RsMod? {
-    findPreludeUsingNewResolve(element)?.let { return it }
-    return findPreludeUsingOldResolve(element)
-}
-
-private fun findPreludeUsingOldResolve(element: RsElement): RsFile? {
-    val crateRoot = element.crateRoot as? RsFile ?: return null
-    val cargoPackage = crateRoot.containingCargoPackage
-    val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB && !element.isDoctestInjection
-    val packageName = cargoPackage?.normName
-
-    // `std` and `core` crates explicitly add their prelude
-    // TODO `#[prelude_import]`
-    val stdlibCrateRoot = if (isStdlib && (packageName == STD || packageName == CORE)) {
-        crateRoot
-    } else {
-        implicitStdlibCrate(crateRoot)?.crateRoot
-    }
-
-    return stdlibCrateRoot
-        ?.virtualFile
-        ?.findFileByRelativePath("../prelude/v1.rs")
-        ?.toPsiFile(element.project)
-        ?.rustFile
-}
-
-private fun findPreludeUsingNewResolve(element: RsElement): RsMod? {
     val info = getModInfo(element.containingMod) ?: return null
     val prelude = info.defMap.prelude ?: return null
     return prelude.toRsMod(info).singleOrNull()
