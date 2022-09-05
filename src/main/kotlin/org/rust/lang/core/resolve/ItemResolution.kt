@@ -58,5 +58,4 @@ enum class ItemProcessingMode(val withExternCrates: Boolean) {
     WITHOUT_PRIVATE_IMPORTS(false),
     WITH_PRIVATE_IMPORTS(false),
     WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
-    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION(true);
 }

@@ -1658,10 +1658,7 @@ fun processNestedScopesUpwards(
         } else {
             val modInfo = getModInfo(scope) ?: return@walkUp false
             val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
-                val ipm = when {
-                    isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
-                    else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
-                }
+                val ipm = ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
                 processItemDeclarationsUsingModInfo(scopeIsMod = true, modInfo, ns, shadowingProcessor, ipm)
             }
             if (stop) return@walkUp true
