@@ -69,6 +69,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitEnumVariant(o: RsEnumVariant) = checkEnumVariant(rsHolder, o)
             override fun visitExternAbi(o: RsExternAbi) = checkExternAbi(rsHolder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(rsHolder, o)
+            override fun visitIfExpr(o: RsIfExpr) = checkIfExpr(rsHolder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(rsHolder, o)
             override fun visitLetDecl(o: RsLetDecl) = checkLetDecl(rsHolder, o)
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
@@ -870,6 +871,26 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         if (modDecl.reference.resolve() == null && modDecl.semicolon != null) {
             RsDiagnostic.ModuleNotFound(modDecl).addToHolder(holder)
+        }
+    }
+
+    private fun checkIfExpr(holder: RsAnnotationHolder, expr: RsIfExpr) {
+        if (expr.elseBranch == null) {
+            val ty = if (expr.type != TyUnknown) {
+                expr.type
+            } else {
+                // If both expected and actual types are unknown, inspection is not applicable.
+                expr.expectedType ?: return
+            }
+            if (ty.isEquivalentTo(TyUnit.INSTANCE)) {
+                // If an `if` expression returns `()`, it doesn't need an `else`.
+                return
+            }
+            if (ty.isEquivalentTo(TyNever)) {
+                // `!` is coercible to any type, in particular to `()` (see above).
+                return
+            }
+            RsDiagnostic.MissingElseBranch(expr).addToHolder(holder)
         }
     }
 

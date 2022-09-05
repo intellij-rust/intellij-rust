@@ -1044,7 +1044,11 @@ class RsTypeInferenceWalker(
             blockTys.add(elseBranch.ifExpr?.inferType(expected))
             blockTys.add(elseBranch.block?.inferType(expected))
         }
-        return if (expr.elseBranch == null) TyUnit.INSTANCE else getMoreCompleteType(blockTys.filterNotNull())
+        return if (expr.elseBranch == null && expr.parent is RsBlock) {
+            TyUnit.INSTANCE
+        } else {
+            getMoreCompleteType(blockTys.filterNotNull())
+        }
     }
 
     private fun RsCondition.inferTypes() {

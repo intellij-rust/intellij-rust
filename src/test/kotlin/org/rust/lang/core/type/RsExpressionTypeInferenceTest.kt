@@ -407,9 +407,9 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = if true { 92 };
             x
-          //^ ()
+          //^ i32
         }
-    """)
+    """, allowErrors = true)
 
     fun `test if`() = testExpr("""
         fn main() {

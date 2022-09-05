@@ -2841,6 +2841,50 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><Struct as Trait>::Item</error> {}
     """)
 
+    fun `test missing else branch 1 E0317`() = checkErrors("""
+        fn f(x: u32) {
+            let a = <error descr="An `if` expression is missing an `else` block [E0317]">if x == 5 {
+                1
+            }</error>;
+            foo(a);
+            let _b = <error descr="An `if` expression is missing an `else` block [E0317]">if x == 5 {
+                1
+            }</error>;
+            let _: u32 = <error descr="An `if` expression is missing an `else` block [E0317]">if x == 5 {
+                1
+            }</error>;
+            let _ = if x == 5 {};
+            let _: () = if x == 5 {};
+            let _ = if x == 5 {
+                ()
+            };
+        }
+
+        fn foo(x: u32) {}
+    """)
+
+    fun `test missing else branch 2 E0317`() = checkErrors("""
+        fn f(x: u32) {
+            let a = <error descr="An `if` expression is missing an `else` block [E0317]">if let 5 = x {
+                1
+            }</error>;
+            foo(a);
+            let _b = <error descr="An `if` expression is missing an `else` block [E0317]">if let 5 = x {
+                1
+            }</error>;
+            let _: u32 = <error descr="An `if` expression is missing an `else` block [E0317]">if let 5 = x {
+                1
+            }</error>;
+            let _ = if let 5 = x {};
+            let _: () = if let 5 = x {};
+            let _ = if let 5 = x {
+                ()
+            };
+        }
+
+        fn foo(x: u32) {}
+    """)
+
     fun `test impl sized for struct E0322`() = checkErrors("""
         #[lang = "sized"]
         trait Sized {}

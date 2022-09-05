@@ -492,7 +492,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             if let S(x) = s { x }
                             //^ i32
         }
-    """)
+    """, allowErrors = true)
 
     fun `test generic struct pattern`() = testExpr("""
         struct S<T> { s: T }
