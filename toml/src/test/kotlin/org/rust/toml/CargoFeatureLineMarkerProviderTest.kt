@@ -14,7 +14,6 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.fileTree
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 import org.rust.ide.lineMarkers.invokeNavigationHandler
 import org.rust.singleProject
@@ -56,6 +55,24 @@ class CargoFeatureLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         [dependencies]
         foo = { path = "foo", optional = true } # - Toggle feature `foo`
     """)
+
+    // TODO the line marker should not be shown for the dependency
+    @MockCargoFeatures("foo")
+    fun `test optional dependency is not a feature`() = expect<Throwable> {
+    doTest("foo", """
+        [package]
+        name = "intellij-rust-test"
+        version = "0.1.0"
+        authors = []
+
+        [features]
+        foo = ["dep:foo"] # - Toggle feature `foo`
+
+        [dependencies.foo]
+        path = "foo"
+        optional = true
+    """)
+    }
 
     private fun doTest(featureName: FeatureName, @Language("Toml") source: String) {
         doTestByFileTree("Cargo.toml") {
