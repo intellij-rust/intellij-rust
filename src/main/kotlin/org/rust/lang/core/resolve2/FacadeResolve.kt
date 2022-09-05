@@ -682,8 +682,15 @@ fun findModDataFor(file: RsFile): ModData? {
             val fileInfo = defMap.fileInfos[virtualFile.id] ?: return@mapNotNull null
             fileInfo.modData
         }
-        .singleOrFirstCfgEnabled()
+        .pickSingleModData()
 }
 
-private fun List<ModData>.singleOrFirstCfgEnabled(): ModData? =
-    singleOrNull() ?: firstOrNull { it.isDeeplyEnabledByCfg } ?: firstOrNull()
+private fun List<ModData>.pickSingleModData(): ModData? {
+    singleOrNull()?.let { return it }
+
+    val cfgEnabled = filter { it.isDeeplyEnabledByCfg }.ifEmpty { this }
+    cfgEnabled.singleOrNull()?.let { return it }
+
+    // If after filtering cfg-enabled modules there are still multiple options, choose one deterministically
+    return cfgEnabled.minByOrNull { it.crate }
+}

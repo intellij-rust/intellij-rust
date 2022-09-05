@@ -137,8 +137,8 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
 }
 
 private fun isApplicableForUseItem(item: RsUseItem): Boolean {
-    if (item.visibility == RsVisibility.Public) return false
     val crate = item.containingCrate ?: return false
+    if (item.visibility == RsVisibility.Public && crate.kind.isLib) return false
     if (!item.existsAfterExpansion(crate)) return false
     return true
 }
@@ -189,7 +189,8 @@ private fun isItemUsedInOtherMods(item: RsNamedElement, importName: String, useS
             RsVisibility.Restricted(importMod)
         }
         is RsVisibility.Restricted -> visibility
-        RsVisibility.Public -> return true
+        // we handle public imports in binary crates only, so this is effectively `pub(crate)` import
+        RsVisibility.Public -> RsVisibility.Restricted(importMod.crateRoot ?: return true)
     }
     if (item is RsTraitItem) {
         // TODO we should search usages for all methods of the trait

@@ -54,7 +54,7 @@ plugins {
     id("org.jetbrains.intellij") version "1.8.1"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
-    id("org.gradle.test-retry") version "1.4.0"
+    id("org.gradle.test-retry") version "1.4.1"
 }
 
 idea {
@@ -395,7 +395,7 @@ project(":") {
     }
 
     dependencies {
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.4") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
