@@ -451,10 +451,7 @@ fun RsDocAndAttributeOwner.existsAfterExpansionSelf(crate: Crate?): Boolean =
         (this !is RsAttrProcMacroOwner ||
             ProcMacroAttribute.getProcMacroAttribute(this, explicitCrate = crate) !is ProcMacroAttribute.Attr)
 
-fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
-    isEnabledByCfgSelfInner(crate)
-
-fun RsDocAndAttributeOwner.isEnabledByCfgSelfInner(crate: Crate?): Boolean =
+fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate?): Boolean =
     evaluateCfg(crate) != ThreeValuedLogic.False
 
 val RsDocAndAttributeOwner.isCfgUnknownSelf: Boolean

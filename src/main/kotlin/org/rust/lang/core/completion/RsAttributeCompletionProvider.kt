@@ -25,6 +25,7 @@ import org.rust.lang.core.RsPsiPattern.onExternCrate
 import org.rust.lang.core.RsPsiPattern.onFn
 import org.rust.lang.core.RsPsiPattern.onMacro
 import org.rust.lang.core.RsPsiPattern.onMod
+import org.rust.lang.core.RsPsiPattern.onProcMacroFn
 import org.rust.lang.core.RsPsiPattern.onStatic
 import org.rust.lang.core.RsPsiPattern.onStaticMut
 import org.rust.lang.core.RsPsiPattern.onStruct
@@ -51,8 +52,9 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
         onExternCrate to "macro_use no_link",
         onMod to "no_implicit_prelude path macro_use",
         onFn to "main start test cold naked export_name link_section lang inline track_caller " +
-            "panic_handler must_use",
+            "panic_handler must_use target_feature()",
         onTestFn to "should_panic ignore",
+        onProcMacroFn to "proc_macro proc_macro_derive() proc_macro_attribute",
         onStaticMut to "thread_local",
         onExternBlock to "link_args link() linked_from",
         onExternBlockDecl to "link_name linkage",

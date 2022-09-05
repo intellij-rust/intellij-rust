@@ -1661,10 +1661,12 @@ private fun AnnotationSession.duplicatesByNamespace(
     }
 
     if (owner is RsItemsOwner) {
-        for (import in owner.expandedItemsCached.namedImports) {
-            val useSpeck = import.path.parent as? RsUseSpeck ?: continue
-            val nameInScope = import.nameInScope.takeIf { it != "_" } ?: continue
-            addItem(useSpeck, useSpeck.namespaces, nameInScope)
+        for (import in owner.expandedItemsCached.imports) {
+            import.useSpeck?.forEachLeafSpeck { speck ->
+                if (speck.isStarImport) return@forEachLeafSpeck
+                val nameInScope = speck.nameInScope.takeIf { it != "_" } ?: return@forEachLeafSpeck
+                addItem(speck, speck.namespaces, nameInScope)
+            }
         }
     }
 

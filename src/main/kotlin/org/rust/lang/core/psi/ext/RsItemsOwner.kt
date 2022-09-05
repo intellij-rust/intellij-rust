@@ -13,12 +13,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
-import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
 import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
-import org.rust.openapiext.testAssert
 import org.rust.stdext.optimizeList
 import org.rust.stdext.replaceTrivialMap
 import kotlin.LazyThreadSafetyMode.PUBLICATION
@@ -107,7 +104,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         }
         CachedValueProvider.Result.create(
             RsCachedItems(
-                lazy(PUBLICATION) { lowerImports(imports) },
+                imports.optimizeList(),
                 macros.optimizeList(),
                 named.replaceTrivialMap(),
             ),
@@ -115,45 +112,17 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         )
     }
 
-private fun lowerImports(imports: List<RsUseItem>): NamedAndStarImports {
-    val namedImports = SmartList<CachedNamedImport>()
-    val starImports = SmartList<CachedStarImport>()
-    for (use in imports) {
-        if (!use.isEnabledByCfgSelf()) continue
-
-        val isPublic = use.isPublic
-        use.useSpeck?.forEachLeafSpeck { speck ->
-            if (speck.isStarImport) {
-                starImports += CachedStarImport(isPublic, speck)
-            } else {
-                testAssert { speck.useGroup == null }
-                val path = speck.path ?: return@forEachLeafSpeck
-                val nameInScope = speck.nameInScope ?: return@forEachLeafSpeck
-                val isAtom = speck.alias == null && path.isAtom
-                namedImports += CachedNamedImport(isPublic, path, nameInScope, isAtom)
-            }
-        }
-    }
-    return NamedAndStarImports(
-        namedImports.optimizeList(),
-        starImports.optimizeList(),
-    )
-}
-
 /**
  * Used for optimization purposes, to reduce access to a cache and PSI tree in one very hot
  * place - [org.rust.lang.core.resolve2.processItemDeclarations]
  */
 class RsCachedItems(
-    private val imports: Lazy<NamedAndStarImports>,
+    val imports: List<RsUseItem>,
     /** May contain cfg-disabled items. [RsMacro2] are stored in [named] */
     val legacyMacros: List<RsMacro>,
     /** May contain cfg-disabled items*/
     val named: Map<String, List<RsItemElement>>,
 ) {
-    val namedImports: List<CachedNamedImport> get() = imports.value.namedImports
-    val starImports: List<CachedStarImport> get() = imports.value.starImports
-
     val cfgEnabledNamedItems: List<RsItemElement> by lazy(PUBLICATION) {
         named.values.asSequence()
             .flatten()
@@ -163,21 +132,7 @@ class RsCachedItems(
 
     fun getNamedElementsIfCfgEnabled(name: String): List<RsItemElement>? =
         named[name]?.filter { it.isEnabledByCfgSelf() }?.takeIf { it.isNotEmpty() }
-
-    data class CachedNamedImport(
-        val isPublic: Boolean,
-        val path: RsPath,
-        val nameInScope: String,
-        val isAtom: Boolean
-    )
-
-    data class CachedStarImport(val isPublic: Boolean, val speck: RsUseSpeck)
 }
-
-class NamedAndStarImports(
-    val namedImports: List<CachedNamedImport>,
-    val starImports: List<CachedStarImport>,
-)
 
 @VisibleForTesting
 fun RsItemsOwner.processExpandedItemsInternal(
@@ -245,9 +200,3 @@ private fun RsElement.processItem(
 private fun RsElement.isEnabledByCfgSelf() =
     this !is RsDocAndAttributeOwner || evaluateCfg() != ThreeValuedLogic.False
 
-private val RsPath.isAtom: Boolean
-    get() = when (kind) {
-        PathKind.IDENTIFIER -> qualifier == null
-        PathKind.SELF -> qualifier?.isAtom == true
-        else -> false
-    }
