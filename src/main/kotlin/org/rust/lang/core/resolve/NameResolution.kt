@@ -27,7 +27,6 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
-import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.IN_BAND_LIFETIMES
@@ -274,7 +273,8 @@ fun processExternCrateResolveVariants(
 
     val visitedDeps = mutableSetOf<String>()
     fun processPackage(crate: Crate, dependencyName: String): Boolean {
-        if (isCompletion && crate.origin != PackageOrigin.DEPENDENCY) return false
+        val isDependencyOrWorkspace = crate.origin == PackageOrigin.DEPENDENCY || crate.origin == PackageOrigin.WORKSPACE
+        if (isCompletion && !isDependencyOrWorkspace) return false
 
         if (crate.origin == PackageOrigin.STDLIB && dependencyName in visitedDeps) return false
         visitedDeps.add(dependencyName)
