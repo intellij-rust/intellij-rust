@@ -762,6 +762,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
+    fun `test no stack overflow when trait type parameter default value refers to the trait name`() = checkByCode("""
+        pub trait Rem<RHS=Rem> {
+            type Output = Self;
+        }
+        struct S<A>(A);
+        impl<B: Rem> S<B> { fn foo(&self) {} }
+                             //X
+        fn foo<C: Rem>(t: C) {
+            S(t).foo()
+        }      //^
+    """)
+
     fun `test resolve assoc constant`() = checkByCode("""
         trait T {
             const C: i32;
