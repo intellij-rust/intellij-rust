@@ -216,8 +216,14 @@ fun <T : RsElement> instantiatePathGenerics(
 }
 
 fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
+    if (path.hasCself) {
+        return RsPsiSubstitution()
+    }
     val args = pathTypeParameters(path)
-
+    val genericParameters = resolved.getGenericParameters()
+    val lifetimeParameters = genericParameters.filterIsInstance<RsLifetimeParameter>()
+    val typeParameters = genericParameters.filterIsInstance<RsTypeParameter>()
+    val constParameters = genericParameters.filterIsInstance<RsConstParameter>()
     val parent = path.parent
 
     // Generic arguments are optional in expression context, e.g.
@@ -226,7 +232,7 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
     val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
 
     val regionSubst = associateSubst<RsLifetimeParameter, RsLifetime, Nothing>(
-        resolved.lifetimeParameters,
+        lifetimeParameters,
         (args as? RsPsiPathParameters.InAngles)?.lifetimeArgs,
         areOptionalArgs
     )
@@ -239,7 +245,7 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
         null -> null
     }
 
-    val typeSubst = associateSubst(resolved.typeParameters, typeArguments, areOptionalArgs) { param ->
+    val typeSubst = associateSubst(typeParameters, typeArguments, areOptionalArgs) { param ->
         val defaultTy = param.typeReference ?: return@associateSubst null
         val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
             val pred = parent.ancestorStrict<RsWherePred>()
@@ -261,7 +267,7 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
     val constArguments = (args as? RsPsiPathParameters.InAngles)?.typeOrConstArgs
         ?.let { list -> list.filter { it !is RsTypeReference || it !in usedTypeArguments && it is RsBaseType} }
 
-    val constSubst = associateSubst(resolved.constParameters, constArguments, areOptionalArgs) { param ->
+    val constSubst = associateSubst(constParameters, constArguments, areOptionalArgs) { param ->
         param.expr
     }
 
@@ -295,7 +301,7 @@ fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitutio
                 null -> emptyMap()
             }
         } else {
-            emptyMap<RsTypeAlias, AssocValue>()
+            emptyMap()
         }
     }
 

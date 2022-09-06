@@ -6,11 +6,11 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
+import org.rust.lang.core.psi.RsConstParameter
+import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.constParameters
-import org.rust.lang.core.psi.ext.lifetimeParameters
-import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
@@ -84,22 +84,28 @@ data class TyAdt private constructor(
     }
 
     companion object {
-        fun valueOf(struct: RsStructOrEnumItemElement): TyAdt =
-            TyAdt(
+        fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
+            val genericParameters = struct.getGenericParameters()
+
+            val typeParameters = mutableListOf<TyTypeParameter>()
+            val lifetimeParameters = mutableListOf<ReEarlyBound>()
+            val constParameters = mutableListOf<CtConstParameter>()
+
+            for (generic in genericParameters) {
+                when (generic) {
+                    is RsTypeParameter -> typeParameters += TyTypeParameter.named(generic)
+                    is RsLifetimeParameter -> lifetimeParameters += ReEarlyBound(generic)
+                    is RsConstParameter -> constParameters += CtConstParameter(generic)
+                }
+            }
+
+            return TyAdt(
                 CompletionUtil.getOriginalOrSelf(struct),
-                defaultTypeArguments(struct),
-                defaultRegionArguments(struct),
-                defaultConstArguments(struct),
+                typeParameters,
+                lifetimeParameters,
+                constParameters,
                 null
             )
+        }
     }
 }
-
-private fun defaultTypeArguments(item: RsStructOrEnumItemElement): List<Ty> =
-    item.typeParameters.map { param -> TyTypeParameter.named(param) }
-
-private fun defaultRegionArguments(item: RsStructOrEnumItemElement): List<Region> =
-    item.lifetimeParameters.map { param -> ReEarlyBound(param) }
-
-private fun defaultConstArguments(item: RsStructOrEnumItemElement): List<Const> =
-    item.constParameters.map { param -> CtConstParameter(param) }
