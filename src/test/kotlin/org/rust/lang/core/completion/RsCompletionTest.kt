@@ -481,13 +481,243 @@ class RsCompletionTest : RsCompletionTestBase() {
         trait Foo {
             type Bar;
             fn foo(bar: Self::Ba/*caret*/);
+            fn bar(bar: &[Self::Ba/*caret*/]);
         }
     """, """
         trait Foo {
             type Bar;
             fn foo(bar: Self::Bar/*caret*/);
+            fn bar(bar: &[Self::Bar/*caret*/]);
         }
     """)
+
+    fun `test associated const completion 1`() = doSingleCompletion("""
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 3;
+        }
+
+        fn f(_: usize) {
+            let x = [1, 2, 3];
+            let _ = x[Foo::/*caret*/];
+            foo(Foo::/*caret*/);
+            vec![Foo::/*caret*/];
+            vec!{Foo::/*caret*/};
+            let _ = x[Foo::/*caret*/];
+            foo(Foo::/*caret*/);
+            vec![Foo::/*caret*/];
+            vec!{Foo::/*caret*/};
+        }
+    """, """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 3;
+        }
+
+        fn f(_: usize) {
+            let x = [1, 2, 3];
+            let _ = x[Foo::FOO/*caret*/];
+            foo(Foo::FOO/*caret*/);
+            vec![Foo::FOO/*caret*/];
+            vec!{Foo::FOO/*caret*/};
+            let _ = x[Foo::FOO/*caret*/];
+            foo(Foo::FOO/*caret*/);
+            vec![Foo::FOO/*caret*/];
+            vec!{Foo::FOO/*caret*/};
+        }
+    """)
+
+    fun `test associated const completion 2`() = doSingleCompletion("""
+        trait T {
+            const CONST: usize;
+        }
+
+        struct Foo;
+
+        impl T for Foo {
+            const CONST: usize = 1;
+        }
+
+        fn f(_: usize) {
+            let x = [1, 2, 3];
+            let _ = x[<Foo as T>::/*caret*/];
+            foo(<Foo as T>::/*caret*/);
+            vec![<Foo as T>::/*caret*/];
+            vec!{<Foo as T>::/*caret*/};
+            let _ = x[<Foo as T>::/*caret*/];
+            foo(<Foo as T>::/*caret*/);
+            vec![<Foo as T>::/*caret*/];
+            vec!{<Foo as T>::/*caret*/};
+
+            let _ = x[Foo::/*caret*/];
+            foo(Foo::/*caret*/);
+            vec![Foo::/*caret*/];
+            vec!{Foo::/*caret*/};
+            let _ = x[Foo::/*caret*/];
+            foo(Foo::/*caret*/);
+            vec![Foo::/*caret*/];
+            vec!{Foo::/*caret*/};
+        }
+    """, """
+        trait T {
+            const CONST: usize;
+        }
+
+        struct Foo;
+
+        impl T for Foo {
+            const CONST: usize = 1;
+        }
+
+        fn f(_: usize) {
+            let x = [1, 2, 3];
+            let _ = x[<Foo as T>::CONST/*caret*/];
+            foo(<Foo as T>::CONST/*caret*/);
+            vec![<Foo as T>::CONST/*caret*/];
+            vec!{<Foo as T>::CONST/*caret*/};
+            let _ = x[<Foo as T>::CONST/*caret*/];
+            foo(<Foo as T>::CONST/*caret*/);
+            vec![<Foo as T>::CONST/*caret*/];
+            vec!{<Foo as T>::CONST/*caret*/};
+
+            let _ = x[Foo::CONST/*caret*/];
+            foo(Foo::CONST/*caret*/);
+            vec![Foo::CONST/*caret*/];
+            vec!{Foo::CONST/*caret*/};
+            let _ = x[Foo::CONST/*caret*/];
+            foo(Foo::CONST/*caret*/);
+            vec![Foo::CONST/*caret*/];
+            vec!{Foo::CONST/*caret*/};
+        }
+    """)
+
+    fun `test no overwrite of brackets`() = checkCompletion("FOO", """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::/*caret*/];
+            mac![Foo::/*caret*/];
+            mac!(Foo::/*caret*/);
+            mac!{Foo::/*caret*/};
+            func(Foo::/*caret*/);
+            if true {Foo::/*caret*/};
+            Foo::/*caret*/+1;
+            Foo::/*caret*/-1;
+            Foo::/*caret*/*1;
+            Foo::/*caret*//1;
+            Foo::/*caret*/+=1;
+            Foo::/*caret*/-=1;
+            Foo::/*caret*/*=1;
+            Foo::/*caret*//=1;
+            Foo::/*caret*/;
+            Foo::/*caret*/.bar;
+        }
+    """, """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::FOO/*caret*/];
+            mac![Foo::FOO/*caret*/];
+            mac!(Foo::FOO/*caret*/);
+            mac!{Foo::FOO/*caret*/};
+            func(Foo::FOO/*caret*/);
+            if true {Foo::FOO/*caret*/};
+            Foo::FOO/*caret*/+1;
+            Foo::FOO/*caret*/-1;
+            Foo::FOO/*caret*/*1;
+            Foo::FOO/*caret*//1;
+            Foo::FOO/*caret*/+=1;
+            Foo::FOO/*caret*/-=1;
+            Foo::FOO/*caret*/*=1;
+            Foo::FOO/*caret*//=1;
+            Foo::FOO/*caret*/;
+            Foo::FOO/*caret*/.bar;
+        }
+    """, '\t')
+
+    fun `test tab completion overwrites identifiers`() = checkCompletion("FOO", """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::F/*caret*/Bar];
+            mac![Foo::F/*caret*/Bar];
+            mac!(Foo::F/*caret*/Bar);
+            mac!{Foo::F/*caret*/Bar};
+            func(Foo::F/*caret*/Bar);
+            if true {Foo::F/*caret*/Bar};
+            Foo::F/*caret*/Bar+1;
+            Foo::F/*caret*/Bar-1;
+            Foo::F/*caret*/Bar*1;
+            Foo::F/*caret*/Bar/1;
+            Foo::F/*caret*/Bar+=1;
+            Foo::F/*caret*/Bar-=1;
+            Foo::F/*caret*/Bar*=1;
+            Foo::F/*caret*/Bar/=1;
+            Foo::F/*caret*/Bar;
+            Foo::F/*caret*/Bar.bar;
+        }
+    """, """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::FOO/*caret*/];
+            mac![Foo::FOO/*caret*/];
+            mac!(Foo::FOO/*caret*/);
+            mac!{Foo::FOO/*caret*/};
+            func(Foo::FOO/*caret*/);
+            if true {Foo::FOO/*caret*/};
+            Foo::FOO/*caret*/+1;
+            Foo::FOO/*caret*/-1;
+            Foo::FOO/*caret*/*1;
+            Foo::FOO/*caret*//1;
+            Foo::FOO/*caret*/+=1;
+            Foo::FOO/*caret*/-=1;
+            Foo::FOO/*caret*/*=1;
+            Foo::FOO/*caret*//=1;
+            Foo::FOO/*caret*/;
+            Foo::FOO/*caret*/.bar;
+        }
+    """, '\t')
+
+    fun `test no overwrite of brackets short`() = checkCompletion("FOO", """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::F/*caret*/];
+        }
+    """, """
+        struct Foo;
+
+        impl Foo {
+            const FOO: usize = 0;
+        }
+
+        fn main() {
+            [0][Foo::FOO/*caret*/];
+        }
+    """, '\t')
 
     fun `test complete enum variants 1`() = doSingleCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
