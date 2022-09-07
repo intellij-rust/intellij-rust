@@ -91,7 +91,7 @@ private fun isPathLitExpr(expr: RsLitExpr): Boolean {
     val (function, arguments) = getFunctionAndArguments(expr) ?: return false
     val owner = function.owner as? RsAbstractableOwner.Impl
     val ownerType = (owner?.impl?.typeReference?.normType as? TyAdt)?.item
-    val (implLookup, knownItems) = expr.implLookupAndKnownItems
+    val (implLookup, knownItems) = function.implLookupAndKnownItems
     val isCallExpr = arguments.parent is RsCallExpr
 
     return when {

@@ -1434,4 +1434,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             W(1u8).foo();
         }        //^
     """)
+
+    fun `test resolve associated type in where predicate with type parameter declared on upper level`() = checkByCode("""
+        trait Foo { type Item; }
+                       //X
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn foo()
+                where
+                    T: Foo,
+                    T::Item: ?Sized
+            {}       //^
+        }
+    """)
 }

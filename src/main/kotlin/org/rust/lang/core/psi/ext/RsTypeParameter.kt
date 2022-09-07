@@ -16,13 +16,15 @@ import org.rust.lang.core.stubs.RsTypeParameterStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
 
+val RsTypeParameter.owner: RsGenericDeclaration?
+    get() = parent?.parent as? RsGenericDeclaration
+
 /**
  * Returns all bounds for type parameter.
  *
  * Don't use it for stub creation because it will cause [com.intellij.openapi.project.IndexNotReadyException]!
  */
 val RsTypeParameter.bounds: List<RsPolybound> get() {
-    val owner = parent?.parent as? RsGenericDeclaration
     val whereBounds =
         owner?.whereClause?.wherePredList.orEmpty()
             .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() == this }

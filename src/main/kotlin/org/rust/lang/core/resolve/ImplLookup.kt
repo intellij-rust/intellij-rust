@@ -26,6 +26,7 @@ import org.rust.openapiext.testAssert
 import org.rust.stdext.buildList
 import org.rust.stdext.exhaustive
 import org.rust.stdext.swapRemoveAt
+import org.rust.stdext.withPrevious
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
@@ -147,19 +148,20 @@ sealed class TraitImplSource {
  * Note: ParamEnv of an associated item (method) also contains bounds of its trait/impl
  * Note: callerBounds should have type `List<Predicate>` to also support lifetime bounds
  */
-data class ParamEnv(val callerBounds: List<TraitRef>) {
-    fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
-        callerBounds.asSequence().filter { it.selfTy.isEquivalentTo(ty) }.map { it.trait }
-
-    fun isEmpty(): Boolean = callerBounds.isEmpty()
+interface ParamEnv {
+    fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>>
 
     companion object {
-        val EMPTY: ParamEnv = ParamEnv(emptyList())
-        val LEGACY: ParamEnv = ParamEnv(emptyList())
+        val EMPTY: ParamEnv = SimpleParamEnv(emptyList())
 
-        fun buildFor(decl: RsGenericDeclaration): ParamEnv {
-            val rawBounds = buildList<TraitRef> {
-                addAll(decl.bounds)
+        fun buildFor(decl: RsItemElement): ParamEnv {
+            val rawBounds = buildList {
+                if (decl is RsGenericDeclaration) {
+                    addAll(decl.bounds)
+                    if (decl is RsTraitItem) {
+                        add(TraitRef(TyTypeParameter.self(), decl.withDefaultSubst()))
+                    }
+                }
                 if (decl is RsAbstractable) {
                     when (val owner = decl.owner) {
                         is RsAbstractableOwner.Trait -> {
@@ -177,10 +179,10 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
 
             when (rawBounds.size) {
                 0 -> return EMPTY
-                1 -> return ParamEnv(rawBounds)
+                1 -> return SimpleParamEnv(rawBounds)
             }
 
-            val lookup = ImplLookup(decl.project, decl.containingCrate, decl.knownItems, ParamEnv(rawBounds))
+            val lookup = ImplLookup(decl.project, decl.containingCrate, decl.knownItems, SimpleParamEnv(rawBounds))
             val ctx = lookup.ctx
             val bounds2 = rawBounds.map {
                 val (bound, obligations) = ctx.normalizeAssociatedTypesIn(it)
@@ -189,7 +191,42 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
             }
             ctx.fulfill.selectWherePossible()
 
-            return ParamEnv(bounds2.map { ctx.fullyResolve(it) })
+            return SimpleParamEnv(bounds2.map { ctx.fullyResolve(it) })
+        }
+    }
+}
+
+class SimpleParamEnv(private val callerBounds: List<TraitRef>) : ParamEnv {
+    override fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
+        callerBounds.asSequence().filter { it.selfTy.isEquivalentTo(ty) }.map { it.trait }
+}
+
+class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
+    override fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
+        return if (ty is TyTypeParameter) {
+            val additionalBounds = when (val parameter = ty.parameter) {
+                is TyTypeParameter.Named -> if (parameter.parameter.owner != parentItem) {
+                    parentItem.whereClause?.wherePredList.orEmpty().asSequence()
+                        .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() == parameter.parameter }
+                        .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+                } else {
+                    emptySequence()
+                }
+                TyTypeParameter.Self -> if (parentItem !is RsTraitOrImpl) {
+                    parentItem.whereClause?.wherePredList.orEmpty().asSequence()
+                        .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.kind == PathKind.CSELF }
+                        .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+                } else {
+                    emptySequence()
+                }
+            }.mapNotNull {
+                if (it.hasQ) return@mapNotNull null // Ignore `T: ?Sized`
+                it.bound.traitRef?.resolveToBoundTrait()
+            }
+            @Suppress("DEPRECATION")
+            ty.getTraitBoundsTransitively().asSequence() + additionalBounds
+        } else {
+            emptySequence()
         }
     }
 }
@@ -228,10 +265,6 @@ class ImplLookup(
     }
 
     fun getEnvBoundTransitivelyFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
-        if (paramEnv == ParamEnv.LEGACY && ty is TyTypeParameter) {
-            @Suppress("DEPRECATION")
-            return ty.getTraitBoundsTransitively().asSequence()
-        }
         return paramEnv.boundsFor(ty)
     }
 
@@ -1265,19 +1298,20 @@ class ImplLookup(
         fun relativeTo(psi: RsElement): ImplLookup {
             val parentItem = psi.contextOrSelf<RsItemElement>()
             val paramEnv = if (parentItem is RsGenericDeclaration) {
-                val useLegacy = psi.contextOrSelf<RsWherePred>() != null ||
-                    psi.contextOrSelf<RsBound>() != null ||
-                    run {
-                        val impl = psi.contextOrSelf<RsImplItem>() ?: return@run false
-                        impl.traitRef?.isAncestorOf(psi) == true || impl.typeReference?.isAncestorOf(psi) == true
-                    }
-                if (useLegacy) {
-                    // We should mock ParamEnv here. Otherwise, we run into infinite recursion
-                    // This is mostly a hack. It should be solved in the future somehow
-                    ParamEnv.LEGACY
+                val (ancestor, cameFrom) = psi.contexts.withPrevious().find { (it, _) ->
+                    it is RsWherePred || it is RsBound || it is RsImplItem
+                } ?: (null to null)
+                val isInTraitBoundOrImplSignature = ancestor != null && (ancestor !is RsImplItem
+                    || cameFrom is RsTraitRef || cameFrom is RsTypeReference)
+                if (isInTraitBoundOrImplSignature) {
+                    // We have to calculate type parameter bounds lazily in this case.
+                    // Otherwise, we run into infinite recursion
+                    LazyParamEnv(parentItem)
                 } else {
                     ParamEnv.buildFor(parentItem)
                 }
+            } else if (parentItem != null) {
+                ParamEnv.buildFor(parentItem)
             } else {
                 ParamEnv.EMPTY
             }
