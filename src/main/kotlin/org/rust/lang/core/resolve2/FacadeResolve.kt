@@ -652,11 +652,11 @@ private fun ModData.toRsModNullable(project: Project): List<RsMod> {
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
     expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
 
-fun findModDataFor(file: RsFile): ModData? {
+fun findModDataFor(file: RsFile): List<ModData> {
     val project = file.project
     val defMapService = project.defMapService
-    val virtualFile = file.virtualFile ?: return null
-    if (virtualFile !is VirtualFileWithId) return null
+    val virtualFile = file.virtualFile ?: return emptyList()
+    if (virtualFile !is VirtualFileWithId) return emptyList()
 
     if (!defMapService.areAllDefMapsUpToDate()) {
         // Ensure def maps are up-to-date (`findCrates` may return an old crate if def maps haven't updated)
@@ -675,22 +675,17 @@ fun findModDataFor(file: RsFile): ModData? {
         }
     }
 
-    return defMapService
+    val rawList = defMapService
         .findCrates(file)
         .mapNotNull { crateId ->
             val defMap = defMapService.getOrUpdateIfNeeded(crateId) ?: return@mapNotNull null
             val fileInfo = defMap.fileInfos[virtualFile.id] ?: return@mapNotNull null
             fileInfo.modData
         }
-        .pickSingleModData()
-}
 
-private fun List<ModData>.pickSingleModData(): ModData? {
-    singleOrNull()?.let { return it }
-
-    val cfgEnabled = filter { it.isDeeplyEnabledByCfg }.ifEmpty { this }
-    cfgEnabled.singleOrNull()?.let { return it }
-
-    // If after filtering cfg-enabled modules there are still multiple options, choose one deterministically
-    return cfgEnabled.minByOrNull { it.crate }
+    return if (rawList.size == 1) {
+        rawList
+    } else {
+        rawList.filter { it.isDeeplyEnabledByCfg }.ifEmpty { rawList }
+    }
 }

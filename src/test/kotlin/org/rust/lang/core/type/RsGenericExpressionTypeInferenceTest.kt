@@ -2240,4 +2240,29 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test ignore impl in independent crate`() = stubOnlyTypeInfer("""
+    //- lib.rs
+        pub struct Foo;
+        pub trait Bar {
+            type Item;
+        }
+
+        impl Bar for Foo {
+            type Item = i32;
+        }
+
+        fn infer<T: Bar>(_: T) -> T::Item { todo!() }
+
+        fn foo() {
+            let a = infer(Foo);
+            a;
+        } //^ i32
+    //- main.rs
+        use test_package::*;
+
+        impl Bar for Foo { // Incoherent impl
+            type Item = u8;
+        }
+    """)
 }

@@ -892,4 +892,44 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             pub fn func() {}
         }
     """)
+
+    fun `test method is not resolved to independent crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        pub struct Foo;
+
+        fn foo() {
+            Foo.bar();
+        }     //^ unresolved
+    //- main.rs
+        use test_package::*;
+
+        impl Foo { // Incoherent impl
+            fn bar(&self) {}
+        }
+    """)
+
+    fun `test method is not resolved to independent crate 2`() = stubOnlyResolve("""
+    //- bar.rs
+        pub struct Foo;
+        pub trait Bar {
+            fn bar(&self);
+        }
+    //- lib.rs
+        mod bar;
+        pub use bar::*;
+
+        impl Bar for Foo {
+            fn bar(&self) {}
+        }
+
+        fn foo() {
+            Foo.bar();
+        }     //^ lib.rs
+    //- main.rs
+        use test_package::*;
+
+        impl Bar for Foo { // Incoherent impl
+            fn bar(&self) {}
+        }
+    """)
 }

@@ -30,10 +30,12 @@ class RsCachedTypeAlias(
     val isFreeAndValid: Boolean
 
     val containingCrate: Crate?
+    val containingCrates: List<Crate>
 
     init {
-        val (isValid, crate) = alias.isValidProjectMemberAndContainingCrate
+        val (isValid, crate, crates) = alias.isValidProjectMemberAndContainingCrate
         this.containingCrate = crate
+        this.containingCrates = crates
         this.isFreeAndValid = isValid
             && name != null
             && alias.owner is RsAbstractableOwner.Free

@@ -35,7 +35,6 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
             // `StubIndex.processElements` in order to simplify profiling
             val aliases = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
                 .map { RsCachedTypeAlias.forAlias(it) }
-                .filter { it.isFreeAndValid }
 
             // This is basically a hack to make some crates (winapi 0.2) work in a reasonable amount of time.
             // If the number of aliases exceeds the threshold, we prefer ones from stdlib and a workspace over

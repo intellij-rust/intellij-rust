@@ -32,12 +32,14 @@ class RsCachedImplItem(
 ) {
     private val traitRef: RsTraitRef? = impl.traitRef
     val containingCrate: Crate?
+    val containingCrates: List<Crate>
     val isValid: Boolean
     val isNegativeImpl: Boolean = impl.isNegativeImpl
 
     init {
-        val (isValid, crate) = impl.isValidProjectMemberAndContainingCrate
+        val (isValid, crate, crates) = impl.isValidProjectMemberAndContainingCrate
         this.containingCrate = crate
+        this.containingCrates = crates
         this.isValid = isValid && !impl.isReservationImpl
     }
 
