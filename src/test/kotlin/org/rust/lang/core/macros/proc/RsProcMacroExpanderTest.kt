@@ -89,6 +89,7 @@ class RsProcMacroExpanderTest : RsTestBase() {
     }
 
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @WithoutExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
     fun `test ProcMacroExpansionIsDisabled error 2`() {
         val expander = ProcMacroExpander.new(project, server = null)
         expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
