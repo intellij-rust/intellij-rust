@@ -18,6 +18,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.RsBundle
 import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
@@ -47,11 +48,16 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            runWriteCommandAction(project) {
-                for (element in elements) {
-                    contractModule(element as PsiFileSystemItem)
+            runWriteCommandAction(
+                project,
+                RsBundle.message("action.Rust.RsDowngradeModuleToFile.text"),
+                "action.Rust.RsDowngradeModuleToFile",
+                {
+                    for (element in elements) {
+                        contractModule(element as PsiFileSystemItem)
+                    }
                 }
-            }
+            )
         }
     }
 }
