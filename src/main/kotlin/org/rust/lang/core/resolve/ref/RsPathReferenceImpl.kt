@@ -5,22 +5,22 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.openapi.util.RecursionGuard
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
-import com.intellij.util.containers.map2Array
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.RsPsiSubstitution.*
-import org.rust.lang.core.types.infer.ResolvedPath
-import org.rust.lang.core.types.infer.foldTyInferWith
-import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
+import org.rust.openapiext.testAssert
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
 import org.rust.stdext.mapNotNullToSet
@@ -77,42 +77,59 @@ class RsPathReferenceImpl(
         return target.manager.areElementsEquivalent(resolved, target)
     }
 
-    override fun advancedResolve(): BoundElement<RsElement>? =
-        advancedMultiResolve().singleOrNull()?.inner
+    override fun advancedResolve(): BoundElement<RsElement>? {
+        val resolved = advancedMultiResolve().singleOrNull() ?: return null
+        return guard.doPreventingRecursion(element, /* memoize = */true) {
+            instantiatePathGenerics(element, resolved.element, resolved.resolvedSubst)
+        }
+    }
+
+    override fun resolve(): RsElement? = advancedMultiResolve().singleOrNull()?.element
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
-        advancedMultiResolve().map2Array { it.inner }
+        advancedMultiResolve().toTypedArray()
 
     override fun multiResolve(): List<RsElement> =
-        advancedMultiResolve().map { it.inner.element }
+        advancedMultiResolve().map { it.element }
 
     override fun multiResolveIfVisible(): List<RsElement> =
         advancedMultiResolve().mapNotNull {
             if (!it.isVisible) return@mapNotNull null
-            it.inner.element
+            it.element
         }
 
-    private fun advancedMultiResolve(): List<BoundElementWithVisibility<RsElement>> =
+    private fun advancedMultiResolve(): List<RsPathResolveResult<RsElement>> =
         advancedMultiresolveUsingInferenceCache() ?: advancedCachedMultiResolve()
 
-    private fun advancedMultiresolveUsingInferenceCache(): List<BoundElementWithVisibility<RsElement>>? {
+    private fun advancedMultiresolveUsingInferenceCache(): List<RsPathResolveResult<RsElement>>? {
         val path = element.parent as? RsPathExpr ?: return null
         return path.inference?.getResolvedPath(path)?.map { result ->
-            val element = BoundElement(result.element, result.subst)
             val isVisible = (result as? ResolvedPath.Item)?.isVisible ?: true
-            BoundElementWithVisibility(element, isVisible)
+            RsPathResolveResult(result.element, result.subst, isVisible)
         }
     }
 
-    private fun advancedCachedMultiResolve(): List<BoundElementWithVisibility<RsElement>> {
-        return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(element, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE, Resolver)
+    private fun advancedCachedMultiResolve(): List<RsPathResolveResult<RsElement>> {
+        // Optimization: resolve and cache all nested paths at once, so `Foo<Foo<Foo<Foo>>>` resolution
+        // costs `O(1)` instead of `O(4)`
+        val root = getRootCachingElement(element)
+        val mapOrList = RsResolveCache.getInstance(element.project)
+            .resolveWithCaching(root, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE, Resolver)
+
+        @Suppress("UNCHECKED_CAST")
+        val rawResult = if (mapOrList is Map<*, *>) {
+            mapOrList[element]
+        } else {
+            mapOrList
+        } as List<RsPathResolveResult<RsElement>>?
+
+        return rawResult
             .orEmpty()
             // We can store a fresh `TyInfer.TyVar` to the cache for `_` path parameter (like `Vec<_>`), but
             // TyVar is mutable type, so we must copy it after retrieving from the cache
-            .map { boundElementWithVisibility ->
-                boundElementWithVisibility.map { boundElement ->
-                    boundElement.foldTyInferWith {
+            .map { result ->
+                result.mapSubst { subst ->
+                    subst.foldTyInferWith {
                         if (it is TyInfer.TyVar) TyInfer.TyVar(it.origin) else it
                     }
                 }
@@ -152,10 +169,71 @@ class RsPathReferenceImpl(
         return element.replace(elementNew)
     }
 
-    private object Resolver : (RsPath) -> List<BoundElementWithVisibility<RsElement>> {
-        override fun invoke(element: RsPath): List<BoundElementWithVisibility<RsElement>> {
-            return resolvePath(element)
+    private object Resolver : (RsElement) -> Any {
+        /**
+         * Returns `List<RsPathResolveResult<RsElement>>` if [root] is a single path or
+         * `Map<RsPath, List<RsPathResolveResult<RsElement>>>` if [root] contains nested paths.
+         */
+        override fun invoke(root: RsElement): Any {
+            testAssert { root.parent !is RsPathExpr } // Goes through type inference cache
+            val allPaths = root.collectNestedPathsFromRoot(root)
+            if (allPaths.isEmpty()) return emptyList<RsPathResolveResult<RsElement>>()
+            val ctx = PathResolutionContext(root, isCompletion = false, null)
+            if (allPaths.size == 1) {
+                val singlePath = allPaths.single()
+                return resolvePath(ctx, singlePath, ctx.classifyPath(singlePath))
+            }
+            val classifiedPaths = allPaths.map { it to ctx.classifyPath(it) }
+            val (unqualified, others) = classifiedPaths.partition { it.second is RsPathResolveKind.UnqualifiedPath }
+            val kindToPathList = unqualified
+                .groupBy { it.second }
+                .mapValues { (_, v) -> v.map { it.first } }
+            val resolved = hashMapOf<RsPath, List<RsPathResolveResult<RsElement>>>()
+            for ((kind, paths) in kindToPathList) {
+                resolved += collectMultiplePathResolveVariants(ctx, paths) {
+                    processPathResolveVariants(ctx, kind, it)
+                }.mapValues { (path, result) ->
+                    filterResolveResults(path, result)
+                }
+            }
+            others.associateTo(resolved) { (path, kind) ->
+                path to resolvePath(ctx, path, kind)
+            }
+            return resolved
         }
+    }
+}
+
+private val guard: RecursionGuard<PsiElement> =
+    RecursionManager.createGuard("org.rust.lang.core.resolve.ref.RsPathReferenceImpl")
+
+/**
+ * Returns a PSI element considered a "caching root" for the [path]. Usually it is a topmost [RsPath],
+ * e.g. in `Foo<Bar<Baz>>` `Foo` is a caching root for `Bar` and `Baz` paths, so
+ * [getRootCachingElement] returns `Foo` for `Baz`.
+ */
+private fun getRootCachingElement(path: RsPath): RsElement {
+    var rootPath = path
+    var parent = path.stubParent
+    while (parent is RsTypeReference || parent is RsTypeArgumentList) {
+        parent = parent.stubParent
+        if (parent is RsPath) {
+            val parentParent = parent.stubParent
+            if (parentParent !is RsPathExpr) {
+                rootPath = parent
+                parent = parentParent
+            }
+        }
+    }
+    return rootPath
+}
+
+/**
+ * Returns all nested [RsPath]s for which [getRootCachingElement] returns [root]
+ */
+private fun RsElement.collectNestedPathsFromRoot(root: RsElement): List<RsPath> {
+    return stubDescendantsOfTypeOrSelf<RsPath>().filter {
+        it.parent !is RsPathExpr && getRootCachingElement(it) == root
     }
 }
 
@@ -165,22 +243,29 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
     }
 }
 
-private fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElementWithVisibility<RsElement>> {
-    val result = collectPathResolveVariants(path) {
-        processPathResolveVariants(lookup, path, false, it)
+private fun resolvePath(ctx: PathResolutionContext, path: RsPath, kind: RsPathResolveKind): List<RsPathResolveResult<RsElement>> {
+    val result = collectPathResolveVariants(ctx, path) {
+        processPathResolveVariants(ctx, kind, it)
     }
 
+    return filterResolveResults(path, result)
+}
+
+private fun filterResolveResults(
+    path: RsPath,
+    result: List<RsPathResolveResult<RsElement>>
+): List<RsPathResolveResult<RsElement>> {
     // type A = Foo<T>
     //              ~ `T` can be either type or const argument.
     //                    Prefer types if they are
     val pathParent = path.parent
-    val result2 = if (pathParent is RsTypeReference && pathParent.parent is RsTypeArgumentList) {
+    return if (pathParent is RsTypeReference && pathParent.parent is RsTypeArgumentList) {
         when (result.size) {
             0 -> emptyList()
             1 -> result
             else -> {
                 val types = result.filter {
-                    val element = it.inner.element as? RsNamedElement ?: return@filter false
+                    val element = it.element as? RsNamedElement ?: return@filter false
                     Namespace.Types in element.namespaces
                 }
                 types.ifEmpty { result }
@@ -189,20 +274,15 @@ private fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundEle
     } else {
         result
     }
-
-    return when (result2.size) {
-        0 -> emptyList()
-        1 -> listOf(result2.single().map { instantiatePathGenerics(path, it) })
-        else -> result2
-    }
 }
 
 fun <T : RsElement> instantiatePathGenerics(
     path: RsPath,
-    resolved: BoundElement<T>,
-    resolver: PathExprResolver? = PathExprResolver.default
+    element: T,
+    subst: Substitution,
+    resolver: PathExprResolver? = PathExprResolver.default,
 ): BoundElement<T> {
-    val (element, subst) = resolved.downcast<RsGenericDeclaration>() ?: return resolved
+    if (element !is RsGenericDeclaration) return BoundElement(element, subst)
 
     val psiSubst = pathPsiSubst(path, element)
     val newSubst = psiSubst.toSubst(resolver)
@@ -212,7 +292,7 @@ fun <T : RsElement> instantiatePathGenerics(
             AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
         }
     }
-    return BoundElement(resolved.element, subst + newSubst, assoc)
+    return BoundElement(element, subst + newSubst, assoc)
 }
 
 fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
