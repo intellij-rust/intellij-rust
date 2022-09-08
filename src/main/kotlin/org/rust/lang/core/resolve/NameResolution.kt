@@ -1645,9 +1645,6 @@ fun processNestedScopesUpwards(
             }
             if (stop) return@walkUp true
 
-            // Prelude is injected via implicit star import `use std::prelude::v1::*;`
-            if (processor(ScopeEvent.STAR_IMPORTS)) return@walkUp false
-
             val preludeModInfo = findPreludeUsingModInfo(modInfo)
             if (preludeModInfo != null) {
                 return@walkUp processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
