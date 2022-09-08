@@ -34,7 +34,6 @@ interface ScopeEntry {
     val name: String
     val element: RsElement?
     val subst: Substitution get() = emptySubstitution
-    val isInitialized: Boolean get() = true
 }
 
 typealias RsProcessor<T> = (T) -> Boolean
@@ -52,6 +51,11 @@ interface RsResolveProcessorBase<in T : ScopeEntry> {
      * `null` in completion
      */
     val names: Set<String>?
+
+    fun acceptsName(name: String): Boolean {
+        val names = names
+        return names == null || name in names
+    }
 }
 
 typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
@@ -259,18 +263,6 @@ data class AssocItemScopeEntry(
     override val source: TraitImplSource
 ) : AssocItemScopeEntryBase<RsAbstractable>
 
-private class LazyScopeEntry(
-    override val name: String,
-    private val thunk: Lazy<RsElement?>
-) : ScopeEntry {
-    override val element: RsElement? by thunk
-
-    override val isInitialized: Boolean
-        get() = thunk.isInitialized()
-
-    override fun toString(): String = "LazyScopeEntry($name, $element)"
-}
-
 
 operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
     this(SimpleScopeEntry(name, e))
@@ -281,8 +273,11 @@ operator fun RsResolveProcessor.invoke(
     visibilityFilter: (RsElement) -> VisibilityStatus
 ): Boolean = this(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
-fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
-    this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.PUBLICATION, e)))
+inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
+    if (!acceptsName(name)) return false
+    val element = e() ?: return false
+    return this(name, element)
+}
 
 operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
