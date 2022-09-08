@@ -25,7 +25,7 @@ data class CustomAttributes(
             val project = crate.project
 
             return CachedValuesManager.getManager(project).getCachedValue(crate) {
-                CachedValueProvider.Result.create(doGetFromCrate(crate), project.rustStructureModificationTracker)
+                CachedValueProvider.Result.create(doGetFromCrate(crate), crate.rustStructureModificationTracker)
             }
         }
 
