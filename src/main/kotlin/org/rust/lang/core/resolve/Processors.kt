@@ -37,20 +37,6 @@ interface ScopeEntry {
     val isInitialized: Boolean get() = true
 }
 
-/**
- * This special event allows to transmit "out of band" information
- * to the resolve processor
- */
-enum class ScopeEvent : ScopeEntry {
-    /**
-     * Communicate to the resolve processor that we are about to process wildcard imports.
-     * This is basically a hack to make winapi 0.2 work in a reasonable amount of time.
-     */
-    STAR_IMPORTS;
-
-    override val element: RsElement? get() = null
-}
-
 typealias RsProcessor<T> = (T) -> Boolean
 
 interface RsResolveProcessorBase<in T : ScopeEntry> {
@@ -102,10 +88,6 @@ fun collectPathResolveVariants(
     val referenceName = path.referenceName ?: return emptyList()
     val result = SmartList<RsPathResolveResult<RsElement>>()
     val processor = createProcessor(referenceName) { e ->
-        if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
-            return@createProcessor true
-        }
-
         if (e.name == referenceName) {
             collectPathScopeEntry(ctx, result, e)
         }
@@ -128,10 +110,6 @@ fun collectMultiplePathResolveVariants(
         result[path] = list
     }
     val processor = createProcessor(resultByName.keys) { e ->
-        if ((e == ScopeEvent.STAR_IMPORTS) && result.values.all { it.isNotEmpty() }) {
-            return@createProcessor true
-        }
-
         val list = resultByName[e.name]
         if (list != null) {
             collectPathScopeEntry(ctx, list, e)
@@ -161,8 +139,6 @@ fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Un
     if (referenceName == null) return emptyList()
     val result = SmartList<RsElement>()
     val processor = createProcessor(referenceName) { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@createProcessor true
-
         if (e.name == referenceName) {
             val element = e.element ?: return@createProcessor false
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
@@ -182,10 +158,6 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
     if (referenceName == null) return emptyList()
     val result = mutableListOf<T>()
     val processor = createProcessorGeneric<T>(referenceName) { e ->
-        if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
-            return@createProcessorGeneric true
-        }
-
         if (e.name == referenceName) {
             // de-lazying. See `RsResolveProcessor.lazy`
             val element = e.element ?: return@createProcessorGeneric false
