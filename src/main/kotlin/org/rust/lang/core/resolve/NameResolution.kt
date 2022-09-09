@@ -420,14 +420,13 @@ private fun processQualifiedPathResolveVariants(
     if (resolvedQualifier != null) {
         val shadowingProcessor = if (primitiveType != null) {
             createProcessor(processor.names) { e ->
-                val result = processor(e)
-                if (e.isInitialized) {
+                if (processor.acceptsName(e.name)) {
                     val element = e.element
                     if (element is RsNamedElement) {
                         prevScope[e.name] = element.namespaces
                     }
                 }
-                result
+                processor(e)
             }
         } else {
             processor
@@ -1550,7 +1549,7 @@ private fun processLexicalDeclarations(
             if (Namespace.Values in ns) {
                 val shadowingProcessor = createProcessor(processor.names) { e ->
                     (e.name !in prevScope) && processor(e).also {
-                        if (e.isInitialized && e.element != null) {
+                        if (processor.acceptsName(e.name)) {
                             prevScope[e.name] = VALUES
                         }
                     }
@@ -1702,14 +1701,13 @@ inline fun processWithShadowingAndUpdateScope(
                 return@createProcessor false
             }
         }
-        val result = processor(e)
-        if (e.isInitialized && e.name != "_") {
+        if (processor.acceptsName(e.name) && e.name != "_") {
             val newNs = (e.element as? RsNamedElement)?.namespaces
             if (newNs != null) {
                 currScope[e.name] = prevNs?.let { it + newNs } ?: newNs
             }
         }
-        result
+        processor(e)
     }
     return try {
         f(shadowingProcessor)
