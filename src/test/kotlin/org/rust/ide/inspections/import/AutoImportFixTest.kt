@@ -3133,4 +3133,32 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Output`">Output/*caret*/</error>=i32
         >) {}
     """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import derive proc macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(Builder)]
+        pub fn builder(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        #[derive(Builder/*caret*/)]
+        struct Foo {}
+    """, """
+    //- lib.rs
+        use dep_proc_macro::Builder;
+
+        #[derive(Builder/*caret*/)]
+        struct Foo {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test don't import bang proc macro as derive`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn Builder(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[derive(<error descr="Unresolved reference: `Builder`">Builder/*caret*/</error>)]
+        struct Foo {}
+    """)
 }
