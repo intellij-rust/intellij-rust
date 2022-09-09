@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
+import org.rust.lang.core.types.infer.TyLowering
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
@@ -45,7 +46,10 @@ open class RsPsiSubstitution(
     }
 }
 
-fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.default): Substitution {
+fun RsPsiSubstitution.toSubst(
+    resolver: PathExprResolver,
+    tyLowering: TyLowering,
+): Substitution {
     val typeSubst = typeSubst.entries.associate { (param, value) ->
         val paramTy = TyTypeParameter.named(param)
         val valueTy = when (value) {
@@ -62,9 +66,9 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
             }
             is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
             is RsPsiSubstitution.Value.Present -> when (value.value) {
-                is RsPsiSubstitution.TypeValue.InAngles -> value.value.value.rawType
+                is RsPsiSubstitution.TypeValue.InAngles -> tyLowering.lowerTy(value.value.value)
                 is RsPsiSubstitution.TypeValue.FnSugar -> if (value.value.inputArgs.isNotEmpty()) {
-                    TyTuple(value.value.inputArgs.map { it?.rawType ?: TyUnknown })
+                    TyTuple(value.value.inputArgs.map { if (it != null) tyLowering.lowerTy(it) else TyUnknown })
                 } else {
                     TyUnit.INSTANCE
                 }

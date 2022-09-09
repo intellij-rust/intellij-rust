@@ -427,11 +427,12 @@ class RsTypeInferenceWalker(
             inferConstArgumentTypes(element.constParameters, path.constArguments)
         }
 
-        val subst = instantiatePathGenerics(
+        val subst = TyLowering.lowerPathGenerics(
             path,
             element,
             scopeEntry.subst,
             PathExprResolver.fromContext(ctx),
+            emptyMap(),
         ).subst
 
         val typeParameters = when {

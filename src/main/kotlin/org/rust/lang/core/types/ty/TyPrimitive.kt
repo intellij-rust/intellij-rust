@@ -9,7 +9,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.resolve.RsPathResolveResult
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 
@@ -36,7 +38,11 @@ sealed class TyPrimitive : Ty() {
     }
 
     companion object {
-        fun fromPath(path: RsPath, checkResolve: Boolean = true): TyPrimitive? {
+        fun fromPath(
+            path: RsPath,
+            checkResolve: Boolean = true,
+            givenResolveResult: List<RsPathResolveResult<RsElement>>? = null,
+        ): TyPrimitive? {
             val name = path.referenceName ?: return null
 
             val result = fromName(name) ?: return null
@@ -48,9 +54,10 @@ sealed class TyPrimitive : Ty() {
             // struct u8;
             // let a: u8; // this is a struct "u8", not a primitive type "u8"
             if (checkResolve) {
-                val pathReference = path.reference ?: return null
-                val resolvedTo = pathReference.multiResolve()
-                if (parent is RsBaseType && resolvedTo.any { it !is RsMod }) return null
+                val resolvedTo = givenResolveResult
+                    ?: path.reference?.rawMultiResolve()
+                    ?: return null
+                if (parent is RsBaseType && resolvedTo.any { it.element !is RsMod }) return null
                 if (parent is RsPath && resolvedTo.isNotEmpty()) return null
             }
 
