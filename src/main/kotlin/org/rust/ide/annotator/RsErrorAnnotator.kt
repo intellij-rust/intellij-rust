@@ -1858,7 +1858,9 @@ private fun RsAttr.isBuiltinWithName(target: String): Boolean {
     if (name != target) return false
     if (name !in RS_BUILTIN_ATTRIBUTES) return false
 
-    return !hasInScope(name, MACROS)
+    val procMacro = findInScope(name, MACROS) as? RsFunction ?: return true
+
+    return !procMacro.isAttributeProcMacroDef
 }
 
 private val RsPat.isTopLevel: Boolean

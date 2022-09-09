@@ -4264,7 +4264,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test use derive attr on unsupported items`() = checkErrors("""
-        <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
+        <error descr="`derive` may only be applied to structs, enums and unions [E0774]">#[derive(Debug)]</error>
         type Test = i32;
     """)
 
@@ -4275,6 +4275,28 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[derive(Debug)]
         enum Color {
             RED, GREEN
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test user defined derive proc macro`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn derive(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- lib.rs
+        /*caret*/
+        #[dep_proc_macro::derive]
+        fn main() {}
+
+        mod foo {
+            use dep_proc_macro::derive;
+
+            #[derive]
+            fn bar() {}
         }
     """)
 

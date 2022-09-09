@@ -149,9 +149,6 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     return resolved
 }
 
-fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
-    findInScope(name, ns) != null
-
 fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
     val bindings = HashMap<String, RsPatBinding>()
     processLocalVariables(this) { variable ->
