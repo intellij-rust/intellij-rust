@@ -50,6 +50,7 @@ import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.CompilerMessage
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR
 import org.rust.cargo.toolchain.tools.ProjectDescriptionStatus.OK
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
@@ -143,13 +144,15 @@ class Cargo(
         owner: Project,
         projectDirectory: Path,
         buildTarget: String? = null,
+        rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
         val rawData = fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-            fetchBuildScriptsInfo(owner, projectDirectory, listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK))
+            val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
+            fetchBuildScriptsInfo(owner, projectDirectory, rustcVersion, listener)
         } else {
             BuildMessages.DEFAULT
         }
@@ -270,15 +273,25 @@ class Cargo(
     private fun fetchBuildScriptsInfo(
         owner: Project,
         projectDirectory: Path,
+        rustcVersion: RustcVersion?,
         listener: ProcessListener?
     ): BuildMessages {
         // `--all-targets` is needed here to compile:
         //   - build scripts even if a crate doesn't contain library or binary targets
         //   - dev dependencies during build script evaluation
-        val additionalArgs = listOf("--message-format", "json", "--workspace", "--all-targets")
+        // `--keep-going` is needed here to compile as many proc macro artifacts as possible
+        val additionalArgs = mutableListOf("--message-format", "json", "--workspace", "--all-targets")
+        val useKeepGoing = rustcVersion != null && rustcVersion.semver >= RUST_1_62
+        if (useKeepGoing) {
+            additionalArgs += listOf("-Z", "unstable-options", "--keep-going")
+        }
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
-            EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
+            val envMap = mutableMapOf(RUSTC_WRAPPER to nativeHelper.toString())
+            if (useKeepGoing) {
+                envMap += RUSTC_BOOTSTRAP to "1"
+            }
+            EnvironmentVariablesData.create(envMap, true)
         } else {
             EnvironmentVariablesData.DEFAULT
         }
@@ -716,3 +729,5 @@ enum class ProjectDescriptionStatus {
     BUILD_SCRIPT_EVALUATION_ERROR,
     OK
 }
+
+private val RUST_1_62: SemVer = "1.62.0".parseSemVer()

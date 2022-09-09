@@ -361,7 +361,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val (projectDescriptionData, status) = cargo.fullProjectDescription(
             childContext.project,
             projectDirectory,
-            cargoConfig.buildTarget ?: rustcInfo?.version?.host
+            cargoConfig.buildTarget ?: rustcInfo?.version?.host,
+            rustcInfo?.version,
         ) {
             when (it) {
                 CargoCallType.METADATA -> SyncProcessAdapter(childContext)
