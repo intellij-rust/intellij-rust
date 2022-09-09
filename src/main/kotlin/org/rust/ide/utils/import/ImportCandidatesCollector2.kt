@@ -133,13 +133,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
             val itemsPsi = item
                 .toPsi(rootInfo)
                 .filterIsInstance<RsQualifiedNamedElement>()
-                .let { list ->
-                    if (pathInfo != null) {
-                        list.filter(pathInfo.namespaceFilter)
-                    } else {
-                        list
-                    }
-                }
+                .filterByNamespace(this)
             // cartesian product of `itemsPsi` and `paths`
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
@@ -403,6 +397,14 @@ private fun resolveRootPath(defMap: CrateDefMap, path: ItemUsePath, segments: Li
         perNs = modData.getVisibleItem(segment)
     }
     return perNs
+}
+
+private fun List<RsQualifiedNamedElement>.filterByNamespace(context: ImportContext2): List<RsQualifiedNamedElement> {
+    val namespaceFilter = context.pathInfo?.namespaceFilter ?: return this
+    return filter {
+        namespaceFilter(it)
+            || context.type == ImportContext2.Type.COMPLETION && it is RsMod
+    }
 }
 
 private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {

@@ -550,6 +550,24 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         fn func() {}
     """)
 
+    fun `test suggest module in any namespace`() = doTestByText("""
+        fn main() {
+            inn/*caret*/
+        }
+        mod mod1 {
+            pub mod inner {}
+        }
+    """, """
+        use crate::mod1::inner;
+
+        fn main() {
+            inner/*caret*/
+        }
+        mod mod1 {
+            pub mod inner {}
+        }
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
