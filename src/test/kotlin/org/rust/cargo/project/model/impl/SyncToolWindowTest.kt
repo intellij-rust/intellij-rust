@@ -22,6 +22,7 @@ import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.launchAction
 import java.nio.file.Path
 
+@WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
 class SyncToolWindowTest : RsWithToolchainTestBase() {
 
     private lateinit var buildViewTestFixture: BuildViewTestFixture
@@ -67,7 +68,9 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
              -finished
               -Sync ${project.root.name} project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking hello v0.1.0
                Getting Rust stdlib
         """)
     }
@@ -109,11 +112,15 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
              -finished
               -Sync crate1 project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking crate1 v0.1.0
                Getting Rust stdlib
               -Sync crate2 project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking crate2 v0.1.0
                Getting Rust stdlib
         """)
     }
@@ -157,11 +164,15 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
              -finished
               -Sync crate1 project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking crate1 v0.1.0
                Getting Rust stdlib
               -Sync crate2 project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking crate2 v0.1.0
                Getting Rust stdlib
         """)
     }
@@ -222,12 +233,13 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
              -finished
               -Sync crate project
                Getting toolchain version
-               Updating workspace info
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking crate v0.1.0
                Getting Rust stdlib
         """)
     }
 
-    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
     fun `test with build script evaluation`() {
         val project = buildProject {
             toml("Cargo.toml", """
@@ -258,7 +270,6 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
         """)
     }
 
-    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
     fun `test with compile error in build script`() {
         val project = buildProject {
             toml("Cargo.toml", """
@@ -294,7 +305,6 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
         """)
     }
 
-    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
     fun `test with panic in build script`() {
         val project = buildProject {
             toml("Cargo.toml", """
