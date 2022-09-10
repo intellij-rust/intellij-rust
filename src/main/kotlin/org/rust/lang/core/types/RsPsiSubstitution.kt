@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.types
 
+import com.intellij.openapi.util.RecursionGuard
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -46,10 +49,16 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
     val typeSubst = typeSubst.entries.associate { (param, value) ->
         val paramTy = TyTypeParameter.named(param)
         val valueTy = when (value) {
-            is RsPsiSubstitution.Value.DefaultValue -> if (value.value.selfTy != null) {
-                value.value.value.rawType.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
-            } else {
-                value.value.value.rawType
+            is RsPsiSubstitution.Value.DefaultValue -> {
+                val defaultValue = value.value.value
+                val defaultValueTy = guard.doPreventingRecursion(defaultValue, /* memoize = */true) {
+                    defaultValue.rawType
+                } ?: TyUnknown
+                if (value.value.selfTy != null) {
+                    defaultValueTy.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
+                } else {
+                    defaultValueTy
+                }
             }
             is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
             is RsPsiSubstitution.Value.Present -> when (value.value) {
@@ -96,3 +105,6 @@ fun RsPsiSubstitution.toSubst(resolver: PathExprResolver? = PathExprResolver.def
 
     return Substitution(typeSubst, regionSubst, constSubst)
 }
+
+private val guard: RecursionGuard<PsiElement> =
+    RecursionManager.createGuard("org.rust.lang.core.types.RsPsiSubstitution")

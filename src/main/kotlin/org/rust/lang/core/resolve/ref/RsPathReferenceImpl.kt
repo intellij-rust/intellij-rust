@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve.ref
 
-import com.intellij.openapi.util.RecursionGuard
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.*
@@ -79,9 +77,7 @@ class RsPathReferenceImpl(
 
     override fun advancedResolve(): BoundElement<RsElement>? {
         val resolved = advancedMultiResolve().singleOrNull() ?: return null
-        return guard.doPreventingRecursion(element, /* memoize = */true) {
-            instantiatePathGenerics(element, resolved.element, resolved.resolvedSubst)
-        }
+        return instantiatePathGenerics(element, resolved.element, resolved.resolvedSubst)
     }
 
     override fun resolve(): RsElement? = advancedMultiResolve().singleOrNull()?.element
@@ -203,9 +199,6 @@ class RsPathReferenceImpl(
         }
     }
 }
-
-private val guard: RecursionGuard<PsiElement> =
-    RecursionManager.createGuard("org.rust.lang.core.resolve.ref.RsPathReferenceImpl")
 
 /**
  * Returns a PSI element considered a "caching root" for the [path]. Usually it is a topmost [RsPath],
