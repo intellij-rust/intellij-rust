@@ -66,7 +66,7 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """, checkWeakWarn = true)
 
     fun `test derive on function`() = checkFixByText("Remove attribute `derive`","""
-        <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
+        <error descr="`derive` may only be applied to structs, enums and unions [E0774]">#[derive(Debug)]</error>
         fn foo() { }
     """, """
         fn foo() { }
