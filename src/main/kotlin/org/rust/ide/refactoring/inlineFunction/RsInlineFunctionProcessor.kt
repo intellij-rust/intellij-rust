@@ -23,12 +23,13 @@ import org.rust.ide.inspections.RsFieldInitShorthandInspection
 import org.rust.ide.inspections.fixes.deleteUseSpeck
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.refactoring.freshenName
-import org.rust.ide.refactoring.inlineTypeAlias.replacePathWithTypeReference
+import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
 import org.rust.ide.refactoring.inlineValue.replaceWithAddingParentheses
 import org.rust.lang.core.dfa.ExitPoint
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.inference
@@ -141,7 +142,7 @@ class RsInlineFunctionProcessor(
             is FunctionCallUsage -> usage.functionCall.valueArgumentList.exprList
             is MethodCallUsage -> getArgumentsOfMethodCall(usage.methodCall, function) ?: return false
         }
-        return InlineSingleUsage(arguments, usage, function).invoke()
+        return InlineSingleUsage(arguments, usage, originalFunction, function).invoke()
     }
 
     // `self.foo(arg1, arg2)` -> listOf(`&self`, `arg1`, `arg2`)
@@ -242,7 +243,8 @@ class RsInlineFunctionProcessor(
 private class InlineSingleUsage(
     private val arguments: List<RsExpr>,
     private val usage: CallUsage,
-    originalFunction: RsFunction,
+    private val originalFunction: RsFunction,
+    function: RsFunction,
 ) {
 
     /** The expression which should be replaced by function body */
@@ -251,13 +253,14 @@ private class InlineSingleUsage(
         is MethodCallUsage -> usage.methodCall.parent as RsDotExpr
     }
     private val factory: RsPsiFactory = RsPsiFactory(functionCall.project)
-    private val function: RsFunction = preprocessFunction(originalFunction)
+    private val function: RsFunction = preprocessFunction(function)
 
     fun invoke(): Boolean {
         val parametersAndArguments = matchParametersAndArguments() ?: return false
         val letDeclarations = substituteParametersInFunctionBody(parametersAndArguments)
 
         collapseStructLiteralFieldsShorthand()
+        replaceSelfWithActualType()
         InsertFunctionBody(functionCall, function, letDeclarations).invoke()
         return true
     }
@@ -473,6 +476,49 @@ private class InlineSingleUsage(
             }
         }
     }
+
+    /**
+     * impl Foo {
+     *     fn foo() {
+     *         Self::bar();
+     *     }   ~~~~ replaces with `Foo::bar();`
+     *     ...
+     * }
+     */
+    private fun replaceSelfWithActualType() {
+        run {
+            // Don't replace `Self` if it can be resolved to same type
+            val path = RsCodeFragmentFactory(function.project).createPath("Self::${function.name}", functionCall, ns = VALUES)
+            if (path?.reference?.resolve() == originalFunction) return
+        }
+
+        val block = function.block ?: return
+        val paths = block
+            .descendantsOfType<RsPath>()
+            .filter { !it.hasColonColon && it.cself != null }
+            .ifEmpty { return }
+
+        val impl = function.owner as? RsAbstractableOwner.Impl ?: return
+        val typeReference = impl.impl.typeReference ?: return
+        val substitution = usage.getSubstitution() ?: return
+
+        for (path in paths) {
+            fillPathWithActualType(path, typeReference, substitution)
+        }
+    }
+
+    private fun CallUsage.getSubstitution(): Substitution? =
+        when (this) {
+            is FunctionCallUsage -> {
+                val path = (functionCall.expr as? RsPathExpr)?.path
+                path?.reference?.advancedResolve()?.subst
+            }
+            is MethodCallUsage -> {
+                val methodCall = methodCall
+                val inference = methodCall.inference
+                inference?.getResolvedMethodSubst(methodCall)
+            }
+        }
 }
 
 private class InsertFunctionBody(
