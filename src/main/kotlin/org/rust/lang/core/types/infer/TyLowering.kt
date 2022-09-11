@@ -38,6 +38,9 @@ import org.rust.lang.utils.evaluation.tryEvaluate
 class TyLowering private constructor(
     private val resolvedNestedPaths: Map<RsPath, List<RsPathResolveResult<RsElement>>>
 ) {
+    private val declaredTypeCache = hashMapOf<RsTypeDeclarationElement, Ty>()
+    private val genericParametersCache = hashMapOf<RsGenericDeclaration, List<RsGenericParameter>>()
+
     // Keep in sync with TyFingerprint-create
     private fun lowerTy(type: RsTypeReference, defaultTraitObjectRegion: Region?): Ty {
         return when (type) {
@@ -87,7 +90,7 @@ class TyLowering private constructor(
                         }
 
                         target is RsTypeDeclarationElement -> {
-                            val ty = target.declaredType
+                            val ty = declaredTypeCache.getOrPut(target) { target.declaredType }
                                 .substituteWithTraitObjectRegion(boundElement.subst, defaultTraitObjectRegion ?: ReStatic)
                             // Ignore associated type aliases, as these are usually not very useful
                             if (target is RsTypeAlias && !target.owner.isImplOrTrait) {
@@ -188,7 +191,8 @@ class TyLowering private constructor(
     ): BoundElement<T> {
         if (element !is RsGenericDeclaration) return BoundElement(element, subst)
 
-        val psiSubstitution = pathPsiSubst(path, element)
+        val genericParameters = genericParametersCache.getOrPut(element) { element.getGenericParameters() }
+        val psiSubstitution = pathPsiSubst(path, element, givenGenericParameters = genericParameters)
 
         val typeSubst = psiSubstitution.typeSubst.entries.associate { (param, value) ->
             val paramTy = TyTypeParameter.named(param)

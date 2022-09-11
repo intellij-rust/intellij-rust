@@ -320,12 +320,16 @@ private fun filterResolveResults(
     }
 }
 
-fun pathPsiSubst(path: RsPath, resolved: RsGenericDeclaration): RsPsiSubstitution {
+fun pathPsiSubst(
+    path: RsPath,
+    resolved: RsGenericDeclaration,
+    givenGenericParameters: List<RsGenericParameter>? = null,
+): RsPsiSubstitution {
     if (path.hasCself) {
         return RsPsiSubstitution()
     }
     val args = pathTypeParameters(path)
-    val genericParameters = resolved.getGenericParameters()
+    val genericParameters = givenGenericParameters ?: resolved.getGenericParameters()
     val lifetimeParameters = genericParameters.filterIsInstance<RsLifetimeParameter>()
     val typeParameters = genericParameters.filterIsInstance<RsTypeParameter>()
     val constParameters = genericParameters.filterIsInstance<RsConstParameter>()
