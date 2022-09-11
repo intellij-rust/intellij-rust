@@ -901,6 +901,7 @@ upper TraitAlias ::= trait identifier TypeParameterList? '=' TraitAliasBounds? W
 
 private TypeAscription ::= ':' TypeReference { pin = 1 }
 
+// Note: don't forget to add new TypeReference element types to [org.rust.lang.core.psi.RS_TYPES]
 TypeReference ::= ArrayType
                 | RefLikeType
                 | FnPointerType

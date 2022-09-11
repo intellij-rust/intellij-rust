@@ -7,9 +7,13 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
+import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.PATH_EXPR
+import org.rust.lang.core.psi.RsElementTypes.TYPE_ARGUMENT_LIST
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.RsPsiSubstitution.*
 import org.rust.lang.core.types.infer.*
@@ -206,12 +210,22 @@ class RsPathReferenceImpl(
  * [getRootCachingElement] returns `Foo` for `Baz`.
  */
 private fun getRootCachingElement(path: RsPath): RsElement {
+    // Optimization: traversing a stub is much faster than PSI traversing
+    val stub = path.greenStub
+    return if (stub != null) {
+        getRootCachingElementStub(stub)
+    } else {
+        getRootCachingElementPsi(path)
+    }
+}
+
+private fun getRootCachingElementPsi(path: RsPath): RsElement {
     var rootPath = path
-    var parent = path.stubParent
-    while (parent is RsTypeReference || parent is RsTypeArgumentList) {
-        parent = parent.stubParent
+    var parent = path.parent
+    while (parent != null && parent.elementType in TYPE_REFS_AND_TYPE_ARG_LIST) {
+        parent = parent.parent
         if (parent is RsPath) {
-            val parentParent = parent.stubParent
+            val parentParent = parent.parent
             if (parentParent !is RsPathExpr) {
                 rootPath = parent
                 parent = parentParent
@@ -220,6 +234,24 @@ private fun getRootCachingElement(path: RsPath): RsElement {
     }
     return rootPath
 }
+
+private fun getRootCachingElementStub(path: RsPathStub): RsElement {
+    var rootPath = path
+    var parent = path.parentStub
+    while (parent.stubType in TYPE_REFS_AND_TYPE_ARG_LIST) {
+        parent = parent.parentStub
+        if (parent is RsPathStub) {
+            val parentParent = parent.parentStub
+            if (parentParent.stubType != PATH_EXPR) {
+                rootPath = parent
+                parent = parentParent
+            }
+        }
+    }
+    return rootPath.psi
+}
+
+private val TYPE_REFS_AND_TYPE_ARG_LIST = TokenSet.orSet(RS_TYPES, tokenSetOf(TYPE_ARGUMENT_LIST))
 
 /**
  * Returns all nested [RsPath]s for which [getRootCachingElement] returns [root]
