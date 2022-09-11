@@ -39,12 +39,12 @@ class TyLowering private constructor(
     private val resolvedNestedPaths: Map<RsPath, List<RsPathResolveResult<RsElement>>>
 ) {
     // Keep in sync with TyFingerprint-create
-    private fun lowerTy(type: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
+    private fun lowerTy(type: RsTypeReference, defaultTraitObjectRegion: Region?): Ty {
         return when (type) {
             is RsParenType -> type.typeReference?.let { lowerTy(it, defaultTraitObjectRegion) }
                 ?: TyUnknown
 
-            is RsTupleType -> TyTuple(type.typeReferenceList.map { lowerTy(it) })
+            is RsTupleType -> TyTuple(type.typeReferenceList.map { lowerTy(it, null) })
 
             is RsBaseType -> when (val kind = type.kind) {
                 RsBaseTypeKind.Unit -> TyUnit.INSTANCE
@@ -75,7 +75,7 @@ class TyLowering private constructor(
                                     // `impl {}` or `impl Self {}`
                                     TyUnknown
                                 } else {
-                                    lowerTy(typeReference)
+                                    lowerTy(typeReference, null)
                                 }
                             } else {
                                 TyTypeParameter.self(target)
@@ -121,7 +121,7 @@ class TyLowering private constructor(
             }
 
             is RsArrayType -> {
-                val componentType = type.typeReference?.let { lowerTy(it) } ?: TyUnknown
+                val componentType = type.typeReference?.let { lowerTy(it, null) } ?: TyUnknown
                 if (type.isSlice) {
                     TySlice(componentType)
                 } else {
@@ -131,8 +131,8 @@ class TyLowering private constructor(
             }
 
             is RsFnPointerType -> {
-                val paramTypes = type.valueParameters.map { p -> p.typeReference?.let { lowerTy(it) } ?: TyUnknown }
-                TyFunction(paramTypes, type.retType?.let { it -> it.typeReference?.let { lowerTy(it) } ?: TyUnknown } ?: TyUnit.INSTANCE)
+                val paramTypes = type.valueParameters.map { p -> p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
+                TyFunction(paramTypes, type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown } ?: TyUnit.INSTANCE)
             }
 
             is RsTraitType -> {
@@ -166,7 +166,7 @@ class TyLowering private constructor(
             is RsMacroType -> {
                 if (type.calculateMacroExpansionDepth() >= DEFAULT_RECURSION_LIMIT) return TyUnknown
                 val expansion = type.macroCall.expansion as? MacroExpansion.Type ?: return TyUnknown
-                lowerTy(expansion.type)
+                lowerTy(expansion.type, null)
             }
 
             else -> TyUnknown
@@ -206,9 +206,9 @@ class TyLowering private constructor(
                 }
                 is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
                 is RsPsiSubstitution.Value.Present -> when (value.value) {
-                    is RsPsiSubstitution.TypeValue.InAngles -> lowerTy(value.value.value)
+                    is RsPsiSubstitution.TypeValue.InAngles -> lowerTy(value.value.value, null)
                     is RsPsiSubstitution.TypeValue.FnSugar -> if (value.value.inputArgs.isNotEmpty()) {
-                        TyTuple(value.value.inputArgs.map { if (it != null) lowerTy(it) else TyUnknown })
+                        TyTuple(value.value.inputArgs.map { if (it != null) lowerTy(it, null) else TyUnknown })
                     } else {
                         TyUnit.INSTANCE
                     }
@@ -252,7 +252,7 @@ class TyLowering private constructor(
         val assoc = if (withAssoc) {
             psiSubstitution.assoc.mapValues {
                 when (val value = it.value) {
-                    is RsPsiSubstitution.AssocValue.Present -> lowerTy(value.value)
+                    is RsPsiSubstitution.AssocValue.Present -> lowerTy(value.value, null)
                     RsPsiSubstitution.AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
                 }
             }
@@ -275,7 +275,7 @@ class TyLowering private constructor(
             } else {
                 emptyMap()
             }
-            return TyLowering(resolvedNestedPaths).lowerTy(type).foldTyPlaceholderWithTyInfer()
+            return TyLowering(resolvedNestedPaths).lowerTy(type, null).foldTyPlaceholderWithTyInfer()
         }
 
         fun <T : RsElement> lowerPathGenerics(
