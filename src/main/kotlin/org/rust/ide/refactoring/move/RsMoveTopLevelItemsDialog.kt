@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.refactoring.RefactoringBundle.message
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
@@ -112,7 +112,7 @@ class RsMoveTopLevelItemsDialog(
                     .verticalAlign(VerticalAlign.FILL)
             }
             row {
-                checkBox(message("search.for.references"))
+                checkBox(RefactoringBundle.message("search.for.references"))
                     .bindSelected(::searchForReferences)
             }
         }.also { it.preferredSize = Dimension(600, 400) }
@@ -143,7 +143,7 @@ class RsMoveTopLevelItemsDialog(
         CommandProcessor.getInstance().executeCommand(
             project,
             { doActionUndoCommand() },
-            message("move.title"),
+            RefactoringBundle.message("move.title"),
             null
         )
     }
@@ -196,7 +196,7 @@ class RsMoveTopLevelItemsDialog(
     }
 
     private fun showErrorMessage(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
-        val title = message("error.title")
+        val title = RefactoringBundle.message("error.title")
         CommonRefactoringUtil.showErrorMessage(title, message, null, project)
     }
 }
@@ -251,7 +251,10 @@ val MOVE_TARGET_FILE_PATH_KEY: Key<Path> = Key("RS_MOVE_TARGET_FILE_PATH_KEY")
 
 /** Creates new rust file and attaches it to parent mod */
 private fun createNewRustFile(filePath: Path, project: Project, crateRoot: RsMod?, requestor: Any?): RsFile? {
-    return project.runWriteCommandAction {
+    return project.runWriteCommandAction(
+        RefactoringBundle.message("move.title"),
+        "refactoring.move"
+    ) {
         val fileSystem = (crateRoot as? RsFile)?.virtualFile?.fileSystem ?: LocalFileSystem.getInstance()
         createNewFile(filePath, fileSystem, requestor) { virtualFile ->
             val file = virtualFile.toPsiFile(project)?.rustFile ?: return@createNewFile null

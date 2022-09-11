@@ -18,12 +18,12 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWriteCommandAction
 
 
-fun extractExpression(editor: Editor, expr: RsExpr, postfixLet: Boolean) {
+fun extractExpression(editor: Editor, expr: RsExpr, postfixLet: Boolean, commandName: String, groupId: String) {
     if (!expr.isValid) return
     val occurrences = findOccurrences(expr)
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
         ExpressionReplacer(expr.project, editor, expr)
-            .replaceElementForAllExpr(occurrencesToReplace, postfixLet)
+            .replaceElementForAllExpr(occurrencesToReplace, postfixLet, commandName, groupId)
     }
 }
 
@@ -35,7 +35,7 @@ private class ExpressionReplacer(
     private val psiFactory = RsPsiFactory(project)
     private val suggestedNames = chosenExpr.suggestedNames()
 
-    fun replaceElementForAllExpr(exprs: List<RsExpr>, postfixLet: Boolean) {
+    fun replaceElementForAllExpr(exprs: List<RsExpr>, postfixLet: Boolean, commandName: String, groupId: String) {
         val anchor = findAnchor(exprs, chosenExpr) ?: return
         val sortedExprs = exprs.sortedBy { it.startOffset }
         val firstExpr = sortedExprs.firstOrNull() ?: chosenExpr
@@ -51,7 +51,7 @@ private class ExpressionReplacer(
         val let = createLet(suggestedNames.default)
         val name = psiFactory.createExpression(suggestedNames.default)
 
-        project.runWriteCommandAction {
+        project.runWriteCommandAction(commandName, groupId) {
             val letBinding = if (inlinableExprStmt != null) {
                 // `inline let` is a statement, i.e. it returns `()`, so this replacement produces equivalent
                 // code only when the replaced expression had a value coerced to `()`, i.e. it is either `expr;`,

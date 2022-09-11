@@ -81,7 +81,10 @@ private class ParamIntroducer(
         } else {
             findFunctionUsages(function)
         }
-        project.runWriteCommandAction {
+        project.runWriteCommandAction(
+            RefactoringBundle.message("introduce.parameter.title"),
+            "refactoring.extractParameter"
+        ) {
             appendNewArgument(functionUsages, expr)
             if (replaceForTrait) {
                 getTraitAndImpls(traitFunction)
@@ -130,7 +133,6 @@ private class ParamIntroducer(
         return getTraitAndImpls(traitFunction)
             .map { findFunctionUsages(it) }
             .flatten()
-            .asSequence()
     }
 
     private fun findDescendantFunction(traitImplRef: PsiReference, functionToSearch: RsFunction): RsFunction? {

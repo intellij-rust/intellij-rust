@@ -7,7 +7,6 @@ package org.rust.ide.inspections.fixes
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,6 +33,7 @@ import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.exhaustive
+import org.rust.openapiext.*
 
 /**
  * Attaches a file to a Rust module.
@@ -67,6 +67,28 @@ class AttachFileToModuleFix(
 
     override fun startInWriteAction(): Boolean {
         return false
+    }
+
+    private fun insertFileToModule(file: RsFile, targetFile: RsFile) {
+        val project = file.project
+        val factory = RsPsiFactory(project)
+
+        // if the filename is mod.rs, attach its parent directory
+        val name = if (file.isModuleFile) {
+            file.virtualFile.parent.name
+        } else {
+            file.virtualFile.nameWithoutExtension
+        }
+
+        val modItem = factory.tryCreateModDeclItem(name)
+        if (modItem == null) {
+            project.showBalloon("Could not create `mod ${name}`", NotificationType.ERROR)
+            return
+        }
+
+        project.runWriteCommandAction(text, "inspection.DetachedFile.Fix", targetFile) {
+            insertModItem(modItem, targetFile).navigate(true)
+        }
     }
 
     companion object {
@@ -160,28 +182,6 @@ private fun findModule(root: RsFile, project: Project, file: VirtualFile?): RsFi
     val module = file.toPsiFile(project)?.rustFile ?: return null
     if (module == root || module.crateRoot == null) return null
     return module
-}
-
-private fun insertFileToModule(file: RsFile, targetFile: RsFile) {
-    val project = file.project
-    val factory = RsPsiFactory(project)
-
-    // if the filename is mod.rs, attach it's parent directory
-    val name = if (file.isModuleFile) {
-        file.virtualFile.parent.name
-    } else {
-        file.virtualFile.nameWithoutExtension
-    }
-
-    val modItem = factory.tryCreateModDeclItem(name)
-    if (modItem == null) {
-        project.showBalloon("Could not create `mod ${name}`", NotificationType.ERROR)
-        return
-    }
-
-    WriteCommandAction.runWriteCommandAction(project) {
-        insertModItem(modItem, targetFile).navigate(true)
-    }
 }
 
 private fun insertModItem(item: RsModDeclItem, module: RsFile): RsModDeclItem {

@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring.extractFunction
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,6 +14,7 @@ import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import org.rust.ide.presentation.PsiRenderingOptions
 import org.rust.ide.presentation.RsPsiRenderer
@@ -25,6 +25,7 @@ import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTys
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
+import org.rust.openapiext.runWriteCommandAction
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -44,9 +45,13 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     }
 
     private fun extractFunction(project: Project, file: PsiFile, config: RsExtractFunctionConfig) {
-        WriteCommandAction.writeCommandAction(file).run<Throwable> {
+        project.runWriteCommandAction(
+            RefactoringBundle.message("extract.method.title"),
+            "refactoring.ExtractMethod",
+            file
+        ) {
             val psiFactory = RsPsiFactory(project)
-            val extractedFunction = addExtractedFunction(project, config, psiFactory) ?: return@run
+            val extractedFunction = addExtractedFunction(project, config, psiFactory) ?: return@runWriteCommandAction
             replaceOldStatementsWithCallExpr(config, psiFactory)
             val parameters = config.valueParameters.filter { it.isSelected }
             renameFunctionParameters(extractedFunction, parameters.map { it.name })

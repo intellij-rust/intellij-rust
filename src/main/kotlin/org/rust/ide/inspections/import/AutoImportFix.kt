@@ -53,7 +53,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         val element = startElement as? RsElement ?: return
         val candidates = context.candidates
         if (candidates.size == 1) {
-            project.runWriteCommandAction {
+            project.runWriteCommandAction(text, "inspection.AutoImportFix") {
                 candidates.first().import(element)
             }
         } else {
@@ -70,7 +70,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         psiElementsToIgnore: List<PsiElement>,
         refreshViews: Runnable?
     ) {
-        project.runWriteCommandAction {
+        project.runWriteCommandAction(text, "inspection.AutoImportFix") {
             for (descriptor in descriptors) {
                 val fix = descriptor.fixes?.filterIsInstance<AutoImportFix>()?.singleOrNull() ?: continue
                 val candidate = fix.context.candidates.singleOrNull() ?: continue
@@ -88,7 +88,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         context: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
-            project.runWriteCommandAction {
+            project.runWriteCommandAction(text, "inspection.AutoImportFix") {
                 selectedValue.import(context)
             }
         }

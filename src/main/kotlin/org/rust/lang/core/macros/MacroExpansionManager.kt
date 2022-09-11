@@ -9,6 +9,7 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -589,7 +590,7 @@ private class MacroExpansionServiceImplInner(
         if (!isExpansionModeNew) {
             cleanMacrosDirectoryAndStorage()
         }
-        project.runWriteCommandAction {
+        WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
             project.defMapService.scheduleRebuildAllDefMaps()
             project.rustPsiManager.incRustStructureModificationCount()
         }

@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
@@ -284,7 +285,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         """)
 
         checkModCount(INC) {
-            project.runWriteCommandAction {
+            WriteCommandAction.runWriteCommandAction(project) {
                 myFixture.file.childOfType<RsUseItem>()!!.delete()
             }
         }

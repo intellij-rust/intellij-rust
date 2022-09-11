@@ -102,6 +102,9 @@ class LetPostfixTemplate(provider: RsPostfixTemplateProvider) :
     PostfixTemplateWithExpressionSelector(null, "let", "let name = expr;", RsExprParentsSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         if (expression !is RsExpr) return
-        extractExpression(editor, expression, postfixLet = true)
+        extractExpression(
+            editor, expression, postfixLet = true, "Postfix `let` template",
+            "template.postfix.let"
+        )
     }
 }

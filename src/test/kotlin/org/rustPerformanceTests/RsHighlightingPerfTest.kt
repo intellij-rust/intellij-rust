@@ -6,6 +6,8 @@
 package org.rustPerformanceTests
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDocumentManager
@@ -71,10 +73,10 @@ class RsHighlightingPerfTest : RsRealProjectTestBase() {
             refs.forEach { it.reference?.resolve() }
         }
 
-        val added = project.runWriteCommandAction {
+        val added = WriteCommandAction.runWriteCommandAction(project, Computable {
             myFixture.file.add(RsPsiFactory(project).createFunction("fn foo() {}"))
-        }
-        project.runWriteCommandAction {
+        })
+        WriteCommandAction.runWriteCommandAction(project) {
             added.delete()
         }
 

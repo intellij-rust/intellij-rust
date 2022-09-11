@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.refactoring.findCandidateExpressionsToExtract
 import org.rust.ide.refactoring.showExpressionChooser
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.Testmark
 
@@ -23,20 +24,27 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
         if (file !is RsFile) return
         val exprs = findCandidateExpressionsToExtract(editor, file)
 
-        when (exprs.size) {
-            0 -> {
-                val message = RefactoringBundle.message(if (editor.selectionModel.hasSelection())
+        if (exprs.isEmpty()) {
+            val message = RefactoringBundle.message(
+                if (editor.selectionModel.hasSelection())
                     "selected.block.should.represent.an.expression"
                 else
                     "refactoring.introduce.selection.error"
+            )
+            val title = RefactoringBundle.message("introduce.variable.title")
+            val helpId = "refactoring.extractVariable"
+            CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
+        } else {
+            val extractor = { expr: RsExpr ->
+                extractExpression(
+                    editor, expr, postfixLet = false, "Introduce local variable",
+                    "intention.Rust.IntroduceLocalVariable"
                 )
-                val title = RefactoringBundle.message("introduce.variable.title")
-                val helpId = "refactoring.extractVariable"
-                CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
             }
-            1 -> extractExpression(editor, exprs.single(), postfixLet = false)
-            else -> showExpressionChooser(editor, exprs) {
-                extractExpression(editor, it, postfixLet = false)
+            if (exprs.size == 1) {
+                extractor(exprs.single())
+            } else showExpressionChooser(editor, exprs) {
+                extractor(it)
             }
         }
     }
