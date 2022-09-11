@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapi.util.RecursionGuard
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.calculateMacroExpansionDepth
 import org.rust.lang.core.psi.*
@@ -14,9 +17,7 @@ import org.rust.lang.core.resolve.RsPathResolveResult
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
 import org.rust.lang.core.resolve.ref.pathPsiSubst
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.RsPsiSubstitution
-import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
@@ -24,10 +25,10 @@ import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
-import org.rust.lang.core.types.toSubst
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.lang.utils.evaluation.evaluate
+import org.rust.lang.utils.evaluation.toConst
 import org.rust.lang.utils.evaluation.tryEvaluate
 
 /**
@@ -187,10 +188,69 @@ class TyLowering private constructor(
     ): BoundElement<T> {
         if (element !is RsGenericDeclaration) return BoundElement(element, subst)
 
-        val psiSubst = pathPsiSubst(path, element)
-        val newSubst = psiSubst.toSubst(resolver, this)
+        val psiSubstitution = pathPsiSubst(path, element)
+
+        val typeSubst = psiSubstitution.typeSubst.entries.associate { (param, value) ->
+            val paramTy = TyTypeParameter.named(param)
+            val valueTy = when (value) {
+                is RsPsiSubstitution.Value.DefaultValue -> {
+                    val defaultValue = value.value.value
+                    val defaultValueTy = guard.doPreventingRecursion(defaultValue, /* memoize = */true) {
+                        defaultValue.rawType
+                    } ?: TyUnknown
+                    if (value.value.selfTy != null) {
+                        defaultValueTy.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
+                    } else {
+                        defaultValueTy
+                    }
+                }
+                is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
+                is RsPsiSubstitution.Value.Present -> when (value.value) {
+                    is RsPsiSubstitution.TypeValue.InAngles -> lowerTy(value.value.value)
+                    is RsPsiSubstitution.TypeValue.FnSugar -> if (value.value.inputArgs.isNotEmpty()) {
+                        TyTuple(value.value.inputArgs.map { if (it != null) lowerTy(it) else TyUnknown })
+                    } else {
+                        TyUnit.INSTANCE
+                    }
+                }
+                RsPsiSubstitution.Value.RequiredAbsent -> TyUnknown
+            }
+            paramTy to valueTy
+        }
+
+        val regionSubst = psiSubstitution.regionSubst.entries.mapNotNull { (psiParam, psiValue) ->
+            val param = ReEarlyBound(psiParam)
+            val value = if (psiValue is RsPsiSubstitution.Value.Present) {
+                psiValue.value.resolve()
+            } else {
+                return@mapNotNull null
+            }
+
+            param to value
+        }.toMap()
+
+        val constSubst = psiSubstitution.constSubst.entries.associate { (psiParam, psiValue) ->
+            val param = CtConstParameter(psiParam)
+            val value = when (psiValue) {
+                RsPsiSubstitution.Value.OptionalAbsent -> param
+                RsPsiSubstitution.Value.RequiredAbsent -> CtUnknown
+                is RsPsiSubstitution.Value.Present -> {
+                    val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
+                    psiValue.value.toConst(expectedTy, resolver)
+                }
+                is RsPsiSubstitution.Value.DefaultValue -> {
+                    val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
+                    psiValue.value.toConst(expectedTy, resolver)
+                }
+            }
+
+            param to value
+        }
+
+        val newSubst = Substitution(typeSubst, regionSubst, constSubst)
+
         val assoc = if (withAssoc) {
-            psiSubst.assoc.mapValues {
+            psiSubstitution.assoc.mapValues {
                 when (val value = it.value) {
                     is RsPsiSubstitution.AssocValue.Present -> lowerTy(value.value)
                     RsPsiSubstitution.AssocValue.FnSugarImplicitRet -> TyUnit.INSTANCE
@@ -199,6 +259,7 @@ class TyLowering private constructor(
         } else {
             emptyMap()
         }
+
         return BoundElement(element, subst + newSubst, assoc)
     }
 
@@ -230,6 +291,9 @@ class TyLowering private constructor(
         }
     }
 }
+
+private val guard: RecursionGuard<PsiElement> =
+    RecursionManager.createGuard("org.rust.lang.core.types.infer.TyLowering")
 
 fun RsLifetime?.resolve(): Region {
     this ?: return ReUnknown
