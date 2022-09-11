@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
+import org.rust.RsBundle
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsElementTypes.COMMA
@@ -25,8 +26,17 @@ class AddGenericArguments(
     private val declaration: SmartPsiElementPointer<RsGenericDeclaration>,
     element: RsElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-    override fun getText(): String = "Add missing $argumentsName"
-    override fun getFamilyName() = "Add missing generic arguments"
+    override fun getText(): String {
+        val generics = RsBundle.message("inspection.AddGenericArguments.text.generic")
+        val element = declaration.element ?: return generics
+        return when {
+            element.typeParameters.isNotEmpty() && element.constParameters.isNotEmpty() -> generics
+            element.typeParameters.isNotEmpty() -> RsBundle.message("inspection.AddGenericArguments.text.type")
+            element.constParameters.isNotEmpty() -> RsBundle.message("inspection.AddGenericArguments.text.const")
+            else -> generics
+        }
+    }
+    override fun getFamilyName() = RsBundle.message("inspection.AddGenericArguments.name")
 
     override fun invoke(
         project: Project,
@@ -39,17 +49,6 @@ class AddGenericArguments(
         val inserted = insertGenericArgumentsIfNeeded(element) ?: return
         editor?.buildAndRunTemplate(element, inserted.map { it.createSmartPointer() })
     }
-
-    private val argumentsName: String
-        get() {
-            val element = declaration.element ?: return "generic arguments"
-            return when {
-                element.typeParameters.isNotEmpty() && element.constParameters.isNotEmpty() -> "generic arguments"
-                element.typeParameters.isNotEmpty() -> "type arguments"
-                element.constParameters.isNotEmpty() -> "const arguments"
-                else -> "generic arguments"
-            }
-        }
 }
 
 /**

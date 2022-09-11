@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.findOuterAttr
@@ -19,7 +20,7 @@ class ToggleIgnoreTestIntention: RsElementBaseIntentionAction<ToggleIgnoreTestIn
         val element: RsFunction
     )
 
-    override fun getText() = "Toggle ignore for tests"
+    override fun getText() = RsBundle.message("intention.Rust.ToggleIgnoreTest.text")
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {

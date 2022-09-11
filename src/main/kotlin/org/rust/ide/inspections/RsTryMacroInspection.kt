@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.macros.isExprOrStmtContext
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
@@ -23,7 +24,7 @@ import org.rust.lang.core.psi.ext.replaceWithExpr
 class RsTryMacroInspection : RsLocalInspectionTool() {
 
     @Suppress("DialogTitleCapitalization")
-    override fun getDisplayName(): String = "try! macro usage"
+    override fun getDisplayName()= RsBundle.message("inspection.TryMacro.name")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitMacroCall(o: RsMacroCall) {
@@ -31,9 +32,9 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
             if (!isApplicable) return
             holder.registerProblem(
                 o,
-                "try! macro can be replaced with ? operator",
+                RsBundle.message("inspection.TryMacro.Fix.text"),
                 object : LocalQuickFix {
-                    override fun getName() = "Change try! to ?"
+                    override fun getName() = RsBundle.message("inspection.TryMacro.Fix.name")
 
                     override fun getFamilyName() = name
 

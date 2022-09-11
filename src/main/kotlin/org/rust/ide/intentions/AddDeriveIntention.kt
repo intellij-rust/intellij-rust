@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -18,8 +19,8 @@ import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.firstKeyword
 
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
-    override fun getFamilyName() = "Add derive clause"
-    override fun getText() = "Add derive clause"
+    override fun getFamilyName() = text
+    override fun getText() = RsBundle.message("inspection.AddDerive.text")
 
     class Context(
         val item: RsStructOrEnumItemElement,

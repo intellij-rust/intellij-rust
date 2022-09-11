@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.checkMatch.checkExhaustive
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.RsMatchExpr
 
 open class AddRemainingArmsIntention : RsElementBaseIntentionAction<AddRemainingArmsIntention.Context>() {
 
-    override fun getText(): String = AddRemainingArmsFix.NAME
+    override fun getText(): String = RsBundle.message("inspection.AddRemainingArms.Fix.name")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {

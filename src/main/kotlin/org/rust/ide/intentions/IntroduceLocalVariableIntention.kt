@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.refactoring.introduceVariable.extractExpression
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestors
@@ -17,8 +18,8 @@ import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
 class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
-    override fun getText(): String = "Introduce local variable"
-    override fun getFamilyName(): String = text
+    override fun getText() = RsBundle.message("intention.Rust.IntroduceLocalVariable.text")
+    override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
         val expr = element.ancestors

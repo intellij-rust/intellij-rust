@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
 class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
-    override fun getText() = "Add else branch to this if statement"
+    override fun getText() = RsBundle.message("inspection.AddElse.text")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsIfExpr? {

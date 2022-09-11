@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -18,7 +19,7 @@ import org.rust.openapiext.isUnderDarkTheme
 import org.rust.stdext.buildList
 
 class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>(), LowPriorityAction {
-    override fun getText(): String = "Show the result of macro expansion (cargo expand)"
+    override fun getText() = RsBundle.message("intention.Rust.RunCargoExpand.text")
     override fun getFamilyName(): String = text
 
     override fun startInWriteAction(): Boolean = false

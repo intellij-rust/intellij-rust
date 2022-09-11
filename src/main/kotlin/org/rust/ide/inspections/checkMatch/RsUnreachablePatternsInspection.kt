@@ -8,6 +8,7 @@ package org.rust.ide.inspections.checkMatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.ide.inspections.lints.RsLint
@@ -23,7 +24,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class RsUnreachablePatternsInspection : RsLintInspection() {
-    override fun getDisplayName(): String = "Unreachable patterns"
+    override fun getDisplayName() = RsBundle.message("inspection.UnreachablePatterns.name")
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnreachablePattern
 
@@ -56,7 +57,11 @@ class RsUnreachablePatternsInspection : RsLintInspection() {
 
                 val fix = if (arm.patList.size == 1) {
                     /** If the arm consists of only one pattern, we can delete the whole arm */
-                    SubstituteTextFix.delete("Remove unreachable match arm", match.containingFile, arm.rangeWithPrevSpace)
+                    SubstituteTextFix.delete(
+                        RsBundle.message("inspection.UnreachablePatterns.Fix.match.arm"),
+                        match.containingFile,
+                        arm.rangeWithPrevSpace
+                    )
                 } else {
                     /** Otherwise, delete only ` | <pat>` part from the arm */
                     val separatorRange = (armPat.getPrevNonCommentSibling() as? LeafPsiElement)
@@ -65,10 +70,18 @@ class RsUnreachablePatternsInspection : RsLintInspection() {
                         ?: TextRange.EMPTY_RANGE
 
                     val range = armPat.rangeWithPrevSpace.union(separatorRange)
-                    SubstituteTextFix.delete("Remove unreachable pattern", match.containingFile, range)
+                    SubstituteTextFix.delete(
+                        RsBundle.message("inspection.UnreachablePatterns.Fix.pattern"),
+                        match.containingFile,
+                        range
+                    )
                 }
 
-                holder.registerLintProblem(armPat, "Unreachable pattern", fixes = listOf(fix))
+                holder.registerLintProblem(
+                    armPat,
+                    RsBundle.message("inspection.UnreachablePatterns.text"),
+                    fixes = listOf(fix)
+                )
             }
 
             /** If the arm is not guarded, we have "seen" the pattern */

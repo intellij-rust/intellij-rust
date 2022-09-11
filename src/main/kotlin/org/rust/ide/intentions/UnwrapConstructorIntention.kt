@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPathExpr
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class UnwrapConstructorIntention : RsElementBaseIntentionAction<Context>() {
-    override fun getFamilyName() = "Unwrap enum or tuple struct constructor from an expression"
+    override fun getFamilyName() = RsBundle.message("intention.Rust.UnwrapConstructor.name")
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val call = element.ancestorStrict<RsCallExpr>() ?: return null
@@ -24,7 +25,7 @@ class UnwrapConstructorIntention : RsElementBaseIntentionAction<Context>() {
         val expr = call.expr as? RsPathExpr ?: return null
         if (expr.path.reference?.resolve() !is RsFieldsOwner) return null
 
-        text = "Unwrap `${expr.text}` from the expression"
+        text = RsBundle.message("intention.Rust.UnwrapConstructor.text", expr.text)
 
         return Context(call, argument)
     }

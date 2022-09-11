@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnit
@@ -16,7 +17,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprIntention.Context>() {
-    override fun getFamilyName() = "Remove braces from single expression"
+    override fun getFamilyName() = RsBundle.message("intention.Rust.UnwrapSingleExpr.text.expr")
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val blockExpr = element.ancestorStrict<RsBlockExpr>() ?: return null
@@ -26,11 +27,11 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprI
         val singleStatement = block.singleStmt() as? RsExprStmt ?: return null
         return when {
             singleStatement.isTailStmt -> {
-                text = "Remove braces from single expression"
+                text = RsBundle.message("intention.Rust.UnwrapSingleExpr.text.expr")
                 Context(blockExpr, singleStatement.expr)
             }
             singleStatement.expr.type is TyUnit -> {
-                text = "Remove braces from single expression statement"
+                text = RsBundle.message("intention.Rust.UnwrapSingleExpr.text.stmt")
                 Context(blockExpr, singleStatement.expr)
             }
             else -> null

@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.addMissingFieldsToStructLiteral
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsPsiFactory
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 open class AddStructFieldsLiteralIntention : RsElementBaseIntentionAction<AddStructFieldsLiteralIntention.Context>() {
 
-    override fun getText() = "Replace .. with actual fields"
+    override fun getText() = RsBundle.message("intention.Rust.AddStructFieldsLiteral.text")
 
     override fun getFamilyName() = text
 

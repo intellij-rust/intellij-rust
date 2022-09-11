@@ -9,12 +9,13 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.utils.BooleanExprSimplifier
 import org.rust.ide.utils.isPure
 import org.rust.lang.core.psi.RsExpr
 
 class SimplifyBooleanExpressionFix(expr: RsExpr) : LocalQuickFixOnPsiElement(expr) {
-    override fun getText(): String = "Simplify boolean expression"
+    override fun getText() = RsBundle.message("intention.Rust.SimplifyBooleanExpression.Fix.text")
     override fun getFamilyName() = text
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {

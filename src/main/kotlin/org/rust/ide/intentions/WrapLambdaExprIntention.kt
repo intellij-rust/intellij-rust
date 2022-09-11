@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.syntaxTailStmt
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
-    override fun getText() = "Add braces to lambda expression"
+    override fun getText() = RsBundle.message("intention.Rust.WrapLambdaExpr.text")
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {

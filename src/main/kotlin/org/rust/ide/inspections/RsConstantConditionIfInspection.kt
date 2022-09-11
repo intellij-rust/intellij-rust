@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.prevLeaf
+import org.rust.RsBundle
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -34,7 +35,12 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
                     SimplifyFix(conditionValue)
                 }
 
-                holder.registerProblem(condition, "Condition is always ''$conditionValue''", fix)
+                val conditionError = if (conditionValue) {
+                    RsBundle.message("inspection.ConstantCondition.text.true")
+                } else {
+                    RsBundle.message("inspection.ConstantCondition.text.false")
+                }
+                holder.registerProblem(condition, conditionError, fix)
             }
         }
 
@@ -48,7 +54,7 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
             ifRange
         }
         return SubstituteTextFix.delete(
-            "Delete expression",
+            RsBundle.message("inspection.ConstantCondition.Fix.delete"),
             ifExpr.containingFile,
             deletionRange
         )
@@ -60,7 +66,7 @@ private class SimplifyFix(
 ) : LocalQuickFix {
     override fun getFamilyName(): String = name
 
-    override fun getName(): String = "Simplify expression"
+    override fun getName() = RsBundle.message("inspection.ConstantCondition.Fix.simplify")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val ifExpr = descriptor.psiElement.ancestorStrict<RsIfExpr>() ?: return

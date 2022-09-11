@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsUseItem
@@ -30,7 +31,7 @@ import org.rust.lang.core.psi.ext.startOffset
  * ```
  */
 class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
-    override fun getText() = "Add curly braces"
+    override fun getText() = RsBundle.message("inspection.AddCurlyBraces.text")
     override fun getFamilyName() = text
 
     class Context(
