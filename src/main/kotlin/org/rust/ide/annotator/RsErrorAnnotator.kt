@@ -882,11 +882,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 // If both expected and actual types are unknown, inspection is not applicable.
                 expr.expectedType ?: return
             }
-            if (ty.isEquivalentTo(TyUnit.INSTANCE)) {
+            if (ty is TyUnit) {
                 // If an `if` expression returns `()`, it doesn't need an `else`.
                 return
             }
-            if (ty.isEquivalentTo(TyNever)) {
+            if (ty == TyNever) {
                 // `!` is coercible to any type, in particular to `()` (see above).
                 return
             }
