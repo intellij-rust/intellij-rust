@@ -37,8 +37,7 @@ class RsConvertToNamedFieldsProcessor(
 
     override fun findUsages(): Array<UsageInfo> {
         if (!convertUsages) return arrayOf()
-        var usages = ReferencesSearch
-            .search(element)
+        var usages = element.searchReferencesWithSelf()
             .asSequence()
             .map { MyUsageInfo(it) }
 
@@ -162,3 +161,4 @@ class RsConvertToNamedFieldsProcessor(
 
     override fun getRefactoringId(): String = "refactoring.convertToNamedFields"
 }
+

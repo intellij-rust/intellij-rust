@@ -28,8 +28,7 @@ class RsConvertToTupleProcessor(
     override fun findUsages(): Array<UsageInfo> {
         if (!convertUsages) return arrayOf()
 
-        var usages = ReferencesSearch
-            .search(element)
+        var usages = element.searchReferencesWithSelf()
             .asSequence()
             .map { UsageInfo(it) }
 
