@@ -7,6 +7,7 @@ package org.rust.ide.actions
 
 import com.google.common.annotations.VisibleForTesting
 import com.google.gson.Gson
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationListener
@@ -22,6 +23,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -31,6 +34,11 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.JsonUtils
 import org.rust.openapiext.isUnitTestMode
 import java.awt.datatransfer.StringSelection
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
+import java.time.Duration
 
 class ShareInPlaygroundAction : DumbAwareAction() {
 
@@ -75,14 +83,18 @@ class ShareInPlaygroundAction : DumbAwareAction() {
                 override fun shouldStartInBackground(): Boolean = true
                 override fun run(indicator: ProgressIndicator) {
                     val json = Gson().toJson(PlaygroundCode(text))
-                    val response = HttpRequests.post("$playgroundHost/meta/gist/", "application/json")
-                        .userAgent(USER_AGENT)
-                        .connect {
-                            it.write(json)
-                            it.readString(indicator)
-                        }
+                    val request = HttpRequest.newBuilder()
+                        .uri(URI.create("$playgroundHost/meta/gist/"))
+                        .header("Content-Type", HttpRequests.JSON_CONTENT_TYPE)
+                        .header("User-Agent", USER_AGENT)
+                        .timeout(Duration.ofMillis(HttpRequests.READ_TIMEOUT.toLong()))
+                        .POST(HttpRequest.BodyPublishers.ofString(json))
+                        .build()
 
-                    gistId = JsonUtils.parseJsonObject(response).getAsJsonPrimitive("id").asString
+                    val client = createHttpClient()
+                    val response = client.send(request, BodyHandlers.ofString())
+
+                    gistId = JsonUtils.parseJsonObject(response.body()).getAsJsonPrimitive("id").asString
                 }
 
                 override fun onSuccess() {
@@ -111,6 +123,14 @@ class ShareInPlaygroundAction : DumbAwareAction() {
                 }
             }.queue()
         }
+
+        private fun createHttpClient(): HttpClient = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofMillis(HttpRequests.CONNECTION_TIMEOUT.toLong()))
+            .executor(ProcessIOExecutorService.INSTANCE)
+            .sslContext(CertificateManager.getInstance().sslContext)
+            .proxy(CommonProxy.getInstance())
+            .build()
 
         private fun confirmShare(file: RsFile, hasSelection: Boolean): Boolean {
             val showConfirmation = PropertiesComponent.getInstance().getBoolean(SHOW_SHARE_IN_PLAYGROUND_CONFIRMATION, true)
