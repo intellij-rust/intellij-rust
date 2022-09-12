@@ -15,6 +15,7 @@ import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_CT_PARAME
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_CT_UNEVALUATED_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_EARLY_BOUND_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_INFER_VISITOR
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PLACEHOLDER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PROJECTION_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_TYPE_PARAMETER_VISITOR
 import org.rust.lang.core.types.regions.ReEarlyBound
@@ -86,6 +87,15 @@ fun <T> TypeFoldable<T>.foldTyInferWith(folder: (TyInfer) -> Ty): T =
         override fun foldTy(ty: Ty): Ty {
             val foldedTy = if (ty is TyInfer) folder(ty) else ty
             return if (foldedTy.hasTyInfer) foldedTy.superFoldWith(this) else foldedTy
+        }
+    })
+
+/** Deeply replace a [TyPlaceholder] with a fresh [TyInfer] */
+fun <T> TypeFoldable<T>.foldTyPlaceholderWithTyInfer(): T =
+    foldWith(object : TypeFolder {
+        override fun foldTy(ty: Ty): Ty {
+            val foldedTy = if (ty is TyPlaceholder) TyInfer.TyVar(ty.origin) else ty
+            return if (foldedTy.hasTyPlaceholder) foldedTy.superFoldWith(this) else foldedTy
         }
     })
 
@@ -226,6 +236,7 @@ private data class HasTypeFlagVisitor(val mask: TypeFlags) : TypeVisitor {
         val HAS_CT_INFER_VISITOR = HasTypeFlagVisitor(HAS_CT_INFER_MASK)
         val HAS_CT_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_CT_PARAMETER_MASK)
         val HAS_CT_UNEVALUATED_VISITOR = HasTypeFlagVisitor(HAS_CT_UNEVALUATED_MASK)
+        val HAS_TY_PLACEHOLDER_VISITOR = HasTypeFlagVisitor(HAS_TY_PLACEHOLDER_MASK)
 
         val NEEDS_INFER = HasTypeFlagVisitor(HAS_TY_INFER_MASK or HAS_CT_INFER_MASK)
         val NEEDS_EVAL = HasTypeFlagVisitor(HAS_CT_UNEVALUATED_MASK or HAS_CT_PARAMETER_MASK)
@@ -265,6 +276,9 @@ val TypeFoldable<*>.hasCtUnevaluated
 
 val TypeFoldable<*>.hasCtConstParameters
     get(): Boolean = visitWith(HAS_CT_PARAMETER_VISITOR)
+
+val TypeFoldable<*>.hasTyPlaceholder
+    get(): Boolean = visitWith(HAS_TY_PLACEHOLDER_VISITOR)
 
 val TypeFoldable<*>.needsInfer
     get(): Boolean = visitWith(HasTypeFlagVisitor.NEEDS_INFER)

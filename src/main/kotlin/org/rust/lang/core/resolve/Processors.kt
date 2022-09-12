@@ -10,18 +10,15 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
-import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.stripReferences
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.hasTyInfer
+import org.rust.lang.core.types.ty.*
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -134,10 +131,27 @@ private fun collectPathScopeEntry(
         val visibilityStatus = e.getVisibilityStatusFrom(ctx.context)
         if (visibilityStatus != VisibilityStatus.CfgDisabled) {
             val isVisible = visibilityStatus == VisibilityStatus.Visible
-            result += RsPathResolveResult(element, e.subst, isVisible)
+            result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible)
         }
     }
 }
+// This is basically a hack - we replace type variables incorrectly created during name resolution
+// TODO don't create `TyInfer.TyVar` during name resolution
+private fun Substitution.foldTyInferWithTyPlaceholder(): Substitution =
+    foldWith(object : TypeFolder {
+        override fun foldTy(ty: Ty): Ty {
+            val foldedTy = if (ty is TyInfer.TyVar) {
+                if (ty.origin is RsBaseType) {
+                    TyPlaceholder(ty.origin)
+                } else {
+                    TyUnknown
+                }
+            } else {
+                ty
+            }
+            return if (foldedTy.hasTyInfer) foldedTy.superFoldWith(this) else foldedTy
+        }
+    })
 
 fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Unit): List<RsElement> {
     if (referenceName == null) return emptyList()

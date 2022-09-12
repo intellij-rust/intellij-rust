@@ -71,7 +71,7 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
  * reference in this case. If you need [org.rust.lang.core.types.ty.TyInteger] `i32` instead, use [normType].
  */
 val RsTypeReference.rawType: Ty
-    get() = inferTypeReferenceType(this)
+    get() = inferTypeReferenceType(this).foldTyPlaceholderWithTyInfer()
 
 /**
  * A [Ty]pe of the type reference WITH normalization of normalizable associated type projections

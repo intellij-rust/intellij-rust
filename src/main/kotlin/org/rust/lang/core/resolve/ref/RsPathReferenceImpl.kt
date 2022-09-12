@@ -17,7 +17,6 @@ import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.RsPsiSubstitution.*
 import org.rust.lang.core.types.infer.*
-import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
@@ -129,9 +128,7 @@ class RsPathReferenceImpl(
             // TyVar is mutable type, so we must copy it after retrieving from the cache
             .map { result ->
                 result.mapSubst { subst ->
-                    subst.foldTyInferWith {
-                        if (it is TyInfer.TyVar) TyInfer.TyVar(it.origin) else it
-                    }
+                    subst.foldTyPlaceholderWithTyInfer()
                 }
             }
     }
@@ -182,6 +179,7 @@ class RsPathReferenceImpl(
             if (allPaths.size == 1) {
                 val singlePath = allPaths.single()
                 return resolvePath(ctx, singlePath, ctx.classifyPath(singlePath))
+                    .onEach { check(!it.resolvedSubst.hasTyInfer) }
             }
             val classifiedPaths = allPaths.map { it to ctx.classifyPath(it) }
             val (unqualified, others) = classifiedPaths.partition { it.second is RsPathResolveKind.UnqualifiedPath }
@@ -199,6 +197,7 @@ class RsPathReferenceImpl(
             others.associateTo(resolved) { (path, kind) ->
                 path to resolvePath(ctx, path, kind)
             }
+            resolved.values.forEach { l -> l.forEach { r -> check(!r.resolvedSubst.hasTyInfer) } }
             return resolved
         }
     }

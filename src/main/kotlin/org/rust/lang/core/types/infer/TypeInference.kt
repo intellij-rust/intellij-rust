@@ -28,6 +28,7 @@ import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
+import org.rust.openapiext.testAssert
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
@@ -830,7 +831,9 @@ class RsInferenceContext(
      * Full type resolution replaces all type and const variables with their concrete results.
      */
     fun <T : TypeFoldable<T>> fullyResolve(value: T): T {
-        return value.foldWith(fullTypeResolver)
+        val resolved = value.foldWith(fullTypeResolver)
+        testAssert { !resolved.hasTyPlaceholder }
+        return resolved
     }
 
     private inner class FullTypeResolver : TypeFolder {

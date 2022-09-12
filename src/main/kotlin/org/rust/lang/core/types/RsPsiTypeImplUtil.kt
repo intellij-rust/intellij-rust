@@ -8,6 +8,7 @@ package org.rust.lang.core.types
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.types.infer.foldTyPlaceholderWithTyInfer
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
@@ -32,4 +33,4 @@ object RsPsiTypeImplUtil {
 }
 
 private val RsTypeReference.typeWithRecursionGuard: Ty
-    get() = recursionGuard(this, { inferTypeReferenceType(this) }) ?: TyUnknown
+    get() = recursionGuard(this, { inferTypeReferenceType(this).foldTyPlaceholderWithTyInfer() }) ?: TyUnknown
