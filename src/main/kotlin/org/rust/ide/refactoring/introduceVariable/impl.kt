@@ -7,10 +7,12 @@ package org.rust.ide.refactoring.introduceVariable
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.NonNls
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.psi.*
@@ -18,7 +20,14 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWriteCommandAction
 
 
-fun extractExpression(editor: Editor, expr: RsExpr, postfixLet: Boolean, commandName: String, groupId: String) {
+fun extractExpression(
+    editor: Editor,
+    expr: RsExpr,
+    postfixLet: Boolean,
+    @Suppress("UnstableApiUsage")
+    @NlsContexts.Command commandName: String,
+    @NonNls groupId: String
+) {
     if (!expr.isValid) return
     val occurrences = findOccurrences(expr)
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
@@ -35,7 +44,13 @@ private class ExpressionReplacer(
     private val psiFactory = RsPsiFactory(project)
     private val suggestedNames = chosenExpr.suggestedNames()
 
-    fun replaceElementForAllExpr(exprs: List<RsExpr>, postfixLet: Boolean, commandName: String, groupId: String) {
+    fun replaceElementForAllExpr(
+        exprs: List<RsExpr>,
+        postfixLet: Boolean,
+        @Suppress("UnstableApiUsage")
+        @NlsContexts.Command commandName: String,
+        @NonNls groupId: String
+    ) {
         val anchor = findAnchor(exprs, chosenExpr) ?: return
         val sortedExprs = exprs.sortedBy { it.startOffset }
         val firstExpr = sortedExprs.firstOrNull() ?: chosenExpr

@@ -40,7 +40,7 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
         extractExpression(
-            editor, ctx, postfixLet = false, "Introduce local variable",
+            editor, ctx, postfixLet = false, "Introduce Local Variable",
             "intention.Rust.IntroduceLocalVariable"
         )
     }

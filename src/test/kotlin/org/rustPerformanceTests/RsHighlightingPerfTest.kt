@@ -20,7 +20,6 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.rustPsiManager
-import org.rust.openapiext.runWriteCommandAction
 import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
 

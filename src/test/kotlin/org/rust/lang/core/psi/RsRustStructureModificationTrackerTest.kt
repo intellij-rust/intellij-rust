@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.resolve2.defMapService
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
-import org.rust.openapiext.runWriteCommandAction
 
 class RsRustStructureModificationTrackerTest : RsTestBase() {
     private enum class TestAction(val function: (Long, Long) -> Boolean, val comment: String) {

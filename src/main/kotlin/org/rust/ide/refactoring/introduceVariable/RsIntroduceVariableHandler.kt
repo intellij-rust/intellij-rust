@@ -37,7 +37,7 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
         } else {
             val extractor = { expr: RsExpr ->
                 extractExpression(
-                    editor, expr, postfixLet = false, "Introduce local variable",
+                    editor, expr, postfixLet = false, "Introduce Local Variable",
                     "intention.Rust.IntroduceLocalVariable"
                 )
             }

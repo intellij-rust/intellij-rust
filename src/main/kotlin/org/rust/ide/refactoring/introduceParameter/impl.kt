@@ -83,7 +83,7 @@ private class ParamIntroducer(
         }
         project.runWriteCommandAction(
             RefactoringBundle.message("introduce.parameter.title"),
-            "refactoring.extractParameter"
+            "refactoring.IntroduceParameter"
         ) {
             appendNewArgument(functionUsages, expr)
             if (replaceForTrait) {

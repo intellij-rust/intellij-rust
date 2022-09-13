@@ -47,7 +47,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     private fun extractFunction(project: Project, file: PsiFile, config: RsExtractFunctionConfig) {
         project.runWriteCommandAction(
             RefactoringBundle.message("extract.method.title"),
-            "refactoring.ExtractMethod",
+            "refactoring.ExtractFunction",
             file
         ) {
             val psiFactory = RsPsiFactory(project)

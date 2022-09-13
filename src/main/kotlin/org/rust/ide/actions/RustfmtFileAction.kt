@@ -35,15 +35,16 @@ class RustfmtFileAction : DumbAwareAction() {
         val (cargoProject, rustfmt, document) = getContext(e) ?: return
         checkWriteAccessNotAllowed()
         val formattedText = cargoProject.project
-            .computeWithCancelableProgress(RsBundle.message("action.Rustfmt.file.progress")) {
+            .computeWithCancelableProgress(RsBundle.message("action.Cargo.RustfmtFile.progress")) {
                 reformatDocumentAndGetText(cargoProject, rustfmt, document)
             } ?: return
-        val fileName =
-            document.virtualFile?.presentableName ?: RsBundle.message("action.Rustfmt.file.default.name")
-        cargoProject.project.runWriteCommandAction(
-            RsBundle.message("action.Rustfmt.file.text", fileName),
-            "action.Rustfmt.file",
-        ) {
+        val fileName = document.virtualFile?.presentableName
+        val commandName = if (fileName != null) {
+            RsBundle.message("action.Cargo.RustfmtFile.file.text", fileName)
+        } else {
+            RsBundle.message("action.Cargo.RustfmtFile.default.text")
+        }
+        cargoProject.project.runWriteCommandAction(commandName, "action.Cargo.RustfmtFile") {
             document.setText(formattedText)
         }
     }

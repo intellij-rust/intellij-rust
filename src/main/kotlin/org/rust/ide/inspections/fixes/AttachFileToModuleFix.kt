@@ -86,7 +86,7 @@ class AttachFileToModuleFix(
             return
         }
 
-        project.runWriteCommandAction(text, "inspection.DetachedFile.Fix", targetFile) {
+        project.runWriteCommandAction(text, "fix.Rust.AttachFileToModule", targetFile) {
             insertModItem(modItem, targetFile).navigate(true)
         }
     }

@@ -103,7 +103,7 @@ class LetPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         if (expression !is RsExpr) return
         extractExpression(
-            editor, expression, postfixLet = true, "Postfix `let` template",
+            editor, expression, postfixLet = true, "Postfix `let` Template",
             "template.postfix.let"
         )
     }
