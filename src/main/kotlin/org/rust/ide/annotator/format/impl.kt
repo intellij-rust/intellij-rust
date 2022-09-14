@@ -134,7 +134,7 @@ private val formatParameterParser = Regex("""(?x) # enable comments
     (.?[\^<>])?[+\-]?\#?
     0?(?!\$) # negative lookahead to parse 0$ as width and 00$ as zero padding followed by width
     (?<width>$argument\$|\d+)?
-    (\.(?<precision>$argument\$|\d+|\*))?
+    (\.(?<precision>$argument\$|\d+|\*)?)? # specifying no precision after a dot is allowed
     (?<type>\w?\??)?
 )?\s*""")
 
