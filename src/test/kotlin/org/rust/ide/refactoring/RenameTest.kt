@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring
 
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.testFramework.PsiTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
@@ -803,16 +802,58 @@ class RenameTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test rename different crate`() = doTestByFileTree("bar", """
+    //- lib.rs
+        pub fn foo() {}
+    //- main.rs
+        fn main() {
+            test_package::/*caret*/foo();
+        }
+    """, """
+    //- lib.rs
+        pub fn bar() {}
+    //- main.rs
+        fn main() {
+            test_package::bar();
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    fun `test rename derive proc macro`() = doTestByFileTree("Bar", """
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(Foo)]
+        pub fn func(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::Foo;
+        #[derive(/*caret*/Foo)]
+        struct Struct {}
+    """, """
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(Bar)]
+        pub fn func(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::Bar;
+        #[derive(Bar)]
+        struct Struct {}
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String
-    ) {
-        InlineFile(before).withCaret()
-        val element = myFixture.elementAtCaret
-        myFixture.renameElement(element, newName, true, true)
-        myFixture.checkResult(after)
-        PsiTestUtil.checkPsiStructureWithCommit(myFixture.file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+    ) = checkByText(before, after) {
+        myFixture.renameElement(myFixture.elementAtCaret, newName, true, true)
+    }
+
+    private fun doTestByFileTree(
+        newName: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = checkByDirectory(before, after) {
+        myFixture.configureFromTempProjectFile(it.fileWithCaret)
+        myFixture.renameElementAtCaret(newName)
     }
 
     private fun doTestWithConflicts(
