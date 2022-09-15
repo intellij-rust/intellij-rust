@@ -1333,7 +1333,7 @@ class RsTypeInferenceWalker(
             name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> inferredTy
-            else -> TyUnknown
+            else -> inferredTy
         }
     }
 

@@ -291,4 +291,15 @@ class RsUnreachableCodeInspectionTest : RsInspectionsTestBase(RsUnreachableCodeI
             return;</warning>
         }
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/9355
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no false-positive when todo macro is used`() = checkByText("""
+        fn foo(a: u32) -> u32 {
+            match a {
+                42 => todo!(),
+                _ => return 123,
+            }
+        }
+    """)
 }
