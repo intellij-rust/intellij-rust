@@ -784,6 +784,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
+    fun `test resolve assoc constant in assoc constant initializer`() = checkByCode("""
+        trait WithConst {
+            const C: i32;
+        }       //X
+
+        struct S<T>(T);
+        impl<T: WithConst> WithConst for S<T> {
+            const C: i32 = T::C;
+        }                   //^
+    """)
+
     fun `test assoc type in fn parameter`() = checkByCode("""
         pub trait Iter {
             type Item;
