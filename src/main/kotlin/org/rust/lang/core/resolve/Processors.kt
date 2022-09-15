@@ -13,6 +13,7 @@ import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.resolve2.RsModInfo
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -128,7 +129,7 @@ private fun collectPathScopeEntry(
 ) {
     val element = e.element ?: return
     if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
-        val visibilityStatus = e.getVisibilityStatusFrom(ctx.context)
+        val visibilityStatus = e.getVisibilityStatusFrom(ctx.context, ctx.lazyContainingModInfo)
         if (visibilityStatus != VisibilityStatus.CfgDisabled) {
             val isVisible = visibilityStatus == VisibilityStatus.Visible
             result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible)
@@ -243,19 +244,21 @@ data class ScopeEntryWithVisibility(
     override val name: String,
     override val element: RsElement,
     /** Given a [RsElement] (usually [RsPath]) checks if this item is visible in `containingMod` of that element */
-    val visibilityFilter: (RsElement) -> VisibilityStatus,
+    val visibilityFilter: VisibilityFilter,
     override val subst: Substitution = emptySubstitution,
 ) : ScopeEntry
 
-fun ScopeEntry.getVisibilityStatusFrom(context: RsElement): VisibilityStatus =
+typealias VisibilityFilter = (RsElement, Lazy<RsModInfo?>?) -> VisibilityStatus
+
+fun ScopeEntry.getVisibilityStatusFrom(context: RsElement, lazyModInfo: Lazy<RsModInfo?>?): VisibilityStatus =
     if (this is ScopeEntryWithVisibility) {
-        visibilityFilter(context)
+        visibilityFilter(context, lazyModInfo)
     } else {
         VisibilityStatus.Visible
     }
 
 fun ScopeEntry.isVisibleFrom(context: RsElement): Boolean =
-    getVisibilityStatusFrom(context) == VisibilityStatus.Visible
+    getVisibilityStatusFrom(context, null) == VisibilityStatus.Visible
 
 enum class VisibilityStatus {
     Visible,
@@ -284,7 +287,7 @@ operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
 operator fun RsResolveProcessor.invoke(
     name: String,
     e: RsElement,
-    visibilityFilter: (RsElement) -> VisibilityStatus
+    visibilityFilter: VisibilityFilter
 ): Boolean = this(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
 inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {

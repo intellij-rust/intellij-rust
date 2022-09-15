@@ -7,10 +7,13 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsPathResolveKind.*
+import org.rust.lang.core.resolve2.RsModInfo
+import org.rust.lang.core.resolve2.getModInfo
 import kotlin.LazyThreadSafetyMode.NONE
 
 class PathResolutionContext(
@@ -19,8 +22,12 @@ class PathResolutionContext(
     private val givenImplLookup: ImplLookup?,
 ) {
     val crateRoot: RsMod? = context.crateRoot
-    val containingMod: RsMod by lazy(NONE) {
+    private var lazyContainingMod: Lazy<RsMod> = lazy(NONE) {
         context.containingMod
+    }
+    val containingMod: RsMod get() = lazyContainingMod.value
+    var lazyContainingModInfo: Lazy<RsModInfo?> = lazy(NONE) {
+        getModInfo(containingMod)
     }
     val implLookup: ImplLookup by lazy(NONE) {
         givenImplLookup ?: ImplLookup.relativeTo(context)
@@ -30,6 +37,21 @@ class PathResolutionContext(
             val edition = crateRoot?.edition ?: CargoWorkspace.Edition.DEFAULT
             return edition >= CargoWorkspace.Edition.EDITION_2018
         }
+
+    fun getContainingModInfo(knownContainingMod: RsMod): RsModInfo? {
+        if (lazyContainingModInfo.isInitialized()) {
+            return lazyContainingModInfo.value
+        }
+        @Suppress("NAME_SHADOWING")
+        val knownContainingMod = knownContainingMod.getOriginalOrSelf()
+        if (lazyContainingMod.isInitialized()) {
+            check(lazyContainingMod.value == knownContainingMod)
+        }
+        val modInfo = getModInfo(knownContainingMod)
+        lazyContainingMod = lazyOf(knownContainingMod)
+        lazyContainingModInfo = lazyOf(modInfo)
+        return modInfo
+    }
 
     fun classifyPath(path: RsPath): RsPathResolveKind {
         val parent = path.stubParent

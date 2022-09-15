@@ -336,6 +336,7 @@ fun processPathResolveVariants(ctx: PathResolutionContext, pathKind: RsPathResol
             processNestedScopesUpwards(
                 ctx.context,
                 pathKind.ns,
+                ctx,
                 processor.withIgnoringSecondaryCSelf()
             )
         }
@@ -1622,6 +1623,13 @@ fun processNestedScopesUpwards(
     scopeStart: RsElement,
     ns: Set<Namespace>,
     processor: RsResolveProcessor
+): Boolean = processNestedScopesUpwards(scopeStart, ns, null, processor)
+
+fun processNestedScopesUpwards(
+    scopeStart: RsElement,
+    ns: Set<Namespace>,
+    ctx: PathResolutionContext?,
+    processor: RsResolveProcessor
 ): Boolean {
     val hygieneFilter: (RsPatBinding) -> Boolean = if (scopeStart is RsPath && ns == VALUES) {
         makeHygieneFilter(scopeStart)
@@ -1636,7 +1644,13 @@ fun processNestedScopesUpwards(
                 processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
             }
         } else {
-            val modInfo = getModInfo(scope) ?: return@walkUp false
+            // Optimization: use `RsModInfo` already stored in the `ctx` (or just calculate it if `ctx` is null)
+            val modInfo = if (ctx != null) {
+                ctx.getContainingModInfo(scope)
+            } else {
+                getModInfo(scope)
+            } ?: return@walkUp false
+
             val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
                 val ipm = ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
                 processItemDeclarationsUsingModInfo(scopeIsMod = true, modInfo, ns, shadowingProcessor, ipm)
