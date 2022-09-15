@@ -15,6 +15,7 @@ const val HAS_CT_INFER_MASK: TypeFlags = 16
 const val HAS_CT_PARAMETER_MASK: TypeFlags = 32
 const val HAS_CT_UNEVALUATED_MASK: TypeFlags = 64
 const val HAS_TY_OPAQUE_MASK: TypeFlags = 128
+const val HAS_TY_PLACEHOLDER_MASK: TypeFlags = 256
 
 /**
  * An entity in the Rust type system, which can be one of several kinds (only types, lifetimes and constants for now).

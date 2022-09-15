@@ -2265,4 +2265,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             type Item = u8;
         }
     """)
+
+    fun `test type placeholder in a Type as Trait UFCS qualified associated type path`() = testExpr("""
+        struct Foo<T>(T);
+
+        trait Bar {
+            type SelfTy;
+        }
+
+        impl<T> Bar for Foo<T> {
+            type SelfTy = Foo<T>;
+        }
+
+        fn baz() {
+            let a: <Foo<_> as Bar>::SelfTy = Foo(1);
+            a;
+        } //^ Foo<i32>
+    """)
 }

@@ -181,6 +181,7 @@ private data class TypeRenderer(
                 is TyInfer.IntVar -> integer
                 is TyInfer.FloatVar -> float
             }
+            is TyPlaceholder -> "_"
             is FreshTyInfer -> "<fresh>" // really should never be displayed; debug only
             else -> error("unreachable")
         }
