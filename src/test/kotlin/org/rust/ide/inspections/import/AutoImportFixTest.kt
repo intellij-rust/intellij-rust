@@ -3120,4 +3120,17 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         mod attr_as_is {}
     """)
+
+    fun `test don't import assoc type binding`() = checkAutoImportFixIsUnavailable("""
+        mod inner {
+            pub trait Trait {
+                type Output;
+            }
+            pub struct Output {}
+        }
+
+        fn func(_: impl <error descr="Unresolved reference: `Trait`">Trait</error><
+            <error descr="Unresolved reference: `Output`">Output/*caret*/</error>=i32
+        >) {}
+    """)
 }
