@@ -6,8 +6,8 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -49,7 +49,7 @@ sealed class TyPrimitive : Ty() {
 
             if (path.hasColonColon || path.typeQual != null) return null
             val parent = path.parent
-            if (parent !is RsBaseType && parent !is RsPath) return null
+            if (parent !is RsPathType && parent !is RsPath) return null
 
             // struct u8;
             // let a: u8; // this is a struct "u8", not a primitive type "u8"
@@ -57,7 +57,7 @@ sealed class TyPrimitive : Ty() {
                 val resolvedTo = givenResolveResult
                     ?: path.reference?.rawMultiResolve()
                     ?: return null
-                if (parent is RsBaseType && resolvedTo.any { it.element !is RsMod }) return null
+                if (parent is RsPathType && resolvedTo.any { it.element !is RsMod }) return null
                 if (parent is RsPath && resolvedTo.isNotEmpty()) return null
             }
 

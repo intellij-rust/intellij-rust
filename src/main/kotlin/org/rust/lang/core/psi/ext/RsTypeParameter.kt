@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsPolybound
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTypeParameter
@@ -27,7 +27,7 @@ val RsTypeParameter.owner: RsGenericDeclaration?
 val RsTypeParameter.bounds: List<RsPolybound> get() {
     val whereBounds =
         owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() == this }
+            .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() == this }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
 
     return typeParamBounds?.polyboundList.orEmpty() + whereBounds
@@ -50,7 +50,7 @@ val RsTypeParameter.isSized: Boolean
         val owner = parent?.parent as? RsGenericDeclaration
         val whereBounds =
             owner?.whereClause?.wherePredList.orEmpty()
-                .filter { (it.typeReference?.skipParens() as? RsBaseType)?.name == name }
+                .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.referenceName == name }
                 .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
         val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
         return bounds.none { it.hasQ }

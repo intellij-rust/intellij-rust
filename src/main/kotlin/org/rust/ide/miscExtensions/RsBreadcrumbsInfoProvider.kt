@@ -49,7 +49,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
         override fun elementInfo(e: RsImplItem): String {
             val typeName = run {
                 val typeReference = e.typeReference
-                (typeReference?.skipParens() as? RsBaseType)?.path?.referenceName
+                (typeReference?.skipParens() as? RsPathType)?.path?.referenceName
                     ?: typeReference?.text
             } ?: return ""
 

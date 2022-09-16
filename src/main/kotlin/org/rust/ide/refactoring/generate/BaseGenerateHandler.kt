@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
@@ -57,7 +57,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
 
             if (!isImplBlockValid(impl)) return null
 
-            val structRef = (impl.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() as? RsStructItem
+            val structRef = (impl.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() as? RsStructItem
                 ?: return null
             structRef to impl
         }

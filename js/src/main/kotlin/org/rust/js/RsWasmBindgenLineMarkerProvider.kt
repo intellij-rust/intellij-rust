@@ -21,12 +21,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import icons.JavaScriptPsiIcons
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.impl.RsBaseTypeImpl
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 
@@ -68,8 +64,8 @@ class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val destination = when (element) {
             // If it is impl, then resolving to the related struct and using its name
             is RsImplItem -> {
-                val reference = (element.typeReference as? RsBaseTypeImpl) ?: return null
-                val struct = (reference.path?.reference?.resolve() as? RsStructItem) ?: return null
+                val reference = (element.typeReference as? RsPathType) ?: return null
+                val struct = (reference.path.reference?.resolve() as? RsStructItem) ?: return null
                 findRelatedTsElement(struct, tsPsiFile)
             }
             else -> findRelatedTsElement(element, tsPsiFile)

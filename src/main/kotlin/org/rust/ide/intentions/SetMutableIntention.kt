@@ -36,20 +36,20 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
 
     data class Context(
         val refType: RsRefLikeType,
-        val baseType: RsTypeReference
+        val referencedType: RsTypeReference
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val refType = element.ancestorStrict<RsRefLikeType>() ?: return null
         if (!refType.isRef) return null
-        val baseType = refType.typeReference ?: return null
+        val referencedType = refType.typeReference ?: return null
         if (refType.mutability.isMut == mutable) return null
-        return Context(refType, baseType)
+        return Context(refType, referencedType)
 
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val newType = RsPsiFactory(project).createReferenceType(ctx.baseType.text, mutable)
+        val newType = RsPsiFactory(project).createReferenceType(ctx.referencedType.text, mutable)
         ctx.refType.replace(newType)
     }
 }

@@ -83,14 +83,14 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
         impl: RsImplItem,
         insertedGenericArgumentsPtr: List<SmartPsiElementPointer<RsElement>>?
     ) {
-        val insertedGenericArguments = insertedGenericArgumentsPtr?.mapNotNull { it.element }?.filterIsInstance<RsBaseType>()
-        if (insertedGenericArguments != null && insertedGenericArguments.isNotEmpty()) {
+        val insertedGenericArguments = insertedGenericArgumentsPtr?.mapNotNull { it.element }?.filterIsInstance<RsPathType>()
+        if (!insertedGenericArguments.isNullOrEmpty()) {
             val members = impl.members ?: return
-            val baseTypes = members.descendantsOfType<RsPath>()
-                .filter { (it.parent is RsBaseType || it.parent is RsPathExpr) && !it.hasColonColon && it.path == null && it.typeQual == null }
+            val pathTypes = members.descendantsOfType<RsPath>()
+                .filter { (it.parent is RsPathType || it.parent is RsPathExpr) && !it.hasColonColon && it.path == null && it.typeQual == null }
                 .groupBy { it.referenceName }
             val typeToUsage = insertedGenericArguments.associateWith { ty ->
-                ty.path?.referenceName?.let { baseTypes[it] } ?: emptyList()
+                ty.path.referenceName?.let { pathTypes[it] } ?: emptyList()
             }
             val tmp = editor.newTemplateBuilder(impl) ?: return
             for ((type, usages) in typeToUsage) {

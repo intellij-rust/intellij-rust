@@ -62,7 +62,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
 
         val fields = inserted.tupleFields?.tupleFieldDeclList.orEmpty()
         if (inserted.containingFile == ctx.call.containingFile && fields.isNotEmpty()) {
-            val unknownTypes = inserted.descendantsOfType<RsBaseType>().filter { it.underscore != null }
+            val unknownTypes = inserted.descendantsOfType<RsInferType>()
             if (unknownTypes.isNotEmpty()) {
                 editor.buildAndRunTemplate(inserted, unknownTypes.map { it.createSmartPointer() })
             } else {

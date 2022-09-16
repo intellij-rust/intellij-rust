@@ -221,9 +221,9 @@ class RsInferenceContext(
                 }
                 RsTypeInferenceWalker(this, TyUnknown).inferReplCodeFragment(element)
             }
-            is RsBaseType, is RsTraitRef -> {
+            is RsPathType, is RsTraitRef -> {
                 val path = when (element) {
-                    is RsBaseType -> element.path
+                    is RsPathType -> element.path
                     is RsTraitRef -> element.path
                     else -> null
                 }

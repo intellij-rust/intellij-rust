@@ -45,7 +45,7 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
 
         val expectedRequiredParams = declaration.requiredGenericParameters.size
         val minRequiredParams = when (element.parent) {
-            is RsBaseType, is RsTraitRef -> 0
+            is RsPathType, is RsTraitRef -> 0
             else -> 1
         }
 

@@ -29,7 +29,7 @@ val RsTypeArgumentList.lifetimeArguments: List<RsLifetime> get() = lifetimeList
 
 val RsTypeArgumentList.typeArguments: List<RsTypeReference>
     get() = typeReferenceList.filter { ref ->
-        val type = ref as? RsBaseType
+        val type = ref as? RsPathType
         val element = type?.path?.reference?.resolve()
         element !is RsConstant && element !is RsFunction && element !is RsConstParameter
     }

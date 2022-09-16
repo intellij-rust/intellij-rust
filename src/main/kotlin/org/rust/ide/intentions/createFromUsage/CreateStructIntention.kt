@@ -53,8 +53,7 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
 
         val fields = inserted.blockFields?.namedFieldDeclList.orEmpty().map { it.createSmartPointer() }
         if (inserted.containingFile == function.containingFile && fields.isNotEmpty()) {
-            val unknownTypes = inserted.descendantsOfType<RsBaseType>()
-                .filter { it.underscore != null }
+            val unknownTypes = inserted.descendantsOfType<RsInferType>()
                 .map { it.createSmartPointer() }
             val builder = editor.newTemplateBuilder(inserted.containingFile) ?: return
 

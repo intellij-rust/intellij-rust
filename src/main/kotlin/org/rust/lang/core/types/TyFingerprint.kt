@@ -6,7 +6,10 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.isImpl
+import org.rust.lang.core.psi.ext.isPointer
+import org.rust.lang.core.psi.ext.isSlice
+import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -30,17 +33,15 @@ data class TyFingerprint constructor(
         fun create(ref: RsTypeReference, typeParameters: List<String>): List<TyFingerprint> {
             val fingerprint = when (val type = ref.skipParens()) {
                 is RsTupleType -> TyFingerprint("(tuple)")
-                is RsBaseType -> when (val kind = type.kind) {
-                    RsBaseTypeKind.Unit -> TyFingerprint("()")
-                    RsBaseTypeKind.Never -> TyFingerprint("!")
-                    RsBaseTypeKind.Underscore -> return emptyList()
-                    is RsBaseTypeKind.Path -> when (val name = kind.path.referenceName) {
-                        null -> return emptyList()
-                        in typeParameters -> TYPE_PARAMETER_OR_MACRO_FINGERPRINT
-                        in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
-                        in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
-                        else -> TyFingerprint(name)
-                    }
+                is RsUnitType -> TyFingerprint("()")
+                is RsNeverType -> TyFingerprint("!")
+                is RsInferType -> return emptyList()
+                is RsPathType -> when (val name = type.path.referenceName) {
+                    null -> return emptyList()
+                    in typeParameters -> TYPE_PARAMETER_OR_MACRO_FINGERPRINT
+                    in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
+                    in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
+                    else -> TyFingerprint(name)
                 }
                 is RsRefLikeType -> {
                     if (type.isPointer) {

@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.parser.RustParserUtil
-import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.startOffset
@@ -27,7 +27,7 @@ class WrapTypePathPostfixTemplate(provider: RsPostfixTemplateProvider)
         val factory = RsPsiFactory(typeRef.project)
         val path = factory.tryCreatePath("Wrapper<${typeRef.text}>", RustParserUtil.PathParsingMode.TYPE) ?: return
         val newTypeRef = factory.tryCreateType(path.text) ?: return
-        val inserted = typeRef.replace(newTypeRef) as? RsBaseType ?: return
+        val inserted = typeRef.replace(newTypeRef) as? RsPathType ?: return
         val ptr = inserted.createSmartPointer()
 
         val template = editor.newTemplateBuilder(inserted) ?: return

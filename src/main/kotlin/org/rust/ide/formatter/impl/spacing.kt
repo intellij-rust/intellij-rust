@@ -98,7 +98,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .between(BINDING_MODE, IDENTIFIER).spaces(1)
         .between(IMPL, TYPE_PARAMETER_LIST).spaces(0)
         .afterInside(TYPE_PARAMETER_LIST, IMPL_ITEM).spaces(1)
-        .betweenInside(ts(TYPE_PARAMETER_LIST), TYPES, IMPL_ITEM).spaces(1)
+        .betweenInside(ts(TYPE_PARAMETER_LIST), RS_TYPES, IMPL_ITEM).spaces(1)
 
         // Handling blocks is pretty complicated. Do not tamper with
         // them too much and let rustfmt do all the pesky work.

@@ -534,17 +534,15 @@ private fun generatePathDocumentation(element: RsPath, buffer: StringBuilder) {
 
 private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer: StringBuilder) {
     when (val typeElement = element.skipParens()) {
-        is RsBaseType -> when (val kind = typeElement.kind) {
-            RsBaseTypeKind.Unit -> buffer += "()"
-            RsBaseTypeKind.Never -> buffer += "!"
-            RsBaseTypeKind.Underscore -> buffer += "_"
-            is RsBaseTypeKind.Path -> {
-                val path = kind.path
-                if (path.hasCself) {
-                    buffer += "Self"
-                } else {
-                    path.generateDocumentation(buffer)
-                }
+        is RsUnitType -> buffer += "()"
+        is RsNeverType -> buffer += "!"
+        is RsInferType -> buffer += "_"
+        is RsPathType -> {
+            val path = typeElement.path
+            if (path.hasCself) {
+                buffer += "Self"
+            } else {
+                path.generateDocumentation(buffer)
             }
         }
         is RsTupleType -> typeElement.typeReferenceList.joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }

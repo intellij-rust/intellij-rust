@@ -58,7 +58,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {
-            override fun visitBaseType(o: RsBaseType) = checkBaseType(rsHolder, o)
+            override fun visitInferType(o: RsInferType) = checkInferType(rsHolder, o)
             override fun visitCondition(o: RsCondition) = checkCondition(rsHolder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(rsHolder, o)
             override fun visitTypeArgumentList(o: RsTypeArgumentList) = checkTypeArgumentList(rsHolder, o)
@@ -594,8 +594,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
-        if (type.underscore == null) return
+    private fun checkInferType(holder: RsAnnotationHolder, type: RsInferType) {
         val owner = type.owner.parent
         val ownerParent = owner.parent
         val ownerGrandParent = ownerParent.parent

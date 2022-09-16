@@ -374,7 +374,7 @@ fun pathPsiSubst(
     }
 
     val constArguments = (args as? RsPsiPathParameters.InAngles)?.typeOrConstArgs
-        ?.let { list -> list.filter { it !is RsTypeReference || it !in usedTypeArguments && it is RsBaseType} }
+        ?.let { list -> list.filter { it !is RsTypeReference || it !in usedTypeArguments && it is RsPathType } }
 
     val constSubst = associateSubst(constParameters, constArguments, areOptionalArgs) { param ->
         param.expr
@@ -496,7 +496,7 @@ fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
     val boundElement = advancedResolve()?.let { resolved ->
         // Resolve potential `Self` inside `impl`
         if (resolved.element is RsImplItem && element.hasCself) {
-            (resolved.element.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.advancedResolve() ?: resolved
+            (resolved.element.typeReference?.skipParens() as? RsPathType)?.path?.reference?.advancedResolve() ?: resolved
         } else {
             resolved
         }
@@ -514,7 +514,7 @@ private fun resolveThroughTypeAliases(boundElement: BoundElement<RsElement>): Bo
     var base: BoundElement<RsElement> = boundElement
     val visited = mutableSetOf(boundElement.element)
     while (base.element is RsTypeAlias) {
-        val resolved = ((base.element as RsTypeAlias).typeReference?.skipParens() as? RsBaseType)
+        val resolved = ((base.element as RsTypeAlias).typeReference?.skipParens() as? RsPathType)
             ?.path?.reference?.advancedResolve()
             ?: break
         if (!visited.add(resolved.element)) return null

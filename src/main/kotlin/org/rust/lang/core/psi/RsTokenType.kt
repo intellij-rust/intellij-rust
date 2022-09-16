@@ -122,7 +122,10 @@ val RS_TYPES = tokenSetOf(
     TUPLE_TYPE,
     PAREN_TYPE,
     TRAIT_TYPE,
-    BASE_TYPE,
+    UNIT_TYPE,
+    NEVER_TYPE,
+    INFER_TYPE,
+    PATH_TYPE,
     MACRO_TYPE,
     FOR_IN_TYPE,
 )

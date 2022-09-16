@@ -26,7 +26,7 @@ tailrec fun RsTypeReference.skipParens(): RsTypeReference {
 val RsTypeReference.owner: RsTypeReference
     get() = ancestors
         .filterNot { it is RsTypeArgumentList || it is RsPath }
-        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType || it is RsTypeReference }
+        .takeWhile { it is RsPathType || it is RsTupleType || it is RsRefLikeType || it is RsTypeReference }
         .last() as RsTypeReference
 
 abstract class RsTypeReferenceImplMixin : RsStubbedElementImpl<StubBase<*>>, RsTypeReference {

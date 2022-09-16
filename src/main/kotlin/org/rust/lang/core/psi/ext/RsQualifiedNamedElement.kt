@@ -342,16 +342,14 @@ data class RsQualifiedName private constructor(
                     }
 
                 }
-                is RsBaseType -> when (val kind = type.kind) {
-                    RsBaseTypeKind.Unit -> Item.primitive("unit")
-                    RsBaseTypeKind.Never -> Item.primitive("never")
-                    RsBaseTypeKind.Underscore -> return null
-                    is RsBaseTypeKind.Path -> {
-                        val path = kind.path
-                        val primitiveType = TyPrimitive.fromPath(path)
-                        if (primitiveType != null) return Item.primitive(primitiveType.name)
-                        (path.reference?.resolve() as? RsQualifiedNamedElement)?.toParentItem()
-                    }
+                is RsUnitType -> Item.primitive("unit")
+                is RsNeverType -> Item.primitive("never")
+                is RsInferType -> return null
+                is RsPathType -> {
+                    val path = type.path
+                    val primitiveType = TyPrimitive.fromPath(path)
+                    if (primitiveType != null) return Item.primitive(primitiveType.name)
+                    (path.reference?.resolve() as? RsQualifiedNamedElement)?.toParentItem()
                 }
                 else -> null
             }
