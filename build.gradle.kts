@@ -423,8 +423,8 @@ project(":") {
     val generateRustParser = task<GenerateParserTask>("generateRustParser") {
         source.set("src/main/grammars/RustParser.bnf")
         targetRoot.set("src/gen")
-        pathToParser.set("/org/rust/lang/core/parser/RustParser.java")
-        pathToPsiRoot.set("/org/rust/lang/core/psi")
+        pathToParser.set("org/rust/lang/core/parser/RustParser.java")
+        pathToPsiRoot.set("org/rust/lang/core/psi")
         purgeOldFiles.set(true)
     }
 
