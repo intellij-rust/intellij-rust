@@ -7,7 +7,7 @@ on:
 
 jobs:
     generate-build-number:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             build_number: ${{ steps.buildnumber.outputs.build_number }}
         steps:
@@ -19,7 +19,7 @@ jobs:
                   prefix: rust
 
     fetch-latest-changes:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
             rust-nightly: ${{ steps.fetch-commits.outputs.rust-nightly }}
@@ -57,7 +57,7 @@ jobs:
     build:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
         needs: [ generate-build-number, fetch-latest-changes, build-native-code ]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: true
             matrix:
@@ -89,7 +89,7 @@ jobs:
 
     save-commit:
         needs: [ build, fetch-latest-changes ]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v2

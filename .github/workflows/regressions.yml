@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
     calculate-base-commit:
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         outputs:
             base-commit: ${{ steps.base-commit.outputs.base-commit }}
         steps:
@@ -46,7 +46,7 @@ jobs:
     check:
         needs: [ calculate-base-commit ]
         name: ${{ matrix.batch.name }}
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
