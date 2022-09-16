@@ -784,6 +784,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
+    fun `test resolve assoc constant in assoc constant initializer`() = checkByCode("""
+        trait WithConst {
+            const C: i32;
+        }       //X
+
+        struct S<T>(T);
+        impl<T: WithConst> WithConst for S<T> {
+            const C: i32 = T::C;
+        }                   //^
+    """)
+
     fun `test assoc type in fn parameter`() = checkByCode("""
         pub trait Iter {
             type Item;
@@ -1422,5 +1433,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         fn main() {
             W(1u8).foo();
         }        //^
+    """)
+
+    fun `test resolve associated type in where predicate with type parameter declared on upper level`() = checkByCode("""
+        trait Foo { type Item; }
+                       //X
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn foo()
+                where
+                    T: Foo,
+                    T::Item: ?Sized
+            {}       //^
+        }
     """)
 }
