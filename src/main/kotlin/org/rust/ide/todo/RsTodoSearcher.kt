@@ -31,9 +31,7 @@ class RsTodoSearcher : QueryExecutorBase<IndexPatternOccurrence, IndexPatternSea
 
         val file = queryParameters.file as? RsFile ?: return
 
-        // BACKCOMPAT: 2022.1
-        @Suppress("DEPRECATION")
-        val cacheManager = TodoCacheManager.SERVICE.getInstance(file.project)
+        val cacheManager = TodoCacheManager.getInstance(file.project)
         val patternProvider = queryParameters.patternProvider
         val count = if (patternProvider != null) {
             cacheManager.getTodoCount(file.virtualFile, patternProvider)

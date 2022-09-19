@@ -374,10 +374,10 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2022.1. Update value to 222 and this comment
+        // BACKCOMPAT: 2022.2. Update value to 223 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "221")
+        environment("IDEA_BUILD_NUMBER", "222")
     }
 }
 

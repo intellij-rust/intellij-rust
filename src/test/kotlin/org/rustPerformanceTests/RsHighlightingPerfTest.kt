@@ -120,10 +120,8 @@ class RsHighlightingPerfTest : RsRealProjectTestBase() {
     }
 
 
-    // BACKCOMPAT: 2022.1
-    @Suppress("DEPRECATION", "UnstableApiUsage")
-    private fun currentPsiModificationCount() =
-        PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+    private fun currentPsiModificationCount(): Long =
+        PsiModificationTracker.getInstance(project).modificationCount
 
     override val disableMissedCacheAssertions: Boolean get() = false
     private val lastDisposable = Disposer.newDisposable("RsHighlightingPerfTest last")
