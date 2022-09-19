@@ -1,6 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="/META-INF/platform-experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
+<idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
         <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="100">
             <description>Enable Cargo tasks to use Build Tool Window. Requires Rust +1.48.0</description>
@@ -19,6 +17,9 @@
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.emulate.terminal" percentOfUsers="100">
             <description>Emulate terminal in output console by default</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
+            <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
     </extensions>
 </idea-plugin>
