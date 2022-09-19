@@ -1257,6 +1257,43 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test nested for loop shadowing`() = checkByCode("""
+        fn main() {
+            'shadowed: for _ in 0..2 {
+                'shadowed: for _ in 0..2 {
+               //X
+                    break 'shadowed;
+                         //^
+                }
+            }
+        }
+    """)
+
+    fun `test nested for loop without shadowing`() = checkByCode("""
+        fn main() {
+            'not_shadowed: for _ in 0..2 {
+           //X
+                'another_label: for _ in 0..2 {
+                    break 'not_shadowed;
+                         //^
+                }
+            }
+        }
+    """)
+
+    fun `test nested for loop shadowing and macro`() = checkByCode("""
+        macro_rules! match_lifetimes { ($ lt:lifetime) => { break $ lt; } }
+        fn main() {
+            'shadowed: for _ in 0..2 {
+                'shadowed: for _ in 0..2 {
+               //X
+                    match_lifetimes!('shadowed);
+                                    //^
+                }
+            }
+        }
+    """)
+
     fun `test pattern constant binding ambiguity`() = checkByCode("""
         const X: i32 = 0;
             //X

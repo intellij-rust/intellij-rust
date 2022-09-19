@@ -709,11 +709,12 @@ fun processPatBindingResolveVariants(
 }
 
 fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
-    for (scope in label.ancestors) {
+    val prevScope = hashMapOf<String, Set<Namespace>>()
+    for (scope in label.contexts) {
         if (scope is RsLambdaExpr || scope is RsFunction) return false
         if (scope is RsLabeledExpression) {
             val labelDecl = scope.labelDecl ?: continue
-            if (processor(labelDecl)) return true
+            if (processWithShadowingAndUpdateScope(prevScope, LIFETIMES, processor) { it(labelDecl) }) return true
         }
     }
     return false
