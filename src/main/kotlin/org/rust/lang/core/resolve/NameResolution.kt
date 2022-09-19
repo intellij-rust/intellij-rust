@@ -30,7 +30,6 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.IN_BAND_LIFETIMES
-import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.*
@@ -487,7 +486,7 @@ private fun processQualifiedPathResolveVariants1(
 
         val containingMod = ctx?.containingMod ?: path.containingMod
         if (Namespace.Macros in ns) {
-            if (processMacros(base, processor, null, isAttrOrDerive = false)) return true
+            if (processMacros(base, processor, path, isAttrOrDerive = false)) return true
         }
 
         // Proc macro crates are not allowed to export anything but procedural macros,
@@ -934,15 +933,14 @@ private fun processMacrosExportedByCrate(crateRoot: RsFile, processor: RsResolve
 }
 
 fun processMacroCallVariantsInScope(
-    context: PsiElement,
+    path: RsPath,
     isAttrOrDerive: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val (result, usedNewResolve) = MacroResolver.processMacrosInLexicalOrderUpward(context, isAttrOrDerive, processor)
+    val (result, usedNewResolve) = MacroResolver.processMacrosInLexicalOrderUpward(path, isAttrOrDerive, processor)
     if (result || usedNewResolve) return result
 
-    val element = context.contextOrSelf<RsElement>() ?: return false
-    val crateRoot = element.crateRoot as? RsFile ?: return false
+    val crateRoot = path.crateRoot as? RsFile ?: return false
     val prelude = implicitStdlibCrate(crateRoot)?.crateRoot ?: return false
     return processAllScopeEntries(exportedMacrosAsScopeEntries(prelude), processor)
 }
@@ -957,8 +955,7 @@ private data class MacroResolveResult(val result: Boolean, val usedNewResolve: B
 private class MacroResolver private constructor(
     private val processor: RsResolveProcessor,
     private val isAttrOrDerive: Boolean,
-    /** `RsPath` in resolve, `PsiElement(identifier)` in completion by [RsMacroCompletionProvider] */
-    private val macroPath: PsiElement,
+    private val path: RsPath,
 ) : RsVisitor() {
     private val visitor = MacroResolvingVisitor(reverse = true, ignoreLegacyMacros = isAttrOrDerive) { processor(it) }
 
@@ -1064,7 +1061,7 @@ private class MacroResolver private constructor(
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement, isAttrOrDerive: Boolean): MacroResolveResult? {
         if (element !is RsElement) return null
         val scope = element.context as? RsItemsOwner ?: return null // we are interested only in top-level elements
-        val result = processMacros(scope, processor, macroPath, isAttrOrDerive)
+        val result = processMacros(scope, processor, path, isAttrOrDerive)
         if (scope !is RsMod && !result) return null  // we should search in parent scopes
         return result.toResult(usedNewResolve = true)
     }
@@ -1077,11 +1074,11 @@ private class MacroResolver private constructor(
 
     companion object {
         fun processMacrosInLexicalOrderUpward(
-            startElement: PsiElement,
+            path: RsPath,
             isAttrOrDerive: Boolean,
             processor: RsResolveProcessor
         ): MacroResolveResult {
-            return MacroResolver(processor, isAttrOrDerive, startElement).processMacrosInLexicalOrderUpward(startElement)
+            return MacroResolver(processor, isAttrOrDerive, path).processMacrosInLexicalOrderUpward(path)
         }
 
         private fun Boolean.toResult(usedNewResolve: Boolean = false): MacroResolveResult =
