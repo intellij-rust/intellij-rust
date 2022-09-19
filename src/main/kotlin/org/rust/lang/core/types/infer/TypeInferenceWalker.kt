@@ -866,8 +866,8 @@ class RsTypeInferenceWalker(
         for ((type, expr) in argDefs.zip(constArguments.asSequence())) {
             when (expr) {
                 is RsExpr -> expr.inferTypeCoercableTo(type)
-                is RsBaseType -> {
-                    val typeReference = when (val def = expr.path?.reference?.resolve()) {
+                is RsPathType -> {
+                    val typeReference = when (val def = expr.path.reference?.resolve()) {
                         is RsConstant -> def.typeReference?.takeIf { def.isConst }
                         is RsConstParameter -> def.typeReference
                         else -> null

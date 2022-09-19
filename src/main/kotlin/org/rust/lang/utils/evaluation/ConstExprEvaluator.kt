@@ -5,10 +5,10 @@
 
 package org.rust.lang.utils.evaluation
 
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstParameter
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.*
 import org.rust.lang.core.types.infer.TypeFoldable
@@ -31,7 +31,7 @@ fun RsElement.toConst(
     resolver: PathExprResolver? = PathExprResolver.default
 ): Const = when (this) {
     is RsExpr -> evaluate(expectedTy, resolver)
-    is RsBaseType -> when (val resolved = path?.reference?.resolve()) {
+    is RsPathType -> when (val resolved = path.reference?.resolve()) {
         is RsConstParameter -> CtConstParameter(resolved)
         is RsConstant -> when {
             resolved.isConst -> {

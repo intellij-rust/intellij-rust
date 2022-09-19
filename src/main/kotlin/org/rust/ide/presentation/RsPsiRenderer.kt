@@ -283,12 +283,10 @@ open class RsPsiRenderer(
                 }
             }
 
-            is RsBaseType -> when (val kind = type.kind) {
-                RsBaseTypeKind.Unit -> sb.append("()")
-                RsBaseTypeKind.Never -> sb.append("!")
-                RsBaseTypeKind.Underscore -> sb.append("_")
-                is RsBaseTypeKind.Path -> appendPath(sb, kind.path)
-            }
+            is RsUnitType -> sb.append("()")
+            is RsNeverType -> sb.append("!")
+            is RsInferType -> sb.append("_")
+            is RsPathType -> appendPath(sb, type.path)
 
             is RsRefLikeType -> {
                 if (type.isPointer) {

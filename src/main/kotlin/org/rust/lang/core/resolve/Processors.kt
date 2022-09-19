@@ -141,7 +141,7 @@ private fun Substitution.foldTyInferWithTyPlaceholder(): Substitution =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty {
             val foldedTy = if (ty is TyInfer.TyVar) {
-                if (ty.origin is RsBaseType) {
+                if (ty.origin is RsInferType) {
                     TyPlaceholder(ty.origin)
                 } else {
                     TyUnknown

@@ -75,7 +75,7 @@ FILE
         RsPatWildImpl(PAT_WILD)
           PsiElement(_)('_')
         PsiElement(:)(':')
-        PsiErrorElement:'(', <bound>, <fn pointer type>, <macro call>, <path start>, <ref like type>, <trivial base type>, '?', '[', for, impl or '~' expected, got 'for'
+        PsiErrorElement:'!', '(', <bound>, <fn pointer type>, <macro call>, <path start>, <ref like type>, '?', '[', _, for, impl or '~' expected, got 'for'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsExprStmtImpl(EXPR_STMT)

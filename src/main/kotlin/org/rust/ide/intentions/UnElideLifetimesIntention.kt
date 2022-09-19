@@ -92,9 +92,9 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
     sealed class PotentialLifetimeRef(val element: RsElement) {
         data class Self(val self: RsSelfParameter) : PotentialLifetimeRef(self)
         data class RefLike(val ref: RsRefLikeType) : PotentialLifetimeRef(ref)
-        data class BaseType(val baseType: RsBaseType, val type: Ty) : PotentialLifetimeRef(baseType) {
+        data class PathType(val pathType: RsPathType, val type: Ty) : PotentialLifetimeRef(pathType) {
             val typeLifetimes: List<Region>
-                get() = when (val type = baseType.rawType) {
+                get() = when (val type = pathType.rawType) {
                     is TyAdt -> type.regionArguments.filter { it.hasReEarlyBounds }
                     else -> emptyList()
                 }
@@ -104,9 +104,9 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
             get() = when (this) {
                 is Self -> listOf(self.lifetime)
                 is RefLike -> listOf(ref.lifetime)
-                is BaseType -> {
+                is PathType -> {
                     val lifetimes = typeLifetimes
-                    val actualLifetimes = baseType.path?.typeArgumentList?.lifetimeList
+                    val actualLifetimes = pathType.path.typeArgumentList?.lifetimeList
                     lifetimes.indices.map { actualLifetimes?.getOrNull(it) }
                 }
             }
@@ -123,7 +123,7 @@ private fun isPotentialLifetimeAdt(ref: RsTypeReference): Boolean {
 private fun parsePotentialLifetimeType(ref: RsTypeReference): PotentialLifetimeRef? {
     return when {
         ref is RsRefLikeType -> PotentialLifetimeRef.RefLike(ref)
-        ref is RsBaseType && isPotentialLifetimeAdt(ref) -> PotentialLifetimeRef.BaseType(ref, ref.rawType)
+        ref is RsPathType && isPotentialLifetimeAdt(ref) -> PotentialLifetimeRef.PathType(ref, ref.rawType)
         else -> null
     }
 }
@@ -153,11 +153,11 @@ private fun addLifetimeParameter(ref: PotentialLifetimeRef, names: List<String>)
             val typeRef = factory.createType(elem.text.replaceFirst("&", "&${names.first()} "))
             elem.replace(typeRef)
         }
-        is PotentialLifetimeRef.BaseType -> {
-            val elem = ref.baseType
-            val restArgs = elem.path?.getGenericArguments(includeLifetimes = false)?.map { it.text }.orEmpty()
+        is PotentialLifetimeRef.PathType -> {
+            val elem = ref.pathType
+            val restArgs = elem.path.getGenericArguments(includeLifetimes = false).map { it.text }
             val types = factory.createTypeArgumentList(names + restArgs)
-            val replacement = factory.createType("${elem.name}${types.text}")
+            val replacement = factory.createType("${elem.path.referenceName}${types.text}")
             elem.replace(replacement)
         }
     }

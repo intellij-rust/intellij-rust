@@ -12,8 +12,8 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.ext.RsElement
 
 class RsQuickDocumentationTest : RsDocumentationProviderTest() {
@@ -1183,7 +1183,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """) {
         val element = findElementWithDataAndOffsetInEditor<RsElement>().first
         val const = element.reference?.resolve() as? RsConstant ?: error("Failed to resolve `${element.text}`")
-        val originalElement = (const.typeReference as RsBaseType).path!!
+        val originalElement = (const.typeReference as RsPathType).path
 
         myFixture.openFileInEditor(const.containingFile.virtualFile)
         originalElement to originalElement.textOffset

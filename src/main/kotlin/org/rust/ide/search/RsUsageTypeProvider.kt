@@ -47,7 +47,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
         val refinedElement = element?.findExpansionElements()?.firstOrNull()?.parent ?: element
         val parent = refinedElement?.goUp<RsPath>() ?: return null
         return when (parent) {
-            is RsBaseType -> when (parent.parent) {
+            is RsPathType -> when (parent.parent) {
                 is RsImplItem -> IMPL
                 else -> TYPE_REFERENCE
             }

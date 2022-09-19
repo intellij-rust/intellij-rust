@@ -102,7 +102,7 @@
     extraRoot(".*CodeFragmentElement")=true
 
     extends("(Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest))|(OrPat)") = Pat
-    extends("(Array|RefLike|Tuple|Paren|FnPointer|Base|Macro|ForIn|Trait)Type") = TypeReference
+    extends("(Array|RefLike|Tuple|Paren|FnPointer|Path|Unit|Never|Infer|Macro|ForIn|Trait)Type") = TypeReference
 
     generateTokenAccessors=true
 
@@ -907,9 +907,11 @@ TypeReference ::= ArrayType
                 | FnPointerType
                 | TupleOrParenType
                 | ExplicitTraitType
-                | TrivialBaseType
+                | UnitType
+                | NeverType
+                | InferType
                 // External rule to find the difference between `T` and `T+T`
-                | <<baseOrTraitType TypePathGenericArgs ImplicitTraitType TraitType_upper>>
+                | <<pathOrTraitType TypePathGenericArgs ImplicitTraitType TraitType_upper>>
                 | MacroType
                 | ForInType { // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
   implements = "org.rust.lang.core.macros.RsExpandedElement"
@@ -924,7 +926,10 @@ TypeReferenceNoImplicitTraitType ::= ArrayType
                                    | FnPointerType
                                    | TupleOrParenType
                                    | ExplicitTraitType
-                                   | BaseType !'!'
+                                   | UnitType
+                                   | NeverType
+                                   | InferType
+                                   | PathType !'!'
                                    | MacroType
                                    | ForInType { // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
   elementType = TypeReference
@@ -936,7 +941,10 @@ ScalarTypeReference ::= ArrayType
                       | FnPointerType
                       | TupleOrParenType
                       | MacroType
-                      | BaseType
+                      | UnitType
+                      | NeverType
+                      | InferType
+                      | PathType
                       | ForInType {
   elementType = TypeReference
   name = "type"
@@ -991,13 +999,20 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= TrivialBaseTypeInner | TypePathGenericArgs {
+PathType ::= TypePathGenericArgs {
   implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TrivialBaseType ::= TrivialBaseTypeInner { elementType = BaseType }
-private TrivialBaseTypeInner ::= '(' ')' | '_' | '!'
+UnitType ::= '(' ')' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+NeverType ::= '!' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+InferType ::= '_' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 // `impl Trait` or `dyn Trait` or `Trait+'a`
 fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {

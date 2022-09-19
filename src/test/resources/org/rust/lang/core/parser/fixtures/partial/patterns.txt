@@ -11,7 +11,7 @@ FILE
         PsiElement(identifier)('f')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
-        RsBaseTypeImpl(BASE_TYPE)
+        RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('f64')
       PsiWhiteSpace('\n')

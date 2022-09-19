@@ -388,10 +388,10 @@ private fun replacePlaceholders(
                     }
                 }
 
-                val underscoreVisitor = UnderscorePathVisitor()
+                val underscoreVisitor = InferTypeVisitor()
                 item.accept(underscoreVisitor)
 
-                for (wildcard in underscoreVisitor.paths) {
+                for (wildcard in underscoreVisitor.types) {
                     template.replaceElement(wildcard)
                 }
             }
@@ -402,18 +402,16 @@ private fun replacePlaceholders(
 }
 
 /**
- * Looks for underscore (`_`) paths.
+ * Looks for underscore (`_`) types.
  */
-private class UnderscorePathVisitor : RsRecursiveVisitor() {
-    private val _paths: MutableSet<RsBaseType> = linkedSetOf()
+private class InferTypeVisitor : RsRecursiveVisitor() {
+    private val _types: MutableSet<RsInferType> = linkedSetOf()
 
-    val paths: Set<RsBaseType> get() = _paths
+    val types: Set<RsInferType> get() = _types
 
-    override fun visitBaseType(o: RsBaseType) {
-        if (o.text == "_") {
-            _paths.add(o)
-        }
-        super.visitBaseType(o)
+    override fun visitInferType(o: RsInferType) {
+        _types.add(o)
+        super.visitInferType(o)
     }
 }
 
@@ -426,12 +424,12 @@ private class StructFieldVisitor(private val structNames: Set<String>) : RsRecur
 
     val usages: Map<String, List<PsiElement>> get() = _usages
 
-    override fun visitBaseType(o: RsBaseType) {
+    override fun visitPathType(o: RsPathType) {
         val path = o.text
         if (o.ancestorStrict<RsNamedFieldDecl>() != null && path in structNames) {
             _usages.getOrPut(path) { mutableListOf() }.add(o)
         }
-        super.visitBaseType(o)
+        super.visitPathType(o)
     }
 }
 

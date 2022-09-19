@@ -25,12 +25,9 @@ class RsConstReferStaticInspection : RsLocalInspectionTool() {
             super.visitPathExpr(pathExpr)
         }
 
-        override fun visitBaseType(o: RsBaseType) {
-            val path = o.path
-            if (path != null) {
-                checkPathInConstContext(holder, path, RsConstContextKind.ConstGenericArgument)
-            }
-            super.visitBaseType(o)
+        override fun visitPathType(o: RsPathType) {
+            checkPathInConstContext(holder, o.path, RsConstContextKind.ConstGenericArgument)
+            super.visitPathType(o)
         }
     }
 

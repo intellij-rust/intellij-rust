@@ -43,7 +43,7 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsBaseTypeImpl(BASE_TYPE)
+    RsUnitTypeImpl(UNIT_TYPE)
       PsiElement(()('(')
       PsiElement())(')')
     PsiErrorElement:';' expected, got '+'
@@ -219,7 +219,7 @@ FILE
     PsiElement(identifier)('T9')
   PsiWhiteSpace(' ')
   PsiElement(=)('=')
-  PsiErrorElement:'(', <macro call>, <path start>, <polybound>, <ref like type>, <trivial base type>, '[', extern, for, impl or unsafe expected, got 'extern'
+  PsiErrorElement:'!', '(', <macro call>, <path start>, <polybound>, <ref like type>, '[', _, extern, for, impl or unsafe expected, got 'extern'
     <empty list>
   PsiWhiteSpace(' ')
   PsiElement(extern)('extern')

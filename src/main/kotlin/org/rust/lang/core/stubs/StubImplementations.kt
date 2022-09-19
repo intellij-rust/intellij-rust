@@ -261,7 +261,10 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "FN_POINTER_TYPE" -> RsFnPointerTypeStub.Type
     "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
     "PAREN_TYPE" -> RsPlaceholderStub.Type("PAREN_TYPE", ::RsParenTypeImpl)
-    "BASE_TYPE" -> RsBaseTypeStub.Type
+    "UNIT_TYPE" -> RsPlaceholderStub.Type("UNIT_TYPE", ::RsUnitTypeImpl)
+    "NEVER_TYPE" -> RsPlaceholderStub.Type("NEVER_TYPE", ::RsNeverTypeImpl)
+    "INFER_TYPE" -> RsPlaceholderStub.Type("INFER_TYPE", ::RsInferTypeImpl)
+    "PATH_TYPE" -> RsPathTypeStub.Type
     "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
     "TRAIT_TYPE" -> RsTraitTypeStub.Type
     "MACRO_TYPE" -> RsPlaceholderStub.Type("MACRO_TYPE", ::RsMacroTypeImpl)
@@ -1439,27 +1442,24 @@ class RsTraitTypeStub(
     }
 }
 
-class RsBaseTypeStub private constructor(
+class RsPathTypeStub private constructor(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val kind: RsBaseTypeStubKind
-) : StubBase<RsBaseType>(parent, elementType) {
+) : StubBase<RsPathType>(parent, elementType) {
 
-    object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
+    object Type : RsStubElementType<RsPathTypeStub, RsPathType>("PATH_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, dataStream.readEnum())
+            RsPathTypeStub(parentStub, this)
 
-        override fun serialize(stub: RsBaseTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            writeEnum(stub.kind)
-        }
+        override fun serialize(stub: RsPathTypeStub, dataStream: StubOutputStream) = Unit
 
-        override fun createPsi(stub: RsBaseTypeStub) =
-            RsBaseTypeImpl(stub, this)
+        override fun createPsi(stub: RsPathTypeStub) =
+            RsPathTypeImpl(stub, this)
 
-        override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, psi.stubKind)
+        override fun createStub(psi: RsPathType, parentStub: StubElement<*>?) =
+            RsPathTypeStub(parentStub, this)
     }
 }
 

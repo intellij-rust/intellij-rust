@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
@@ -19,14 +19,16 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
-            override fun visitBaseType(type: RsBaseType) {
-                // Don't apply generic declaration checks to Fn-traits and `Self`
-                if (type.path?.valueParameterList != null) return
-                if (type.path?.cself != null) return
+            override fun visitPathType(type: RsPathType) {
+                val path = type.path
 
-                val paramsDecl = type.path?.reference?.resolve() as? RsGenericDeclaration ?: return
+                // Don't apply generic declaration checks to Fn-traits and `Self`
+                if (path.valueParameterList != null) return
+                if (path.cself != null) return
+
+                val paramsDecl = path.reference?.resolve() as? RsGenericDeclaration ?: return
                 val expectedLifetimes = paramsDecl.lifetimeParameters.size
-                val actualLifetimes = type.path?.lifetimeArguments?.size ?: 0
+                val actualLifetimes = path.lifetimeArguments.size
                 if (expectedLifetimes == actualLifetimes) return
                 if (actualLifetimes == 0 && !type.lifetimeElidable) {
                     RsDiagnostic.MissingLifetimeSpecifier(type).addToHolder(holder)

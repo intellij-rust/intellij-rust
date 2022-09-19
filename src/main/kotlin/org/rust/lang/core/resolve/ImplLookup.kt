@@ -207,14 +207,14 @@ class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
             val additionalBounds = when (val parameter = ty.parameter) {
                 is TyTypeParameter.Named -> if (parameter.parameter.owner != parentItem) {
                     parentItem.whereClause?.wherePredList.orEmpty().asSequence()
-                        .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() == parameter.parameter }
+                        .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() == parameter.parameter }
                         .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
                 } else {
                     emptySequence()
                 }
                 TyTypeParameter.Self -> if (parentItem !is RsTraitOrImpl) {
                     parentItem.whereClause?.wherePredList.orEmpty().asSequence()
-                        .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.kind == PathKind.CSELF }
+                        .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.kind == PathKind.CSELF }
                         .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
                 } else {
                     emptySequence()

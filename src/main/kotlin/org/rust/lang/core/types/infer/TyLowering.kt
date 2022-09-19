@@ -49,59 +49,58 @@ class TyLowering private constructor(
 
             is RsTupleType -> TyTuple(type.typeReferenceList.map { lowerTy(it, null) })
 
-            is RsBaseType -> when (val kind = type.kind) {
-                RsBaseTypeKind.Unit -> TyUnit.INSTANCE
-                RsBaseTypeKind.Never -> TyNever
-                RsBaseTypeKind.Underscore -> TyPlaceholder(type)
-                is RsBaseTypeKind.Path -> {
-                    val path = kind.path
-                    val rawResolveResult = rawMultiResolvePath(path)
+            is RsUnitType -> TyUnit.INSTANCE
+            is RsNeverType -> TyNever
+            is RsInferType -> TyPlaceholder(type)
 
-                    val primitiveType = TyPrimitive.fromPath(path, givenResolveResult = rawResolveResult)
-                    if (primitiveType != null) return primitiveType
+            is RsPathType -> {
+                val path = type.path
+                val rawResolveResult = rawMultiResolvePath(path)
 
-                    val singleResolveResult = rawResolveResult.singleOrNull() ?: return TyUnknown
-                    val target = singleResolveResult.element
-                    val boundElement = instantiatePathGenerics(
-                        path,
-                        singleResolveResult.element,
-                        singleResolveResult.resolvedSubst,
-                        PathExprResolver.default,
-                        withAssoc = target is RsTraitItem
-                    )
+                val primitiveType = TyPrimitive.fromPath(path, givenResolveResult = rawResolveResult)
+                if (primitiveType != null) return primitiveType
 
-                    when {
-                        target is RsTraitOrImpl && path.hasCself -> {
-                            if (target is RsImplItem) {
-                                val typeReference = target.typeReference
-                                if (typeReference == null || typeReference.isAncestorOf(path)) {
-                                    // `impl {}` or `impl Self {}`
-                                    TyUnknown
-                                } else {
-                                    lowerTy(typeReference, null)
-                                }
+                val singleResolveResult = rawResolveResult.singleOrNull() ?: return TyUnknown
+                val target = singleResolveResult.element
+                val boundElement = instantiatePathGenerics(
+                    path,
+                    singleResolveResult.element,
+                    singleResolveResult.resolvedSubst,
+                    PathExprResolver.default,
+                    withAssoc = target is RsTraitItem
+                )
+
+                when {
+                    target is RsTraitOrImpl && path.hasCself -> {
+                        if (target is RsImplItem) {
+                            val typeReference = target.typeReference
+                            if (typeReference == null || typeReference.isAncestorOf(path)) {
+                                // `impl {}` or `impl Self {}`
+                                TyUnknown
                             } else {
-                                TyTypeParameter.self(target)
+                                lowerTy(typeReference, null)
                             }
+                        } else {
+                            TyTypeParameter.self(target)
                         }
-
-                        target is RsTraitItem -> {
-                            TyTraitObject(listOfNotNull(boundElement.downcast()), defaultTraitObjectRegion ?: ReUnknown)
-                        }
-
-                        target is RsTypeDeclarationElement -> {
-                            val ty = declaredTypeCache.getOrPut(target) { target.declaredType }
-                                .substituteWithTraitObjectRegion(boundElement.subst, defaultTraitObjectRegion ?: ReStatic)
-                            // Ignore associated type aliases, as these are usually not very useful
-                            if (target is RsTypeAlias && !target.owner.isImplOrTrait) {
-                                ty.withAlias(boundElement.downcast()!!)
-                            } else {
-                                ty
-                            }
-                        }
-
-                        else -> TyUnknown
                     }
+
+                    target is RsTraitItem -> {
+                        TyTraitObject(listOfNotNull(boundElement.downcast()), defaultTraitObjectRegion ?: ReUnknown)
+                    }
+
+                    target is RsTypeDeclarationElement -> {
+                        val ty = declaredTypeCache.getOrPut(target) { target.declaredType }
+                            .substituteWithTraitObjectRegion(boundElement.subst, defaultTraitObjectRegion ?: ReStatic)
+                        // Ignore associated type aliases, as these are usually not very useful
+                        if (target is RsTypeAlias && !target.owner.isImplOrTrait) {
+                            ty.withAlias(boundElement.downcast()!!)
+                        } else {
+                            ty
+                        }
+                    }
+
+                    else -> TyUnknown
                 }
             }
 
@@ -269,13 +268,8 @@ class TyLowering private constructor(
 
     companion object {
         fun lowerTypeReference(type: RsTypeReference): Ty {
-            val resolvedNestedPaths = if (type is RsBaseType) {
-                val kind = type.kind
-                if (kind is RsBaseTypeKind.Path) {
-                    RsPathReferenceImpl.resolveAllNestedPaths(kind.path)
-                } else {
-                    emptyMap()
-                }
+            val resolvedNestedPaths = if (type is RsPathType) {
+                RsPathReferenceImpl.resolveAllNestedPaths(type.path)
             } else {
                 emptyMap()
             }

@@ -23,7 +23,7 @@ val RsInferenceContextOwner.body: RsElement?
         is RsFunction -> block
         is RsVariantDiscriminant -> expr
         is RsExpressionCodeFragment -> expr
-        is RsBaseType -> path?.typeArgumentList
+        is RsPathType -> path.typeArgumentList
         is RsTraitRef -> path.typeArgumentList
         else -> null
     }

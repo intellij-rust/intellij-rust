@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -25,14 +25,14 @@ fun processItemOrEnumVariantDeclarations(
     when (scope) {
         // https://github.com/rust-lang/rfcs/blob/master/text/2338-type-alias-enum-variants.md
         is RsTypeAlias -> {
-            val (item, subst) = (scope.typeReference?.skipParens() as? RsBaseType)
+            val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
                 ?.path?.reference?.advancedDeepResolve() ?: return false
             if (item is RsEnumItem) {
                 if (processAllWithSubst(item.variants, subst, processor)) return true
             }
         }
         is RsImplItem -> {
-            val (item, subst) = (scope.typeReference?.skipParens() as? RsBaseType)
+            val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
                 ?.path?.reference?.advancedDeepResolve() ?: return false
             if (item is RsEnumItem) {
                 if (processAllWithSubst(item.variants, subst, processor)) return true
