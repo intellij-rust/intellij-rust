@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.text.nullize
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
@@ -37,12 +38,13 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         val project = cargoProject.project
-        return createCommandLine(cargoProject, document)
+        val stdout = createCommandLine(cargoProject, document)
             ?.execute(project, stdIn = document.text.toByteArray())
             ?.unwrapOrElse { e ->
                 e.showRustfmtError(project)
                 if (isUnitTestMode) throw e else return null
             }?.stdout
+        return stdout.nullize()
     }
 
     fun createCommandLine(cargoProject: CargoProject, document: Document): GeneralCommandLine? {
