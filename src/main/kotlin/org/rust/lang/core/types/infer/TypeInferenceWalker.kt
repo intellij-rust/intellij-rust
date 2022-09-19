@@ -1044,7 +1044,8 @@ class RsTypeInferenceWalker(
             blockTys.add(elseBranch.ifExpr?.inferType(expected))
             blockTys.add(elseBranch.block?.inferType(expected))
         }
-        return if (expr.elseBranch == null && expr.parent is RsBlock) {
+        val parent = expr.parent
+        return if (expr.elseBranch == null && parent is RsExprStmt && !parent.isTailStmt) {
             TyUnit.INSTANCE
         } else {
             getMoreCompleteType(blockTys.filterNotNull())

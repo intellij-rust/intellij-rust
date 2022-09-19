@@ -2885,6 +2885,241 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo(x: u32) {}
     """)
 
+    fun `test missing else branch noreturn E0317`() = checkErrors("""
+        fn f(x: u32) -> usize {
+            if x == 3 {
+                return 4;
+            }
+            if x == 3 {
+                return 4
+            }
+            let _ = if x == 3 {
+                return 4;
+            };
+            {
+                if x == 3 {
+                    return 4;
+                }
+            }
+            {
+                if x == 3 {
+                    return 4
+                }
+            }
+            let _ = if x == 3 {
+                return 4
+            };
+            let _ = loop {
+                if x == 1 {
+                    break 3;
+                }
+                if x == 2 {
+                    break 3
+                }
+                if x == 0 {
+                    continue
+                }
+                if x == 12 {
+                    continue;
+                }
+            };
+            let _ = if x == 2 {
+                diverge();
+            };
+            if x > 3 {
+                if x == 5 {
+                    return 2;
+                }
+            }
+        }
+
+        fn diverge() -> ! { loop {} }
+    """)
+
+    fun `test missing else branch async E0317`() = checkErrors("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        async fn f(x: u32) -> usize {
+            if x == 3 {
+                yield_now().await;
+            }
+            if x == 3 {
+                yield_now().await
+            }
+            let _ = if x == 3 {
+                diverge().await;
+            };
+            let _ = if x == 3 {
+                diverge().await
+            };
+            let _ = loop {
+                if x == 1 {
+                    break 3;
+                }
+                if x == 2 {
+                    break 3
+                }
+                if x == 0 {
+                    continue
+                }
+                if x == 12 {
+                    continue;
+                }
+            };
+            let _ = <error descr="An `if` expression is missing an `else` block [E0317]">if x == 2 {
+                async { 3 }.await
+            }</error>;
+            match x {
+                0 => if x == 5 {
+                    diverge().await
+                }
+                _ => {}
+            }
+        }
+
+        async fn yield_now() {}
+
+        async fn diverge() -> ! { loop {} }
+    """)
+
+    fun `test missing else branch in block exprs E0317`() = checkErrors("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        static _: u32 = {
+            <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                3
+            }</error>
+        };
+
+        const _: u32 = {
+            <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                3
+            }</error>
+        };
+
+        fn f(x: u32) -> u32 {
+            let _ = {
+                <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                    3
+                }</error>
+            };
+            let _ = async {
+                <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                    3
+                }</error>
+            };
+            (|| {
+                <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                    3
+                }</error>
+            })();
+            <error descr="An `if` expression is missing an `else` block [E0317]">if x == 0 {
+                3
+            }</error>
+        }
+    """)
+
+    fun `test no missing else branch in statements E0317`() = checkErrors("""
+        static _: u32 = {
+            if x == 0 {
+                foo();
+            }
+            3
+        };
+
+        const _: u32 = {
+            if x == 0 {
+                foo();
+            }
+            3
+        };
+
+        fn f(x: u32) {
+            if x == 0 {
+                foo()
+            }
+            if x == 0 {
+                foo();
+            }
+            let _ = {
+                if x == 0 {
+                    foo()
+                }
+                if x == 0 {
+                    foo();
+                }
+                3
+            };
+            (|| {
+                if x == 0 {
+                    foo();
+                }
+                3
+            })();
+        }
+
+        const fn foo() {}
+    """)
+
+    fun `test no missing else branch in async statements E0317`() = checkErrors("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        async fn f(x: u32) {
+            if x == 0 {
+                yield_now().await
+            }
+            if x == 0 {
+                yield_now().await;
+            }
+            let _ = {
+                if x == 0 {
+                    yield_now().await
+                }
+                if x == 0 {
+                    yield_now().await;
+                }
+                if x == 0 {
+                    yield_now().await
+                }
+            };
+            if x == 0 {
+                diverge().await
+            }
+            if x == 0 {
+                diverge().await;
+            }
+            let _ = {
+                if x == 0 {
+                    diverge().await
+                }
+                if x == 0 {
+                    diverge().await;
+                }
+                if x == 0 {
+                    diverge().await
+                }
+            };
+            let _ = async {
+                if x == 0 {
+                    yield_now().await
+                }
+                if x == 0 {
+                    yield_now().await;
+                }
+                if x == 0 {
+                    yield_now().await
+                }
+            };
+        }
+
+        async fn yield_now() {}
+
+        async fn diverge() -> ! { loop {} }
+    """)
+
     fun `test impl sized for struct E0322`() = checkErrors("""
         #[lang = "sized"]
         trait Sized {}

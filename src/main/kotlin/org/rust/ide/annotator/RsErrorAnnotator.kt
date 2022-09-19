@@ -879,8 +879,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val ty = if (expr.type != TyUnknown) {
                 expr.type
             } else {
+                expr.expectedType ?: TyUnknown
+            }
+
+            if (ty.isEquivalentTo(TyUnknown)) {
                 // If both expected and actual types are unknown, inspection is not applicable.
-                expr.expectedType ?: return
+                return
             }
             if (ty is TyUnit) {
                 // If an `if` expression returns `()`, it doesn't need an `else`.
@@ -890,6 +894,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 // `!` is coercible to any type, in particular to `()` (see above).
                 return
             }
+
             RsDiagnostic.MissingElseBranch(expr).addToHolder(holder)
         }
     }
