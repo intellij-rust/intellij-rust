@@ -775,6 +775,19 @@ class RsCompletionTest : RsCompletionTestBase() {
         use bar::foo;/*caret*/
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete bang proc macro unqualified`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { input }
+    //- lib.rs
+        use dep_proc_macro::*;
+        function_like/*caret*/
+    """, """
+        use dep_proc_macro::*;
+        function_like_as_is!(/*caret*/)
+    """)
+
     // https://github.com/intellij-rust/intellij-rust/issues/1598
     fun `test no macro completion in item element definition`() {
         for (itemKeyword in listOf("fn", "struct", "enum", "union", "trait", "type", "impl")) {

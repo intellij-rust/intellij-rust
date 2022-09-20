@@ -283,7 +283,7 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         fn func() {}
     """, """
         use dep_proc_macro::attr_as_is;
-        #[attr_as_is]/*caret*/
+        #[attr_as_is/*caret*/]
         fn func() {}
     """)
 
@@ -296,7 +296,7 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         #[dep_proc_macro::attr_as_/*caret*/]
         fn func() {}
     """, """
-        #[dep_proc_macro::attr_as_is]/*caret*/
+        #[dep_proc_macro::attr_as_is/*caret*/]
         fn func() {}
     """)
 
