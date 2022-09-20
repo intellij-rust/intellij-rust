@@ -6,6 +6,7 @@
 package org.rust.ide.utils.import
 
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -119,10 +120,14 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
     }
     is RsPath -> { e -> Namespace.Types in e.namespaces }
     is RsMacroCall -> { e -> Namespace.Macros in e.namespaces }
-    is RsMetaItem -> if (context.isRootMetaItem()) {
-        { e -> e is RsFunction && e.isAttributeProcMacroDef }
-    } else {
-        { _ -> true }
+    is RsMetaItem -> when {
+        context.isRootMetaItem() -> { e ->
+            e is RsFunction && e.isAttributeProcMacroDef
+        }
+        RsPsiPattern.derivedTraitMetaItem.accepts(context) -> { e ->
+            e is RsFunction && e.isCustomDeriveProcMacroDef
+        }
+        else -> { _ -> true }
     }
     else -> { _ -> true }
 }
