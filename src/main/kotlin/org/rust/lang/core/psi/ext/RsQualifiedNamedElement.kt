@@ -306,6 +306,7 @@ data class RsQualifiedName private constructor(
             val name = when (itemType) {
                 CRATE -> containingCrate.asNotFake?.normName
                 MOD -> (this as? RsMod)?.modName
+                DERIVE -> (this as? RsFunction)?.procMacroName
                 else -> name
             } ?: return null
 
@@ -322,7 +323,13 @@ data class RsQualifiedName private constructor(
                 is RsTraitItem -> TRAIT
                 is RsTraitAlias -> TRAITALIAS
                 is RsTypeAlias -> TYPE
-                is RsFunction -> FN
+                is RsFunction -> when {
+                    !isProcMacroDef -> FN
+                    isCustomDeriveProcMacroDef -> DERIVE
+                    isAttributeProcMacroDef -> ATTR
+                    isBangProcMacroDef -> MACRO
+                    else -> null
+                }
                 is RsConstant -> CONSTANT
                 is RsMacro, is RsMacro2 -> MACRO
                 is RsMod -> if (isCrateRoot) CRATE else MOD
@@ -404,6 +411,8 @@ data class RsQualifiedName private constructor(
         FN,
         CONSTANT,
         MACRO,
+        ATTR,
+        DERIVE,
         PRIMITIVE,
         KEYWORD,
 
@@ -428,6 +437,8 @@ data class RsQualifiedName private constructor(
                     "fn" -> FN
                     "constant" -> CONSTANT
                     "macro" -> MACRO
+                    "attr" -> ATTR
+                    "derive" -> DERIVE
                     "primitive" -> PRIMITIVE
                     "keyword" -> KEYWORD
                     else -> {
@@ -475,7 +486,7 @@ data class RsQualifiedName private constructor(
             STRUCT -> TYPES_N_VALUES
             UNION, ENUM, TRAIT, TRAITALIAS, TYPE, MOD, CRATE -> TYPES
             FN, CONSTANT -> VALUES
-            MACRO -> MACROS  // including bang proc macros
+            MACRO, ATTR, DERIVE -> MACROS  // including bang proc macros
             PRIMITIVE, KEYWORD -> null
 
             // child item type
