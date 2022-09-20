@@ -30,6 +30,7 @@ import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 abstract class RsExecutableRunner(
     protected val executorId: String,
@@ -138,8 +139,10 @@ abstract class RsExecutableRunner(
         private val ARTIFACTS: Key<CompletableFuture<List<CompilerArtifactMessage>>> =
             Key.create("CARGO.CONFIGURATION.ARTIFACTS")
 
+        private const val TIMEOUT: Long = 3
+
         var ExecutionEnvironment.artifacts: List<CompilerArtifactMessage>?
-            get() = getUserData(this@Companion.ARTIFACTS)?.get()
+            get() = getUserData(this@Companion.ARTIFACTS)?.get(TIMEOUT, TimeUnit.SECONDS)
             set(value) {
                 getUserData(this@Companion.ARTIFACTS)?.complete(value)
             }
