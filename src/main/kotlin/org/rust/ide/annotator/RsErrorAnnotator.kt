@@ -1493,8 +1493,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkIsAsyncContext(holder: RsAnnotationHolder, element: RsElement) {
         if (element.isInAsyncContext) return
         val function = element.ancestorStrict<RsFunctionOrLambda>() ?: return
-        val fix = MakeAsyncFix(function)
+        val fix = MakeAsyncFix(function).takeIf { !function.returnsFuture() }
         RsDiagnostic.AwaitOutsideAsyncContext(element, fix).addToHolder(holder)
+    }
+
+    private fun RsFunctionOrLambda.returnsFuture(): Boolean {
+        val lookup = implLookup
+        val returnType = retType?.typeReference?.normType ?: return false
+        val futureTrait = lookup.items.Future ?: return false
+        return lookup.canSelect(TraitRef(returnType, BoundElement(futureTrait)))
     }
 
     private fun isInTrait(o: RsVis): Boolean =
