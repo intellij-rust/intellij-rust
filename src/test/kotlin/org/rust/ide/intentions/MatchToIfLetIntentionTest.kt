@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::class) {
     fun `test availability range`() = checkAvailableInSelectionOnly("""
-        enum MyOption { Some(u32) }
+        enum MyOption { Some(x) }
 
         fn main() {
             let color = MyOption::Some(52);
@@ -25,124 +25,68 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """)
 
-    fun `test unavailability empty match`() = doUnavailableTest("""
-        enum MyOption { Some(u32) }
-
-        fn main() {
-            let color = MyOption::Some(52);
-
-            /*caret*/match color {};
-        }
-    """)
-
-    fun `test block expr without line`() = doAvailableTest("""
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
+    fun `test unavailable all void arms`() = doUnavailableTest("""
+        enum MyOption {
+            Nothing,
+            Some(x),
         }
 
         fn main() {
-            let color = OptionColor::Color(255, 255, 255);
-
-            /*caret*/match color {
-                OptionColor::Color(255, 255, 255) => { 1 },
-                OptionColor::Color(_, _, _) => { 2 }
-                OptionColor::NoColor => { 3 }
-            };
-        }
-    """, """
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
-        }
-
-        fn main() {
-            let color = OptionColor::Color(255, 255, 255);
-
-            if let OptionColor::Color(255, 255, 255) = color {
-                1
-            } else if let OptionColor::Color(_, _, _) = color {
-                2
-            } else if let OptionColor::NoColor = color {
-                3
-            };
-        }
-    """)
-
-    fun `test block expr with line`() = doAvailableTest("""
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
-        }
-
-        fn main() {
-            let color = OptionColor::Color(255, 255, 255);
-
-            /*caret*/match color {
-                OptionColor::Color(255, 255, 255) => {
-                    1
-                },
-                OptionColor::Color(_, _, _) => {
-                    2
-                }
-                OptionColor::NoColor => {
-                    3
-                }
-            };
-        }
-    """, """
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
-        }
-
-        fn main() {
-            let color = OptionColor::Color(255, 255, 255);
-
-            if let OptionColor::Color(255, 255, 255) = color {
-                1
-            } else if let OptionColor::Color(_, _, _) = color {
-                2
-            } else if let OptionColor::NoColor = color {
-                3
-            };
-        }
-    """)
-
-    fun `test add braces to expr`() = doAvailableTest("""
-        enum Enum {
-            A,
-            B
-        }
-
-        fn main() {
-            let a = Enum::A;
+            let a = MyOption::Some(52);
 
             /*caret*/match a {
-                Enum::A => 1,
-                Enum::B => 2
-            };
-        }
-    """, """
-        enum Enum {
-            A,
-            B
-        }
-
-        fn main() {
-            let a = Enum::A;
-
-            if let Enum::A = a {
-                1
-            } else if let Enum::B = a {
-                2
-            };
+                MyOption::Some(x) => {}
+                Nothing => {}
+            }
         }
     """)
 
-    fun `test skip empty last arm`() = doAvailableTest("""
+    fun `test unavailable all not void arms`() = doUnavailableTest("""
         enum MyOption {
-            Some(u32)
+            Nothing,
+            Some(x),
+        }
+
+        fn main() {
+            let a = MyOption::Some(52);
+
+            match a {
+                MyOption::Some(x) => {42}
+                Nothing => {43}/*caret*/
+            }
+        }
+    """)
+
+    fun `test unavailable pattern`() = doAvailableTest("""
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
+        }
+
+        fn main() {
+            let color = OptionColor::Color(255, 255, 255);
+
+            /*caret*/match color {
+                OptionColor::Color(_, _, _) => {}
+                _ => {print!("No color")}
+            };
+        }
+    """, """
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
+        }
+
+        fn main() {
+            let color = OptionColor::Color(255, 255, 255);
+
+            if let _ = color { print!("No color") };
+        }
+    """)
+
+    fun `test simple 1`() = doAvailableTest("""
+        enum MyOption {
+            Some(x)
         }
 
         fn main() {
@@ -159,7 +103,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """, """
         enum MyOption {
-            Some(u32)
+            Some(x)
         }
 
         fn main() {
@@ -173,40 +117,33 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """)
 
-    fun `test shorten last wild pat`() = doAvailableTest("""
-        enum MyOption {
-            Some(u32)
+    fun `test simple 2`() = doAvailableTest("""
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
         }
 
         fn main() {
-            let color = MyOption::Some(52);
+            let color = OptionColor::Color(255, 255, 255);
 
             /*caret*/match color {
-                MyOption::Some(42) => {
-                    let a = x + 1;
-                    let b = x + 2;
-                    let c = a + b;
-                }
-                _ => {
-                    let d = 5;
-                }
-            }
+                OptionColor::Color(255, 255, 255) => print!("White"),
+                OptionColor::Color(_,   _,   _  ) => {}
+                OptionColor::NoColor => {}
+            };
         }
     """, """
-        enum MyOption {
-            Some(u32)
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
         }
 
         fn main() {
-            let color = MyOption::Some(52);
+            let color = OptionColor::Color(255, 255, 255);
 
-            if let MyOption::Some(42) = color {
-                let a = x + 1;
-                let b = x + 2;
-                let c = a + b;
-            } else {
-                let d = 5;
-            }
+            if let OptionColor::Color(255, 255, 255) = color {
+                print!("White")
+            };
         }
     """)
 
