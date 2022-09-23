@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"
@@ -18,7 +19,8 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     data class Context(
         val match: RsMatchExpr,
         val matchTarget: RsExpr,
-        val matchBody: RsMatchBody
+        val nonVoidArm: RsMatchArm,
+        val pat: RsPat
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -26,55 +28,29 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         if (element != matchExpr.match) return null
         val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null
-        if (matchBody.matchArmList.isEmpty()) return null
-        if (matchBody.matchArmList.any { it.matchArmGuard != null || it.outerAttrList.isNotEmpty() }) return null
+        val matchArmList = matchBody.matchArmList
 
-        return Context(matchExpr, matchTarget, matchBody)
+        val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
+        if (nonVoidArm.matchArmGuard != null || nonVoidArm.outerAttrList.isNotEmpty()) return null
+        val pat = nonVoidArm.pat
+
+        return Context(matchExpr, matchTarget, nonVoidArm, pat)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val arms = ctx.matchBody.matchArmList
-        val lastArm = arms.lastOrNull() ?: return
-        val lastArmPatWild = lastArm.pat is RsPatWild
-        val lastArmExprEmpty = lastArm.expr?.let {
-            when {
-                it is RsUnitExpr -> true
-                it is RsBlockExpr && it.block.children.isEmpty() -> true
-                else -> false
-            }
-        } ?: false
+        val (matchExpr, matchTarget, arm, pat) = ctx
 
-        val text = buildString {
-            for ((index, arm) in arms.withIndex()) {
-                var armText = "if let ${arm.pat.text} = ${ctx.matchTarget.text}"
-                if (index > 0) {
-                    val lastIndex = index == arms.size - 1
-                    armText = when {
-                        lastIndex && lastArmExprEmpty -> break
-                        lastIndex && lastArmPatWild -> " else"
-                        else -> " else $armText"
-                    }
-                }
-                append(armText)
-
-                val expr = arm.expr ?: continue
-
-                val innerExprText = if (expr is RsBlockExpr) {
-                    val text = expr.block.text
-                    val start = expr.block.lbrace.startOffsetInParent + 1
-                    val end = expr.block.rbrace?.startOffsetInParent ?: text.length
-                    text.substring(start, end)
-                } else {
-                    expr.text
-                }
-
-                val exprText = "{\n    $innerExprText\n}"
-                append(exprText)
-            }
+        var bodyText = arm.expr?.text ?: return
+        if (arm.expr !is RsBlockExpr) {
+            bodyText = "{\n$bodyText\n}"
         }
 
-        val factory = RsPsiFactory(project)
-        val ifLetExpr = factory.createExpression(text)
-        ctx.match.replace(ifLetExpr)
+        val exprText = "if let ${pat.text} = ${matchTarget.text} $bodyText"
+        val rustIfLetExprElement = RsPsiFactory(project).createExpression(exprText) as RsIfExpr
+        matchExpr.replace(rustIfLetExprElement)
     }
+
+    private val RsExpr.isVoid: Boolean
+        get() = (this is RsBlockExpr && block.lbrace.getNextNonCommentSibling() == block.rbrace)
+            || this is RsUnitExpr
 }
