@@ -100,19 +100,18 @@ fun processMacros(
     processor: RsResolveProcessor,
     /** Needed to filter textual scoped macros if path is unqualified. */
     macroPath: RsPath,
-    isAttrOrDerive: Boolean,
 ): Boolean {
     val info = getModInfo(scope) ?: return false
-    return info.modData.processMacros(macroPath, isAttrOrDerive, processor, info)
+    return info.modData.processMacros(macroPath, processor, info)
 }
 
 private fun ModData.processMacros(
     macroPath: RsPath,
-    isAttrOrDerive: Boolean,
     processor: RsResolveProcessor,
     info: RsModInfo,
 ): Boolean {
     val isQualified = macroPath.qualifier != null
+    val isAttrOrDerive = macroPath.parent is RsMetaItem
 
     val stop = processScopedMacros(processor, info) { name ->
         val isLegacyMacroDeclaredInSameMod = !isQualified && legacyMacros[name].orEmpty().any {
@@ -206,12 +205,7 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(processor: RsResolvePro
     if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return null
     val project = info.project
     val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return null
-    return defMap.root.processMacros(
-        macroPath = path,
-        isAttrOrDerive = false,
-        processor = processor,
-        info = info,
-    )
+    return defMap.root.processMacros(path, processor, info)
 }
 
 private fun RsPossibleMacroCall.resolveToMacroInfo(): Pair<MacroDefInfo, RsModInfo>? {
