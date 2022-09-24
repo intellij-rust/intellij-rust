@@ -150,7 +150,8 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: install
-                  args: evcxr_repl --locked
+                  # https://github.com/intellij-rust/intellij-rust/issues/9406
+                  args: evcxr_repl --locked --version 0.13.0
 
             - name: Install cargo-generate
               # BACKCOMPAT: cargo-generate 0.15.2 requires Rust 1.61.0 or newer

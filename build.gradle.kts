@@ -198,7 +198,7 @@ allprojects {
         tasks.withType<AbstractTestTask> {
             testLogging {
                 if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
-                    events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+                    events = setOf(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
                 }
                 exceptionFormat = TestExceptionFormat.FULL
             }
