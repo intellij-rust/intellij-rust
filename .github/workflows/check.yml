@@ -83,7 +83,7 @@ jobs:
                 os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.63.0, nightly-2022-09-17 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 222 ]
+                platform-version: [ 222, 223 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
