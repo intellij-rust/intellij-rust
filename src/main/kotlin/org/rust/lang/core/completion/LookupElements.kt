@@ -421,7 +421,7 @@ private val InsertionContext.alreadyHasAngleBrackets: Boolean
 private val InsertionContext.alreadyHasStructBraces: Boolean
     get() = nextCharIs('{')
 
-private val RsElement.isFnLikeTrait: Boolean
+val RsElement.isFnLikeTrait: Boolean
     get() {
         val knownItems = knownItems
         return this == knownItems.Fn ||
