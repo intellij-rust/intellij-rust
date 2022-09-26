@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.flattenHierarchy
+import org.rust.lang.core.psi.ext.isAuto
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.psi.ext.withDefaultSubst
 import org.rust.lang.core.types.BoundElement
@@ -53,6 +54,12 @@ class TyTraitObject(
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         traits.flatMap { it.flattenHierarchy }
+
+    val baseTrait: RsTraitItem?
+        get() {
+            val traits = traits.map { it.element }
+            return traits.singleOrNull() ?: traits.singleOrNull { !it.isAuto }
+        }
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true

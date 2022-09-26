@@ -4449,6 +4449,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo() -> impl FooBar {}
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0116 inherent impls should be in same crate`() = checkByFileTree("""
     //- lib.rs
         pub struct ForeignStruct {}
@@ -4468,7 +4469,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl LocalStructAlias {}
 
         impl dyn LocalTrait {}
+        impl dyn LocalTrait + Send {}
+        impl dyn Send + LocalTrait {}
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
+        impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn Send</error> {}
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -4506,8 +4510,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Pin<ForeignStruct> {}
 
         // trait objects
-        impl ForeignTrait for Box<dyn LocalTrait> {}
-        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0> {}
+        impl ForeignTrait for Box<dyn LocalTrait + Send> {}
+        impl ForeignTrait for Box<dyn Send + LocalTrait> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0 + Send> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn Send + ForeignTrait0> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn Send> {}
     """)
 
     fun `test no E0252 multiple underscore aliases`() = checkErrors("""

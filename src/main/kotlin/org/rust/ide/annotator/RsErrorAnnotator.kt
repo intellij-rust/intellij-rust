@@ -1027,7 +1027,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val typeReference = impl.typeReference ?: return
         val element = when (val type = typeReference.rawType) {
             is TyAdt -> type.item
-            is TyTraitObject -> type.traits.first().element
+            is TyTraitObject -> type.baseTrait ?: return
             else -> return
         }
         if (impl.containingCrate != element.containingCrate) {

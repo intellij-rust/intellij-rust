@@ -105,7 +105,7 @@ fun checkOrphanRules(impl: RsImplItem, isSameCrate: (RsElement) -> Boolean): Boo
             // `impl ForeignTrait<LocalStruct> for ForeignStruct`
             || ty is TyAdt && isSameCrate(ty.item)
             // `impl ForeignTrait for Box<dyn LocalTrait>`
-            || ty is TyTraitObject && (ty.traits.isEmpty() || isSameCrate(ty.traits.first().element))
+            || ty is TyTraitObject && ty.baseTrait.let { it == null || isSameCrate(it) }
             // `impl<T> ForeignTrait for Box<T>` in stdlib
             || tyWrapped is TyAdt && isSameCrate(tyWrapped.item)
     }
