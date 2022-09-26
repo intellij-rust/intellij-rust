@@ -281,7 +281,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
     override fun createCallerChooser(
         title: String?,
         treeToReuse: Tree?,
-        callback: CallerChooserCallback?
+        callback: Consumer<in Set<RsFunction>>?
     ): CallerChooserBase<RsFunction>? = null
 
     override fun validateAndCommitData(): String? {

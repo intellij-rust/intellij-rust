@@ -81,7 +81,7 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     }
 
     companion object {
-        // BACKCOMPAT: 2022.1
+        // BACKCOMPAT: 2022.1. Check if we still need this for 223
         private val BUILD_222 = BuildNumber.fromString("222")!!
         private const val PLUGIN_PATH_MAPPER_EP = "cidr.util.pluginPathMapper"
     }

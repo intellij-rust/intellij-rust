@@ -95,9 +95,7 @@ private class ExpressionReplacer(
 
     private fun introduceLet(anchor: PsiElement, let: RsLetDecl): PsiElement {
         val context = anchor.parent
-        // BACKCOMPAT: 2022.1
-        @Suppress("DEPRECATION", "UnstableApiUsage")
-        val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
+        val newline = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n")
 
         val result = context.addBefore(let, anchor)
         context.addAfter(newline, result)

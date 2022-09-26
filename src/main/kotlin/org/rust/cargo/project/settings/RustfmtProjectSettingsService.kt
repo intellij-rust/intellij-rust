@@ -22,15 +22,6 @@ class RustfmtProjectSettingsService(
     private val project: Project
 ) : SimplePersistentStateComponent<RustfmtState>(RustfmtState()) {
 
-    override fun noStateLoaded() {
-        project.rustSettings.modify {
-            state.useRustfmt = it.useRustfmt
-            it.useRustfmt = false
-            state.runRustfmtOnSave = it.runRustfmtOnSave
-            it.runRustfmtOnSave = false
-        }
-    }
-
     @TestOnly
     fun modifyTemporary(parentDisposable: Disposable, action: (RustfmtState) -> Unit) {
         val oldState = state

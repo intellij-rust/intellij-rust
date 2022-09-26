@@ -14,6 +14,8 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -182,6 +184,28 @@ open class CargoProjectsServiceImpl(
     override var initialized: Boolean = false
 
     private var isLegacyRustNotificationShowed: Boolean = false
+
+    private fun registerProjectAware(project: Project, disposable: Disposable) {
+        // There is no sense to register `CargoExternalSystemProjectAware` for default project.
+        // Moreover, it may break searchable options building
+        if (project.isDefault) return
+
+        val cargoProjectAware = CargoExternalSystemProjectAware(project)
+        val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+        projectTracker.register(cargoProjectAware, disposable)
+        projectTracker.activate(cargoProjectAware.projectId)
+
+        project.messageBus.connect(disposable)
+            .subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
+                override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
+                    if (e.affectsCargoMetadata) {
+                        val tracker = AutoImportProjectTracker.getInstance(project)
+                        tracker.markDirty(cargoProjectAware.projectId)
+                        tracker.scheduleProjectRefresh()
+                    }
+                }
+            })
+    }
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { info -> info !== noProjectMarker } }

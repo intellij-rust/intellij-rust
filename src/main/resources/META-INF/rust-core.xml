@@ -4,7 +4,6 @@
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/platform-rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
@@ -1060,6 +1059,9 @@
         <projectService serviceInterface="org.rust.lang.core.crate.CrateGraphService"
                         serviceImplementation="org.rust.lang.core.crate.impl.CrateGraphServiceImpl"/>
 
+        <externalIconProvider key="Cargo"
+                              implementationClass="org.rust.cargo.project.model.impl.CargoExternalSystemIconProvider"/>
+
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
@@ -1206,6 +1208,10 @@
                      description="Show notification warning if the external linter is running longer than the set value (ms)"/>
         <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="false" restartRequired="false"
                      description="Enable Rust MSVC support in LLDB (Windows-only)"/>
+        <registryKey key="org.rust.cargo.new.auto.import"
+                     defaultValue="true"
+                     description="Enable new Cargo project model reloading"
+                     restartRequired="true"/>
 
         <!-- Move refactoring -->
 
