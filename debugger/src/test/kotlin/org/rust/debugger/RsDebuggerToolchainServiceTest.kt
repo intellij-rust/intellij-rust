@@ -23,7 +23,7 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         @Suppress("UnstableApiUsage")
         if (PlatformUtils.isIdeaUltimate()) {
-            if (ApplicationInfo.getInstance().build >= BUILD_222) {
+            if (ApplicationInfo.getInstance().build < BUILD_223) {
                 // Temporarily hack to avoid https://youtrack.jetbrains.com/issue/CPP-29341/
                 ApplicationManager.getApplication().extensionArea.registerExtensionPoint(
                     PLUGIN_PATH_MAPPER_EP,
@@ -81,8 +81,8 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     }
 
     companion object {
-        // BACKCOMPAT: 2022.1. Check if we still need this for 223
-        private val BUILD_222 = BuildNumber.fromString("222")!!
+        // BACKCOMPAT: 2022.2
+        private val BUILD_223 = BuildNumber.fromString("223")!!
         private const val PLUGIN_PATH_MAPPER_EP = "cidr.util.pluginPathMapper"
     }
 }

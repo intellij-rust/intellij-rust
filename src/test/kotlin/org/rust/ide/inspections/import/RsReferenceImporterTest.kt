@@ -8,12 +8,15 @@ package org.rust.ide.inspections.import
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
+import org.rust.IgnoreInPlatform
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.settings.RsCodeInsightSettings
 
 class RsReferenceImporterTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
+    // https://github.com/intellij-rust/intellij-rust/issues/9418
+    @IgnoreInPlatform(223)
     fun `test single item`() = doTest("""
         fn main() {
             func();/*caret*/
