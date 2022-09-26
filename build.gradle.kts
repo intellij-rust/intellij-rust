@@ -2,6 +2,7 @@ import groovy.json.JsonSlurper
 import groovy.xml.XmlParser
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -93,10 +94,18 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
+    val javaVersion = if (platformVersion < 223) VERSION_11 else VERSION_17
+
+    configure<JavaPluginExtension> {
+        // BACKCOMPAT: 2022.2. Use VERSION_17
+        sourceCompatibility = VERSION_11
+        targetCompatibility = javaVersion
+    }
+
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = javaVersion.toString()
                 languageVersion = "1.7"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
                 apiVersion = "1.6"
@@ -160,11 +169,6 @@ allprojects {
                 enabled = prop("compileNativeCode").toBoolean()
             }
         }
-    }
-
-    configure<JavaPluginExtension> {
-        sourceCompatibility = VERSION_11
-        targetCompatibility = VERSION_11
     }
 
     sourceSets {
