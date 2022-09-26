@@ -263,8 +263,7 @@
         <elementDescriptionProvider implementation="org.rust.ide.presentation.RsDescriptionProvider"/>
         <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
 
-        <!-- Disabled because of https://github.com/intellij-rust/intellij-rust/issues/7153 -->
-        <!-- <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/>-->
+        <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/>
 
         <!-- Spell-checker -->
 
