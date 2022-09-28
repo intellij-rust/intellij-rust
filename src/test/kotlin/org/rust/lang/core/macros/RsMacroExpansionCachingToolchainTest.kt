@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.util.io.delete
 import org.intellij.lang.annotations.Language
 import org.rust.TestProject
 import org.rust.cargo.RsWithToolchainTestBase
@@ -37,9 +36,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
 
     override fun tearDown() {
         try {
-            val indexableDirectory = project.macroExpansionManager.indexableDirectory
             macroExpansionServiceDisposable?.let { Disposer.dispose(it) }
-            indexableDirectory?.parent?.pathAsPath?.delete()
         } finally {
             super.tearDown()
             dirFixture.tearDown()
@@ -82,7 +79,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
             dir("src", fileTreeFromText(code))
         }.create(project, dirFixture.getFile(".")!!)
 
-        attachCargoProjectAndExpandMacros(p)
+        attachCargoProjectAndExpandMacros(p, clearCacheBeforeDispose = false)
         myFixture.openFileInEditor(p.file("src/main.rs"))
         val oldStamps = myFixture.file.childrenOfType<RsMacroCall>().collectStamps()
 
@@ -92,7 +89,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         fullyRefreshDirectory(p.root)
         super.setUp()
 
-        attachCargoProjectAndExpandMacros(p)
+        attachCargoProjectAndExpandMacros(p, clearCacheBeforeDispose = true)
         myFixture.openFileInEditor(p.file("src/main.rs"))
         val changed = myFixture.file.childrenOfType<RsMacroCall>().collectStamps().entries
             .filter { oldStamps[it.key] != it.value }
@@ -102,8 +99,12 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         }
     }
 
-    private fun attachCargoProjectAndExpandMacros(p: TestProject) {
-        macroExpansionServiceDisposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.WORKSPACE, "mocked")
+    private fun attachCargoProjectAndExpandMacros(p: TestProject, clearCacheBeforeDispose: Boolean) {
+        macroExpansionServiceDisposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(
+            MacroExpansionScope.WORKSPACE,
+            "mocked",
+            clearCacheBeforeDispose
+        )
         check(project.cargoProjects.attachCargoProject(p.file("Cargo.toml").pathAsPath))
     }
 

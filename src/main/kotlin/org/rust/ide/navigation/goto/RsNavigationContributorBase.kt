@@ -79,7 +79,7 @@ abstract class RsNavigationContributorBase<T> protected constructor(
         return if (result.isEmpty()) NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY else result.toTypedArray()
     }
 
-    override fun getQualifiedName(item: NavigationItem?): String? = (item as? RsQualifiedNamedElement)?.qualifiedName
+    override fun getQualifiedName(item: NavigationItem): String? = (item as? RsQualifiedNamedElement)?.qualifiedName
 
     override fun getQualifiedNameSeparator(): String = "::"
 }

@@ -21,7 +21,6 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.Link
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -149,15 +148,15 @@ class RsNewProjectPanel(
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            separator("Project Template")
-                .topGap(TopGap.MEDIUM)
-            row {
-                resizableRow()
-                fullWidthCell(templateToolbar.createPanel())
-                    .verticalAlign(VerticalAlign.FILL)
-            }
-            row {
-                cell(downloadCargoGenerateLink)
+            groupRowsRange(title = "Project Template", indent = false) {
+                row {
+                    resizableRow()
+                    fullWidthCell(templateToolbar.createPanel())
+                        .verticalAlign(VerticalAlign.FILL)
+                }
+                row {
+                    cell(downloadCargoGenerateLink)
+                }
             }
         }
 

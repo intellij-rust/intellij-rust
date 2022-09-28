@@ -83,7 +83,7 @@ jobs:
                 os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.63.0, nightly-2022-09-17 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 222 ]
+                platform-version: [ 222, 223 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
@@ -108,10 +108,11 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Set up JDK 11
-              uses: actions/setup-java@v1
+            - name: Set up JDK 17
+              uses: actions/setup-java@v3
               with:
-                  java-version: 11
+                  distribution: corretto
+                  java-version: 17
 
             - name: Set up Rust
               uses: actions-rs/toolchain@v1

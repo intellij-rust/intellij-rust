@@ -183,6 +183,8 @@ class MacroExpansionTask(
                     for (segment in segmentsToCreate) {
                         newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
                     }
+                    oldFile.contentsToByteArray() // Ensure content is cached. If not, we can miss the modification
+                                                  // event (hence miss invalidating of some caches)
                     RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
                         if (newFileParent != oldFile.parent) {
                             oldFile.move(TrustedRequestor, newFileParent)
