@@ -551,6 +551,46 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    fun `test create associated method inside impl`() = doAvailableTest("""
+        struct S;
+        impl S {
+            fn foo() {
+                Self::bar/*caret*/();
+            }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo() {
+                Self::bar();
+            }
+            fn bar() {
+                todo!()
+            }
+        }
+    """)
+
+    fun `test create associated method inside complex impl`() = doAvailableTest("""
+        struct S;
+        trait T<A> {}
+        impl<A> T<A> for (S, A) {
+            fn foo() {
+                Self::bar/*caret*/();
+            }
+        }
+    """, """
+        struct S;
+        trait T<A> {}
+        impl<A> T<A> for (S, A) {
+            fn foo() {
+                Self::bar();
+            }
+            fn bar() {
+                todo!()
+            }
+        }
+    """)
+
     fun `test unavailable inside method arguments`() = doUnavailableTest("""
         struct S;
         fn foo(s: S) {

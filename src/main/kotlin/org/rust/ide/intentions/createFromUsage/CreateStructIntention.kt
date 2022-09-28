@@ -32,7 +32,7 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
             if (structLiteral.path != path) return null
             if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
-            val target = getTargetModForStruct(path) ?: return null
+            val target = getWritablePathMod(path) ?: return null
             val name = path.referenceName ?: return null
 
             text = "Create struct `$name`"
@@ -99,9 +99,4 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
 
         return factory.tryCreateStruct("${visibility}struct ${ctx.name}$suffix")
     }
-}
-
-private fun getTargetModForStruct(path: RsPath): RsMod? = when {
-    path.qualifier != null -> getWritablePathTarget(path) as? RsMod
-    else -> path.containingMod
 }

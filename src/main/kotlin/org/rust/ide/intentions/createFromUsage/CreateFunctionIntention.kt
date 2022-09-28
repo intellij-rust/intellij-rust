@@ -51,7 +51,6 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         open val isAsync: Boolean = callElement.isAtLeastEdition2018
         abstract val arguments: RsValueArgumentList
         abstract val returnType: ReturnType
-        open val implItem: RsImplItem? = null
 
         open class Function(callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
             override val visibility: String = getVisibility(module, callExpr.containingMod)
@@ -65,11 +64,9 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             callExpr: RsCallExpr,
             name: String,
             module: RsMod,
-            val item: RsStructOrEnumItemElement
-        ) : Function(callExpr, name, module) {
-            override val implItem: RsImplItem?
-                get() = super.implItem
-        }
+            val item: RsStructOrEnumItemElement?,
+            val existingImpl: RsImplItem?,
+        ) : Function(callExpr, name, module)
 
         class Method(
             val methodCall: RsMethodCall,
@@ -103,12 +100,23 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             val target = getTargetItemForFunctionCall(path) ?: return null
             val name = path.referenceName ?: return null
 
-            return if (target is CallableInsertionTarget.Item) {
-                text = "Create associated function `${target.item.name}::$name`"
-                Context.AssociatedFunction(functionCall, name, target.module, target.item)
-            } else {
-                text = "Create function `$name`"
-                Context.Function(functionCall, name, target.module)
+            return when (target) {
+                is RsMod -> {
+                    text = "Create function `$name`"
+                    Context.Function(functionCall, name, target)
+                }
+
+                is RsStructOrEnumItemElement -> {
+                    text = "Create associated function `${target.name}::$name`"
+                    Context.AssociatedFunction(functionCall, name, target.containingMod, target, existingImpl = null)
+                }
+
+                is RsImplItem -> {
+                    text = "Create associated function `Self::$name`"
+                    Context.AssociatedFunction(functionCall, name, target.containingMod, item = null, target)
+                }
+
+                else -> null
             }
         }
         val methodCall = element.parentOfType<RsMethodCall>()
@@ -202,21 +210,25 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val sourceFunction = ctx.callElement.parentOfType<RsFunction>() ?: return null
 
         return when (ctx) {
-            is Context.AssociatedFunction -> insertAssociatedFunction(ctx.item, function)
+            is Context.AssociatedFunction -> insertAssociatedFunction(ctx.item, ctx.existingImpl, function)
             is Context.Function -> insertFunction(ctx.module, sourceFunction, function)
             is Context.Method -> insertMethod(ctx.item, sourceFunction, function)
         }
     }
 
     private fun insertAssociatedFunction(
-        item: RsStructOrEnumItemElement,
+        item: RsStructOrEnumItemElement?,
+        existingImpl: RsImplItem?,
         function: RsFunction
     ): RsFunction? {
-        val psiFactory = RsPsiFactory(item.project)
-        val name = item.name ?: return null
+        val psiFactory = RsPsiFactory(function.project)
 
-        val newImpl = psiFactory.createInherentImplItem(name, item.typeParameterList, item.whereClause)
-        val impl = item.parent.addAfter(newImpl, item) as RsImplItem
+        val impl = existingImpl
+            ?: run {
+                val name = item?.name ?: return null
+                val newImpl = psiFactory.createInherentImplItem(name, item.typeParameterList, item.whereClause)
+                item.parent.addAfter(newImpl, item) as RsImplItem
+            }
 
         return impl.members?.let {
             it.addBefore(function, it.rbrace) as RsFunction
