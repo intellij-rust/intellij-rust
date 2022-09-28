@@ -95,7 +95,11 @@ interface MacroExpansionManager {
     val macroExpansionMode: MacroExpansionMode
 
     @TestOnly
-    fun setUnitTestExpansionModeAndDirectory(mode: MacroExpansionScope, cacheDirectory: String = ""): Disposable
+    fun setUnitTestExpansionModeAndDirectory(
+        mode: MacroExpansionScope,
+        cacheDirectory: String = "",
+        clearCacheBeforeDispose: Boolean = false
+    ): Disposable
     @TestOnly
     fun updateInUnitTestMode()
 
@@ -256,7 +260,11 @@ class MacroExpansionManagerImpl(
     override val macroExpansionMode: MacroExpansionMode
         get() = inner?.expansionMode ?: MacroExpansionMode.OLD
 
-    override fun setUnitTestExpansionModeAndDirectory(mode: MacroExpansionScope, cacheDirectory: String): Disposable {
+    override fun setUnitTestExpansionModeAndDirectory(
+        mode: MacroExpansionScope,
+        cacheDirectory: String,
+        clearCacheBeforeDispose: Boolean
+    ): Disposable {
         check(isUnitTestMode)
         val dir = updateDirs(cacheDirectory.ifEmpty { null })
         val impl = MacroExpansionServiceBuilder.build(project, dir)
@@ -270,7 +278,7 @@ class MacroExpansionManagerImpl(
         }
 
         val saveCacheOnDispose = cacheDirectory.isNotEmpty()
-        val disposable = impl.setupForUnitTests(saveCacheOnDispose)
+        val disposable = impl.setupForUnitTests(saveCacheOnDispose, clearCacheBeforeDispose)
 
         Disposer.register(disposable) {
             this.inner = null
@@ -851,8 +859,8 @@ private class MacroExpansionServiceImplInner(
     }
 
     @TestOnly
-    fun setupForUnitTests(saveCacheOnDispose: Boolean): Disposable {
-        val disposable = Disposable { disposeUnitTest(saveCacheOnDispose) }
+    fun setupForUnitTests(saveCacheOnDispose: Boolean, clearCacheBeforeDispose: Boolean): Disposable {
+        val disposable = Disposable { disposeUnitTest(saveCacheOnDispose, clearCacheBeforeDispose) }
 
         setupListeners(disposable)
 
@@ -864,7 +872,7 @@ private class MacroExpansionServiceImplInner(
         processChangedMacros()
     }
 
-    private fun disposeUnitTest(saveCacheOnDispose: Boolean) {
+    private fun disposeUnitTest(saveCacheOnDispose: Boolean, clearCacheBeforeDispose: Boolean) {
         check(isUnitTestMode)
 
         project.taskQueue.cancelTasks(RsTask.TaskType.MACROS_CLEAR)
@@ -875,6 +883,10 @@ private class MacroExpansionServiceImplInner(
                 PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
                 Thread.sleep(10)
             }
+        }
+
+        if (clearCacheBeforeDispose) {
+            MacroExpansionFileSystem.getInstance().cleanDirectoryIfExists(dirs.expansionDirPath)
         }
 
         if (saveCacheOnDispose) {
