@@ -20,7 +20,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
         override fun visitImplItem(impl: RsImplItem) {
             val trait = impl.traitRef?.resolveToTrait() ?: return
             val typeRef = impl.typeReference ?: return
-            if (sortedImplItems(impl.items(), trait.items()) == null) return
+            if (sortedImplItems(impl.explicitMembers, trait.explicitMembers) == null) return
             val textRange = TextRange(
                 (impl.vis ?: impl.default ?: impl.unsafe ?: impl.impl).startOffsetInParent,
                 typeRef.startOffsetInParent + typeRef.textLength
@@ -52,8 +52,8 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val impl = descriptor.psiElement as? RsImplItem ?: return
             val trait = impl.traitRef?.resolveToTrait() ?: return
-            val implItems = impl.items()
-            val traitItems = trait.items()
+            val implItems = impl.explicitMembers
+            val traitItems = trait.explicitMembers
 
             // As we're applying the fix, this will be non-null.
             val sortedImplItems = sortedImplItems(implItems, traitItems) ?: return
@@ -67,10 +67,6 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     object Testmarks {
         object ImplMemberNotInTrait : Testmark()
     }
-}
-
-private fun RsTraitOrImpl.items(): List<RsAbstractable> {
-    return members?.stubChildrenOfType<RsAbstractable>().orEmpty()
 }
 
 private fun RsAbstractable.key(): Pair<String?, IElementType> = name to elementType

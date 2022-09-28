@@ -20,3 +20,6 @@ interface RsTraitOrImpl : RsItemElement, RsGenericDeclaration, RsAttrProcMacroOw
 
 val RsTraitOrImpl.expandedMembers: List<RsAbstractable>
     get() = members?.expandedMembers.orEmpty()
+
+val RsTraitOrImpl.explicitMembers: List<RsAbstractable>
+    get() = members?.stubChildrenOfType<RsAbstractable>().orEmpty()

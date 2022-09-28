@@ -104,7 +104,7 @@ class RsExtractTraitProcessor(
                 RsImportHelper.importElement(newImpl, newTrait)
             }
 
-            if (impl.traitRef == null && impl.members?.childrenOfType<RsItemElement>()?.isEmpty() == true) {
+            if (impl.traitRef == null && impl.explicitMembers.isEmpty()) {
                 impl.delete()
             }
         }
