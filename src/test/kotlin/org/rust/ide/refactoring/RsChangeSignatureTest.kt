@@ -58,6 +58,20 @@ Cannot change signature of function with cfg-disabled parameters""")
         }
     """) {}
 
+    fun `test do not change anything 2`() = doTest("""
+        mod inner {
+            pub struct Struct {}
+        }
+
+        fn func/*caret*/(a: inner::Struct) {}
+    """, """
+        mod inner {
+            pub struct Struct {}
+        }
+
+        fn func(a: inner::Struct) {}
+    """) {}
+
     fun `test rename function reference`() = doTest("""
         fn foo/*caret*/() {}
         fn id<T>(t: T) {}

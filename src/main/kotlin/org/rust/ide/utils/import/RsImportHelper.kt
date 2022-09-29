@@ -7,7 +7,6 @@ package org.rust.ide.utils.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
@@ -20,18 +19,15 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.normType
-import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
 
 object RsImportHelper {
-    fun importTypeReferencesFromElements(
-        context: RsElement,
-        elements: Collection<RsElement>,
-        subst: Substitution = emptySubstitution,
-        useAliases: Boolean = true,
-        skipUnchangedDefaultTypeArguments: Boolean = true
-    ) {
-        val (toImport, _) = getTypeReferencesInfoFromElements(context, elements, subst, useAliases, skipUnchangedDefaultTypeArguments)
+
+    fun importTypeReferencesFromElement(context: RsElement, element: RsElement) =
+        importTypeReferencesFromElements(context, listOf(element))
+
+    private fun importTypeReferencesFromElements(context: RsElement, elements: Collection<RsElement>) {
+        val (toImport, _) = getTypeReferencesInfoFromElements(context, elements)
         importElements(context, toImport)
     }
 
@@ -84,11 +80,8 @@ object RsImportHelper {
     private fun getTypeReferencesInfoFromElements(
         context: RsElement,
         elements: Collection<RsElement>,
-        subst: Substitution,
-        useAliases: Boolean,
-        skipUnchangedDefaultTypeArguments: Boolean
     ): TypeReferencesInfo = getTypeReferencesInfo(context, elements) { ty, result ->
-        collectImportSubjectsFromTypeReferences(ty, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
+        collectImportSubjectsFromTypeReferences(ty, result)
     }
 
     /**
@@ -115,10 +108,7 @@ object RsImportHelper {
 
     private fun collectImportSubjectsFromTypeReferences(
         context: RsElement,
-        subst: Substitution,
         result: MutableSet<RsQualifiedNamedElement>,
-        useAliases: Boolean,
-        skipUnchangedDefaultTypeArguments: Boolean
     ) {
         context.accept(object : RsVisitor() {
             override fun visitPath(path: RsPath) {
@@ -131,9 +121,6 @@ object RsImportHelper {
                 }
                 super.visitPath(path)
             }
-
-            override fun visitTypeReference(reference: RsTypeReference) =
-                collectImportSubjectsFromTy(reference.rawType, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
 
             override fun visitElement(element: RsElement) =
                 element.acceptChildren(this)
