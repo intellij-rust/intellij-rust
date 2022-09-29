@@ -121,4 +121,16 @@ class RsBuiltinMacroExpansionTest : RsMacroExpansionTestBase() {
             //^
         }
     """)
+
+    fun `test self`() = checkSingleMacro("""
+        #[rustc_builtin_macro]
+        macro_rules! format_args {}
+
+        fn foo() {
+            format_args!("{self}");
+            //^
+        }
+    """, """
+        format_args!("{self}", self = self)
+    """)
 }

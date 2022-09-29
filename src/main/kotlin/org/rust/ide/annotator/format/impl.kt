@@ -407,7 +407,7 @@ private fun checkArgument(argument: RsFormatMacroArg, ctx: FormatContext): List<
     val hasPositionalParameter = ctx.positionalParameters.find { it.second.position == position } != null
 
     if (name == null) {
-        val firstNamed = ctx.arguments.indexOfFirst { it.identifier != null }
+        val firstNamed = ctx.arguments.indexOfFirst { it.eq != null }
         if (firstNamed != -1 && firstNamed < position) {
             errors.add(ErrorAnnotation(argument.textRange, "Positional arguments cannot follow named arguments"))
         } else if (!hasPositionalParameter) {
@@ -474,4 +474,5 @@ fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg
     return Pair(position, formatMacroArgs)
 }
 
-private fun RsFormatMacroArg.name(): String? = this.identifier?.text
+fun RsFormatMacroArg.name(): String? =
+    if (eq != null) node.findChildByType(RS_IDENTIFIER_TOKENS)?.text else null

@@ -1539,7 +1539,7 @@ ExprMacroArgument ::= <<any_braces [ AnyExpr ','? ]>>
 //noinspection BnfUnusedRule
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
 //noinspection BnfUnusedRule
-FormatMacroArg ::= [ identifier '=' ] AnyExpr
+FormatMacroArg ::= [ <<macroIdentifier>> '=' ] AnyExpr
 //noinspection BnfUnusedRule
 AssertMacroArgument ::= <<any_braces (AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ])>>
 //noinspection BnfUnusedRule
