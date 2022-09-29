@@ -938,6 +938,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.AddImportForPatternIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.SubstituteTypeAliasIntention</className>
             <category>Rust</category>
         </intentionAction>
