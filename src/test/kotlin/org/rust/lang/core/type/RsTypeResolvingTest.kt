@@ -6,8 +6,7 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.presentation.render
-import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.presentation.*
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.type.RsTypeResolvingTest.RenderMode.*
 import org.rust.lang.core.types.normType
@@ -554,6 +553,17 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         impl Trait for S {}
         type A = <S as Trait>::f64;
                              //^ <unknown>
+    """)
+
+    fun `test mixed type and const arguments`() = testType("""
+        struct A1;
+        const B1: i32 = 1;
+        struct C1;
+
+        struct Foo<A, const B: i32, C>(A, C);
+
+        type T = Foo<A1, B1, C1>;
+               //^ Foo<A1, 1, C1>
     """)
 
     /**
