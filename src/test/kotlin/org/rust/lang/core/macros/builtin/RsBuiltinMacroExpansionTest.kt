@@ -3,10 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros.decl
+package org.rust.lang.core.macros.builtin
 
 import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
