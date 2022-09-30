@@ -12,9 +12,7 @@ import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.core.macros.decl.DeclMacroExpander
-import org.rust.lang.core.macros.errors.DeclMacroExpansionError
-import org.rust.lang.core.macros.errors.MacroExpansionAndParsingError
+import org.rust.lang.core.macros.errors.*
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
@@ -71,8 +69,8 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     protected fun doErrorTest(@Language("Rust") code: String) {
         InlineFile(code)
         val call = findElementInEditor<RsMacroCall>("^")
-        val def = call.resolveToMacro() ?: error("Failed to resolve macro ${call.path.text}")
-        check(expandMacroAsTextWithErr(call, RsDeclMacroData(def)).isErr)
+        val def = call.resolveToMacroWithoutPsi().ok() ?: error("Failed to resolve macro ${call.path.text}")
+        check(expandMacroAsTextWithErr(call, def.data).isErr)
     }
 
     private fun checkMacroExpansion(
@@ -113,9 +111,10 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
 
     private fun expandMacroAsTextWithErr(
         call: RsMacroCall,
-        def: RsDeclMacroData
-    ): RsResult<MacroExpansion, MacroExpansionAndParsingError<DeclMacroExpansionError>> {
-        val expander = DeclMacroExpander(project)
+        def: RsMacroData
+    ): RsResult<MacroExpansion, MacroExpansionAndParsingError<MacroExpansionError>> {
+        val crate = call.containingCrate ?: error("`containingCrate` for the macro call is null")
+        val expander = FunctionLikeMacroExpander.forCrate(crate)
         val expansionResult = expander.expandMacro(
             RsMacroDataWithHash(def, null),
             call,
@@ -131,13 +130,19 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun MacroExpansionAndParsingError<DeclMacroExpansionError>.formatError(call: RsMacroCall) = when (this) {
+    private fun MacroExpansionAndParsingError<MacroExpansionError>.formatError(call: RsMacroCall): String = when (this) {
         is MacroExpansionAndParsingError.ExpansionError -> error.formatError(call)
         is MacroExpansionAndParsingError.ParsingError -> "can't parse expansion text `$expansionText` as $context"
         MacroExpansionAndParsingError.MacroCallSyntaxError -> "there is a syntax error in the macro call"
     }
 
-    private fun DeclMacroExpansionError.formatError(call: RsMacroCall) = when (this) {
+    private fun MacroExpansionError.formatError(call: RsMacroCall): String = when (this) {
+        BuiltinMacroExpansionError -> toString()
+        is DeclMacroExpansionError -> formatDeclMacroError(call)
+        is ProcMacroExpansionError -> toString()
+    }
+
+    private fun DeclMacroExpansionError.formatDeclMacroError(call: RsMacroCall): String = when (this) {
         is DeclMacroExpansionError.Matching -> {
             val macroBody = call.macroBody ?: ""
             errors.withIndex().joinToString(prefix = "no matching patterns:\n", separator = "\n") { (i, e) ->

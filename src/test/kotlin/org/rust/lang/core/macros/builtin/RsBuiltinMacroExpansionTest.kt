@@ -3,10 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros.decl
+package org.rust.lang.core.macros.builtin
 
 import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
@@ -109,5 +108,29 @@ class RsBuiltinMacroExpansionTest : RsMacroExpansionTestBase() {
         }
     """, """
         format_args!("{a}", a = a)
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/9282
+    fun `test incorrect syntax`() = doErrorTest("""
+        #[rustc_builtin_macro]
+        macro_rules! format_args {}
+
+        fn foo() {
+            let a = 2;
+            format_args!("{a+5}");
+            //^
+        }
+    """)
+
+    fun `test self`() = checkSingleMacro("""
+        #[rustc_builtin_macro]
+        macro_rules! format_args {}
+
+        fn foo() {
+            format_args!("{self}");
+            //^
+        }
+    """, """
+        format_args!("{self}", self = self)
     """)
 }

@@ -6,14 +6,13 @@
 package org.rust.lang.core.macros.builtin
 
 import com.intellij.openapi.project.Project
-import org.rust.ide.annotator.format.ParameterLookup
-import org.rust.ide.annotator.format.buildParameters
-import org.rust.ide.annotator.format.checkSyntaxErrors
-import org.rust.ide.annotator.format.parseParameters
+import org.rust.ide.annotator.format.*
+import org.rust.lang.core.lexer.getRustLexerTokenType
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.BuiltinMacroExpansionError
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
+import org.rust.lang.core.psi.RS_IDENTIFIER_TOKENS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFormatMacroArgument
 import org.rust.lang.core.psi.RsLitExpr
@@ -43,7 +42,7 @@ class BuiltinMacroExpander(val project: Project) : MacroExpander<RsBuiltinMacroD
     companion object {
         private val BUILTIN_FORMAT_MACROS: Set<String> = setOf("format_args", "format_args_nl")
 
-        const val EXPANDER_VERSION = 1
+        const val EXPANDER_VERSION = 3
     }
 }
 
@@ -72,9 +71,9 @@ private fun handleFormatMacro(macroName: String, macroText: String, format: RsFo
 
     val namedArguments = mutableSetOf<String>()
     for (argument in format.formatMacroArgList) {
-        val identifier = argument.identifier
-        if (identifier != null) {
-            namedArguments.add(identifier.text)
+        val name = argument.name()
+        if (name != null) {
+            namedArguments.add(name)
         }
     }
 
@@ -101,10 +100,14 @@ private fun handleFormatMacro(macroName: String, macroText: String, format: RsFo
     val parameters = buildParameters(parseCtx)
     for (parameter in parameters) {
         if (parameter.lookup is ParameterLookup.Named) {
-            if (parameter.lookup.name !in namedArguments) {
+            val name = parameter.lookup.name
+            if (name.getRustLexerTokenType() !in RS_IDENTIFIER_TOKENS) {
+                return null
+            }
+            if (name !in namedArguments) {
                 // Candidate for implicit argument
                 // We subtract 1 because we have added '(' to the beginning of the format so that it could be parsed
-                addImplicitArgument(parameter.lookup.name, parameter.range.startOffset - 1)
+                addImplicitArgument(name, parameter.range.startOffset - 1)
                 hasChanges = true
             }
         }

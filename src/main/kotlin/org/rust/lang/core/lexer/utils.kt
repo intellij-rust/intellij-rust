@@ -16,3 +16,9 @@ fun CharSequence.tokenize(lexer: Lexer): Sequence<Pair<IElementType, String>> =
         lexer.advance()
         lexer.tokenType?.to(lexer.tokenText)
     })
+
+fun String.getRustLexerTokenType(): IElementType? {
+    val lexer = RsLexer()
+    lexer.start(this)
+    return if (lexer.tokenEnd == length) lexer.tokenType else null
+}
