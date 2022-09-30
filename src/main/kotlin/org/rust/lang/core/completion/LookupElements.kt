@@ -458,6 +458,7 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: E
     val expectedTy = expectedType.ty
     if (
         actualTy is TyUnknown || expectedTy is TyUnknown ||
+        actualTy is TyNever || expectedTy is TyNever ||
         actualTy is TyTypeParameter || expectedTy is TyTypeParameter
     ) return false
 

@@ -302,6 +302,17 @@ class RsCompletionSortingTest : RsTestBase() {
         RsMacro::class to "foo09"
     ))
 
+    fun `test expected types priority (functions returning ! types are not prioritised)`() = doTest("""
+        fn foo_1_dont_panic() -> u8 { 0 }
+        fn foo_2_panic() -> ! { panic!() }
+        fn main() {
+            let a: i32 = foo_/*caret*/
+        }
+    """, listOf(
+        RsFunction::class to "foo_1_dont_panic",
+        RsFunction::class to "foo_2_panic",
+    ))
+
     fun `test expected types priority (fn arg)`() = doTest("""
         struct foo01<T>(T);
         struct foo02<T>(T);
