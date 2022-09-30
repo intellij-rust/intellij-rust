@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.psiElement
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.types.expectedTypeCoercable
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
@@ -52,7 +53,7 @@ object RsTupleFieldCompletionProvider : RsCompletionProvider() {
 
         val elements = type.types.withIndex().map { (index, ty) ->
             createLookupElement(object : CompletionEntity {
-                override val ty: Ty get() = ty
+                override fun retTy(items: KnownItems): Ty = ty
                 override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties =
                     RsLookupElementProperties(elementKind = RsLookupElementProperties.ElementKind.FIELD_DECL)
 

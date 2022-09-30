@@ -477,7 +477,7 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo2", // &i32
     ))
 
-    fun `test tuple field order`() = doTest("""
+    fun `test expected types priority (tuple field order)`() = doTest("""
         fn main() {
             let tuple = (0, "", 0.0);
             let d: f64 = tuple./*caret*/
@@ -486,6 +486,22 @@ class RsCompletionSortingTest : RsTestBase() {
         Int::class to "2",
         Int::class to "0",
         Int::class to "1"
+    ))
+
+    fun `test expected types priority (vec macro)`() = doTest("""
+        #[lang = "alloc::vec::Vec"]
+        struct Vec<T>(T);
+        #[intellij_rust_std_macro]
+        macro_rules! vec { () => {}; }
+        macro_rules! vec_local { () => {}; }
+        fn vec() -> i32 { 0 }
+        fn main() {
+            let v: Vec<i32> = ve/*caret*/
+        }
+    """, listOf(
+        RsMacro::class to "vec",
+        RsFunction::class to "vec",
+        RsMacro::class to "vec_local",
     ))
 
     private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out Any>, String>>) {

@@ -6,8 +6,6 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -30,8 +28,6 @@ import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 import javax.swing.Icon
-
-private val LOG: Logger = logger<RsTraitItem>()
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
@@ -124,20 +120,6 @@ val RsTraitItem.isSized: Boolean
     get() {
         return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
     }
-
-fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
-    val typeParameterList = typeParameters
-    val substitution = if (typeParameterList.size != subst.size) {
-        LOG.warn("Trait has ${typeParameterList.size} type parameters but received ${subst.size} types for substitution")
-        emptySubstitution
-    } else {
-        typeParameterList.withIndex().associate { (i, par) ->
-            val param = TyTypeParameter.named(par)
-            param to (subst.getOrNull(i) ?: param)
-        }.toTypeSubst()
-    }
-    return BoundElement(this, substitution)
-}
 
 fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =
     BoundElement(this, defaultSubstitution(this))

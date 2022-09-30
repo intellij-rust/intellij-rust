@@ -37,7 +37,7 @@ import org.rust.stdext.mapToSet
 const val DEFAULT_PRIORITY = 0.0
 
 interface CompletionEntity {
-    val ty: Ty?
+    fun retTy(items: KnownItems): Ty?
     fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties
     fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
 }
@@ -46,7 +46,7 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
     private val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
 
-    override val ty: Ty? get() = element.asTy
+    override fun retTy(items: KnownItems): Ty? = element.asTy(items)
 
     override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties {
         val isMethodSelfTypeIncompatible = element is RsFunction && element.isMethod
@@ -148,7 +148,8 @@ fun createLookupElement(
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
     val implLookup = context.lookup
-    val isCompatibleTypes = implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)
+    val isCompatibleTypes = implLookup != null
+        && isCompatibleTypes(implLookup, completionEntity.retTy(implLookup.items), context.expectedTy)
 
     val properties = completionEntity.getBaseLookupElementProperties(context)
         .copy(isReturnTypeConformsToExpectedType = isCompatibleTypes)
@@ -168,17 +169,17 @@ private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitu
             emptySubstitution
     }
 
-private val RsElement.asTy: Ty?
-    get() = when (this) {
-        is RsConstant -> typeReference?.normType
-        is RsConstParameter -> typeReference?.normType
-        is RsFieldDecl -> typeReference?.normType
-        is RsFunction -> retType?.typeReference?.normType
-        is RsStructItem -> declaredType
-        is RsEnumVariant -> parentEnum.declaredType
-        is RsPatBinding -> type
-        else -> null
-    }
+private fun RsElement.asTy(items: KnownItems): Ty? = when (this) {
+    is RsConstant -> typeReference?.normType
+    is RsConstParameter -> typeReference?.normType
+    is RsFieldDecl -> typeReference?.normType
+    is RsFunction -> retType?.typeReference?.normType
+    is RsStructItem -> declaredType
+    is RsEnumVariant -> parentEnum.declaredType
+    is RsPatBinding -> type
+    is RsMacroDefinitionBase -> KnownMacro.of(this)?.retTy(items)
+    else -> null
+}
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
