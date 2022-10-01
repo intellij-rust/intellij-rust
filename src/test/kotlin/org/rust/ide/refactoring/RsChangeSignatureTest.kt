@@ -607,6 +607,31 @@ Cannot change signature of function with cfg-disabled parameters""")
         parameters.add(parameter("b", "S", defaultValue = createExprWithContext("S(1)", function)))
     }
 
+    fun `test don't import default value type from current module`() = doTest("""
+        mod foo {
+            pub fn bar/*caret*/() {}
+        }
+
+        const S: i32 = 0;
+            //^
+        fn baz() {
+            foo::bar();
+        }
+    """, """
+        mod foo {
+            pub fn bar(a: i32) {}
+        }
+
+        const S: i32 = 0;
+            //^
+        fn baz() {
+            foo::bar(S);
+        }
+    """) {
+        val defaultValue = createExprWithContext("S", findElementInEditor<RsConstant>())
+        parameters.add(parameter("a", "i32", defaultValue))
+    }
+
     fun `test import default value type inside path`() = doTest("""
         mod foo {
             pub enum Option<T> {

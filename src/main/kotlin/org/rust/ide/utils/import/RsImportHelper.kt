@@ -11,15 +11,14 @@ import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.TYPES
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
+import org.rust.stdext.intersects
 
 object RsImportHelper {
 
@@ -176,22 +175,30 @@ object RsImportHelper {
         context: RsElement,
         rawImportSubjects: Set<RsQualifiedNamedElement>
     ): TypeReferencesInfo {
-        val importSubjects = hashMapOf<String, MutableSet<RsQualifiedNamedElement>>()
-        for (element in rawImportSubjects) {
-            val name = element.name ?: continue
-            importSubjects.getOrPut(name, ::hashSetOf) += element
-        }
-
-        val toQualifiedName = hashSetOf<RsQualifiedNamedElement>()
+        val subjectsWithName = rawImportSubjects.associateWithTo(hashMapOf()) { it.name }
         val processor = createProcessor { entry ->
-            val group = importSubjects.remove(entry.name) ?: return@createProcessor false
-            group.remove(entry.element)
-            toQualifiedName.addAll(group)
-            importSubjects.isEmpty()
+            val element = entry.element ?: return@createProcessor false
+            if (subjectsWithName[element] == entry.name) {
+                subjectsWithName.remove(element)
+            }
+            subjectsWithName.isEmpty()
         }
-        processNestedScopesUpwards(context, TYPES, processor)
+        val itemsInScope = hashMapOf<String, Set<Namespace>>()
+        processWithShadowingAndUpdateScope(itemsInScope, TYPES_N_VALUES, processor) {
+            processNestedScopesUpwards(context, TYPES_N_VALUES, it)
+        }
 
-        return TypeReferencesInfo(importSubjects.flatMap { it.value }.toSet(), toQualifiedName)
+        val toImport = hashSetOf<RsQualifiedNamedElement>()
+        val toQualify = hashSetOf<RsQualifiedNamedElement>()
+        for ((item, name) in subjectsWithName) {
+            val existingNs = itemsInScope[name ?: continue]
+            if (existingNs != null && existingNs.intersects(item.namespaces)) {
+                toQualify += item
+            } else {
+                toImport += item
+            }
+        }
+        return TypeReferencesInfo(toImport, toQualify)
     }
 }
 
