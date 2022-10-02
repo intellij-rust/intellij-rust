@@ -15,7 +15,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
-import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
@@ -99,26 +98,20 @@ fun processItemDeclarationsUsingModInfo(
 fun processMacros(
     scope: RsItemsOwner,
     processor: RsResolveProcessor,
-    /**
-     * `RsPath` in resolve, `PsiElement(identifier)` in completion by [RsMacroCompletionProvider].
-     * Needed to filter textual scoped macros if path is unqualified.
-     * null if path is qualified.
-     */
-    macroPath: PsiElement?,
-    isAttrOrDerive: Boolean,
+    /** Needed to filter textual scoped macros if path is unqualified. */
+    macroPath: RsPath,
 ): Boolean {
     val info = getModInfo(scope) ?: return false
-    return info.modData.processMacros(macroPath, isAttrOrDerive, processor, info)
+    return info.modData.processMacros(macroPath, processor, info)
 }
 
 private fun ModData.processMacros(
-    /** null if path is qualified */
-    macroPath: PsiElement?,
-    isAttrOrDerive: Boolean,
+    macroPath: RsPath,
     processor: RsResolveProcessor,
     info: RsModInfo,
 ): Boolean {
-    val isQualified = macroPath == null || macroPath is RsPath && macroPath.qualifier != null
+    val isQualified = macroPath.qualifier != null
+    val isAttrOrDerive = macroPath.parent is RsMetaItem
 
     val stop = processScopedMacros(processor, info) { name ->
         val isLegacyMacroDeclaredInSameMod = !isQualified && legacyMacros[name].orEmpty().any {
@@ -133,7 +126,6 @@ private fun ModData.processMacros(
     if (stop) return true
 
     if (!isQualified) {
-        check(macroPath != null)
         val macroIndex = info.getMacroIndex(macroPath, info.crate)
         for ((name, macroInfos) in legacyMacros.entriesWithNames(processor.names)) {
             val macroInfo = if (!isAttrOrDerive) {
@@ -213,12 +205,7 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(processor: RsResolvePro
     if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return null
     val project = info.project
     val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return null
-    return defMap.root.processMacros(
-        macroPath = null,  // null because we resolve qualified macro path
-        isAttrOrDerive = false,
-        processor = processor,
-        info = info,
-    )
+    return defMap.root.processMacros(path, processor, info)
 }
 
 private fun RsPossibleMacroCall.resolveToMacroInfo(): Pair<MacroDefInfo, RsModInfo>? {
