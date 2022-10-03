@@ -62,8 +62,12 @@ class RsNavBarTest : RsTestBase() {
         fn foo/*caret*/() {}
     """, "foo()")
 
-    fun `test type`() = doTest("""
+    fun `test type alias`() = doTest("""
         type T/*caret*/ = u32;
+    """, "T")
+
+    fun `test trait alias`() = doTest("""
+        trait T/*caret*/ = T2;
     """, "T")
 
     fun `test block`() = doTest("""
@@ -71,6 +75,12 @@ class RsNavBarTest : RsTestBase() {
             let x = {/*caret*/
                 42
             };
+        }
+    """, "foo()")
+
+    fun `test let declaration`() = doTest("""
+        fn foo() {
+            let x/*caret*/ = 1;
         }
     """, "foo()")
 
@@ -115,16 +125,18 @@ class RsNavBarTest : RsTestBase() {
     """)
 
     fun `test use item alias`() = doTest("""
-        use foo::bar as baz/*caret*/;
+        use foo::bar as /*caret*/baz;
     """)
 
     fun `test use extern crate`() = doTest("""
         extern crate foo/*caret*/;
     """, "foo")
 
-    @Suppress("UNREACHABLE_CODE", "UNUSED_PARAMETER")
+    fun `test impl`() = doTest("""
+        impl/*caret*/ S {}
+    """, "impl S")
+
     fun doTest(@Language("Rust") code: String, vararg items: String) {
-        return  // TODO
         InlineFile(code).withCaret()
 
         val model = NavBarModel(myFixture.project)

@@ -8,7 +8,9 @@ package org.rust.ide.navigationToolbar
 import com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider
 import org.rust.ide.structure.RsStructureViewModel
@@ -16,6 +18,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
 
+/** Shows nav bar for items from structure view [RsStructureViewModel] */
 class RsNavBarModelExtension : StructureAwareNavBarModelExtension() {
     override val language: Language = RsLanguage
 
@@ -32,5 +35,12 @@ class RsNavBarModelExtension : StructureAwareNavBarModelExtension() {
 
         val provider = RsBreadcrumbsInfoProvider()
         return provider.getBreadcrumb(element)
+    }
+
+    /** When [getPresentableText] returns null, [PsiElement.getText] will be used, and we want to avoid it */
+    override fun getLeafElement(dataContext: DataContext): PsiElement? {
+        val leafElement = super.getLeafElement(dataContext) as? RsElement ?: return null
+        if (RsBreadcrumbsInfoProvider().getBreadcrumb(leafElement) == null) return null
+        return leafElement
     }
 }

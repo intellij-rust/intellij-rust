@@ -20,6 +20,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.map2Array
+import org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -32,8 +33,11 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase, expandMacros: Bool
 
     init {
         withSuitableClasses(
-            RsNamedElement::class.java,
-            RsImplItem::class.java
+            RsImplItem::class.java,
+            RsMacro::class.java,
+            RsMacro2::class.java,
+            RsFunction::class.java,
+            *RsBreadcrumbsInfoProvider.RsNamedHandler.SUITABLE_CLASSES,
         )
         withSorters(
             // Order of sorters matters: if both visibility and alpha sorters are active, we want
