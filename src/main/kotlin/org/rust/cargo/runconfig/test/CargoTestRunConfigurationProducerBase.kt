@@ -34,14 +34,6 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
     protected abstract val commandName: String
     private val testConfigProviders: MutableList<TestConfigProvider> = mutableListOf()
 
-    init {
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsModDeclItem>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsFunction>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsMod>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigForMultipleFiles(elements, climbUp) }
-        registerDirectoryConfigProvider { dir -> createConfigForDirectory(dir) }
-    }
-
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext
@@ -88,7 +80,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return elements?.let { findTestConfig(it) }
     }
 
-    private fun createConfigForDirectory(dir: PsiDirectory): TestConfig? {
+    protected fun createConfigForDirectory(dir: PsiDirectory): TestConfig? {
         val filesConfig = createConfigForMultipleFiles(dir.targets, climbUp = false) ?: return null
 
         val sourceRoot = dir.sourceRoot ?: return null
@@ -98,7 +90,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return DirectoryTestConfig(commandName, filesConfig.targets, dir)
     }
 
-    private fun createConfigForMultipleFiles(elements: List<PsiElement>, climbUp: Boolean): TestConfig? {
+    protected fun createConfigForMultipleFiles(elements: List<PsiElement>, climbUp: Boolean): TestConfig? {
         val modConfigs = elements.mapNotNull { createConfigFor<RsMod>(listOf(it), climbUp) }
 
         if (modConfigs.size == 1) {
@@ -115,7 +107,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return MultipleFileTestConfig(commandName, targets, modConfigs.first().sourceElement)
     }
 
-    private inline fun <reified T : RsQualifiedNamedElement> createConfigFor(
+    protected inline fun <reified T : RsQualifiedNamedElement> createConfigFor(
         elements: List<PsiElement>,
         climbUp: Boolean
     ): TestConfig? {
@@ -145,7 +137,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
 
     protected abstract fun isSuitable(element: PsiElement): Boolean
 
-    private fun isIgnoredTest(element: PsiElement): Boolean =
+    protected fun isIgnoredTest(element: PsiElement): Boolean =
         element is RsFunction && element.findOuterAttr("ignore") != null
 
     companion object {
@@ -228,7 +220,7 @@ private class MultipleFileTestConfig(
         get() = "${commandName.capitalize()} multiple selected files"
 }
 
-private class SingleItemTestConfig(
+ class SingleItemTestConfig(
     override val commandName: String,
     override val path: String,
     val target: CargoWorkspace.Target,

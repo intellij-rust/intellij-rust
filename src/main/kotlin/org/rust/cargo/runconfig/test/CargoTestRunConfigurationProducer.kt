@@ -16,6 +16,7 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.ide.injected.DoctestInfo
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocCodeFence
 import org.rust.openapiext.isUnitTestMode
@@ -25,9 +26,14 @@ class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase(
     override val commandName: String = "test"
 
     init {
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsModDeclItem>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigForDocTest(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsFunction>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsMod>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigForMultipleFiles(elements, climbUp) }
+        registerDirectoryConfigProvider { dir -> createConfigForDirectory(dir) }
         registerDirectoryConfigProvider { dir -> createConfigForCargoProject(dir) }
         registerDirectoryConfigProvider { dir -> createConfigForCargoPackage(dir) }
-        registerConfigProvider { elements, climbUp -> createConfigForDocTest(elements, climbUp) }
     }
 
     override fun isSuitable(element: PsiElement): Boolean =
