@@ -13,16 +13,17 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ThreeState
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.cargoProject
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
+import org.rust.lang.core.types.asTy
+import org.rust.lang.core.types.ty.*
+import org.rust.openapiext.isUnitTestMode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -220,3 +221,34 @@ enum class KnownDerivableTrait(
 val KnownDerivableTrait.withDependencies: List<KnownDerivableTrait> get() = listOf(this, *dependencies)
 
 val KNOWN_DERIVABLE_TRAITS: Map<String, KnownDerivableTrait> = KnownDerivableTrait.values().associateBy { it.name }
+
+enum class KnownMacro(val macroName: String) {
+    Format("format"),
+    Vec("vec"),
+    AddrOf("addr_of"),
+    AddrOfMut("addr_of_mut"),
+    Env("env"),
+    ;
+
+    fun retTy(items: KnownItems): Ty {
+        return when (this) {
+            Format -> items.String.asTy()
+            Vec -> items.Vec.asTy(TyUnknown)
+            AddrOf -> TyPointer(TyUnknown, Mutability.IMMUTABLE)
+            AddrOfMut -> TyPointer(TyUnknown, Mutability.MUTABLE)
+            Env -> TyReference(TyStr.INSTANCE, Mutability.IMMUTABLE)
+        }
+    }
+
+    companion object {
+        private val NAME_TO_VALUE: Map<String, KnownMacro> = values().associateBy { it.macroName }
+
+        fun of(macro: RsMacroDefinitionBase): KnownMacro? {
+            val isStdMacro = macro.containingCrate?.origin == PackageOrigin.STDLIB
+                || isUnitTestMode && macro.queryAttributes.hasAttribute("intellij_rust_std_macro")
+            if (!isStdMacro) return null
+            val name = macro.name ?: return null
+            return NAME_TO_VALUE[name]
+        }
+    }
+}

@@ -191,6 +191,16 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
 fun RsNamedElement?.asTy(): Ty =
     (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
 
+fun RsNamedElement?.asTy(vararg subst: Ty): Ty {
+    if (this !is RsTypeDeclarationElement) return TyUnknown
+    val declaredType = declaredType
+    return if (this is RsGenericDeclaration) {
+        declaredType.substitute(withSubst(*subst).subst)
+    } else {
+        declaredType
+    }
+}
+
 private val CONTROL_FLOW_KEY: Key<CachedValue<ControlFlowGraph>> = Key.create("CONTROL_FLOW_KEY")
 
 val RsInferenceContextOwner.controlFlowGraph: ControlFlowGraph?
