@@ -28,8 +28,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
+import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
 import org.rust.lang.core.FeatureAvailability
-import org.rust.lang.core.IN_BAND_LIFETIMES
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.*

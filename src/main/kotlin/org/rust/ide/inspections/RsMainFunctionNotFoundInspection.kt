@@ -7,8 +7,8 @@ package org.rust.ide.inspections
 
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability
-import org.rust.lang.core.START
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor

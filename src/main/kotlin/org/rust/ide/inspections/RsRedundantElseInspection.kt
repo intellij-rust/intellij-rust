@@ -8,8 +8,8 @@ package org.rust.ide.inspections
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.lang.core.CompilerFeature.Companion.LET_ELSE
 import org.rust.lang.core.FeatureAvailability
-import org.rust.lang.core.LET_ELSE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 

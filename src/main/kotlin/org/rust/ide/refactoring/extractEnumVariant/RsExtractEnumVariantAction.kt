@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
-import org.rust.lang.core.ARBITRARY_ENUM_DISCRIMINANT
+import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.ext.ancestorOrSelf

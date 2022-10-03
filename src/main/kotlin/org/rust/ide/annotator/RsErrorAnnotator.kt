@@ -29,6 +29,37 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.*
+import org.rust.lang.core.CompilerFeature.Companion.ADT_CONST_PARAMS
+import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
+import org.rust.lang.core.CompilerFeature.Companion.ASSOCIATED_TYPE_DEFAULTS
+import org.rust.lang.core.CompilerFeature.Companion.BOX_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.BOX_SYNTAX
+import org.rust.lang.core.CompilerFeature.Companion.CONST_FN_TRAIT_BOUND
+import org.rust.lang.core.CompilerFeature.Companion.CONST_GENERICS_DEFAULTS
+import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
+import org.rust.lang.core.CompilerFeature.Companion.CRATE_IN_PATHS
+import org.rust.lang.core.CompilerFeature.Companion.CRATE_VISIBILITY_MODIFIER
+import org.rust.lang.core.CompilerFeature.Companion.DECL_MACRO
+import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
+import org.rust.lang.core.CompilerFeature.Companion.EXTERN_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.GENERATORS
+import org.rust.lang.core.CompilerFeature.Companion.GENERIC_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.IF_LET_GUARD
+import org.rust.lang.core.CompilerFeature.Companion.IF_WHILE_OR_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.INHERENT_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST
+import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST_PAT
+import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
+import org.rust.lang.core.CompilerFeature.Companion.IRREFUTABLE_LET_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.LABEL_BREAK_VALUE
+import org.rust.lang.core.CompilerFeature.Companion.LET_ELSE
+import org.rust.lang.core.CompilerFeature.Companion.MIN_CONST_GENERICS
+import org.rust.lang.core.CompilerFeature.Companion.NON_MODRS_MODS
+import org.rust.lang.core.CompilerFeature.Companion.OR_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.PARAM_ATTRS
+import org.rust.lang.core.CompilerFeature.Companion.RAW_REF_OP
+import org.rust.lang.core.CompilerFeature.Companion.SLICE_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -589,7 +620,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val reason = metaItems.singleOrNull { it.name == "reason" }?.value
             val reasonSuffix = if (reason != null) ": $reason" else ""
             val feature = CompilerFeature.find(featureName)
-                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null, cache = false)
+                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null)
             feature.check(holder, startElement, null, "`$featureName` is unstable$reasonSuffix")
         }
     }
