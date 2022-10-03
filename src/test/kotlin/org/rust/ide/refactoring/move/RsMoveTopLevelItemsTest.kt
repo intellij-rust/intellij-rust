@@ -1549,6 +1549,33 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    fun `test outside references to macro from other crate`() = doTest("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen { () => {} }
+    //- main.rs
+        mod mod1 {
+            use test_package::gen;
+            fn foo/*caret*/() {
+                gen!();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen { () => {} }
+    //- main.rs
+        mod mod1 {}
+        mod mod2 {
+            use test_package::gen;
+
+            fn foo() {
+                gen!();
+            }
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test outside reference to items from stdlib`() = doTest("""
     //- lib.rs
