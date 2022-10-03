@@ -5,7 +5,8 @@ use reqwest::blocking::get;
 use syn::{File, Item};
 
 fn main() {
-    let text = get("https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_span/src/symbol.rs")
+    let commit = env::var("RUSTC_COMMIT").unwrap_or(String::from("master"));
+    let text = get(format!("https://raw.githubusercontent.com/rust-lang/rust/{commit}/compiler/rustc_span/src/symbol.rs"))
         .unwrap()
         .text()
         .unwrap();
