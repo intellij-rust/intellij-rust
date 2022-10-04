@@ -127,7 +127,7 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = foo::foo::<0, usize>();
             x;
-          //^ S<usize, 0>
+          //^ S<T1, <unknown>>
         }
     """)
 

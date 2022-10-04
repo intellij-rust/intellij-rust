@@ -6,12 +6,18 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.presentation.render
-import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.presentation.*
+import org.rust.lang.core.macros.setContext
+import org.rust.lang.core.psi.RsPathType
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.resolve.ref.pathPsiSubst
 import org.rust.lang.core.type.RsTypeResolvingTest.RenderMode.*
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.rawType
+import org.rust.lang.core.types.ty.TyUnknown
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
     fun `test path`() = testType("""
@@ -556,6 +562,17 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                              //^ <unknown>
     """)
 
+    fun `test mixed type and const arguments`() = testType("""
+        struct A1;
+        const B1: i32 = 1;
+        struct C1;
+
+        struct Foo<A, const B: i32, C>(A, C);
+
+        type T = Foo<A1, B1, C1>;
+               //^ Foo<A1, 1, C1>
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
@@ -567,6 +584,31 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
+        checkType(normalize, typeAtCaret, renderMode, expectedType)
+
+        // Additionally test RsPsiSubstitution and PsiSubstitutingPsiRenderer
+        if (typeAtCaret is RsPathType && !typeAtCaret.rawType.containsTyOfClass(TyUnknown.javaClass)) {
+            val path = typeAtCaret.path
+            val resolved = path.reference?.resolve()
+            if (resolved is RsGenericDeclaration) {
+                val psiSubst = pathPsiSubst(path, resolved)
+                val renderedType = PsiSubstitutingPsiRenderer(PsiRenderingOptions(shortPaths = false), listOf(psiSubst))
+                    .renderTypeReference(typeAtCaret)
+                val reconstructedType = RsPsiFactory(project)
+                    .createType(renderedType)
+                    .apply { setContext(typeAtCaret) }
+
+                checkType(normalize, reconstructedType, renderMode, expectedType)
+            }
+        }
+    }
+
+    private fun checkType(
+        normalize: Boolean,
+        typeAtCaret: RsTypeReference,
+        renderMode: RenderMode,
+        expectedType: String
+    ) {
         val ty = if (normalize) {
             typeAtCaret.normType
         } else {

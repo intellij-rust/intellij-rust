@@ -23,7 +23,6 @@ import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.openapiext.testAssert
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
-import org.rust.stdext.mapNotNullToSet
 
 class RsPathReferenceImpl(
     element: RsPath
@@ -329,10 +328,18 @@ fun pathPsiSubst(
         return RsPsiSubstitution()
     }
     val args = pathTypeParameters(path)
-    val genericParameters = givenGenericParameters ?: resolved.getGenericParameters()
-    val lifetimeParameters = genericParameters.filterIsInstance<RsLifetimeParameter>()
-    val typeParameters = genericParameters.filterIsInstance<RsTypeParameter>()
-    val constParameters = genericParameters.filterIsInstance<RsConstParameter>()
+
+    val lifetimeParameters = mutableListOf<RsLifetimeParameter>()
+    val typeOrConstParameters = mutableListOf<RsElement>()
+
+    for (generic in givenGenericParameters ?: resolved.getGenericParameters()) {
+        if (generic is RsLifetimeParameter) {
+            lifetimeParameters += generic
+        } else {
+            typeOrConstParameters += generic
+        }
+    }
+
     val parent = path.parent
 
     // Generic arguments are optional in expression context, e.g.
@@ -346,38 +353,71 @@ fun pathPsiSubst(
         areOptionalArgs
     )
 
-    val typeArguments = when (args) {
+    val typeOrConstArguments = when (args) {
         is RsPsiPathParameters.InAngles -> args.typeOrConstArgs
-            .filterIsInstance<RsTypeReference>()
-            .map { TypeValue.InAngles(it) }
+            .map {
+                if (it is RsTypeReference) {
+                    TypeValue.InAngles(it)
+                } else {
+                    it
+                }
+            }
         is RsPsiPathParameters.FnSugar -> listOf(TypeValue.FnSugar(args.inputArgs))
         null -> null
     }
 
-    val typeSubst = associateSubst(typeParameters, typeArguments, areOptionalArgs) { param ->
-        val defaultTy = param.typeReference ?: return@associateSubst null
-        val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
-            val pred = parent.ancestorStrict<RsWherePred>()
-            if (pred != null) {
-                pred.typeReference?.rawType
-            } else {
-                parent.ancestorStrict<RsTypeParameter>()?.declaredType
-            } ?: TyUnknown
-        } else {
-            null
+    val typeOrConstSubst = associateSubst(typeOrConstParameters, typeOrConstArguments, areOptionalArgs) { param ->
+        when (param) {
+            is RsTypeParameter -> {
+                val defaultTy = param.typeReference ?: return@associateSubst null
+                val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
+                    val pred = parent.ancestorStrict<RsWherePred>()
+                    if (pred != null) {
+                        pred.typeReference?.rawType
+                    } else {
+                        parent.ancestorStrict<RsTypeParameter>()?.declaredType
+                    } ?: TyUnknown
+                } else {
+                    null
+                }
+                TypeDefault(defaultTy, selfTy)
+            }
+
+            is RsConstParameter -> param.expr
+
+            else -> null
         }
-        TypeDefault(defaultTy, selfTy)
     }
 
-    val usedTypeArguments = typeSubst.values.mapNotNullToSet {
-        ((it as? Value.Present)?.value as? TypeValue.InAngles)?.value
-    }
+    val typeSubst = hashMapOf<RsTypeParameter, Value<TypeValue, TypeDefault>>()
+    val constSubst = hashMapOf<RsConstParameter, Value<RsElement, RsExpr>>()
 
-    val constArguments = (args as? RsPsiPathParameters.InAngles)?.typeOrConstArgs
-        ?.let { list -> list.filter { it !is RsTypeReference || it !in usedTypeArguments && it is RsPathType } }
+    for ((k, v) in typeOrConstSubst) {
+        when (k) {
+            is RsTypeParameter -> {
+                val isTypeValue = v is Value.Present && v.value is TypeValue
+                    || v is Value.DefaultValue && v.value is TypeDefault
+                    || v is Value.RequiredAbsent
+                    || v is Value.OptionalAbsent
+                if (isTypeValue) {
+                    @Suppress("UNCHECKED_CAST")
+                    typeSubst[k] = v as Value<TypeValue, TypeDefault>
+                }
+            }
 
-    val constSubst = associateSubst(constParameters, constArguments, areOptionalArgs) { param ->
-        param.expr
+            is RsConstParameter -> {
+                val isConstValue = v is Value.Present && v.value is RsExpr
+                    || v is Value.DefaultValue && v.value is RsExpr
+                    || v is Value.RequiredAbsent
+                    || v is Value.OptionalAbsent
+                if (isConstValue) {
+                    @Suppress("UNCHECKED_CAST")
+                    constSubst[k] = v as Value<RsElement, RsExpr>
+                } else if (v is Value.Present && v.value is TypeValue.InAngles && v.value.value is RsPathType) {
+                    constSubst[k] = Value.Present(v.value.value)
+                }
+            }
+        }
     }
 
     val assocTypes = run {
