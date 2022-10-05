@@ -256,4 +256,18 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
             S.fo/*caret*/;
         }
     """)
+
+    fun `test complete associated type inside a where bound in the middle of an identifier`() = doSingleCompletion("""
+        trait Foo { type Item; }
+        struct S<T>(T);
+        impl<T: Foo> S<T> {
+            fn foo() where T::It/*caret*/m: ?Sized {}
+        }
+    """, """
+        trait Foo { type Item; }
+        struct S<T>(T);
+        impl<T: Foo> S<T> {
+            fn foo() where T::Item/*caret*/m: ?Sized {}
+        }
+    """)
 }
