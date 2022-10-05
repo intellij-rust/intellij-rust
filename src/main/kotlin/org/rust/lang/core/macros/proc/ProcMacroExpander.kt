@@ -52,7 +52,7 @@ class ProcMacroExpander private constructor(
 
         val (macroCallBodyText, attrText) = when (val macroBody = call.macroBody) {
             is MacroCallBody.FunctionLike -> MappedText.single(macroBody.text, 0) to null
-            is MacroCallBody.Derive -> MappedText.single(macroBody.item, 0) to null
+            is MacroCallBody.Derive -> macroBody.item to null
             is MacroCallBody.Attribute -> {
                 val item = if (macroBody.fixupRustSyntaxErrors) {
                     fixupRustSyntaxErrors(macroBody.item)
@@ -206,7 +206,7 @@ class ProcMacroExpander private constructor(
         psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 5
+        const val EXPANDER_VERSION: Int = 6
 
         fun forCrate(crate: Crate): ProcMacroExpander {
             val project = crate.project
