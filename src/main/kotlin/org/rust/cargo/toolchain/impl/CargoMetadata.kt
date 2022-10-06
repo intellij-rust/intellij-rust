@@ -410,11 +410,16 @@ object CargoMetadata {
 
         val features = features.toMutableMap()
 
-        // Optional dependencies are features implicitly
+        // Backcompat Cargo 1.59.0: optional dependencies are features implicitly.
+        // Since 1.60.0 these implicit features are returned from cargo as usual
+        val allFeatureDependencies = features.values.flatten().toSet()
         for (dependency in dependencies) {
             val featureName = dependency.rename ?: dependency.name
             if (dependency.optional && featureName !in features) {
-                features[featureName] = emptyList()
+                val depFeatureName = "dep:$featureName"
+                if (depFeatureName !in allFeatureDependencies) {
+                    features[featureName] = listOf(depFeatureName)
+                }
             }
         }
 

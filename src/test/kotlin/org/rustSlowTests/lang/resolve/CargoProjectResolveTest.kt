@@ -947,6 +947,76 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
     }
 
+    @MinRustcVersion("1.60.0")
+    fun `test cargo features namespaced dependencies and weak dependency features`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [features]
+            feature_foo = ["dep:foo"]
+            feature_baz = ["foo?/baz"]
+
+            [dependencies]
+            foo = { path = "./foo", optional = true }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    foo::foo_fn();
+                }       //^
+            """)
+        }
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+
+                [features]
+                baz = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature = "baz")]
+                    pub fn foo_fn() {}
+                """)
+            }
+        }
+
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "0.1.0"
+            """)
+
+            dir("src") {
+                rust("lib.rs", "pub fn bar_fn() {}")
+            }
+        }
+    }.run {
+        val helloPkg = project.cargoProjects.singlePackage("hello")
+        assertEquals(setOf("feature_foo", "feature_baz"), helloPkg.featureState.keys)
+
+        helloPkg.checkFeatureEnabled("feature_foo")
+        helloPkg.checkFeatureEnabled("feature_baz")
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("baz")
+
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+
+        project.cargoProjects.disableCargoFeature("hello", "feature_foo")
+        project.cargoProjects.disableCargoFeature("hello", "feature_baz")
+
+        project.cargoProjects.singlePackage("foo").checkFeatureDisabled("baz")
+
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+    }
+
     // TODO the test has been regressed after switching to Name Resolution 2.0
     fun `test cyclic dev deps`() = expect<IllegalStateException> {
     buildProject {
