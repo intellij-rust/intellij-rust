@@ -116,7 +116,7 @@ fun processFieldExprResolveVariants(
     for (ty in autoderef) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
         val processor = createProcessor(originalProcessor.names) {
-            originalProcessor.process(FieldResolveVariant(it.name, it.element!!, ty, autoderef.steps()))
+            originalProcessor.process(FieldResolveVariant(it.name, it.element, ty, autoderef.steps()))
         }
         if (processFieldDeclarations(ty.item, processor)) return true
     }
@@ -712,7 +712,7 @@ fun processPatBindingResolveVariants(
 
     val processor = createProcessor(originalProcessor.names) { entry ->
         originalProcessor.lazy(entry.name) {
-            val element = entry.element ?: return@lazy null
+            val element = entry.element
             val isConstant = element.isConstantLike
             val isPathOrDestructable = when (element) {
                 is RsMod, is RsEnumItem, is RsEnumVariant, is RsStructItem -> true

@@ -490,10 +490,7 @@ private fun addProcessedPathName(
     processor: RsResolveProcessor,
     processedPathElements: MultiMap<String, RsElement>
 ): RsResolveProcessor = createProcessor(processor.names) {
-    val element = it.element
-    if (element != null) {
-        processedPathElements.putValue(it.name, element)
-    }
+    processedPathElements.putValue(it.name, it.element)
     processor.process(it)
 }
 

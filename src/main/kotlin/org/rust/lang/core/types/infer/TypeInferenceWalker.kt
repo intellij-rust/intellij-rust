@@ -351,7 +351,7 @@ class RsTypeInferenceWalker(
         ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it, expr) })
 
         val first = filteredVariants.singleOrNull() ?: return TyUnknown
-        return instantiatePath(first.element ?: return TyUnknown, first, expr)
+        return instantiatePath(first.element, first, expr)
     }
 
     /** This works for `String::from` where multiple impls of `From` trait found for `String` */

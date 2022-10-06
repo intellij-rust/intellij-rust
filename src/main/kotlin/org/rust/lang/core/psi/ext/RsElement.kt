@@ -131,7 +131,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     var resolved: PsiElement? = null
     val processor = createProcessor(name) { entry ->
-        if (entry.name == name && entry.element != null) {
+        if (entry.name == name) {
             resolved = entry.element
             true
         } else {

@@ -45,7 +45,7 @@ interface CompletionEntity {
 
 class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : CompletionEntity {
 
-    private val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
+    private val element = scopeEntry.element
 
     override fun retTy(items: KnownItems): Ty? = element.asTy(items)
 

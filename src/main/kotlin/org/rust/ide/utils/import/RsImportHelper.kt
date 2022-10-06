@@ -177,7 +177,7 @@ object RsImportHelper {
     ): TypeReferencesInfo {
         val subjectsWithName = rawImportSubjects.associateWithTo(hashMapOf()) { it.name }
         val processor = createProcessor { entry ->
-            val element = entry.element ?: return@createProcessor false
+            val element = entry.element
             if (subjectsWithName[element] == entry.name) {
                 subjectsWithName.remove(element)
             }

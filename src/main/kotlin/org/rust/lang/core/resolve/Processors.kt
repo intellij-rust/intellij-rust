@@ -30,7 +30,7 @@ import org.rust.lang.core.types.ty.*
  */
 interface ScopeEntry {
     val name: String
-    val element: RsElement?
+    val element: RsElement
     val subst: Substitution get() = emptySubstitution
 }
 
@@ -127,7 +127,7 @@ private fun collectPathScopeEntry(
     result: MutableList<RsPathResolveResult<RsElement>>,
     e: ScopeEntry
 ) {
-    val element = e.element ?: return
+    val element = e.element
     if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
         val visibilityStatus = e.getVisibilityStatusFrom(ctx.context, ctx.lazyContainingModInfo)
         if (visibilityStatus != VisibilityStatus.CfgDisabled) {
@@ -159,7 +159,7 @@ fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Un
     val result = SmartList<RsElement>()
     val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {
-            val element = e.element ?: return@createProcessor false
+            val element = e.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result += element
             }
@@ -178,8 +178,7 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
     val result = mutableListOf<T>()
     val processor = createProcessorGeneric<T>(referenceName) { e ->
         if (e.name == referenceName) {
-            // de-lazying. See `RsResolveProcessor.lazy`
-            val element = e.element ?: return@createProcessorGeneric false
+            val element = e.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result += e
             }
@@ -199,7 +198,7 @@ fun pickFirstResolveEntry(referenceName: String?, f: (RsResolveProcessor) -> Uni
     val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {
             val element = e.element
-            if (element != null && (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf)) {
+            if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result = e
                 return@createProcessor true
             }
@@ -216,7 +215,7 @@ fun collectCompletionVariants(
     f: (RsResolveProcessor) -> Unit
 ) {
     val processor = createProcessor { e ->
-        val element = e.element ?: return@createProcessor false
+        val element = e.element
 
         if (element is RsEnumItem
             && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
@@ -327,7 +326,7 @@ fun processAllWithSubst(
 
 fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {
     return createProcessor(processor.names) { e ->
-        val element = e.element ?: return@createProcessor false
+        val element = e.element
         if (element is RsFunction && element.isTest) return@createProcessor false
         if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
 
