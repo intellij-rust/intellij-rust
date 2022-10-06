@@ -65,7 +65,7 @@ fun processItemDeclarationsUsingModInfo(
                 val visibilityFilter = visItem.visibility.createFilter()
                 for (element in visItem.toPsi(info, namespace)) {
                     if (!elements.add(element)) continue
-                    if (processor(name, element, visibilityFilter)) return true
+                    if (processor.process(name, element, visibilityFilter)) return true
                 }
             }
         }
@@ -76,7 +76,7 @@ fun processItemDeclarationsUsingModInfo(
             val trait = VisItem(traitPath, traitVisibility)
             val visibilityFilter = traitVisibility.createFilter()
             for (traitPsi in trait.toPsi(info, Namespace.Types)) {
-                if (processor("_", traitPsi, visibilityFilter)) return true
+                if (processor.process("_", traitPsi, visibilityFilter)) return true
             }
         }
     }
@@ -87,7 +87,7 @@ fun processItemDeclarationsUsingModInfo(
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
             val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
-            processor(name, externCrateRoot) && return true
+            processor.process(name, externCrateRoot) && return true
         }
     }
 
@@ -135,7 +135,7 @@ private fun ModData.processMacros(
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             val macroContainingScope = visItem.containingMod.toScope(info).singleOrNull() ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingScope, info) ?: continue
-            if (processor(name, macro)) return true
+            if (processor.process(name, macro)) return true
         }
 
         info.defMap.prelude?.let { prelude ->
@@ -156,7 +156,7 @@ private fun ModData.processScopedMacros(
             if (!filter(name)) continue
             val macro = visItem.scopedMacroToPsi(info) ?: continue
             val visibilityFilter = visItem.visibility.createFilter()
-            if (processor(name, macro, visibilityFilter)) return true
+            if (processor.process(name, macro, visibilityFilter)) return true
         }
     }
     return false

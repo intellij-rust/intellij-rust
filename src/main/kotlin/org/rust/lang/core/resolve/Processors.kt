@@ -41,7 +41,7 @@ interface RsResolveProcessorBase<in T : ScopeEntry> {
      * Return `true` to stop further processing,
      * return `false` to continue search
      */
-    operator fun invoke(entry: T): Boolean
+    fun process(entry: T): Boolean
 
     /**
      * Indicates that processor is interested only in [ScopeEntry]s with specified [names].
@@ -74,9 +74,9 @@ fun <T : ScopeEntry> createProcessorGeneric(
     processor: (T) -> Boolean
 ): RsResolveProcessorBase<T> {
     return object : RsResolveProcessorBase<T> {
-        override fun invoke(entry: T): Boolean = processor(entry)
+        override fun process(entry: T): Boolean = processor(entry)
         override val names: Set<String>? = names
-        override fun toString(): String = "Processor(name=$names)"
+        override fun toString(): String = "Processor(names=$names)"
     }
 }
 
@@ -281,37 +281,37 @@ data class AssocItemScopeEntry(
 ) : AssocItemScopeEntryBase<RsAbstractable>
 
 
-operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
-    this(SimpleScopeEntry(name, e))
+fun RsResolveProcessor.process(name: String, e: RsElement): Boolean =
+    process(SimpleScopeEntry(name, e))
 
-operator fun RsResolveProcessor.invoke(
+fun RsResolveProcessor.process(
     name: String,
     e: RsElement,
     visibilityFilter: VisibilityFilter
-): Boolean = this(ScopeEntryWithVisibility(name, e, visibilityFilter))
+): Boolean = process(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
 inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
     if (!acceptsName(name)) return false
     val element = e() ?: return false
-    return this(name, element)
+    return process(name, element)
 }
 
-operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
+fun RsResolveProcessor.process(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
-    return this(name, e)
+    return process(name, e)
 }
 
-operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>): Boolean {
+fun RsResolveProcessor.process(e: BoundElement<RsNamedElement>): Boolean {
     val name = e.element.name ?: return false
-    return this(SimpleScopeEntry(name, e.element, e.subst))
+    return process(SimpleScopeEntry(name, e.element, e.subst))
 }
 
 fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor(it) }
+    return elements.any { processor.process(it) }
 }
 
 fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor(it) }
+    return elements.any { processor.process(it) }
 }
 
 fun processAllWithSubst(
@@ -320,7 +320,7 @@ fun processAllWithSubst(
     processor: RsResolveProcessor
 ): Boolean {
     for (e in elements) {
-        if (processor(BoundElement(e, subst))) return true
+        if (processor.process(BoundElement(e, subst))) return true
     }
     return false
 }
@@ -331,7 +331,7 @@ fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): Rs
         if (element is RsFunction && element.isTest) return@createProcessor false
         if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
 
-        processor(e)
+        processor.process(e)
     }
 }
 
@@ -350,7 +350,7 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
             element.containingMod != mod
         if (isHidden) return@createProcessor false
 
-        processor(it)
+        processor.process(it)
     }
 }
 
@@ -358,19 +358,19 @@ fun filterNotAttributeAndDeriveProcMacros(processor: RsResolveProcessor): RsReso
     createProcessor(processor.names) { e ->
         val element = e.element
         if (element is RsFunction && element.isProcMacroDef && !element.isBangProcMacroDef) return@createProcessor false
-        processor(e)
+        processor.process(e)
     }
 
 fun filterAttributeProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
     createProcessor(processor.names) { e ->
         val function = e.element as? RsFunction ?: return@createProcessor false
         if (!function.isAttributeProcMacroDef) return@createProcessor false
-        processor(e)
+        processor.process(e)
     }
 
 fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
     createProcessor(processor.names) { e ->
         val function = e.element as? RsFunction ?: return@createProcessor false
         if (!function.isCustomDeriveProcMacroDef) return@createProcessor false
-        processor(e)
+        processor.process(e)
     }
