@@ -195,7 +195,8 @@ class TyLowering private constructor(
         val genericParameters = genericParametersCache.getOrPut(element) { element.getGenericParameters() }
         val psiSubstitution = pathPsiSubst(path, element, givenGenericParameters = genericParameters)
 
-        val typeSubst = psiSubstitution.typeSubst.entries.associate { (param, value) ->
+        val typeSubst = hashMapOf<TyTypeParameter, Ty>()
+        for ((param, value) in psiSubstitution.typeSubst.entries) {
             val paramTy = TyTypeParameter.named(param)
             val valueTy = when (value) {
                 is RsPsiSubstitution.Value.DefaultValue -> {
@@ -207,8 +208,9 @@ class TyLowering private constructor(
                         defaultValueTy.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
                     } else {
                         defaultValueTy
-                    }
+                    }.substitute(typeSubst.toTypeSubst())
                 }
+
                 is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
                 is RsPsiSubstitution.Value.Present -> when (value.value) {
                     is RsPsiSubstitution.TypeValue.InAngles -> lowerTy(value.value.value, null)
@@ -218,9 +220,10 @@ class TyLowering private constructor(
                         TyUnit.INSTANCE
                     }
                 }
+
                 RsPsiSubstitution.Value.RequiredAbsent -> TyUnknown
             }
-            paramTy to valueTy
+            typeSubst[paramTy] = valueTy
         }
 
         val regionSubst = psiSubstitution.regionSubst.entries.mapNotNull { (psiParam, psiValue) ->
@@ -234,7 +237,8 @@ class TyLowering private constructor(
             param to value
         }.toMap()
 
-        val constSubst = psiSubstitution.constSubst.entries.associate { (psiParam, psiValue) ->
+        val constSubst = hashMapOf<CtConstParameter, Const>()
+        psiSubstitution.constSubst.entries.forEach { (psiParam, psiValue) ->
             val param = CtConstParameter(psiParam)
             val value = when (psiValue) {
                 RsPsiSubstitution.Value.OptionalAbsent -> param
@@ -245,11 +249,11 @@ class TyLowering private constructor(
                 }
                 is RsPsiSubstitution.Value.DefaultValue -> {
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
-                    psiValue.value.toConst(expectedTy, resolver)
+                    psiValue.value.toConst(expectedTy, resolver).substitute(constSubst.toConstSubst())
                 }
             }
 
-            param to value
+            constSubst[param] = value
         }
 
         val newSubst = Substitution(typeSubst, regionSubst, constSubst)

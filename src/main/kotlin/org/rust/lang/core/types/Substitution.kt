@@ -114,6 +114,7 @@ private object EmptySubstitution : Substitution()
 val emptySubstitution: Substitution = EmptySubstitution
 
 fun Map<TyTypeParameter, Ty>.toTypeSubst(): Substitution = Substitution(typeSubst = this)
+fun Map<CtConstParameter, Const>.toConstSubst(): Substitution = Substitution(constSubst = this)
 
 private fun <K, V> mergeMaps(map1: Map<K, V>, map2: Map<K, V>): Map<K, V> =
     when {
