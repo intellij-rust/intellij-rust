@@ -20,6 +20,7 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.hasTyInfer
 import org.rust.lang.core.types.ty.*
+import org.rust.stdext.intersects
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -78,6 +79,143 @@ fun <T : ScopeEntry> createProcessorGeneric(
         override val names: Set<String>? = names
         override fun toString(): String = "Processor(names=$names)"
     }
+}
+
+fun <T : ScopeEntry, U : ScopeEntry> RsResolveProcessorBase<T>.wrapWithMapper(
+    mapper: (U) -> T
+): RsResolveProcessorBase<U> {
+    return MappingProcessor(this, mapper)
+}
+
+private class MappingProcessor<in T : ScopeEntry, in U : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val mapper: (U) -> T,
+) : RsResolveProcessorBase<U> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: U): Boolean {
+        val mapped = mapper(entry)
+        return originalProcessor.process(mapped)
+    }
+    override fun toString(): String = "MappingProcessor($originalProcessor, mapper = $mapper)"
+}
+
+fun <T : ScopeEntry> RsResolveProcessorBase<T>.wrapWithFilter(
+    filter: (T) -> Boolean
+): RsResolveProcessorBase<T> {
+    return FilteringProcessor(this, filter)
+}
+
+private class FilteringProcessor<in T : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val filter: (T) -> Boolean,
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: T): Boolean {
+        return if (filter(entry)) {
+            originalProcessor.process(entry)
+        } else {
+            false
+        }
+    }
+    override fun toString(): String = "FilteringProcessor($originalProcessor, filter = $filter)"
+}
+
+fun <T : ScopeEntry> RsResolveProcessorBase<T>.wrapWithBeforeProcessingHandler(
+    handler: (T) -> Unit
+): RsResolveProcessorBase<T> {
+    return BeforeProcessingProcessor(this, handler)
+}
+
+private class BeforeProcessingProcessor<in T : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val handler: (T) -> Unit,
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: T): Boolean {
+        handler(entry)
+        return originalProcessor.process(entry)
+    }
+    override fun toString(): String = "BeforeProcessingProcessor($originalProcessor, handler = $handler)"
+}
+
+fun <T : ScopeEntry> RsResolveProcessorBase<T>.wrapWithShadowingProcessor(
+    prevScope: Map<String, Set<Namespace>>,
+    ns: Set<Namespace>,
+): RsResolveProcessorBase<T> {
+    return ShadowingProcessor(this, prevScope, ns)
+}
+
+private class ShadowingProcessor<in T : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val prevScope: Map<String, Set<Namespace>>,
+    private val ns: Set<Namespace>,
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: T): Boolean {
+        val prevNs = prevScope[entry.name]
+        if (entry.name == "_" || prevNs == null) return originalProcessor.process(entry)
+        val newNs = (entry.element as? RsNamedElement)?.namespaces
+        return (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor.process(entry)
+    }
+    override fun toString(): String = "ShadowingProcessor($originalProcessor, ns = $ns)"
+}
+
+fun <T : ScopeEntry> RsResolveProcessorBase<T>.wrapWithShadowingProcessorAndUpdateScope(
+    prevScope: Map<String, Set<Namespace>>,
+    currScope: MutableMap<String, Set<Namespace>>,
+    ns: Set<Namespace>,
+): RsResolveProcessorBase<T> {
+    return ShadowingAndUpdateScopeProcessor(this, prevScope, currScope, ns)
+}
+
+private class ShadowingAndUpdateScopeProcessor<in T : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val prevScope: Map<String, Set<Namespace>>,
+    private val currScope: MutableMap<String, Set<Namespace>>,
+    private val ns: Set<Namespace>,
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: T): Boolean {
+        val prevNs = if (entry.name != "_") prevScope[entry.name] else null
+        if (prevNs != null) {
+            val newNs = (entry.element as? RsNamedElement)?.namespaces
+            if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
+                return false
+            }
+        }
+        if (originalProcessor.acceptsName(entry.name) && entry.name != "_") {
+            val newNs = (entry.element as? RsNamedElement)?.namespaces
+            if (newNs != null) {
+                currScope[entry.name] = prevNs?.let { it + newNs } ?: newNs
+            }
+        }
+        return originalProcessor.process(entry)
+    }
+    override fun toString(): String = "ShadowingAndUpdateScopeProcessor($originalProcessor, ns = $ns)"
+}
+
+fun <T : ScopeEntry> RsResolveProcessorBase<T>.wrapWithShadowingProcessorAndImmediatelyUpdateScope(
+    prevScope: MutableMap<String, Set<Namespace>>,
+    ns: Set<Namespace>,
+): RsResolveProcessorBase<T> {
+    return ShadowingAndImmediatelyUpdateScopeProcessor(this, prevScope, ns)
+}
+
+private class ShadowingAndImmediatelyUpdateScopeProcessor<in T : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val prevScope: MutableMap<String, Set<Namespace>>,
+    private val ns: Set<Namespace>,
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: T): Boolean {
+        if (entry.name in prevScope) return false
+        val result = originalProcessor.process(entry)
+        if (originalProcessor.acceptsName(entry.name)) {
+            prevScope[entry.name] = ns
+        }
+        return result
+    }
+    override fun toString(): String = "ShadowingAndImmediatelyUpdateScopeProcessor($originalProcessor, ns = $ns)"
 }
 
 typealias RsMethodResolveProcessor = RsResolveProcessorBase<MethodResolveVariant>
@@ -325,12 +463,12 @@ fun processAllWithSubst(
 }
 
 fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {
-    return createProcessor(processor.names) { e ->
+    return processor.wrapWithFilter { e ->
         val element = e.element
-        if (element is RsFunction && element.isTest) return@createProcessor false
-        if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@createProcessor false
+        if (element is RsFunction && element.isTest) return@wrapWithFilter false
+        if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf) return@wrapWithFilter false
 
-        processor.process(e)
+        true
     }
 }
 
@@ -340,36 +478,36 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
         return processor
     }
     val mod = context.containingMod
-    return createProcessor(processor.names) {
+    return processor.wrapWithFilter {
         val element = it.element
-        if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
-        if (!it.isVisibleFrom(context)) return@createProcessor false
+        if (element is RsVisible && !element.isVisibleFrom(mod)) return@wrapWithFilter false
+        if (!it.isVisibleFrom(context)) return@wrapWithFilter false
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod
-        if (isHidden) return@createProcessor false
+        if (isHidden) return@wrapWithFilter false
 
-        processor.process(it)
+        true
     }
 }
 
 fun filterNotAttributeAndDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
-    createProcessor(processor.names) { e ->
+    processor.wrapWithFilter { e ->
         val element = e.element
-        if (element is RsFunction && element.isProcMacroDef && !element.isBangProcMacroDef) return@createProcessor false
-        processor.process(e)
+        if (element is RsFunction && element.isProcMacroDef && !element.isBangProcMacroDef) return@wrapWithFilter false
+        true
     }
 
 fun filterAttributeProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
-    createProcessor(processor.names) { e ->
-        val function = e.element as? RsFunction ?: return@createProcessor false
-        if (!function.isAttributeProcMacroDef) return@createProcessor false
-        processor.process(e)
+    processor.wrapWithFilter { e ->
+        val function = e.element as? RsFunction ?: return@wrapWithFilter false
+        if (!function.isAttributeProcMacroDef) return@wrapWithFilter false
+        true
     }
 
 fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
-    createProcessor(processor.names) { e ->
-        val function = e.element as? RsFunction ?: return@createProcessor false
-        if (!function.isCustomDeriveProcMacroDef) return@createProcessor false
-        processor.process(e)
+    processor.wrapWithFilter { e ->
+        val function = e.element as? RsFunction ?: return@wrapWithFilter false
+        if (!function.isCustomDeriveProcMacroDef) return@wrapWithFilter false
+        true
     }

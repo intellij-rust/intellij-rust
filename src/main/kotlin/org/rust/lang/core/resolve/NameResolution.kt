@@ -54,7 +54,6 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
-import org.rust.stdext.intersects
 import org.rust.stdext.withPrevious
 
 // IntelliJ Rust name resolution algorithm.
@@ -115,8 +114,8 @@ fun processFieldExprResolveVariants(
     val autoderef = lookup.coercionSequence(receiverType)
     for (ty in autoderef) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
-        val processor = createProcessor(originalProcessor.names) {
-            originalProcessor.process(FieldResolveVariant(it.name, it.element, ty, autoderef.steps()))
+        val processor = originalProcessor.wrapWithMapper { it: ScopeEntry ->
+            FieldResolveVariant(it.name, it.element, ty, autoderef.steps())
         }
         if (processFieldDeclarations(ty.item, processor)) return true
     }
@@ -399,16 +398,16 @@ private fun RsResolveProcessor.withIgnoringSecondaryCSelf(): RsResolveProcessor 
 
     var hasSelfItem = false
 
-    return createProcessor(names) {
+    return wrapWithFilter {
         if (it.name == "Self") {
             if (hasSelfItem) {
                 false
             } else {
                 hasSelfItem = true
-                process(it)
+                true
             }
         } else {
-            process(it)
+            true
         }
     }
 }
@@ -435,14 +434,13 @@ private fun processQualifiedPathResolveVariants(
 
     if (resolvedQualifier != null) {
         val shadowingProcessor = if (primitiveType != null) {
-            createProcessor(processor.names) { e ->
+            processor.wrapWithBeforeProcessingHandler { e ->
                 if (processor.acceptsName(e.name)) {
                     val element = e.element
                     if (element is RsNamedElement) {
                         prevScope[e.name] = element.namespaces
                     }
                 }
-                processor.process(e)
             }
         } else {
             processor
@@ -710,15 +708,17 @@ fun processPatBindingResolveVariants(
         }
     }
 
-    val processor = createProcessor(originalProcessor.names) { entry ->
-        originalProcessor.lazy(entry.name) {
+    val processor = originalProcessor.wrapWithFilter { entry ->
+        if (originalProcessor.acceptsName(entry.name)) {
             val element = entry.element
             val isConstant = element.isConstantLike
             val isPathOrDestructable = when (element) {
                 is RsMod, is RsEnumItem, is RsEnumVariant, is RsStructItem -> true
                 else -> false
             }
-            if (isConstant || (isCompletion && isPathOrDestructable)) element else null
+            isConstant || (isCompletion && isPathOrDestructable)
+        } else {
+            false
         }
     }
     return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES, processor)
@@ -847,12 +847,8 @@ fun processProcMacroResolveVariants(
 ): Boolean {
     val qualifier = path.qualifier
 
-    val processor = createProcessor(originalProcessor.names) {
-        if (it.element !is RsMacroDefinitionBase) {
-            originalProcessor.process(it)
-        } else {
-            false
-        }
+    val processor = originalProcessor.wrapWithFilter {
+        it.element !is RsMacroDefinitionBase
     }
     return if (qualifier == null) {
         processMacroCallVariantsInScope(path, ignoreLegacyMacros = true, processor)
@@ -1487,13 +1483,8 @@ private fun processLexicalDeclarations(
         // Rust allows to defined several bindings in single pattern to the same name,
         // but they all must bind the same variables, hence we can inspect only the first one.
         // See https://github.com/rust-lang/rfcs/blob/master/text/2535-or-patterns.md
-        val patternProcessor = createProcessor(processor.names) { e ->
-            if (e.name !in alreadyProcessedNames) {
-                alreadyProcessedNames += e.name
-                processor.process(e)
-            } else {
-                false
-            }
+        val patternProcessor = processor.wrapWithFilter { e ->
+            alreadyProcessedNames.add(e.name) // Process element if it is not in the set
         }
 
         return PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java).any { binding ->
@@ -1511,13 +1502,7 @@ private fun processLexicalDeclarations(
     ): Boolean {
         if (expr == null || expr == cameFrom) return false
 
-        val shadowingProcessor = createProcessor(processor.names) { e ->
-            (e.name !in prevScope) && processor.process(e).also {
-                if (processor.acceptsName(e.name)) {
-                    prevScope[e.name] = VALUES
-                }
-            }
-        }
+        val shadowingProcessor = processor.wrapWithShadowingProcessorAndImmediatelyUpdateScope(prevScope, VALUES)
 
         fun process(expr: RsExpr): Boolean {
             when (expr) {
@@ -1594,13 +1579,7 @@ private fun processLexicalDeclarations(
             // ```
             val prevScope = hashMapOf<String, Set<Namespace>>()
             if (Namespace.Values in ns) {
-                val shadowingProcessor = createProcessor(processor.names) { e ->
-                    (e.name !in prevScope) && processor.process(e).also {
-                        if (processor.acceptsName(e.name)) {
-                            prevScope[e.name] = VALUES
-                        }
-                    }
-                }
+                val shadowingProcessor = processor.wrapWithShadowingProcessorAndImmediatelyUpdateScope(prevScope, VALUES)
 
                 val letDecls = mutableListOf<RsLetDecl>()
                 val stmts = when (scope) {
@@ -1758,22 +1737,7 @@ inline fun processWithShadowingAndUpdateScope(
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val currScope = mutableMapOf<String, Set<Namespace>>()
-    val shadowingProcessor = createProcessor(processor.names) { e ->
-        val prevNs = if (e.name != "_") prevScope[e.name] else null
-        if (prevNs != null) {
-            val newNs = (e.element as? RsNamedElement)?.namespaces
-            if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
-                return@createProcessor false
-            }
-        }
-        if (processor.acceptsName(e.name) && e.name != "_") {
-            val newNs = (e.element as? RsNamedElement)?.namespaces
-            if (newNs != null) {
-                currScope[e.name] = prevNs?.let { it + newNs } ?: newNs
-            }
-        }
-        processor.process(e)
-    }
+    val shadowingProcessor = processor.wrapWithShadowingProcessorAndUpdateScope(prevScope, currScope, ns)
     return try {
         f(shadowingProcessor)
     } finally {
@@ -1784,16 +1748,11 @@ inline fun processWithShadowingAndUpdateScope(
 inline fun processWithShadowing(
     prevScope: Map<String, Set<Namespace>>,
     ns: Set<Namespace>,
-    originalProcessor: RsResolveProcessor,
+    processor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
-    val processor = createProcessor(originalProcessor.names) { e ->
-        val prevNs = prevScope[e.name]
-        if (e.name == "_" || prevNs == null) return@createProcessor originalProcessor.process(e)
-        val newNs = (e.element as? RsNamedElement)?.namespaces
-        (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor.process(e)
-    }
-    return f(processor)
+    val shadowingProcessor = processor.wrapWithShadowingProcessor(prevScope, ns)
+    return f(shadowingProcessor)
 }
 
 fun findPrelude(element: RsElement): RsMod? {
