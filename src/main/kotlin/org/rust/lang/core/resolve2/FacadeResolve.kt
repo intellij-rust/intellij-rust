@@ -60,7 +60,7 @@ fun processItemDeclarationsUsingModInfo(
             for (visItem in visItems) {
                 if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
                 if (namespace == Namespace.Types && visItem.visibility.isInvisible && name in defMap.externPrelude) continue
-                val visibilityFilter = visItem.visibility.createFilter(info)
+                val visibilityFilter = visItem.visibility.createFilter()
                 for (element in visItem.toPsi(info, namespace)) {
                     if (!elements.add(element)) continue
                     if (processor(name, element, visibilityFilter)) return true
@@ -72,7 +72,7 @@ fun processItemDeclarationsUsingModInfo(
     if (processor.names == null && Namespace.Types in ns) {
         for ((traitPath, traitVisibility) in modData.unnamedTraitImports) {
             val trait = VisItem(traitPath, traitVisibility)
-            val visibilityFilter = traitVisibility.createFilter(info)
+            val visibilityFilter = traitVisibility.createFilter()
             for (traitPsi in trait.toPsi(info, Namespace.Types)) {
                 if (processor("_", traitPsi, visibilityFilter)) return true
             }
@@ -156,7 +156,7 @@ private fun ModData.processScopedMacros(
         for (visItem in perNs.macros) {
             if (!filter(name)) continue
             val macro = visItem.scopedMacroToPsi(info) ?: continue
-            val visibilityFilter = visItem.visibility.createFilter(info)
+            val visibilityFilter = visItem.visibility.createFilter()
             if (processor(name, macro, visibilityFilter)) return true
         }
     }
@@ -475,28 +475,32 @@ private fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String
 }
 
 /** Creates filter which determines whether item with [this] visibility is visible from specific [RsMod] */
-private fun Visibility.createFilter(info: RsModInfo): (RsElement) -> VisibilityStatus {
+private fun Visibility.createFilter(): VisibilityFilter {
     if (this is Visibility.Restricted) {
-        val inMod = inMod.toRsMod(info)
-        if (inMod.isNotEmpty()) {
-            return { context ->
-                val modOpenedInEditor = context.containingModOrSelf
-                val visible = inMod.any(modOpenedInEditor.superMods::contains)
-                if (visible) VisibilityStatus.Visible else VisibilityStatus.Invisible
+        val inMod = inMod
+        if (!inMod.isHanging) {
+            return fun(context: RsElement, lazyModInfo: Lazy<RsModInfo?>?): VisibilityStatus {
+                val modOpenedInEditor = if (lazyModInfo != null) {
+                    lazyModInfo.value
+                } else {
+                    getModInfo(context.containingModOrSelf)
+                } ?: return VisibilityStatus.Visible
+                val visible = modOpenedInEditor.modData.parents.contains(inMod)
+                return if (visible) VisibilityStatus.Visible else VisibilityStatus.Invisible
             }
         }
     }
     // cfg-disabled items should resolve only from cfg-disabled modules
     if (this === Visibility.CfgDisabled) {
-        return filter@{ context ->
-            val file = context.containingFile as? RsFile ?: return@filter VisibilityStatus.Visible
+        return fun(context: RsElement, _: Lazy<RsModInfo?>?): VisibilityStatus {
+            val file = context.containingFile as? RsFile ?: return VisibilityStatus.Visible
             // ignore doc test crates
-            val crate = file.containingCrate as? CargoBasedCrate ?: return@filter VisibilityStatus.Visible
+            val crate = file.containingCrate as? CargoBasedCrate ?: return VisibilityStatus.Visible
             val isDeeplyEnabledByCfg = context.isEnabledByCfg(crate) && file.isDeeplyEnabledByCfg
-            if (isDeeplyEnabledByCfg) VisibilityStatus.CfgDisabled else VisibilityStatus.Visible
+            return if (isDeeplyEnabledByCfg) VisibilityStatus.CfgDisabled else VisibilityStatus.Visible
         }
     }
-    return { VisibilityStatus.Visible }
+    return { _, _ -> VisibilityStatus.Visible }
 }
 
 private fun VisItem.scopedMacroToPsi(info: RsModInfo): RsNamedElement? {
