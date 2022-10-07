@@ -240,7 +240,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val referenceName = qualifier.referenceName ?: return
         val itemToCandidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
             .groupBy { it.qualifiedNamedItem.item }
-        for ((_, candidates) in itemToCandidates) {
+        for ((item, candidates) in itemToCandidates) {
+            if (item is RsMod && item.queryAttributes.deprecatedAttribute != null) continue
             // Here all use path resolves to the same item, so we can just use the first of them
             val firstUsePath = candidates.first().info.usePath
 

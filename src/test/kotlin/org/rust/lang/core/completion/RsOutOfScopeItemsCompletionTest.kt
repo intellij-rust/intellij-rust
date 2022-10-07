@@ -568,6 +568,16 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test don't suggest deprecated modules`() = doTestNoCompletion("""
+        fn main() {
+            inn/*caret*/
+        }
+        mod mod1 {
+            #[deprecated]
+            pub mod inner {}
+        }
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

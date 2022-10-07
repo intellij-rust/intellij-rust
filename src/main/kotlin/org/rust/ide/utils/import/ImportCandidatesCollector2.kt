@@ -75,8 +75,12 @@ object ImportCandidatesCollector2 {
         val itemsPaths = modPaths
             .flatMap { context.getAllItemPathsInMod(it, nameToPriority::containsKey) }
         return context.convertToCandidates(itemsPaths)
-            /** we need this filter in addition to [hasVisibleItemInRootScope] because there can be local imports */
-            .filter { it.qualifiedNamedItem.item !in processedElements[it.qualifiedNamedItem.itemName] }
+            .filter {
+                val item = it.qualifiedNamedItem.item
+                /** we need this filter in addition to [hasVisibleItemInRootScope] because there can be local imports */
+                item !in processedElements[it.qualifiedNamedItem.itemName]
+                    && (item !is RsMod || item.queryAttributes.deprecatedAttribute == null)
+            }
             .sortedBy { nameToPriority[it.qualifiedNamedItem.itemName] }
     }
 
