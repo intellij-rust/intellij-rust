@@ -100,7 +100,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
     ) {
         val parent = element.parent
         when {
-            parent is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
+            parent is RsMacroCall -> {
+                val filtered = filterNotAttributeAndDeriveProcMacros(processor)
+                processMacroCallPathResolveVariants(element, true, filtered)
+            }
             parent is RsMetaItem -> {
                 // Derive is handled by [RsDeriveCompletionProvider]
                 if (!RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
@@ -115,6 +118,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     addProcessedPathName(processor, processedPathElements),
                     lookup
                 )
+                filtered = filterNotAttributeAndDeriveProcMacros(filtered)
                 // Filters are applied in reverse order (the last filter is applied first)
                 val filters = listOf(
                     ::filterCompletionVariantsByVisibility,
