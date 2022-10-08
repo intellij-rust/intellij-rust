@@ -29,35 +29,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
 
             override fun visitPath(path: RsPath) {
-                if (path.reference == null) return
-
-                val rootPathParent = path.rootPath().parent
-                if (rootPathParent is RsMetaItem) {
-                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isFullyEnabled()) return
-                }
-
-                if (path.isInsideDocLink) return
-
-                val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
-                val qualifier = path.qualifier
-
-                val context = when {
-                    qualifier == null && isPathUnresolved -> AutoImportFix.findApplicableContext(path)
-                    qualifier != null && isPathUnresolved -> {
-                        // There is not sense to highlight path as unresolved
-                        // if qualifier cannot be resolved as well
-                        if (qualifier.resolveStatus != PathResolveStatus.RESOLVED) return
-                        if (qualifier.reference?.multiResolve()?.let { it.size > 1 } == true) return
-                        null
-                    }
-                    // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
-                    // the view of the rust compiler. Specifically we resolve associated items even if corresponding
-                    // trait is not in the scope, so here we suggest importing such traits
-                    (qualifier != null || path.typeQual != null) && !isPathUnresolved ->
-                        AutoImportFix.findApplicableContextForAssocItemPath(path)
-                    else -> null
-                }
-
+                val (isPathUnresolved, context) = processPath(path) ?: return
                 if (isPathUnresolved || context != null) {
                     holder.registerProblem(path, context)
                 }
@@ -88,9 +60,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         val candidates = context?.candidates
         if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
 
-        if (element.containingCrate.hasCyclicDevDependencies && element.isUnderCfgTest) {
-            return
-        }
+        if (element.shouldIgnoreUnresolvedReference()) return
 
         val referenceName = element.referenceName
         val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
@@ -107,6 +77,42 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
     override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
         addCheckbox("Ignore unresolved references without quick fix", "ignoreWithoutQuickFix")
+    }
+
+    companion object {
+        data class PathInfo(val isPathUnresolved: Boolean, val context: AutoImportFix.Context?)
+
+        fun processPath(path: RsPath): PathInfo? {
+            if (path.reference == null) return null
+
+            val rootPathParent = path.rootPath().parent
+            if (rootPathParent is RsMetaItem) {
+                if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isFullyEnabled()) return null
+            }
+
+            if (path.isInsideDocLink) return null
+
+            val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
+            val qualifier = path.qualifier
+
+            val context = when {
+                qualifier == null && isPathUnresolved -> AutoImportFix.findApplicableContext(path)
+                qualifier != null && isPathUnresolved -> {
+                    // There is not sense to highlight path as unresolved
+                    // if qualifier cannot be resolved as well
+                    if (qualifier.resolveStatus != PathResolveStatus.RESOLVED) return null
+                    if (qualifier.reference?.multiResolve()?.let { it.size > 1 } == true) return null
+                    null
+                }
+                // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
+                // the view of the rust compiler. Specifically we resolve associated items even if corresponding
+                // trait is not in the scope, so here we suggest importing such traits
+                (qualifier != null || path.typeQual != null) && !isPathUnresolved ->
+                    AutoImportFix.findApplicableContextForAssocItemPath(path)
+                else -> null
+            }
+            return PathInfo(isPathUnresolved, context)
+        }
     }
 }
 
@@ -127,3 +133,6 @@ private fun createQuickFixes(
     }
     return fixes
 }
+
+fun RsElement.shouldIgnoreUnresolvedReference(): Boolean =
+    containingCrate.hasCyclicDevDependencies && isUnderCfgTest
