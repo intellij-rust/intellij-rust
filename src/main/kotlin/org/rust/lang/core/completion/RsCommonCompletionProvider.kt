@@ -269,8 +269,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         scopeEntry: ScopeEntry,
         context: RsCompletionContext,
         candidate: ImportCandidate
-    ): LookupElement {
-        val lookupElement = createLookupElement(
+    ): RsImportLookupElement {
+        return createLookupElement(
             scopeEntry = scopeEntry,
             context = context,
             locationString = candidate.info.usePath,
@@ -286,14 +286,6 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 }
             }
         ).withImportCandidate(candidate)
-
-        return if (context.isSimplePath && scopeEntry.element is RsMod) {
-            // TODO Use a weigher instead of a priority.
-            // TODO Consider dispreferring modules in other cases (not only auto-import)
-            PrioritizedLookupElement.withPriority(lookupElement, -1000.0)
-        } else {
-            lookupElement
-        }
     }
 
     private fun isInSameRustMod(element1: PsiElement, element2: PsiElement): Boolean =
