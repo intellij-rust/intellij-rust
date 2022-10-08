@@ -1211,8 +1211,6 @@
                      Run Tool Window instead of raw console"/>
         <registryKey key="org.rust.macros.proc.timeout" defaultValue="5000" restartRequired="false"
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
-        <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="true" restartRequired="false"
-                     description="Expand macros in parallel"/>
         <registryKey key="org.rust.external.linter.max.duration" defaultValue="3000" restartRequired="false"
                      description="Show notification warning if the external linter is running longer than the set value (ms)"/>
         <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="false" restartRequired="false"
