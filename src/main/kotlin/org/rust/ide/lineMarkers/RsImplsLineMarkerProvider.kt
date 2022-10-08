@@ -39,7 +39,7 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
             // if (query.isEmptyQuery) return null
             val query = implsQuery(el) ?: continue
             val targets: NotNullLazyValue<Collection<PsiElement>> = NotNullLazyValue.createValue { query.findAll() }
-            val info = ImplsGutterIconBuilder(RsIcons.IMPLEMENTED)
+            val info = ImplsGutterIconBuilder(el.text, RsIcons.IMPLEMENTED)
                 .setTargets(targets)
                 .setTooltipText("Has implementations")
                 .setCellRenderer { RsGoToImplRenderer() }

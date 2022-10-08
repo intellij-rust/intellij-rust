@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import javax.swing.Icon
 
-class ImplsGutterIconBuilder(icon: Icon) : ImplsGutterIconBuilderBase(icon) {
+class ImplsGutterIconBuilder(elementName: String, icon: Icon) : ImplsGutterIconBuilderBase(elementName, icon) {
     override fun createGutterIconRenderer(
         pointers: NotNullLazyValue<List<SmartPsiElementPointer<*>>>,
         renderer: Computable<PsiElementListCellRenderer<*>>,

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
@@ -21,7 +22,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
 
-abstract class ImplsGutterIconBuilderBase(icon: Icon) :
+abstract class ImplsGutterIconBuilderBase(private val elementName: String, icon: Icon) :
     NavigationGutterIconBuilder<PsiElement>(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER) {
 
     protected fun createGutterIconRendererInner(
@@ -34,6 +35,7 @@ abstract class ImplsGutterIconBuilderBase(icon: Icon) :
             emptyText = myEmptyText,
             pointers = pointers,
             cellRenderer = renderer,
+            elementName = elementName,
             alignment = myAlignment,
             icon = myIcon,
             tooltipText = myTooltipText,
@@ -46,18 +48,19 @@ abstract class ImplsGutterIconBuilderBase(icon: Icon) :
         emptyText: String?,
         pointers: NotNullLazyValue<List<SmartPsiElementPointer<*>>>,
         cellRenderer: Computable<PsiElementListCellRenderer<*>>,
+        private val elementName: String,
         private val alignment: Alignment,
         private val icon: Icon,
         private val tooltipText: String?,
         private val empty: Boolean
-    ) : NavigationGutterIconRenderer(popupTitle, emptyText, cellRenderer, pointers) {
+    ) : NavigationGutterIconRenderer(popupTitle, emptyText, cellRenderer, pointers, /* computeTargetsInBackground = */ !isUnitTestMode) {
         override fun isNavigateAction(): Boolean = !empty
         override fun getIcon(): Icon = icon
         override fun getTooltipText(): String? = tooltipText
         override fun getAlignment(): Alignment = alignment
 
-        override fun navigate(event: MouseEvent?, elt: PsiElement?) {
-            if (event == null || elt == null) return
+        override fun navigateToItems(event: MouseEvent?) {
+            if (event == null) return
 
             val targets = targetElements.filterIsInstance<NavigatablePsiElement>().toTypedArray()
             val renderer = myCellRenderer.compute()
@@ -66,9 +69,9 @@ abstract class ImplsGutterIconBuilderBase(icon: Icon) :
 
             if (isUnitTestMode) {
                 val renderedItems = targets.map(renderer::getElementText)
-                elt.putUserData(RsImplsLineMarkerProvider.RENDERED_IMPLS, renderedItems)
+                (event as? UserDataHolder)?.putUserData(RsImplsLineMarkerProvider.RENDERED_IMPLS, renderedItems)
             } else {
-                val escapedName = StringUtil.escapeXmlEntities(elt.text)
+                val escapedName = StringUtil.escapeXmlEntities(elementName)
                 @Suppress("DialogTitleCapitalization")
                 PsiElementListNavigator.openTargets(
                     event,
