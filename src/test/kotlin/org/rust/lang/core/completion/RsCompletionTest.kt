@@ -701,8 +701,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod1::mod2::foo!(/*caret*/)
     """)
 
-    // TODO Complete `foo3` as well
-    fun `test complete out-of-scope modules at top-level`() = checkContainsCompletion("foo1", """
+    fun `test no items completion at top-level`() = checkNoCompletion("""
         mod inner {
             pub mod foo1 {}
             pub fn foo2() {}
