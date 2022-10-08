@@ -95,7 +95,7 @@ class ChangeReturnTypeFix(
         private fun findCallableOwner(element: PsiElement): RsFunctionOrLambda? = element.contextStrict()
 
         fun createIfCompatible(element: RsElement, actualTy: Ty): ChangeReturnTypeFix? {
-            if (element.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
+            if (element.containingCrate.origin != PackageOrigin.WORKSPACE) return null
 
             val owner = findCallableOwner(element)
             val isOverriddenFn = owner is RsFunction && owner.superItem != null

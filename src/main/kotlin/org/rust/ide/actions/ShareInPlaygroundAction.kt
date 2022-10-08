@@ -27,7 +27,6 @@ import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.USER_AGENT
 import org.rust.lang.core.psi.RsFile
@@ -73,7 +72,7 @@ class ShareInPlaygroundAction : DumbAwareAction() {
             if (!confirmShare(file, hasSelection)) return
 
             val channel = file.cargoProject?.rustcInfo?.version?.channel?.channel ?: "stable"
-            val edition = (file.crate?.edition ?: Edition.DEFAULT).presentation
+            val edition = file.crate.edition.presentation
 
             object : Task.Backgroundable(project, RsBundle.message("action.Rust.ShareInPlayground.progress.title")) {
 

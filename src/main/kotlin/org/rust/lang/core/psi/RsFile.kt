@@ -37,13 +37,17 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
+import org.rust.lang.core.crate.impl.FakeDetachedCrate
+import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.MacroExpansionFileSystem
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve2.DefMapService
 import org.rust.lang.core.resolve2.ModData
 import org.rust.lang.core.resolve2.findModDataFor
 import org.rust.lang.core.resolve2.toRsMod
@@ -77,7 +81,7 @@ class RsFile(
 
     val cargoProject: CargoProject? get() = cachedData.cargoProject
     val cargoWorkspace: CargoWorkspace? get() = cachedData.cargoWorkspace
-    val crate: Crate? get() = cachedData.crate
+    val crate: Crate get() = cachedData.crate
     val crates: List<Crate> get() = cachedData.crates
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
@@ -93,7 +97,10 @@ class RsFile(
             forcedCachedData?.let { return it() }
 
             val originalFile = originalFile
-            if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+            if (originalFile != this) {
+                return (originalFile as? RsFile)?.cachedData
+                    ?: CachedData(crate = FakeInvalidCrate(project))
+            }
 
             val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
@@ -103,7 +110,7 @@ class RsFile(
                 val modificationTracker: Any = when {
                     /** See [rustStructureOrAnyPsiModificationTracker] */
                     virtualFile is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
-                    value.crate?.origin == PackageOrigin.WORKSPACE -> project.rustStructureModificationTracker
+                    value.crate.origin == PackageOrigin.WORKSPACE -> project.rustStructureModificationTracker
                     else -> project.rustPsiManager.rustStructureModificationTrackerInDependencies
                 }
                 CachedValueProvider.Result(value, modificationTracker)
@@ -113,12 +120,14 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        val virtualFile = virtualFile ?: return EMPTY_CACHED_DATA
+        val virtualFile = virtualFile
+            ?: return CachedData(crate = FakeDetachedCrate(this, id = -1, dependencies = emptyList()))
 
         if (virtualFile.fileSystem is MacroExpansionFileSystem) {
             val crateId = project.macroExpansionManager.getCrateForExpansionFile(virtualFile)
-                ?: return EMPTY_CACHED_DATA // Possibly an expansion file from another IDEA project
-            val crate = project.crateGraph.findCrateById(crateId) ?: return EMPTY_CACHED_DATA
+                ?: return CachedData(crate = FakeInvalidCrate(project)) // Possibly an expansion file from another IDEA project
+            val crate = project.crateGraph.findCrateById(crateId)
+                ?: return CachedData(crate = FakeInvalidCrate(project))
             return CachedData(
                 crate.cargoProject,
                 crate.cargoWorkspace,
@@ -136,7 +145,8 @@ class RsFile(
         if (modData != null) {
             val crateGraph = project.crateGraph
             val crates = allModData.mapNotNull { crateGraph.findCrateById(it.crate) }
-            val crate = crates.find { it.id == modData.crate } ?: return EMPTY_CACHED_DATA
+            val crate = crates.find { it.id == modData.crate }
+                ?: return CachedData(crate = FakeInvalidCrate(project))
             return CachedData(
                 crate.cargoProject,
                 crate.cargoWorkspace,
@@ -154,7 +164,7 @@ class RsFile(
             // Doctest injection file should be a crate root to resolve absolute paths inside injection.
             // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
             // we should be able to resolve it by an absolute path
-            val doctestCrate = cached.crate?.let { DoctestCrate.inCrate(it, this) }
+            val doctestCrate = DoctestCrate.inCrate(cached.crate, this)
             return cached.copy(
                 crateRoot = this,
                 crate = doctestCrate,
@@ -165,9 +175,11 @@ class RsFile(
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
         // (usually lib.rs or main.rs). It's anyway useful to know cargoProject&workspace in this case
-        val cargoProject = project.cargoProjects.findProjectForFile(virtualFile) ?: return EMPTY_CACHED_DATA
-        val workspace = cargoProject.workspace ?: return CachedData(cargoProject)
-        return CachedData(cargoProject, workspace)
+        val crate = FakeDetachedCrate(this, DefMapService.getNextNonCargoCrateId(), dependencies = emptyList())
+
+        val cargoProject = project.cargoProjects.findProjectForFile(virtualFile) ?: return CachedData(crate = crate)
+        val workspace = cargoProject.workspace ?: return CachedData(cargoProject, crate =  crate)
+        return CachedData(cargoProject, workspace, crate = crate)
     }
 
     /** Very internal utility, do not use */
@@ -310,13 +322,11 @@ private data class CachedData(
     val cargoProject: CargoProject? = null,
     val cargoWorkspace: CargoWorkspace? = null,
     val crateRoot: RsFile? = null,
-    val crate: Crate? = null,
+    val crate: Crate,
     val crates: List<Crate> = emptyList(),
     val isDeeplyEnabledByCfg: Boolean = true,
     val isIncludedByIncludeMacro: Boolean = false,
 )
-
-private val EMPTY_CACHED_DATA: CachedData = CachedData()
 
 // A rust file can be included in multiple places, but currently IntelliJ Rust works properly only with one
 // inclusion point, so we have to choose one
@@ -354,7 +364,7 @@ val RsElement.isValidProjectMemberAndContainingCrate: Triple<Boolean, Crate?, Li
     get() {
         val file = containingRsFileSkippingCodeFragments ?: return Triple(true, null, emptyList())
         if (!file.isDeeplyEnabledByCfg) return Triple(false, null, emptyList())
-        val crate = file.crate ?: return Triple(false, null, emptyList())
+        val crate = file.crate.asNotFake ?: return Triple(false, null, emptyList())
         if (!existsAfterExpansion(crate)) return Triple(false, null, emptyList())
 
         return Triple(true, crate, file.crates)

@@ -448,7 +448,7 @@ fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg
     val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return null
     val macroName = macro.name ?: return null
 
-    val crate = macro.containingCrate ?: return null
+    val crate = macro.containingCrate
     val formatMacroArgs = formatMacro.formatMacroArgument?.formatMacroArgList
 
     if (crate.origin != PackageOrigin.STDLIB || formatMacroArgs === null) return null
@@ -464,7 +464,7 @@ fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg
         // panic macro handles any literal (even with `{}`) if it's single argument in 2015 and 2018 editions,
         // but starting with edition 2021 the first string literal is always format string
         "panic" -> {
-            val edition = formatMacro.containingCrate?.edition ?: CargoWorkspace.Edition.DEFAULT
+            val edition = formatMacro.containingCrate.edition
             if (formatMacroArgs.size < 2 && edition < CargoWorkspace.Edition.EDITION_2021) null else 0
         }
         "write",

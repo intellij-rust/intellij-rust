@@ -18,6 +18,7 @@ import com.intellij.psi.search.UsageSearchContext
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveImportFix
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
@@ -137,7 +138,7 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
 }
 
 private fun isApplicableForUseItem(item: RsUseItem): Boolean {
-    val crate = item.containingCrate ?: return false
+    val crate = item.containingCrate
     if (item.visibility == RsVisibility.Public && crate.kind.isLib) return false
     if (!item.existsAfterExpansion(crate)) return false
     return true
@@ -237,8 +238,8 @@ private fun isImportNeededForReference(
 
 private fun RsMod.hasTransitiveGlobImportTo(target: RsMod): Boolean {
     if (this == target) return true
-    val crateId = containingCrate?.id ?: return false
-    if (crateId != target.containingCrate?.id) {
+    val crateId = containingCrate.asNotFake?.id ?: return false
+    if (crateId != target.containingCrate.id) {
         // we consider `pub` imports as always used,
         // so any possible usage of import will be in same crate
         return false

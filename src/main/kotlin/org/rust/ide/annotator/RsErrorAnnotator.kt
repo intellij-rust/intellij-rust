@@ -612,7 +612,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkUnstableAttribute(ref: RsReferenceElement, holder: RsAnnotationHolder) {
         val startElement = ref.referenceNameElement?.takeIf { it.elementType == IDENTIFIER } ?: return
-        if (ref.containingCrate?.origin == PackageOrigin.STDLIB) return
+        if (ref.containingCrate.origin == PackageOrigin.STDLIB) return
         val element = ref.reference?.resolve() as? RsOuterAttributeOwner ?: return
         for (attr in element.queryAttributes.unstableAttributes) {
             val metaItems = attr.metaItemArgs?.metaItemList ?: continue

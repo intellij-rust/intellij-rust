@@ -21,11 +21,8 @@ import org.rust.lang.core.psi.ext.getChildModule
 import org.rust.openapiext.getCachedOrCompute
 import java.lang.ref.SoftReference
 
-fun Project.getDetachedModInfo(scope: RsMod): RsModInfo? {
-    val rootMod = scope.containingFile as? RsFile ?: return null
-    val crate = FakeDetachedCrate(rootMod, DefMapService.getNextNonCargoCrateId(), dependencies = emptyList())
-    return getModInfoInDetachedCrate(scope, crate)
-}
+fun Project.getDetachedModInfo(scope: RsMod, crate: FakeDetachedCrate): RsModInfo? =
+    getModInfoInDetachedCrate(scope, crate)
 
 fun Project.getDoctestModInfo(scope: RsMod, crate: DoctestCrate): RsModInfo? =
     getModInfoInDetachedCrate(scope, crate)

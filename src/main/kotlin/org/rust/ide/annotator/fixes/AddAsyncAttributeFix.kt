@@ -44,7 +44,7 @@ class AddAsyncRecursionAttributeFix(function: RsFunction): LocalQuickFixAndInten
         }
 
         private fun hasAsyncRecursionDependency(context: RsElement): Boolean {
-            val crate = context.containingCrate ?: return false
+            val crate = context.containingCrate
             return crate.dependencies.any { it.normName == "async_recursion" }
         }
     }

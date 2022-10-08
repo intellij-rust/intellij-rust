@@ -86,7 +86,7 @@ class RsChangeSignatureHandler : ChangeSignatureHandler {
         @Suppress("UnstableApiUsage")
         @DialogMessage
         private fun checkFunction(function: RsFunction): String? {
-            if (function.containingCrate?.origin != PackageOrigin.WORKSPACE) {
+            if (function.containingCrate.origin != PackageOrigin.WORKSPACE) {
                 return "Cannot change signature of function in a foreign crate"
             }
             if (function.valueParameters != function.rawValueParameters) {

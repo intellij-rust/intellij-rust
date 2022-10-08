@@ -20,6 +20,8 @@ import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
+import org.rust.lang.core.crate.impl.FakeDetachedCrate
+import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
@@ -416,7 +418,8 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfo? {
     val crate = when (val crate = scope.containingCrate) {
         is CargoBasedCrate -> crate
         is DoctestCrate -> return project.getDoctestModInfo(scope, crate)
-        null -> return project.getDetachedModInfo(scope)
+        is FakeDetachedCrate -> return project.getDetachedModInfo(scope, crate)
+        is FakeInvalidCrate -> return null
         else -> error("unreachable")
     }
     testAssert { crate.rootModFile == null || shouldIndexFile(project, crate.rootModFile) }
@@ -514,7 +517,7 @@ private fun VisItem.scopedMacroToPsi(containingScope: RsItemsOwner): RsNamedElem
         .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
     if (legacyMacros.isNotEmpty()) return legacyMacros.singlePublicOrFirst()
 
-    if (name !in KNOWN_DERIVABLE_TRAITS || containingScope.containingCrate?.origin != PackageOrigin.STDLIB) {
+    if (name !in KNOWN_DERIVABLE_TRAITS || containingScope.containingCrate.origin != PackageOrigin.STDLIB) {
         items.named[name]
             ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
             ?.let { return it as RsMacro2 }

@@ -59,7 +59,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
         val project = context.project
         if (!project.rustSettings.doctestInjectionEnabled) return
 
-        val crate = context.containingCrate ?: return
+        val crate = context.containingCrate
         if (!crate.areDoctestsEnabled) return // only library targets can have doctests
         val crateName = crate.normName
 
@@ -197,7 +197,7 @@ class DoctestInfo private constructor(
     companion object {
         fun fromCodeFence(codeFence: RsDocCodeFence): DoctestInfo? {
             if (!codeFence.project.rustSettings.doctestInjectionEnabled) return null
-            if (codeFence.containingCrate?.areDoctestsEnabled != true) return null
+            if (!codeFence.containingCrate.areDoctestsEnabled) return null
             if (hasUnbalancedCodeFencesBefore(codeFence)) return null
 
             val lang = codeFence.lang?.text ?: ""

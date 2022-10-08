@@ -59,7 +59,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         globalContext: GlobalInspectionContext,
         problemDescriptionsProcessor: ProblemDescriptionsProcessor
     ) {
-        if (file !is RsFile || file.containingCrate?.origin != PackageOrigin.WORKSPACE) return
+        if (file !is RsFile || file.containingCrate.origin != PackageOrigin.WORKSPACE) return
         val analyzedFiles = globalContext.getUserData(ANALYZED_FILES) ?: return
         analyzedFiles.add(file)
     }

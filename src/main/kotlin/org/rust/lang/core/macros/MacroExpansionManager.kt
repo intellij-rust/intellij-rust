@@ -51,6 +51,7 @@ import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
+import org.rust.lang.core.crate.impl.FakeCrate
 import org.rust.lang.core.indexing.RsIndexableSetContributor
 import org.rust.lang.core.macros.errors.*
 import org.rust.lang.core.psi.*
@@ -920,7 +921,7 @@ class MacroExpansionManagerWaker : CargoProjectsListener {
 
 private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
     // Most of std macros contain the only `impl`s which are not supported for now, so ignoring them
-    if (call.containingCrate?.origin == PackageOrigin.STDLIB) {
+    if (call.containingCrate.origin == PackageOrigin.STDLIB) {
         return memExpansionResult(call, Err(GetMacroExpansionError.OldEngineStd))
     }
     return expandMacroToMemoryFile(
@@ -933,7 +934,8 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
 private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
     val def = call.resolveToMacroWithoutPsiWithErr()
         .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionError())) }
-    val crate = call.containingCrate ?: return memExpansionResult(call, Err(GetMacroExpansionError.Unresolved))
+    val crate = call.containingCrate
+    if (crate is FakeCrate) return memExpansionResult(call, Err(GetMacroExpansionError.Unresolved))
     val result = FunctionLikeMacroExpander.forCrate(crate).expandMacro(
         def,
         call,

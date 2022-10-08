@@ -115,7 +115,7 @@ private fun RsExpr.getValue(crateOrNull: Crate?): String? {
                 }
                 "env" -> {
                     val expr = macroCall.envMacroArgument?.variableNameExpr as? RsLitExpr ?: return null
-                    val crate = crateOrNull ?: expr.containingCrate ?: return null
+                    val crate = crateOrNull ?: expr.containingCrate
                     when (val variableName = expr.getValue(crate)) {
                         "OUT_DIR" -> crate.outDir?.path
                         else -> {

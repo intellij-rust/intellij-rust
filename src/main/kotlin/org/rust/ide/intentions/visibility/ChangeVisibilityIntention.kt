@@ -45,7 +45,7 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
     companion object {
         fun isValidVisibilityOwner(visible: RsVisibilityOwner): Boolean {
             if (visible is RsEnumVariant) return false
-            if (visible.containingCrate?.origin != PackageOrigin.WORKSPACE) return false
+            if (visible.containingCrate.origin != PackageOrigin.WORKSPACE) return false
 
             val owner = (visible as? RsAbstractable)?.owner
             if (owner is RsAbstractableOwner.Trait || owner?.isTraitImpl == true) return false

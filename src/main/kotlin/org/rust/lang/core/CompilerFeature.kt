@@ -25,6 +25,7 @@ import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.utils.RsDiagnostic
@@ -61,7 +62,7 @@ class CompilerFeature(
             ThreeState.YES -> Unit
         }
 
-        val crate = rsElement.containingCrate ?: return UNKNOWN
+        val crate = rsElement.containingCrate.asNotFake ?: return UNKNOWN
         val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
         val possibleFeatureAttrs = attrs.asSequence()

@@ -21,6 +21,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
+import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.*
@@ -47,16 +48,16 @@ fun PsiFileSystemItem.findCargoProject(): CargoProject? {
 }
 
 fun PsiFileSystemItem.findCargoPackage(): CargoWorkspace.Package? {
-    if (this is RsFile) return this.crate?.cargoTarget?.pkg
+    if (this is RsFile) return this.crate.cargoTarget?.pkg
     val vFile = virtualFile ?: return null
     return project.cargoProjects.findPackageForFile(vFile)
 }
 
 val RsElement.containingCargoTarget: CargoWorkspace.Target?
-    get() = containingCrate?.cargoTarget
+    get() = containingCrate.cargoTarget
 
-val RsElement.containingCrate: Crate?
-    get() = containingRsFileSkippingCodeFragments?.crate
+val RsElement.containingCrate: Crate
+    get() = containingRsFileSkippingCodeFragments?.crate ?: FakeInvalidCrate(project)
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
@@ -98,7 +99,7 @@ val RsElement.isInAsyncContext: Boolean
 
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCrate
-        ?.findDependency(dependencyName)
+        .findDependency(dependencyName)
         ?.rootMod
 }
 
