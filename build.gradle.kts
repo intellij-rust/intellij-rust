@@ -15,7 +15,6 @@ import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
-import java.net.URL
 import kotlin.concurrent.thread
 
 // The same as `--stacktrace` param
@@ -658,34 +657,6 @@ task("runPrettyPrintersTests") {
     }
 }
 
-task("updateCompilerFeatures") {
-    doLast {
-        val file = File("src/main/kotlin/org/rust/lang/core/CompilerFeatures.kt")
-        file.bufferedWriter().use {
-            it.writeln("""
-                /*
-                 * Use of this source code is governed by the MIT license that can be
-                 * found in the LICENSE file.
-                 */
-
-                @file:Suppress("unused")
-
-                package org.rust.lang.core
-
-                import org.rust.lang.core.FeatureState.ACCEPTED
-                import org.rust.lang.core.FeatureState.INCOMPLETE
-                import org.rust.lang.core.FeatureState.ACTIVE
-
-            """.trimIndent())
-            it.writeFeatures("active", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/active.rs")
-            it.writeln()
-            it.writeFeatures("incomplete", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/active.rs")
-            it.writeln()
-            it.writeFeatures("accepted", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/accepted.rs")
-        }
-    }
-}
-
 task("updateCargoOptions") {
     doLast {
         val file = File("src/main/kotlin/org/rust/cargo/util/CargoOptions.kt")
@@ -752,23 +723,6 @@ val $variableName: List<Lint> = listOf(
             "CLIPPY_LINTS"
         )
     }
-}
-
-fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
-    val text = URL(remoteFileUrl).openStream().bufferedReader().readText()
-    val commentRegex = "^/{2,}".toRegex()
-    """((\s*//.*\n)*)\s*\($featureSet, (\w+), (\"\d+\.\d+\.\d+\"), .*\),"""
-        .toRegex(RegexOption.MULTILINE)
-        .findAll(text)
-        .forEach { matcher ->
-            val (comments, _, featureName, version) = matcher.destructured
-            if (comments.isNotEmpty()) {
-                comments.trimIndent().trim().lines().forEach { line ->
-                    writeln(line.replace(commentRegex, "//"))
-                }
-            }
-            writeln("""val ${featureName.toUpperCase()} = CompilerFeature("$featureName", ${featureSet.toUpperCase()}, $version)""")
-        }
 }
 
 fun Writer.writeCargoOptions(baseUrl: String) {
