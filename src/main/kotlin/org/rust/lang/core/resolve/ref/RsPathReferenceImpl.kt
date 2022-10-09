@@ -420,7 +420,7 @@ fun pathPsiSubst(
         }
     }
 
-    val assocTypes = run {
+    val assocTypes: Map<RsTypeAlias, AssocValue> = run {
         if (resolved is RsTraitItem) {
             when (args) {
                 // Iterator<Item=T>
