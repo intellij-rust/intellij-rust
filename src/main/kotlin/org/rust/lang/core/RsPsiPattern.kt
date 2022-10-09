@@ -231,6 +231,13 @@ object RsPsiPattern {
 
     val fieldVisibility: PsiElementPattern.Capture<PsiElement> = namedFieldVisibility or tupleFieldVisibility
 
+    /**
+     * fn foo(a: &'/*here*/static u32) {}
+     */
+    val lifetimeIdentifier: ElementPattern<PsiElement> = psiElement(QUOTE_IDENTIFIER).withParent(
+        psiElement<RsLifetime>()
+    )
+
     private fun identifierStatementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(onStatementBeginning(*startWords))
 
