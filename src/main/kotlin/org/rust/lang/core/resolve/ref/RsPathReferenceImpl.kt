@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.PATH_EXPR
 import org.rust.lang.core.psi.RsElementTypes.TYPE_ARGUMENT_LIST
@@ -174,7 +175,7 @@ class RsPathReferenceImpl(
          */
         override fun invoke(root: RsElement): Any {
             testAssert { root.parent !is RsPathExpr } // Goes through type inference cache
-            val allPaths = root.collectNestedPathsFromRoot(root)
+            val allPaths = collectNestedPathsFromRoot(root)
             if (allPaths.isEmpty()) return emptyList<RsPathResolveResult<RsElement>>()
             val ctx = PathResolutionContext(root, isCompletion = false, null)
             if (allPaths.size == 1) {
@@ -204,6 +205,66 @@ class RsPathReferenceImpl(
     }
 
     companion object {
+        /**
+         * Returns a PSI element considered a "caching root" for the [path]. Usually it is a topmost [RsPath],
+         * e.g. in `Foo<Bar<Baz>>` `Foo` is a caching root for `Bar` and `Baz` paths, so
+         * [getRootCachingElement] returns `Foo` for `Baz`.
+         */
+        @VisibleForTesting
+        fun getRootCachingElement(path: RsPath): RsElement {
+            // Optimization: traversing a stub is much faster than PSI traversing
+            val stub = path.greenStub
+            return if (stub != null) {
+                getRootCachingElementStub(stub)
+            } else {
+                getRootCachingElementPsi(path)
+            }
+        }
+
+        private fun getRootCachingElementPsi(path: RsPath): RsElement {
+            var rootPath = path
+            var parent = path.parent
+            while (parent != null && parent.elementType in TYPE_REFS_AND_TYPE_ARG_LIST) {
+                parent = parent.parent
+                if (parent is RsPath) {
+                    val parentParent = parent.parent
+                    if (parentParent !is RsPathExpr) {
+                        rootPath = parent
+                        parent = parentParent
+                    }
+                }
+            }
+            return rootPath
+        }
+
+        private fun getRootCachingElementStub(path: RsPathStub): RsElement {
+            var rootPath = path
+            var parent = path.parentStub
+            while (parent.stubType in TYPE_REFS_AND_TYPE_ARG_LIST) {
+                parent = parent.parentStub
+                if (parent is RsPathStub) {
+                    val parentParent = parent.parentStub
+                    if (parentParent.stubType != PATH_EXPR) {
+                        rootPath = parent
+                        parent = parentParent
+                    }
+                }
+            }
+            return rootPath.psi
+        }
+
+        private val TYPE_REFS_AND_TYPE_ARG_LIST = TokenSet.orSet(RS_TYPES, tokenSetOf(TYPE_ARGUMENT_LIST))
+
+        /**
+         * Returns all nested [RsPath]s for which [getRootCachingElement] returns [root]
+         */
+        @VisibleForTesting
+        fun collectNestedPathsFromRoot(root: RsElement): List<RsPath> {
+            return root.stubDescendantsOfTypeOrSelf<RsPath>().filter {
+                it.parent !is RsPathExpr && getRootCachingElement(it) == root
+            }
+        }
+
         private fun resolveAllNestedPathsInternal(path: RsPath): Any? {
             val root = getRootCachingElement(path)
             return RsResolveCache.getInstance(path.project)
@@ -219,64 +280,6 @@ class RsPathReferenceImpl(
                 mapOf(path to mapOrList as List<RsPathResolveResult<RsElement>>)
             }
         }
-    }
-}
-
-/**
- * Returns a PSI element considered a "caching root" for the [path]. Usually it is a topmost [RsPath],
- * e.g. in `Foo<Bar<Baz>>` `Foo` is a caching root for `Bar` and `Baz` paths, so
- * [getRootCachingElement] returns `Foo` for `Baz`.
- */
-private fun getRootCachingElement(path: RsPath): RsElement {
-    // Optimization: traversing a stub is much faster than PSI traversing
-    val stub = path.greenStub
-    return if (stub != null) {
-        getRootCachingElementStub(stub)
-    } else {
-        getRootCachingElementPsi(path)
-    }
-}
-
-private fun getRootCachingElementPsi(path: RsPath): RsElement {
-    var rootPath = path
-    var parent = path.parent
-    while (parent != null && parent.elementType in TYPE_REFS_AND_TYPE_ARG_LIST) {
-        parent = parent.parent
-        if (parent is RsPath) {
-            val parentParent = parent.parent
-            if (parentParent !is RsPathExpr) {
-                rootPath = parent
-                parent = parentParent
-            }
-        }
-    }
-    return rootPath
-}
-
-private fun getRootCachingElementStub(path: RsPathStub): RsElement {
-    var rootPath = path
-    var parent = path.parentStub
-    while (parent.stubType in TYPE_REFS_AND_TYPE_ARG_LIST) {
-        parent = parent.parentStub
-        if (parent is RsPathStub) {
-            val parentParent = parent.parentStub
-            if (parentParent.stubType != PATH_EXPR) {
-                rootPath = parent
-                parent = parentParent
-            }
-        }
-    }
-    return rootPath.psi
-}
-
-private val TYPE_REFS_AND_TYPE_ARG_LIST = TokenSet.orSet(RS_TYPES, tokenSetOf(TYPE_ARGUMENT_LIST))
-
-/**
- * Returns all nested [RsPath]s for which [getRootCachingElement] returns [root]
- */
-private fun RsElement.collectNestedPathsFromRoot(root: RsElement): List<RsPath> {
-    return stubDescendantsOfTypeOrSelf<RsPath>().filter {
-        it.parent !is RsPathExpr && getRootCachingElement(it) == root
     }
 }
 
