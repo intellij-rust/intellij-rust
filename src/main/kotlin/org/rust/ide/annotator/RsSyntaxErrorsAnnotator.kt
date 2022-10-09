@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.C_VARIADIC
+import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type

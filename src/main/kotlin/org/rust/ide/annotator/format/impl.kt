@@ -14,7 +14,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.colors.RsColor
 import org.rust.ide.presentation.render
-import org.rust.lang.core.FORMAT_ARGS_CAPTURE
+import org.rust.lang.core.CompilerFeature.Companion.FORMAT_ARGS_CAPTURE
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.startOffset
