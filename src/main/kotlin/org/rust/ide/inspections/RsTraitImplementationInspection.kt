@@ -34,7 +34,7 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
                 // ignore members expanded from macros
                 if (member.containingFile != impl.containingFile) continue
 
-                RsDiagnostic.UnknownMethodInTraitError(member.nameIdentifier!!, member, traitName)
+                RsDiagnostic.UnknownMemberInTraitError(member.nameIdentifier!!, member, traitName)
                     .addToHolder(holder)
             }
 
