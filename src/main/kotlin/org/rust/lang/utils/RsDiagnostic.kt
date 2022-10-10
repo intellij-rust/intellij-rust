@@ -50,6 +50,7 @@ import org.rust.lang.core.CompilerFeature.Companion.C_UNWIND
 import org.rust.lang.core.CompilerFeature.Companion.INTRINSICS
 import org.rust.lang.core.CompilerFeature.Companion.PLATFORM_INTRINSICS
 import org.rust.lang.core.CompilerFeature.Companion.UNBOXED_CLOSURES
+import org.rust.lang.core.CompilerFeature.Companion.WASM_ABI
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -1777,8 +1778,7 @@ val SUPPORTED_CALLING_CONVENTIONS = mapOf(
     "avr-interrupt" to ABI_AVR_INTERRUPT,
     "avr-non-blocking-interrupt" to ABI_AVR_INTERRUPT,
     "C-cmse-nonsecure-call" to ABI_C_CMSE_NONSECURE_CALL,
-    // TODO: update compiler features and use `WASM_ABI` here
-    "wasm" to null,
+    "wasm" to WASM_ABI,
     "system" to null,
     "system-unwind" to C_UNWIND,
     "rust-intrinsic" to INTRINSICS,

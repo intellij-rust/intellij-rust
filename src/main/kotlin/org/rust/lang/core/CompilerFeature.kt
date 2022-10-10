@@ -207,6 +207,7 @@ class CompilerFeature(
         val SLICE_PATTERNS: CompilerFeature get() = get("slice_patterns")
         val START: CompilerFeature get() = get("start")
         val UNBOXED_CLOSURES: CompilerFeature get() = get("unboxed_closures")
+        val WASM_ABI: CompilerFeature get() = get("wasm_abi")
     }
 }
 

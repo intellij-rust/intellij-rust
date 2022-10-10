@@ -4647,7 +4647,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         extern <error descr="avr-interrupt ABI is experimental [E0658]">"avr-interrupt"</error> fn fn19() {}
         extern <error descr="avr-non-blocking-interrupt ABI is experimental [E0658]">"avr-non-blocking-interrupt"</error> fn fn20() {}
         extern <error descr="C-cmse-nonsecure-call ABI is experimental [E0658]">"C-cmse-nonsecure-call"</error> fn fn21() {}
-        extern "wasm" fn fn22() {}
+        extern <error descr="wasm ABI is experimental [E0658]">"wasm"</error> fn fn22() {}
         extern "system" fn fn23() {}
         extern <error descr="system-unwind ABI is experimental [E0658]">"system-unwind"</error> fn fn24() {}
         extern <error descr="rust-intrinsic ABI is experimental [E0658]">"rust-intrinsic"</error> fn fn25() {}
