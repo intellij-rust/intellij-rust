@@ -981,6 +981,24 @@ Cannot change signature of function with cfg-disabled parameters""")
         returnTypeDisplay = referToType("S", findElementInEditor<RsStructItem>())
     }
 
+    fun `test don't import return type when used absolute path`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+        mod bar {
+            fn func/*caret*/() {}
+        }    //^
+    """, """
+        mod foo {
+            pub struct S;
+        }
+        mod bar {
+            fn func/*caret*/() -> crate::foo::S {}
+        }    //^
+    """) {
+        returnTypeDisplay = referToType("crate::foo::S", findElementInEditor<RsFunction>())
+    }
+
     fun `test import new parameter type in different module`() = doTest("""
         mod foo {
             pub struct S;
