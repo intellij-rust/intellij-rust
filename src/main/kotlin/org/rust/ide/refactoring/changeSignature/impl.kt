@@ -123,7 +123,7 @@ private fun changeReturnType(factory: RsPsiFactory, function: RsFunction, config
         if (config.returnType !is TyUnit) {
             val ret = factory.createRetType(config.returnTypeReference.text)
             function.addAfter(ret, function.valueParameterList) as RsRetType
-            RsImportHelper.importTypeReferencesFromTy(function, config.returnType)
+            RsImportHelper.importTypeReferencesFromElement(function, config.returnTypeReference)
         }
     }
 }
