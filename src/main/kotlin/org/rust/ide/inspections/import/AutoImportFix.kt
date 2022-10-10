@@ -27,6 +27,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.checkWriteAccessNotAllowed
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement, private val context: Context) :
@@ -46,6 +47,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     }
 
     fun invoke(project: Project) {
+        checkWriteAccessNotAllowed()
         val element = startElement as? RsElement ?: return
         val candidates = context.candidates
         if (candidates.size == 1) {
@@ -77,7 +79,9 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = invoke(project)
 
-    override fun startInWriteAction(): Boolean = true
+    override fun startInWriteAction(): Boolean = false
+
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiFile = currentFile
 
     override fun showHint(editor: Editor): Boolean {
         if (!RsCodeInsightSettings.getInstance().showImportPopup) return false
