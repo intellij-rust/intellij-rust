@@ -51,7 +51,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.7.20"
-    id("org.jetbrains.intellij") version "1.8.1"
+    id("org.jetbrains.intellij") version "1.9.0"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.1"
