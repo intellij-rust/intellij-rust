@@ -655,6 +655,18 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
+    fun `test ignore reexport of legacy macro`() = checkNotChanged("""
+        macro_rules! foo1 { () => {} }
+        macro_rules! foo2 { () => {} }
+        macro_rules! foo3 { () => {} }
+        pub(crate) use foo1;
+        pub(crate) use foo2 as foo_alias;
+        pub(crate) use {foo3, inner::func};
+        mod inner {
+            pub fn func() {}
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
         checkEditorAction(code, excepted, "OptimizeImports")
 

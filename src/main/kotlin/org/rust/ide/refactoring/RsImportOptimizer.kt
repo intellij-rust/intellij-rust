@@ -46,7 +46,9 @@ class RsImportOptimizer : ImportOptimizer {
 
     private fun optimizeAndReorderUseItems(file: RsFile) {
         file.forEachMod { mod, pathUsage ->
-            val uses = mod.childrenOfType<RsUseItem>()
+            val uses = mod
+                .childrenOfType<RsUseItem>()
+                .filterNot { it.isReexportOfLegacyMacro() }
             replaceOrderOfUseItems(mod, uses, pathUsage)
         }
     }
@@ -176,4 +178,26 @@ private fun RsFile.getAllModulesInFile(): List<RsMod> {
 private fun getPathUsage(mod: RsMod): PathUsageMap? {
     if (!RsUnusedImportInspection.isEnabled(mod.project)) return null
     return mod.pathUsage
+}
+
+// `macro_rules! foo { () => {} }`
+// `pub(crate) use foo_ as foo;`
+// `pub(crate) use foo;`
+private fun RsUseItem.isReexportOfLegacyMacro(): Boolean {
+    val useSpeck = useSpeck ?: return false
+    val useGroup = useSpeck.useGroup
+    return if (useGroup == null) {
+        useSpeck.isReexportOfLegacyMacro()
+    } else {
+        useSpeck.coloncolon == null && useGroup.useSpeckList.any { it.isReexportOfLegacyMacro() }
+    }
+}
+
+private fun RsUseSpeck.isReexportOfLegacyMacro(): Boolean {
+    val path = path ?: return false
+    return path.coloncolon == null
+        // TODO: Check not null when we will support resolving legacy macro in `use foo as bar;`
+        && path.reference?.resolve().let { it is RsMacro || it == null && alias != null }
+        && !isStarImport
+        && useGroup == null
 }
