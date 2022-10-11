@@ -18,17 +18,17 @@ abstract class RsToolchainFlavor {
 
     fun suggestHomePaths(): Sequence<Path> = getHomePathCandidates().filter { isValidToolchainPath(it) }
 
-    fun suggestProjectPaths(projectPath: Path?): Sequence<Path> {
-        return if (projectPath == null) emptySequence() else getProjectPathCandidates(projectPath).filter { isValidToolchainPath(it) }
+    fun suggestBazelPaths(projectPath: Path?): Sequence<Path> {
+        return if (projectPath == null) emptySequence() else getBazelPathCandidates(projectPath).filter { isValidToolchainPath(it) }
     }
 
     protected abstract fun getHomePathCandidates(): Sequence<Path>
 
-    private fun getProjectPathCandidates(projectPath: Path): Sequence<Path> {
-        if (projectPath.fileName.toString() == ".ijwb") { // Bazel project root
+    private fun getBazelPathCandidates(projectPath: Path): Sequence<Path> {
+        if (projectPath.fileName.toString() in listOf(".ijwb", ".clwb")) { // Bazel project root
             val sourcesRoot = projectPath.parent
-            val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(sourcesRoot.toFile()) ?: return emptySequence()
-            return listOf(Path.of("$toolchainRoot/bin")).asSequence()
+            val toolchainPath = RsToolchainBase.findToolchainInBazelProject(sourcesRoot.toFile()) ?: return emptySequence()
+            return sequenceOf(toolchainPath)
         } else {
             return emptySequence()
         }
