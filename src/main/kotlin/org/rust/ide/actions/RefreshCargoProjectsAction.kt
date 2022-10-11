@@ -18,7 +18,7 @@ class RefreshCargoProjectsAction : CargoProjectActionBase() {
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        e.presentation.isEnabled = project != null && project.toolchain != null && project.hasCargoProject
+        e.presentation.isEnabled = project != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {
