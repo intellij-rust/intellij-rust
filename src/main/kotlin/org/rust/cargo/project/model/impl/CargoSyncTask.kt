@@ -417,7 +417,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
-        if (isBazelProject(workingDirectory)) {
+        if (cargoProject.projectService.looksLikeBazelProject() || isBazelProject(workingDirectory)) {
             cargoProject.stdlibPathBazel(workingDirectory)?.let {
                 val std = StandardLibrary.fromPath(childContext.project, it.path, rustcInfo)
                 return@runWithChildProgress when (std) {
@@ -481,7 +481,12 @@ private fun <T, R> BuildProgress<BuildProgressDescriptor>.runWithChildProgress(
 }
 
 private fun isBazelProject(workingDirectory: Path): Boolean {
-    return "bazel-bin" in workingDirectory.toString()
+    if ("bazel-bin" in workingDirectory.toString()) return true
+    var path = workingDirectory
+    while (!path.resolve("bazel-bin").exists()) {
+        path = path.parent ?: return false
+    }
+    return true
 }
 
 private class SyncProcessAdapter(

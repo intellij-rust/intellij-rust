@@ -18,6 +18,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.ProcessProgressListener
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.findBazelRustToolchainCandidates
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadataException
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -33,6 +34,7 @@ import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import org.rust.stdext.toPath
 import org.rust.stdext.unwrapOrElse
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 
@@ -178,6 +180,34 @@ data class StandardLibrary(
             val data = CargoWorkspaceData(crates.values.toList(), dependencies, emptyMap())
             return StandardLibrary(workspaceData = data, isHardcoded = true)
         }
+
+        fun findStdlibInBazelProject(projectRoot: File): Path? {
+            var file = projectRoot
+            while (!file.resolve("bazel-${file.name}").exists()) {
+                file = file.parentFile ?: return null
+            }
+            // bazel-{projectname} symlinks get purged on running other build commands, so we need to
+            // resolve the real path to get a permalink to the rustc sources
+            val externalReposRealPath = file.resolve("bazel-${file.name}").toPath().toRealPath().parent.parent.resolve("external")
+            return externalReposRealPath.toFile().listFiles()
+                ?.findBazelRustToolchainCandidates()
+                ?.map { it.resolve("lib/rustlib/src/library") }
+                ?.firstOrNull { it.exists() }
+                ?.toPath()
+
+            // TODO: this approach is the more idiomatic way to detect the Rust toolchain, but throws
+            //  a 'severe' IDE error about running a process on EDT thread
+            // @rules_rust >= 0.8.0
+//            var queryOutput = runCommand(listOf("bazel", "query", "kind(rust_toolchain_tools_repository, //external:*)"), projectRoot) ?: return null
+//            if ("//external:" !in queryOutput) {
+//                // @rules_rust <= 0.7.0
+//                queryOutput = runCommand(listOf("bazel", "query", "kind(rust_toolchain_repository, //external:*)"), projectRoot) ?: return null
+//            }
+//            return queryOutput.split("\n")
+//                .filter { ":" in it }
+//                .map { Path.of(projectRoot.toString(), "bazel-$projectName", "external", it.split(":")[1]) }
+//                .firstOrNull { it.exists() }
+        }
     }
 }
 
@@ -222,7 +252,7 @@ class StdlibDataFetcher private constructor(
             workspaceMembers,
             srcDir.path
         )
-        val stdlibWorkspaceData = CargoMetadata.clean(stdlibMetadataProject)
+        val stdlibWorkspaceData = CargoMetadata.clean(project, stdlibMetadataProject)
         val stdlibPackages = stdlibWorkspaceData.packages.map {
             val newOrigin = if (it.source == null) PackageOrigin.STDLIB else PackageOrigin.STDLIB_DEPENDENCY
             it.copy(origin = newOrigin)

@@ -50,6 +50,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsLi
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.*
+import org.rust.cargo.project.workspace.StandardLibrary.Companion.findStdlibInBazelProject
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.AutoInjectedCrates
@@ -247,6 +248,11 @@ open class CargoProjectsServiceImpl(
         return listOfNotNull(findChild(name)) + children
             .filterNot { excludeDirs.any { regex -> regex.matches(it.name) } }
             .flatMap { it.findChildrenRecursively(name, excludeDirs) }
+    }
+
+    fun looksLikeBazelProject(): Boolean {
+        return project.projectFilePath?.contains(".ijwb") == true
+            || project.projectFilePath?.contains(".clwb") == true
     }
 
     /**
@@ -503,7 +509,7 @@ open class CargoProjectsServiceImpl(
 
 data class CargoProjectImpl(
     override val manifest: Path,
-    private val projectService: CargoProjectsServiceImpl,
+    val projectService: CargoProjectsServiceImpl,
     override val userDisabledFeatures: UserDisabledFeatures = UserDisabledFeatures.EMPTY,
     val rawWorkspace: CargoWorkspace? = null,
     private val stdlib: StandardLibrary? = null,
@@ -558,11 +564,8 @@ data class CargoProjectImpl(
     }
 
     fun stdlibPathBazel(workingDirectory: Path): File? {
-        var workspaceRoot: Path = workingDirectory
-        while ("bazel-bin" in workspaceRoot.toString()) workspaceRoot = workspaceRoot.parent
-        val toolchainRoot = RsToolchainBase.findToolchainInBazelProject(workspaceRoot.toFile())
-        return Path.of(toolchainRoot.toString(), "lib/rustlib/src/library").toFile()
-            .let { if (it.exists()) it else null }
+        val stdlibRoot = findStdlibInBazelProject(workingDirectory.toFile())
+        return stdlibRoot?.toFile()?.takeIf { it.exists() }
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
