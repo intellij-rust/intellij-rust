@@ -235,9 +235,6 @@ open class CargoProjectsServiceImpl(
         return sequence {
             for (module in project.modules) {
                 for (contentRoot in ModuleRootManager.getInstance(module).contentRoots.asSequence()) {
-                    contentRoot.findChild("bazel-bin")?.let {
-                        yieldAll(it.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
-                    }
                     yieldAll(contentRoot.findChildrenRecursively(CargoConstants.MANIFEST_FILE, PROJECT_SEARCH_EXCLUDES))
                 }
             }
@@ -671,7 +668,7 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
     }
 }
 
-private val PROJECT_SEARCH_EXCLUDES = setOf(Regex("bazel-.*"), Regex("external"))
+private val PROJECT_SEARCH_EXCLUDES = setOf(Regex("bazel-.*"), Regex("target"))
 
 private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.(VirtualFile) -> Unit) {
     val packageModule = ModuleUtilCore.findModuleForFile(this, project) ?: return

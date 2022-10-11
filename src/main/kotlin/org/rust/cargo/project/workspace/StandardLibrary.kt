@@ -186,8 +186,7 @@ data class StandardLibrary(
             while (!file.resolve("bazel-${file.name}").exists()) {
                 file = file.parentFile ?: return null
             }
-            // bazel-{projectname} symlinks get purged on running other build commands, so we need to
-            // resolve the real path to get a permalink to the rustc sources
+            // bazel-{projectname} symlinks are transient, so resolve real path to get a link to the rustc sources
             val externalReposRealPath = file.resolve("bazel-${file.name}").toPath().toRealPath().parent.parent.resolve("external")
             return externalReposRealPath.toFile().listFiles()
                 ?.findBazelRustToolchainCandidates()

@@ -73,9 +73,9 @@ object CargoMetadata {
          */
         val workspace_root: String
     ) {
-        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Project = copy(
-            packages = packages.map { it.convertPaths(converter, srcPathConverter) },
-            workspace_root = srcPathConverter(workspace_root)
+        fun convertPaths(converter: PathConverter): Project = copy(
+            packages = packages.map { it.convertPaths(converter) },
+            workspace_root = converter(workspace_root)
         )
     }
 
@@ -142,9 +142,9 @@ object CargoMetadata {
          */
         val dependencies: List<RawDependency>
     ) {
-        fun convertPaths(converter: PathConverter, srcPathConverter: PathConverter): Package = copy(
+        fun convertPaths(converter: PathConverter): Package = copy(
             manifest_path = converter(manifest_path),
-            targets = targets.map { it.convertPaths(srcPathConverter) }
+            targets = targets.map { it.convertPaths(converter) }
         )
     }
 
@@ -243,7 +243,9 @@ object CargoMetadata {
                 }
             }
 
-        fun convertPaths(converter: PathConverter): Target = copy(src_path = converter(src_path))
+        fun convertPaths(converter: PathConverter): Target = copy(
+            src_path = converter(src_path)
+        )
     }
 
     enum class TargetKind {
@@ -343,7 +345,7 @@ object CargoMetadata {
             }
             val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
             val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-            pkg.clean(intellijProject, fs, pkg.id in members, enabledFeatures, pkgBuildMessages, project.workspace_root)
+            pkg.clean(intellijProject, fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
         }
 
         adjustFileSizeLimitForFilesInOutDirs(packages)
@@ -367,33 +369,7 @@ object CargoMetadata {
         )
     }
 
-    fun isBazelOutPath(path: String) = "/bazel-out/" in path
-
-    private fun isBazelBinPath(path: String) = "/bazel-bin/" in path || path.endsWith("bazel-bin")
-
-    fun bazelPathToSourcesPath(path: String, workspaceRoot: String): String {
-        val projectRelativePathStartIndex = path.indexOf("/bin", startIndex = path.indexOf("/bazel-out/")) + 4
-        if (projectRelativePathStartIndex == -1) return path
-        val projectRelativePath = path.substring(projectRelativePathStartIndex).trim('/')
-        val projectRoot = if (isBazelBinPath(workspaceRoot)) {
-            if ("bin/external" in path) {
-                val repoRoot = Path.of(workspaceRoot.substring(0, workspaceRoot.indexOf("bazel-bin")))
-                repoRoot.resolve("bazel-${repoRoot.fileName}").toString()
-            } else {
-                val bazelBinPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin") + "bazel-bin".length)
-                if (Path.of(bazelBinPath, projectRelativePath).exists()) {
-                    bazelBinPath
-                } else {
-                    val projectPath = workspaceRoot.substring(startIndex = 0, endIndex = workspaceRoot.indexOf("bazel-bin"))
-                    if (Path.of(projectPath, projectRelativePath).exists()) projectPath else workspaceRoot
-                }
-            }
-        } else workspaceRoot
-        // e.g: /private/var/tmp/.../bazel-out/darwin-fastbuild/bin/lib1 -> $projectRoot/lib1
-        return Path.of(projectRoot, projectRelativePath).toString()
-    }
-
-    fun projectPathToBazelPath(path: Path, workspaceRoot: Path): String {
+    private fun projectPathToBazelPath(path: Path, workspaceRoot: Path): String {
         if (path.exists()) return path.toString()
         return workspaceRoot.resolve("bazel-bin").resolve(path.relativeTo(workspaceRoot)).toString()
     }
@@ -439,15 +415,12 @@ object CargoMetadata {
         isWorkspaceMember: Boolean,
         enabledFeatures: Set<String>,
         buildMessages: List<CompilerMessage>,
-        workspaceRoot: String
     ): CargoWorkspaceData.Package {
         val projectRootPath = getIntelliJProjectRootPath(project)
-        val rootPath = if (isBazelOutPath(manifest_path)) {
-            bazelPathToSourcesPath(PathUtil.getParentPath(manifest_path), workspaceRoot)
-        } else PathUtil.getParentPath(manifest_path)
+        val rootPath = PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (could not find `$rootPath`; workspaceRoot is `$workspaceRoot`)")
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (could not find `$rootPath`)")
 
         val features = features.toMutableMap()
 
@@ -571,9 +544,8 @@ object CargoMetadata {
     private val DYNAMIC_LIBRARY_EXTENSIONS: List<String> = listOf(".dll", ".so", ".dylib")
 
     private fun Target.clean(projectRoot: Path, root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
-        val mappedSrcPath = collapseDoubleDots(src_path)
-        val mainFile = (root.findFileByMaybeRelativePath(mappedSrcPath)
-            ?: root.findFileByMaybeRelativePath(projectPathToBazelPath(mappedSrcPath.toPath(), projectRoot)))
+        val mainFile = (root.findFileByMaybeRelativePath(src_path)
+            ?: root.findFileByMaybeRelativePath(projectPathToBazelPath(src_path.toPath(), projectRoot)))
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
         return mainFile?.let {
@@ -586,22 +558,6 @@ object CargoMetadata {
                 requiredFeatures = required_features.orEmpty()
             )
         }
-    }
-
-    private fun collapseDoubleDots(path: String): String {
-        // Double dots don't behave as intended when we're in a symlink, such as the Bazel sandbox
-        val components = path.split(File.separator).toMutableList()
-        var i = 0
-        while (i < components.size) {
-            if (components[i] == ".." && i > 0) {
-                components.removeAt(i)
-                components.removeAt(i - 1)
-                i--
-            } else {
-                i++
-            }
-        }
-        return components.joinToString(File.separator)
     }
 
     private fun makeTargetKind(target: TargetKind, crateTypes: List<CrateType>): CargoWorkspace.TargetKind {
