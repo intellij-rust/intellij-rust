@@ -274,7 +274,7 @@ private fun ImportContext2.checkVisibility(visItem: VisItem, modData: ModData): 
     val visibility = visItem.visibility
     if (!visibility.isVisibleFromMod(rootModData)) return false
     if (visibility is Visibility.Restricted) {
-        val isPrivate = visibility.inMod == modData && !visibility.inMod.isCrateRoot
+        val isPrivate = visibility.inMod == modData
         val isExplicitlyDeclared = !visItem.isCrateRoot && visItem.containingMod == modData.path
         if (isPrivate && !isExplicitlyDeclared) {
             Testmarks.IgnorePrivateImportInParentMod.hit()
