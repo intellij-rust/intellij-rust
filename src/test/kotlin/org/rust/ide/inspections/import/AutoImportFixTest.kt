@@ -518,6 +518,35 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @CheckTestmarkHit(Testmarks.IgnorePrivateImportInParentMod::class)
+    fun `test don't try to import private reexport from crate root`() = checkAutoImportFixByText("""
+        use mod1::func;
+
+        mod mod1 {
+            pub fn func() {}
+        }
+
+        mod inner {
+            fn test() {
+                /*error descr="Unresolved reference: `func`"*//*caret*/func/*error**/();
+            }
+        }
+    """, """
+        use mod1::func;
+
+        mod mod1 {
+            pub fn func() {}
+        }
+
+        mod inner {
+            use crate::mod1::func;
+
+            fn test() {
+                func();
+            }
+        }
+    """)
+
     fun `test complex module structure`() = checkAutoImportFixByText("""
         mod aaa {
             mod bbb {
