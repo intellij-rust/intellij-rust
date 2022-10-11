@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsProcMacroKind
 
 sealed class MacroCallBody {
     data class FunctionLike(val text: String) : MacroCallBody()
-    data class Derive(val item: String) : MacroCallBody()
+    data class Derive(val item: MappedText) : MacroCallBody()
 
     /**
      * An attribute procedural macro body consists of two parts: an [item] part and an [attribute][attr] part.

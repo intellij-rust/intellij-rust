@@ -103,6 +103,15 @@ pub fn derive_macro_bar_invocation(_item: TokenStream) -> TokenStream {
    "bar!{}".parse().unwrap()
 }
 
+#[proc_macro_derive(DeriveAsIsInNestedMod)]
+pub fn derive_as_is_in_nested_mod(item: TokenStream) -> TokenStream {
+    vec![
+        Ident::new("mod", Span::call_site()).into(),
+        Ident::new("inner", Span::call_site()).into(),
+        TokenTree::Group(Group::new(Delimiter::Brace, item))
+    ].into_iter().collect()
+}
+
 #[proc_macro]
 pub fn function_like_generates_impl_for_foo(_input: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()

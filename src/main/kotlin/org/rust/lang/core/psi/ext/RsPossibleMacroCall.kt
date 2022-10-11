@@ -214,7 +214,7 @@ fun doPrepareCustomDeriveMacroCallBody(
         sb.appendAttr(meta)
     }
     sb.appendMapped(text.substring(endOfAttrsOffset, text.length), endOfAttrsOffset)
-    return MacroCallBody.Derive(sb.toString())
+    return MacroCallBody.Derive(sb.toMappedText())
 }
 
 /**
@@ -399,7 +399,10 @@ val MacroCallBody.bodyHash: HashCode
             IOUtil.writeString(attr.text, this)
             attr.ranges.writeTo(this)
         }
-        is MacroCallBody.Derive -> HashCode.compute(item)
+        is MacroCallBody.Derive -> HashCode.compute {
+            IOUtil.writeString(item.text, this)
+            item.ranges.writeTo(this)
+        }
         is MacroCallBody.FunctionLike -> error("unreachable")
     }
 
