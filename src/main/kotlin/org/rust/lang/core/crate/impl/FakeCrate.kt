@@ -56,7 +56,7 @@ abstract class FakeCrate : UserDataHolderBase(), Crate {
     override val env: Map<String, String> get() = emptyMap()
     override val outDir: VirtualFile? get() = null
 
-    override val origin: PackageOrigin get() = PackageOrigin.DEPENDENCY
+    override val origin: PackageOrigin get() = PackageOrigin.WORKSPACE
     override val edition: CargoWorkspace.Edition get() = CargoWorkspace.Edition.DEFAULT
     override val areDoctestsEnabled: Boolean get() = false
     override val normName: String get() = "__fake__"
