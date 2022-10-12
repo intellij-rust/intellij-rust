@@ -39,6 +39,7 @@ class RsFoldingBuilderTest : RsTestBase() {
     fun `test custom region in match expr`() = doTest()
     fun `test custom region in trait`() = doTest()
     fun `test where`() = doTest()
+    fun `test extern`() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")
