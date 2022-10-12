@@ -175,7 +175,10 @@ class RsFile(
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
         // (usually lib.rs or main.rs). It's anyway useful to know cargoProject&workspace in this case
-        val crate = FakeDetachedCrate(this, DefMapService.getNextNonCargoCrateId(), dependencies = emptyList())
+        val stdlibCrates = project.crateGraph.topSortedCrates
+            .filter { it.origin == PackageOrigin.STDLIB }
+            .map { Crate.Dependency(it.normName, it) }
+        val crate = FakeDetachedCrate(this, DefMapService.getNextNonCargoCrateId(), dependencies = stdlibCrates)
 
         val cargoProject = project.cargoProjects.findProjectForFile(virtualFile) ?: return CachedData(crate = crate)
         val workspace = cargoProject.workspace ?: return CachedData(cargoProject, crate =  crate)

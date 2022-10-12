@@ -57,7 +57,7 @@ abstract class FakeCrate : UserDataHolderBase(), Crate {
     override val outDir: VirtualFile? get() = null
 
     override val origin: PackageOrigin get() = PackageOrigin.DEPENDENCY
-    override val edition: CargoWorkspace.Edition get() = CargoWorkspace.Edition.values().last()
+    override val edition: CargoWorkspace.Edition get() = CargoWorkspace.Edition.DEFAULT
     override val areDoctestsEnabled: Boolean get() = false
     override val normName: String get() = "__fake__"
     override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? get() = null
