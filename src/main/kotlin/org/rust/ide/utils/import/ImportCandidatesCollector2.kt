@@ -133,13 +133,7 @@ private fun ImportContext2.convertToCandidates(itemsPaths: List<ItemUsePath>): L
             val itemsPsi = item
                 .toPsi(rootInfo)
                 .filterIsInstance<RsQualifiedNamedElement>()
-                .let { list ->
-                    if (pathInfo != null) {
-                        list.filter(pathInfo.namespaceFilter)
-                    } else {
-                        list
-                    }
-                }
+                .filterByNamespace(this)
             // cartesian product of `itemsPsi` and `paths`
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
@@ -403,6 +397,18 @@ private fun resolveRootPath(defMap: CrateDefMap, path: ItemUsePath, segments: Li
         perNs = modData.getVisibleItem(segment)
     }
     return perNs
+}
+
+private fun List<RsQualifiedNamedElement>.filterByNamespace(context: ImportContext2): List<RsQualifiedNamedElement> {
+    val pathInfo = context.pathInfo ?: return this
+    return filter {
+        pathInfo.namespaceFilter(it) && checkProcMacroType(it, pathInfo.parentIsMetaItem)
+    }
+}
+
+fun checkProcMacroType(element: RsQualifiedNamedElement, parentIsMetaItem: Boolean): Boolean {
+    if (parentIsMetaItem) return true  /** attr and derives are checked in [RsPath.namespaceFilter] */
+    return if (element is RsFunction && element.isProcMacroDef) element.isBangProcMacroDef else true
 }
 
 private fun ImportContext2.isUsefulTraitImport(usePath: String): Boolean {
