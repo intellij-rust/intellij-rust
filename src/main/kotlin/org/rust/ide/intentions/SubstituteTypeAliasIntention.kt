@@ -9,19 +9,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.rust.ide.presentation.getStubOnlyText
+import org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasProcessor
+import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
+import org.rust.ide.refactoring.inlineTypeAlias.tryGetTypeAliasSubstitutionUsingParent
 import org.rust.ide.utils.import.RsImportHelper
-import org.rust.lang.core.parser.RustParserUtil
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.endOffsetInParent
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.resolve.ref.advancedResolveTypeAliasToImpl
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.implLookup
-import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.rawType
-import org.rust.lang.core.types.ty.TyTypeParameter
 
+/** See also [RsInlineTypeAliasProcessor] */
 class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteTypeAliasIntention.Context>() {
     override fun getText() = "Substitute type alias"
     override fun getFamilyName() = text
@@ -44,42 +43,8 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val factory = RsPsiFactory(project)
-        val typeRef = ctx.typeAliasReference
-        val isTypeContext = ctx.path.parentOfType<RsTypeReference>() != null
-
-        val parentPath = ctx.path.parent as? RsPath
-        val selfTy = if (parentPath != null && parentPath.parent is RsPathExpr) {
-            parentPath.reference?.advancedResolve()?.subst?.let { it[TyTypeParameter.self()] }
-        } else {
-            null
-        }
-        val subst = if (selfTy != null) {
-            val lookup = ctx.path.implLookup
-            val inf = lookup.ctx
-            val subst = inf.instantiateBounds(ctx.typeAlias, selfTy)
-            val type = typeRef.normType.substitute(subst)
-            inf.combineTypes(type, selfTy)
-            subst.mapTypeValues { (_, v) -> inf.resolveTypeVarsIfPossible(v) }
-        } else {
-            ctx.substitution
-        }
-
-        val renderedType = typeRef.getStubOnlyText(subst)
-        val createdPath = factory.tryCreatePath(renderedType, RustParserUtil.PathParsingMode.TYPE)
-            ?: return
-
-        // S<u32> -> S::<u32> in expression context
-        val insertedPath: RsPath = if (!isTypeContext && createdPath.typeArgumentList != null) {
-            val end = createdPath.identifier?.endOffsetInParent ?: 0
-            val pathText = createdPath.text
-            val newPath = pathText.substring(0, end) + "::" + pathText.substring(end)
-            val path = factory.tryCreatePath(newPath, RustParserUtil.PathParsingMode.TYPE) ?: return
-            ctx.path.replace(path) as RsPath
-        } else {
-            ctx.path.replace(createdPath) as RsPath
-        }
-
-        RsImportHelper.importTypeReferencesFromTy(insertedPath, typeRef.rawType)
+        val substitution = tryGetTypeAliasSubstitutionUsingParent(ctx.path, ctx.typeAlias) ?: ctx.substitution
+        val inlined = fillPathWithActualType(ctx.path, ctx.typeAliasReference, substitution) ?: return
+        RsImportHelper.importTypeReferencesFromTy(inlined, ctx.typeAliasReference.rawType)
     }
 }

@@ -6,8 +6,9 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import junit.framework.ComparisonFailure
+import org.rust.ide.refactoring.RsInlineTestBase
 
-class RsInlineFunctionTest2 : RsInlineFunctionTestBase() {
+class RsInlineFunctionTest2 : RsInlineTestBase() {
 
     fun `test simple`() = doTest("""
         fn main() {
