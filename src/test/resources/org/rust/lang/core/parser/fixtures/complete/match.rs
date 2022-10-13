@@ -16,7 +16,9 @@ fn main() {
     match x {
         0 => 0,
         1 if 1 < 2 => 1,
-        2 if let Some(24) | Some(42) = Some(42) => 42
+        2 if let Some(24) | Some(42) = Some(42) => 2,
+        3 if let Some(24) = Some(24) && 1 < 2 => 3,
+        4 if 1 < 2 && let Some(42) = Some(42) => 4,
     };
 
     match x {

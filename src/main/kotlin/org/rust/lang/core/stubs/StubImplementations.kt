@@ -323,6 +323,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "DOT_EXPR" -> RsExprStubType("DOT_EXPR", ::RsDotExprImpl)
     "FOR_EXPR" -> RsExprStubType("FOR_EXPR", ::RsForExprImpl)
     "IF_EXPR" -> RsExprStubType("IF_EXPR", ::RsIfExprImpl)
+    "LET_EXPR" -> RsExprStubType("LET_EXPR", ::RsLetExprImpl)
     "INDEX_EXPR" -> RsExprStubType("INDEX_EXPR", ::RsIndexExprImpl)
     "LAMBDA_EXPR" -> RsExprStubType("LAMBDA_EXPR", ::RsLambdaExprImpl)
     "LIT_EXPR" -> RsLitExprStub.Type
