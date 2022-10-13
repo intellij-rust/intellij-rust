@@ -1070,6 +1070,7 @@ Expr ::= RetExpr
        | OpenRangeExpr
        | BoolOrBinExpr
        | BoolAndBinExpr
+       | LetExpr
        | CompBinExpr
        | RelCompBinExpr
        | BitOrBinExpr
@@ -1186,7 +1187,7 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut])
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
+LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? <<setLambdaExprMode>> Expr <<resetFlags>> {
   implements = [ "org.rust.lang.core.psi.ext.RsFunctionOrLambda"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1227,8 +1228,7 @@ WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
                  "org.rust.lang.core.psi.ext.RsLooplikeExpr" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Condition ::= IfLetCondition | NoStructLitExpr
-private IfLetCondition ::= let TopPat '=' NoStructLitExpr { pin = 1 }
+Condition ::= <<withConditionMode 'ConditionMode.ON' NoStructLitExpr>> | never NoStructLitExpr
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
@@ -1279,7 +1279,7 @@ MatchArm ::= OuterAttr* TopPat MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
 }
-MatchArmGuard ::= if (AnyExpr | IfLetCondition)
+MatchArmGuard ::= if (<<withConditionMode 'ConditionMode.ON' AnyExpr>> | never AnyExpr)
 
 private MatchArm_with_recover ::= !'}' MatchArm {
   pin = 1
@@ -1293,6 +1293,13 @@ IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 ElseBranch ::= else ( IfExpr | SimpleBlock )
+
+LetExpr ::= LetExprStart NoStructLitExpr {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+private LetExprStart ::= <<checkLetExprAllowed>> let TopPat '=' {
+  pin = "let"
+}
 
 RetExpr ::= OuterAttr* return AnyExpr? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -1602,7 +1609,7 @@ fake Block ::= '{' InnerAttr* (Item | Stmt)* '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-SimpleBlock ::= '{' <<withRestrictedConstExprMode 'RestrictedConstExprMode.OFF' BlockElement*>> '}' {
+SimpleBlock ::= '{' <<enterBlockExpr BlockElement*>> '}' {
   pin = 1
   elementType = Block
 }
