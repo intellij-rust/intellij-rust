@@ -5,11 +5,13 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -22,6 +24,7 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.utils.evaluation.PathExprResolver
+import org.rust.openapiext.forEachChild
 import org.rust.openapiext.testAssert
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
@@ -216,7 +219,7 @@ class RsPathReferenceImpl(
             // Optimization: traversing a stub is much faster than PSI traversing
             val stub = path.greenStub
             return if (stub != null) {
-                getRootCachingElementStub(stub)
+                getRootCachingElementStub(stub)?.psi as RsElement?
             } else {
                 getRootCachingElementPsi(path)
             }
@@ -244,7 +247,7 @@ class RsPathReferenceImpl(
             return root
         }
 
-        private fun getRootCachingElementStub(path: RsPathStub): RsElement? {
+        private fun getRootCachingElementStub(path: RsPathStub): StubElement<*>? {
             var root: StubElement<*>? = null
             var element: StubElement<*> = path
             var elementType: IElementType = PATH
@@ -263,7 +266,7 @@ class RsPathReferenceImpl(
                 element = parent
                 elementType = parentType
             }
-            return root?.psi as RsElement?
+            return root
         }
 
         private fun isStepToParentAllowed(child: IElementType?, parent: IElementType): Boolean {
@@ -290,9 +293,60 @@ class RsPathReferenceImpl(
          */
         @VisibleForTesting
         fun collectNestedPathsFromRoot(root: RsElement): List<RsPath> {
-            return root.stubDescendantsOfTypeOrSelf<RsPath>().filter {
-                getRootCachingElement(it) == root
+            val stub = (root as? StubBasedPsiElementBase<*>)?.greenStub
+            return if (stub != null) {
+                collectNestedPathsFromRootStub(stub)
+            } else {
+                collectNestedPathsFromRootPsi(root)
             }
+        }
+
+        private fun collectNestedPathsFromRootPsi(root: RsElement): List<RsPath> {
+            testAssert { root.elementType in ALLOWED_CACHING_ROOTS }
+
+            val result = SmartList<RsPath>()
+            val queue = mutableListOf(root)
+
+            while (queue.isNotEmpty()) {
+                val nextElement = queue.removeLast()
+                if (nextElement is RsPath) {
+                    testAssert { getRootCachingElementPsi(nextElement) == root }
+                    result.add(nextElement)
+                }
+
+                val nextElementType = nextElement.elementType
+                nextElement.forEachChild { child ->
+                    if (child is RsElement && isStepToParentAllowed(child.elementType, nextElementType)) {
+                        queue += child
+                    }
+                }
+            }
+
+            return result
+        }
+
+        private fun collectNestedPathsFromRootStub(root: StubElement<*>): List<RsPath> {
+            testAssert { root.stubType in ALLOWED_CACHING_ROOTS }
+
+            val result = SmartList<RsPath>()
+            val queue = mutableListOf(root)
+
+            while (queue.isNotEmpty()) {
+                val nextStub = queue.removeLast()
+                if (nextStub is RsPathStub) {
+                    testAssert { getRootCachingElementStub(nextStub) == root }
+                    result.add(nextStub.psi)
+                }
+
+                val nextStubType = nextStub.stubType
+                for (child in nextStub.childrenStubs) {
+                    if (isStepToParentAllowed(child.stubType, nextStubType)) {
+                        queue += child
+                    }
+                }
+            }
+
+            return result
         }
 
         private fun resolveNeighborPathsInternal(path: RsPath): Any? {
