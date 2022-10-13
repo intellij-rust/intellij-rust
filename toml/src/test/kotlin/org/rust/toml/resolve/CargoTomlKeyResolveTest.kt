@@ -48,5 +48,8 @@ class CargoTomlKeyResolveTest : CargoTomlResolveTestBase() {
 
     private fun checkResolve(@Language("TOML") code: String) = doResolveTest<TomlKeySegment> {
         toml("Cargo.toml", code)
+        dir("dep-lib") {
+            rust("lib.rs", "")
+        }
     }
 }

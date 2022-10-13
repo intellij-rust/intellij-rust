@@ -180,7 +180,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
 
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test crate`() = checkHighlightingWithMacro("""
-        extern crate <CRATE>dep_lib_target</CRATE>;
+        extern crate <CRATE>std</CRATE>;
 
         use <CRATE>std</CRATE>::<MODULE>io</MODULE>::<TRAIT>Read</TRAIT>;
     """)

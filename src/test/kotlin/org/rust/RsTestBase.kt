@@ -328,8 +328,15 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     ) {
         fun String.trimIndentIfNeeded(): String = if (trimIndent) trimIndent() else this
 
-        checkByText(before.trimIndentIfNeeded(), after.trimIndentIfNeeded()) {
-            myFixture.performEditorAction(actionId)
+        if ("//-" in before) {
+            checkByDirectory(before, after) {
+                myFixture.configureFromTempProjectFile(it.fileWithCaret)
+                myFixture.performEditorAction(actionId)
+            }
+        } else {
+            checkByText(before.trimIndentIfNeeded(), after.trimIndentIfNeeded()) {
+                myFixture.performEditorAction(actionId)
+            }
         }
     }
 

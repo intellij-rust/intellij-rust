@@ -431,6 +431,9 @@ class RsImportOptimizerTest: RsTestBase() {
 
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test group imports by semantics`() = doTest("""
+    //- dep-lib/lib.rs
+    //- lib.rs
+        /*caret*/
         extern crate dep_lib_target;
 
         use bbb::{fff, eee};
@@ -443,6 +446,8 @@ class RsImportOptimizerTest: RsTestBase() {
 
         fn main() {}
     """, """
+    //- dep-lib/lib.rs
+    //- lib.rs
         extern crate dep_lib_target;
 
         use std::{io, mem};
