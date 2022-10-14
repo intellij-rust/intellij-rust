@@ -18,7 +18,7 @@
         <experimentalFeature id="org.rust.cargo.emulate.terminal" percentOfUsers="0">
             <description>Emulate terminal in output console by default</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="0">
+        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
     </extensions>
