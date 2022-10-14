@@ -29,7 +29,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
 
-
 private val LOG: Logger = logger<CargoMetadata>()
 
 typealias PathConverter = (String) -> String
