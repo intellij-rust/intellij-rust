@@ -59,7 +59,7 @@ val RsItemsOwner.pathUsage: PathUsageMap
 private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
     val usage = PathUsageMapMutable()
 
-    val crate = owner.containingCrate ?: return usage
+    val crate = owner.containingCrate
     if (!owner.existsAfterExpansion(crate)) return usage
 
     for (child in owner.children) {

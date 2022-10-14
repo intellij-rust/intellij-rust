@@ -15,7 +15,7 @@ abstract class RsDefMapUpdateTestBase : RsTestBase() {
         val crateRoot = myFixture.findFileInTempDir("main.rs").toPsiFile(myFixture.project) as RsFile
         // Note: crate can change after `action`
         val getTimestamp = {
-            val crateId = crateRoot.crate!!.id!!
+            val crateId = crateRoot.crate.id!!
             val defMap = project.defMapService.getOrUpdateIfNeeded(crateId)!!
             defMap.timestamp
         }

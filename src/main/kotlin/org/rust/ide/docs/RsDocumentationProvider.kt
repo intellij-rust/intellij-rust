@@ -161,7 +161,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
         val (qualifiedName, origin) = when {
             element is RsDocAndAttributeOwner && element is RsQualifiedNamedElement && element.hasExternalDocumentation -> {
-                val origin = element.containingCrate?.origin
+                val origin = element.containingCrate.origin
                 RsQualifiedName.from(element) to origin
             }
             else -> {

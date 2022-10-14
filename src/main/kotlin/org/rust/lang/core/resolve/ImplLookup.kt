@@ -233,7 +233,7 @@ class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
 
 class ImplLookup(
     private val project: Project,
-    private val containingCrate: Crate?,
+    private val containingCrate: Crate,
     val items: KnownItems,
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
@@ -381,7 +381,7 @@ class ImplLookup(
             .filter { useImplsFromCrate(it.containingCrates) }
 
     private fun useImplsFromCrate(crates: List<Crate>): Boolean =
-        containingCrate == null || crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
+        crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
 
     private fun canCombineTypes(
         ty1: Ty,

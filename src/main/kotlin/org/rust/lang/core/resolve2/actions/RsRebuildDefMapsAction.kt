@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import org.rust.ide.notifications.setStatusBarText
 import org.rust.ide.notifications.showBalloon
+import org.rust.lang.core.crate.impl.FakeCrate
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve2.forceRebuildDefMapForAllCrates
 import org.rust.lang.core.resolve2.forceRebuildDefMapForCrate
@@ -34,7 +35,8 @@ class RsRebuildCurrentDefMapAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val file = e.dataContext.psiFile as? RsFile ?: return
-        val crate = file.crate ?: return
+        val crate = file.crate
+        if (crate is FakeCrate) return
         val crateId = crate.id ?: return
         ApplicationManager.getApplication().executeOnPooledThread {
             val time = measureTimeMillis {

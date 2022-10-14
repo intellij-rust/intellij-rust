@@ -1800,7 +1800,7 @@ val SUPPORTED_CALLING_CONVENTIONS = mapOf(
 )
 
 fun RsElement.areUnstableFeaturesAvailable(version: RustcVersion): ThreeState {
-    val crate = containingCrate ?: return ThreeState.UNSURE
+    val crate = containingCrate
 
     val origin = crate.origin
     val isStdlibPart = origin == PackageOrigin.STDLIB || origin == PackageOrigin.STDLIB_DEPENDENCY

@@ -31,6 +31,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
@@ -268,7 +269,7 @@ fun processExternCrateResolveVariants(
     withSelf: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val crate = element.containingCrate ?: return false
+    val crate = element.containingCrate
 
     val visitedDeps = mutableSetOf<String>()
     fun processPackage(crate: Crate, dependencyName: String): Boolean {
@@ -495,7 +496,7 @@ private fun processQualifiedPathResolveVariants1(
         // happens inside proc macro crate itself, all items are allowed
         val baseModContainingCrate = base.containingCrate
         val resolveBetweenDifferentTargets = baseModContainingCrate != containingMod.containingCrate
-        if (resolveBetweenDifferentTargets && baseModContainingCrate?.kind?.isProcMacro == true) {
+        if (resolveBetweenDifferentTargets && baseModContainingCrate.kind.isProcMacro) {
             return false
         }
     }
@@ -799,7 +800,7 @@ fun resolveStringPath(
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(crateRelativePath, it) }
         .filter {
             val crateRoot = it.containingFile.context as RsFile
-            val crateId = crateRoot.containingCrate?.id ?: return@filter false
+            val crateId = crateRoot.containingCrate.asNotFake?.id ?: return@filter false
             // ignore e.g. test/bench non-workspace crates
             project.defMapService.getOrUpdateIfNeeded(crateId) != null
         }
@@ -1202,7 +1203,7 @@ private val EXPORTED_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPOR
 
 private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
     // proc-macro crates are allowed to export only procedural macros.
-    if (scope.containingCrate?.kind?.isProcMacro == true) {
+    if (scope.containingCrate.kind.isProcMacro) {
         return scope.stubChildrenOfType<RsFunction>().mapNotNull { asProcMacroDefinition(it) }
     }
 

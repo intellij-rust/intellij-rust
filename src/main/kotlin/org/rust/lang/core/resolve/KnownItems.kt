@@ -244,7 +244,7 @@ enum class KnownMacro(val macroName: String) {
         private val NAME_TO_VALUE: Map<String, KnownMacro> = values().associateBy { it.macroName }
 
         fun of(macro: RsMacroDefinitionBase): KnownMacro? {
-            val isStdMacro = macro.containingCrate?.origin == PackageOrigin.STDLIB
+            val isStdMacro = macro.containingCrate.origin == PackageOrigin.STDLIB
                 || isUnitTestMode && macro.queryAttributes.hasAttribute("intellij_rust_std_macro")
             if (!isStdMacro) return null
             val name = macro.name ?: return null

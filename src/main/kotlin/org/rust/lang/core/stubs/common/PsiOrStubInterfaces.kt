@@ -41,7 +41,7 @@ interface RsAttributeOwnerPsiOrStub<T : RsMetaItemPsiOrStub> {
     val rawOuterMetaItems: Sequence<T>
         get() = emptySequence()
 
-    val containingCrate: Crate?
+    val containingCrate: Crate
         get() = when (this) {
             is PsiElement -> (this as RsElement).containingCrate
             is StubElement<*> -> (psi as RsElement).containingCrate

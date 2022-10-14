@@ -23,8 +23,25 @@ class FakeDetachedCrate(
     override val rootMod: RsFile,
     override val id: CratePersistentId,
     override val dependencies: Collection<Crate.Dependency>,
-) : UserDataHolderBase(), Crate {
+) : FakeCrate() {
     override val flatDependencies: LinkedHashSet<Crate> = dependencies.flattenTopSortedDeps()
+
+    override val rootModFile: VirtualFile? get() = rootMod.virtualFile
+    override val presentableName: String get() = "Fake for ${rootModFile?.path}"
+    override val project: Project get() = rootMod.project
+}
+
+/** Fake crate for cases when something is very wrong */
+class FakeInvalidCrate(override val project: Project) : FakeCrate() {
+    override val id: CratePersistentId? get() = null
+    override val dependencies: Collection<Crate.Dependency> get() = emptyList()
+    override val flatDependencies: LinkedHashSet<Crate> get() = linkedSetOf()
+    override val rootModFile: VirtualFile? get() = null
+    override val rootMod: RsFile? get() = null
+    override val presentableName: String get() = "Fake"
+}
+
+abstract class FakeCrate : UserDataHolderBase(), Crate {
 
     override val reverseDependencies: List<Crate> get() = emptyList()
 
@@ -39,13 +56,10 @@ class FakeDetachedCrate(
     override val env: Map<String, String> get() = emptyMap()
     override val outDir: VirtualFile? get() = null
 
-    override val rootModFile: VirtualFile? get() = rootMod.virtualFile
-    override val origin: PackageOrigin get() = PackageOrigin.WORKSPACE
-    override val edition: CargoWorkspace.Edition get() = CargoWorkspace.Edition.values().last()
+    override val origin: PackageOrigin get() = PackageOrigin.DEPENDENCY
+    override val edition: CargoWorkspace.Edition get() = CargoWorkspace.Edition.DEFAULT
     override val areDoctestsEnabled: Boolean get() = false
-    override val presentableName: String get() = "Fake for ${rootModFile?.path}"
     override val normName: String get() = "__fake__"
-    override val project: Project get() = rootMod.project
     override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? get() = null
 
     override fun toString(): String = presentableName

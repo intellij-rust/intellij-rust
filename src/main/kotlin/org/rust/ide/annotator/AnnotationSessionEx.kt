@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
 import com.intellij.util.containers.orNull
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.getOrPut
 import java.util.*
@@ -18,7 +19,7 @@ private val CRATE_KEY = Key<Optional<Crate>>("org.rust.ide.annotator.currentCrat
 
 fun AnnotationSession.currentCrate(): Crate? {
     return getOrPut(CRATE_KEY) {
-        Optional.ofNullable((file as? RsFile)?.crate)
+        Optional.ofNullable((file as? RsFile)?.crate?.asNotFake)
     }.orNull()
 }
 

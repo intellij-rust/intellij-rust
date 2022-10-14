@@ -9,6 +9,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
@@ -26,7 +27,7 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
                 if (file is RsFile) {
                     if (file.childOfType<PsiErrorElement>() != null) return
 
-                    val crate = file.crate ?: return
+                    val crate = file.crate.asNotFake ?: return
                     if (!(crate.kind.isBin || crate.kind.isExampleBin || crate.kind.isCustomBuild)) return
                     if (!file.isCrateRoot) return
 

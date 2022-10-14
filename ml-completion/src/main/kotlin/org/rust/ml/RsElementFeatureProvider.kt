@@ -58,9 +58,7 @@ class RsElementFeatureProvider : ElementFeatureProvider {
             result[KIND] = MLFeatureValue.categorical(psiElementKind)
         }
         val containingCrate = psiElement.containingMod.containingCrate
-        if (containingCrate != null) {
-            result[IS_FROM_STDLIB] = MLFeatureValue.binary(containingCrate.isStd)
-        }
+        result[IS_FROM_STDLIB] = MLFeatureValue.binary(containingCrate.isStd)
 
         val rsElement = element.`as`(RsLookupElement::class.java)
         if (rsElement != null) {

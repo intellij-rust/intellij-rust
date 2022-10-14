@@ -87,7 +87,7 @@ val PsiElement.isUnderCfgTest: Boolean
 
 private val RsElement.isUnderCfgTest: Boolean
     get() {
-        val crate = containingCrate ?: return false
+        val crate = containingCrate
         val trueEvaluator = LazyCfgEvaluator.NonLazy(CfgEvaluator.forCrate(crate, true, ThreeValuedLogic.True))
         val falseEvaluator = LazyCfgEvaluator.NonLazy(CfgEvaluator.forCrate(crate, true, ThreeValuedLogic.False))
 

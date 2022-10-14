@@ -143,7 +143,7 @@ private fun doPrepareProcMacroCallBody(
     return when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate)) {
         is ProcMacroAttribute.Attr -> {
             val attrIndex = attr.index
-            val crate = explicitCrate ?: owner.containingCrate ?: return null
+            val crate = explicitCrate ?: owner.containingCrate
             val body = doPrepareAttributeProcMacroCallBody(
                 project,
                 text,
@@ -155,7 +155,7 @@ private fun doPrepareProcMacroCallBody(
             PreparedProcMacroCallBody.Attribute(body, attr)
         }
         is ProcMacroAttribute.Derive -> {
-            val crate = explicitCrate ?: owner.containingCrate ?: return null
+            val crate = explicitCrate ?: owner.containingCrate
             val body = doPrepareCustomDeriveMacroCallBody(project, text, endOfAttrsOffset, crate) ?: return null
             PreparedProcMacroCallBody.Derive(body)
         }

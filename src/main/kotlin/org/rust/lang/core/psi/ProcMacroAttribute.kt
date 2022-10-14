@@ -7,6 +7,7 @@ package org.rust.lang.core.psi
 
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.resolveToProcMacroWithoutPsi
@@ -135,7 +136,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                 }
             }
 
-            val crate = explicitCrate ?: owner.containingCrate ?: return None
+            val crate = explicitCrate ?: owner.containingCrate.asNotFake ?: return None
 
             // Stdlib uses many unstable built-in attributes that change frequently, and We may not be able to update
             // the `RS_BUILTIN_ATTRIBUTES` list in time. Let's just assume that stdlib can't have proc macros
