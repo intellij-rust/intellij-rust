@@ -729,7 +729,11 @@ private class MacroExpansionServiceImplInner(
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, modificationTracker, call.modificationTracker)
         } else {
-            CachedValueProvider.Result.create(expansion, call.rustStructureOrAnyPsiModificationTracker)
+            CachedValueProvider.Result.create(
+                expansion,
+                modificationTracker,
+                call.rustStructureOrAnyPsiModificationTracker
+            )
         }
     }
 
