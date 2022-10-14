@@ -155,7 +155,7 @@ class Cargo(
 
         val (rawDataAdjusted, buildScriptsInfoAdjusted) =
             replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
-        val workspaceData = CargoMetadata.clean(owner, rawDataAdjusted, buildScriptsInfoAdjusted)
+        val workspaceData = CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted)
         val status = if (buildScriptsInfo.isSuccessful) OK else BUILD_SCRIPT_EVALUATION_ERROR
         return Ok(ProjectDescription(workspaceData, status))
     }

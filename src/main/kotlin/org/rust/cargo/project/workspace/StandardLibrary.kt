@@ -251,7 +251,7 @@ class StdlibDataFetcher private constructor(
             workspaceMembers,
             srcDir.path
         )
-        val stdlibWorkspaceData = CargoMetadata.clean(project, stdlibMetadataProject)
+        val stdlibWorkspaceData = CargoMetadata.clean(stdlibMetadataProject)
         val stdlibPackages = stdlibWorkspaceData.packages.map {
             val newOrigin = if (it.source == null) PackageOrigin.STDLIB else PackageOrigin.STDLIB_DEPENDENCY
             it.copy(origin = newOrigin)

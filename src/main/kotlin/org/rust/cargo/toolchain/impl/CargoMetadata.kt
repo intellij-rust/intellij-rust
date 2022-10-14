@@ -8,7 +8,6 @@ package org.rust.cargo.toolchain.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.SingleRootFileViewProvider
@@ -21,19 +20,14 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.findFileByMaybeRelativePath
-import org.rust.openapiext.modules
-import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.mapToSet
-import org.rust.stdext.toPath
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
-import kotlin.io.path.relativeTo
 
 
 private val LOG: Logger = logger<CargoMetadata>()
@@ -326,7 +320,6 @@ object CargoMetadata {
     }
 
     fun clean(
-        intellijProject: com.intellij.openapi.project.Project,
         project: Project,
         buildMessages: BuildMessages? = null
     ): CargoWorkspaceData {
@@ -345,7 +338,7 @@ object CargoMetadata {
             }
             val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
             val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
-            pkg.clean(intellijProject, fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
+            pkg.clean(fs, pkg.id in members, enabledFeatures, pkgBuildMessages)
         }
 
         adjustFileSizeLimitForFilesInOutDirs(packages)
@@ -367,11 +360,6 @@ object CargoMetadata {
             project.packages.associate { it.id to it.dependencies },
             workspaceRoot.url
         )
-    }
-
-    private fun projectPathToBazelPath(path: Path, workspaceRoot: Path): String {
-        if (path.exists()) return path.toString()
-        return workspaceRoot.resolve("bazel-bin").resolve(path.relativeTo(workspaceRoot)).toString()
     }
 
     /**
@@ -410,17 +398,15 @@ object CargoMetadata {
     private const val ADJUSTED_FILE_SIZE_LIMIT_FOR_OUTPUT_FILES: Int = 8 * 1024 * 1024
 
     private fun Package.clean(
-        project: com.intellij.openapi.project.Project,
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         enabledFeatures: Set<String>,
-        buildMessages: List<CompilerMessage>,
+        buildMessages: List<CompilerMessage>
     ): CargoWorkspaceData.Package {
-        val projectRootPath = getIntelliJProjectRootPath(project)
         val rootPath = PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
-            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path` (could not find `$rootPath`)")
+            ?: throw CargoMetadataException("`cargo metadata` reported a package which does not exist at `$manifest_path`")
 
         val features = features.toMutableMap()
 
@@ -470,7 +456,7 @@ object CargoMetadata {
             root.url,
             name,
             version,
-            targets.mapNotNull { it.clean(projectRootPath, root, isWorkspaceMember) },
+            targets.mapNotNull { it.clean(root, isWorkspaceMember) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition.cleanEdition(),
@@ -481,13 +467,6 @@ object CargoMetadata {
             outDirUrl = outDir?.url,
             procMacroArtifact = procMacroArtifact
         )
-    }
-
-    private fun getIntelliJProjectRootPath(project: com.intellij.openapi.project.Project): Path {
-        return project.modules
-            .flatMap { ModuleRootManager.getInstance(it).contentRoots.toList() }
-            .map { it.pathAsPath }
-            .minByOrNull { it.toString().length }!!
     }
 
     private fun getProcMacroArtifact(buildMessages: List<CompilerMessage>): CargoWorkspaceData.ProcMacroArtifact? {
@@ -543,9 +522,8 @@ object CargoMetadata {
 
     private val DYNAMIC_LIBRARY_EXTENSIONS: List<String> = listOf(".dll", ".so", ".dylib")
 
-    private fun Target.clean(projectRoot: Path, root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
-        val mainFile = (root.findFileByMaybeRelativePath(src_path)
-            ?: root.findFileByMaybeRelativePath(projectPathToBazelPath(src_path.toPath(), projectRoot)))
+    private fun Target.clean(root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
+        val mainFile = root.findFileByMaybeRelativePath(src_path)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
         return mainFile?.let {
