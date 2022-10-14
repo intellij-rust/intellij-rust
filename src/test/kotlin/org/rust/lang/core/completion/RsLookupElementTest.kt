@@ -15,6 +15,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.util.containers.MultiMap
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.ext.RsElement
@@ -128,6 +129,12 @@ class RsLookupElementTest : RsTestBase() {
         macro test() {}
               //^
     """, tailText = "!", typeText = null)
+
+    fun `test bang proc macro`() = check("""
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { input }
+               //^
+    """, tailText = "!")
 
     fun `test deprecated fn`() = check("""
         #[deprecated]
@@ -316,7 +323,12 @@ class RsLookupElementTest : RsTestBase() {
         isBold: Boolean = false,
         isStrikeout: Boolean = false
     ) where T : NavigatablePsiElement, T : RsElement {
-        InlineFile(code)
+        if ("//-" in code) {
+            fileTreeFromText(code).createAndOpenFileWithCaretMarker()
+        } else {
+            InlineFile(code)
+        }
+
         val element = findElementInEditor<T>()
         val lookup = createLookupElement(
             SimpleScopeEntry(element.name!!, element as RsElement),

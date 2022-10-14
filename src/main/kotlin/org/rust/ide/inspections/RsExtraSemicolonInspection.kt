@@ -12,8 +12,8 @@ import org.rust.lang.core.dfa.ExitPoint
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.type
 
 /**
  * Suggest to remove a semicolon in situations like
@@ -34,7 +34,7 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
 
 private fun inspect(holder: RsProblemsHolder, fn: RsFunction) {
     val retType = fn.retType?.typeReference ?: return
-    if (retType.type is TyUnit) return
+    if (retType.normType is TyUnit) return
     ExitPoint.process(fn) { exitPoint ->
         if (exitPoint is ExitPoint.InvalidTailStatement) {
             holder.registerProblem(

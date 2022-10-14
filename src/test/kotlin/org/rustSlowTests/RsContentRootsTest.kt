@@ -220,6 +220,50 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
         ))
     }
 
+    fun `test do not override existing settings`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("main.rs", "")
+            }
+            dir("examples") {}
+            dir("tests") {}
+            dir("benches") {}
+            dir("target") {}
+        }
+
+        ModuleRootModificationUtil.updateModel(myModule) { model ->
+            val contentEntry = model.contentEntries.firstOrNull() ?: error("Can't find any content entry")
+            contentEntry.clearSourceFolders()
+            contentEntry.clearExcludeFolders()
+
+            // Add some weird user content root settings
+            contentEntry.addExcludeFolder(testProject.file("examples"))
+            contentEntry.addExcludeFolder(testProject.file("tests"))
+            contentEntry.addExcludeFolder(testProject.file("benches"))
+
+            contentEntry.addSourceFolder(testProject.file("target"), true)
+        }
+
+        project.testCargoProjects.refreshAllProjectsSync()
+
+        val projectFolders = listOf(
+            ProjectFolder.Source(testProject.file("src"), false),
+            ProjectFolder.Excluded(testProject.file("examples")),
+            ProjectFolder.Excluded(testProject.file("tests")),
+            ProjectFolder.Excluded(testProject.file("benches")),
+            ProjectFolder.Source(testProject.file("target"), true),
+        )
+
+        check(myModule, projectFolders)
+    }
+
+
     private fun check(module: Module, projectFolders: List<ProjectFolder>) {
         ModuleRootModificationUtil.updateModel(module) { model ->
             val contentEntry = model.contentEntries.firstOrNull() ?: error("Can't find any content entry")
@@ -236,10 +280,16 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
                         val sourceFile = sourceFiles[projectFolder.file]
                             ?: error("Can't find `${projectFolder.file}` folder in source folders")
                         check(sourceFile.isTestSource == projectFolder.isTest)
+                        if (excludedFiles[projectFolder.file] != null) {
+                            error("`${projectFolder.file}` folder shouldn't be in excluded folders")
+                        }
                     }
                     is ProjectFolder.Excluded -> {
                         if (excludedFiles[projectFolder.file] == null) {
                             error("Can't find `${projectFolder.file}` folder in excluded folders")
+                        }
+                        if (sourceFiles[projectFolder.file] != null) {
+                            error("`${projectFolder.file}` folder shouldn't be in source folders")
                         }
                     }
                 }

@@ -424,10 +424,10 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             // comment 1
-            #[attr1]
+            #[rustfmt::attr1]
             fn foo1/*caret*/() {}
             /// comment 2
-            #[attr2]
+            #[rustfmt::attr2]
             struct Foo2/*caret*/ {}
             fn bar() {
                 foo1();
@@ -448,11 +448,11 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
         mod mod2 {
             // comment 1
-            #[attr1]
+            #[rustfmt::attr1]
             pub fn foo1() {}
 
             /// comment 2
-            #[attr2]
+            #[rustfmt::attr2]
             pub struct Foo2 {}
         }
     """)
@@ -1545,6 +1545,33 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
             fn foo() {
                 println!("foo");
                 let _ = format!("{}", 1);
+            }
+        }
+    """)
+
+    fun `test outside references to macro from other crate`() = doTest("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen { () => {} }
+    //- main.rs
+        mod mod1 {
+            use test_package::gen;
+            fn foo/*caret*/() {
+                gen!();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen { () => {} }
+    //- main.rs
+        mod mod1 {}
+        mod mod2 {
+            use test_package::gen;
+
+            fn foo() {
+                gen!();
             }
         }
     """)

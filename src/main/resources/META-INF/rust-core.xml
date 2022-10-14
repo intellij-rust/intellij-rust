@@ -4,7 +4,6 @@
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/platform-rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
@@ -139,6 +138,7 @@
 
         <!-- Copy paste processors -->
         <copyPastePostProcessor implementation="org.rust.ide.typing.paste.RsConvertJsonToStructCopyPasteProcessor"/>
+        <copyPastePostProcessor implementation="org.rust.ide.typing.paste.RsImportCopyPasteProcessor"/>
 
         <!-- Imports -->
 
@@ -196,7 +196,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsSyntaxErrorsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsEdition2018KeywordsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsFormatMacroAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.format.RsFormatMacroAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingMutableAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
@@ -264,8 +264,7 @@
         <elementDescriptionProvider implementation="org.rust.ide.presentation.RsDescriptionProvider"/>
         <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
 
-        <!-- Disabled because of https://github.com/intellij-rust/intellij-rust/issues/7153 -->
-        <!-- <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/>-->
+        <!-- <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/> -->
 
         <!-- Spell-checker -->
 
@@ -317,6 +316,8 @@
 
         <lang.inspectionSuppressor language="Rust"
                                    implementationClass="org.rust.ide.inspections.RsInspectionSuppressor"/>
+        <commandLineInspectionProjectConfigurator
+            implementation="org.rust.ide.inspections.CargoCommandLineInspectionProjectConfigurator"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Implicit trait objects are deprecated"
@@ -548,6 +549,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsDoubleMustUseInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Redundant semicolons"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsRedundantSemicolonsInspection"/>
+
         <localInspection language="Rust" groupName="Rust"
                          displayName="Assert Equal"
                          enabledByDefault="true" level="WEAK WARNING"
@@ -650,13 +656,18 @@
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unused import"
-                         enabledByDefault="false" level="WARNING"
+                         enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnusedImportInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unnecessarily qualified path"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong associated type arguments"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"/>
 
         <!-- Surrounders -->
 
@@ -928,6 +939,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.AddImportForPatternIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.SubstituteTypeAliasIntention</className>
             <category>Rust</category>
         </intentionAction>
@@ -1053,6 +1068,9 @@
         <projectService serviceInterface="org.rust.lang.core.crate.CrateGraphService"
                         serviceImplementation="org.rust.lang.core.crate.impl.CrateGraphServiceImpl"/>
 
+        <externalIconProvider key="Cargo"
+                              implementationClass="org.rust.cargo.project.model.impl.CargoExternalSystemIconProvider"/>
+
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
@@ -1111,6 +1129,7 @@
 
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineFunction.RsInlineFunctionHandler"/>
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineValue.RsInlineValueHandler"/>
+        <inlineActionHandler implementation="org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasHandler"/>
 
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"
@@ -1176,8 +1195,6 @@
 
         <!-- Registry keys -->
 
-        <registryKey key="org.rust.lang.type.alias.threshold" defaultValue="10" restartRequired="false"
-                     description="Maximum number of type aliases to take into account during `impl`s search (old resolve)"/>
         <registryKey key="org.rust.lang.type.alias.threshold.new.resolve" defaultValue="2147483647" restartRequired="false"
                      description="Maximum number of type aliases to take into account during `impl`s search (new resolve)"/>
         <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
@@ -1195,14 +1212,14 @@
                      Run Tool Window instead of raw console"/>
         <registryKey key="org.rust.macros.proc.timeout" defaultValue="5000" restartRequired="false"
                      description="The maximum time (in milliseconds) allotted to one procedural macro expansion"/>
-        <registryKey key="org.rust.resolve.new.engine" defaultValue="true" restartRequired="true"
-                     description="Enables new name resolution engine"/>
-        <registryKey key="org.rust.resolve.new.engine.macros.parallel" defaultValue="true" restartRequired="false"
-                     description="Expand macros in parallel"/>
         <registryKey key="org.rust.external.linter.max.duration" defaultValue="3000" restartRequired="false"
                      description="Show notification warning if the external linter is running longer than the set value (ms)"/>
         <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="false" restartRequired="false"
                      description="Enable Rust MSVC support in LLDB (Windows-only)"/>
+        <registryKey key="org.rust.cargo.new.auto.import"
+                     defaultValue="true"
+                     description="Enable new Cargo project model reloading"
+                     restartRequired="true"/>
 
         <!-- Move refactoring -->
 
@@ -1498,11 +1515,6 @@
                 class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
                 internal="true">
             <add-to-group group-id="Internal"/>
-        </action>
-
-        <action id="Rust.ToggleNewResolve"
-                class="org.rust.lang.core.resolve2.actions.RsToggleNewResolveAction"
-                internal="true">
         </action>
 
     </actions>

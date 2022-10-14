@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.psi.ext
 
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsRetType
 import org.rust.lang.core.psi.RsValueParameterList
 
@@ -15,3 +17,10 @@ interface RsFunctionOrLambda : RsOuterAttributeOwner {
     val valueParameterList: RsValueParameterList?
     val retType: RsRetType?
 }
+
+val RsFunctionOrLambda.isAsync: Boolean
+    get() = when (this) {
+        is RsFunction -> isAsync
+        is RsLambdaExpr -> isAsync
+        else -> error("unreachable")
+    }

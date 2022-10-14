@@ -24,10 +24,10 @@ import org.rust.ide.utils.import.ImportContext2
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.checkWriteAccessNotAllowed
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement, private val context: Context) :
@@ -46,7 +46,8 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         invoke(project)
     }
 
-    private fun invoke(project: Project) {
+    fun invoke(project: Project) {
+        checkWriteAccessNotAllowed()
         val element = startElement as? RsElement ?: return
         val candidates = context.candidates
         if (candidates.size == 1) {
@@ -78,7 +79,9 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = invoke(project)
 
-    override fun startInWriteAction(): Boolean = true
+    override fun startInWriteAction(): Boolean = false
+
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiFile = currentFile
 
     override fun showHint(editor: Editor): Boolean {
         if (!RsCodeInsightSettings.getInstance().showImportPopup) return false
@@ -112,6 +115,11 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         fun findApplicableContext(path: RsPath): Context? {
             if (path.reference == null) return null
 
+            // `impl Future<Output=i32>`
+            //              ~~~~~~ path
+            val parent = path.parent
+            if (parent is RsAssocTypeBinding && parent.eq != null && parent.path == path) return null
+
             val basePath = path.basePath()
             if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
@@ -122,19 +130,16 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             }
 
             val referenceName = basePath.referenceName ?: return null
-
-            val isNameInScope = path.hasInScope(referenceName, TYPES_N_VALUES) && path.parent !is RsMacroCall
-            if (isNameInScope) {
-                // Don't import names that are already in scope but cannot be resolved
-                // because namespace of psi element prevents correct name resolution.
-                // It's possible for incorrect or incomplete code like "let map = HashMap"
-                Testmarks.NameInScope.hit()
-                return null
-            }
-
             val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return null
             val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
 
+            return Context(GENERAL_PATH, candidates)
+        }
+
+        fun findApplicableContext(pat: RsPatBinding): Context? {
+            val importContext = ImportContext2.from(pat, ImportContext2.Type.AUTO_IMPORT) ?: return null
+            val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, pat.referenceName)
+            if (candidates.isEmpty()) return null
             return Context(GENERAL_PATH, candidates)
         }
 
@@ -180,6 +185,5 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     object Testmarks {
         object PathInUseItem : Testmark()
-        object NameInScope : Testmark()
     }
 }

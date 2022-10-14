@@ -168,7 +168,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
             let _: () = 0;
         }
     """, """
-        mismatched types <a href="<a href='https://doc.rust-lang.org/error-index.html#E0308'>https://doc.rust-lang.org/error-index.html#E0308</a>">E0308</a><br>expected `()`, found integer
+        mismatched types [<a href="https://doc.rust-lang.org/error-index.html#E0308">E0308</a>]<br>expected `()`, found integer
     """)
 
     @MinRustcVersion("1.44.1")

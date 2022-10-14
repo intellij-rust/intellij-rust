@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+use proc_macro::{Delimiter, Group, Ident, Span, TokenStream, TokenTree};
 
 #[proc_macro]
 pub fn function_like_as_is(input: TokenStream) -> TokenStream {
@@ -103,6 +103,15 @@ pub fn derive_macro_bar_invocation(_item: TokenStream) -> TokenStream {
    "bar!{}".parse().unwrap()
 }
 
+#[proc_macro_derive(DeriveAsIsInNestedMod)]
+pub fn derive_as_is_in_nested_mod(item: TokenStream) -> TokenStream {
+    vec![
+        Ident::new("mod", Span::call_site()).into(),
+        Ident::new("inner", Span::call_site()).into(),
+        TokenTree::Group(Group::new(Delimiter::Brace, item))
+    ].into_iter().collect()
+}
+
 #[proc_macro]
 pub fn function_like_generates_impl_for_foo(_input: TokenStream) -> TokenStream {
    "impl Foo { fn foo(&self) -> Bar {} }".parse().unwrap()
@@ -116,6 +125,15 @@ pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn attr_replace_with_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     attr
+}
+
+#[proc_macro_attribute]
+pub fn attr_declare_struct_with_name(attr: TokenStream, _item: TokenStream) -> TokenStream {
+    vec![
+        Ident::new("struct", Span::call_site()).into(),
+        attr.into_iter().next().unwrap(),
+        TokenTree::Group(Group::new(Delimiter::Brace, TokenStream::new())),
+    ].into_iter().collect()
 }
 
 /// The macro is hardcoded to be an "identity" macro in `HardcodedProcMacroProperties.kt`

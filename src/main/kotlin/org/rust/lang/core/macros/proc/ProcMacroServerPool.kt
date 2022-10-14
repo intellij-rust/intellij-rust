@@ -65,18 +65,30 @@ class ProcMacroServerPool private constructor(
     override fun dispose() {}
 
     companion object {
-        fun tryCreate(toolchain: RsToolchainBase, parentDisposable: Disposable): ProcMacroServerPool? {
-            val expanderExecutable = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
-            if (expanderExecutable == null || !expanderExecutable.isExecutable()) {
-                return null
-            }
-            return createUnchecked(toolchain, expanderExecutable, parentDisposable)
-        }
-
-        @VisibleForTesting
-        fun createUnchecked(toolchain: RsToolchainBase, expanderExecutable: Path, parentDisposable: Disposable): ProcMacroServerPool {
+        fun new(toolchain: RsToolchainBase, expanderExecutable: Path, parentDisposable: Disposable): ProcMacroServerPool {
             return ProcMacroServerPool(toolchain, expanderExecutable)
                 .also { Disposer.register(parentDisposable, it) }
+        }
+
+        fun findExpanderExecutablePath(toolchain: RsToolchainBase, sysroot: String): Path? {
+            return findExpanderFromToolchain(toolchain, sysroot) ?: findEmbeddedExpander(toolchain)
+        }
+
+        private fun findExpanderFromToolchain(toolchain: RsToolchainBase, sysroot: String): Path? {
+            val binaryName = toolchain.getExecutableName("rust-analyzer-proc-macro-srv")
+            val expanderPath = Path.of(sysroot, "libexec", binaryName)
+
+            if (toolchain is RsWslToolchain) {
+                // Path.isExecutable() doesn't work for WSL files
+                if (!expanderPath.toFile().isFile) return null
+            } else {
+                if (!expanderPath.isExecutable()) return null
+            }
+            return expanderPath
+        }
+
+        private fun findEmbeddedExpander(toolchain: RsToolchainBase): Path? {
+            return RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         }
     }
 }
@@ -326,6 +338,7 @@ private class ProcMacroServerProcess private constructor(
             val env = mapOf(
                 "INTELLIJ_RUST" to "1", // Let a proc macro know that it is run from intellij-rust
                 "RA_DONT_COPY_PROC_MACRO_DLL" to "1",
+                "RUST_ANALYZER_INTERNALS_DO_NOT_USE" to "this is unstable",
             )
             val commandLine = toolchain.createGeneralCommandLine(
                 expanderExecutable,

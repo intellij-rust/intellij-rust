@@ -39,15 +39,17 @@ private class CargoTomlFeatureDependencyReference(element: TomlLiteral) : PsiPol
         val element = element
         val literalValue = (element.kind as? TomlLiteralKind.String)?.value ?: return ResolveResult.EMPTY_ARRAY
         return if ("/" in literalValue) {
-            val (depName, featureName) = literalValue.split("/", limit = 2)
+            val (firstSegment, featureName) = literalValue.split("/", limit = 2)
                 .takeIf { it.size == 2 }
                 ?: return ResolveResult.EMPTY_ARRAY
+            val depName = firstSegment.removeSuffix("?")
 
             val depToml = findDependencyTomlFile(element, depName) ?: return ResolveResult.EMPTY_ARRAY
             depToml.resolveFeature(featureName)
         } else {
+            val depOnly = literalValue.startsWith("dep:")
             val tomlFile = element.containingFile as? TomlFile ?: return ResolveResult.EMPTY_ARRAY
-            tomlFile.resolveFeature(literalValue)
+            tomlFile.resolveFeature(literalValue.removePrefix("dep:"), depOnly)
         }
     }
 

@@ -7,6 +7,7 @@ package org.rust.ide.intentions.createFromUsage
 
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsStructItem
@@ -32,37 +33,34 @@ fun getVisibility(target: RsMod, source: RsMod): String = when {
     else -> ""
 }
 
-fun getWritablePathTarget(path: RsPath): RsQualifiedNamedElement? {
+private fun getWritablePathTarget(path: RsPath): RsQualifiedNamedElement? {
     val item = path.qualifier?.reference?.resolve() as? RsQualifiedNamedElement
     if (item?.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
     if (!isUnitTestMode && !item.isWritable) return null
     return item
 }
 
-sealed class CallableInsertionTarget {
-    abstract val module: RsMod
-
-    class Module(val target: RsMod) : CallableInsertionTarget() {
-        override val module: RsMod = target
-    }
-
-    class Item(val item: RsStructOrEnumItemElement) : CallableInsertionTarget() {
-        override val module: RsMod = item.containingMod
-    }
+/**
+ * `foo::bar`
+ *  ~~~~~~~~ [path]
+ *  ~~~ returning mod
+ */
+fun getWritablePathMod(path: RsPath): RsMod? {
+    if (path.qualifier == null) return path.containingMod
+    return getWritablePathTarget(path) as? RsMod
 }
 
 /**
- * Find either a module or an ADT which qualifies the passed path.
+ * Find either a module, or an ADT which qualifies the passed path.
  */
-fun getTargetItemForFunctionCall(path: RsPath): CallableInsertionTarget? {
-    if (path.qualifier != null) {
-        return when (val item = getWritablePathTarget(path)) {
-            is RsMod -> CallableInsertionTarget.Module(item)
-            is RsStructOrEnumItemElement -> CallableInsertionTarget.Item(item)
-            else -> null
-        }
+fun getTargetItemForFunctionCall(path: RsPath): RsElement? {
+    val qualifier = path.qualifier ?: return path.containingMod
+
+    if (qualifier.hasCself && !qualifier.hasColonColon) {
+        val impl = qualifier.reference?.resolve() as? RsImplItem
+        if (impl != null && impl.isAncestorOf(path)) return impl
     }
-    return CallableInsertionTarget.Module(path.containingMod)
+    return getWritablePathTarget(path)
 }
 
 fun insertStruct(targetModule: RsMod, struct: RsStructItem, sourceFunction: RsElement): RsStructItem {

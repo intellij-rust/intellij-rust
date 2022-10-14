@@ -22,10 +22,7 @@ import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.TrustedRequestor
 import org.rust.lang.core.psi.RsPsiManager
-import org.rust.lang.core.resolve2.CrateDefMap
-import org.rust.lang.core.resolve2.DefCollector
-import org.rust.lang.core.resolve2.MacroIndex
-import org.rust.lang.core.resolve2.updateDefMapForAllCrates
+import org.rust.lang.core.resolve2.*
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
@@ -59,6 +56,7 @@ class MacroExpansionTask(
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
     RsTask {
     private val expansionFileSystem: MacroExpansionFileSystem = MacroExpansionFileSystem.getInstance()
+    private val defMapService = project.defMapService
 
     override fun run(indicator: ProgressIndicator) {
         indicator.checkCanceled()
@@ -69,7 +67,7 @@ class MacroExpansionTask(
 
         val allDefMaps = try {
             indicator.text = "Preparing resolve data"
-            updateDefMapForAllCrates(project, subTaskIndicator)
+            defMapService.updateDefMapForAllCratesWithWriteActionPriority(subTaskIndicator)
         } catch (e: ProcessCanceledException) {
             throw e
         }
@@ -185,8 +183,14 @@ class MacroExpansionTask(
                     for (segment in segmentsToCreate) {
                         newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
                     }
+                    oldFile.contentsToByteArray() // Ensure content is cached. If not, we can miss the modification
+                                                  // event (hence miss invalidating of some caches)
                     RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
-                        oldFile.move(TrustedRequestor, newFileParent)
+                        if (newFileParent != oldFile.parent) {
+                            oldFile.move(TrustedRequestor, newFileParent)
+                        } else {
+                            MoveToTheSameDir.hit()
+                        }
                         oldFile.rename(TrustedRequestor, newName)
                     }
                     val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
@@ -289,6 +293,8 @@ class MacroExpansionTask(
 
     override val runSyncInUnitTests: Boolean
         get() = true
+
+    object MoveToTheSameDir: Testmark()
 }
 
 // "<mixHash>_<order>.rs" → "<mixHash>"

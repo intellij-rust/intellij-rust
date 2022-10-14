@@ -28,6 +28,7 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
@@ -36,7 +37,7 @@ import org.rust.stdext.mapToSet
 const val DEFAULT_PRIORITY = 0.0
 
 interface CompletionEntity {
-    val ty: Ty?
+    fun retTy(items: KnownItems): Ty?
     fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties
     fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
 }
@@ -45,7 +46,7 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
     private val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
 
-    override val ty: Ty? get() = element.asTy
+    override fun retTy(items: KnownItems): Ty? = element.asTy(items)
 
     override fun getBaseLookupElementProperties(context: RsCompletionContext): RsLookupElementProperties {
         val isMethodSelfTypeIncompatible = element is RsFunction && element.isMethod
@@ -147,7 +148,8 @@ fun createLookupElement(
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
     val implLookup = context.lookup
-    val isCompatibleTypes = implLookup != null && isCompatibleTypes(implLookup, completionEntity.ty, context.expectedTy)
+    val isCompatibleTypes = implLookup != null
+        && isCompatibleTypes(implLookup, completionEntity.retTy(implLookup.items), context.expectedTy)
 
     val properties = completionEntity.getBaseLookupElementProperties(context)
         .copy(isReturnTypeConformsToExpectedType = isCompatibleTypes)
@@ -167,17 +169,17 @@ private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitu
             emptySubstitution
     }
 
-private val RsElement.asTy: Ty?
-    get() = when (this) {
-        is RsConstant -> typeReference?.type
-        is RsConstParameter -> typeReference?.type
-        is RsFieldDecl -> typeReference?.type
-        is RsFunction -> retType?.typeReference?.type
-        is RsStructItem -> declaredType
-        is RsEnumVariant -> parentEnum.declaredType
-        is RsPatBinding -> type
-        else -> null
-    }
+private fun RsElement.asTy(items: KnownItems): Ty? = when (this) {
+    is RsConstant -> typeReference?.normType
+    is RsConstParameter -> typeReference?.normType
+    is RsFieldDecl -> typeReference?.normType
+    is RsFunction -> retType?.typeReference?.normType
+    is RsStructItem -> declaredType
+    is RsEnumVariant -> parentEnum.declaredType
+    is RsPatBinding -> type
+    is RsMacroDefinitionBase -> KnownMacro.of(this)?.retTy(items)
+    else -> null
+}
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
@@ -190,6 +192,7 @@ fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind
     toRsLookupElement(RsLookupElementProperties(keywordKind = keywordKind))
 
 private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
+    val isProcMacroDef = this is RsFunction && isProcMacroDef
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
         .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
@@ -210,10 +213,15 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsTraitItem -> base
 
-        is RsFunction -> base
-            .withTypeText(retType?.typeReference?.getStubOnlyText(subst) ?: "()")
-            .withTailText(valueParameterList?.getStubOnlyText(subst) ?: "()")
-            .appendTailText(getExtraTailText(subst), true)
+        is RsFunction -> when {
+            !isProcMacroDef -> base
+                .withTypeText(retType?.typeReference?.getStubOnlyText(subst) ?: "()")
+                .withTailText(valueParameterList?.getStubOnlyText(subst) ?: "()")
+                .appendTailText(getExtraTailText(subst), true)
+            isBangProcMacroDef -> base
+                .withTailText("!")
+            else -> base  // attr proc macro
+        }
 
         is RsStructItem -> base
             .withTailText(getFieldsOwnerTailText(this, subst))
@@ -289,10 +297,17 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
             is RsTraitItem -> appendSemicolon(context, curUseItem)
             is RsStructItem -> appendSemicolon(context, curUseItem)
 
-            is RsFunction -> {
-                if (curUseItem != null) {
+            is RsFunction -> when {
+                curUseItem != null -> {
                     appendSemicolon(context, curUseItem)
-                } else {
+                }
+                element.isProcMacroDef -> {
+                    if (element.isBangProcMacroDef && !context.nextCharIs('!')) {
+                        document.insertString(context.selectionEndOffset, "!()")
+                        EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                    }
+                }
+                else -> {
                     val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
                     if (!context.alreadyHasCallParens) {
                         document.insertString(context.selectionEndOffset, "()")
@@ -407,7 +422,7 @@ private val InsertionContext.alreadyHasAngleBrackets: Boolean
 private val InsertionContext.alreadyHasStructBraces: Boolean
     get() = nextCharIs('{')
 
-private val RsElement.isFnLikeTrait: Boolean
+val RsElement.isFnLikeTrait: Boolean
     get() {
         val knownItems = knownItems
         return this == knownItems.Fn ||
@@ -444,6 +459,7 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedType: E
     val expectedTy = expectedType.ty
     if (
         actualTy is TyUnknown || expectedTy is TyUnknown ||
+        actualTy is TyNever || expectedTy is TyNever ||
         actualTy is TyTypeParameter || expectedTy is TyTypeParameter
     ) return false
 

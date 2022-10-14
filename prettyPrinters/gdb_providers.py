@@ -152,12 +152,20 @@ class StdStrProvider:
         return "string"
 
 
-class StdVecProvider:
+class ArrayLikeProviderBase:
     def __init__(self, valobj):
         # type: (Value) -> None
         self.valobj = valobj
-        self.length = int(valobj["len"])
-        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
+        self.data_ptr = self.get_data_ptr()
+        self.length = self.get_length()
+
+    def get_data_ptr(self):
+        # type: () -> Value
+        pass
+
+    def get_length(self):
+        # type: () -> int
+        pass
 
     def to_string(self):
         return "size={}".format(self.length)
@@ -169,6 +177,26 @@ class StdVecProvider:
     @staticmethod
     def display_hint():
         return "array"
+
+
+class StdSliceProvider(ArrayLikeProviderBase):
+    def get_data_ptr(self):
+        # type: () -> Value
+        return self.valobj["data_ptr"]
+
+    def get_length(self):
+        # type: () -> int
+        return int(self.valobj["length"])
+
+
+class StdVecProvider(ArrayLikeProviderBase):
+    def get_data_ptr(self):
+        # type: () -> Value
+        return unwrap_unique_or_non_null(self.valobj["buf"]["ptr"])
+
+    def get_length(self):
+        # type: () -> int
+        return int(self.valobj["len"])
 
 
 class StdVecDequeProvider:
@@ -225,7 +253,15 @@ class StdCellProvider:
 class StdRefProvider:
     def __init__(self, valobj):
         # type: (Value) -> None
-        self.value = valobj["value"].dereference()
+        # BACKCOMPAT: Rust 1.62.0. Drop `else`-branch
+        value = valobj["value"]
+        if value.type.code == gdb.TYPE_CODE_STRUCT and value["pointer"]:
+            # Since Rust 1.63.0, `Ref` and `RefMut` use `value: NonNull<T>` instead of `value: &T`
+            # https://github.com/rust-lang/rust/commit/d369045aed63ac8b9de1ed71679fac9bb4b0340a
+            # https://github.com/rust-lang/rust/commit/2b8041f5746bdbd7c9f6ccf077544e1c77e927c0
+            self.value = unwrap_unique_or_non_null(value).dereference()
+        else:
+            self.value = value.dereference()
         self.borrow = valobj["borrow"]["borrow"]["value"]["value"]
 
     def to_string(self):
@@ -262,6 +298,53 @@ class StdNonZeroNumberProvider:
 
     def to_string(self):
         return self.value
+
+
+class StdRangeProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "{}..{}".format(self.start, self.end)
+
+
+class StdRangeFromProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+
+    def to_string(self):
+        return "{}..".format(self.start)
+
+
+class StdRangeInclusiveProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.start = int(valobj["start"])
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "{}..={}".format(self.start, self.end)
+
+
+class StdRangeToProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "..{}".format(self.end)
+
+
+class StdRangeToInclusiveProvider:
+    def __init__(self, valobj):
+        # type: (Value) -> None
+        self.end = int(valobj["end"])
+
+    def to_string(self):
+        return "..={}".format(self.end)
 
 
 # Yields children (in a provider's sense of the word) for a BTreeMap.

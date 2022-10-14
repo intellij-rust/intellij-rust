@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -28,14 +27,15 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.openapiext.checkWriteAccessAllowed
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.mapToSet
+import java.lang.ref.WeakReference
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
 /** Stores [CrateDefMap] and data needed to determine whether [defMap] is up-to-date. */
@@ -143,14 +143,18 @@ class DefMapService(val project: Project) : Disposable {
     /** Merged map of [CrateDefMap.missedFiles] for all crates */
     private val missedFiles: ConcurrentHashMap<Path, CratePersistentId> = ConcurrentHashMap()
 
+    /** Used as an optimization in [removeStaleDefMaps] */
+    private val lastCheckedTopSortedCrates: AtomicReference<WeakReference<List<Crate>>?> = AtomicReference(null)
+
     private val structureModificationTracker: ModificationTracker =
         project.rustPsiManager.rustStructureModificationTracker
 
+    /** The last value of [structureModificationTracker] when *all* def maps has been updated */
+    @Volatile
+    private var allDefMapsUpdatedStamp: Long = -1
+
     init {
         setupListeners()
-        if (System.getenv("INTELLIJ_RUST_FORCE_USE_OLD_RESOLVE") != null) {
-            IS_NEW_RESOLVE_ENABLED_KEY.setValue(false)
-        }
     }
 
     /**
@@ -224,7 +228,6 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     fun onFileChanged(file: RsFile) {
-        if (!project.isNewResolveEnabled) return
         checkWriteAccessAllowed()
         for (crate in findCrates(file)) {
             getDefMapHolder(crate).addChangedFile(file)
@@ -258,6 +261,10 @@ class DefMapService(val project: Project) : Disposable {
 
     /** Removes DefMaps for crates not in crate graph */
     fun removeStaleDefMaps(allCrates: List<Crate>) {
+        // Optimization: proceed only if the list of crates has been changed since a previous check. We can compare
+        // the list by reference because the list is immutable (it refers to `CrateGraphService.topSortedCrates`)
+        if (lastCheckedTopSortedCrates.getAndSet(WeakReference(allCrates))?.get() === allCrates) return
+
         val allCrateIds = allCrates.mapToSet { it.id }
         val staleCrates = hashSetOf<CratePersistentId>()
         defMaps.keys.removeIf { crate ->
@@ -269,11 +276,16 @@ class DefMapService(val project: Project) : Disposable {
         missedFiles.values.removeIf { it in staleCrates }
     }
 
+    fun setAllDefMapsUpToDate() {
+        allDefMapsUpdatedStamp = structureModificationTracker.modificationCount
+    }
+
+    fun areAllDefMapsUpToDate(): Boolean = allDefMapsUpdatedStamp == structureModificationTracker.modificationCount
+
     override fun dispose() {}
 
     private inner class DefMapPsiTreeChangeListener : RsPsiTreeChangeAdapter() {
         override fun handleEvent(event: RsPsiTreeChangeEvent) {
-            if (!project.isNewResolveEnabled) return
             // events for file addition/deletion have null `event.file` and not-null `event.child`
             if (event.file != null) return
             when (event) {
@@ -301,12 +313,6 @@ class DefMapService(val project: Project) : Disposable {
                 else -> Unit
             }
         }
-    }
-
-    @TestOnly
-    fun setNewResolveEnabled(disposable: Disposable, value: Boolean) {
-        check(isUnitTestMode)
-        IS_NEW_RESOLVE_ENABLED_KEY.setValue(value, disposable)
     }
 
     companion object {

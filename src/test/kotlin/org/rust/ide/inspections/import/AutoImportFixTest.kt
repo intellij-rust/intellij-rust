@@ -7,6 +7,8 @@ package org.rust.ide.inspections.import
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.utils.import.Testmarks
 
 class AutoImportFixTest : AutoImportFixTestBase() {
@@ -512,6 +514,35 @@ class AutoImportFixTest : AutoImportFixTestBase() {
                 pub mod b3 {
                     pub struct Foo;
                 }
+            }
+        }
+    """)
+
+    @CheckTestmarkHit(Testmarks.IgnorePrivateImportInParentMod::class)
+    fun `test don't try to import private reexport from crate root`() = checkAutoImportFixByText("""
+        use mod1::func;
+
+        mod mod1 {
+            pub fn func() {}
+        }
+
+        mod inner {
+            fn test() {
+                /*error descr="Unresolved reference: `func`"*//*caret*/func/*error**/();
+            }
+        }
+    """, """
+        use mod1::func;
+
+        mod mod1 {
+            pub fn func() {}
+        }
+
+        mod inner {
+            use crate::mod1::func;
+
+            fn test() {
+                func();
             }
         }
     """)
@@ -3073,5 +3104,90 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             foo();
         }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test filter single mod when root path resolves to same item`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Foo;
+        }
+    //- lib.rs
+        pub mod foo {
+            pub use dep_lib_target::foo::Foo;
+        }
+    //- main.rs
+        fn main() {
+            let _ = foo/*caret*/::Foo;
+        }
+    """, """
+    //- main.rs
+        use dep_lib_target::foo;
+
+        fn main() {
+            let _ = foo::Foo;
+        }
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import attr proc macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[attr_as_is/*caret*/]
+        fn func() {}
+
+        mod attr_as_is {}
+    """, """
+    //- lib.rs
+        use dep_proc_macro::attr_as_is;
+
+        #[attr_as_is]
+        fn func() {}
+
+        mod attr_as_is {}
+    """)
+
+    fun `test don't import assoc type binding`() = checkAutoImportFixIsUnavailable("""
+        mod inner {
+            pub trait Trait {
+                type Output;
+            }
+            pub struct Output {}
+        }
+
+        fn func(_: impl <error descr="Unresolved reference: `Trait`">Trait</error><
+            <error descr="Unresolved reference: `Output`">Output/*caret*/</error>=i32
+        >) {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import derive proc macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(Builder)]
+        pub fn builder(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        #[derive(Builder/*caret*/)]
+        struct Foo {}
+    """, """
+    //- lib.rs
+        use dep_proc_macro::Builder;
+
+        #[derive(Builder/*caret*/)]
+        struct Foo {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test don't import bang proc macro as derive`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn Builder(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[derive(<error descr="Unresolved reference: `Builder`">Builder/*caret*/</error>)]
+        struct Foo {}
     """)
 }

@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.CheckTestmarkHit
+import org.rust.MockAdditionalCfgOptions
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun `test child mod`() = stubOnlyResolve("""
@@ -195,6 +196,27 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     //- sub/mod.rs
         fn foo() {
+            crate::quux();
+       }         //^ main.rs
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve in cfg disabled mod`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(intellij_rust)]
+        #[path = "cfg_enabled/mod.rs"]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        #[path = "cfg_disabled/mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- cfg_enabled/mod.rs
+        fn bar() {
+            crate::quux();
+       }
+    //- cfg_disabled/mod.rs
+        fn baz() {
             crate::quux();
        }         //^ main.rs
     """)
@@ -868,6 +890,46 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
                    //^ detached.rs
         pub mod foo {
             pub fn func() {}
+        }
+    """)
+
+    fun `test method is not resolved to independent crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        pub struct Foo;
+
+        fn foo() {
+            Foo.bar();
+        }     //^ unresolved
+    //- main.rs
+        use test_package::*;
+
+        impl Foo { // Incoherent impl
+            fn bar(&self) {}
+        }
+    """)
+
+    fun `test method is not resolved to independent crate 2`() = stubOnlyResolve("""
+    //- bar.rs
+        pub struct Foo;
+        pub trait Bar {
+            fn bar(&self);
+        }
+    //- lib.rs
+        mod bar;
+        pub use bar::*;
+
+        impl Bar for Foo {
+            fn bar(&self) {}
+        }
+
+        fn foo() {
+            Foo.bar();
+        }     //^ lib.rs
+    //- main.rs
+        use test_package::*;
+
+        impl Bar for Foo { // Incoherent impl
+            fn bar(&self) {}
         }
     """)
 }

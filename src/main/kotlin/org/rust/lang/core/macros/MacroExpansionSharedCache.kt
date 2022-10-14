@@ -24,6 +24,8 @@ import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.stdext.*
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -119,8 +121,8 @@ class MacroExpansionSharedCache : Disposable {
     private object DontRetrieveSomeErrorsStrategy : CacheRetrievingStrategy<RsResult<ExpansionResultOk, MacroExpansionError>> {
         override fun isRetrievedValueReusable(value: RsResult<ExpansionResultOk, MacroExpansionError>): Boolean {
             return when (value) {
-                is RsResult.Ok -> true
-                is RsResult.Err -> value.err.canCacheError()
+                is Ok -> true
+                is Err -> value.err.canCacheError()
             }
         }
     }
@@ -143,10 +145,10 @@ class MacroExpansionSharedCache : Disposable {
         expander: MacroExpander<T, E>,
         def: T,
         call: RsMacroCallData,
-        /** mixed hash of [def] and [call], passed as optimization */
-        hash: HashCode
+        /** mixed hash of [def] and [call] (see [RsMacroDataWithHash.mixHash]), passed as optimization */
+        mixHash: HashCode
     ): RsResult<ExpansionResultOk, E> {
-        return getOrPut(PersistentCacheData::expansions, DontRetrieveSomeErrorsStrategy, hash) {
+        return getOrPut(PersistentCacheData::expansions, DontRetrieveSomeErrorsStrategy, mixHash) {
             expander.expandMacroAsTextWithErr(def, call)
                 .map { ExpansionResultOk(it.first.toString(), it.second) }
         }.mapErr {
@@ -183,32 +185,33 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
-    fun <T : RsMacroData> createExpansionStub(
+    fun <T : RsMacroData, E : MacroExpansionError> createExpansionStub(
         project: Project,
-        expander: MacroExpander<T, *>,
-        def: RsMacroDataWithHash<T>,
-        call: RsMacroCallDataWithHash
-    ): Pair<RsFileStub, ExpansionResultOk>? {
-        val hash = def.mixHash(call) ?: return null
-        val result = cachedExpand(expander, def.data, call.data, hash).ok() ?: return null
-        val serializedStub = cachedBuildStub(hash) {
+        expander: MacroExpander<T, E>,
+        def: T,
+        call: RsMacroCallData,
+        /** mixed hash of [def] and [call] (see [RsMacroDataWithHash.mixHash]), passed as optimization */
+        mixHash: HashCode
+    ): RsResult<Pair<RsFileStub?, ExpansionResultOk>, E> {
+        val result = cachedExpand(expander, def, call, mixHash).unwrapOrElse { return Err(it) }
+        val serializedStub = cachedBuildStub(mixHash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
             FileContentImpl.createByText(file, result.text, project)
-        } ?: return null
+        } ?: return Ok(null to result)
 
         val stub = try {
             serializedStub.stub
         } catch (e: SerializerNotFoundException) {
             // This most likely means that `RsFileStub.Type.stubVersion` was not incremented after stubs change
             MACRO_LOG.error(e)
-            return null
+            return Ok(null to result)
         }
 
         if (stub === SerializedStubTree.NO_STUB) {
-            return null
+            return Ok(null to result)
         }
 
-        return Pair(stub as RsFileStub, result)
+        return Ok(stub as RsFileStub to result)
     }
 
     companion object {

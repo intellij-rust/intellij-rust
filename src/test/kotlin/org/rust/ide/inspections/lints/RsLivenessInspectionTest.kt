@@ -895,4 +895,22 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         }
     """)
     }
+
+    fun `test usage in implicit format arg`() = checkByText("""
+        #[rustc_builtin_macro]
+        macro_rules! format_args {}
+
+        fn foo(a: u32) {
+            format_args!("{a}");
+        }
+    """)
+
+    fun `test usage in implicit format arg argument unused`() = checkByText("""
+        #[rustc_builtin_macro]
+        macro_rules! format_args {}
+
+        fn foo(<warning descr="Parameter `a` is never used">a</warning>: u32) {
+            format_args!("{a}", a = 5);
+        }
+    """)
 }

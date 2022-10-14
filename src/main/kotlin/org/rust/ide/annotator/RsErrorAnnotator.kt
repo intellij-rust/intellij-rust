@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
@@ -28,6 +29,37 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.*
+import org.rust.lang.core.CompilerFeature.Companion.ADT_CONST_PARAMS
+import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
+import org.rust.lang.core.CompilerFeature.Companion.ASSOCIATED_TYPE_DEFAULTS
+import org.rust.lang.core.CompilerFeature.Companion.BOX_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.BOX_SYNTAX
+import org.rust.lang.core.CompilerFeature.Companion.CONST_FN_TRAIT_BOUND
+import org.rust.lang.core.CompilerFeature.Companion.CONST_GENERICS_DEFAULTS
+import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
+import org.rust.lang.core.CompilerFeature.Companion.CRATE_IN_PATHS
+import org.rust.lang.core.CompilerFeature.Companion.CRATE_VISIBILITY_MODIFIER
+import org.rust.lang.core.CompilerFeature.Companion.DECL_MACRO
+import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
+import org.rust.lang.core.CompilerFeature.Companion.EXTERN_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.GENERATORS
+import org.rust.lang.core.CompilerFeature.Companion.GENERIC_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.IF_LET_GUARD
+import org.rust.lang.core.CompilerFeature.Companion.IF_WHILE_OR_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.INHERENT_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST
+import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST_PAT
+import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
+import org.rust.lang.core.CompilerFeature.Companion.IRREFUTABLE_LET_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.LABEL_BREAK_VALUE
+import org.rust.lang.core.CompilerFeature.Companion.LET_ELSE
+import org.rust.lang.core.CompilerFeature.Companion.MIN_CONST_GENERICS
+import org.rust.lang.core.CompilerFeature.Companion.NON_MODRS_MODS
+import org.rust.lang.core.CompilerFeature.Companion.OR_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.PARAM_ATTRS
+import org.rust.lang.core.CompilerFeature.Companion.RAW_REF_OP
+import org.rust.lang.core.CompilerFeature.Companion.SLICE_PATTERNS
+import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -57,7 +89,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {
-            override fun visitBaseType(o: RsBaseType) = checkBaseType(rsHolder, o)
+            override fun visitInferType(o: RsInferType) = checkInferType(rsHolder, o)
             override fun visitCondition(o: RsCondition) = checkCondition(rsHolder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(rsHolder, o)
             override fun visitTypeArgumentList(o: RsTypeArgumentList) = checkTypeArgumentList(rsHolder, o)
@@ -120,6 +152,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatTup(o: RsPatTup) = checkRsPatTup(rsHolder, o)
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
             override fun visitMetaItem(o: RsMetaItem) = checkMetaItem(rsHolder, o)
+            override fun visitFieldLookup(o: RsFieldLookup) = checkFieldLookup(rsHolder, o)
         }
 
         element.accept(visitor)
@@ -196,17 +229,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
         val parent = orPat.context
-
-        if (parent is RsPat) {
-            val firstChild = orPat.firstChild
-            if (firstChild?.elementType == RsElementTypes.OR) {
-                holder.createErrorAnnotation(
-                    firstChild,
-                    "a leading `|` is only allowed in a top-level pattern",
-                    RemoveElementFix(firstChild)
-                )
-            }
-        }
 
         if (parent !is RsCondition && parent !is RsMatchArm) {
             OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
@@ -598,13 +620,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val reason = metaItems.singleOrNull { it.name == "reason" }?.value
             val reasonSuffix = if (reason != null) ": $reason" else ""
             val feature = CompilerFeature.find(featureName)
-                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null, cache = false)
+                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null)
             feature.check(holder, startElement, null, "`$featureName` is unstable$reasonSuffix")
         }
     }
 
-    private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
-        if (type.underscore == null) return
+    private fun checkInferType(holder: RsAnnotationHolder, type: RsInferType) {
         val owner = type.owner.parent
         val ownerParent = owner.parent
         val ownerGrandParent = ownerParent.parent
@@ -639,6 +660,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
         if (!checkSelfImport(holder, path)) return
+        if (!checkCaptureVariableFromOuterFunction(holder, path)) return
 
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
@@ -704,6 +726,22 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun RsPath.isSelfImport(): Boolean {
         val parent = parent
         return self != null && parent is RsUseSpeck && parent.useGroup == null
+    }
+
+    private fun checkCaptureVariableFromOuterFunction(holder: RsAnnotationHolder, path: RsPath): Boolean {
+        if (path.hasColonColon || path.parent is RsPath) return true
+        val declaration = path.reference?.resolve() as? RsPatBinding ?: return true
+        val innerFunction = path.ancestorStrict<RsFunctionOrLambda>() as? RsFunction ?: return true
+        val function = declaration.ancestorStrict<RsFunctionOrLambda>() ?: return true
+        if (!function.isAncestor(innerFunction, strict = true)) return true
+        val fix = run {
+            if (innerFunction.ancestorStrict<RsFunctionOrLambda>() != function) return@run null
+            if (innerFunction.typeParameterList != null) return@run null
+            if (innerFunction.parent !is RsBlock) return@run null
+            ConvertFunctionToClosureFix(innerFunction)
+        }
+        RsDiagnostic.CannotCaptureDynamicEnvironment(path, fix).addToHolder(holder)
+        return false
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
@@ -904,7 +942,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val traitRef = impl.traitRef ?: return
         val typeRef = impl.typeReference ?: return
-        val type = typeRef.type
+        val type = typeRef.normType
         // If type is not fully known, the plugin should produce some another error, like E0412
         if (type.containsTyOfClass(TyUnknown::class.java)) return
         val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
@@ -949,7 +987,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (impl.`for` != null) return
         val typeRef = impl.typeReference ?: return
         if (typeRef.skipParens() is RsTraitType) return
-        val type = typeRef.type
+        val type = typeRef.rawType
         if (impl.queryAttributes.langAttribute != null) {
             // There are some special rules for #[lang] items, see:
             // https://doc.rust-lang.org/unstable-book/language-features/lang-items.html)
@@ -981,13 +1019,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     ) {
         if (trait != trait.knownItems.Drop) return
 
-        if (impl.typeReference?.type is TyAdt?) return
+        if (impl.typeReference?.normType is TyAdt?) return
 
         RsDiagnostic.ImplDropForNonAdtError(traitRef).addToHolder(holder)
     }
 
     private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
-        checkImplBothCopyAndDrop(holder, impl.typeReference?.type ?: return, impl.traitRef ?: return, trait)
+        checkImplBothCopyAndDrop(holder, impl.typeReference?.normType ?: return, impl.traitRef ?: return, trait)
     }
 
     private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, attr: RsAttr) {
@@ -1014,13 +1052,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ImplBothCopyAndDropError(element).addToHolder(holder)
     }
 
-    // E0116: Cannot define inherent `impl` for a type outside of the crate where the type is defined
+    // E0116: Cannot define inherent `impl` for a type outside the crate where the type is defined
     private fun checkInherentImplSameCrate(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.traitRef != null) return  // checked in [checkTraitImplOrphanRules]
         val typeReference = impl.typeReference ?: return
-        val element = when (val type = typeReference.type) {
+        val element = when (val type = typeReference.rawType) {
             is TyAdt -> type.item
-            is TyTraitObject -> type.traits.first().element
+            is TyTraitObject -> type.baseTrait ?: return
             else -> return
         }
         if (impl.containingCrate != element.containingCrate) {
@@ -1184,6 +1222,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
         checkEmptyFunctionReturnType(holder, fn)
+        checkRecursiveAsyncFunction(holder, fn)
 
         fn.innerAttrList.forEach { checkStartAttribute(holder, it) }
         fn.outerAttrList.forEach { checkStartAttribute(holder, it) }
@@ -1224,7 +1263,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             is RsFunction -> {
                 // Check if signature matches `fn(isize, *const *const u8) -> isize`
                 val params = owner.valueParameters
-                if (owner.returnType !is TyInteger.ISize) {
+                if (owner.normReturnType !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.ReturnMismatch(owner.retType?.typeReference ?: owner.identifier)
                         .addToHolder(holder)
                 }
@@ -1235,11 +1274,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     // with errors
                     return
                 }
-                if (params[0].typeReference?.type !is TyInteger.ISize) {
+                if (params[0].typeReference?.normType !is TyInteger.ISize) {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
                         .addToHolder(holder)
                 }
-                if (params[1].typeReference?.type?.isEquivalentTo(TyPointer(
+                if (params[1].typeReference?.normType?.isEquivalentTo(TyPointer(
                         TyPointer(TyInteger.U8.INSTANCE, Mutability.IMMUTABLE),
                         Mutability.IMMUTABLE
                     )) == false
@@ -1314,9 +1353,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkRetExpr(holder: RsAnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
         val fn = ret.ancestors.find {
-            it is RsFunction || it is RsLambdaExpr || it is RsBlockExpr && it.isAsync
+            it is RsFunctionOrLambda || it is RsBlockExpr && it.isAsync
         } as? RsFunction ?: return
-        val retType = fn.retType?.typeReference?.type ?: return
+        val retType = fn.retType?.typeReference?.normType ?: return
         if (retType is TyUnit) return
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
@@ -1476,6 +1515,26 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    private fun checkFieldLookup(holder: RsAnnotationHolder, field: RsFieldLookup) {
+        if (field.isAsync) {
+            checkIsAsyncContext(holder, field)
+        }
+    }
+
+    private fun checkIsAsyncContext(holder: RsAnnotationHolder, element: RsElement) {
+        if (element.isInAsyncContext) return
+        val function = element.ancestorStrict<RsFunctionOrLambda>() ?: return
+        val fix = MakeAsyncFix(function).takeIf { !function.returnsFuture() }
+        RsDiagnostic.AwaitOutsideAsyncContext(element, fix).addToHolder(holder)
+    }
+
+    private fun RsFunctionOrLambda.returnsFuture(): Boolean {
+        val lookup = implLookup
+        val returnType = retType?.typeReference?.normType ?: return false
+        val futureTrait = lookup.items.Future ?: return false
+        return lookup.canSelect(TraitRef(returnType, BoundElement(futureTrait)))
+    }
+
     private fun isInTrait(o: RsVis): Boolean =
         (o.parent as? RsAbstractable)?.owner is RsAbstractableOwner.Trait
 
@@ -1543,7 +1602,8 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     checkConstArguments(holder, listOfNotNull(constParameter.expr))
 
     val typeReference = constParameter.typeReference
-    val ty = typeReference?.type ?: return
+    // Currently, associated type projections can't be used as a const parameter type, so `rawType` is fine here
+    val ty = typeReference?.rawType ?: return
     if (ty !is TyInteger && ty !is TyBool && ty !is TyChar) {
         ADT_CONST_PARAMS.check(holder, typeReference, "adt const params")
     }
@@ -1638,10 +1698,12 @@ private fun AnnotationSession.duplicatesByNamespace(
     }
 
     if (owner is RsItemsOwner) {
-        for (import in owner.expandedItemsCached.namedImports) {
-            val useSpeck = import.path.parent as? RsUseSpeck ?: continue
-            val nameInScope = import.nameInScope.takeIf { it != "_" } ?: continue
-            addItem(useSpeck, useSpeck.namespaces, nameInScope)
+        for (import in owner.expandedItemsCached.imports) {
+            import.useSpeck?.forEachLeafSpeck { speck ->
+                if (speck.isStarImport) return@forEachLeafSpeck
+                val nameInScope = speck.nameInScope.takeIf { it != "_" } ?: return@forEachLeafSpeck
+                addItem(speck, speck.namespaces, nameInScope)
+            }
         }
     }
 
@@ -1771,14 +1833,14 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
 
     for (arg in arguments) {
         val typeReference = arg.typeReference ?: continue
-        val ty = typeReference.type
+        val ty = typeReference.normType
         if (isError(ty)) {
             RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
         }
     }
 
     val typeReference = retType?.typeReference ?: return
-    val ty = typeReference.type
+    val ty = typeReference.normType
     if (isError(ty)) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
     }
@@ -1787,7 +1849,7 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
 private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunction) {
     val block = fn.block ?: return
     val rbrace = block.rbrace ?: return
-    val returnType = fn.returnType
+    val returnType = fn.normReturnType
     if (returnType is TyInfer.TyVar ||
         returnType is TyUnit ||
         returnType is TyAnon ||
@@ -1799,13 +1861,43 @@ private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunct
     }
 }
 
+private fun checkRecursiveAsyncFunction(holder: RsAnnotationHolder, fn: RsFunction) {
+    if (!fn.isAsync) return
+    val recursiveCalls = fn
+        .descendantsOfType<RsFieldLookup>()
+        .filter {
+            if (!it.isAsync) return@filter false
+            val dotExpr = it.parent as? RsDotExpr
+            val callExpr = dotExpr?.expr as? RsCallExpr
+            val pathExpr = callExpr?.expr as? RsPathExpr ?: return@filter false
+            val path = pathExpr.path
+            !path.hasColonColon && path.reference?.resolve() == fn
+                && dotExpr.ancestorStrict<RsFunctionOrLambda>() == fn
+        }
+        .ifEmpty { return }
+    if (fn.hasAsyncRecursionProcMacro()) return
+    val fix = AddAsyncRecursionAttributeFix.createIfCompatible(fn)
+    for (recursiveCall in recursiveCalls) {
+        RsDiagnostic.RecursiveAsyncFunction(recursiveCall, fix).addToHolder(holder)
+    }
+}
+
+private fun RsFunction.hasAsyncRecursionProcMacro(): Boolean {
+    val attr = ProcMacroAttribute
+        .getProcMacroAttributeWithoutResolve(this, ignoreProcMacrosDisabled = true)
+        as? ProcMacroAttribute.Attr ?: return false
+    return attr.attr.path?.referenceName == "async_recursion"
+}
+
 private fun RsAttr.isBuiltinWithName(target: String): Boolean {
     val name = metaItem.name ?: return false
 
     if (name != target) return false
     if (name !in RS_BUILTIN_ATTRIBUTES) return false
 
-    return !hasInScope(name, MACROS)
+    val procMacro = findInScope(name, MACROS) as? RsFunction ?: return true
+
+    return !procMacro.isAttributeProcMacroDef
 }
 
 private val RsPat.isTopLevel: Boolean

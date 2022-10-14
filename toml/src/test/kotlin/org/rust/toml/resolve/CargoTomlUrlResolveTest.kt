@@ -7,17 +7,9 @@ package org.rust.toml.resolve
 
 import com.intellij.openapi.paths.WebReference
 import org.intellij.lang.annotations.Language
-import org.rust.IgnoreInPlatform
 import org.rust.RsTestBase
 
 class CargoTomlUrlResolveTest : RsTestBase() {
-
-    // BACKCOMPAT: 2022.1. Drop it
-    @IgnoreInPlatform(222)
-    fun `test no reference for package name`() = checkNoUrlReference("""
-        [package]
-        name = "<caret>https://github.com/foo/bar"
-    """)
 
     fun `test no reference if literal is not absolute URL`() = checkNoUrlReference("""
         [package]

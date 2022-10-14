@@ -12,7 +12,6 @@ import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.withPrevious
 
@@ -73,7 +72,7 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
         val info = getModInfo(crateRoot) as RsModInfo
 
         val expandedItems = mutableListOf<RsElement>()
-        crateRoot.processExpandedItemsInternal(withMacroCalls = true) { item, _ ->
+        crateRoot.processExpandedItemsInternal(withMacroCalls = true) { item ->
             expandedItems += item
             false
         }

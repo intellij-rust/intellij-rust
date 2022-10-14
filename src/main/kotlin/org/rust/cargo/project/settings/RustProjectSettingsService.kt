@@ -46,11 +46,7 @@ interface RustProjectSettingsService {
         var useOffline: Boolean = false,
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
-        var doctestInjectionEnabled: Boolean = true,
-        // BACKCOMPAT: 2022.1
-        var useRustfmt: Boolean = false,
-        // BACKCOMPAT: 2022.1
-        var runRustfmtOnSave: Boolean = false,
+        var doctestInjectionEnabled: Boolean = true
     ) {
         @get:Transient
         @set:Transient

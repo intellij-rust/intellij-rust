@@ -58,6 +58,20 @@ Cannot change signature of function with cfg-disabled parameters""")
         }
     """) {}
 
+    fun `test do not change anything 2`() = doTest("""
+        mod inner {
+            pub struct Struct {}
+        }
+
+        fn func/*caret*/(a: inner::Struct) {}
+    """, """
+        mod inner {
+            pub struct Struct {}
+        }
+
+        fn func(a: inner::Struct) {}
+    """) {}
+
     fun `test rename function reference`() = doTest("""
         fn foo/*caret*/() {}
         fn id<T>(t: T) {}
@@ -593,6 +607,31 @@ Cannot change signature of function with cfg-disabled parameters""")
         parameters.add(parameter("b", "S", defaultValue = createExprWithContext("S(1)", function)))
     }
 
+    fun `test don't import default value type from current module`() = doTest("""
+        mod foo {
+            pub fn bar/*caret*/() {}
+        }
+
+        const S: i32 = 0;
+            //^
+        fn baz() {
+            foo::bar();
+        }
+    """, """
+        mod foo {
+            pub fn bar(a: i32) {}
+        }
+
+        const S: i32 = 0;
+            //^
+        fn baz() {
+            foo::bar(S);
+        }
+    """) {
+        val defaultValue = createExprWithContext("S", findElementInEditor<RsConstant>())
+        parameters.add(parameter("a", "i32", defaultValue))
+    }
+
     fun `test import default value type inside path`() = doTest("""
         mod foo {
             pub enum Option<T> {
@@ -940,6 +979,24 @@ Cannot change signature of function with cfg-disabled parameters""")
         }
     """) {
         returnTypeDisplay = referToType("S", findElementInEditor<RsStructItem>())
+    }
+
+    fun `test don't import return type when used absolute path`() = doTest("""
+        mod foo {
+            pub struct S;
+        }
+        mod bar {
+            fn func/*caret*/() {}
+        }    //^
+    """, """
+        mod foo {
+            pub struct S;
+        }
+        mod bar {
+            fn func/*caret*/() -> crate::foo::S {}
+        }    //^
+    """) {
+        returnTypeDisplay = referToType("crate::foo::S", findElementInEditor<RsFunction>())
     }
 
     fun `test import new parameter type in different module`() = doTest("""

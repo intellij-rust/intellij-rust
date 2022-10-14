@@ -10,6 +10,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -67,4 +70,16 @@ class LineMarkerTestHelper(private val fixture: CodeInsightTestFixture) {
 
 fun LineMarkerInfo<PsiElement>.invokeNavigationHandler(element: PsiElement?) {
     navigationHandler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), element)
+}
+
+fun <T> LineMarkerInfo<PsiElement>.invokeNavigationHandler(element: PsiElement?, key: Key<T>): T? {
+    val event = object : MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), UserDataHolder {
+        private val dataHolder = UserDataHolderBase()
+        override fun <T> getUserData(key: Key<T>): T? = dataHolder.getUserData(key)
+        override fun <T> putUserData(key: Key<T>, value: T?) = dataHolder.putUserData(key, value)
+    }
+
+    navigationHandler.navigate(event, element)
+
+    return event.getUserData(key)
 }

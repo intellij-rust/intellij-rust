@@ -202,25 +202,30 @@ class RsDebugProcessConfigurationHelper(
         private val RUST_STD_TYPES: List<String> = listOf(
             "^(alloc::([a-z_]+::)+)String$",
             "^[&*]?(const |mut )?str\\*?$",
+            "^&(mut )?\\[.*\\]$",
+            "^(mut )?slice\\$<.+>$",
             "^(std::ffi::([a-z_]+::)+)OsString$",
             "^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \\*)?$",
             "^(std::([a-z_]+::)+)PathBuf$",
             "^(&?std::([a-z_]+::)+)Path( \\*)?$",
-            "^(std::ffi::([a-z_]+::)+)CString$",
-            "^(&?std::ffi::([a-z_]+::)+)CStr( \\*)?$",
+            "^((std|alloc)::ffi::([a-z_]+::)+)CString$",
+            "^(&?(std|core)::ffi::([a-z_]+::)+)CStr( \\*)?$",
             "^(alloc::([a-z_]+::)+)Vec<.+>$",
             "^(alloc::([a-z_]+::)+)VecDeque<.+>$",
             "^(alloc::([a-z_]+::)+)BTreeSet<.+>$",
             "^(alloc::([a-z_]+::)+)BTreeMap<.+>$",
             "^(std::collections::([a-z_]+::)+)HashMap<.+>$",
             "^(std::collections::([a-z_]+::)+)HashSet<.+>$",
-            "^(alloc::([a-z_]+::)+)Rc<.+>$",
-            "^(alloc::([a-z_]+::)+)Arc<.+>$",
+            "^alloc::rc::Rc<.+>$",
+            "^alloc::rc::Weak<.+>$",
+            "^alloc::(sync|arc)::Arc<.+>$",
+            "^alloc::(sync|arc)::Weak<.+>$",
             "^(core::([a-z_]+::)+)Cell<.+>$",
             "^(core::([a-z_]+::)+)Ref<.+>$",
             "^(core::([a-z_]+::)+)RefMut<.+>$",
             "^(core::([a-z_]+::)+)RefCell<.+>$",
-            "^core::num::([a-z_]+::)*NonZero.+$"
+            "^core::num::([a-z_]+::)*NonZero.+$",
+            "^core::ops::range::Range(From|Inclusive|To|ToInclusive)?<.+>$"
         )
     }
 }

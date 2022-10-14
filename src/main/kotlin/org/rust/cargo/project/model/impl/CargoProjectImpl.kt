@@ -14,13 +14,14 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -28,7 +29,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -48,6 +48,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.*
 import org.rust.cargo.project.workspace.StandardLibrary.Companion.findStdlibInBazelProject
@@ -57,6 +58,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.proc.ProcMacroServerPool
 import org.rust.openapiext.TaskResult
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.modules
@@ -184,6 +186,28 @@ open class CargoProjectsServiceImpl(
     override var initialized: Boolean = false
 
     private var isLegacyRustNotificationShowed: Boolean = false
+
+    private fun registerProjectAware(project: Project, disposable: Disposable) {
+        // There is no sense to register `CargoExternalSystemProjectAware` for default project.
+        // Moreover, it may break searchable options building
+        if (project.isDefault) return
+
+        val cargoProjectAware = CargoExternalSystemProjectAware(project)
+        val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+        projectTracker.register(cargoProjectAware, disposable)
+        projectTracker.activate(cargoProjectAware.projectId)
+
+        project.messageBus.connect(disposable)
+            .subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
+                override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
+                    if (e.affectsCargoMetadata) {
+                        val tracker = AutoImportProjectTracker.getInstance(project)
+                        tracker.markDirty(cargoProjectAware.projectId)
+                        tracker.scheduleProjectRefresh()
+                    }
+                }
+            })
+    }
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { info -> info !== noProjectMarker } }
@@ -474,9 +498,12 @@ open class CargoProjectsServiceImpl(
         // instead of `modifyProjects` for this reason
         projects.updateSync { loaded }
             .whenComplete { _, _ ->
-                invokeLater {
-                    if (project.isDisposed) return@invokeLater
-                    refreshAllProjects()
+                val disableRefresh = System.getProperty(CARGO_DISABLE_PROJECT_REFRESH_ON_CREATION, "false").toBooleanStrictOrNull()
+                if (disableRefresh != true) {
+                    invokeLater {
+                        if (project.isDisposed) return@invokeLater
+                        refreshAllProjects()
+                    }
                 }
             }
     }
@@ -502,6 +529,10 @@ open class CargoProjectsServiceImpl(
 
     override fun toString(): String =
         "CargoProjectsService(projects = $allProjects)"
+
+    companion object {
+        const val CARGO_DISABLE_PROJECT_REFRESH_ON_CREATION: String = "cargo.disable.project.refresh.on.creation"
+    }
 }
 
 data class CargoProjectImpl(
@@ -516,6 +547,11 @@ data class CargoProjectImpl(
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
     override val project get() = projectService.project
+
+    override val procMacroExpanderPath: Path? = rustcInfo?.sysroot?.let { sysroot ->
+        val toolchain = project.toolchain ?: return@let null
+        ProcMacroServerPool.findExpanderExecutablePath(toolchain, sysroot)
+    }
 
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
@@ -646,12 +682,12 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
                 for (cargoProject in cargoProjects) {
                     cargoProject.workspaceRootDir?.setupContentRoots(project) { contentRoot ->
-                        addExcludeFolder(FileUtil.join(contentRoot.url, CargoConstants.ProjectLayout.target))
+                        addExcludeFolder("${contentRoot.url}/${CargoConstants.ProjectLayout.target}")
                     }
 
                     if ((cargoProject as? CargoProjectImpl)?.doesProjectLooksLikeRustc() == true) {
                         cargoProject.workspaceRootDir?.setupContentRoots(project) { contentRoot ->
-                            addExcludeFolder(FileUtil.join(contentRoot.url, "build"))
+                            addExcludeFolder("${contentRoot.url}/build")
                         }
                     }
 
@@ -660,7 +696,7 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                         .filter { it.origin == PackageOrigin.WORKSPACE }
 
                     for (pkg in workspacePackages) {
-                        pkg.contentRoot?.setupContentRoots(project, ContentEntry::setup)
+                        pkg.contentRoot?.setupContentRoots(project, ContentEntryWrapper::setup)
                     }
                 }
             }
@@ -670,13 +706,14 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
 
 private val PROJECT_SEARCH_EXCLUDES = setOf(Regex("bazel-.*"), Regex("target"))
 
-private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.(VirtualFile) -> Unit) {
+private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntryWrapper.(VirtualFile) -> Unit) {
     val packageModule = ModuleUtilCore.findModuleForFile(this, project) ?: return
     setupContentRoots(packageModule, setup)
 }
 
-private fun VirtualFile.setupContentRoots(packageModule: Module, setup: ContentEntry.(VirtualFile) -> Unit) {
+private fun VirtualFile.setupContentRoots(packageModule: Module, setup: ContentEntryWrapper.(VirtualFile) -> Unit) {
     ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
-        rootModel.contentEntries.singleOrNull()?.setup(this)
+        val contentEntry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
+        ContentEntryWrapper(contentEntry).setup(this)
     }
 }

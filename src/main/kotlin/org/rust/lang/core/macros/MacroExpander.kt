@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.openapi.project.Project
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.macros.errors.MacroExpansionError
@@ -34,10 +34,10 @@ class FunctionLikeMacroExpander(
     }
 
     companion object {
-        fun new(project: Project): FunctionLikeMacroExpander = FunctionLikeMacroExpander(
-            DeclMacroExpander(project),
-            ProcMacroExpander(project),
-            BuiltinMacroExpander(project)
+        fun forCrate(crate: Crate): FunctionLikeMacroExpander = FunctionLikeMacroExpander(
+            DeclMacroExpander(crate.project),
+            ProcMacroExpander.forCrate(crate),
+            BuiltinMacroExpander(crate.project)
         )
     }
 }

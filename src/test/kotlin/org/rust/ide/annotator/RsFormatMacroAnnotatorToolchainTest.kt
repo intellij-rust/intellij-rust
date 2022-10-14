@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import org.rust.ExpandMacros
+import org.rust.ide.annotator.format.RsFormatMacroAnnotator
 import org.rust.ide.colors.RsColor
 
 @ExpandMacros

@@ -12,9 +12,12 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.util.CachedValueImpl
 import com.intellij.util.containers.addIfNotNull
 import gnu.trove.TIntObjectHashMap
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.CargoProjectsService.Companion.CARGO_PROJECTS_TOPIC
@@ -25,7 +28,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
-import org.rust.openapiext.CachedValueDelegate
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.applyWithSymlink
@@ -43,10 +45,13 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
         })
     }
 
-    private val crateGraph: CrateGraph by CachedValueDelegate {
+    private val crateGraphCachedValue: CachedValue<CrateGraph> = CachedValueImpl {
         val result = buildCrateGraph(project.cargoProjects.allProjects)
         CachedValueProvider.Result(result, cargoProjectsModTracker, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
     }
+
+    private val crateGraph: CrateGraph
+        get() = crateGraphCachedValue.value
 
     override val topSortedCrates: List<Crate>
         get() {
@@ -64,6 +69,8 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
         return rootModFile.applyWithSymlink { if (it is VirtualFileWithId) findCrateById(it.id) else null }
     }
 
+    @TestOnly
+    fun hasUpToDateGraph(): Boolean = crateGraphCachedValue.hasUpToDateValue()
 }
 
 private data class CrateGraph(

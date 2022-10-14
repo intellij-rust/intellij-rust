@@ -133,7 +133,7 @@ internal enum class RsPsiElementMLKind(val klass: KClass<out RsElement>) {
     TupleFieldDecl(RsTupleFieldDecl::class),
     PathExpr(RsPathExpr::class),
     DotExpr(RsDotExpr::class),
-    BaseType(RsBaseType::class),
+    BaseType(RsPathType::class),
     PatIdent(RsPatIdent::class),
     UseSpeck(RsUseSpeck::class),
     ImplItem(RsImplItem::class),
@@ -152,6 +152,9 @@ internal enum class RsPsiElementMLKind(val klass: KClass<out RsElement>) {
 
     companion object {
         fun from(element: RsElement): RsPsiElementMLKind? {
+            if (element is RsUnitType || element is RsNeverType || element is RsInferType) {
+                return BaseType
+            }
             return values().find { it.klass.isInstance(element) }
         }
     }

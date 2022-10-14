@@ -53,8 +53,46 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
     }
 }
 
-val RsTypeReference.type: Ty
-    get() = inferTypeReferenceType(this)
+/**
+ * A [Ty]pe of the type reference without normalization of normalizable associated type projections
+ * ([org.rust.lang.core.types.ty.TyProjection]).
+ *
+ * Consider the code:
+ *
+ * ```
+ * struct S;
+ * trait Trait { type Type; }
+ * impl Trait for S { type Type = i32; }
+ * type A = <S as Trait>::Type;
+ *                      //^ The type reference
+ * ```
+ *
+ * [rawType] returns [org.rust.lang.core.types.ty.TyProjection] `<S as Trait>::Type` for the type
+ * reference in this case. If you need [org.rust.lang.core.types.ty.TyInteger] `i32` instead, use [normType].
+ */
+val RsTypeReference.rawType: Ty
+    get() = TyLowering.lowerTypeReference(this)
+
+/**
+ * A [Ty]pe of the type reference WITH normalization of normalizable associated type projections
+ * ([org.rust.lang.core.types.ty.TyProjection]).
+ */
+val RsTypeReference.normType: Ty
+    get() {
+        val rawType = rawType
+        return if (rawType.hasTyProjection) {
+            // Creating `implLookup` is slow
+            implLookup.ctx.fullyNormalizeAssociatedTypesIn(rawType)
+        } else {
+            rawType
+        }
+    }
+
+fun RsTypeReference.normType(implLookup: ImplLookup): Ty =
+    normType(implLookup.ctx)
+
+fun RsTypeReference.normType(ctx: RsInferenceContext): Ty =
+    ctx.fullyNormalizeAssociatedTypesIn(rawType)
 
 val RsTypeReference.lifetimeElidable: Boolean
     get() {
@@ -117,7 +155,7 @@ val RsExpr.declaration: RsElement?
 
 val RsTraitOrImpl.selfType: Ty
     get() = when (this) {
-        is RsImplItem -> typeReference?.type ?: TyUnknown
+        is RsImplItem -> typeReference?.rawType ?: TyUnknown
         is RsTraitItem -> TyTypeParameter.self(this)
         else -> error("Unreachable")
     }
@@ -152,6 +190,16 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
 
 fun RsNamedElement?.asTy(): Ty =
     (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
+
+fun RsNamedElement?.asTy(vararg subst: Ty): Ty {
+    if (this !is RsTypeDeclarationElement) return TyUnknown
+    val declaredType = declaredType
+    return if (this is RsGenericDeclaration) {
+        declaredType.substitute(withSubst(*subst).subst)
+    } else {
+        declaredType
+    }
+}
 
 private val CONTROL_FLOW_KEY: Key<CachedValue<ControlFlowGraph>> = Key.create("CONTROL_FLOW_KEY")
 

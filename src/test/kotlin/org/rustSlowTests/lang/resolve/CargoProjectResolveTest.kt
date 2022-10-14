@@ -19,6 +19,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.openapiext.pathAsPath
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
@@ -744,6 +745,71 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
+    fun `test duplicate dependency with and without rename with different cargo features`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            edition = "2018"
+
+            [dependencies]
+            foo = { path = "./foo", features = ["bar-renamed"] }
+        """)
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    let _ = foo::bar();
+                               //^
+                }
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                edition = "2018"
+
+                [dependencies.bar] # Disabled
+                path = "../bar"
+                features = ["bar_feature"]
+                optional = true
+
+                [dependencies.bar-renamed] # Enabled
+                package = "bar"
+                path = "../bar"
+                optional = true
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature="bar-renamed")]
+                    pub use bar_renamed::bar;
+                """)
+            }
+        }
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "1.0.0"
+
+                [features]
+                bar_feature = [] # Disabled
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(feature="bar_feature"))]
+                    pub fn bar() -> u32 { 42 }
+                """)
+            }
+        }
+    }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("bar-renamed")
+        project.cargoProjects.singlePackage("foo").checkFeatureDisabled("bar")
+        project.cargoProjects.singlePackage("bar").checkFeatureDisabled("bar_feature")
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
     fun `test enabled cfg feature with changed target name`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -881,8 +947,79 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
     }
 
-    @UseOldResolve
-    fun `test cyclic dev deps`() = buildProject {
+    @MinRustcVersion("1.60.0")
+    fun `test cargo features namespaced dependencies and weak dependency features`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [features]
+            feature_foo = ["dep:foo"]
+            feature_baz = ["foo?/baz"]
+
+            [dependencies]
+            foo = { path = "./foo", optional = true }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    foo::foo_fn();
+                }       //^
+            """)
+        }
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+
+                [features]
+                baz = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature = "baz")]
+                    pub fn foo_fn() {}
+                """)
+            }
+        }
+
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "0.1.0"
+            """)
+
+            dir("src") {
+                rust("lib.rs", "pub fn bar_fn() {}")
+            }
+        }
+    }.run {
+        val helloPkg = project.cargoProjects.singlePackage("hello")
+        assertEquals(setOf("feature_foo", "feature_baz"), helloPkg.featureState.keys)
+
+        helloPkg.checkFeatureEnabled("feature_foo")
+        helloPkg.checkFeatureEnabled("feature_baz")
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("baz")
+
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+
+        project.cargoProjects.disableCargoFeature("hello", "feature_foo")
+        project.cargoProjects.disableCargoFeature("hello", "feature_baz")
+
+        project.cargoProjects.singlePackage("foo").checkFeatureDisabled("baz")
+
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+    }
+
+    // TODO the test has been regressed after switching to Name Resolution 2.0
+    fun `test cyclic dev deps`() = expect<IllegalStateException> {
+    buildProject {
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -931,6 +1068,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             checkReferenceIsResolved<RsPath>("tests/main.rs")
             checkReferenceIsResolved<RsPath>("src/lib.rs")
         }
+    }
     }
 
     fun `test build-dependency is resolved in 'build rs' and not resolved in 'main rs'`() = buildProject {
@@ -1144,6 +1282,36 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
         project.testCargoProjects.refreshAllProjectsSync()
         checkReferenceIsResolved<RsPath>("foo2/src/main.rs")
+    }
+
+    @CheckTestmarkHit(NameResolutionTestmarks.UpdateDefMapsForAllCratesWhenFindingModData::class)
+    fun `test file outside of a package root`() = buildProject {
+        dir("cargo-package") {
+            toml("Cargo.toml", """
+                [package]
+                name = "cargo-package"
+                version = "0.1.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    fn func() {}
+
+                    #[path = "../../outside/foo.rs"]
+                    mod foo;
+                """)
+            }
+        }
+        dir("outside") {
+            rust("foo.rs", """
+                fn main() {
+                    crate::func();
+                }        //^
+
+            """)
+        }
+    }.run {
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("cargo-package/Cargo.toml"))
+        checkReferenceIsResolved<RsPath>("outside/foo.rs")
     }
 
     private fun excludeDirectoryFromIndex(path: String) {

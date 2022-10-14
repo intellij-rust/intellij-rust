@@ -21,6 +21,10 @@ import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.fileId
 import org.rust.openapiext.toPsiFile
 
+/**
+ * [equals]/[hashCode] are based on [cargoTarget] and [id] fields
+ * because these fields equality guarantee other fields equality
+ */
 class CargoBasedCrate(
     override var cargoProject: CargoProject,
     override var cargoTarget: CargoWorkspace.Target,
@@ -72,6 +76,24 @@ class CargoBasedCrate(
     override val normName: String get() = cargoTarget.normName
 
     override fun toString(): String = "${cargoTarget.name}(${kind.name})"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CargoBasedCrate
+
+        if (cargoTarget != other.cargoTarget) return false
+        if (id != other.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cargoTarget.hashCode()
+        result = 31 * result + (id ?: 0)
+        return result
+    }
 }
 
 // See https://github.com/rust-lang/cargo/blob/5a0c31d81/src/cargo/core/manifest.rs#L775

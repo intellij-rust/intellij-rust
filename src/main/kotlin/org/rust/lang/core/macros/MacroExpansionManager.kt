@@ -59,7 +59,6 @@ import org.rust.lang.core.psi.RsProcMacroKind.FUNCTION_LIKE
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.*
-import org.rust.lang.core.resolve2.RsModInfoBase.RsModInfo
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
@@ -96,7 +95,11 @@ interface MacroExpansionManager {
     val macroExpansionMode: MacroExpansionMode
 
     @TestOnly
-    fun setUnitTestExpansionModeAndDirectory(mode: MacroExpansionScope, cacheDirectory: String = ""): Disposable
+    fun setUnitTestExpansionModeAndDirectory(
+        mode: MacroExpansionScope,
+        cacheDirectory: String = "",
+        clearCacheBeforeDispose: Boolean = false
+    ): Disposable
     @TestOnly
     fun updateInUnitTestMode()
 
@@ -257,7 +260,11 @@ class MacroExpansionManagerImpl(
     override val macroExpansionMode: MacroExpansionMode
         get() = inner?.expansionMode ?: MacroExpansionMode.OLD
 
-    override fun setUnitTestExpansionModeAndDirectory(mode: MacroExpansionScope, cacheDirectory: String): Disposable {
+    override fun setUnitTestExpansionModeAndDirectory(
+        mode: MacroExpansionScope,
+        cacheDirectory: String,
+        clearCacheBeforeDispose: Boolean
+    ): Disposable {
         check(isUnitTestMode)
         val dir = updateDirs(cacheDirectory.ifEmpty { null })
         val impl = MacroExpansionServiceBuilder.build(project, dir)
@@ -271,7 +278,7 @@ class MacroExpansionManagerImpl(
         }
 
         val saveCacheOnDispose = cacheDirectory.isNotEmpty()
-        val disposable = impl.setupForUnitTests(saveCacheOnDispose)
+        val disposable = impl.setupForUnitTests(saveCacheOnDispose, clearCacheBeforeDispose)
 
         Disposer.register(disposable) {
             this.inner = null
@@ -711,7 +718,7 @@ private class MacroExpansionServiceImplInner(
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
-        val info = getModInfo(call.containingMod) as? RsModInfo
+        val info = getModInfo(call.containingMod)
             ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
         val macroIndex = info.getMacroIndex(call, info.crate)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
@@ -852,8 +859,8 @@ private class MacroExpansionServiceImplInner(
     }
 
     @TestOnly
-    fun setupForUnitTests(saveCacheOnDispose: Boolean): Disposable {
-        val disposable = Disposable { disposeUnitTest(saveCacheOnDispose) }
+    fun setupForUnitTests(saveCacheOnDispose: Boolean, clearCacheBeforeDispose: Boolean): Disposable {
+        val disposable = Disposable { disposeUnitTest(saveCacheOnDispose, clearCacheBeforeDispose) }
 
         setupListeners(disposable)
 
@@ -865,7 +872,7 @@ private class MacroExpansionServiceImplInner(
         processChangedMacros()
     }
 
-    private fun disposeUnitTest(saveCacheOnDispose: Boolean) {
+    private fun disposeUnitTest(saveCacheOnDispose: Boolean, clearCacheBeforeDispose: Boolean) {
         check(isUnitTestMode)
 
         project.taskQueue.cancelTasks(RsTask.TaskType.MACROS_CLEAR)
@@ -876,6 +883,10 @@ private class MacroExpansionServiceImplInner(
                 PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
                 Thread.sleep(10)
             }
+        }
+
+        if (clearCacheBeforeDispose) {
+            MacroExpansionFileSystem.getInstance().cleanDirectoryIfExists(dirs.expansionDirPath)
         }
 
         if (saveCacheOnDispose) {
@@ -922,20 +933,23 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
 private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
     val def = call.resolveToMacroWithoutPsiWithErr()
         .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionError())) }
-    val project = call.project
-    val result = FunctionLikeMacroExpander.new(project).expandMacro(
+    val crate = call.containingCrate ?: return memExpansionResult(call, Err(GetMacroExpansionError.Unresolved))
+    val result = FunctionLikeMacroExpander.forCrate(crate).expandMacro(
         def,
         call,
-        RsPsiFactory(project, markGenerated = false),
         storeRangeMap,
         useCache = true
     ).map { expansion ->
+        val context = call.context as? RsElement
         expansion.elements.forEach {
             it.setExpandedFrom(call)
-            val context = call.context as? RsElement
             if (context != null) {
-                it.setContext(context)
+                it.setExpandedElementContext(context)
             }
+        }
+        if (context != null) {
+            // `lazy = false` in order to prevent deep stack overflow if the expansion is deep
+            expansion.file.setRsFileContext(context, lazy = false)
         }
         expansion
     }.mapErr {
@@ -956,6 +970,7 @@ private fun memExpansionResult(
     call: RsPossibleMacroCall,
     result: RsResult<MacroExpansion, GetMacroExpansionError>
 ): MacroExpansionCachedResult {
+    // Note: the cached result must be invalidated when `RsFile.cachedData` is invalidated
     return if (call is RsMacroCall) {
         CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
     } else {

@@ -16,13 +16,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.URLUtil
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.experiments.EnabledInStable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.isRustFile
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
 import kotlin.reflect.full.hasAnnotation
@@ -45,8 +45,10 @@ class CreateNewGithubIssue : DumbAwareAction() {
             ?.displayText
         val ideNameAndVersion = ideNameAndVersion
         val os = SystemInfo.getOsNameAndVersion()
-        val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
-        val resolveEngine = if (project.isNewResolveEnabled) "new" else "old"
+        val macroExpansionState = when (project.rustSettings.macroExpansionEngine) {
+            MacroExpansionEngine.DISABLED -> "disabled"
+            else -> "enabled"
+        }
         val additionalExperimentalFeatures = additionalExperimentalFeatures
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample.orEmpty()
 
@@ -55,8 +57,7 @@ class CreateNewGithubIssue : DumbAwareAction() {
             toolchainVersion,
             ideNameAndVersion,
             os,
-            macroEngine,
-            resolveEngine,
+            macroExpansionState,
             additionalExperimentalFeatures
         )
         val body = ISSUE_TEMPLATE.format(environmentInfo, codeSnippet)
@@ -93,17 +94,15 @@ class CreateNewGithubIssue : DumbAwareAction() {
             toolchainVersion: String?,
             ideNameAndVersion: String,
             os: String,
-            macroEngine: String,
-            resolveEngine: String,
+            macroExpansionState: String,
             additionalExperimentalFeatures: String?,
         ): String = """
             * **IntelliJ Rust plugin version:** $pluginVersion
             * **Rust toolchain version:** $toolchainVersion
             * **IDE name and version:** $ideNameAndVersion
             * **Operating system:** $os
-            * **Macro expansion engine:** $macroEngine
-            * **Name resolution engine:** $resolveEngine
-            ${additionalExperimentalFeatures?.let { "* **Additional experimental features:** $it" }.orEmpty()}    
+            * **Macro expansion:** $macroExpansionState
+            ${additionalExperimentalFeatures?.let { "* **Additional experimental features:** $it" }.orEmpty()}
         """.trimEnd().trimIndent()
 
         private val ideNameAndVersion: String

@@ -20,11 +20,8 @@ import com.intellij.util.containers.Stack
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.MacroBraces
-import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
-import org.rust.lang.core.psi.RS_KEYWORDS
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.tokenSetOf
 import org.rust.stdext.makeBitMask
 import kotlin.math.max
 
@@ -114,9 +111,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val TYPE_QUAL_ALLOWED: Int = makeBitMask(2)
     private val STMT_EXPR_MODE: Int = makeBitMask(3)
 
-    private val PATH_VALUE: Int = makeBitMask(4)
-    private val PATH_TYPE: Int = makeBitMask(5)
-    private val PATH_NO_TYPE_ARGS: Int = makeBitMask(6)
+    private val PATH_MODE_VALUE: Int = makeBitMask(4)
+    private val PATH_MODE_TYPE: Int = makeBitMask(5)
+    private val PATH_MODE_NO_TYPE_ARGS: Int = makeBitMask(6)
 
     private val MACRO_BRACE_PARENS: Int = makeBitMask(7)
     private val MACRO_BRACE_BRACKS: Int = makeBitMask(8)
@@ -126,17 +123,17 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
         val flag = when (mode) {
-            PathParsingMode.VALUE -> PATH_VALUE
-            PathParsingMode.TYPE -> PATH_TYPE
-            PathParsingMode.NO_TYPE_ARGS -> PATH_NO_TYPE_ARGS
+            PathParsingMode.VALUE -> PATH_MODE_VALUE
+            PathParsingMode.TYPE -> PATH_MODE_TYPE
+            PathParsingMode.NO_TYPE_ARGS -> PATH_MODE_NO_TYPE_ARGS
         }
-        return flags and (PATH_VALUE or PATH_TYPE or PATH_NO_TYPE_ARGS).inv() or flag
+        return flags and (PATH_MODE_VALUE or PATH_MODE_TYPE or PATH_MODE_NO_TYPE_ARGS).inv() or flag
     }
 
     private fun getPathMod(flags: Int): PathParsingMode = when {
-        BitUtil.isSet(flags, PATH_VALUE) -> PathParsingMode.VALUE
-        BitUtil.isSet(flags, PATH_TYPE) -> PathParsingMode.TYPE
-        BitUtil.isSet(flags, PATH_NO_TYPE_ARGS) -> PathParsingMode.NO_TYPE_ARGS
+        BitUtil.isSet(flags, PATH_MODE_VALUE) -> PathParsingMode.VALUE
+        BitUtil.isSet(flags, PATH_MODE_TYPE) -> PathParsingMode.TYPE
+        BitUtil.isSet(flags, PATH_MODE_NO_TYPE_ARGS) -> PathParsingMode.NO_TYPE_ARGS
         else -> error("Path parsing mode not set")
     }
 
@@ -392,14 +389,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
     @JvmStatic
-    fun baseOrTraitType(
+    fun pathOrTraitType(
         b: PsiBuilder,
         level: Int,
         pathP: Parser,
         implicitTraitTypeP: Parser,
         traitTypeUpperP: Parser
     ): Boolean {
-        val baseOrTrait = enter_section_(b)
+        val pathOrTraitType = enter_section_(b)
         val polybound = enter_section_(b)
         val bound = enter_section_(b)
         val traitRef = enter_section_(b)
@@ -409,7 +406,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             exit_section_(b, traitRef, null, false)
             exit_section_(b, bound, null, false)
             exit_section_(b, polybound, null, false)
-            exit_section_(b, baseOrTrait, null, false)
+            exit_section_(b, pathOrTraitType, null, false)
             return implicitTraitTypeP.parse(b, level)
         }
 
@@ -417,7 +414,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             exit_section_(b, traitRef, null, true)
             exit_section_(b, bound, null, true)
             exit_section_(b, polybound, null, true)
-            exit_section_(b, baseOrTrait, BASE_TYPE, true)
+            exit_section_(b, pathOrTraitType, PATH_TYPE, true)
             return true
         }
 
@@ -425,7 +422,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         exit_section_(b, bound, BOUND, true)
         exit_section_(b, polybound, POLYBOUND, true)
         val result = traitTypeUpperP.parse(b, level)
-        exit_section_(b, baseOrTrait, TRAIT_TYPE, result)
+        exit_section_(b, pathOrTraitType, TRAIT_TYPE, result)
         return result
     }
 
@@ -470,7 +467,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         exit_section_(b, polybound, null, true)
 
         if (!nextTokenIsFast(b, EQ) && !nextTokenIsFast(b, COLON)) {
-            exit_section_(b, typeOrAssoc, BASE_TYPE, true)
+            exit_section_(b, typeOrAssoc, PATH_TYPE, true)
             return true
         }
 

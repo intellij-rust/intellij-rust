@@ -15,9 +15,9 @@ import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.hasCtConstParameters
 import org.rust.lang.core.types.infer.hasTyTypeParameters
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 
 /**
  * This file contains tools for extracting a subset of related type/const parameters, lifetimes and their constraints
@@ -39,7 +39,7 @@ data class GenericConstraints(
     val whereClauses: List<RsWhereClause> = emptyList()
 ) {
     fun filterByTypeReferences(references: List<RsTypeReference>): GenericConstraints {
-        val types = references.map { it.type }
+        val types = references.map { it.rawType }
         val typeParameters = gatherTypeParameters(types, typeParameters)
         val lifetimes = gatherLifetimesFromTypeReferences(references, lifetimes, typeParameters)
         val constParameters = constParameters.filter { param -> types.any { matchesConstParameter(it, param) } }
@@ -181,7 +181,7 @@ private data class CollectLifetimesVisitor(
 
     override fun visitTypeReference(ref: RsTypeReference) {
         super.visitTypeReference(ref)
-        val type = ref.type as? TyTypeParameter ?: return
+        val type = ref.rawType as? TyTypeParameter ?: return
         val parameter = parameters[type.name] ?: return
         parameter.bounds.forEach { bound ->
             bound.accept(this)
@@ -249,7 +249,7 @@ private data class CollectTypeParametersTypeVisitor(
 
 private data class CollectTypeParametersVisitor(val typeVisitor: CollectTypeParametersTypeVisitor) : RsRecursiveVisitor() {
     override fun visitTypeReference(ref: RsTypeReference) {
-        ref.type.visitWith(typeVisitor)
+        ref.rawType.visitWith(typeVisitor)
         super.visitTypeReference(ref)
     }
 }
@@ -282,7 +282,7 @@ private fun matchesConstParameter(type: Ty, parameter: RsConstParameter): Boolea
     type.visitWith(HasConstParameterVisitor(parameter))
 
 private fun hasTypeParameter(ref: RsTypeReference, map: Map<String, RsTypeParameter>): Boolean =
-    HasTypeParameterVisitor(map).visitTy(ref.type)
+    HasTypeParameterVisitor(map).visitTy(ref.rawType)
 
 /**
  * Create a predicate if the lifetime is in the map and at least one of its bounds is in the map.

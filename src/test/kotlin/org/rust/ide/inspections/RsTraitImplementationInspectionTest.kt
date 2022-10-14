@@ -114,13 +114,19 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         impl !TError for (){}
     """)
 
-    fun `test unknown method in trait impl E0407`() = checkErrors("""
+    fun `test unknown member in trait impl E0407, E0437, E0438`() = checkErrors("""
         trait T {
-            fn foo();
+            fn method_existing();
+            type TypeExisting;
+            const CONST_EXISTING: i32;
         }
         impl T for () {
-            fn foo() {}
-            fn <error descr="Method `quux` is not a member of trait `T` [E0407]">quux</error>() {}
+            fn method_existing() {}
+            type TypeExisting = i32;
+            const CONST_EXISTING: i32 = 0;
+            fn /*error descr="Method `method_unknown` is not a member of trait `T` [E0407]"*/method_unknown/*error**/() {}
+            type /*error descr="Type `TypeUnknown` is not a member of trait `T` [E0437]"*/TypeUnknown/*error**/ = i32;
+            const /*error descr="Const `CONST_UNKNOWN` is not a member of trait `T` [E0438]"*/CONST_UNKNOWN/*error**/: i32 = 0;
         }
     """)
 

@@ -1016,4 +1016,12 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ Option<String>
     """)
+
+    fun `test todo macro`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = todo!();
+            a;
+        } //^ !
+    """)
 }

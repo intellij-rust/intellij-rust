@@ -16,8 +16,8 @@ IDE.
 
 ## Environment
 
-Java 11 is required for development.
-For example, you can install [openJDK](https://openjdk.java.net/install/) or [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html).
+Java 17 is required for development.
+For example, you can install [openJDK](https://openjdk.java.net/install/) or [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html).
 You can also [install](https://www.jetbrains.com/help/idea/sdk.html#set-up-jdk) Java just from your IntelliJ IDEA.
 
 ## Clone

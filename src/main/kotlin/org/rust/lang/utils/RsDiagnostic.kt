@@ -28,17 +28,29 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.ide.inspections.fixes.AddMainFnFix
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
-import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection
+import org.rust.ide.inspections.fixes.*
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
-import org.rust.lang.core.*
+import org.rust.lang.core.CompilerFeature.Companion.ABI_AMDGPU_KERNEL
+import org.rust.lang.core.CompilerFeature.Companion.ABI_AVR_INTERRUPT
+import org.rust.lang.core.CompilerFeature.Companion.ABI_C_CMSE_NONSECURE_CALL
+import org.rust.lang.core.CompilerFeature.Companion.ABI_EFIAPI
+import org.rust.lang.core.CompilerFeature.Companion.ABI_MSP430_INTERRUPT
+import org.rust.lang.core.CompilerFeature.Companion.ABI_PTX
+import org.rust.lang.core.CompilerFeature.Companion.ABI_THISCALL
+import org.rust.lang.core.CompilerFeature.Companion.ABI_UNADJUSTED
+import org.rust.lang.core.CompilerFeature.Companion.ABI_VECTORCALL
+import org.rust.lang.core.CompilerFeature.Companion.ABI_X86_INTERRUPT
+import org.rust.lang.core.CompilerFeature.Companion.C_UNWIND
+import org.rust.lang.core.CompilerFeature.Companion.INTRINSICS
+import org.rust.lang.core.CompilerFeature.Companion.PLATFORM_INTRINSICS
+import org.rust.lang.core.CompilerFeature.Companion.UNBOXED_CLOSURES
+import org.rust.lang.core.CompilerFeature.Companion.WASM_ABI
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -444,19 +456,31 @@ sealed class RsDiagnostic(
         }
     }
 
-    class UnknownMethodInTraitError(
+    class UnknownMemberInTraitError(
         element: PsiElement,
         private val member: RsAbstractable,
         private val traitName: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
-            E0407,
+            errorCode(),
             errorText()
         )
 
+        private fun errorCode(): RsErrorCode =
+            when (member) {
+                is RsTypeAlias -> E0437
+                is RsConstant -> E0438
+                else -> E0407
+            }
+
         private fun errorText(): String {
-            return "Method `${member.name}` is not a member of trait `$traitName`"
+            val itemType = when (member) {
+                is RsTypeAlias -> "Type"
+                is RsConstant -> "Const"
+                else -> "Method"
+            }
+            return "$itemType `${member.name}` is not a member of trait `$traitName`"
         }
     }
 
@@ -1370,7 +1394,7 @@ sealed class RsDiagnostic(
     class DeriveAttrUnsupportedItem(element: RsAttr) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
-            null,
+            E0774,
             "`derive` may only be applied to structs, enums and unions",
             fixes = listOf(RemoveAttrFix(element as RsAttr))
         )
@@ -1540,17 +1564,78 @@ sealed class RsDiagnostic(
             "`self` import can only appear in an import list with a non-empty prefix",
         )
     }
+
+    class AwaitOutsideAsyncContext(element: PsiElement, private val fix: LocalQuickFix?) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0728,
+            "`await` is only allowed inside `async` functions and blocks",
+            fixes = listOfNotNull(fix)
+        )
+    }
+
+    class CannotCaptureDynamicEnvironment(
+        element: PsiElement,
+        private val fix: LocalQuickFix?,
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0434,
+            "Can't capture dynamic environment in a fn item",
+            fixes = listOfNotNull(fix)
+        )
+    }
+
+    class RecursiveAsyncFunction(element: PsiElement, private val fix: LocalQuickFix?) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0733,
+            "Recursion in an `async fn` requires boxing",
+            fixes = listOfNotNull(fix)
+        )
+    }
+
+    class UnknownAssocTypeBinding(
+        element: RsAssocTypeBinding,
+        private val name: String,
+        private val trait: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0220,
+            "Associated type `$name` not found for `$trait`",
+            fixes = listOf(RemoveAssocTypeBindingFix(element))
+        )
+    }
+
+    class MissingAssocTypeBindings(
+        element: PsiElement,
+        private val missingTypes: List<RsWrongAssocTypeArgumentsInspection.MissingAssocTypeBinding>
+    ) : RsDiagnostic(element) {
+        private fun getText(): String {
+            val typeText = pluralize("type", missingTypes.size)
+            val missing = missingTypes.joinToString(", ") { "`${it.name}` (from trait `${it.trait}`)" }
+            return "The value of the associated $typeText $missing must be specified"
+        }
+
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0191,
+            getText(),
+            fixes = listOf(AddAssocTypeBindingsFix(element, missingTypes.map { it.name }))
+        )
+    }
 }
 
 enum class RsErrorCode {
     E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
-    E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
-    E0200, E0201, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
+    E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0191, E0198, E0199,
+    E0200, E0201, E0220, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
-    E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0435, E0449, E0451, E0463,
+    E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0437, E0438, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
-    E0703, E0704, E0732, E0741, E0742, E0747;
+    E0703, E0704, E0728, E0732, E0733, E0741, E0742, E0747, E0774;
 
     val code: String
         get() = toString()
@@ -1705,8 +1790,7 @@ val SUPPORTED_CALLING_CONVENTIONS = mapOf(
     "avr-interrupt" to ABI_AVR_INTERRUPT,
     "avr-non-blocking-interrupt" to ABI_AVR_INTERRUPT,
     "C-cmse-nonsecure-call" to ABI_C_CMSE_NONSECURE_CALL,
-    // TODO: update compiler features and use `WASM_ABI` here
-    "wasm" to null,
+    "wasm" to WASM_ABI,
     "system" to null,
     "system-unwind" to C_UNWIND,
     "rust-intrinsic" to INTRINSICS,

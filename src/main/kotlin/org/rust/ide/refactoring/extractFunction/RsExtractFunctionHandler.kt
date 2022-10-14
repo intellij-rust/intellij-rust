@@ -63,9 +63,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         val owner = config.function.owner
 
         val function = psiFactory.createFunction(config.functionText)
-        // BACKCOMPAT: 2022.1
-        @Suppress("DEPRECATION", "UnstableApiUsage")
-        val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
+        val psiParserFacade = PsiParserFacade.getInstance(project)
         return when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
                 val impl = findExistingInherentImpl(owner.impl) ?: createNewInherentImpl(owner.impl) ?: return null

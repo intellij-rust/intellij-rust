@@ -6,8 +6,6 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -18,6 +16,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -29,8 +28,6 @@ import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 import javax.swing.Icon
-
-private val LOG: Logger = logger<RsTraitItem>()
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
@@ -92,7 +89,15 @@ fun BoundElement<RsTraitItem>.substAssocType(assocName: String, ty: Ty?): BoundE
 }
 
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
+    @Suppress("UnstableApiUsage")
     return ReferencesSearch.search(this, this.useScope)
+        .transforming {
+            if (it is RsMacroBodyReferenceDelegateImpl) {
+                it.delegates
+            } else {
+                listOf(it)
+            }
+        }
         .mapQuery { it.element.parent?.parent }
         .filterIsInstanceQuery<RsImplItem>()
         .filterQuery { it.typeReference != null }
@@ -102,7 +107,7 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>>
     get() {
         // trait Foo where Self: Bar {}
         val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
-            .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.hasCself == true }
+            .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.hasCself == true }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
         // trait Foo: Bar {}
         val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds
@@ -115,20 +120,6 @@ val RsTraitItem.isSized: Boolean
     get() {
         return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
     }
-
-fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
-    val typeParameterList = typeParameters
-    val substitution = if (typeParameterList.size != subst.size) {
-        LOG.warn("Trait has ${typeParameterList.size} type parameters but received ${subst.size} types for substitution")
-        emptySubstitution
-    } else {
-        typeParameterList.withIndex().associate { (i, par) ->
-            val param = TyTypeParameter.named(par)
-            param to (subst.getOrNull(i) ?: param)
-        }.toTypeSubst()
-    }
-    return BoundElement(this, substitution)
-}
 
 fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =
     BoundElement(this, defaultSubstitution(this))

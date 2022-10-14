@@ -107,7 +107,6 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
-    @CheckTestmarkHit(AutoImportFix.Testmarks.NameInScope::class)
     fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
         use foo::Foo;
 

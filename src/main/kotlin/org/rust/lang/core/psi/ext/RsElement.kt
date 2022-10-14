@@ -22,10 +22,7 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.*
 
 interface RsElement : PsiElement {
@@ -38,10 +35,10 @@ interface RsElement : PsiElement {
 }
 
 val RsElement.cargoProject: CargoProject?
-    get() = (contextualFile.originalFile as? RsFile)?.cargoProject
+    get() = containingRsFileSkippingCodeFragments?.cargoProject
 
 val RsElement.cargoWorkspace: CargoWorkspace?
-    get() = (contextualFile.originalFile as? RsFile)?.cargoWorkspace
+    get() = containingRsFileSkippingCodeFragments?.cargoWorkspace
 
 fun PsiFileSystemItem.findCargoProject(): CargoProject? {
     if (this is RsFile) return this.cargoProject
@@ -59,7 +56,7 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() = containingCrate?.cargoTarget
 
 val RsElement.containingCrate: Crate?
-    get() = (contextualFile.originalFile as? RsFile)?.crate
+    get() = containingRsFileSkippingCodeFragments?.crate
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
@@ -88,6 +85,17 @@ val PsiElement.isAtLeastEdition2018: Boolean
 val RsElement.isConstantLike: Boolean
     get() = this is RsConstant || (this is RsFieldsOwner && isFieldless)
 
+val RsElement.isInAsyncContext: Boolean
+    get() {
+        for (context in contexts) {
+            when (context) {
+                is RsBlockExpr -> if (context.isAsync) return true
+                is RsFunctionOrLambda -> return context.isAsync
+            }
+        }
+        return false
+    }
+
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCrate
         ?.findDependency(dependencyName)
@@ -100,7 +108,7 @@ abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElem
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
@@ -118,7 +126,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (contextualFile as? RsElement)?.crateRoot
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
@@ -140,9 +148,6 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     processNestedScopesUpwards(this, ns, processor)
     return resolved
 }
-
-fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
-    findInScope(name, ns) != null
 
 fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
     val bindings = HashMap<String, RsPatBinding>()

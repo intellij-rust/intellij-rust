@@ -31,7 +31,7 @@ FILE
       RsTypeParameterImpl(TYPE_PARAMETER)
         PsiElement(identifier)('B')
         PsiElement(=)('=')
-        RsBaseTypeImpl(BASE_TYPE)
+        RsUnitTypeImpl(UNIT_TYPE)
           PsiElement(()('(')
           PsiElement())(')')
       PsiElement(>)('>')

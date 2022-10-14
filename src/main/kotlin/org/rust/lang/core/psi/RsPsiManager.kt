@@ -25,16 +25,14 @@ import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.MacroExpansionFileSystem
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsPsiManager.Companion.isIgnorePsiEvents
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
-import org.rust.lang.core.psi.ext.findModificationTrackerOwner
-import org.rust.lang.core.psi.ext.isTopLevelExpansion
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.defMapService
 
 /** Don't subscribe directly or via plugin.xml lazy listeners. Use [RsPsiManager.subscribeRustStructureChange] */
@@ -258,18 +256,34 @@ val Project.rustStructureModificationTracker: ModificationTracker
     get() = rustPsiManager.rustStructureModificationTracker
 
 /**
+ * Returns [RsPsiManager.rustStructureModificationTracker] if [Crate.origin] == [PackageOrigin.WORKSPACE] or
+ * [RsPsiManager.rustStructureModificationTrackerInDependencies] otherwise
+ */
+val Crate.rustStructureModificationTracker: ModificationTracker
+    get() = if (origin == PackageOrigin.WORKSPACE) {
+        project.rustStructureModificationTracker
+    } else {
+        project.rustPsiManager.rustStructureModificationTrackerInDependencies
+    }
+
+/**
  * Returns [RsPsiManager.rustStructureModificationTracker] or [PsiModificationTracker.MODIFICATION_COUNT]
  * if `this` element is inside language injection
  */
 val RsElement.rustStructureOrAnyPsiModificationTracker: Any
     get() {
         val containingFile = containingFile
-        return when (containingFile.virtualFile) {
-            // The case of injected language. Injected PSI don't have it's own event system, so can only
+        return when {
+            // The case of injected language. Injected PSI doesn't have its own event system, so can only
             // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
             // literal. If a user change the literal, we can only be notified that the literal is changed.
             // So we have to invalidate the cached value on any PSI change
-            is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
-            else -> containingFile.project.rustStructureModificationTracker
+            containingFile.virtualFile is VirtualFileWindow ->
+                PsiModificationTracker.MODIFICATION_COUNT
+
+            containingFile.containingRsFileSkippingCodeFragments?.crate?.origin == PackageOrigin.WORKSPACE ->
+                project.rustStructureModificationTracker
+
+            else -> containingFile.project.rustPsiManager.rustStructureModificationTrackerInDependencies
         }
     }

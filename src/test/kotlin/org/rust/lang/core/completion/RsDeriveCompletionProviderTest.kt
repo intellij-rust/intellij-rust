@@ -7,6 +7,7 @@ package org.rust.lang.core.completion
 
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.resolve.KnownDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
@@ -39,12 +40,9 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
 
     fun `test complete with dependencies`() {
         KnownDerivableTrait.values()
-            .filter { it.dependencies.isNotEmpty() }
+            .filter { it.isStd && it.dependencies.isNotEmpty() }
             .forEach {
                 checkContainsCompletion(it.withDependencies.joinToString(", "), """
-                    #[lang = "failure::Fail"]
-                    trait Fail {}
-
                     #[derive(${it.name.dropLast(1)}/*caret*/)]
                     struct Foo;
                 """)
@@ -107,18 +105,6 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test serde Serialize`() = doSingleCompletion("""
-        #[lang = "serde::Serialize"]
-        trait Serialize {}
-        #[derive(Ser/*caret*/)]
-        struct S;
-    """, """
-        #[lang = "serde::Serialize"]
-        trait Serialize {}
-        #[derive(Serialize/*caret*/)]
-        struct S;
-    """)
-
     fun `test no serde Serialize completion if no serde traits`() = checkNoCompletion("""
         trait Serialize {}
         #[derive(Ser/*caret*/)]
@@ -149,5 +135,56 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         struct Test {
             foo: u8
         }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test derive proc macro (unqualified)`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(DeriveEmpty)]
+        pub fn derive_empty(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::DeriveEmpty;
+        #[derive(Derive/*caret*/)]
+        struct Test {}
+    """, """
+        use dep_proc_macro::DeriveEmpty;
+        #[derive(DeriveEmpty/*caret*/)]
+        struct Test {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test derive proc macro (out of scope)`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(DeriveEmpty)]
+        pub fn derive_empty(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        #[derive(Derive/*caret*/)]
+        struct Test {}
+    """, """
+        use dep_proc_macro::DeriveEmpty;
+
+        #[derive(DeriveEmpty/*caret*/)]
+        struct Test {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no function like proc macro (unqualified)`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { return input; }
+    //- lib.rs
+        use dep_proc_macro::function_like_as_is;
+        #[derive(function_like_/*caret*/)]
+        struct Test {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no function like proc macro (out of scope)`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { return input; }
+    //- lib.rs
+        #[derive(function_like_/*caret*/)]
+        struct Test {}
     """)
 }

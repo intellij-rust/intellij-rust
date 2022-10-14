@@ -140,6 +140,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             testTarget("$contentRoot/bin/a.rs", name, TargetKind.Bin),
             testTarget("$contentRoot/bin/a/main.rs", name, TargetKind.Bin),
             testTarget("$contentRoot/tests/a.rs", name, TargetKind.Test),
+            testTarget("$contentRoot/tests/b.rs", name, TargetKind.Test),
             testTarget("$contentRoot/tests/a/main.rs", name, TargetKind.Test),
             testTarget("$contentRoot/bench/a.rs", name, TargetKind.Bench),
             testTarget("$contentRoot/bench/a/main.rs", name, TargetKind.Bench),
@@ -280,8 +281,11 @@ open class WithProcMacros(
             setExperimentalFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS, true, disposable)
             val testProcMacroProjectPath = Path.of("testData/$TEST_PROC_MACROS")
             fullyRefreshDirectoryInUnitTests(LocalFileSystem.getInstance().findFileByNioFile(testProcMacroProjectPath)!!)
-            val (testProcMacroProject, _) = toolchain!!.cargo().fullProjectDescription(project, testProcMacroProjectPath)
-                .unwrapOrThrow()
+            val (testProcMacroProject, _) = toolchain!!.cargo().fullProjectDescription(
+                project,
+                testProcMacroProjectPath,
+                rustcVersion = rustcInfo?.version,
+            ).unwrapOrThrow()
             procMacroPackage = testProcMacroProject.packages.find { it.name == TEST_PROC_MACROS }!!
                 .copy(origin = PackageOrigin.DEPENDENCY)
             procMacroPackage

@@ -101,8 +101,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val parent = element.parent
         when {
             parent is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
-            // Handled by [RsDeriveCompletionProvider]
-            parent is RsMetaItem -> return
+            parent is RsMetaItem -> {
+                // Derive is handled by [RsDeriveCompletionProvider]
+                if (!RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
+                val filtered = filterAttributeProcMacros(processor)
+                processProcMacroResolveVariants(element, filtered, isCompletion = true)
+            }
             // Handled by [RsVisRestrictionCompletionProvider]
             parent is RsVisRestriction && parent.`in` == null -> return
             else -> {
@@ -120,6 +124,19 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 )
                 for (filter in filters) {
                     filtered = filter(element, filtered)
+                }
+
+                // RsPathExpr can become a macro by adding a trailing `!`, so we add macros to completion
+                if (element.parent is RsPathExpr && element.qualifier == null) {
+                    processMacroCallPathResolveVariants(element, isCompletion = true, filtered)
+                }
+
+                val possibleTypeArgs = parent?.parent
+                if (possibleTypeArgs is RsTypeArgumentList) {
+                    val trait = (possibleTypeArgs.parent as? RsPath)?.reference?.resolve() as? RsTraitItem
+                    if (trait != null) {
+                        processAssocTypeVariants(trait, filtered)
+                    }
                 }
 
                 processPathResolveVariants(
@@ -186,8 +203,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             }
         }
         if (TyPrimitive.fromPath(path) != null) return
-        // TODO: implement special rules paths in meta items
-        if (path.parent is RsMetaItem) return
+        val parent = path.parent
+        if (parent is RsMetaItem && !RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
         Testmarks.OutOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
@@ -265,10 +282,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     item: LookupElement
                 ) {
                     super.handleInsert(element, scopeName, context, item)
-                    if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
-                        context.commitDocument()
-                        context.getElementOfType<RsElement>()?.let { candidate.import(it) }
-                    }
+                    context.import(candidate)
                 }
             }
         ).withImportCandidate(candidate)
@@ -305,7 +319,7 @@ private fun filterVisRestrictionPaths(
 ): RsResolveProcessor {
     return if (path.parent is RsVisRestriction) {
         val allowedModules = path.containingMod.superMods
-        createProcessor(processor.name) {
+        createProcessor(processor.names) {
             when (it.element) {
                 !is RsMod -> false
                 !in allowedModules -> false
@@ -328,7 +342,7 @@ private fun filterTraitRefPaths(
 ): RsResolveProcessor {
     val parent = path.parent
     return if (parent is RsTraitRef) {
-        createProcessor(processor.name) {
+        createProcessor(processor.names) {
             if (it.element is RsTraitItem || it.element is RsMod) {
                 processor(it)
             } else {
@@ -347,7 +361,7 @@ private fun filterAssocTypes(
     val qualifier = path.path
     val allAssocItemsAllowed =
         qualifier == null || qualifier.hasCself || qualifier.reference?.resolve() is RsTypeParameter
-    return if (allAssocItemsAllowed) processor else createProcessor(processor.name) {
+    return if (allAssocItemsAllowed) processor else createProcessor(processor.names) {
         if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) false
         else processor(it)
     }
@@ -358,7 +372,7 @@ private fun filterPathCompletionVariantsByTraitBounds(
     lookup: ImplLookup
 ): RsResolveProcessor {
     val cache = hashMapOf<TraitImplSource, Boolean>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         if (it !is AssocItemScopeEntry) return@createProcessor processor(it)
 
         val receiver = it.subst[TyTypeParameter.self()] ?: return@createProcessor processor(it)
@@ -385,7 +399,7 @@ private fun filterMethodCompletionVariantsByTraitBounds(
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
 
     val cache = mutableMapOf<Pair<TraitImplSource, Int>, Boolean>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         // If not a method (actually a field) or a trait method - just process it
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         // Filter methods by trait bounds (try to select all obligations for each impl)
@@ -412,7 +426,7 @@ private fun filterMethodCompletionVariantsByTraitBounds(
  */
 private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): RsResolveProcessor {
     val processedNamesAndTraits = mutableSetOf<Pair<String, RsTraitItem?>>()
-    return createProcessor(processor.name) {
+    return createProcessor(processor.names) {
         if (it !is MethodResolveVariant) return@createProcessor processor(it)
         val shouldProcess = processedNamesAndTraits.add(it.name to it.source.implementedTrait?.element)
         if (shouldProcess) return@createProcessor processor(it)
@@ -471,7 +485,7 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
 private fun addProcessedPathName(
     processor: RsResolveProcessor,
     processedPathElements: MultiMap<String, RsElement>
-): RsResolveProcessor = createProcessor(processor.name) {
+): RsResolveProcessor = createProcessor(processor.names) {
     val element = it.element
     if (element != null) {
         processedPathElements.putValue(it.name, element)
@@ -491,7 +505,7 @@ private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement
     return null
 }
 
-private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
+fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
     return RsImportLookupElement(this, candidate)
 }
 
@@ -502,7 +516,7 @@ private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImp
  *
  * See [#5415](https://github.com/intellij-rust/intellij-rust/issues/5415)
  */
-private class RsImportLookupElement(
+class RsImportLookupElement(
     delegate: LookupElement,
     private val candidate: ImportCandidate
 ) : LookupElementDecorator<LookupElement>(delegate) {
@@ -559,5 +573,12 @@ fun collectVariantsForEnumCompletion(
                 }
             }
         ).let { if (candidate != null) it.withImportCandidate(candidate) else it }
+    }
+}
+
+fun InsertionContext.import(candidate: ImportCandidate) {
+    if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+        commitDocument()
+        getElementOfType<RsElement>()?.let { candidate.import(it) }
     }
 }

@@ -67,6 +67,8 @@ def lookup(valobj):
         return StdOsStringProvider(valobj)
     if rust_type == RustType.STD_STR:
         return StdStrProvider(valobj)
+    if rust_type == RustType.STD_SLICE:
+        return StdSliceProvider(valobj)
 
     if rust_type == RustType.STD_VEC:
         return StdVecProvider(valobj)
@@ -80,9 +82,9 @@ def lookup(valobj):
         return StdHashMapProvider(valobj)
     if rust_type == RustType.STD_HASH_SET:
         return StdHashMapProvider(valobj, show_values=False)
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcProvider(valobj)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcProvider(valobj, is_atomic=True)
 
     if rust_type == RustType.STD_CELL:
@@ -96,5 +98,16 @@ def lookup(valobj):
 
     if rust_type == RustType.STD_NONZERO_NUMBER:
         return StdNonZeroNumberProvider(valobj)
+
+    if rust_type == RustType.STD_RANGE:
+        return StdRangeProvider(valobj)
+    if rust_type == RustType.STD_RANGE_FROM:
+        return StdRangeFromProvider(valobj)
+    if rust_type == RustType.STD_RANGE_INCLUSIVE:
+        return StdRangeInclusiveProvider(valobj)
+    if rust_type == RustType.STD_RANGE_TO:
+        return StdRangeToProvider(valobj)
+    if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
+        return StdRangeToInclusiveProvider(valobj)
 
     return None

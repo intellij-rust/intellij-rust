@@ -499,6 +499,38 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         } //^ main.rs
     """)
 
+    fun `test $crate passed to attr proc macro`() = checkByCode("""
+        fn main() {
+            bar();
+        } //^
+        fn foo() {}
+         //X
+        macro_rules! gen {
+            () => {
+                #[test_proc_macros::attr_as_is]
+                use $ crate::foo as bar;
+            }
+        }
+        gen!();
+    """)
+
+    fun `test $crate passed to derive proc macro`() = checkByCode("""
+        macro_rules! gen {
+            () => {
+                #[derive(test_proc_macros::DeriveAsIsInNestedMod)]
+                pub struct Foo(pub $ crate::Struct);
+            }
+        }
+        gen!();
+
+        fn func(foo: inner::Foo) {
+            foo.0.field;
+        }       //^
+        pub struct Struct {
+            pub field: i32
+        }     //X
+    """)
+
     override val followMacroExpansions: Boolean
         get() = true
 }

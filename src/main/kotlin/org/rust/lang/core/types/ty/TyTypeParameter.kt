@@ -35,15 +35,15 @@ class TyTypeParameter private constructor(
 
     val name: String? get() = parameter.name
 
-    interface TypeParameter {
-        val name: String?
+    sealed class TypeParameter {
+        abstract val name: String?
     }
 
-    object Self : TypeParameter {
+    object Self : TypeParameter() {
         override val name: String get() = "Self"
     }
 
-    data class Named(val parameter: RsTypeParameter) : TypeParameter {
+    data class Named(val parameter: RsTypeParameter) : TypeParameter() {
         override val name: String? get() = parameter.name
     }
 

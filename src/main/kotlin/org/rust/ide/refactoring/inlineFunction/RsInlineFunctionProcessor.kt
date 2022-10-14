@@ -25,6 +25,7 @@ import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.refactoring.freshenName
 import org.rust.ide.refactoring.inlineValue.replaceWithAddingParentheses
 import org.rust.lang.core.dfa.ExitPoint
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -161,6 +162,7 @@ class RsInlineFunctionProcessor(
 
     private fun preprocessFunction(originalFunction: RsFunction): RsFunction {
         val function = originalFunction.copy() as RsFunction
+        (originalFunction.context as? RsElement?)?.let { function.setContext(it) }
         replaceSelfParameter(function)
         replaceReturnWithTailExpr(function)
         return function
@@ -193,7 +195,7 @@ class RsInlineFunctionProcessor(
         returnExpr.replace(returnValue)
     }
 
-    override fun getCommandName(): String = "Inline function ${originalFunction.declaration}"
+    override fun getCommandName(): String = "Inline function ${originalFunction.name}"
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
         RsInlineUsageViewDescriptor(originalFunction, "Function to inline")
@@ -410,6 +412,7 @@ private class InlineSingleUsage(
         }
 
         val function = originalFunction.copy() as RsFunction
+        (originalFunction.context as? RsElement?)?.let { function.setContext(it) }
         expandStructLiteralFieldsShorthand(function)
         renameParametersIfNecessary(function, getFreshName)
         renameTopLevelDeclarationsIfNecessary(function, getFreshName)

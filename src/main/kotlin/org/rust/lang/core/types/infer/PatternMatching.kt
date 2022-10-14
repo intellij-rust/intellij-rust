@@ -9,12 +9,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
-import org.rust.lang.core.resolve.ref.resolvePath
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtUnknown
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ConstExpr
 import org.rust.lang.utils.evaluation.toConst
 import org.rust.openapiext.Testmark
@@ -24,13 +23,22 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         is RsPatWild -> fcx.writePatTy(this, type)
         is RsPatConst -> {
             val expr = expr
-            val expected = when {
-                expr is RsLitExpr && expr.kind is RsLiteralKind.String -> type
-                expr is RsPathExpr && resolvePath(expr.path).singleOrNull()?.inner?.element is RsConstant -> type
-                else -> type.stripReferences(defBm).first
+            if (expr is RsPathExpr) {
+                val inferred = fcx.inferType(expr)
+                val expected = when (fcx.getResolvedPath(expr).singleOrNull()?.element) {
+                    is RsConstant -> type
+                    else -> type.stripReferences(defBm).first
+                }
+                fcx.coerce(expr, inferred, expected)
+                fcx.writePatTy(this, expected)
+            } else {
+                val expected = when {
+                    expr is RsLitExpr && expr.kind is RsLiteralKind.String -> type
+                    else -> type.stripReferences(defBm).first
+                }
+                fcx.writePatTy(this, expected)
+                fcx.inferTypeCoercableTo(expr, expected)
             }
-            fcx.writePatTy(this, expected)
-            fcx.inferTypeCoercableTo(expr, expected)
         }
         is RsPatRef -> {
             pat.extractBindings(fcx, (type as? TyReference)?.referenced ?: TyUnknown)
@@ -70,7 +78,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 tupleFields
                     .getOrNull(idx)
                     ?.typeReference
-                    ?.type
+                    ?.normType(fcx.ctx)
                     ?.substituteOrUnknown(expected.typeParameterValues)
                     ?: TyUnknown
             }
@@ -87,7 +95,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 val kind = patField.kind
                 val fieldType = structFields[kind.fieldName]
                     ?.typeReference
-                    ?.type
+                    ?.normType(fcx.ctx)
                     ?.substituteOrUnknown(expected.typeParameterValues)
                     ?: TyUnknown
 

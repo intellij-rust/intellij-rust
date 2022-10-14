@@ -276,15 +276,18 @@ private class WorkspaceImpl(
 
                 val wrappedDeps = deps.flatMap { featureDep ->
                     when {
+                        featureDep.startsWith("dep:") -> emptyList()
                         featureDep in pkgFeatures -> listOf(PackageFeature(pkg, featureDep))
                         "/" in featureDep -> {
-                            val (crateName, name) = featureDep.split('/', limit = 2)
+                            val (firstSegment, name) = featureDep.split('/', limit = 2)
+                            val optional = firstSegment.endsWith("?")
+                            val depName = firstSegment.removeSuffix("?")
 
-                            val dep = pkg.dependencies.find { it.cargoFeatureDependencyPackageName == crateName }
+                            val dep = pkg.dependencies.find { it.cargoFeatureDependencyPackageName == depName }
                                 ?: return@flatMap emptyList()
 
                             if (name in dep.pkg.rawFeatures) {
-                                if (dep.isOptional) {
+                                if (!optional && dep.isOptional) {
                                     listOf(PackageFeature(pkg, dep.cargoFeatureDependencyPackageName), PackageFeature(dep.pkg, name))
                                 } else {
                                     listOf(PackageFeature(dep.pkg, name))
@@ -395,7 +398,6 @@ private class WorkspaceImpl(
     }
 
     override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace {
-        checkFeaturesInference()
         val featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
 
         return WorkspaceImpl(
@@ -657,16 +659,18 @@ private fun PackageImpl.addDependencies(workspaceData: CargoWorkspaceData, packa
     dependencies += pkgDeps.mapNotNull { dep ->
         val dependencyPackage = packagesMap[dep.id] ?: return@mapNotNull null
 
+        val depTargetName = dependencyPackage.libTarget?.normName ?: dependencyPackage.normName
+        val depName = dep.name ?: depTargetName
+        val rename = if (depName != depTargetName) depName else null
+
         // There can be multiple appropriate raw dependencies because a dependency can be mentioned
         // in `Cargo.toml` in different sections, e.g. [dev-dependencies] and [build-dependencies]
         val rawDeps = pkgRawDeps.filter { rawDep ->
-            rawDep.name == dependencyPackage.name && dep.depKinds.any {
+            rawDep.name == dependencyPackage.name && rawDep.rename?.replace('-', '_') == rename && dep.depKinds.any {
                 it.kind == CargoWorkspace.DepKind.Unclassified ||
                     it.target == rawDep.target && it.kind.cargoName == rawDep.kind
             }
         }
-
-        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
 
         DependencyImpl(
             dependencyPackage,
@@ -734,7 +738,9 @@ fun CargoWorkspace.Package.additionalRoots(): List<VirtualFile> {
             CORE -> contentRoot?.parent?.let {
                 listOfNotNull(
                     it.findFileByRelativePath("stdarch/crates/core_arch"),
-                    it.findFileByRelativePath("stdarch/crates/std_detect")
+                    it.findFileByRelativePath("stdarch/crates/std_detect"),
+                    it.findFileByRelativePath("portable-simd/crates/core_simd"),
+                    it.findFileByRelativePath("portable-simd/crates/std_float"),
                 )
             } ?: emptyList()
             else -> emptyList()

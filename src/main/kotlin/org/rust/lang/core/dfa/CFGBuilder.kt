@@ -276,7 +276,13 @@ class CFGBuilder(
             is RsVecMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
 
             is RsFormatMacroArgument -> {
-                argument.formatMacroArgList.map { it.expr }.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+                val expansion = macroCall.expansion
+                @Suppress("IfThenToElvis")
+                if (expansion != null) {
+                    expansion.elements.fold(pred) { pred, element -> process(element, pred) }
+                } else {
+                    argument.formatMacroArgList.map { it.expr }.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+                }
             }
 
             is RsAssertMacroArgument -> {

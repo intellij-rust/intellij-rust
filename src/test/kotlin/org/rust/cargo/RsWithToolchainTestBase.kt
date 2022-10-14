@@ -84,7 +84,6 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
             RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         }
         setupExperimentalFeatures()
-        setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let { ann ->
             Disposer.register(
                 earlyTestRootDisposable,

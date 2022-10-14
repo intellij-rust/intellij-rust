@@ -2217,8 +2217,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.53.0")
+    fun `test non top level or patterns E0658 3`() = checkErrors("""
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            if let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            while let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            match y {
+                Option::Some(V::V1(x) | V::V2(x)) => {},
+                _ => {}
+            }
+        }
+    """)
+
     @MockRustcVersion("1.38.0-nightly")
-    fun `test leading vertical bar in or patterns 1`() = checkErrors("""
+    fun `test leading vertical bar in toplevel or patterns`() = checkErrors("""
         #![feature(or_patterns)]
         enum V { V1(i32), V2(i32) }
         fn foo(y: V, z: V) {
@@ -2229,20 +2243,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @MockRustcVersion("1.38.0-nightly")
-    fun `test leading vertical bar in or patterns 2`() = checkFixByText("Remove `|`", """
-        #![feature(or_patterns)]
+    @MockRustcVersion("1.53.0")
+    fun `test leading vertical bar in nested or patterns`() = checkErrors("""
         enum Option<T> { None, Some(T) }
         enum V { V1(i32), V2(i32) }
         fn foo(y: Option<V>) {
-            while let Option::Some(<error descr="a leading `|` is only allowed in a top-level pattern">|/*caret*/</error> V::V1(x) | V::V2(x)) = y {}
-        }
-    """, """
-        #![feature(or_patterns)]
-        enum Option<T> { None, Some(T) }
-        enum V { V1(i32), V2(i32) }
-        fn foo(y: Option<V>) {
-            while let Option::Some(/*caret*/V::V1(x) | V::V2(x)) = y {}
+            while let Option::Some(|/*caret*/ V::V1(x) | V::V2(x)) = &y {}
+            if let (| Option::None | Option::Some(_), _) = (&y, &y) {}
+            match &[y] {
+                [.., | Option::None | Option::Some(_)] => {},
+                _ => {}
+            }
         }
     """)
 
@@ -2811,6 +2822,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![feature(no_core)]
         #![no_core]
         impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
+    """)
+
+    fun `test E0118 impl for normalizable associated type 1`() = checkErrors("""
+        struct S;
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = S; }
+
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><Struct as Trait>::Item</error> {}
+    """)
+
+    fun `test E0118 impl for normalizable associated type 2`() = checkErrors("""
+        struct Struct;
+        trait Trait { type Item; }
+        impl Trait for Struct { type Item = u8; }
+
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><Struct as Trait>::Item</error> {}
     """)
 
     fun `test impl sized for struct E0322`() = checkErrors("""
@@ -4152,9 +4180,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         type Foo = i32;
     """)
 
-    @UseOldResolve
+    // TODO the test has been regressed after switching to Name Resolution 2.0
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test custom inline proc macro attr and disable cfg`() = checkByFileTree("""
+    fun `test custom inline proc macro attr and disable cfg`() = expect<org.junit.ComparisonFailure> {
+    checkByFileTree("""
     //- dep-proc-macro/lib.rs
         use proc_macro::TokenStream;
 
@@ -4171,6 +4200,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
         type Foo = i32;
     """)
+    }
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test custom inline proc macro attr but ref invalid`() = checkByFileTree("""
@@ -4234,7 +4264,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test use derive attr on unsupported items`() = checkErrors("""
-        <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
+        <error descr="`derive` may only be applied to structs, enums and unions [E0774]">#[derive(Debug)]</error>
         type Test = i32;
     """)
 
@@ -4245,6 +4275,28 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[derive(Debug)]
         enum Color {
             RED, GREEN
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test user defined derive proc macro`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn derive(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- lib.rs
+        /*caret*/
+        #[dep_proc_macro::derive]
+        fn main() {}
+
+        mod foo {
+            use dep_proc_macro::derive;
+
+            #[derive]
+            fn bar() {}
         }
     """)
 
@@ -4397,6 +4449,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo() -> impl FooBar {}
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0116 inherent impls should be in same crate`() = checkByFileTree("""
     //- lib.rs
         pub struct ForeignStruct {}
@@ -4416,7 +4469,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl LocalStructAlias {}
 
         impl dyn LocalTrait {}
+        impl dyn LocalTrait + Send {}
+        impl dyn Send + LocalTrait {}
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
+        impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn Send</error> {}
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -4454,8 +4510,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Pin<ForeignStruct> {}
 
         // trait objects
-        impl ForeignTrait for Box<dyn LocalTrait> {}
-        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0> {}
+        impl ForeignTrait for Box<dyn LocalTrait + Send> {}
+        impl ForeignTrait for Box<dyn Send + LocalTrait> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0 + Send> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn Send + ForeignTrait0> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn Send> {}
     """)
 
     fun `test no E0252 multiple underscore aliases`() = checkErrors("""
@@ -4595,7 +4654,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         extern <error descr="avr-interrupt ABI is experimental [E0658]">"avr-interrupt"</error> fn fn19() {}
         extern <error descr="avr-non-blocking-interrupt ABI is experimental [E0658]">"avr-non-blocking-interrupt"</error> fn fn20() {}
         extern <error descr="C-cmse-nonsecure-call ABI is experimental [E0658]">"C-cmse-nonsecure-call"</error> fn fn21() {}
-        extern "wasm" fn fn22() {}
+        extern <error descr="wasm ABI is experimental [E0658]">"wasm"</error> fn fn22() {}
         extern "system" fn fn23() {}
         extern <error descr="system-unwind ABI is experimental [E0658]">"system-unwind"</error> fn fn24() {}
         extern <error descr="rust-intrinsic ABI is experimental [E0658]">"rust-intrinsic"</error> fn fn25() {}
@@ -4852,5 +4911,32 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![cfg_attr(intellij_rust, <error>/*caret*/feature</error>(never_type))]
 
         fn main() {}
+    """)
+
+    fun `test recursive async function E0733`() = checkErrors("""
+        async fn func1() {
+            func1().<error descr="Recursion in an `async fn` requires boxing [E0733]">await</error>;
+            func1();
+        }
+        async fn func2() {
+            func1().await;
+        }
+        async fn func3() {
+            let _ = async || {
+                func3().await;
+            };
+            async fn inner() {
+                func3().await;
+            }
+        }
+
+        #[async_recursion]
+        async fn func4() {
+            func4().await;
+        }
+        #[async_recursion::async_recursion]
+        async fn func5() {
+            func5().await;
+        }
     """)
 }

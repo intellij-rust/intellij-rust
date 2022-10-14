@@ -9,18 +9,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.rust.ide.presentation.getStubOnlyText
+import org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasProcessor
+import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
+import org.rust.ide.refactoring.inlineTypeAlias.tryGetTypeAliasSubstitutionUsingParent
 import org.rust.ide.utils.import.RsImportHelper
-import org.rust.lang.core.parser.RustParserUtil
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.endOffsetInParent
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.resolve.ref.advancedResolveTypeAliasToImpl
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.implLookupAndKnownItems
-import org.rust.lang.core.types.infer.RsInferenceContext
-import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.rawType
 
+/** See also [RsInlineTypeAliasProcessor] */
 class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteTypeAliasIntention.Context>() {
     override fun getText() = "Substitute type alias"
     override fun getFamilyName() = text
@@ -34,7 +34,7 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>() ?: return null
-        val target = path.reference?.advancedResolve() ?: return null
+        val target = path.reference?.advancedResolveTypeAliasToImpl() ?: return null
 
         val typeAlias = target.element as? RsTypeAlias ?: return null
 
@@ -43,42 +43,8 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val factory = RsPsiFactory(project)
-        val typeRef = ctx.typeAliasReference
-        val isTypeContext = ctx.path.parentOfType<RsTypeReference>() != null
-
-        val parentPath = ctx.path.parent as? RsPath
-        val selfTy = if (parentPath != null && parentPath.parent is RsPathExpr) {
-            parentPath.reference?.advancedResolve()?.subst?.let { it[TyTypeParameter.self()] }
-        } else {
-            null
-        }
-        val subst = if (selfTy != null) {
-            val (lookup, items) = ctx.path.implLookupAndKnownItems
-            val inf = RsInferenceContext(project, lookup, items)
-            val subst = inf.instantiateBounds(ctx.typeAlias, selfTy)
-            val type = typeRef.type.substitute(subst)
-            inf.combineTypes(type, selfTy)
-            subst.mapTypeValues { (_, v) -> inf.resolveTypeVarsIfPossible(v) }
-        } else {
-            ctx.substitution
-        }
-
-        val renderedType = typeRef.getStubOnlyText(subst)
-        val createdPath = factory.tryCreatePath(renderedType, RustParserUtil.PathParsingMode.TYPE)
-            ?: return
-
-        // S<u32> -> S::<u32> in expression context
-        val insertedPath: RsPath = if (!isTypeContext && createdPath.typeArgumentList != null) {
-            val end = createdPath.identifier?.endOffsetInParent ?: 0
-            val pathText = createdPath.text
-            val newPath = pathText.substring(0, end) + "::" + pathText.substring(end)
-            val path = factory.tryCreatePath(newPath, RustParserUtil.PathParsingMode.TYPE) ?: return
-            ctx.path.replace(path) as RsPath
-        } else {
-            ctx.path.replace(createdPath) as RsPath
-        }
-
-        RsImportHelper.importTypeReferencesFromTy(insertedPath, typeRef.type)
+        val substitution = tryGetTypeAliasSubstitutionUsingParent(ctx.path, ctx.typeAlias) ?: ctx.substitution
+        val inlined = fillPathWithActualType(ctx.path, ctx.typeAliasReference, substitution) ?: return
+        RsImportHelper.importTypeReferencesFromTy(inlined, ctx.typeAliasReference.rawType)
     }
 }

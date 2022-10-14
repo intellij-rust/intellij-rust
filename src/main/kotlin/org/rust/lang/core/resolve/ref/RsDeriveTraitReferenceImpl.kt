@@ -47,6 +47,6 @@ private fun RsPath.resolveToDerivedTrait(): List<RsTraitItem> {
 private fun RsPath.resolveToProcMacro(): List<RsElement> {
     val traitName = referenceName ?: return emptyList()
     return collectResolveVariants(traitName) {
-        processProcMacroResolveVariants(this, it)
+        processProcMacroResolveVariants(this, it, isCompletion = false)
     }
 }

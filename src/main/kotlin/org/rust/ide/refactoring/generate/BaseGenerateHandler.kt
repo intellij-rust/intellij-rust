@@ -14,15 +14,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.type
+import org.rust.lang.core.types.rawType
 import org.rust.openapiext.checkWriteAccessNotAllowed
 
 abstract class BaseGenerateAction : CodeInsightAction() {
@@ -57,13 +57,13 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
 
             if (!isImplBlockValid(impl)) return null
 
-            val structRef = (impl.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() as? RsStructItem
+            val structRef = (impl.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() as? RsStructItem
                 ?: return null
             structRef to impl
         }
 
         if (!isStructValid(structItem)) return null
-        val substitution = impl?.typeReference?.type?.typeParameterValues ?: emptySubstitution
+        val substitution = impl?.typeReference?.rawType?.typeParameterValues ?: emptySubstitution
         val fields = StructMember.fromStruct(structItem, substitution).filter { isFieldValid(it, impl) }
         if (fields.isEmpty() && !allowEmptyFields()) return null
 

@@ -36,7 +36,7 @@ class RsStubTest : RsTestBase() {
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
             RET_TYPE:RsPlaceholderStub
-              BASE_TYPE:RsBaseTypeStub
+              PATH_TYPE:RsPathTypeStub
                 PATH:RsPathStub
     """)
 
@@ -47,7 +47,7 @@ class RsStubTest : RsTestBase() {
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
             RET_TYPE:RsPlaceholderStub
-              BASE_TYPE:RsBaseTypeStub
+              PATH_TYPE:RsPathTypeStub
                 PATH:RsPathStub
     """)
 
@@ -62,10 +62,10 @@ class RsStubTest : RsTestBase() {
               VALUE_PARAMETER:RsValueParameterStub
                 REF_LIKE_TYPE:RsRefLikeTypeStub
                   LIFETIME:RsLifetimeStub
-                  BASE_TYPE:RsBaseTypeStub
+                  PATH_TYPE:RsPathTypeStub
                     PATH:RsPathStub
             RET_TYPE:RsPlaceholderStub
-              BASE_TYPE:RsBaseTypeStub
+              PATH_TYPE:RsPathTypeStub
                 PATH:RsPathStub
     """)
 
@@ -94,7 +94,7 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           CONSTANT:RsConstantStub
-            BASE_TYPE:RsBaseTypeStub
+            PATH_TYPE:RsPathTypeStub
               PATH:RsPathStub
             LIT_EXPR:RsLitExprStub
     """)
@@ -104,7 +104,7 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           CONSTANT:RsConstantStub
-            BASE_TYPE:RsBaseTypeStub
+            PATH_TYPE:RsPathTypeStub
               PATH:RsPathStub
             BINARY_EXPR:RsPlaceholderStub
               LIT_EXPR:RsLitExprStub
@@ -122,7 +122,7 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           CONSTANT:RsConstantStub
-            BASE_TYPE:RsBaseTypeStub
+            PATH_TYPE:RsPathTypeStub
               PATH:RsPathStub
             BLOCK_EXPR:RsBlockExprStub
               BLOCK:RsPlaceholderStub
@@ -145,7 +145,7 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           TYPE_ALIAS:RsTypeAliasStub
             ARRAY_TYPE:RsArrayTypeStub
-              BASE_TYPE:RsBaseTypeStub
+              PATH_TYPE:RsPathTypeStub
                 PATH:RsPathStub
               LIT_EXPR:RsLitExprStub
     """)
@@ -156,7 +156,7 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           TYPE_ALIAS:RsTypeAliasStub
             ARRAY_TYPE:RsArrayTypeStub
-              BASE_TYPE:RsBaseTypeStub
+              PATH_TYPE:RsPathTypeStub
                 PATH:RsPathStub
               BINARY_EXPR:RsPlaceholderStub
                 LIT_EXPR:RsLitExprStub

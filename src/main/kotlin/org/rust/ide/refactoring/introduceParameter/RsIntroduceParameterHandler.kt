@@ -15,13 +15,16 @@ import org.rust.ide.refactoring.findCandidateExpressionsToExtract
 import org.rust.ide.refactoring.showErrorMessageForExtractParameter
 import org.rust.ide.refactoring.showExpressionChooser
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.types.ty.TyNever
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.type
 
 class RsIntroduceParameterHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is RsFile) return
 
         val exprs = findCandidateExpressionsToExtract(editor, file)
-            .filter { checkTypeIsExtractable(it) }
+            .filter { it.type !is TyUnit && it.type !is TyNever }
 
         when (exprs.size) {
             0 -> {

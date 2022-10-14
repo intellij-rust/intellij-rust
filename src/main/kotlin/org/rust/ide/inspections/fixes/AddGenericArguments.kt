@@ -56,47 +56,58 @@ class AddGenericArguments(
  * Inserts type arguments if they are needed and returns a list of inserted generic arguments.
  */
 fun insertGenericArgumentsIfNeeded(pathOrMethodCall: RsMethodOrPath): List<RsElement>? {
-    val (typeArguments, declaration) = getTypeArgumentsAndDeclaration(pathOrMethodCall) ?: return null
+    val (typeArgumentsExisting, declaration) = getTypeArgumentsAndDeclaration(pathOrMethodCall) ?: return null
 
     val requiredParameters = declaration.requiredGenericParameters
     if (requiredParameters.isEmpty()) return null
 
-    val argumentCount = (typeArguments?.typeReferenceList?.size ?: 0) + (typeArguments?.exprList?.size ?: 0)
-    if (argumentCount >= requiredParameters.size) return null
-
     val factory = RsPsiFactory(pathOrMethodCall.project)
-    val missingParams = requiredParameters.drop(argumentCount).map { it.name ?: "_" }
-
-    val replaced = if (typeArguments != null) {
-        var anchor = with(typeArguments) {
-            (lifetimeList + typeReferenceList + exprList).maxByOrNull { it.startOffset } ?: lt
-        }
-        val nextSibling = anchor.getNextNonCommentSibling()
-        val addCommaAfter = nextSibling?.isComma == true
-        if (addCommaAfter && nextSibling != null) {
-            anchor = nextSibling
-        }
-
-        for (type in missingParams) {
-            if (anchor.elementType != LT && !anchor.isComma) {
-                anchor = typeArguments.addAfter(factory.createComma(), anchor)
-            }
-            anchor = typeArguments.addAfter(factory.createType(type), anchor)
-        }
-
-        if (addCommaAfter) {
-            typeArguments.addAfter(factory.createComma(), anchor)
-        }
-
-        typeArguments
-    } else {
-        val newArgumentList = factory.createTypeArgumentList(missingParams)
-
+    val typeArguments = typeArgumentsExisting ?: run {
         // this can only happen for type references (base types/trait refs)
         if (pathOrMethodCall !is RsPath) return null
-        pathOrMethodCall.addAfter(newArgumentList, pathOrMethodCall.identifier) as RsTypeArgumentList
+        pathOrMethodCall.addEmptyTypeArguments(factory)
     }
-    return (replaced.typeReferenceList + replaced.exprList).sortedBy { it.startOffset }.drop(argumentCount)
+
+    val argumentCount = typeArguments.typeReferenceList.size + typeArguments.exprList.size
+    if (argumentCount >= requiredParameters.size) return null
+
+    val missingParams = requiredParameters.drop(argumentCount).map { it.name ?: "_" }
+    val lastArgument = with(typeArguments) {
+        (lifetimeList + typeReferenceList + exprList).maxByOrNull { it.startOffset } ?: lt
+    }
+    return typeArguments.addElements(missingParams.map(factory::createType), lastArgument, factory)
+}
+
+fun RsPath.addEmptyTypeArguments(factory: RsPsiFactory): RsTypeArgumentList {
+    val list = factory.createTypeArgumentList(emptyList())
+    return addAfter(list, identifier) as RsTypeArgumentList
+}
+
+/** Result on `Foo<A>` and `listOf(B, C)` is `Foo<A, B, C>` */
+fun <T : RsElement> RsTypeArgumentList.addElements(
+    elements: List<T>,
+    anchor: PsiElement,
+    factory: RsPsiFactory
+): List<T> {
+    val nextSibling = anchor.getNextNonCommentSibling() ?: return emptyList()
+    val addCommaAfter = nextSibling.isComma
+
+    @Suppress("NAME_SHADOWING")
+    var anchor = if (addCommaAfter) nextSibling else anchor
+
+    val added = mutableListOf<T>()
+    for (element in elements) {
+        if (anchor.elementType != LT && !anchor.isComma) {
+            anchor = addAfter(factory.createComma(), anchor)
+        }
+        anchor = addAfter(element, anchor)
+        @Suppress("UNCHECKED_CAST")
+        added += anchor as T
+    }
+    if (addCommaAfter) {
+        addAfter(factory.createComma(), anchor)
+    }
+    return added
 }
 
 private val PsiElement.isComma: Boolean

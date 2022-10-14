@@ -650,6 +650,30 @@ class RsCompletionTest : RsCompletionTestBase() {
         foo!(/*caret*/)
     """)
 
+    fun `test complete top-level unqualified macro from other module 2`() = doSingleCompletion("""
+        mod mod1 {
+            mod mod2 {
+                #[macro_export]
+                macro_rules! foo {
+                    () => {};
+                }
+            }
+            fo/*caret*/
+        }
+    """, """
+        mod mod1 {
+            use crate::foo;
+
+            mod mod2 {
+                #[macro_export]
+                macro_rules! foo {
+                    () => {};
+                }
+            }
+            foo!(/*caret*/)
+        }
+    """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test complete top-level unqualified macro from other crate`() = doSingleCompletionByFileTree("""
     //- main.rs
@@ -749,6 +773,19 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
 
         use bar::foo;/*caret*/
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete bang proc macro unqualified`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn function_like_as_is(input: TokenStream) -> TokenStream { input }
+    //- lib.rs
+        use dep_proc_macro::*;
+        function_like/*caret*/
+    """, """
+        use dep_proc_macro::*;
+        function_like_as_is!(/*caret*/)
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1598

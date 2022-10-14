@@ -13,7 +13,8 @@ import org.rust.RsBundle
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.findFirstMetaItem
+import org.rust.lang.core.psi.ext.normReturnType
 import org.rust.lang.core.types.ty.TyAdt
 
 private class FixRemoveMustUseAttr : LocalQuickFix {
@@ -34,7 +35,7 @@ class RsDoubleMustUseInspection : RsLintInspection() {
 
             val mustUseAttrName = "must_use"
             val attrFunc = o.findFirstMetaItem(mustUseAttrName)
-            val type = o.returnType as? TyAdt
+            val type = o.normReturnType as? TyAdt
             val attrType = type?.item?.findFirstMetaItem(mustUseAttrName)
             if (attrFunc != null && attrType != null) {
                 val description = RsBundle.message("inspection.DoubleMustUse.description")

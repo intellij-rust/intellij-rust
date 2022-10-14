@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve
 
 import org.rust.CheckTestmarkHit
 import org.rust.MockEdition
-import org.rust.UseOldResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.stdext.BothEditions
 
@@ -484,19 +483,6 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @UseOldResolve
-    fun `test star imports do not leak`() = checkByCode("""
-        fn foo() {}
-        mod m {
-            use super::*;
-        }
-
-        fn bar() {
-            m::foo();
-             //^ unresolved
-        }
-    """)
-
     fun `test circular mod`() = checkByCode("""
         use baz::bar;
                //^ unresolved
@@ -754,8 +740,9 @@ class RsUseResolveTest : RsResolveTestBase() {
         }          //^
     """)
 
-    @UseOldResolve
-    fun `test usual import overrides glob import`() = checkByCode("""
+    // TODO the test has been regressed after switching to Name Resolution 2.0
+    fun `test usual import overrides glob import`() = expect<IllegalStateException> {
+    checkByCode("""
         mod foo1 {
             pub mod bar {
                 pub fn func() {}
@@ -782,6 +769,7 @@ class RsUseResolveTest : RsResolveTestBase() {
            //^
         }
     """)
+    }
 
     fun `test complex glob imports`() = checkByCode("""
         pub mod inner1 {

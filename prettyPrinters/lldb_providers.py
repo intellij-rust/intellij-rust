@@ -297,20 +297,19 @@ class TupleSyntheticProvider:
         return True
 
 
-class StdVecSyntheticProvider:
-    """Pretty-printer for alloc::vec::Vec<T>
-
-    struct Vec<T> { buf: RawVec<T>, len: usize }
-    struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
-    rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
-    rust 1.62.0: struct Unique<T: ?Sized> { pointer: NonNull<T>, ... }
-    struct NonNull<T> { pointer: *const T }
-    """
-
+class ArrayLikeSyntheticProviderBase:
     def __init__(self, valobj, _dict):
         # type: (SBValue, dict) -> None
         self.valobj = valobj
         self.update()
+
+    def get_data_ptr(self):
+        # type: () -> SBValue
+        pass
+
+    def get_length(self):
+        # type: () -> int
+        pass
 
     def num_children(self):
         # type: () -> int
@@ -326,22 +325,49 @@ class StdVecSyntheticProvider:
 
     def get_child_at_index(self, index):
         # type: (int) -> SBValue
-        start = self.data_ptr.GetValueAsUnsigned()
-        address = start + index * self.element_type_size
-        element = self.data_ptr.CreateValueFromAddress("[%s]" % index, address, self.element_type)
-        return element
+        offset = index * self.element_type_size
+        return self.data_ptr.CreateChildAtOffset("[%s]" % index, offset, self.element_type)
 
     def update(self):
         # type: () -> None
-        self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
-        self.buf = self.valobj.GetChildMemberWithName("buf")
-        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
+        self.data_ptr = self.get_data_ptr()
+        self.length = self.get_length()
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
 
     def has_children(self):
         # type: () -> bool
         return True
+
+
+class StdSliceSyntheticProvider(ArrayLikeSyntheticProviderBase):
+    def get_data_ptr(self):
+        # type: () -> SBValue
+        return self.valobj.GetChildMemberWithName("data_ptr")
+
+    def get_length(self):
+        # type: () -> int
+        return self.valobj.GetChildMemberWithName("length").GetValueAsUnsigned()
+
+
+class StdVecSyntheticProvider(ArrayLikeSyntheticProviderBase):
+    """Pretty-printer for alloc::vec::Vec<T>
+
+    struct Vec<T> { buf: RawVec<T>, len: usize }
+    struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
+    rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
+    rust 1.62.0: struct Unique<T: ?Sized> { pointer: NonNull<T>, ... }
+    struct NonNull<T> { pointer: *const T }
+    """
+
+    def get_data_ptr(self):
+        # type: () -> SBValue
+        buf = self.valobj.GetChildMemberWithName("buf")
+        return unwrap_unique_or_non_null(buf.GetChildMemberWithName("ptr"))
+
+    def get_length(self):
+        # type: () -> int
+        return self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
 
 
 class StdVecDequeSyntheticProvider:
@@ -604,7 +630,14 @@ class StdRefSyntheticProvider:
         else:
             self.borrow = borrow.GetChildMemberWithName("borrow").GetChildMemberWithName(
                 "value").GetChildMemberWithName("value")
-            self.value = value.Dereference()
+            # BACKCOMPAT: Rust 1.62.0. Drop `else`-branch
+            if value.GetChildMemberWithName("pointer"):
+                # Since Rust 1.63.0, `Ref` and `RefMut` use `value: NonNull<T>` instead of `value: &T`
+                # https://github.com/rust-lang/rust/commit/d369045aed63ac8b9de1ed71679fac9bb4b0340a
+                # https://github.com/rust-lang/rust/commit/2b8041f5746bdbd7c9f6ccf077544e1c77e927c0
+                self.value = unwrap_unique_or_non_null(value).Dereference()
+            else:
+                self.value = value.Dereference()
 
         self.value_builder = ValueBuilder(valobj)
 
@@ -645,3 +678,30 @@ def StdNonZeroNumberSummaryProvider(valobj, _dict):
     field = objtype.GetFieldAtIndex(0)
     element = valobj.GetChildMemberWithName(field.name)
     return element.GetValue()
+
+
+def StdRangeSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..{}".format(valobj.GetChildMemberWithName("start").GetValueAsSigned(),
+                           valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeFromSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..".format(valobj.GetChildMemberWithName("start").GetValueAsSigned())
+
+
+def StdRangeInclusiveSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "{}..={}".format(valobj.GetChildMemberWithName("start").GetValueAsSigned(),
+                            valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeToSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "..{}".format(valobj.GetChildMemberWithName("end").GetValueAsSigned())
+
+
+def StdRangeToInclusiveSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    return "..={}".format(valobj.GetChildMemberWithName("end").GetValueAsSigned())

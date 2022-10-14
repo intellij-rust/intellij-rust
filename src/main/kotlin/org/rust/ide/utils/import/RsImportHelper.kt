@@ -7,30 +7,26 @@ package org.rust.ide.utils.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.TYPES
-import org.rust.lang.core.resolve.createProcessor
-import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
+import org.rust.stdext.intersects
 
 object RsImportHelper {
-    fun importTypeReferencesFromElements(
-        context: RsElement,
-        elements: Collection<RsElement>,
-        subst: Substitution = emptySubstitution,
-        useAliases: Boolean = true,
-        skipUnchangedDefaultTypeArguments: Boolean = true
-    ) {
-        val (toImport, _) = getTypeReferencesInfoFromElements(context, elements, subst, useAliases, skipUnchangedDefaultTypeArguments)
+
+    fun importTypeReferencesFromElement(context: RsElement, element: RsElement) =
+        importTypeReferencesFromElements(context, listOf(element))
+
+    private fun importTypeReferencesFromElements(context: RsElement, elements: Collection<RsElement>) {
+        val (toImport, _) = getTypeReferencesInfoFromElements(context, elements)
         importElements(context, toImport)
     }
 
@@ -83,11 +79,8 @@ object RsImportHelper {
     private fun getTypeReferencesInfoFromElements(
         context: RsElement,
         elements: Collection<RsElement>,
-        subst: Substitution,
-        useAliases: Boolean,
-        skipUnchangedDefaultTypeArguments: Boolean
     ): TypeReferencesInfo = getTypeReferencesInfo(context, elements) { ty, result ->
-        collectImportSubjectsFromTypeReferences(ty, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
+        collectImportSubjectsFromTypeReferences(ty, result)
     }
 
     /**
@@ -114,10 +107,7 @@ object RsImportHelper {
 
     private fun collectImportSubjectsFromTypeReferences(
         context: RsElement,
-        subst: Substitution,
         result: MutableSet<RsQualifiedNamedElement>,
-        useAliases: Boolean,
-        skipUnchangedDefaultTypeArguments: Boolean
     ) {
         context.accept(object : RsVisitor() {
             override fun visitPath(path: RsPath) {
@@ -130,9 +120,6 @@ object RsImportHelper {
                 }
                 super.visitPath(path)
             }
-
-            override fun visitTypeReference(reference: RsTypeReference) =
-                collectImportSubjectsFromTy(reference.type, subst, result, useAliases, skipUnchangedDefaultTypeArguments)
 
             override fun visitElement(element: RsElement) =
                 element.acceptChildren(this)
@@ -161,7 +148,7 @@ object RsImportHelper {
                         if (skipUnchangedDefaultTypeArguments) {
                             val filteredTypeArguments = ty.typeArguments
                                 .zip(ty.item.typeParameters)
-                                .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.type) }
+                                .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.normType) }
                                 .map { (argumentTy, _) -> argumentTy }
                             return ty.copy(typeArguments = filteredTypeArguments).superVisitWith(this)
                         }
@@ -188,22 +175,30 @@ object RsImportHelper {
         context: RsElement,
         rawImportSubjects: Set<RsQualifiedNamedElement>
     ): TypeReferencesInfo {
-        val importSubjects = hashMapOf<String, MutableSet<RsQualifiedNamedElement>>()
-        for (element in rawImportSubjects) {
-            val name = element.name ?: continue
-            importSubjects.getOrPut(name, ::hashSetOf) += element
-        }
-
-        val toQualifiedName = hashSetOf<RsQualifiedNamedElement>()
+        val subjectsWithName = rawImportSubjects.associateWithTo(hashMapOf()) { it.name }
         val processor = createProcessor { entry ->
-            val group = importSubjects.remove(entry.name) ?: return@createProcessor false
-            group.remove(entry.element)
-            toQualifiedName.addAll(group)
-            importSubjects.isEmpty()
+            val element = entry.element ?: return@createProcessor false
+            if (subjectsWithName[element] == entry.name) {
+                subjectsWithName.remove(element)
+            }
+            subjectsWithName.isEmpty()
         }
-        processNestedScopesUpwards(context, TYPES, processor)
+        val itemsInScope = hashMapOf<String, Set<Namespace>>()
+        processWithShadowingAndUpdateScope(itemsInScope, TYPES_N_VALUES, processor) {
+            processNestedScopesUpwards(context, TYPES_N_VALUES, it)
+        }
 
-        return TypeReferencesInfo(importSubjects.flatMap { it.value }.toSet(), toQualifiedName)
+        val toImport = hashSetOf<RsQualifiedNamedElement>()
+        val toQualify = hashSetOf<RsQualifiedNamedElement>()
+        for ((item, name) in subjectsWithName) {
+            val existingNs = itemsInScope[name ?: continue]
+            if (existingNs != null && existingNs.intersects(item.namespaces)) {
+                toQualify += item
+            } else {
+                toImport += item
+            }
+        }
+        return TypeReferencesInfo(toImport, toQualify)
     }
 }
 

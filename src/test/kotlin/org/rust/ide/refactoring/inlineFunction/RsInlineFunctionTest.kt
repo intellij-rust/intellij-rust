@@ -6,8 +6,9 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import org.rust.ide.refactoring.RsInlineTestBase
 
-class RsInlineFunctionTest : RsInlineFunctionTestBase() {
+class RsInlineFunctionTest : RsInlineTestBase() {
 
     fun `test inline function without parameters and a return value`() = doTest("""
         fn main() {

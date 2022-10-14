@@ -33,6 +33,7 @@ enum class RsLint(
     NonShorthandFieldPatterns("non_shorthand_field_patterns"),
     UnusedQualifications("unused_qualifications", listOf("unused")),
     UnusedMustUse("unused_must_use", listOf("unused")),
+    RedundantSemicolons("redundant_semicolons", listOf("unused")),
     // errors
     UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
     // CLippy lints

@@ -5,6 +5,7 @@
 
 package org.rust.cargo
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
@@ -15,10 +16,11 @@ data class CargoConfig(
     val env: Map<String, EnvValue>,
 
 ) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class EnvValue(
         @JsonProperty("value")
         val value: String,
-        @JsonProperty("forced")
+        @JsonProperty("force")
         val isForced: Boolean = false,
         @JsonProperty("relative")
         val isRelative: Boolean = false

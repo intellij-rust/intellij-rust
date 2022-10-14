@@ -762,6 +762,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
+    fun `test no stack overflow when trait type parameter default value refers to the trait name`() = checkByCode("""
+        pub trait Rem<RHS=Rem> {
+            type Output = Self;
+        }
+        struct S<A>(A);
+        impl<B: Rem> S<B> { fn foo(&self) {} }
+                             //X
+        fn foo<C: Rem>(t: C) {
+            S(t).foo()
+        }      //^
+    """)
+
     fun `test resolve assoc constant`() = checkByCode("""
         trait T {
             const C: i32;
@@ -770,6 +782,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         fn foo<X: T>() {
             X::C
         }    //^
+    """)
+
+    fun `test resolve assoc constant in assoc constant initializer`() = checkByCode("""
+        trait WithConst {
+            const C: i32;
+        }       //X
+
+        struct S<T>(T);
+        impl<T: WithConst> WithConst for S<T> {
+            const C: i32 = T::C;
+        }                   //^
     """)
 
     fun `test assoc type in fn parameter`() = checkByCode("""
@@ -1046,19 +1069,22 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }           //^ unresolved
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test 'impl for generic type' is USED for associated type resolve UFCS 1`() = checkByCode("""
         trait Bound {}
         trait Tr { type Item; }
+                      //X
         impl<A: Bound> Tr for A { type Item = (); }
-        fn foo<B: Bound>(b: B) {     //X
+        fn foo<B: Bound>(b: B) {
             let a: <B as Tr>::Item;
         }                   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test 'impl for generic type' is USED for associated type resolve UFCS 2`() = checkByCode("""
         trait Bound { type Item; }
+                         //X
         impl<A: Bound> Bound for &A { type Item = (); }
-                                          //X
         fn foo<B: Bound>(b: B) {
             let a: <&B as Bound>::Item;
         }                       //^
@@ -1144,15 +1170,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 1)`() = checkByCode("""
         struct S;
         trait Trait1<T> { type Item; }
+                             //X
         trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
 
         impl Trait1<i32> for S {
             type Item = i32;
-        }       //X
+        }
         impl Trait1<u8> for S {
             type Item = u8;
         }
@@ -1161,15 +1189,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }                   //^
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = checkByCode("""
         struct S;
         trait Trait1<T=u8> { type Item; }
+                                //X
         trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
 
         impl Trait1<i32> for S {
             type Item = i32;
-        }       //X
+        }
         impl Trait1 for S {
             type Item = u8;
         }
@@ -1292,8 +1322,10 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     fun `test explicit UFCS-like type-qualified path is resolved to correct impl when inapplicable blanket impl exists`() = checkByCode("""
         trait Trait { type Item; }
+                         //X
         trait Bound {}
         impl<I: Bound> Trait for I {
             type Item = I;
@@ -1301,7 +1333,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         struct S;
         impl Trait for S {
             type Item = ();
-        }      //X
+        }
         fn main() {
             let a: <S as Trait>::Item;
         }                      //^
@@ -1401,5 +1433,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         fn main() {
             W(1u8).foo();
         }        //^
+    """)
+
+    fun `test resolve associated type in where predicate with type parameter declared on upper level`() = checkByCode("""
+        trait Foo { type Item; }
+                       //X
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn foo()
+                where
+                    T: Foo,
+                    T::Item: ?Sized
+            {}       //^
+        }
     """)
 }

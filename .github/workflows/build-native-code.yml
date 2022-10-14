@@ -18,7 +18,8 @@ jobs:
                 config:
                     - name: linux
                       arch: x86-64
-                      os: ubuntu-18.04
+                      os: ubuntu-latest
+                      container: ubuntu:18.04
                       target: x86_64-unknown-linux-gnu
                       artifact_path: native-helper/target/x86_64-unknown-linux-gnu/release/intellij-rust-native-helper
                     - name: windows
@@ -39,6 +40,7 @@ jobs:
 
         name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
         runs-on: ${{ matrix.config.os }}
+        container: ${{ matrix.config.container }}
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -50,6 +52,16 @@ jobs:
               with:
                   path: ${{ matrix.config.artifact_path }}
                   key: ${{ matrix.config.arch }}-${{ matrix.config.os }}-native-helper-${{ inputs.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
+
+            # Since we use pure ubuntu container, it doesn't contain `curl` and `rustup`.
+            # So let's install them manually
+            - name: Install Rust toolchain dependencies
+              if: ${{ matrix.config.container == 'ubuntu:18.04' && (!inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit) }}
+              shell: bash
+              run: |
+                  apt-get update && apt-get install -y build-essential curl
+                  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --profile minimal --default-toolchain none -y
+                  echo "${CARGO_HOME:-$HOME/.cargo}/bin" >> $GITHUB_PATH
 
             - name: Set up Rust
               if: ${{ !inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit }}

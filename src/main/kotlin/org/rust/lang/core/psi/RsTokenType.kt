@@ -114,6 +114,22 @@ val RS_ITEMS = tokenSetOf(
     USE_ITEM
 )
 
+/** Successors of [org.rust.lang.core.psi.RsTypeReference] */
+val RS_TYPES = tokenSetOf(
+    ARRAY_TYPE,
+    REF_LIKE_TYPE,
+    FN_POINTER_TYPE,
+    TUPLE_TYPE,
+    PAREN_TYPE,
+    TRAIT_TYPE,
+    UNIT_TYPE,
+    NEVER_TYPE,
+    INFER_TYPE,
+    PATH_TYPE,
+    MACRO_TYPE,
+    FOR_IN_TYPE,
+)
+
 val RS_MOD_OR_FILE = tokenSetOf(MOD_ITEM, RsFileStub.Type)
 
 /**

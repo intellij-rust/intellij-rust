@@ -82,13 +82,13 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         highlightType: ProblemHighlightType,
         vararg fixes: LocalQuickFix
     ) {
-        if (element.existsAfterExpansion) {
+        if (element.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
             holder.registerProblem(element, descriptionTemplate, highlightType, *fixes)
         }
     }
 
     fun registerProblem(problemDescriptor: ProblemDescriptor) {
-        if (problemDescriptor.psiElement.existsAfterExpansion) {
+        if (problemDescriptor.psiElement.existsAfterExpansion && isProblemWithTypeAllowed(problemDescriptor.highlightType)) {
             holder.registerProblem(problemDescriptor)
         }
     }
@@ -106,10 +106,13 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         rangeInElement: TextRange,
         vararg fixes: LocalQuickFix?
     ) {
-        if (element.existsAfterExpansion) {
+        if (element.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
             holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
         }
     }
+
+    private fun isProblemWithTypeAllowed(highlightType: ProblemHighlightType): Boolean =
+        highlightType != ProblemHighlightType.INFORMATION || holder.isOnTheFly
 }
 
 fun ProblemDescriptor.findExistingEditor(): Editor? {

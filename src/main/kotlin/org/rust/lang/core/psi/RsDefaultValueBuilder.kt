@@ -9,6 +9,7 @@ import org.rust.ide.inspections.RsFieldInitShorthandInspection
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -55,7 +56,8 @@ class RsDefaultValueBuilder(
                 }
 
                 var default = this.defaultValue
-                if (item.implLookup.isDefault(ty)) {
+                val implLookup = mod.implLookup
+                if (implLookup.isDefault(ty)) {
                     default = psiFactory.createAssocFunctionCall("Default", "default", emptyList())
                 }
 
@@ -65,7 +67,7 @@ class RsDefaultValueBuilder(
                     items.String -> psiFactory.createExpression("\"\".to_string()")
                     items.Vec -> psiFactory.createExpression("vec![]")
                     is RsStructItem -> if (item.kind == RsStructKind.STRUCT && item.canBeInstantiatedIn(mod)) {
-                        if (item.implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty)) {
                             return default
                         }
 
@@ -85,7 +87,7 @@ class RsDefaultValueBuilder(
                             item.tupleFields != null -> {
                                 val argExprs = if (recursive) {
                                     item.positionalFields
-                                        .map { it.typeReference.type }
+                                        .map { it.typeReference.normType(implLookup) }
                                         .map { buildFor(it, bindings) }
                                 } else {
                                     emptyList()
@@ -98,7 +100,7 @@ class RsDefaultValueBuilder(
                         default
                     }
                     is RsEnumItem -> {
-                        if (item.implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty)) {
                             return default
                         }
 
@@ -156,7 +158,7 @@ class RsDefaultValueBuilder(
 
     private fun findLocalBinding(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
         val name = fieldDecl.name ?: return null
-        val type = fieldDecl.typeReference?.type ?: return null
+        val type = fieldDecl.typeReference?.normType ?: return null
 
         val binding = bindings[name] ?: return null
         val escapedName = fieldDecl.escapedName ?: return null
@@ -234,7 +236,7 @@ class RsDefaultValueBuilder(
 
     private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
         val fieldName = fieldDecl.escapedName ?: return null
-        val fieldType = fieldDecl.typeReference?.type ?: return null
+        val fieldType = fieldDecl.typeReference?.normType ?: return null
         val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
     }

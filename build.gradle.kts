@@ -2,6 +2,7 @@ import groovy.json.JsonSlurper
 import groovy.xml.XmlParser
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -14,7 +15,6 @@ import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
-import java.net.URL
 import kotlin.concurrent.thread
 
 // The same as `--stacktrace` param
@@ -50,11 +50,11 @@ val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
-    kotlin("jvm") version "1.7.10"
-    id("org.jetbrains.intellij") version "1.7.0"
+    kotlin("jvm") version "1.7.20"
+    id("org.jetbrains.intellij") version "1.8.1"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
-    id("org.gradle.test-retry") version "1.4.0"
+    id("org.gradle.test-retry") version "1.4.1"
 }
 
 idea {
@@ -78,13 +78,6 @@ allprojects {
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
-    configurations {
-        all {
-            // Allows using project dependencies instead of IDE dependencies during compilation and test running
-            resolutionStrategy.sortArtifacts(ResolutionStrategy.SortOrder.DEPENDENCY_FIRST)
-        }
-    }
-
     idea {
         module {
             generatedSourceDirs.add(file("src/gen"))
@@ -100,10 +93,18 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
+    val javaVersion = if (platformVersion < 223) VERSION_11 else VERSION_17
+
+    configure<JavaPluginExtension> {
+        // BACKCOMPAT: 2022.2. Use VERSION_17
+        sourceCompatibility = VERSION_11
+        targetCompatibility = javaVersion
+    }
+
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = javaVersion.toString()
                 languageVersion = "1.7"
                 // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
                 apiVersion = "1.6"
@@ -116,7 +117,7 @@ allprojects {
         }
 
         // All these tasks don't make sense for non-root subprojects
-        // Root project (i.e. `:plugin`) enables them itlsef if needed
+        // Root project (i.e. `:plugin`) enables them itself if needed
         runIde { enabled = false }
         prepareSandbox { enabled = false }
         buildSearchableOptions { enabled = false }
@@ -169,11 +170,6 @@ allprojects {
         }
     }
 
-    configure<JavaPluginExtension> {
-        sourceCompatibility = VERSION_11
-        targetCompatibility = VERSION_11
-    }
-
     sourceSets {
         main {
             java.srcDirs("src/gen")
@@ -205,7 +201,7 @@ allprojects {
         tasks.withType<AbstractTestTask> {
             testLogging {
                 if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
-                    events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+                    events = setOf(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
                 }
                 exceptionFormat = TestExceptionFormat.FULL
             }
@@ -328,6 +324,10 @@ project(":plugin") {
             enabled = true
         }
         buildSearchableOptions {
+            // Force `mergePluginJarTask` be executed before `buildSearchableOptions`
+            // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
+            // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
+            dependsOn(mergePluginJarTask)
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
 
@@ -348,7 +348,7 @@ project(":plugin") {
 
         withType<RunIdeTask> {
             // Default args for IDEA installation
-            jvmArgs("-Xmx768m", "-XX:+UseConcMarkSweepGC", "-XX:SoftRefLRUPolicyMSPerMB=50")
+            jvmArgs("-Xmx768m", "-XX:+UseG1GC", "-XX:SoftRefLRUPolicyMSPerMB=50")
             // Disable plugin auto reloading. See `com.intellij.ide.plugins.DynamicPluginVfsListener`
             jvmArgs("-Didea.auto.reload.plugins=false")
             // Don't show "Tip of the Day" at startup
@@ -377,10 +377,10 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2022.1. Update value to 222 and this comment
+        // BACKCOMPAT: 2022.2. Update value to 223 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "221")
+        environment("IDEA_BUILD_NUMBER", "222")
     }
 }
 
@@ -398,10 +398,7 @@ project(":") {
     }
 
     dependencies {
-        implementation("org.jetbrains:markdown:0.3.1") {
-            excludeKotlinDeps()
-        }
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.4") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
@@ -429,8 +426,8 @@ project(":") {
     val generateRustParser = task<GenerateParserTask>("generateRustParser") {
         source.set("src/main/grammars/RustParser.bnf")
         targetRoot.set("src/gen")
-        pathToParser.set("/org/rust/lang/core/parser/RustParser.java")
-        pathToPsiRoot.set("/org/rust/lang/core/psi")
+        pathToParser.set("org/rust/lang/core/parser/RustParser.java")
+        pathToPsiRoot.set("org/rust/lang/core/psi")
         purgeOldFiles.set(true)
     }
 
@@ -520,7 +517,7 @@ project(":toml") {
         plugins.set(listOf(tomlPlugin))
     }
     dependencies {
-        implementation("org.eclipse.jgit:org.eclipse.jgit:6.2.0.202206071550-r") { exclude("org.slf4j") }
+        implementation("org.eclipse.jgit:org.eclipse.jgit:6.3.0.202209071007-r") { exclude("org.slf4j") }
 
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
@@ -660,34 +657,6 @@ task("runPrettyPrintersTests") {
     }
 }
 
-task("updateCompilerFeatures") {
-    doLast {
-        val file = File("src/main/kotlin/org/rust/lang/core/CompilerFeatures.kt")
-        file.bufferedWriter().use {
-            it.writeln("""
-                /*
-                 * Use of this source code is governed by the MIT license that can be
-                 * found in the LICENSE file.
-                 */
-
-                @file:Suppress("unused")
-
-                package org.rust.lang.core
-
-                import org.rust.lang.core.FeatureState.ACCEPTED
-                import org.rust.lang.core.FeatureState.INCOMPLETE
-                import org.rust.lang.core.FeatureState.ACTIVE
-
-            """.trimIndent())
-            it.writeFeatures("active", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/active.rs")
-            it.writeln()
-            it.writeFeatures("incomplete", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/active.rs")
-            it.writeln()
-            it.writeFeatures("accepted", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/accepted.rs")
-        }
-    }
-}
-
 task("updateCargoOptions") {
     doLast {
         val file = File("src/main/kotlin/org/rust/cargo/util/CargoOptions.kt")
@@ -754,23 +723,6 @@ val $variableName: List<Lint> = listOf(
             "CLIPPY_LINTS"
         )
     }
-}
-
-fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
-    val text = URL(remoteFileUrl).openStream().bufferedReader().readText()
-    val commentRegex = "^/{2,}".toRegex()
-    """((\s*//.*\n)*)\s*\($featureSet, (\w+), (\"\d+\.\d+\.\d+\"), .*\),"""
-        .toRegex(RegexOption.MULTILINE)
-        .findAll(text)
-        .forEach { matcher ->
-            val (comments, _, featureName, version) = matcher.destructured
-            if (comments.isNotEmpty()) {
-                comments.trimIndent().trim().lines().forEach { line ->
-                    writeln(line.replace(commentRegex, "//"))
-                }
-            }
-            writeln("""val ${featureName.toUpperCase()} = CompilerFeature("$featureName", ${featureSet.toUpperCase()}, $version)""")
-        }
 }
 
 fun Writer.writeCargoOptions(baseUrl: String) {

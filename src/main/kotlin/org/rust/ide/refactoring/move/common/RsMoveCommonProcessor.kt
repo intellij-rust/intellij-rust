@@ -244,11 +244,7 @@ class RsMoveCommonProcessor(
                 && !path.startsWithSuper()
             ) continue
             if (!isSimplePath(path)) continue
-            // TODO: support references to macros
-            //  is is complicated: https://doc.rust-lang.org/reference/macros-by-example.html#scoping-exporting-and-importing
-            //  also RsImportHelper currently does not work for macros: https://github.com/intellij-rust/intellij-rust/issues/4073
-            val macroCall = path.ancestorStrict<RsMacroCall>()
-            if (macroCall != null && macroCall.path.isAncestorOf(path)) continue
+            if (!checkMacroCallPath(path)) continue
 
             // `use path1::{path2, path3}`
             //              ~~~~~  ~~~~~ TODO: don't ignore such paths
@@ -271,6 +267,15 @@ class RsMoveCommonProcessor(
             references += reference
         }
         return references
+    }
+
+    private fun checkMacroCallPath(path: RsPath): Boolean {
+        if (path.parent !is RsMacroCall) return true
+        val target = path.reference?.resolve() as? RsMacroDefinitionBase ?: return false
+        val targetCrate = target.containingCrate ?: return false
+        // TODO: support references to macros in same crate
+        //  it is complicated: https://doc.rust-lang.org/reference/macros-by-example.html#scoping-exporting-and-importing
+        return targetCrate != sourceMod.containingCrate && target != targetMod.containingCrate
     }
 
     private fun createOutsideReferenceInfo(

@@ -30,6 +30,7 @@ import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
+import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
@@ -37,7 +38,6 @@ import org.rust.lang.core.psi.ext.resolveToMacroWithoutPsi
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve.ref.RsDeriveTraitReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.setFeatureEnabled
 import kotlin.math.min
@@ -125,7 +125,7 @@ private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElemen
 }
 
 private fun checkProcMacroResolve(reference: PsiReference, resolved: PsiElement) {
-    if ((reference is RsDeriveTraitReferenceImpl) && reference.element.project.isNewResolveEnabled) {
+    if (reference is RsDeriveTraitReferenceImpl) {
         val macroCall = reference.element.parent as RsPossibleMacroCall
         assertEquals(
             "different procedural macros resolved using PSI reference and CrateDefMap-based resolution without PSI",
@@ -178,6 +178,12 @@ fun CargoProjectsService.singleWorkspace(): CargoWorkspace = singleProject().wor
 
 fun CargoProjectsService.singlePackage(name: String): CargoWorkspace.Package =
     singleWorkspace().packages.singleOrNull { it.name == name } ?: error("Package with name `$name` does not exists")
+
+fun CargoProjectsService.enableCargoFeature(packageName: String, featureName: FeatureName) =
+    modifyFeatures(singleProject(), setOf(PackageFeature(singlePackage(packageName), featureName)), FeatureState.Enabled)
+
+fun CargoProjectsService.disableCargoFeature(packageName: String, featureName: FeatureName) =
+    modifyFeatures(singleProject(), setOf(PackageFeature(singlePackage(packageName), featureName)), FeatureState.Disabled)
 
 fun CargoWorkspace.Package.checkFeatureEnabled(featureName: FeatureName) =
     checkFeatureState(featureName, FeatureState.Enabled)

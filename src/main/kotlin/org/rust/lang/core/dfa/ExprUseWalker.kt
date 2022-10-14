@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.infer.substituteOrUnknown
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.ReScope
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.TyAdt
@@ -116,7 +117,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         val function = body.parent as? RsFunction ?: return
 
         for (parameter in function.valueParameters) {
-            val parameterType = parameter.typeReference?.type ?: continue
+            val parameterType = parameter.typeReference?.normType(mc.lookup) ?: continue
             val parameterPat = parameter.pat ?: continue
 
             val bodyScopeRegion = ReScope(Scope.Node(body))
@@ -324,7 +325,14 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsVecMacroArgument -> argument.exprList.forEach(::walkExpr)
 
             is RsFormatMacroArgument -> {
-                argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+                val expansion = macroCall.expansion
+                if (expansion != null) {
+                    for (expandedElement in expansion.elements) {
+                        walk(expandedElement)
+                    }
+                } else {
+                    argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+                }
             }
             is RsAssertMacroArgument -> {
                 argument.expr?.let(::walkExpr)
@@ -426,7 +434,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                     val isMentioned = fields.any { it.referenceName == withField.name }
                     // Consume only needed (not mentioned before) fields of `withExpr`
                     if (!isMentioned) {
-                        val rawWithFieldType = withField.typeReference?.type ?: TyUnknown
+                        val rawWithFieldType = withField.typeReference?.normType(mc.lookup) ?: TyUnknown
                         val withFieldType = rawWithFieldType.substituteOrUnknown(withType.typeParameterValues)
                         val interior = Interior.Field(withCmt, withField.name)
                         val fieldCmt = Cmt(withExpr, interior, withCmt.mutabilityCategory.inherit(), withFieldType)

@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.import
 
+import junit.framework.TestCase.assertEquals
 import org.intellij.lang.annotations.Language
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsInspectionsTestBase
@@ -47,8 +48,10 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         expectedElements: List<String>,
         choice: String,
         @Language("Rust") after: String,
-    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice) {
-        checkFixByText(AutoImportFix.NAME, before, after)
+    ) = doTest {
+        checkAutoImportWithMultipleChoice(expectedElements, choice) {
+            checkFixByText(AutoImportFix.NAME, before, after)
+        }
     }
 
     protected fun checkAutoImportFixByFileTreeWithMultipleChoice(
@@ -56,40 +59,20 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         expectedElements: List<String>,
         choice: String,
         @Language("Rust") after: String,
-    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice) {
-        checkFixByFileTree(AutoImportFix.NAME, before, after)
+    ) = doTest {
+        checkAutoImportWithMultipleChoice(expectedElements, choice) {
+            checkFixByFileTree(AutoImportFix.NAME, before, after)
+        }
     }
 
     protected fun checkAutoImportVariantsByText(
         @Language("Rust") before: String,
         expectedElements: List<String>
-    ) = checkAutoImportFixWithMultipleChoice(expectedElements, choice = null) {
-        configureByText(before)
-        annotationFixture.applyQuickFix(AutoImportFix.NAME)
-    }
-
-    private fun checkAutoImportFixWithMultipleChoice(
-        expectedElements: List<String>,
-        choice: String?,
-        action: () -> Unit,
     ) = doTest {
-        var areElementEquals: Boolean? = null
-
-        withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
-                val actualItems = items.map { it.info.usePath }
-                areElementEquals = expectedElements == actualItems
-                assertEquals(expectedElements, actualItems)  // exception here does not fail the test
-                if (choice != null) {
-                    val selectedValue = items.find { it.info.usePath == choice }
-                        ?: error("Can't find `$choice` in `$actualItems`")
-                    callback(selectedValue)
-                }
-            }
-        }, action)
-
-        check(areElementEquals != null) { "`chooseItem` was not called" }
-        check(areElementEquals!!)
+        checkAutoImportWithMultipleChoice(expectedElements, choice = null) {
+            configureByText(before)
+            annotationFixture.applyQuickFix(AutoImportFix.NAME)
+        }
     }
 
     private inline fun doTest(checkOptimizeImports: Boolean = true, action: () -> Unit) {
@@ -112,4 +95,24 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         myFixture.performEditorAction("OptimizeImports")
         myFixture.checkResult(text)
     }
+}
+
+fun checkAutoImportWithMultipleChoice(expectedElements: List<String>, choice: String?, action: () -> Unit) {
+    var areElementEquals: Boolean? = null
+
+    withMockImportItemUi(object : ImportItemUi {
+        override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
+            val actualItems = items.map { it.info.usePath }
+            areElementEquals = expectedElements == actualItems
+            assertEquals(expectedElements, actualItems)  // exception here does not fail the test
+            if (choice != null) {
+                val selectedValue = items.find { it.info.usePath == choice }
+                    ?: error("Can't find `$choice` in `$actualItems`")
+                callback(selectedValue)
+            }
+        }
+    }, action)
+
+    check(areElementEquals != null) { "`chooseItem` was not called" }
+    check(areElementEquals!!)
 }

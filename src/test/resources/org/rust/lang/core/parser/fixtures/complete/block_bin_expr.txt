@@ -16,7 +16,7 @@ FILE
             PsiElement(identifier)('x')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
-        RsBaseTypeImpl(BASE_TYPE)
+        RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('String')
       PsiElement())(')')

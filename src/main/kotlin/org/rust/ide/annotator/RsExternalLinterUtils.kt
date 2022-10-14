@@ -248,21 +248,25 @@ private data class RsExternalLinterFilteredMessage(
 
             val textRange = span.toTextRange(document) ?: return null
 
-            val tooltip = with(ArrayList<String>()) {
+            val tooltip = buildString {
+                append(formatMessage(StringEscapeUtils.escapeHtml(message.message)).escapeUrls())
                 val code = message.code.formatAsLink()
-                add(StringEscapeUtils.escapeHtml(message.message) + if (code == null) "" else " $code")
-
-                if (span.label != null && !message.message.startsWith(span.label)) {
-                    add(StringEscapeUtils.escapeHtml(span.label))
+                if (code != null) {
+                    append(" [$code]")
                 }
 
-                message.children
-                    .filter { it.message.isNotBlank() }
-                    .map { "${it.level.capitalize()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
-                    .forEach { add(it) }
+                with(mutableListOf<String>()) {
+                    if (span.label != null && !message.message.startsWith(span.label)) {
+                        add(StringEscapeUtils.escapeHtml(span.label))
+                    }
 
-                joinToString("<br>") { formatMessage(it) }
-                    .replace(URL_REGEX) { url -> "<a href='${url.value}'>${url.value}</a>" }
+                    message.children
+                        .filter { it.message.isNotBlank() }
+                        .map { "${it.level.capitalize()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
+                        .forEach { add(it) }
+
+                    append(joinToString(prefix = "<br>", separator = "<br>") { formatMessage(it) }.escapeUrls())
+                }
             }
 
             return RsExternalLinterFilteredMessage(
@@ -275,6 +279,8 @@ private data class RsExternalLinterFilteredMessage(
         }
     }
 }
+
+private fun String.escapeUrls(): String = replace(URL_REGEX) { url -> "<a href='${url.value}'>${url.value}</a>" }
 
 fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)

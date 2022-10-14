@@ -34,8 +34,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
             if (!functionCall.expr.isAncestorOf(path)) return null
             if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
-            val target = getTargetItemForFunctionCall(path) ?: return null
-            if (target !is CallableInsertionTarget.Module) return null
+            val targetMod = getWritablePathMod(path) ?: return null
 
             val name = path.referenceName ?: return null
             if (!name.isCamelCase()) return null
@@ -45,7 +44,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
             if (expectedType !is TyUnknown) return null
 
             text = "Create tuple struct `$name`"
-            return Context(name, functionCall, target.module)
+            return Context(name, functionCall, targetMod)
         }
         return null
     }
@@ -62,7 +61,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
 
         val fields = inserted.tupleFields?.tupleFieldDeclList.orEmpty()
         if (inserted.containingFile == ctx.call.containingFile && fields.isNotEmpty()) {
-            val unknownTypes = inserted.descendantsOfType<RsBaseType>().filter { it.underscore != null }
+            val unknownTypes = inserted.descendantsOfType<RsInferType>()
             if (unknownTypes.isNotEmpty()) {
                 editor.buildAndRunTemplate(inserted, unknownTypes.map { it.createSmartPointer() })
             } else {

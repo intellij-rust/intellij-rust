@@ -32,10 +32,8 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
-              <option name="runRustfmtOnSave" value="true" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
-              <option name="useRustfmt" value="true" />
               <option name="version" value="2" />
             </RustProjectSettings>
         """.trimIndent()
@@ -87,4 +85,49 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals("", service.externalLinterArguments)
         assertEquals(MacroExpansionEngine.DISABLED, service.macroExpansionEngine)
     }
+
+    fun `test serialization with old fields`() {
+        val service = RustProjectSettingsServiceImpl(project)
+
+        @Language("XML")
+        val text = """
+            <RustProjectSettings>
+              <option name="autoUpdateEnabled" value="false" />
+              <option name="compileAllTargets" value="false" />
+              <option name="doctestInjectionEnabled" value="false" />
+              <option name="explicitPathToStdlib" value="/stdlib" />
+              <option name="externalLinter" value="Clippy" />
+              <option name="externalLinterArguments" value="--no-default-features" />
+              <option name="macroExpansionEngine" value="DISABLED" />
+              <option name="runExternalLinterOnTheFly" value="true" />
+              <option name="runRustfmtOnSave" value="true" /> <!-- Old field -->
+              <option name="toolchainHomeDirectory" value="/" />
+              <option name="useOffline" value="true" />
+              <option name="useRustfmt" value="true" /> <!-- Old field -->
+              <option name="version" value="2" />
+            </RustProjectSettings>
+        """.trimIndent()
+        service.loadState(elementFromXmlString(text))
+
+        val actual = service.state.toXmlString()
+        @Language("XML")
+        val expected = """
+            <RustProjectSettings>
+              <option name="autoUpdateEnabled" value="false" />
+              <option name="compileAllTargets" value="false" />
+              <option name="doctestInjectionEnabled" value="false" />
+              <option name="explicitPathToStdlib" value="/stdlib" />
+              <option name="externalLinter" value="Clippy" />
+              <option name="externalLinterArguments" value="--no-default-features" />
+              <option name="macroExpansionEngine" value="DISABLED" />
+              <option name="runExternalLinterOnTheFly" value="true" />
+              <option name="toolchainHomeDirectory" value="/" />
+              <option name="useOffline" value="true" />
+              <option name="version" value="2" />
+            </RustProjectSettings>
+        """.trimIndent()
+
+        assertEquals(expected, actual)
+    }
+
 }

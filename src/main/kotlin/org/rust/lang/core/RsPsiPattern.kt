@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -84,6 +85,10 @@ object RsPsiPattern {
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
+
+    val onProcMacroFn: PsiElementPattern.Capture<PsiElement> = onFn.with("proc_macro crate") { it ->
+        it.parentOfType<RsFile>()?.crate?.kind?.isProcMacro ?: false
+    }
 
     val onStructLike: PsiElementPattern.Capture<PsiElement> = onStruct or onEnum or onEnumVariant
 
@@ -225,6 +230,13 @@ object RsPsiPattern {
             )
 
     val fieldVisibility: PsiElementPattern.Capture<PsiElement> = namedFieldVisibility or tupleFieldVisibility
+
+    /**
+     * fn foo(a: &'/*here*/static u32) {}
+     */
+    val lifetimeIdentifier: ElementPattern<PsiElement> = psiElement(QUOTE_IDENTIFIER).withParent(
+        psiElement<RsLifetime>()
+    )
 
     private fun identifierStatementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(onStatementBeginning(*startWords))

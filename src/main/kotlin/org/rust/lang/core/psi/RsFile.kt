@@ -18,12 +18,17 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.FileElement
+import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.testFramework.LightVirtualFile
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.injected.isDoctestInjection
@@ -35,16 +40,15 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.MacroExpansionFileSystem
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve2.ModData
 import org.rust.lang.core.resolve2.findModDataFor
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.resolve2.toRsMod
 import org.rust.lang.core.stubs.RsFileStub
-import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
-import org.rust.openapiext.recursionGuard
 import org.rust.openapiext.toPsiFile
 
 /**
@@ -74,91 +78,106 @@ class RsFile(
     val cargoProject: CargoProject? get() = cachedData.cargoProject
     val cargoWorkspace: CargoWorkspace? get() = cachedData.cargoWorkspace
     val crate: Crate? get() = cachedData.crate
+    val crates: List<Crate> get() = cachedData.crates
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
-    // TODO a hotfix for https://github.com/intellij-rust/intellij-rust/issues/9110
-    val isIncludedByIncludeMacro: Boolean get() = true
-//    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
+    val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
+
+    /** Used for in-memory macro expansions */
+    @Volatile
+    private var forcedCachedData: (() -> CachedData)? = null
+    private var hasForcedStubTree: Boolean = false
 
     private val cachedData: CachedData
         get() {
+            forcedCachedData?.let { return it() }
+
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
             val key = CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
-                val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
-                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
+                val value = doGetCachedData()
+                // Note: if the cached result is invalidated, then the cached result from `memExpansionResult`
+                // must also be invalidated, so keep them in sync
+                val modificationTracker: Any = when {
+                    /** See [rustStructureOrAnyPsiModificationTracker] */
+                    virtualFile is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
+                    value.crate?.origin == PackageOrigin.WORKSPACE -> project.rustStructureModificationTracker
+                    else -> project.rustPsiManager.rustStructureModificationTrackerInDependencies
+                }
+                CachedValueProvider.Result(value, modificationTracker)
             }
         }
 
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        if (project.isNewResolveEnabled) {
-            // Note: `this` file can be not a module (can be included with `include!()` macro)
-            val virtualFile = virtualFile
-            val modData = findModDataFor(this)
-            if (modData != null) {
-                val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
-                return CachedData(
-                    crate.cargoProject,
-                    crate.cargoWorkspace,
-                    crate.rootMod,
-                    crate,
-                    modData.isDeeplyEnabledByCfg,
-                    isIncludedByIncludeMacro = virtualFile is VirtualFileWithId
-                        && virtualFile.id != modData.fileId
-                        && virtualFile.fileSystem !is MacroExpansionFileSystem
-                )
-            }
-            // Else try injected crate, included file, or fill file info with just project and workspace
+        val virtualFile = virtualFile ?: return EMPTY_CACHED_DATA
+
+        if (virtualFile.fileSystem is MacroExpansionFileSystem) {
+            val crateId = project.macroExpansionManager.getCrateForExpansionFile(virtualFile)
+                ?: return EMPTY_CACHED_DATA // Possibly an expansion file from another IDEA project
+            val crate = project.crateGraph.findCrateById(crateId) ?: return EMPTY_CACHED_DATA
+            return CachedData(
+                crate.cargoProject,
+                crate.cargoWorkspace,
+                crate.rootMod,
+                crate,
+                crates = listOf(crate),
+                isDeeplyEnabledByCfg = true, // Macros are ony expanded in cfg-enabled mods
+                isIncludedByIncludeMacro = false, // An expansion file obviously can't be included
+            )
         }
 
-        // [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
-        // so we have to fallback to use [declaration]
-        val declaration = declaration
-        if (declaration != null) {
-            val declarationFile = declaration.contextualFile
-            val parentCachedData = (declarationFile as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-            val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
-                && declaration.existsAfterExpansion
-                && (parentCachedData.crate?.let { declarationFile.isEnabledByCfgSelf(it) } ?: true)
-            return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
+        // Note: `this` file can be not a module (can be included with `include!()` macro)
+        val allModData = findModDataFor(this)
+        val modData = allModData.pickSingleModData()
+        if (modData != null) {
+            val crateGraph = project.crateGraph
+            val crates = allModData.mapNotNull { crateGraph.findCrateById(it.crate) }
+            val crate = crates.find { it.id == modData.crate } ?: return EMPTY_CACHED_DATA
+            return CachedData(
+                crate.cargoProject,
+                crate.cargoWorkspace,
+                crate.rootMod,
+                crate,
+                crates,
+                modData.isDeeplyEnabledByCfg,
+                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId && virtualFile.id != modData.fileId,
+            )
         }
 
-        val possibleCrateRoot = this
-        val crateRootVFile = possibleCrateRoot.virtualFile ?: return EMPTY_CACHED_DATA
-
-        val crate = project.crateGraph.findCrateByRootMod(crateRootVFile)
-        if (crate != null) {
-            // `possibleCrateRoot` is a "real" crate root only if we're able to find a `crate` for it
-            val isEnabledByCfg = possibleCrateRoot.isEnabledByCfgSelf(crate)
-            return CachedData(crate.cargoProject, crate.cargoWorkspace, possibleCrateRoot, crate, isEnabledByCfg)
-        }
-
-        val injectedFromFile = crateRootVFile.getInjectedFromIfDoctestInjection(project)
+        val injectedFromFile = virtualFile.getInjectedFromIfDoctestInjection(project)
         if (injectedFromFile != null) {
             val cached = injectedFromFile.cachedData
             // Doctest injection file should be a crate root to resolve absolute paths inside injection.
             // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
             // we should be able to resolve it by an absolute path
-            val doctestCrate = cached.crate?.let { DoctestCrate.inCrate(it, possibleCrateRoot) }
-            return cached.copy(crateRoot = possibleCrateRoot, crate = doctestCrate)
-        }
-
-        val includingMod = RsIncludeMacroIndex.getIncludedFrom(possibleCrateRoot)?.containingMod
-        if (includingMod != null) {
-            return (includingMod.contextualFile as? RsFile)?.cachedData?.copy(isIncludedByIncludeMacro = true)
-                ?: EMPTY_CACHED_DATA
+            val doctestCrate = cached.crate?.let { DoctestCrate.inCrate(it, this) }
+            return cached.copy(
+                crateRoot = this,
+                crate = doctestCrate,
+                isIncludedByIncludeMacro = false,
+            )
         }
 
         // This occurs if the file is not included to the project's module structure, i.e. it's
         // most parent module is not mentioned in the `Cargo.toml` as a crate root of some target
         // (usually lib.rs or main.rs). It's anyway useful to know cargoProject&workspace in this case
-        val cargoProject = project.cargoProjects.findProjectForFile(crateRootVFile) ?: return EMPTY_CACHED_DATA
+        val cargoProject = project.cargoProjects.findProjectForFile(virtualFile) ?: return EMPTY_CACHED_DATA
         val workspace = cargoProject.workspace ?: return CachedData(cargoProject)
         return CachedData(cargoProject, workspace)
+    }
+
+    /** Very internal utility, do not use */
+    fun inheritCachedDataFrom(other: RsFile, lazy: Boolean) {
+        forcedCachedData = if (lazy) {
+            { other.cachedData }
+        } else {
+            val cachedData = other.cachedData
+            { cachedData }
+        }
     }
 
     override fun setName(name: String): PsiElement {
@@ -169,16 +188,9 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            if (project.isNewResolveEnabled) {
-                val modData = findModDataFor(this)
-                if (modData != null) {
-                    val parenModData = modData.parent ?: return null
-                    return parenModData.toRsMod(project).firstOrNull()
-                }
-            }
-
-            val includedFrom = RsIncludeMacroIndex.getIncludedFrom(this) ?: return declaration?.containingMod
-            return includedFrom.containingMod.`super`
+            val modData = findModDataFor(this).pickSingleModData() ?: return null
+            val parenModData = modData.parent ?: return null
+            return parenModData.toRsMod(project).firstOrNull()
         }
 
     // We can't just return file name here because
@@ -258,6 +270,23 @@ class RsFile(
             }
         }
 
+    /** Very internal utility, do not use it */
+    fun forceSetStubTree(stub: PsiFileStub<*>) {
+        check(virtualFile is LightVirtualFile)
+        hasForcedStubTree = true
+        if (!RsPsiFileInternals.setStubTree(this, stub)) {
+            hasForcedStubTree = false
+        }
+    }
+
+    override fun getTreeElement(): FileElement? {
+        return if (hasForcedStubTree && !isContentsLoaded) {
+            return null
+        } else {
+            super.getTreeElement()
+        }
+    }
+
     enum class Attributes {
         NO_CORE, NO_STD, NONE;
 
@@ -282,11 +311,22 @@ private data class CachedData(
     val cargoWorkspace: CargoWorkspace? = null,
     val crateRoot: RsFile? = null,
     val crate: Crate? = null,
+    val crates: List<Crate> = emptyList(),
     val isDeeplyEnabledByCfg: Boolean = true,
-    val isIncludedByIncludeMacro: Boolean = false
+    val isIncludedByIncludeMacro: Boolean = false,
 )
 
 private val EMPTY_CACHED_DATA: CachedData = CachedData()
+
+// A rust file can be included in multiple places, but currently IntelliJ Rust works properly only with one
+// inclusion point, so we have to choose one
+private fun List<ModData>.pickSingleModData(): ModData? {
+    if (isEmpty()) return null
+    singleOrNull()?.let { return it }
+
+    // If there are still multiple options, choose one deterministically
+    return minByOrNull { it.crate }
+}
 
 private fun VirtualFile.getInjectedFromIfDoctestInjection(project: Project): RsFile? {
     if (!isDoctestInjection(project)) return null
@@ -299,10 +339,8 @@ val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
 
 private val MOD_DECL_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_KEY")
-private val MOD_DECL_MACROS_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_MACROS_KEY")
 
 private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_KEY")
-private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
 
 /**
  * @return true if containing crate root is known for this element and this element is not excluded from
@@ -312,15 +350,14 @@ private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("C
 val RsElement.isValidProjectMember: Boolean
     get() = isValidProjectMemberAndContainingCrate.first
 
-val RsElement.isValidProjectMemberAndContainingCrate: Pair<Boolean, Crate?>
+val RsElement.isValidProjectMemberAndContainingCrate: Triple<Boolean, Crate?, List<Crate>>
     get() {
-        val file = contextualFile
-        if (file !is RsFile) return true to null
-        if (!file.isDeeplyEnabledByCfg) return false to null
-        val crate = file.crate ?: return false to null
-        if (!existsAfterExpansion(crate)) return false to null
+        val file = containingRsFileSkippingCodeFragments ?: return Triple(true, null, emptyList())
+        if (!file.isDeeplyEnabledByCfg) return Triple(false, null, emptyList())
+        val crate = file.crate ?: return Triple(false, null, emptyList())
+        if (!existsAfterExpansion(crate)) return Triple(false, null, emptyList())
 
-        return true to crate
+        return Triple(true, crate, file.crates)
     }
 
 /** Usually used to filter out test/bench non-workspace crates */

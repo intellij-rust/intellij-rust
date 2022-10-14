@@ -28,6 +28,7 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.openapiext.createSmartPointer
 
 object RsLambdaExprCompletionProvider : RsCompletionProvider() {
@@ -44,7 +45,12 @@ object RsLambdaExprCompletionProvider : RsCompletionProvider() {
         val element = parameters.position.safeGetOriginalOrSelf()
         val expr = element.parentOfType<RsExpr>() ?: return
         val exprExpectedType = expr.expectedType ?: return
-        val paramTypes = expr.implLookup.asTyFunction(exprExpectedType)?.value?.paramTypes ?: return
+        val lookup = if (exprExpectedType is TyTypeParameter && exprExpectedType.parameter is TyTypeParameter.Named) {
+            exprExpectedType.parameter.parameter.implLookup
+        } else {
+            expr.implLookup
+        }
+        val paramTypes = lookup.asTyFunction(exprExpectedType)?.value?.paramTypes ?: return
 
         val params = suggestedParams(paramTypes, expr)
         val start = if (expr.leftSiblings.filter { it !is PsiErrorElement }.firstOrNull()?.elementType == OR) {

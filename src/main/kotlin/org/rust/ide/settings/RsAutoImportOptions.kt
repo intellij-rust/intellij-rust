@@ -27,6 +27,10 @@ class RsAutoImportOptions : UiDslUnnamedConfigurable.Simple(), AutoImportOptions
                     .bindSelected(settings::importOutOfScopeItems)
             }
             row {
+                checkBox(RsBundle.message("settings.rust.auto.import.on.paste"))
+                    .bindSelected(settings::importOnPaste)
+            }
+            row {
                 checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"))
                     .bindSelected(settings::addUnambiguousImportsOnTheFly)
                     .gap(RightGap.SMALL)

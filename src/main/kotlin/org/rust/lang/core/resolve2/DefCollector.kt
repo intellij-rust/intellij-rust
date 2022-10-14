@@ -9,8 +9,6 @@ import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import gnu.trove.THashMap
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -34,7 +32,6 @@ import java.util.concurrent.ExecutorService
 import kotlin.math.ceil
 
 private const val CONSIDER_INDETERMINATE_IMPORTS_AS_RESOLVED: Boolean = false
-private val EXPAND_MACROS_IN_PARALLEL: RegistryValue = Registry.get("org.rust.resolve.new.engine.macros.parallel")
 
 /** Resolves all imports and expands macros (new items are added to [defMap]) using fixed point iteration algorithm */
 class DefCollector(
@@ -42,7 +39,7 @@ class DefCollector(
     private val defMap: CrateDefMap,
     private val context: CollectorContext,
     private val pool: ExecutorService?,
-    private val indicator: ProgressIndicator,
+    private val indicator: ProgressIndicator
 ) {
 
     /**
@@ -58,8 +55,7 @@ class DefCollector(
 
     private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
 
-    /** Created once as optimization */
-    private val macroExpander = FunctionLikeMacroExpander.new(project)
+    private val macroExpander = FunctionLikeMacroExpander.forCrate(context.crate)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
     private val macroMixHashToOrder: MutableMap<HashCode /* mix hash */, Int> = THashMap()
@@ -344,7 +340,7 @@ class DefCollector(
         if (macros.isEmpty()) return
         val batches = macros.splitInBatches(100)
 
-        val result = if (pool != null && EXPAND_MACROS_IN_PARALLEL.asBoolean()) {
+        val result = if (pool != null) {
             val indicator = indicator.toThreadSafeProgressIndicator()
             // Don't use `.parallelStream()` - for typical count of batches (10-20) it will run all tasks on current thread
             val tasks = batches.map { batch ->
@@ -371,7 +367,8 @@ class DefCollector(
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val mixHash = defData.mixHash(callData) ?: return null
         val (expandedFile, expansion) =
-            macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: (null to null)
+            macroExpanderShared.createExpansionStub(project, macroExpander, defData.data, callData.data, mixHash).ok()
+                ?: (null to null)
         return ExpansionOutput(call, def, expandedFile, expansion, mixHash)
     }
 

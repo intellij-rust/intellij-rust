@@ -6,6 +6,7 @@
 package org.rust.ide.utils.import
 
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -13,12 +14,12 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve2.CrateDefMap
 import org.rust.lang.core.resolve2.ModData
-import org.rust.lang.core.resolve2.RsModInfoBase
+import org.rust.lang.core.resolve2.RsModInfo
 import org.rust.lang.core.resolve2.getModInfo
 
 class ImportContext2 private constructor(
     /** Info of mod in which auto-import or completion is called */
-    val rootInfo: RsModInfoBase.RsModInfo,
+    val rootInfo: RsModInfo,
     /** Mod in which auto-import or completion is called */
     val rootMod: RsMod,
     val type: Type,
@@ -35,7 +36,7 @@ class ImportContext2 private constructor(
 
         fun from(context: RsElement, type: Type = Type.AUTO_IMPORT, pathInfo: PathInfo? = null): ImportContext2? {
             val rootMod = context.containingMod
-            val info = getModInfo(rootMod) as? RsModInfoBase.RsModInfo ?: return null
+            val info = getModInfo(rootMod) ?: return null
             return ImportContext2(info, rootMod, type, pathInfo)
         }
     }
@@ -46,10 +47,11 @@ class ImportContext2 private constructor(
         OTHER,
     }
 
-    class PathInfo(
+    class PathInfo private constructor(
         val rootPathText: String?,
         val rootPathParsingMode: RustParserUtil.PathParsingMode?,
         val rootPathAllowedNamespaces: Set<Namespace>?,
+        val nextSegments: List<String>?,
         val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
     ) {
         companion object {
@@ -59,14 +61,26 @@ class ImportContext2 private constructor(
                     rootPathText = rootPath?.text,
                     rootPathParsingMode = rootPath?.pathParsingMode,
                     rootPathAllowedNamespaces = rootPath?.allowedNamespaces(isCompletion),
+                    nextSegments = path.getNextSegments(),
                     namespaceFilter = path.namespaceFilter(isCompletion),
                 )
+            }
+
+            /**
+             * foo1::foo2::foo3::foo4
+             * ~~~~~~~~~~ this
+             *             ~~~~~~~~~~ next segments
+             */
+            private fun RsPath.getNextSegments(): List<String>? {
+                val parent = parent as? RsPath ?: return null
+                return generateSequence(parent) { it.parent as? RsPath }
+                    .mapTo(mutableListOf()) { it.referenceName ?: return null }
             }
         }
     }
 }
 
-private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
+private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (val context = context) {
     is RsTypeReference -> { e ->
         when (e) {
             is RsEnumItem,
@@ -106,6 +120,15 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
     }
     is RsPath -> { e -> Namespace.Types in e.namespaces }
     is RsMacroCall -> { e -> Namespace.Macros in e.namespaces }
+    is RsMetaItem -> when {
+        context.isRootMetaItem() -> { e ->
+            e is RsFunction && e.isAttributeProcMacroDef
+        }
+        RsPsiPattern.derivedTraitMetaItem.accepts(context) -> { e ->
+            e is RsFunction && e.isCustomDeriveProcMacroDef
+        }
+        else -> { _ -> true }
+    }
     else -> { _ -> true }
 }
 

@@ -41,6 +41,9 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_CSTR:
         return StdFFIStrSummaryProvider(valobj, dict, is_null_terminated=True)
 
+    if rust_type == RustType.STD_SLICE or rust_type == RustType.STD_MSVC_SLICE:
+        return SizeSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_VEC:
         return SizeSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
@@ -51,9 +54,9 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_HASH_SET:
         return SizeSummaryProvider(valobj, dict)
 
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcSummaryProvider(valobj, dict)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcSummaryProvider(valobj, dict)
 
     if rust_type == RustType.STD_REF:
@@ -65,6 +68,17 @@ def summary_lookup(valobj, dict):
 
     if rust_type == RustType.STD_NONZERO_NUMBER:
         return StdNonZeroNumberSummaryProvider(valobj, dict)
+
+    if rust_type == RustType.STD_RANGE:
+        return StdRangeSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_FROM:
+        return StdRangeFromSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_INCLUSIVE:
+        return StdRangeInclusiveSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_TO:
+        return StdRangeToSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
+        return StdRangeToInclusiveSummaryProvider(valobj, dict)
 
     return ""
 
@@ -90,6 +104,9 @@ def synthetic_lookup(valobj, dict):
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
 
+    if rust_type == RustType.STD_SLICE or rust_type == RustType.STD_MSVC_SLICE:
+        return StdSliceSyntheticProvider(valobj, dict)
+
     if rust_type == RustType.STD_VEC:
         return StdVecSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
@@ -99,9 +116,9 @@ def synthetic_lookup(valobj, dict):
         return StdHashMapSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_HASH_SET:
         return StdHashMapSyntheticProvider(valobj, dict, show_values=False)
-    if rust_type == RustType.STD_RC:
+    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
         return StdRcSyntheticProvider(valobj, dict)
-    if rust_type == RustType.STD_ARC:
+    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
         return StdRcSyntheticProvider(valobj, dict, is_atomic=True)
 
     if rust_type == RustType.STD_CELL:

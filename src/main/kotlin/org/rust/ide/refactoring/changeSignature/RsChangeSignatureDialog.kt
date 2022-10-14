@@ -27,6 +27,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.ide.utils.import.createVirtualImportContext
 import org.rust.lang.RsFileType
+import org.rust.lang.core.completion.FORCE_OUT_OF_SCOPE_COMPLETION
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemsOwner
 import org.rust.lang.core.psi.ext.RsMod
@@ -281,7 +282,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
     override fun createCallerChooser(
         title: String?,
         treeToReuse: Tree?,
-        callback: CallerChooserCallback?
+        callback: Consumer<in Set<RsFunction>>?
     ): CallerChooserBase<RsFunction>? = null
 
     override fun validateAndCommitData(): String? {
@@ -399,7 +400,7 @@ private fun createExprCodeFragment(importContext: RsMod): PsiCodeFragment
         "",
         context = importTarget,
         importTarget = importTarget
-    )
+    ).apply { putUserData(FORCE_OUT_OF_SCOPE_COMPLETION, true) }
 }
 
 private fun createCodeFragment(

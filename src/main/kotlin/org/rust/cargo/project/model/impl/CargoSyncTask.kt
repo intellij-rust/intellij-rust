@@ -118,6 +118,14 @@ class CargoSyncTask(
                     createContext = { it },
                     action = { childProgress ->
                         if (!cargoProject.workingDirectory.exists()) {
+                            childProgress.message(
+                                "Project directory does not exist",
+                                "Project directory `${cargoProject.workingDirectory}` does not exist.\n" +
+                                    "Consider detaching the project `${cargoProject.presentableName}` " +
+                                    "from the Cargo tool window",
+                                MessageEvent.Kind.ERROR,
+                                null
+                            )
                             val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
                             CargoProjectWithStdlib(cargoProject.copy(stdlibStatus = stdlibStatus), null)
                         } else {
@@ -353,6 +361,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val (projectDescriptionData, status) = cargo.fullProjectDescription(
             childContext.project,
             projectDirectory,
+            cargoConfig.buildTarget ?: rustcInfo?.version?.host,
+            rustcInfo?.version,
         ) {
             when (it) {
                 CargoCallType.METADATA -> SyncProcessAdapter(childContext)
@@ -427,11 +437,12 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
+        val cargoConfig = cargoProject.rawWorkspace?.cargoConfig ?: CargoConfig.DEFAULT
         val rustup = childContext.toolchain.rustup(workingDirectory)
         if (rustup == null) {
             val explicitPath = childContext.project.rustSettings.explicitPathToStdlib
                 ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
-            val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it, rustcInfo) }
+            val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it, rustcInfo, cargoConfig) }
             return@runWithChildProgress when {
                 explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
@@ -439,15 +450,19 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
             }
         }
 
-        rustup.fetchStdlib(childContext, rustcInfo)
+        rustup.fetchStdlib(childContext, rustcInfo, cargoConfig)
     }
 }
 
 
-private fun Rustup.fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
+private fun Rustup.fetchStdlib(
+    context: CargoSyncTask.SyncContext,
+    rustcInfo: RustcInfo?,
+    cargoConfig: CargoConfig
+): TaskResult<StandardLibrary> {
     return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {
         is DownloadResult.Ok -> {
-            val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, listener = SyncProcessAdapter(context))
+            val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))
             if (lib == null) {
                 TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
             } else {

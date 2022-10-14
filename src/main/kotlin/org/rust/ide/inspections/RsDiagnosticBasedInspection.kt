@@ -16,7 +16,7 @@ abstract class RsDiagnosticBasedInspection : RsLocalInspectionTool() {
         override fun visitConstant(o: RsConstant) = collectDiagnostics(holder, o)
         override fun visitConstParameter(o: RsConstParameter) = collectDiagnostics(holder, o)
         override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
-        override fun visitBaseType(o: RsBaseType) = collectDiagnostics(holder, o)
+        override fun visitPathType(o: RsPathType) = collectDiagnostics(holder, o)
         override fun visitTraitRef(o: RsTraitRef) = collectDiagnostics(holder, o)
         override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
     }

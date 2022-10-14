@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve.ref
 
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.resolve.RsPathResolveResult
 import org.rust.lang.core.types.BoundElement
 
 interface RsPathReference : RsReference {
@@ -16,6 +17,9 @@ interface RsPathReference : RsReference {
     fun resolveIfVisible(): RsElement? = multiResolveIfVisible().singleOrNull()
 
     fun multiResolveIfVisible(): List<RsElement> = multiResolve()
+
+    fun rawMultiResolve(): List<RsPathResolveResult<RsElement>> =
+        multiResolve().map { RsPathResolveResult(it, isVisible = true) }
 
     fun advancedResolve(): BoundElement<RsElement>? =
         resolve()?.let { BoundElement(it) }

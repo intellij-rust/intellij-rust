@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.annotator.format.RsFormatMacroAnnotator
 import org.rust.ide.colors.RsColor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -409,6 +410,18 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER><FORMAT_PARAMETER>{<FORMAT_SPECIFIER>name</FORMAT_SPECIFIER>:.<FORMAT_SPECIFIER>*</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1, 3, name=2);
             println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER><FORMAT_PARAMETER>{<FORMAT_SPECIFIER>2</FORMAT_SPECIFIER>:.<FORMAT_SPECIFIER>*</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1, 5, 2);
             println!("<FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>a${'$'}</FORMAT_SPECIFIER>.<FORMAT_SPECIFIER>*</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>!", 5, 1, a=3);
+        }
+    """)
+
+    fun `test check precision after dot omitted`() = checkErrors("""
+        $implDisplayI32
+
+        fn main() {
+            println!("<FORMAT_PARAMETER>{:.}</FORMAT_PARAMETER>", 1);
+            println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>:.}</FORMAT_PARAMETER>", 1);
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER><FORMAT_PARAMETER>{<FORMAT_SPECIFIER>name</FORMAT_SPECIFIER>:.}</FORMAT_PARAMETER>", 1, name=2);
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER><FORMAT_PARAMETER>{<FORMAT_SPECIFIER>1</FORMAT_SPECIFIER>:.}</FORMAT_PARAMETER>", 1, 2);
+            println!("<FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>a${'$'}</FORMAT_SPECIFIER>.}</FORMAT_PARAMETER>!", 5, a=3);
         }
     """)
 

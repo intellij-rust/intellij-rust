@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.TYPES_N_VALUES
+import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 import org.rust.openapiext.toPsiFile
 
 
@@ -23,7 +24,7 @@ class RsCodeFragmentFactory(private val project: Project) {
         check(!pathText.startsWith("::"))
         val vFile = target.crateRoot ?: return null
         val crateRoot = vFile.toPsiFile(project) as? RsFile ?: return null
-        return createPath(pathText, crateRoot)
+        return createPath(pathText, crateRoot, ns = TYPES_N_VALUES_N_MACROS)
     }
 
     fun createPath(

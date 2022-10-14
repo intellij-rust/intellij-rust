@@ -6,10 +6,7 @@
 package org.rust.lang.core.dfa
 
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -1499,9 +1496,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """)
 
+    @MinRustcVersion("1.62.0")
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test conditional code`() = testCFG("""
+        macro_rules! reachable { () => {}; }
+        macro_rules! unreachable { () => { foo; }; }
         fn main() {
             1;
             #[cfg(intellij_rust)] 2;
@@ -1510,8 +1510,8 @@ class RsControlFlowGraphTest : RsTestBase() {
             #[cfg(not(intellij_rust))] let x = unreachable();
             let s = S { #[cfg(not(intellij_rust))] x: unreachable() };
             foo(#[cfg(not(intellij_rust))] unreachable);
-            #[cfg(intellij_rust)] println!("{}", a);
-            #[cfg(not(intellij_rust))] println!("{}", unreachable);
+            #[cfg(intellij_rust)] reachable!();
+            #[cfg(not(intellij_rust))] unreachable!();
             #[cfg(not(intellij_rust))] panic!();
             4;
             #[cfg(intellij_rust)] panic!();
@@ -1530,19 +1530,15 @@ class RsControlFlowGraphTest : RsTestBase() {
             "10: let s = S { #[cfg(not(intellij_rust))] x: unreachable() };" -> "11: foo";
             "11: foo" -> "12: foo(#[cfg(not(intellij_rust))] unreachable)";
             "12: foo(#[cfg(not(intellij_rust))] unreachable)" -> "13: foo(#[cfg(not(intellij_rust))] unreachable);";
-            "13: foo(#[cfg(not(intellij_rust))] unreachable);" -> "14: \"{}\"";
-            "14: \"{}\"" -> "15: a";
-            "15: a" -> "16: println!(\"{}\", a)";
-            "16: println!(\"{}\", a)" -> "17: #[cfg(intellij_rust)] println!(\"{}\", a);";
-            "17: #[cfg(intellij_rust)] println!(\"{}\", a);" -> "18: 4";
-            "18: 4" -> "19: 4;";
-            "19: 4;" -> "20: panic!()";
-            "20: panic!()" -> "2: Termination";
-            "21: Unreachable" -> "22: #[cfg(intellij_rust)] panic!();";
-            "22: #[cfg(intellij_rust)] panic!();" -> "23: 5";
-            "23: 5" -> "24: 5;";
-            "24: 5;" -> "25: BLOCK";
-            "25: BLOCK" -> "1: Exit";
+            "13: foo(#[cfg(not(intellij_rust))] unreachable);" -> "14: 4";
+            "14: 4" -> "15: 4;";
+            "15: 4;" -> "16: panic!()";
+            "16: panic!()" -> "2: Termination";
+            "17: Unreachable" -> "18: #[cfg(intellij_rust)] panic!();";
+            "18: #[cfg(intellij_rust)] panic!();" -> "19: 5";
+            "19: 5" -> "20: 5;";
+            "20: 5;" -> "21: BLOCK";
+            "21: BLOCK" -> "1: Exit";
             "1: Exit" -> "2: Termination";
         }
     """)

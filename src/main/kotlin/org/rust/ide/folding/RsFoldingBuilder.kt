@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.nextLeaf
 import org.rust.ide.injected.RsDoctestLanguageInjector.Companion.INJECTED_MAIN_NAME
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
@@ -33,18 +34,19 @@ import org.rust.openapiext.document
 import java.lang.Integer.max
 
 class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
-    override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String =
-        when {
-            node.elementType == LBRACE -> " { "
-            node.elementType == RBRACE -> " }"
-            node.elementType == USE_ITEM -> "/* uses */"
-            node.psi is RsModDeclItem -> "/* mods */"
-            node.psi is RsExternCrateItem -> "/* crates */"
-            node.psi is RsWhereClause -> "/* where */"
-            node.psi is PsiComment -> "/* ... */"
-            node.psi is RsValueParameterList -> "(...)"
+    override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
+        when (node.elementType) {
+            LBRACE -> return " { "
+            RBRACE -> return " }"
+            USE_ITEM -> return "..."
+        }
+        return when (node.psi) {
+            is RsModDeclItem, is RsExternCrateItem, is RsWhereClause -> "..."
+            is PsiComment -> "/* ... */"
+            is RsValueParameterList -> "(...)"
             else -> "{...}"
         }
+    }
 
     override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
         if (root !is RsFile) return
@@ -91,7 +93,14 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
         override fun visitUseGroup(o: RsUseGroup) = fold(o)
 
-        override fun visitWhereClause(o: RsWhereClause) = fold(o)
+        override fun visitWhereClause(clause: RsWhereClause) {
+            val start = clause.where.foldRegionStart()
+            // RsWhereClause always has at least one child - the `where` keyword
+            val end = clause.lastChild.endOffset
+            if (end > start) {
+                descriptors += FoldingDescriptor(clause.node, TextRange(start, end))
+            }
+        }
 
         override fun visitMembers(o: RsMembers) = foldBetween(o, o.lbrace, o.rbrace)
 
@@ -166,35 +175,60 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         override fun visitUseItem(o: RsUseItem) {
-            foldRepeatingItems(o, usesRanges)
+            foldRepeatingItems(o, o.use, o.use, usesRanges)
         }
 
         override fun visitModDeclItem(o: RsModDeclItem) {
-            foldRepeatingItems(o, modsRanges)
+            foldRepeatingItems(o, o.mod, o.mod, modsRanges)
         }
 
         override fun visitExternCrateItem(o: RsExternCrateItem) {
-            foldRepeatingItems(o, cratesRanges)
+            foldRepeatingItems(o, o.extern, o.crate, cratesRanges)
         }
 
-        private inline fun <reified T> foldRepeatingItems(startNode: T, ranges: MutableList<TextRange>) {
+        private inline fun <reified T : RsDocAndAttributeOwner> foldRepeatingItems(
+            startNode: T,
+            startKeyword: PsiElement,
+            endKeyword: PsiElement,
+            ranges: MutableList<TextRange>
+        ) {
             if (isInRangesAlready(ranges, startNode as PsiElement)) return
 
-            var lastNode: PsiElement? = null
-            var tmpNode: PsiElement? = startNode
+            val lastNode = startNode.rightSiblings
+                .filterNot { it is PsiComment || it is PsiWhiteSpace }
+                .takeWhile { it is T }
+                .lastOrNull() ?: return
 
-            while (tmpNode is T || tmpNode is PsiWhiteSpace) {
-                tmpNode = tmpNode.getNextNonCommentSibling()
-                if (tmpNode is T)
-                    lastNode = tmpNode
+            val trailingSemicolon = when (lastNode) {
+                is RsModDeclItem -> lastNode.semicolon
+                is RsExternCrateItem -> lastNode.semicolon
+                is RsUseItem -> lastNode.semicolon
+                else -> null
             }
 
-            if (lastNode == startNode) return
+            val foldStartOffset = endKeyword.foldRegionStart()
+            val foldEndOffset = trailingSemicolon?.startOffset ?: lastNode.endOffset
 
-            if (lastNode != null) {
-                val range = TextRange(startNode.startOffset, lastNode.endOffset)
-                descriptors += FoldingDescriptor(startNode.node, range)
-                ranges.add(range)
+            // This condition may be false when only the leading keyword is present, but the node is malformed.
+            // We don't collapse such nodes (even though they may have attributes).
+            if (foldStartOffset < foldEndOffset) {
+                val totalRange = TextRange(startNode.startOffset, lastNode.endOffset)
+                ranges.add(totalRange)
+
+                val group = FoldingGroup.newGroup("${T::javaClass}")
+                val primaryFoldRange = TextRange(foldStartOffset, foldEndOffset)
+                // TODO: the leading keyword is excluded from folding. This makes it pretty on display, but
+                //       disables the fold action on it (and also on the last semicolon, if present). I don't
+                //       know whether it is possible to display those tokens unfolded, but still provide fold
+                //       action. Kotlin, which implements similar import folding logic, doesn't solve that
+                //       problem.
+                descriptors += FoldingDescriptor(startNode.node, primaryFoldRange, group)
+
+                if (startNode.startOffset < startKeyword.startOffset) {
+                    // Hide leading attributes and doc comments
+                    val attrRange = TextRange(startNode.startOffset, startKeyword.startOffset)
+                    descriptors += FoldingDescriptor(startNode.node, attrRange, group, "")
+                }
             }
         }
 
@@ -239,4 +273,13 @@ private fun PsiElement.getOffsetInLine(doc: Document): Int {
     return leftLeaves
         .takeWhile { doc.getLineNumber(it.endOffset) == blockLine }
         .sumOf { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
+}
+
+private fun PsiElement.foldRegionStart(): Int {
+    val nextLeaf = nextLeaf(skipEmptyElements = true) ?: return endOffset
+    return if (nextLeaf.text.startsWith(' ')) {
+        endOffset + 1
+    } else {
+        endOffset
+    }
 }

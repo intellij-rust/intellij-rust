@@ -13,9 +13,7 @@ import com.intellij.util.BitUtil
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
-import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.resolve.ref.deepResolve
+import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
@@ -32,6 +30,12 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
         // prefer pattern binding to its target if element name is accepted
         if (ref is RsPatBindingReferenceImpl && BitUtil.isSet(flags, TargetElementUtil.ELEMENT_NAME_ACCEPTED)) {
             return ref.element
+        }
+
+        if (ref is RsPathReference) {
+            ref.tryResolveTypeAliasToImpl()?.let {
+                return it
+            }
         }
 
         // Filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest)
@@ -67,7 +71,8 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
     override fun getNamedElement(element: PsiElement): PsiElement? {
         // This hack enables some actions (e.g. "find usages") when the [element] is inside a macro
         // call and this element expands to name identifier of some named element.
-        if (element.elementType == RsElementTypes.IDENTIFIER) {
+        val elementType = element.elementType
+        if (elementType == RsElementTypes.IDENTIFIER || elementType == RsElementTypes.QUOTE_IDENTIFIER) {
             val delegate = element.findExpansionElements()?.firstOrNull() ?: return null
             val delegateParent = delegate.parent
             if (delegateParent is RsNameIdentifierOwner && delegateParent.nameIdentifier == delegate) {

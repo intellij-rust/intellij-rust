@@ -112,3 +112,6 @@ interface Crate : UserDataHolderEx {
 
 fun Crate.findDependency(normName: String): Crate? =
     dependencies.find { it.normName == normName }?.crate
+
+fun Crate.hasTransitiveDependencyOrSelf(other: Crate): Boolean =
+    other == this || other in flatDependencies

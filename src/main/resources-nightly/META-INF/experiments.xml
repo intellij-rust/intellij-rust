@@ -6,9 +6,6 @@
         <experimentalFeature id="org.rust.cargo.test.tool.window" percentOfUsers="100">
             <description>Show test results in Test Tool Window</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="0">
-            <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.fetch.actual.stdlib.metadata" percentOfUsers="100">
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>
@@ -20,6 +17,9 @@
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.emulate.terminal" percentOfUsers="100">
             <description>Emulate terminal in output console by default</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
+            <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
     </extensions>
 </idea-plugin>

@@ -123,7 +123,7 @@ private fun changeReturnType(factory: RsPsiFactory, function: RsFunction, config
         if (config.returnType !is TyUnit) {
             val ret = factory.createRetType(config.returnTypeReference.text)
             function.addAfter(ret, function.valueParameterList) as RsRetType
-            RsImportHelper.importTypeReferencesFromTy(function, config.returnType)
+            RsImportHelper.importTypeReferencesFromElement(function, config.returnTypeReference)
         }
     }
 }
@@ -141,7 +141,7 @@ private fun changeArguments(
     }
     for (parameter in config.parameters) {
         val defaultValue = parameter.defaultValue.item ?: continue
-        RsImportHelper.importTypeReferencesFromElements(arguments, setOf(defaultValue))
+        RsImportHelper.importTypeReferencesFromElement(arguments, defaultValue)
     }
     val argumentsCopy = arguments.copy() as RsValueArgumentList
     val argumentsList = argumentsCopy.exprList
@@ -282,7 +282,7 @@ private fun PsiElement.collectSurroundingWhiteSpaceAndComments(): List<PsiElemen
 
 private fun importParameterTypes(descriptors: List<Parameter>, context: RsElement) {
     for (descriptor in descriptors) {
-        RsImportHelper.importTypeReferencesFromElements(context, setOf(descriptor.typeReference))
+        RsImportHelper.importTypeReferencesFromElement(context, descriptor.typeReference)
     }
 }
 

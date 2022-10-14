@@ -761,17 +761,18 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of current impl`() = checkByCode("""
         struct S;
         trait Trait {
             type Item;
+                //X
             fn foo() -> Self::Item;
         }
 
         impl Trait for S {
             type Item = i32;
-                //X
             fn foo() -> Self::Item { unreachable!() }
         }                    //^
     """)
@@ -791,15 +792,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }                    //^ unresolved
     """)
 
+    // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait`() = checkByCode("""
         struct S;
         trait Trait1 { type Item; }
+                          //X
         trait Trait2: Trait1 { fn foo() -> i32; }
 
         impl Trait1 for S {
             type Item = i32;
-        }       //X
+        }
 
         impl Trait2 for S {
             fn foo() -> Self::Item { unreachable!() }
@@ -922,5 +925,41 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         fn bar(s: &S) {
             s.foo();
         }   //^
+    """)
+
+    fun `test resolve impl from a file included into multiple crates 1`() = stubOnlyResolve("""
+    //- tests/foo.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn foo(&self) {}
+        }
+    //- tests/a.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }          //^ tests/foo.rs
+    //- tests/b.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }
+    """)
+
+    fun `test resolve impl from a file included into multiple crates 2`() = stubOnlyResolve("""
+    //- tests/foo.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn foo(&self) {}
+        }
+    //- tests/a.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }
+    //- tests/b.rs
+        mod foo;
+        fn main() {
+            foo::Foo.foo();
+        }          //^ tests/foo.rs
     """)
 }

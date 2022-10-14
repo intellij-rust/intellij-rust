@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -19,14 +20,17 @@ import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveImportFix
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.findExpansionElements
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.*
+import org.rust.openapiext.isUnitTestMode
 import javax.swing.JComponent
 
 class RsUnusedImportInspection : RsLintInspection() {
 
     var ignoreDoctest: Boolean = true
+    var enableOnlyIfProcMacrosEnabled: Boolean = true
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedImports
 
@@ -38,6 +42,7 @@ class RsUnusedImportInspection : RsLintInspection() {
 
             // It's common to include more imports than needed in doctest sample code
             if (ignoreDoctest && item.containingCrate is DoctestCrate) return
+            if (enableOnlyIfProcMacrosEnabled && !ProcMacroApplicationService.isEnabled() && !isUnitTestMode) return
 
             val owner = item.parent as? RsItemsOwner ?: return
             val usage = owner.pathUsage
@@ -102,12 +107,22 @@ class RsUnusedImportInspection : RsLintInspection() {
 
     override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
         addCheckbox("Ignore unused imports in doctests", "ignoreDoctest")
+        addCheckbox("Enable inspection only if procedural macros are enabled", "enableOnlyIfProcMacrosEnabled")
     }
 
     companion object {
         fun isEnabled(project: Project): Boolean {
             val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
             return profile.isToolEnabled(HighlightDisplayKey.find(SHORT_NAME))
+                && checkProcMacrosMatch(profile, project)
+        }
+
+        private fun checkProcMacrosMatch(profile: InspectionProfileImpl, project: Project): Boolean {
+            if (isUnitTestMode) return true
+            val toolWrapper = profile.getInspectionTool(SHORT_NAME, project)
+            val tool = toolWrapper?.tool as? RsUnusedImportInspection ?: return true
+            if (!tool.enableOnlyIfProcMacrosEnabled) return true
+            return ProcMacroApplicationService.isEnabled()
         }
 
         const val SHORT_NAME: String = "RsUnusedImport"
@@ -122,9 +137,8 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
 }
 
 private fun isApplicableForUseItem(item: RsUseItem): Boolean {
-    if (!item.project.isNewResolveEnabled) return false
-    if (item.visibility == RsVisibility.Public) return false
     val crate = item.containingCrate ?: return false
+    if (item.visibility == RsVisibility.Public && crate.kind.isLib) return false
     if (!item.existsAfterExpansion(crate)) return false
     return true
 }
@@ -134,12 +148,10 @@ private fun isApplicableForUseItem(item: RsUseItem): Boolean {
  * A usage can be either a path that uses the import of the use speck or a method call/associated item available through
  * a trait that is imported by this use speck.
  */
-fun RsUseSpeck.isUsed(): Boolean {
+fun RsUseSpeck.isUsed(pathUsage: PathUsageMap): Boolean {
     val useItem = ancestorStrict<RsUseItem>() ?: return true
     if (!isApplicableForUseItem(useItem)) return true
-    val owner = useItem.parent as? RsItemsOwner ?: return true
-    val usage = owner.pathUsage
-    return isUseSpeckUsed(this, usage)
+    return isUseSpeckUsed(this, pathUsage)
 }
 
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
@@ -177,7 +189,8 @@ private fun isItemUsedInOtherMods(item: RsNamedElement, importName: String, useS
             RsVisibility.Restricted(importMod)
         }
         is RsVisibility.Restricted -> visibility
-        RsVisibility.Public -> return true
+        // we handle public imports in binary crates only, so this is effectively `pub(crate)` import
+        RsVisibility.Public -> RsVisibility.Restricted(importMod.crateRoot ?: return true)
     }
     if (item is RsTraitItem) {
         // TODO we should search usages for all methods of the trait

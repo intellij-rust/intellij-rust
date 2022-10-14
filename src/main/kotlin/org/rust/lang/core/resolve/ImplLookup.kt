@@ -8,12 +8,11 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
-import org.rust.cargo.project.model.CargoProject
+import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.hasTransitiveDependencyOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.SelectionCandidate.*
-import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtInferVar
@@ -22,13 +21,12 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateLoses
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateWins
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.CargoProjectCache
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
-import org.rust.stdext.Cache
 import org.rust.stdext.buildList
 import org.rust.stdext.exhaustive
 import org.rust.stdext.swapRemoveAt
+import org.rust.stdext.withPrevious
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
@@ -150,19 +148,20 @@ sealed class TraitImplSource {
  * Note: ParamEnv of an associated item (method) also contains bounds of its trait/impl
  * Note: callerBounds should have type `List<Predicate>` to also support lifetime bounds
  */
-data class ParamEnv(val callerBounds: List<TraitRef>) {
-    fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
-        callerBounds.asSequence().filter { it.selfTy.isEquivalentTo(ty) }.map { it.trait }
-
-    fun isEmpty(): Boolean = callerBounds.isEmpty()
+interface ParamEnv {
+    fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>>
 
     companion object {
-        val EMPTY: ParamEnv = ParamEnv(emptyList())
-        val LEGACY: ParamEnv = ParamEnv(emptyList())
+        val EMPTY: ParamEnv = SimpleParamEnv(emptyList())
 
-        fun buildFor(decl: RsGenericDeclaration): ParamEnv {
-            val rawBounds = buildList<TraitRef> {
-                addAll(decl.bounds)
+        fun buildFor(decl: RsItemElement): ParamEnv {
+            val rawBounds = buildList {
+                if (decl is RsGenericDeclaration) {
+                    addAll(decl.bounds)
+                    if (decl is RsTraitItem) {
+                        add(TraitRef(TyTypeParameter.self(), decl.withDefaultSubst()))
+                    }
+                }
                 if (decl is RsAbstractable) {
                     when (val owner = decl.owner) {
                         is RsAbstractableOwner.Trait -> {
@@ -180,10 +179,10 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
 
             when (rawBounds.size) {
                 0 -> return EMPTY
-                1 -> return ParamEnv(rawBounds)
+                1 -> return SimpleParamEnv(rawBounds)
             }
 
-            val lookup = ImplLookup(decl.project, decl.cargoProject, decl.knownItems, ParamEnv(rawBounds))
+            val lookup = ImplLookup(decl.project, decl.containingCrate, decl.knownItems, SimpleParamEnv(rawBounds))
             val ctx = lookup.ctx
             val bounds2 = rawBounds.map {
                 val (bound, obligations) = ctx.normalizeAssociatedTypesIn(it)
@@ -192,34 +191,56 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
             }
             ctx.fulfill.selectWherePossible()
 
-            return ParamEnv(bounds2.map { ctx.fullyResolve(it) })
+            return SimpleParamEnv(bounds2.map { ctx.fullyResolve(it) })
+        }
+    }
+}
+
+class SimpleParamEnv(private val callerBounds: List<TraitRef>) : ParamEnv {
+    override fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
+        callerBounds.asSequence().filter { it.selfTy.isEquivalentTo(ty) }.map { it.trait }
+}
+
+class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
+    override fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
+        return if (ty is TyTypeParameter) {
+            val additionalBounds = when (val parameter = ty.parameter) {
+                is TyTypeParameter.Named -> if (parameter.parameter.owner != parentItem) {
+                    parentItem.whereClause?.wherePredList.orEmpty().asSequence()
+                        .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() == parameter.parameter }
+                        .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+                } else {
+                    emptySequence()
+                }
+                TyTypeParameter.Self -> if (parentItem !is RsTraitOrImpl) {
+                    parentItem.whereClause?.wherePredList.orEmpty().asSequence()
+                        .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.kind == PathKind.CSELF }
+                        .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+                } else {
+                    emptySequence()
+                }
+            }.mapNotNull {
+                if (it.hasQ) return@mapNotNull null // Ignore `T: ?Sized`
+                it.bound.traitRef?.resolveToBoundTrait()
+            }
+            @Suppress("DEPRECATION")
+            ty.getTraitBoundsTransitively().asSequence() + additionalBounds
+        } else {
+            emptySequence()
         }
     }
 }
 
 class ImplLookup(
     private val project: Project,
-    cargoProject: CargoProject?,
+    private val containingCrate: Crate?,
     val items: KnownItems,
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
-    private val traitSelectionCache: Cache<TraitRef, SelectionResult<SelectionCandidate>> =
-        if (paramEnv.isEmpty() && cargoProject != null) {
-            cargoProjectGlobalTraitSelectionCache.getCache(cargoProject)
-        } else {
-            // function-local cache is used when [paramEnv] is not empty, i.e. if there are trait bounds
-            // that affect trait selection
-            Cache.new()
-        }
-    private val findImplsAndTraitsCache: Cache<Ty, List<TraitImplSource>> =
-        if (cargoProject != null) {
-            cargoProjectGlobalFindImplsAndTraitsCache.getCache(cargoProject)
-        } else {
-            Cache.new()
-        }
-    private val implIndexCache: Cache<TyFingerprint, List<RsCachedImplItem>> = Cache.new()
-    private val typeAliasIndexCache: Cache<TyFingerprint, List<RsCachedTypeAlias>> = Cache.new()
+    private val traitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>> = hashMapOf()
+    private val findImplsAndTraitsCache: MutableMap<Ty, List<TraitImplSource>> = hashMapOf()
+    private val indexCache = RsImplIndexAndTypeAliasCache.getInstance(project)
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = items.FnOnce ?: return@lazy null
@@ -244,10 +265,6 @@ class ImplLookup(
     }
 
     fun getEnvBoundTransitivelyFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
-        if (paramEnv == ParamEnv.LEGACY && ty is TyTypeParameter) {
-            @Suppress("DEPRECATION")
-            return ty.getTraitBoundsTransitively().asSequence()
-        }
         return paramEnv.boundsFor(ty)
     }
 
@@ -321,7 +338,7 @@ class ImplLookup(
     }
 
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
-        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        val impls = findPotentialImpls(tyf)
         return impls.any { cachedImpl ->
             if (cachedImpl.isNegativeImpl) return@any false
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@any false
@@ -338,9 +355,7 @@ class ImplLookup(
         if (fingerprint != null) {
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
-            val aliases = typeAliasIndexCache.getOrPut(fingerprint) {
-                RsTypeAliasIndex.findPotentialAliases(project, fingerprint)
-            }
+            val aliases = findPotentialAliases(fingerprint)
             val result = aliases.any {
                 val name = it.name ?: return@any false
                 val aliasFingerprint = TyFingerprint(name)
@@ -354,6 +369,19 @@ class ImplLookup(
         }
         return processor(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
+
+    private fun findPotentialImpls(tyf: TyFingerprint): Sequence<RsCachedImplItem> =
+        indexCache.findPotentialImpls(tyf)
+            .asSequence()
+            .filter { useImplsFromCrate(it.containingCrates) }
+
+    private fun findPotentialAliases(tyf: TyFingerprint) =
+        indexCache.findPotentialAliases(tyf)
+            .asSequence()
+            .filter { useImplsFromCrate(it.containingCrates) }
+
+    private fun useImplsFromCrate(crates: List<Crate>): Boolean =
+        containingCrate == null || crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
 
     private fun canCombineTypes(
         ty1: Ty,
@@ -381,10 +409,8 @@ class ImplLookup(
     }
 
     /** return impls for a generic type `impl<T> Trait for T {}` */
-    private fun findBlanketImpls(): List<RsCachedImplItem> {
-        return implIndexCache.getOrPut(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT) {
-            RsImplIndex.findPotentialImpls(project, TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
-        }
+    private fun findBlanketImpls(): Sequence<RsCachedImplItem> {
+        return findPotentialImpls(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
 
     /**
@@ -767,7 +793,7 @@ class ImplLookup(
     }
 
     private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
-        val impls = implIndexCache.getOrPut(tyf) { RsImplIndex.findPotentialImpls(project, tyf) }
+        val impls = findPotentialImpls(tyf)
         return impls.any {
             val candidate = it.trySelectCandidate(ref)
             candidate != null && processor(candidate)
@@ -996,7 +1022,7 @@ class ImplLookup(
                 check(source.item is RsStructItem) { "Guaranteed by assembleCandidates" }
                 val fields = source.item.fields
                 val lastField = fields.lastOrNull() ?: return SelectionResult.Err
-                val lastFieldType = lastField.typeReference?.type ?: return SelectionResult.Err
+                val lastFieldType = lastField.typeReference?.rawType ?: return SelectionResult.Err
                 val unsizingParams = hashSetOf<TyTypeParameter>()
                 // TODO consider const params
                 lastFieldType.visitTypeParameters { ty ->
@@ -1005,7 +1031,7 @@ class ImplLookup(
                 }
                 for (field in fields) {
                     if (field == lastField) break
-                    val fieldType = field.typeReference?.type ?: continue
+                    val fieldType = field.typeReference?.rawType ?: continue
                     fieldType.visitTypeParameters { ty ->
                         unsizingParams -= ty
                         false
@@ -1187,7 +1213,7 @@ class ImplLookup(
     }
 
     private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
-        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
+        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.rawType?.substitute(selection.subst)
 
     private fun lookupAssocTypeInBounds(
         subst: Sequence<BoundElement<RsTraitItem>>,
@@ -1272,30 +1298,25 @@ class ImplLookup(
         fun relativeTo(psi: RsElement): ImplLookup {
             val parentItem = psi.contextOrSelf<RsItemElement>()
             val paramEnv = if (parentItem is RsGenericDeclaration) {
-                val useLegacy = psi.contextOrSelf<RsWherePred>() != null ||
-                    psi.contextOrSelf<RsBound>() != null ||
-                    run {
-                        val impl = psi.contextOrSelf<RsImplItem>() ?: return@run false
-                        impl.traitRef?.isAncestorOf(psi) == true || impl.typeReference?.isAncestorOf(psi) == true
-                    }
-                if (useLegacy) {
-                    // We should mock ParamEnv here. Otherwise we run into infinite recursion
-                    // This is mostly a hack. It should be solved in the future somehow
-                    ParamEnv.LEGACY
+                val (ancestor, cameFrom) = psi.contexts.withPrevious().find { (it, _) ->
+                    it is RsWherePred || it is RsBound || it is RsImplItem
+                } ?: (null to null)
+                val isInTraitBoundOrImplSignature = ancestor != null && (ancestor !is RsImplItem
+                    || cameFrom is RsTraitRef || cameFrom is RsTypeReference)
+                if (isInTraitBoundOrImplSignature) {
+                    // We have to calculate type parameter bounds lazily in this case.
+                    // Otherwise, we run into infinite recursion
+                    LazyParamEnv(parentItem)
                 } else {
                     ParamEnv.buildFor(parentItem)
                 }
+            } else if (parentItem != null) {
+                ParamEnv.buildFor(parentItem)
             } else {
                 ParamEnv.EMPTY
             }
-            return ImplLookup(psi.project, psi.cargoProject, psi.knownItems, paramEnv)
+            return ImplLookup(psi.project, psi.containingCrate, psi.knownItems, paramEnv)
         }
-
-        private val cargoProjectGlobalFindImplsAndTraitsCache =
-            CargoProjectCache<Ty, List<TraitImplSource>>("cargoProjectGlobalFindImplsAndTraitsCache")
-
-        private val cargoProjectGlobalTraitSelectionCache =
-            CargoProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("cargoProjectGlobalTraitSelectionCache")
     }
 }
 

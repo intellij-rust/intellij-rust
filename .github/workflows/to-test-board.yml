@@ -1,0 +1,19 @@
+name: update PR project state
+
+on:
+    pull_request_target:
+        types: [ labeled ]
+
+jobs:
+    update-to-test-board:
+        if: github.event.label.name == 'fix' || github.event.label.name == 'feature'
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout repo content
+                uses: actions/checkout@v2
+
+            -   name: Install python packages
+                run: pip install -r scripts/requirements.txt
+
+            -   name: Add to board
+                run: python scripts/add_to_board.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --pull_request ${{ github.event.pull_request.number }}
