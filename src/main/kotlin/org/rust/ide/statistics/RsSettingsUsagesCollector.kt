@@ -37,13 +37,13 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
             metrics += RUSTFMT.metric(useRustfmt, runRustfmtOnSave, channel)
         }
         with(project.externalLinterSettings) {
-            metrics += EXTERNAL_LINTER.metric(tool, runOnTheFly)
+            metrics += EXTERNAL_LINTER.metric(tool, runOnTheFly, channel)
         }
         return metrics
     }
 
     companion object {
-        private val GROUP = EventLogGroup("rust.settings", 1)
+        private val GROUP = EventLogGroup("rust.settings", 2)
 
         private val PROJECT = GROUP.registerEvent(
             "project",
@@ -74,7 +74,8 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
         private val EXTERNAL_LINTER = GROUP.registerEvent(
             "external_linter",
             EventFields.Enum<ExternalLinter>("tool") { it.toString().lowercase(Locale.ENGLISH) },
-            EventFields.Boolean("run_on_fly")
+            EventFields.Boolean("run_on_fly"),
+            EventFields.Enum<RustChannel>("channel")
         )
     }
 }
