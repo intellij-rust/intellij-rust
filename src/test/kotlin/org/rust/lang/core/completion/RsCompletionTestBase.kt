@@ -81,6 +81,12 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
     ) = completionFixture.checkContainsCompletion(code, variants, render)
 
     protected fun checkContainsCompletionByFileTree(
+        variant: String,
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkContainsCompletionByFileTree(code, listOf(variant), render)
+
+    protected fun checkContainsCompletionByFileTree(
         variants: List<String>,
         @Language("Rust") code: String,
         render: LookupElement.() -> String = { lookupString }

@@ -29,6 +29,7 @@ class PathResolutionContext(
     var lazyContainingModInfo: Lazy<RsModInfo?> = lazy(NONE) {
         getModInfo(containingMod)
     }
+    val containingModInfo: RsModInfo? get() = lazyContainingModInfo.value
     val implLookup: ImplLookup by lazy(NONE) {
         givenImplLookup ?: ImplLookup.relativeTo(context)
     }

@@ -82,22 +82,26 @@ abstract class RsCompletionTestFixtureBase<IN>(
         }
     }
 
-    fun checkContainsCompletion(
-        code: IN,
-        variants: Iterable<String>,
-        render: LookupElement.() -> String = { lookupString }
-    ) {
+    private fun withNoInsertCompletion(action: () -> Unit) {
         val oldAutocomplete = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
         CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
         try {
-            prepare(code)
-            doContainsCompletion(variants.toSet(), render)
+            action()
         } finally {
             CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = oldAutocomplete
         }
     }
 
-    fun doContainsCompletion(variants: Set<String>, render: LookupElement.() -> String) {
+    fun checkContainsCompletion(
+        code: IN,
+        variants: Iterable<String>,
+        render: LookupElement.() -> String = { lookupString }
+    ) {
+        prepare(code)
+        doContainsCompletion(variants.toSet(), render)
+    }
+
+    fun doContainsCompletion(variants: Set<String>, render: LookupElement.() -> String) = withNoInsertCompletion {
         val lookups = myFixture.completeBasic()
 
         checkNotNull(lookups) {
@@ -115,7 +119,7 @@ abstract class RsCompletionTestFixtureBase<IN>(
         code: IN,
         variants: Set<String>,
         render: LookupElement.() -> String = { lookupString }
-    ) {
+    ) = withNoInsertCompletion {
         prepare(code)
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
@@ -126,7 +130,7 @@ abstract class RsCompletionTestFixtureBase<IN>(
         }
     }
 
-    fun checkContainsCompletionPrefixes(code: IN, prefixes: List<String>) {
+    fun checkContainsCompletionPrefixes(code: IN, prefixes: List<String>) = withNoInsertCompletion {
         prepare(code)
         val lookups = myFixture.completeBasic()
 
