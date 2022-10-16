@@ -257,6 +257,20 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     return false
 }
 
+/**
+ * Variants from [processExternCrateResolveVariants] + all renamings `extern crate name as alias;`
+ * See https://doc.rust-lang.org/reference/names/preludes.html#extern-prelude
+ */
+fun processExternPreludeResolveVariants(ctx: PathResolutionContext, processor: RsResolveProcessor): Boolean {
+    val (project, defMap) = ctx.containingModInfo ?: return false
+    for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithNames(processor.names)) {
+        val externCrateRoot = externCrateDefMap.rootAsRsMod(project) ?: continue
+        if (processor(name, externCrateRoot)) return true
+    }
+    return false
+}
+
+/** Processes dependencies crates (specified in Cargo.toml) */
 fun processExternCrateResolveVariants(
     element: RsElement,
     isCompletion: Boolean,
@@ -371,7 +385,7 @@ fun processPathResolveVariants(ctx: PathResolutionContext, pathKind: RsPathResol
             }
         }
         is RsPathResolveKind.ExternCratePath -> {
-            processExternCrateResolveVariants(ctx.crateRoot ?: ctx.context, ctx.isCompletion, processor)
+            processExternPreludeResolveVariants(ctx, processor)
         }
         is RsPathResolveKind.AssocTypeBindingPath -> {
             processAssocTypeVariants(pathKind.parent, processor)

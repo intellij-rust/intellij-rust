@@ -765,6 +765,35 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                    //^ dep-lib/lib.rs
     """)
 
+    fun `test absolute path using aliased extern crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+    //- main.rs
+        extern crate test_package as foo;
+
+        fn main() {
+            ::foo::func();
+        }        //^ lib.rs
+    """)
+
+    fun `test absolute path using aliased extern crate 2`() = stubOnlyResolve("""
+    //- lib.rs
+        extern crate self as foo;
+
+        fn main() {
+            ::foo::func();
+        }        //^ lib.rs
+        pub fn func() {}
+    """)
+
+    fun `test unresolved absolute path self`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+        fn main() {
+            ::self::func();
+        }         //^ unresolved
+    """)
+
     fun `test extern crate in super chain (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;

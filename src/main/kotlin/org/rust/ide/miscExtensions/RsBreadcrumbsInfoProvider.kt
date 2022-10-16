@@ -5,6 +5,7 @@
 
 package org.rust.ide.miscExtensions
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import org.rust.lang.RsLanguage
@@ -63,7 +64,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     private object RsBlockExprHandler : RsElementHandler<RsBlockExpr> {
         override fun accepts(e: PsiElement): Boolean =
-            e is RsBlockExpr && (e.isTailExpr || e.parent is RsLetDecl)
+            e is RsBlockExpr && (e.parent is RsLetDecl || !DumbService.isDumb(e.project) && e.isTailExpr)
 
         override fun elementInfo(e: RsBlockExpr): String {
             return buildString {

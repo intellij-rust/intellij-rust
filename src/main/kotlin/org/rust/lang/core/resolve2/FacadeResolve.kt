@@ -86,10 +86,7 @@ fun processItemDeclarationsUsingModInfo(
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
-            val externCrateRoot = externCrateDefMap.root.toRsMod(info)
-                // crate root can't multiresolve
-                .singleOrNull()
-                ?: continue
+            val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
             processor(name, externCrateRoot) && return true
         }
     }
@@ -465,7 +462,7 @@ private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData, crate: Crate):
     }
 }
 
-private fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String, T> {
+fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String, T> {
     return if (names.isNullOrEmpty()) {
         this
     } else if (names.size == 1) {
@@ -645,6 +642,8 @@ private fun ModData.toRsModNullable(project: Project): List<RsMod> {
             }
         }
 }
+
+fun CrateDefMap.rootAsRsMod(project: Project): RsMod? = root.toRsMod(project).singleOrNull()
 
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
     expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
