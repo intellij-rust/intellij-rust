@@ -602,6 +602,24 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         } //^ unresolved
     """)
 
+    fun `test macro 2 (unresolved when absolute path)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub macro foo() {}
+        fn main() {
+            ::foo!();
+        }   //^ unresolved
+    """)
+
+    @MockEdition(Edition.EDITION_2015)
+    fun `test macro 2 (resolved when absolute path in 2015 edition)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub macro foo() {}
+                //x
+        fn main() {
+            ::foo!();
+        }   //^ lib.rs
+    """)
+
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
     //- lib.rs
         mod foo {

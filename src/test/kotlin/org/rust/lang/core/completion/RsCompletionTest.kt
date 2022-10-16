@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -720,6 +721,35 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
 
         mod1::mod2::fo/*caret*/
+    """)
+
+    fun `test no macro completion if absolute path (top-level)`() = checkNoCompletion("""
+        macro_rules! foo1 { () => {} }
+        mod mod1 {
+            pub macro foo2() {}
+        }
+
+        ::fo/*caret*/
+    """)
+
+    fun `test no macro completion if absolute path (inside function)`() = checkNoCompletion("""
+        macro_rules! foo1 { () => {} }
+        mod mod1 {
+            pub macro foo2() {}
+        }
+
+        fn main() {
+            ::fo/*caret*/
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2015)
+    fun `test complete macro if absolute path in 2015 edition`() = checkContainsCompletion("foo", """
+        #[macro_export]
+        macro_rules! foo { () => {} }
+        fn main() {
+            ::fo/*caret*/
+        }
     """)
 
     fun `test macro don't suggests as function name`() = checkNoCompletion("""

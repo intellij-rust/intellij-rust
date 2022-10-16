@@ -887,6 +887,7 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
 fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.qualifier
     return if (qualifier == null) {
+        if (path.hasColonColon && path.isAtLeastEdition2018) return false
         if (isCompletion) {
             processMacroCallVariantsInScope(path, ignoreLegacyMacros = false, processor)
         } else {

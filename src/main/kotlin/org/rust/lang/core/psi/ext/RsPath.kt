@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.completion.RsCommonCompletionProvider
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.*
@@ -87,7 +88,7 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false, parent: PsiElement? 
     }
     is RsPathExpr -> when {
         isCompletion && qualifier != null -> TYPES_N_VALUES_N_MACROS
-        /** unqualified macros are special cased in [processPathResolveVariants] */
+        /** unqualified macros are special cased in [RsCommonCompletionProvider.processPathVariants] */
         isCompletion && qualifier == null -> TYPES_N_VALUES
         else -> VALUES
     }
