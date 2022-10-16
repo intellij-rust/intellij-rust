@@ -14,22 +14,25 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
+import org.rust.cargo.project.settings.RustProjectSettingsService.*
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 
-class RsProjectConfigurable(
-    project: Project
-) : RsConfigurableBase(project, RsBundle.message("settings.rust.toolchain.name")), Configurable.NoScroll {
+class RsProjectConfigurable(project: Project) : RsConfigurableBase(project, RsBundle.message("settings.rust.toolchain.name")), Configurable.NoScroll {
     private val projectDir = project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     // TODO: move creation of the panel inside `createPanel`
     //  and use `onIsModified`, `onApply` and `onReset` methods
     private val rustProjectSettings by lazy { RustProjectSettingsPanel(projectDir) }
 
     override fun createPanel(): DialogPanel = panel {
+        val settings = project.rustSettings
+        val state = settings.state.copy()
+
         rustProjectSettings.attachTo(this)
+
         row {
             checkBox(RsBundle.message("settings.rust.toolchain.expand.macros.checkbox"))
                 .comment(RsBundle.message("settings.rust.toolchain.expand.macros.comment"))
@@ -42,6 +45,29 @@ class RsProjectConfigurable(
             checkBox(RsBundle.message("settings.rust.toolchain.inject.rust.in.doc.comments.checkbox"))
                 .bindSelected(state::doctestInjectionEnabled)
         }
+
+        onApply {
+            settings.modify {
+                it.toolchain = rustProjectSettings.data.toolchain
+                it.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
+                it.macroExpansionEngine = state.macroExpansionEngine
+                it.doctestInjectionEnabled = state.doctestInjectionEnabled
+            }
+        }
+        onReset {
+            val newData = RustProjectSettingsPanel.Data(
+                toolchain = settings.toolchain ?: RsToolchainBase.suggest(projectDir),
+                explicitPathToStdlib = settings.explicitPathToStdlib
+            )
+            if (rustProjectSettings.data != newData) {
+                rustProjectSettings.data = newData
+            }
+        }
+        onIsModified {
+            val data = rustProjectSettings.data
+            data.toolchain?.location != settings.toolchain?.location
+                || data.explicitPathToStdlib != settings.explicitPathToStdlib
+        }
     }
 
     override fun disposeUIResources() {
@@ -49,27 +75,9 @@ class RsProjectConfigurable(
         Disposer.dispose(rustProjectSettings)
     }
 
-    override fun reset() {
-        super.reset()
-        val toolchain = state.toolchain ?: RsToolchainBase.suggest(projectDir)
-
-        rustProjectSettings.data = RustProjectSettingsPanel.Data(
-            toolchain = toolchain,
-            explicitPathToStdlib = state.explicitPathToStdlib
-        )
-    }
-
-    override fun isModified(): Boolean {
-        if (super.isModified()) return true
-        val data = rustProjectSettings.data
-        return data.toolchain?.location != state.toolchain?.location
-            || data.explicitPathToStdlib != state.explicitPathToStdlib
-    }
-
     @Throws(ConfigurationException::class)
-    override fun doApply() {
+    override fun apply() {
         rustProjectSettings.validateSettings()
-        state.toolchain = rustProjectSettings.data.toolchain
-        state.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
+        super.apply()
     }
 }

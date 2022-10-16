@@ -52,14 +52,14 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         if (file.isNotRustFile || !file.isValid) return null
 
         val project = cargoProject.project
-        val settingsState = project.rustfmtSettings.state
+        val settings = project.rustfmtSettings
 
-        val arguments = ParametersListUtil.parse(settingsState.additionalArguments)
+        val arguments = ParametersListUtil.parse(settings.additionalArguments)
         val cleanArguments = mutableListOf<String>()
 
         val toolchain = arguments.firstOrNull()?.takeIf { it.startsWith("+") }
         when {
-            settingsState.channel != RustChannel.DEFAULT -> cleanArguments += "+${settingsState.channel}"
+            settings.channel != RustChannel.DEFAULT -> cleanArguments += "+${settings.channel}"
             toolchain != null -> cleanArguments += toolchain
         }
 
@@ -90,7 +90,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             edition.presentation
         }
 
-        return createBaseCommandLine(cleanArguments, cargoProject.workingDirectory, settingsState.envs)
+        return createBaseCommandLine(cleanArguments, cargoProject.workingDirectory, settings.envs)
     }
 
     fun reformatCargoProject(
@@ -98,8 +98,8 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         owner: Disposable = cargoProject.project
     ): RsProcessResult<Unit> {
         val project = cargoProject.project
-        val settingsState = project.rustfmtSettings.state
-        val arguments = ParametersListUtil.parse(settingsState.additionalArguments).toMutableList()
+        val settings = project.rustfmtSettings
+        val arguments = ParametersListUtil.parse(settings.additionalArguments).toMutableList()
         val toolchain = if (arguments.firstOrNull()?.startsWith("+") == true) {
             arguments.removeFirst()
         } else {
@@ -111,8 +111,8 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             listOf("--all", "--") + arguments,
             false,
             toolchain,
-            settingsState.channel,
-            EnvironmentVariablesData.create(settingsState.envs, true)
+            settings.channel,
+            EnvironmentVariablesData.create(settings.envs, true)
         )
 
         return project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {

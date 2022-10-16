@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.toolchain.ExternalLinter
@@ -23,33 +24,21 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
         val metrics = mutableSetOf<MetricEvent>()
-
-        val rustSettings = project.rustSettings
-        val rustfmtSettings = project.rustfmtSettings
-
-        metrics += PROJECT.metric(
-            rustSettings.macroExpansionEngine,
-            rustSettings.doctestInjectionEnabled
-        )
-
-        metrics += CARGO.metric(
-            CARGO_AUTO_SHOW_ERRORS_IN_EDITOR.with(rustSettings.autoShowErrorsInEditor.toBoolean()),
-            CARGO_AUTO_UPDATE.with(rustSettings.autoUpdateEnabled),
-            CARGO_COMPILE_ALL_TARGETS.with(rustSettings.compileAllTargets),
-            CARGO_OFFLINE.with(rustSettings.doctestInjectionEnabled)
-        )
-
-        metrics += RUSTFMT.metric(
-            rustfmtSettings.state.useRustfmt,
-            rustfmtSettings.state.runRustfmtOnSave,
-            rustfmtSettings.state.channel
-        )
-
-        metrics += EXTERNAL_LINTER.metric(
-            rustSettings.externalLinter,
-            rustSettings.runExternalLinterOnTheFly
-        )
-
+        with(project.rustSettings) {
+            metrics += PROJECT.metric(macroExpansionEngine, doctestInjectionEnabled)
+            metrics += CARGO.metric(
+                CARGO_AUTO_SHOW_ERRORS_IN_EDITOR.with(autoShowErrorsInEditor.toBoolean()),
+                CARGO_AUTO_UPDATE.with(autoUpdateEnabled),
+                CARGO_COMPILE_ALL_TARGETS.with(compileAllTargets),
+                CARGO_OFFLINE.with(doctestInjectionEnabled)
+            )
+        }
+        with(project.rustfmtSettings) {
+            metrics += RUSTFMT.metric(useRustfmt, runRustfmtOnSave, channel)
+        }
+        with(project.externalLinterSettings) {
+            metrics += EXTERNAL_LINTER.metric(tool, runOnTheFly)
+        }
         return metrics
     }
 

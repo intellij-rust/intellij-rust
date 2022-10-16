@@ -16,9 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.RsBundle
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
-import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
-import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.*
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -38,12 +37,11 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     init {
         project.messageBus.connect().apply {
-            subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC,
-                object : RustSettingsListener {
-                    override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
-                        updateAllNotifications()
-                    }
-                })
+            subscribe(RUST_SETTINGS_TOPIC, object : RsSettingsListener {
+                override fun <T : RsProjectSettingsBase<T>> settingsChanged(e: SettingsChangedEventBase<T>) {
+                    updateAllNotifications()
+                }
+            })
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 updateAllNotifications()

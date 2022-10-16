@@ -10,15 +10,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.GotItTooltip
 import org.rust.cargo.project.configurable.RsExternalLinterConfigurable
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.openapiext.showSettingsDialog
 import javax.swing.JComponent
 
 @Service
 class RsExternalLinterTooltipService(private val project: Project) : Disposable {
-    private val linter: ExternalLinter get() = project.rustSettings.externalLinter
-    private val turnedOn: Boolean get() = project.rustSettings.runExternalLinterOnTheFly
+    private val linter: ExternalLinter get() = project.externalLinterSettings.tool
+    private val turnedOn: Boolean get() = project.externalLinterSettings.runOnTheFly
 
     fun showTooltip(component: JComponent) {
         val tooltip = createTooltip(turnedOn)
