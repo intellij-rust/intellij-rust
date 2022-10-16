@@ -53,6 +53,7 @@ class ImportContext2 private constructor(
         val rootPathAllowedNamespaces: Set<Namespace>?,
         val nextSegments: List<String>?,
         val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
+        val parentIsMetaItem: Boolean,
     ) {
         companion object {
             fun from(path: RsPath, isCompletion: Boolean): PathInfo {
@@ -63,6 +64,7 @@ class ImportContext2 private constructor(
                     rootPathAllowedNamespaces = rootPath?.allowedNamespaces(isCompletion),
                     nextSegments = path.getNextSegments(),
                     namespaceFilter = path.namespaceFilter(isCompletion),
+                    parentIsMetaItem = path.parent is RsMetaItem,
                 )
             }
 
