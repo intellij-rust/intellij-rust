@@ -1024,4 +1024,66 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ !
     """)
+
+    fun `test custom macros with stdlib names`() {
+        // name -> argument count
+        val macros = mapOf(
+            "dbg" to 1,
+            "format" to 1,
+            "format_args" to 1,
+            "format_args_nl" to 1,
+            "write" to 1,
+            "writeln" to 1,
+            "print" to 1,
+            "println" to 1,
+            "eprint" to 1,
+            "eprintln" to 1,
+            "panic" to 1,
+            "unimplemented" to 1,
+            "unreachable" to 1,
+            "todo" to 1,
+            "assert" to 1,
+            "debug_assert" to 1,
+            "assert_eq" to 2,
+            "assert_ne" to 2,
+            "debug_assert_eq" to 2,
+            "debug_assert_ne" to 2,
+            "vec" to 1,
+            "include_str" to 1,
+            "include_bytes" to 1,
+            // `MacroExpansionManagerImpl.getExpansionFor` always processes `include!` call as if `include!` is from stdlib.
+            // As a result, the expansion is null in this test and the plugin can't infer the proper type.
+            //
+            //"include" to 1,
+            "concat" to 1,
+            "env" to 1,
+            "option_env" to 1,
+            "line" to 0,
+            "column" to 0,
+            "file" to 0,
+            "stringify" to 1,
+            "cfg" to 1,
+            "module_path" to 0
+        )
+
+        for ((name, argsCount) in macros) {
+            val argsDefinition = (0..argsCount).joinToString(", ") { "$ x$it:expr" }
+            val args = (0..argsCount).joinToString(", ") { "\"it\"" }
+            // We try to construct custom macro definition in a way to trigger the same parser rules
+            // as if it would be a macro from stdlib
+            stubOnlyTypeInfer("""
+            //- main.rs
+                struct S;
+                macro_rules! $name {
+                    ($argsDefinition) => { S };
+                }
+
+                fn main() {
+                    let a = $name!($args);
+                    a;
+                  //^ S
+                }
+            """, description = "Macro `$name`")
+        }
+    }
 }
