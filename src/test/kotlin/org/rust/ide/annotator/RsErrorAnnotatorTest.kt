@@ -2164,6 +2164,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.56.0")
+    fun `test let chains E0658 1`() = checkErrors("""
+        fn foo(x: Option<i32>) {
+            if let Some(_) = x {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) && (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> || <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> {};
+
+            match 0 {
+                _ if <error descr="if let guard is experimental [E0658]">let</error> Some(_) = x => 1,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 2,
+                _ if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> => 3,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) && (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 4,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 5,
+                _ if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> || <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> => 6,
+                _ => 7
+            };
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test let chains E0658 2`() = checkErrors("""
+        #![feature(let_chains)]
+        #![feature(if_let_guard)]
+        fn foo(x: Option<i32>) {
+            if let Some(_) = x {};
+            if (let Some(_) = x) {};
+            if let Some(_) = x && let Some(_) = x {};
+            if (let Some(_) = x) && (let Some(_) = x) {};
+            if (let Some(_) = x && let Some(_) = x) {};
+            if let Some(_) = x || let Some(_) = x {};
+
+            match 0 {
+                _ if let Some(_) = x => 1,
+                _ if (let Some(_) = x) => 2,
+                _ if let Some(_) = x && let Some(_) = x => 3,
+                _ if (let Some(_) = x) && (let Some(_) = x) => 4,
+                _ if (let Some(_) = x && let Some(_) = x) => 5,
+                _ if let Some(_) = x || let Some(_) = x => 6,
+                _ => 7
+            };
+        }
+    """)
+
     @MockRustcVersion("1.32.0")
     fun `test if while or patterns 1`() = checkErrors("""
         enum V { V1(i32), V2(i32) }
