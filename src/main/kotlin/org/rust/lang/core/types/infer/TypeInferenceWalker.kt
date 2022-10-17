@@ -7,6 +7,7 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -1261,6 +1262,14 @@ class RsTypeInferenceWalker(
 
     private fun inferMacroExprType0(macroExpr: RsMacroExpr, expected: Expectation): Ty {
         val macroCall = macroExpr.macroCall
+
+        val definition = macroCall.resolveToMacro()
+        val origin = definition?.containingCrate?.origin
+        if (origin != null && origin != PackageOrigin.STDLIB) {
+            inferChildExprsRecursively(macroCall)
+            return inferMacroAsExpr(macroCall)
+        }
+
         val name = macroCall.macroName
         val exprArg = macroCall.exprMacroArgument
         if (exprArg != null) {
