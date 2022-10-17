@@ -702,7 +702,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test no attr proc macro completion inside block`() = checkNoCompletion("""
+    fun `test no attr proc macro completion inside block`() = checkNoCompletionByFileTree("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_attribute]
         pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
@@ -716,7 +716,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test no attr proc macro completion at top-level`() = checkNoCompletion("""
+    fun `test no attr proc macro completion at top-level`() = checkNoCompletionByFileTree("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_attribute]
         pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
@@ -725,6 +725,20 @@ class RsCompletionTest : RsCompletionTestBase() {
     //- lib.rs
         use dep_proc_macro::*;
         macro_/*caret*/
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete proc macro in use item`() = checkContainsCompletionByFileTree(
+        listOf("macro_function", "macro_attr", "macro_derive"), """
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn macro_function(input: TokenStream) -> TokenStream { input }
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::/*caret*/
     """)
 
     fun `test no items completion at top-level`() = checkNoCompletion("""

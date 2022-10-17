@@ -118,7 +118,9 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     addProcessedPathName(processor, processedPathElements),
                     lookup
                 )
-                filtered = filterNotAttributeAndDeriveProcMacros(filtered)
+                if (parent !is RsUseSpeck) {
+                    filtered = filterNotAttributeAndDeriveProcMacros(filtered)
+                }
                 // Filters are applied in reverse order (the last filter is applied first)
                 val filters = listOf(
                     ::filterCompletionVariantsByVisibility,
