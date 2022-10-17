@@ -104,7 +104,7 @@ class RsExtractTraitProcessor(
                 RsImportHelper.importElement(newImpl, newTrait)
             }
 
-            if (impl.traitRef == null && impl.members?.childrenOfType<RsItemElement>()?.isEmpty() == true) {
+            if (impl.traitRef == null && impl.explicitMembers.isEmpty()) {
                 impl.delete()
             }
         }
@@ -223,7 +223,7 @@ private fun RsImplItem.getMembersWithNames(names: Set<String>): List<RsItemEleme
     }
 }
 
-private fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
+fun PsiElement.makeAbstract(psiFactory: RsPsiFactory): PsiElement {
     if (this is RsVisibilityOwner) vis?.delete()
     when (this) {
         is RsFunction -> {

@@ -464,7 +464,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             errorCode(),
-            errorText()
+            errorText(),
+            fixes = listOfNotNull(AddDefinitionToTraitFix.createIfCompatible(member))
         )
 
         private fun errorCode(): RsErrorCode =
