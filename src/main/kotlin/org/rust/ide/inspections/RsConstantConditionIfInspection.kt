@@ -22,7 +22,7 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitIfExpr(ifExpr: RsIfExpr) {
                 val condition = ifExpr.condition ?: return
-                if (condition.pat != null) return
+                if (condition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return
                 val conditionValue = condition.expr?.evaluate()?.asBool() ?: return
 
                 val isUsedAsExpression = ifExpr.isUsedAsExpression()
