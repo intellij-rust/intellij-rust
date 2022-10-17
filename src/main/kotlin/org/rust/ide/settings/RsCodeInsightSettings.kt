@@ -18,7 +18,7 @@ class RsCodeInsightSettings : PersistentStateComponent<RsCodeInsightSettings> {
     var importOutOfScopeItems: Boolean = true
     var suggestOutOfScopeItems: Boolean = true
     var addUnambiguousImportsOnTheFly: Boolean = false
-    var importOnPaste: Boolean = true
+    var importOnPaste: Boolean = false
 
     override fun getState(): RsCodeInsightSettings = this
 
