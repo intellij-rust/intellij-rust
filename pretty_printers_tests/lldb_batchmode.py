@@ -87,6 +87,11 @@ def execute_command(command_interpreter, command):
     if res.Succeeded():
         if res.HasResult():
             output = res.GetOutput() or ''
+            # 'win32' is returned on both x32 and x64 Windows,
+            # see https://docs.python.org/3/library/sys.html#sys.platform
+            if sys.platform == 'win32':
+                # Workaround for https://github.com/intellij-rust/intellij-rust/issues/9554
+                output = output.encode('utf-8', errors='replace').decode('utf-8')
             print(normalize_whitespace(output), end='\n')
 
         # If the command introduced any breakpoints, make sure to register
