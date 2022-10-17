@@ -439,4 +439,25 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         <error descr="Extern block cannot be declared unsafe">unsafe</error> extern {}
         <error descr="Extern block cannot be declared unsafe">unsafe</error> extern "Rust" {}
     """)
+
+    fun `test let chains`() = checkErrors("""
+        fn foo(x: Option<i32>) {
+            if let Some(_) = x {};
+            if (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) {};
+            if let Some(_) = x && let Some(_) = x {};
+            if (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) && (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) {};
+            if (<error descr="`let` expressions are not supported here">let Some(_) = x</error> && <error descr="`let` expressions are not supported here">let Some(_) = x</error>) {};
+            if <error descr="`let` expressions are not supported here">let Some(_) = x</error> || <error descr="`let` expressions are not supported here">let Some(_) = x</error> {};
+
+            match 0 {
+                _ if let Some(_) = x => 1,
+                _ if (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) => 2,
+                _ if let Some(_) = x && let Some(_) = x => 3,
+                _ if (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) && (<error descr="`let` expressions are not supported here">let Some(_) = x</error>) => 4,
+                _ if (<error descr="`let` expressions are not supported here">let Some(_) = x</error> && <error descr="`let` expressions are not supported here">let Some(_) = x</error>) => 5,
+                _ if <error descr="`let` expressions are not supported here">let Some(_) = x</error> || <error descr="`let` expressions are not supported here">let Some(_) = x</error> => 6,
+                _ => 7
+            };
+        }
+    """)
 }
