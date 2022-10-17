@@ -275,6 +275,29 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
+    fun `test hints in let expr`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some(1);
+            let _ = let Option::Some(x/*hint text="[:  i32]"*/) = result;
+
+            if let Option::Some(x/*hint text="[:  i32]"*/) = result {};
+            if (let Option::Some(x/*hint text="[:  i32]"*/) = result) {};
+            if let Option::Some(x/*hint text="[:  i32]"*/) = result && let Option::Some(x/*hint text="[:  i32]"*/) = result {};
+            if let Option::Some(x/*hint text="[:  i32]"*/) = result || let Option::Some(x/*hint text="[:  i32]"*/) = result {};
+
+            match 0 {
+                _ if let Option::Some(x/*hint text="[:  i32]"*/) = result => 1,
+                _ if (let Option::Some(x/*hint text="[:  i32]"*/) = result) => 2,
+                _ if let Option::Some(x/*hint text="[:  i32]"*/) = result && let Option::Some(x/*hint text="[:  i32]"*/) = result => 3,
+                _ if let Option::Some(x/*hint text="[:  i32]"*/) = result || let Option::Some(x/*hint text="[:  i32]"*/) = result => 6,
+                _ => 7
+            };
+        }
+    """)
+
     fun `test hints in while let expr`() = checkByText("""
         enum Option<T> {
             Some(T), None
