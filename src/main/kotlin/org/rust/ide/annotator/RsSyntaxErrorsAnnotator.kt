@@ -48,6 +48,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
+            is RsLetExpr -> checkLetExpr(holder, element)
         }
     }
 }
@@ -337,6 +338,18 @@ private fun checkInvalidUnsafe(holder: AnnotationHolder, unsafe: PsiElement?, it
     if (unsafe != null) {
         holder.newAnnotation(HighlightSeverity.ERROR, "$itemName cannot be declared unsafe").range(unsafe).create()
     }
+}
+
+private fun checkLetExpr(holder: AnnotationHolder, element: RsLetExpr) {
+    var ancestor = element.parent
+    while (when (ancestor) {
+        is RsCondition, is RsMatchArmGuard -> return
+        is RsBinaryExpr -> ancestor.binaryOp.andand != null
+        else -> false
+    }) {
+        ancestor = ancestor.parent
+    }
+    deny(element, holder, "`let` expressions are not supported here")
 }
 
 private enum class TypeKind {
