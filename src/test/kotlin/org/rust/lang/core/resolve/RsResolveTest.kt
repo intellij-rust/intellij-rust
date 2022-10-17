@@ -139,6 +139,53 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test match let chain 1`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+            match Some(92) {
+                Some(x)
+                   //X
+                        if let Some(x) = x && let Some(x) = x => x,
+                                       //^
+                _ => x
+            };
+        }
+    """)
+
+    fun `test match let chain 2`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+            match Some(92) {
+                Some(x) if let Some(x) = x
+                                  //X
+                                           && let Some(x) = x => x,
+                                                          //^
+                _ => x
+            };
+        }
+    """)
+
+    fun `test match let chain 3`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+            match Some(92) {
+                Some(x) if let Some(x) = x && let Some(x) = x =>
+                                                     //X
+                                                                 x,
+                                                               //^
+                _ => 0
+            };
+        }
+    """)
+
+    fun `test match let chain 4`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+             //X
+            match Some(92) {
+                Some(x) if let Some(x) = x && let Some(x) = x => 1,
+                _ => x
+                   //^
+            };
+        }
+    """)
+
     fun `test let`() = checkByCode("""
         fn f(i: i32) -> Option<i32> {}
 
@@ -233,6 +280,55 @@ class RsResolveTest : RsResolveTestBase() {
                 x
               //^
             }
+        }
+    """)
+
+    fun `test if let chain 1`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+            if let Some(x) = x &&
+                      //X
+                                  let Some(x) = x {
+                                              //^
+                x
+            } else {
+                x
+            };
+        }
+    """)
+
+    fun `test if let chain 2`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+             //X
+            if let Some(x) = x && let Some(x) = x {
+                           //^
+                x
+            } else {
+                x
+            };
+        }
+    """)
+
+    fun `test if let chain 3`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+            if let Some(x) = x && let Some(x) = x {
+                                         //X
+                x
+              //^
+            } else {
+                x
+            };
+        }
+    """)
+
+    fun `test if let chain 4`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+             //X
+            if let Some(x) = x && let Some(x) = x {
+                x
+            } else {
+                x
+              //^
+            };
         }
     """)
 
