@@ -34,13 +34,14 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         //1) Check that we have an if statement
         var ifStatement = element.ancestorStrict<RsIfExpr>() ?: return null
+        val letExpr = ifStatement.condition?.expr as? RsLetExpr
 
         // if let Some(value) = x {}
         // ~~~~~~             ~
         // ^ available here   ^ and here
         if (element != ifStatement.`if`
-            && element != ifStatement.condition?.let
-            && element != ifStatement.condition?.eq) return null
+            && element != letExpr?.let
+            && element != letExpr?.eq) return null
 
         // We go up in the tree to detect cases like `... else if let Some(value) = x { ... }`
         // and select the correct if statement
@@ -97,13 +98,13 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     }
 
     private fun extractIfLetStatementIfAny(iflet: RsIfExpr, ctx: Context? = null): Context? {
-        val condition = iflet.condition ?: return null
+        val letExpr = iflet.condition?.expr as? RsLetExpr ?: return null
 
         //2) Extract the match arm conditions
-        val pat = condition.pat ?: return null
+        val pat = letExpr.pat ?: return null
 
         //3) Extract the target
-        val target = condition.expr ?: return null
+        val target = letExpr.expr ?: return null
 
         //4) Extract the if body
         val ifBody = iflet.block ?: return null

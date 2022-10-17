@@ -175,7 +175,7 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
     }
 
     private fun getSuitableCondition(ifExpr: RsIfExpr): RsCondition? =
-        ifExpr.condition?.takeIf { it.let == null }
+        ifExpr.condition?.takeIf { it.expr?.descendantOfTypeOrSelf<RsLetExpr>() == null }
 
     override fun getFamilyName(): String = text
 

@@ -10,9 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
+import org.rust.lang.core.psi.RsLetExpr
 import org.rust.lang.core.psi.RsMatchArmGuard
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.descendantOfTypeOrSelf
 import org.rust.lang.core.psi.ext.parentMatchArm
 
 class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMatchArmIntention.Context>() {
@@ -27,7 +29,7 @@ class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMat
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val guard = element.ancestorStrict<RsMatchArmGuard>() ?: return null
-        if (guard.let != null) return null // TODO: support `if let guard` syntax
+        if (guard.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return null // TODO: support `if let guard` syntax
         val guardExpr = guard.expr ?: return null
         val armBody = guard.parentMatchArm.expr ?: return null
         return Context(guard, guardExpr, armBody)
