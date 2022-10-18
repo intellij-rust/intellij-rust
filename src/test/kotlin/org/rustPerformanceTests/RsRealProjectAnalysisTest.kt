@@ -8,18 +8,30 @@ package org.rustPerformanceTests
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.AnnotatorBase
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.inspections.lints.RsUnusedImportInspection
+import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.childModules
+import org.rust.lang.core.psi.shouldIndexFile
+import org.rust.lang.core.resolve2.defMapService
+import org.rust.lang.core.resolve2.getOrUpdateIfNeeded
 
-open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
+open class RsRealProjectAnalysisTest(private val analyzeDependencies: Boolean = true) : RsRealProjectTestBase() {
 
     /** Don't run it on Rustc! It's a kind of stress-test */
     fun `test analyze rustc`() = doTest(RUSTC)
@@ -54,17 +66,18 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
         println("Collecting files to analyze")
 
-        val baseDirToCheck = if (info.name == STDLIB) rustupFixture.stdlib!! else base
+        val crates = project.getCratesToAnalyze(info)
+        val files = crates.flatMap { getFilesToAnalyze(it) }
 
-        val filesToCheck = baseDirToCheck.findDescendantRustFiles(project)
-        for (rsFile in filesToCheck) {
-            val file = rsFile.virtualFile
+        project.defMapService.getOrUpdateIfNeeded(crates.mapNotNull { it.id })
+
+        for ((index, file) in files.withIndex()) {
             val path = if (VfsUtil.isAncestor(base, file, true)) {
                 file.path.substring(base.path.length + 1)
             } else {
                 file.path
             }
-            println("Analyzing $path")
+            println("Analyzing $index/${files.size} $path")
             myFixture.openFileInEditor(file)
             val infos = myFixture.doHighlighting(HighlightSeverity.ERROR)
             val text = myFixture.editor.document.text
@@ -81,8 +94,32 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
                 )
                 consumer.consumeAnnotation(annotation)
             }
+            FileEditorManager.getInstance(project).closeFile(file)
         }
         consumer.finish()
+    }
+
+    private fun Project.getCratesToAnalyze(info: RealProjectInfo): List<Crate> {
+        val isStdlib = info.name == STDLIB
+        val crates = crateGraph.topSortedCrates.reversed()
+        return crates.filter {
+            if (!isStdlib && it.origin in listOf(PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY)) return@filter false
+            if (!analyzeDependencies && it.origin != PackageOrigin.WORKSPACE) return@filter false
+            val crateRoot = it.rootModFile ?: return@filter false
+            shouldIndexFile(this, crateRoot)
+        }
+    }
+
+    private fun getFilesToAnalyze(crate: Crate): List<VirtualFile> {
+        val result = mutableListOf<VirtualFile>()
+        fun go(mod: RsMod) {
+            if (mod is RsFile) result += mod.virtualFile
+            mod.childModules.forEach(::go)
+        }
+
+        val crateRoot = crate.rootMod ?: return emptyList()
+        go(crateRoot)
+        return result
     }
 
     private fun setUpInspections() {
@@ -127,10 +164,10 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
         val COLLECT_ALL_EXCEPTIONS = object : AnnotationConsumer {
 
-            val annotations = mutableListOf<Annotation>()
+            val annotations = mutableListOf<String>()
 
             override fun consumeAnnotation(annotation: Annotation) {
-                annotations += annotation
+                annotations += annotation.toString()
             }
 
             override fun finish() {
