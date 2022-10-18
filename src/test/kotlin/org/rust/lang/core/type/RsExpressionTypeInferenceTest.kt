@@ -1033,6 +1033,34 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test array size reference to const`() = testExpr("""
+        const FOO: usize = 2;
+        const COUNT: usize = FOO;
+        fn main() {
+            let x = [1; COUNT];
+            x;
+          //^ [i32; 2]
+        }
+    """)
+
+    fun `test array size reference to const with add`() = testExpr("""
+        const FOO: usize = 2;
+        const COUNT: usize = FOO + 1;
+        fn main() {
+            let x = [1; COUNT];
+            x;
+          //^ [i32; 3]
+        }
+    """)
+
+    fun `test unresolved array size`() = testExpr("""
+        fn main() {
+            let x = [1; UNRESOLVED];
+            x;
+          //^ [i32; <unknown>]
+        }
+    """)
+
     fun `test not usize constant as array size`() = testExpr("""
         const COUNT: i32 = 2;
         fn main() {

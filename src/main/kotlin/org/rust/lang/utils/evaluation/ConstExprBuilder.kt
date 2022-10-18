@@ -34,6 +34,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
     protected abstract val resolver: PathExprResolver?
     protected abstract val RsLitExpr.value: V?
     protected abstract fun V.wrap(): ConstExpr<T>
+    protected abstract fun copyWithDefaultResolver(): ConstExprBuilder<T, V>
 
     protected fun makeLeafValue(expr: RsLitExpr): ConstExpr<T>? = expr.value?.wrap()
 
@@ -67,7 +68,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
                 if (TyPrimitive.fromPath(typeElementPath) != expectedTy) return null
 
                 when (element) {
-                    is RsConstant -> build(element.expr, depth + 1)
+                    is RsConstant -> copyWithDefaultResolver().build(element.expr, depth + 1)
                     is RsConstParameter -> makeLeafParameter(element)
                     else -> null
                 }
@@ -87,6 +88,7 @@ private class IntegerConstExprBuilder(
 ) : ConstExprBuilder<TyInteger, Long>() {
     override val RsLitExpr.value: Long? get() = integerValue
     override fun Long.wrap(): ConstExpr.Value.Integer = ConstExpr.Value.Integer(this, expectedTy)
+    override fun copyWithDefaultResolver(): IntegerConstExprBuilder = IntegerConstExprBuilder(expectedTy, PathExprResolver.default)
 
     override fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<TyInteger>? {
         return when (expr) {
@@ -111,6 +113,8 @@ private class BoolConstExprBuilder(
 ) : ConstExprBuilder<TyBool, Boolean>() {
     override val expectedTy: TyBool = TyBool.INSTANCE
     override val RsLitExpr.value: Boolean? get() = booleanValue
+    override fun copyWithDefaultResolver(): BoolConstExprBuilder = BoolConstExprBuilder(PathExprResolver.default)
+
     override fun Boolean.wrap(): ConstExpr.Value.Bool = ConstExpr.Value.Bool(this)
 
     override fun buildInner(expr: RsExpr?, depth: Int): ConstExpr<TyBool>? {
@@ -151,6 +155,7 @@ private class FloatConstExprBuilder(
 ) : ConstExprBuilder<TyFloat, Double>() {
     override val RsLitExpr.value: Double? get() = floatValue
     override fun Double.wrap(): ConstExpr.Value.Float = ConstExpr.Value.Float(this, expectedTy)
+    override fun copyWithDefaultResolver(): FloatConstExprBuilder = FloatConstExprBuilder(expectedTy, PathExprResolver.default)
 }
 
 private class CharConstExprBuilder(
@@ -159,6 +164,7 @@ private class CharConstExprBuilder(
     override val expectedTy: TyChar = TyChar.INSTANCE
     override val RsLitExpr.value: String? get() = charValue
     override fun String.wrap(): ConstExpr.Value.Char = ConstExpr.Value.Char(this)
+    override fun copyWithDefaultResolver(): CharConstExprBuilder = CharConstExprBuilder(PathExprResolver.default)
 }
 
 private class StrConstExprBuilder(
@@ -167,4 +173,5 @@ private class StrConstExprBuilder(
     override val expectedTy: TyReference = STR_REF_TYPE
     override val RsLitExpr.value: String? get() = stringValue
     override fun String.wrap(): ConstExpr.Value.Str = ConstExpr.Value.Str(this, expectedTy)
+    override fun copyWithDefaultResolver(): StrConstExprBuilder = StrConstExprBuilder(PathExprResolver.default)
 }
