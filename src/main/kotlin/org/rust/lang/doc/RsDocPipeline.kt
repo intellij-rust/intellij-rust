@@ -33,8 +33,8 @@ import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
 
-fun RsDocAndAttributeOwner.documentation(): String =
-    docElements()
+fun RsDocAndAttributeOwner.documentation(withInner: Boolean = true): String =
+    docElements(withInner)
         .mapNotNull {
             when (it) {
                 is RsAttr -> it.docAttr?.let { text -> RsDocKind.Attr to text }
@@ -99,7 +99,7 @@ private fun documentationAsHtml(
 /**
  * Returns elements contribute to documentation of the element
  */
-fun RsDocAndAttributeOwner.docElements(): Sequence<PsiElement> {
+fun RsDocAndAttributeOwner.docElements(withInner: Boolean = true): Sequence<PsiElement> {
     // rustdoc appends the contents of each doc comment and doc attribute in order
     // so we have to resolve these attributes that are edge-bound at the top of the
     // children list.
@@ -108,11 +108,15 @@ fun RsDocAndAttributeOwner.docElements(): Sequence<PsiElement> {
         // of these, we have reached the actual parse children of this item.
         .takeWhile { it is RsOuterAttr || it is PsiComment || it is PsiWhiteSpace }
         .filter { it is RsOuterAttr && it.isDocAttr || it is RsDocComment && it.tokenType in RS_OUTER_DOC_COMMENTS }
-    // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
-    // lexical order, after the outer elements. This only applies to functions and modules.
-    val childBlock = childOfType<RsBlock>() ?: this
-    val innerDocs = childBlock.childrenWithLeaves
-        .filter { it is RsInnerAttr && it.isDocAttr || it is RsDocComment && it.tokenType in RS_INNER_DOC_COMMENTS }
+    val innerDocs = if (withInner) {
+        // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
+        // lexical order, after the outer elements. This only applies to functions and modules.
+        val childBlock = childOfType<RsBlock>() ?: this
+        childBlock.childrenWithLeaves
+            .filter { it is RsInnerAttr && it.isDocAttr || it is RsDocComment && it.tokenType in RS_INNER_DOC_COMMENTS }
+    } else {
+        emptySequence()
+    }
     return outerDocs + innerDocs
 }
 

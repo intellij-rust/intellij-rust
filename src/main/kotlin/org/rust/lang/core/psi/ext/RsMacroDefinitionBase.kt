@@ -37,8 +37,8 @@ interface RsMacroDefinitionBase : RsNameIdentifierOwner,
 /**
  * Analyses documentation of macro definition to determine what kind of brackets usually used
  */
-fun RsMacroDefinitionBase.guessPreferredBraces(): MacroBraces {
-    val documentation = documentation()
+fun RsDocAndAttributeOwner.guessPreferredBraces(): MacroBraces {
+    val documentation = documentation(withInner = false)
     if (documentation.isEmpty()) return MacroBraces.PARENS
 
     val map: MutableMap<MacroBraces, Int> = EnumMap(MacroBraces::class.java)

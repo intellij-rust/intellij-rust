@@ -302,9 +302,8 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     appendSemicolon(context, curUseItem)
                 }
                 element.isProcMacroDef -> {
-                    if (element.isBangProcMacroDef && !context.nextCharIs('!')) {
-                        document.insertString(context.selectionEndOffset, "!()")
-                        EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                    if (element.isBangProcMacroDef) {
+                        appendMacroBraces(context, document) { element.preferredBraces }
                     }
                 }
                 else -> {
@@ -342,26 +341,30 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
             is RsMacroDefinitionBase -> {
                 if (curUseItem == null) {
-                    var caretShift = 2
-                    if (!context.nextCharIs('!')) {
-                        val braces = element.preferredBraces
-                        val text = buildString {
-                            append("!")
-                            if (braces == MacroBraces.BRACES) {
-                                append(" ")
-                                caretShift = 3
-                            }
-                            append(braces.openText)
-                            append(braces.closeText)
-                        }
-                        document.insertString(context.selectionEndOffset, text)
-                    }
-                    EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
+                    appendMacroBraces(context, document) { element.preferredBraces }
                 } else {
                     appendSemicolon(context, curUseItem)
                 }
             }
         }
+    }
+
+    private fun appendMacroBraces(context: InsertionContext, document: Document, getBraces: () -> MacroBraces) {
+        var caretShift = 2
+        if (!context.nextCharIs('!')) {
+            val braces = getBraces()
+            val text = buildString {
+                append("!")
+                if (braces == MacroBraces.BRACES) {
+                    append(" ")
+                    caretShift = 3
+                }
+                append(braces.openText)
+                append(braces.closeText)
+            }
+            document.insertString(context.selectionEndOffset, text)
+        }
+        EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
     }
 }
 
