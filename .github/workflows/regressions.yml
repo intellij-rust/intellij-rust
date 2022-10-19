@@ -34,7 +34,7 @@ jobs:
 
             - name: Emit base commit
               id: base-commit
-              run: echo "::set-output name=base-commit::$BASE_COMMIT"
+              run: echo "base-commit=$BASE_COMMIT" >> $GITHUB_OUTPUT
 
             - name: Show commits
               run: |

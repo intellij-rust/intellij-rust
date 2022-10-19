@@ -21,7 +21,7 @@ jobs:
             - name: Check date
               if: github.event_name == 'schedule'
               id: check-date
-              run: echo "::set-output name=result::$(python scripts/check_release_branch_date.py)"
+              run: echo "result=$(python scripts/check_release_branch_date.py)" >> $GITHUB_OUTPUT
 
             - name: Make release branch
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch

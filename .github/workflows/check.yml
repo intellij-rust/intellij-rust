@@ -34,9 +34,9 @@ jobs:
             - name: Calculate git info
               id: calculate-git-info
               run: |
-                  echo "::set-output name=is_bors_branch::${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}"
-                  echo "::set-output name=is_master_branch::${{ github.ref == 'refs/heads/master'}}"
-                  echo "::set-output name=checked::$(python scripts/has_successful_status.py --token ${{ github.token }} --ref ${{ github.sha }} --check_name check)"
+                  echo "is_bors_branch=${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}" >> $GITHUB_OUTPUT
+                  echo "is_master_branch=${{ github.ref == 'refs/heads/master'}}" >> $GITHUB_OUTPUT
+                  echo "checked=$(python scripts/has_successful_status.py --token ${{ github.token }} --ref ${{ github.sha }} --check_name check)" >> $GITHUB_OUTPUT
 
             - name: Check git info
               run: |

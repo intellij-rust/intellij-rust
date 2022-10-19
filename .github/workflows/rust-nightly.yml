@@ -32,8 +32,8 @@ jobs:
             - name: Fetch latest commits
               id: fetch-commits
               run: |
-                  echo "::set-output name=rust-commit::$(git log -n 1 --format=format:%H)"
-                  echo "::set-output name=rust-nightly::$(python scripts/get_tag_commit.py --tag "rust-nightly")"
+                  echo "rust-commit=$(git log -n 1 --format=format:%H)" >> $GITHUB_OUTPUT
+                  echo "rust-nightly=$(python scripts/get_tag_commit.py --tag "rust-nightly")" >> $GITHUB_OUTPUT
 
             - name: Show commits
               run: |
