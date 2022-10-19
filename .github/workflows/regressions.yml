@@ -96,12 +96,12 @@ jobs:
               run: python scripts/fetch_projects.py --projects $'${{ toJSON(matrix.batch.projects) }}'
 
             - name: Download
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":resolveDependencies -Pkotlin.incremental=false"
 
             - name: Check with changes
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               env:
                   RESULT_SUFFIX: _with_changes
               with:
@@ -111,7 +111,7 @@ jobs:
               run: git checkout ${{ needs.calculate-base-commit.outputs.base-commit }}
 
             - name: Check without changes
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               env:
                   RESULT_SUFFIX: _without_changes
               with:

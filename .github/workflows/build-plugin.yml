@@ -49,7 +49,7 @@ jobs:
               uses: ./.github/actions/load-native-binaries
 
             - name: Build rust plugin
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:buildPlugin"
 
