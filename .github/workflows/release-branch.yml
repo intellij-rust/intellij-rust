@@ -13,11 +13,6 @@ jobs:
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: 3.7
-
             - name: Set up git user
               run: |
                   git config --local user.email "intellij.rust@gmail.com"
