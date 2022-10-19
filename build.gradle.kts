@@ -51,7 +51,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.7.20"
-    id("org.jetbrains.intellij") version "1.8.1"
+    id("org.jetbrains.intellij") version "1.10.0-SNAPSHOT"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.1"
@@ -331,6 +331,10 @@ project(":plugin") {
             dependsOn(mergePluginJarTask)
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
+        verifyPlugin {
+            // We don't want to fail `verifyPlugin` task because of too short description
+            ignoreUnacceptableWarnings.set(true)
+        }
 
         withType<PrepareSandboxTask> {
             dependsOn(named(compileNativeCodeTaskName))
@@ -601,8 +605,8 @@ project(":ml-completion") {
 
 task("runPrettyPrintersTests") {
     doLast {
-        // https://github.com/intellij-rust/intellij-rust/issues/8482
-        if (platformVersion == 221) return@doLast
+        // https://github.com/intellij-rust/intellij-rust/issues/9554
+        if (platformVersion == 223 && isFamily(FAMILY_WINDOWS)) return@doLast
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"

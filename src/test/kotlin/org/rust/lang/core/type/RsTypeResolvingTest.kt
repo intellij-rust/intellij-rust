@@ -562,6 +562,13 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                              //^ <unknown>
     """)
 
+    fun `test no stack overflow when dyn trait used as a Self type in where clause`() = testType("""
+        trait Foo<T = ()> {}
+        trait Bar {}
+        fn foo<T>() where dyn Foo: Bar {}
+                        //^ dyn Foo<()>
+    """)
+
     fun `test mixed type and const arguments`() = testType("""
         struct A1;
         const B1: i32 = 1;
