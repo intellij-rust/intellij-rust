@@ -20,3 +20,14 @@ updates:
       labels: [ ]
       assignees:
           - "Undin"
+
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "04:00" # UTC
+      open-pull-requests-limit: 10
+      labels: [ ]
+      assignees:
+          - "Undin"
