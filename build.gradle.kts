@@ -75,6 +75,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
