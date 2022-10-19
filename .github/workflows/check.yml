@@ -71,7 +71,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' || !fromJSON(needs.calculate-git-info.outputs.is_master_branch) || !fromJSON(needs.calculate-git-info.outputs.checked) }}
         uses: ./.github/workflows/build-native-code.yml
         with:
-            rust-version: 1.63.0
+            rust-version: 1.64.0
             cache: true
 
     check-plugin:
@@ -81,7 +81,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
-                rust-version: [ 1.63.0, nightly-2022-10-01 ]
+                rust-version: [ 1.64.0, nightly-2022-10-01 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 222, 223 ]
                 # it's enough to verify plugin structure only once per platform version
