@@ -75,7 +75,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         element: RsReferenceElement,
         result: CompletionResultSet,
         context: RsCompletionContext,
-        processedPathNames: MultiMap<String, RsElement>
+        processedElements: MultiMap<String, RsElement>
     ) {
         collectCompletionVariants(result, context) {
             val processor = filterNotCfgDisabledItemsAndTestFunctions(it)
@@ -88,16 +88,15 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 is RsModDeclItem -> processModDeclResolveVariants(element, processor)
                 is RsPatBinding -> processPatBindingResolveVariants(element, true, processor)
                 is RsStructLiteralField -> processStructLiteralFieldResolveVariants(element, true, processor)
-                is RsPath -> processPathVariants(element, processedPathNames, processor)
+                is RsPath -> {
+                    val processor2 = addProcessedPathName(processor, processedElements)
+                    processPathVariants(element, processor2)
+                }
             }
         }
     }
 
-    private fun processPathVariants(
-        element: RsPath,
-        processedPathElements: MultiMap<String, RsElement>,
-        processor: RsResolveProcessor
-    ) {
+    private fun processPathVariants(element: RsPath, processor: RsResolveProcessor) {
         val parent = element.parent
         when {
             parent is RsMacroCall -> {
@@ -114,10 +113,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             parent is RsVisRestriction && parent.`in` == null -> return
             else -> {
                 val lookup = ImplLookup.relativeTo(element)
-                var filtered: RsResolveProcessor = filterPathCompletionVariantsByTraitBounds(
-                    addProcessedPathName(processor, processedPathElements),
-                    lookup
-                )
+                var filtered: RsResolveProcessor = filterPathCompletionVariantsByTraitBounds(processor, lookup)
                 if (parent !is RsUseSpeck) {
                     filtered = filterNotAttributeAndDeriveProcMacros(filtered)
                 }
@@ -266,7 +262,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     }
                     false
                 })
-                processPathVariants(newPath, MultiMap<String, RsElement>(), processor)
+                processPathVariants(newPath, processor)
             }
         }
     }

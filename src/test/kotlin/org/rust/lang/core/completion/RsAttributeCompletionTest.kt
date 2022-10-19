@@ -311,6 +311,25 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         fn func() {}
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test single variant when there is local import`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        fn main() {
+            use dep_proc_macro::attr_as_is;
+            #[attr_as_/*caret*/]
+            fn func() {}
+        }
+    """, """
+        fn main() {
+            use dep_proc_macro::attr_as_is;
+            #[attr_as_is]
+            fn func() {}
+        }
+    """)
+
     fun `test target_feature on function`() = doSingleAttributeCompletion("""
         #[target_f/*caret*/]
         fn foo() {}
