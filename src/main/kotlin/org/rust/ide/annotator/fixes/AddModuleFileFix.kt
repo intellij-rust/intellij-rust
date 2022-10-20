@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -28,6 +29,9 @@ class AddModuleFileFix(
     override fun getText() = text
 
     override fun getFamilyName() = "Create module file"
+
+    // No intention preview because it creates new file
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null
 
     enum class Location {
         /**
