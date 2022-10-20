@@ -29,6 +29,7 @@ import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.stdext.withPrevious
 
 
 private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
@@ -113,8 +114,16 @@ val RsInferenceContextOwner.inference: RsInferenceResult
         createResult(inferred)
     }
 
+val PsiElement.inferenceContextOwner: RsInferenceContextOwner?
+    get() = contexts
+        .withPrevious()
+        .find { (it, prev) ->
+            if (it !is RsInferenceContextOwner) return@find false
+            it !is RsStructLiteral || prev is RsPath
+        }?.first as? RsInferenceContextOwner
+
 val PsiElement.inference: RsInferenceResult?
-    get() = contextOrSelf<RsInferenceContextOwner>()?.inference
+    get() = inferenceContextOwner?.inference
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown

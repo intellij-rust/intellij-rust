@@ -1193,7 +1193,8 @@ LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? 
 }
 
 StructLiteral ::= <<checkStructAllowed>> OuterAttr* ValuePathGenericArgsNoTypeQual StructLiteralBody {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
