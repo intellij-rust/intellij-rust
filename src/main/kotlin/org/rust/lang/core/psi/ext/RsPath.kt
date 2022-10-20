@@ -18,6 +18,7 @@ import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.core.stubs.common.RsPathPsiOrStub
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.lang.doc.psi.RsDocLinkDestination
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
 
@@ -65,6 +66,13 @@ val RsPath.qualifier: RsPath?
         return (ctx as? RsUseSpeck)?.qualifier
     }
 
+val RsPath.isInsideDocLink: Boolean
+    get() = when (val parent = rootPath().parent) {
+        is RsDocLinkDestination -> true
+        is RsTypeReference -> parent.ancestorStrict<RsPath>()?.isInsideDocLink ?: false
+        else -> false
+    }
+
 fun RsPath.allowedNamespaces(isCompletion: Boolean = false, parent: PsiElement? = this.parent): Set<Namespace> = when (parent) {
     is RsPath, is RsTraitRef, is RsStructLiteral, is RsPatStruct -> TYPES
     is RsTypeReference -> when (parent.stubParent) {
@@ -95,6 +103,8 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false, parent: PsiElement? 
     is RsPatTupleStruct -> VALUES
     is RsMacroCall -> MACROS
     is RsPathCodeFragment -> parent.ns
+    // TODO: Use proper namespace based on disambiguator
+    is RsDocLinkDestination -> TYPES_N_VALUES_N_MACROS
     else -> TYPES_N_VALUES
 }
 

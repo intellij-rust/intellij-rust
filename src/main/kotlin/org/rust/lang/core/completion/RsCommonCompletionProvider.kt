@@ -61,12 +61,14 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             addMethodAndFieldCompletion(element, result, context)
         }
 
-        if (element is RsPath && context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsForOutOfScopeItems(position, element, result, processedPathElements, context.expectedTy)
-        }
+        if (element is RsPath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+            if (context.isSimplePath && !element.isInsideDocLink) {
+                addCompletionsForOutOfScopeItems(position, element, result, processedPathElements, context.expectedTy)
+            }
 
-        if (element is RsPath && processedPathElements.isEmpty && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsForOutOfScopeFirstPathSegment(element, result, context)
+            if (processedPathElements.isEmpty) {
+                addCompletionsForOutOfScopeFirstPathSegment(element, result, context)
+            }
         }
     }
 
