@@ -8,14 +8,17 @@ package org.rust.lang.core.psi.ext
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.io.IOUtil
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
@@ -425,7 +428,7 @@ val RsPossibleMacroCall.expansion: MacroExpansion?
 
 val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpansionError>
     get() {
-        return CachedValuesManager.getCachedValue(this) {
+        return CachedValuesManager.getCachedValue(this, RS_MACRO_CALL_EXPANSION_RESULT) {
             val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
                 // Use the original element only if macro bodies are equal. They
                 // will be different if completion invoked inside the macro body.
@@ -434,6 +437,10 @@ val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpans
             project.macroExpansionManager.getExpansionFor(originalOrSelf)
         }
     }
+
+@VisibleForTesting
+val RS_MACRO_CALL_EXPANSION_RESULT: Key<CachedValue<RsResult<MacroExpansion, GetMacroExpansionError>>> =
+    Key("org.rust.lang.core.psi.ext.RS_MACRO_CALL_EXPANSION_RESULT")
 
 fun RsPossibleMacroCall.expandMacrosRecursively(
     depthLimit: Int = getRecursionLimit(this),

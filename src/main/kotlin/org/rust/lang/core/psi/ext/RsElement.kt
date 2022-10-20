@@ -8,6 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -26,7 +27,7 @@ import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.*
 
-interface RsElement : PsiElement {
+interface RsElement : PsiElement, UserDataHolderEx {
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */

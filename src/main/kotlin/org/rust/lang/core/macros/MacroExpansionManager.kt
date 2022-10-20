@@ -66,6 +66,7 @@ import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 import org.rust.taskQueue
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -936,10 +937,15 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansionCachedResult {
 }
 
 private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Boolean): MacroExpansionCachedResult {
+    val modificationTrackers = getModificationTrackersForMemExpansion(call)
+
+    val oldCachedResultSoftReference = call.getUserData(RS_EXPANSION_RESULT_SOFT)
+    extractExpansionResult(oldCachedResultSoftReference, modificationTrackers)?.let { return it }
+
     val def = call.resolveToMacroWithoutPsiWithErr()
-        .unwrapOrElse { return memExpansionResult(call, Err(it.toExpansionError())) }
+        .unwrapOrElse { return CachedValueProvider.Result(Err(it.toExpansionError()), modificationTrackers) }
     val crate = call.containingCrate
-    if (crate is FakeCrate) return memExpansionResult(call, Err(GetMacroExpansionError.Unresolved))
+    if (crate is FakeCrate) return CachedValueProvider.Result(Err(GetMacroExpansionError.Unresolved), modificationTrackers)
     val result = FunctionLikeMacroExpander.forCrate(crate).expandMacro(
         def,
         call,
@@ -969,7 +975,46 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
         }
     }
 
-    return memExpansionResult(call, result)
+    if (result is Ok) {
+        val newCachedResult = CachedMemExpansionResult(result, modificationTrackers.modificationCount(), call)
+
+        // We want to guarantee that only one expansion RsFile per macro call exists in the memory at a time.
+        // That is, if someone holds a strong reference to expansion PSI, the SoftReference must not be cleared.
+        // This is possible if the expansion RsFile holds a strong reference to the object under SoftReference.
+        result.ok.file.putUserData(RS_EXPANSION_RESULT, newCachedResult)
+
+        val newCachedResultSoftReference = SoftReference(newCachedResult)
+        var prevReference = oldCachedResultSoftReference
+        while (!call.replace(RS_EXPANSION_RESULT_SOFT, prevReference, newCachedResultSoftReference)) {
+            prevReference = call.getUserData(RS_EXPANSION_RESULT_SOFT)
+            extractExpansionResult(prevReference, modificationTrackers)?.let { return it }
+        }
+    }
+
+    return CachedValueProvider.Result(result, modificationTrackers)
+}
+
+private val RS_EXPANSION_RESULT_SOFT: Key<SoftReference<CachedMemExpansionResult>> =
+    Key("org.rust.lang.core.macros.RS_EXPANSION_RESULT_SOFT")
+private val RS_EXPANSION_RESULT: Key<CachedMemExpansionResult> = Key("org.rust.lang.core.macros.RS_EXPANSION_RESULT")
+
+private data class CachedMemExpansionResult(
+    val result: RsResult<MacroExpansion, GetMacroExpansionError>,
+    val modificationCount: Long,
+    // Guarantees the macro call is retained in the memory if links to expansion PSI exist
+    val call: RsPossibleMacroCall,
+)
+
+private fun extractExpansionResult(
+    cachedResultSoftReference: SoftReference<CachedMemExpansionResult>?,
+    modificationTrackers: Array<ModificationTracker>,
+): CachedValueProvider.Result<RsResult<MacroExpansion, GetMacroExpansionError>>? {
+    val cachedResult = cachedResultSoftReference?.get()
+    if (cachedResult != null && cachedResult.modificationCount == modificationTrackers.modificationCount()) {
+        return CachedValueProvider.Result(cachedResult.result, modificationTrackers)
+    }
+
+    return null
 }
 
 private fun memExpansionResult(
@@ -977,12 +1022,22 @@ private fun memExpansionResult(
     result: RsResult<MacroExpansion, GetMacroExpansionError>
 ): MacroExpansionCachedResult {
     // Note: the cached result must be invalidated when `RsFile.cachedData` is invalidated
+    val modificationTrackers = getModificationTrackersForMemExpansion(call)
+    return CachedValueProvider.Result.create(result, modificationTrackers)
+}
+
+// Note: the cached result must be invalidated when `RsFile.cachedData` is invalidated
+private fun getModificationTrackersForMemExpansion(call: RsPossibleMacroCall): Array<ModificationTracker> {
+    val structureModTracker = call.rustStructureOrAnyPsiModificationTracker
     return if (call is RsMacroCall) {
-        CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
+        arrayOf(structureModTracker, call.modificationTracker)
     } else {
-        CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker)
+        arrayOf(structureModTracker)
     }
 }
+
+private fun Array<ModificationTracker>.modificationCount(): Long =
+    sumOf { it.modificationCount }
 
 private val RS_EXPANSION_MACRO_CALL = Key.create<RsPossibleMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
