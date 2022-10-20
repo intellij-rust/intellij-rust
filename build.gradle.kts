@@ -55,6 +55,7 @@ plugins {
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.1"
+    antlr
 }
 
 idea {
@@ -462,6 +463,11 @@ project(":") {
                 .forEach { it.resolve() }
         }
     }
+
+    // Exclude antlr4 from transitive dependencies of `:api` configuration (https://github.com/gradle/gradle/issues/820)
+    configurations.api {
+        setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
+    }
 }
 
 project(":idea") {
@@ -492,6 +498,9 @@ project(":clion") {
 }
 
 project(":debugger") {
+    apply {
+        plugin("antlr")
+    }
     intellij {
         if (baseIDE == "idea") {
             plugins.set(listOf(nativeDebugPlugin))
@@ -502,7 +511,24 @@ project(":debugger") {
     }
     dependencies {
         implementation(project(":"))
+        antlr("org.antlr:antlr4:4.10.1")
+        implementation("org.antlr:antlr4-runtime:4.10.1")
         testImplementation(project(":", "testOutput"))
+    }
+    tasks {
+        withType<KotlinCompile> {
+            dependsOn(":debugger:generateGrammarSource")
+        }
+
+        generateGrammarSource {
+            arguments.add("-no-listener")
+            arguments.add("-visitor")
+            outputDirectory = file("src/gen/org/rust/debugger/lang")
+        }
+    }
+    // Exclude antlr4 from transitive dependencies of `:debugger:api` configuration (https://github.com/gradle/gradle/issues/820)
+    configurations.api {
+        setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
     }
 }
 
