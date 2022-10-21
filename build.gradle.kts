@@ -332,11 +332,6 @@ project(":plugin") {
             dependsOn(mergePluginJarTask)
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
-        verifyPlugin {
-            // We don't want to fail `verifyPlugin` task because of too short description
-            ignoreUnacceptableWarnings.set(true)
-        }
-
         withType<PrepareSandboxTask> {
             dependsOn(named(compileNativeCodeTaskName))
 
