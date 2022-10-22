@@ -77,9 +77,9 @@ jobs:
               run: |
                 if ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.type == 'stable' }}
                 then
-                  echo "::set-output name=channel::stable"
+                  echo "::set-output name=channel::stable-dev"
                 else
-                  echo "::set-output name=channel::beta"
+                  echo "::set-output name=channel::beta-dev"
                 fi
 
     fetch-latest-changes:
