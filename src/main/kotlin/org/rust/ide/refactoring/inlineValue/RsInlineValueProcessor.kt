@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.isShorthand
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.stdext.capitalized
 
 class RsInlineValueProcessor(
     private val project: Project,
@@ -64,7 +65,7 @@ class RsInlineValueProcessor(
     override fun getCommandName(): String = "Inline ${context.type} ${context.name}"
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        return RsInlineUsageViewDescriptor(context.element, "${context.type.capitalize()} to inline")
+        return RsInlineUsageViewDescriptor(context.element, "${context.type.capitalized()} to inline")
     }
 }
 

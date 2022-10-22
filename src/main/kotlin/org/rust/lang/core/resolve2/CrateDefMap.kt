@@ -217,8 +217,8 @@ class FileInfo(
  * - when propagating macros from mod with `macro_use` attribute,
  *   to determine modules to which propagate
  */
-@Suppress("EXPERIMENTAL_FEATURE_WARNING")
-inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+@JvmInline
+value class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
 
     val parent: MacroIndex get() = MacroIndex(indices.copyOfRange(0, indices.size - 1))
     val last: Int get() = indices.last()

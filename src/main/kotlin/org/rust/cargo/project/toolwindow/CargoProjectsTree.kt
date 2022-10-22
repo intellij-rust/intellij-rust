@@ -12,6 +12,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNode
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.stdext.capitalized
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -47,8 +48,8 @@ open class CargoProjectsTree : SimpleTree() {
                 }
                 val cargoProject = selectedProject ?: return
                 // Capitalize command name to be consistent with line market providers
-                // TODO: not to use `capitalize` here
-                val configurationName = "${command.capitalize()} ${target.name}"
+                // TODO: not to use `capitalized` here
+                val configurationName = "${command.capitalized()} ${target.name}"
                 run(CargoCommandLine.forTarget(target, command), cargoProject, configurationName)
             }
         })

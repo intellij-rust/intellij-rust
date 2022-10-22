@@ -457,7 +457,7 @@ data class RsQualifiedName private constructor(
         MOD,
         CRATE;
 
-        override fun toString(): String = name.toLowerCase()
+        override fun toString(): String = name.lowercase()
 
         companion object {
 
@@ -492,7 +492,7 @@ data class RsQualifiedName private constructor(
         TYMETHOD,
         METHOD;
 
-        override fun toString(): String = name.toLowerCase()
+        override fun toString(): String = name.lowercase()
 
         companion object {
             fun fromString(name: String): ChildItemType? {

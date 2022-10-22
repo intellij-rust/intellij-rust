@@ -96,8 +96,8 @@ private fun replaceWithConstant(
     val factory = RsPsiFactory(project)
     val suggestedNames = expr.suggestedNames()
 
-    val name = suggestedNames.all.map { it.toUpperCase() }.firstOrNull { it !in existingBindings }
-        ?: freshenName(suggestedNames.default.toUpperCase(), existingBindings)
+    val name = suggestedNames.all.map { it.uppercase() }.firstOrNull { it !in existingBindings }
+        ?: freshenName(suggestedNames.default.uppercase(), existingBindings)
 
     val const = factory.createConstant(name, expr)
 

@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.inlineValue
 import com.intellij.openapi.project.Project
 import com.intellij.refactoring.RefactoringBundle
 import org.rust.ide.refactoring.RsInlineDialog
+import org.rust.stdext.capitalized
 
 class RsInlineValueDialog(
     private val context: InlineValueContext,
@@ -38,7 +39,7 @@ class RsInlineValueDialog(
         RefactoringBundle.message("inline.field.border.title")
 
     override fun getNameLabelText(): String =
-        "${context.type.capitalize()} ${context.name} ${getOccurrencesText(occurrencesNumber)}"
+        "${context.type.capitalized()} ${context.name} ${getOccurrencesText(occurrencesNumber)}"
 
     override fun getInlineAllText(): String {
         val text =

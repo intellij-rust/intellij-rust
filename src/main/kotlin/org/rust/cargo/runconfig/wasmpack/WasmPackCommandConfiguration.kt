@@ -19,6 +19,7 @@ import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.ui.WasmPackCommandConfigurationEditor
 import org.rust.cargo.toolchain.WasmPackCommandLine
 import org.rust.cargo.toolchain.tools.wasmPack
+import org.rust.stdext.capitalized
 
 class WasmPackCommandConfiguration(
     project: Project,
@@ -48,7 +49,7 @@ class WasmPackCommandConfiguration(
         element.readPath("workingDirectory")?.let { workingDirectory = it }
     }
 
-    override fun suggestedName(): String = command.substringBefore(' ').capitalize()
+    override fun suggestedName(): String = command.substringBefore(' ').capitalized()
 
     fun setFromCmd(cmd: WasmPackCommandLine) {
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())

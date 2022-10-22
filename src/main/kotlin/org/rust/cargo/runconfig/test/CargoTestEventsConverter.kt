@@ -62,7 +62,7 @@ class CargoTestEventsConverter(
     private fun handleStartMessage(text: String) {
         when (converterState) {
             START_MESSAGE -> {
-                val clean = text.trim().toLowerCase()
+                val clean = text.trim().lowercase()
                 converterState = when {
                     clean == "running" -> EXECUTABLE_NAME
                     clean == "doc-tests" -> DOCTESTS_PACKAGE_NAME

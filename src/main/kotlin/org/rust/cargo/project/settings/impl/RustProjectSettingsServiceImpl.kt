@@ -23,7 +23,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.*
 import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.showSettingsDialog
 
@@ -62,8 +61,10 @@ class RustProjectSettingsServiceImpl(
     override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
 
+    // BACKCOMPAT: 2022.2. Drop it
     @Suppress("OverridingDeprecatedMember", "DEPRECATION", "OVERRIDE_DEPRECATION")
-    override fun getToolchain(): RsToolchain? = _state.toolchain?.let(RsToolchain::from)
+    override fun getToolchain(): org.rust.cargo.toolchain.RsToolchain? =
+        _state.toolchain?.let(org.rust.cargo.toolchain.RsToolchain::from)
 
     override fun getState(): Element {
         val element = Element(serviceName)

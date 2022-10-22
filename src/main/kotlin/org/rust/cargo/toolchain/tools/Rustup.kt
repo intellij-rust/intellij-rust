@@ -22,6 +22,7 @@ import org.rust.ide.actions.InstallTargetAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.RsResult
+import org.rust.stdext.capitalized
 import org.rust.stdext.unwrapOrThrow
 import java.nio.file.Path
 
@@ -173,7 +174,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
 
             if (needInstall) {
                 project.showBalloon(
-                    "${componentName.capitalize()} is not installed",
+                    "${componentName.capitalized()} is not installed",
                     NotificationType.ERROR,
                     InstallComponentAction(cargoProjectDirectory, componentName)
                 )

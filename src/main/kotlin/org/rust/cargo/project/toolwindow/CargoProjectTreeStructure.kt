@@ -134,7 +134,7 @@ class CargoProjectTreeStructure(
                 }
             }
 
-            override fun toTestString(): String = "Target($name[${target.kind.name.toLowerCase()}])"
+            override fun toTestString(): String = "Target($name[${target.kind.name.lowercase()}])"
 
             private val CargoWorkspace.Target.icon: Icon?
                 get() = when (kind) {

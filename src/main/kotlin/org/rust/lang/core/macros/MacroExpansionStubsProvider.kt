@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.rust.lang.core.macros
 
 import com.intellij.psi.stubs.PrebuiltStubsProvider

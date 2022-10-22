@@ -86,7 +86,7 @@ private fun TokenTree.Subtree.debugPrintSubtree(sb: StringBuilder, level: Int) {
 private fun TokenTree.Leaf.debugPrintLeaf(sb: StringBuilder) {
     when (this) {
         is TokenTree.Leaf.Literal -> sb.append("LITERAL $text $id")
-        is TokenTree.Leaf.Punct -> sb.append("PUNCT   $char [${spacing.toString().toLowerCase()}] $id")
+        is TokenTree.Leaf.Punct -> sb.append("PUNCT   $char [${spacing.toString().lowercase()}] $id")
         is TokenTree.Leaf.Ident -> sb.append("IDENT   $text $id")
     }
 }

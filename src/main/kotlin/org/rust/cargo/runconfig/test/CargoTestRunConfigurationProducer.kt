@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocCodeFence
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
+import org.rust.stdext.capitalized
 
 class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase() {
     override val commandName: String = "test"
@@ -95,7 +96,7 @@ private class CargoProjectTestConfig(
     override val exact = false
 
     override val configurationName: String
-        get() = "All ${StringUtil.pluralize(commandName).capitalize()}"
+        get() = "All ${StringUtil.pluralize(commandName).capitalized()}"
 
     override fun cargoCommandLine(): CargoCommandLine =
         CargoCommandLine.forProject(cargoProject, commandName)
@@ -111,7 +112,7 @@ private class CargoPackageTestConfig(
     override val exact = false
 
     override val configurationName: String
-        get() = "${StringUtil.pluralize(commandName).capitalize()} in '${sourceElement.name}'"
+        get() = "${StringUtil.pluralize(commandName).capitalized()} in '${sourceElement.name}'"
 
     override fun cargoCommandLine(): CargoCommandLine =
         CargoCommandLine.forPackage(cargoPackage, commandName)
