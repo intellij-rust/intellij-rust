@@ -4,7 +4,7 @@ from github import Github
 
 from common import env
 
-DOC_MSG = "@intellij-rust/technical-writers, seems like it's time to write the documentation!"
+DOC_MSG = "seems like it's time to write the documentation!"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
