@@ -560,7 +560,7 @@ private fun processQualifiedPathResolveVariants1(
         // to only members of the current impl or implemented trait or its parent traits
         val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
             NameResolutionTestmarks.SelfRelatedTypeSpecialCase.hit()
-            base.implementedTrait?.flattenHierarchy
+            base.implementedTrait?.getFlattenHierarchy()
         } else {
             null
         }
@@ -669,7 +669,7 @@ private fun processTraitRelativePath(
     ns: Set<Namespace>,
     processor: RsResolveProcessor
 ): Boolean {
-    for (boundTrait in baseBoundTrait.flattenHierarchy) {
+    for (boundTrait in baseBoundTrait.getFlattenHierarchy()) {
         val source = TraitImplSource.Trait(boundTrait.element)
         if (processTraitMembers(boundTrait.element, ns, boundTrait.subst, TyUnknown, source, processor)) return true
     }

@@ -1804,6 +1804,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl Bar for S<Q> {}
     """)
 
+    fun `test no E0277 with PartialEq and Eq impls`() = checkErrors("""
+        struct Box<T>(T);
+        trait PartialEq<Rhs = Self> {}
+        trait Eq: PartialEq<Self> {}
+
+        impl<T: PartialEq> PartialEq for Box<T> {}
+        impl<T: Eq> Eq for Box<T> {}
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;

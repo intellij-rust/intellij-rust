@@ -7,7 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitType
-import org.rust.lang.core.psi.ext.flattenHierarchy
+import org.rust.lang.core.psi.ext.getFlattenHierarchy
 import org.rust.lang.core.psi.ext.isImpl
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.HAS_TY_OPAQUE_MASK
@@ -36,5 +36,5 @@ data class TyAnon(
         traits.any { it.visitWith(visitor) }
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
-        traits.flatMap { it.flattenHierarchy }
+        traits.flatMap { it.getFlattenHierarchy(this) }
 }

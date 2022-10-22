@@ -43,38 +43,42 @@ val RsTraitItem.isKnownDerivable: Boolean
         return derivableTrait.findTrait(knownItems) == this
     }
 
-val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>>
-    get() {
-        val result = mutableListOf<BoundElement<RsTraitItem>>()
-        val visited = mutableSetOf<RsTraitItem>()
-        fun dfs(boundTrait: BoundElement<RsTraitItem>) {
-            if (!visited.add(boundTrait.element)) return
-            result += boundTrait
-            boundTrait.element.superTraits.forEach { superTrait ->
-                run {
-                    // infer associated types on supertraits if possible
-                    if (boundTrait.assoc.isNotEmpty()) {
-                        val inferredAssoc = mutableMapOf<RsTypeAlias, Ty>()
-                        val superTraitAssocTypes = superTrait.element.expandedMembers.types
-                        boundTrait.assoc.filterTo(inferredAssoc) { it.key in superTraitAssocTypes }
-                        if (inferredAssoc.isNotEmpty()) {
-                            inferredAssoc.putAll(superTrait.assoc)
-                            return@run superTrait.copy(assoc = inferredAssoc)
-                        }
+fun BoundElement<RsTraitItem>.getFlattenHierarchy(selfTy: Ty? = null): Collection<BoundElement<RsTraitItem>> {
+    val result = mutableListOf<BoundElement<RsTraitItem>>()
+    val visited = mutableSetOf<RsTraitItem>()
+    fun dfs(boundTrait: BoundElement<RsTraitItem>) {
+        if (!visited.add(boundTrait.element)) return
+        result += boundTrait
+        boundTrait.element.superTraits.forEach { rawSuperTrait ->
+            val superTrait = if (selfTy != null) {
+                rawSuperTrait.substitute(mapOf(TyTypeParameter.self() to selfTy).toTypeSubst())
+            } else {
+                rawSuperTrait
+            }
+            run {
+                // infer associated types on supertraits if possible
+                if (boundTrait.assoc.isNotEmpty()) {
+                    val inferredAssoc = mutableMapOf<RsTypeAlias, Ty>()
+                    val superTraitAssocTypes = superTrait.element.expandedMembers.types
+                    boundTrait.assoc.filterTo(inferredAssoc) { it.key in superTraitAssocTypes }
+                    if (inferredAssoc.isNotEmpty()) {
+                        inferredAssoc.putAll(superTrait.assoc)
+                        return@run superTrait.copy(assoc = inferredAssoc)
                     }
-                    superTrait
-                }.let {
-                    dfs(it.substitute(boundTrait.subst))
                 }
+                superTrait
+            }.let {
+                dfs(it.substitute(boundTrait.subst))
             }
         }
-        dfs(this)
-
-        return result
     }
+    dfs(this)
+
+    return result
+}
 
 val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
-    get() = flattenHierarchy.flatMap { it.element.expandedMembers.types }
+    get() = getFlattenHierarchy().flatMap { it.element.expandedMembers.types }
 
 fun RsTraitItem.findAssociatedType(name: String): RsTypeAlias? =
     associatedTypesTransitively.find { it.name == name }
@@ -114,11 +118,6 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>>
         return bounds
             .filter { !it.hasQ } // ignore `?Sized`
             .mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
-    }
-
-val RsTraitItem.isSized: Boolean
-    get() {
-        return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
     }
 
 fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =

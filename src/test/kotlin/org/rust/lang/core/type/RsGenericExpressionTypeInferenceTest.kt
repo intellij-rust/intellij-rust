@@ -1316,6 +1316,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test invalid inherited generic trait object bound with Self`() = testExpr("""
+        trait Tr1<A> {}
+        trait Tr2: Tr1<Self> {}
+        fn foo<B, C>(_: &B) -> C where B: Tr1<C> + ?Sized { unimplemented!() }
+        fn bar(a: &dyn Tr2) { // error[E0038]: the trait `Tr2` cannot be made into an object
+            let b = foo(a);
+            b;
+        } //^ <unknown>
+    """)
+
     fun `test generic 'impl Trait' method`() = testExpr("""
         trait Tr<A> { fn foo(&self) -> A { unimplemented!() } }
         fn new() -> impl Tr<u8> { unimplemented!() }
@@ -1354,6 +1364,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = foo(new());
             a;
         } //^ u8
+    """)
+
+    fun `test inherited generic 'impl Trait' bound with Self`() = testExpr("""
+        trait Tr1<A> {}
+        trait Tr2: Tr1<Self> + Sized {}
+        fn new() -> impl Tr2 { unimplemented!() }
+        fn foo<B, C>(_: B) -> C where B: Tr1<C> { unimplemented!() }
+        fn main() {
+            let a = foo(new());
+            a;
+        } //^ impl Tr2
     """)
 
     fun `test inherited generic type parameter method`() = testExpr("""
@@ -2324,5 +2345,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
 
         fn foo<A: Foo>(t: A) -> A::Item { todo!() }
+    """)
+
+    fun `test select a supertrait with Self subst 3`() = testExpr("""
+        trait Foo<T: ?Sized> {}
+        trait Bar: Foo<Self> {}
+
+        fn bar<T: Bar>(t: T) {
+            let a = foo(t);
+            a;
+        } //^ T
+
+        fn foo<A: Foo<B>, B>(t: A) -> B { todo!() }
     """)
 }
