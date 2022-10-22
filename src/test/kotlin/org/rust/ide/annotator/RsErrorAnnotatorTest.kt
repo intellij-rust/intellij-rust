@@ -1813,6 +1813,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<T: Eq> Eq for Box<T> {}
     """)
 
+    // Issue // https://github.com/intellij-rust/intellij-rust/issues/8786
+    fun `test no E0277 when Self-related associated type is mentioned in the parent trait`() = checkErrors("""
+        struct S;
+        trait Foo<T> {}
+        impl Foo<S> for S {}
+        trait Bar: Foo<Self::Foo> {
+            type Foo;
+        }
+        impl Bar for S {
+            type Foo = S;
+        }
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;

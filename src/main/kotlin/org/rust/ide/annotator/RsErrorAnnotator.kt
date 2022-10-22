@@ -956,7 +956,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         for (bound in supertraits) {
             val requiredTrait = bound.traitRef ?: continue
             val boundTrait = requiredTrait.resolveToBoundTrait() ?: continue
-            val locallyBoundTrait = boundTrait.substitute(substitution)
+            val locallyBoundTrait = lookup.ctx.fullyNormalizeAssociatedTypesIn(boundTrait.substitute(substitution))
             if (locallyBoundTrait.containsTyOfClass(TyUnknown::class.java)) continue
 
             val canSelect = lookup.canSelect(TraitRef(type, locallyBoundTrait))
