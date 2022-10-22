@@ -1933,6 +1933,19 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ X
     """)
 
+    fun `test assoc type bound selection 7`() = testExpr("""
+        struct X;
+        trait Foo { type Item: Bar; }
+        trait Bar: Baz<Self> {}
+        trait Baz<T> {}
+        fn baz<A: Baz<B>, B>(t: A) -> B { unimplemented!() }
+
+        fn foobar<T: Foo>(a: T::Item) {
+            let b = baz(a);
+            b;
+        } //^ T
+    """)
+
     fun `test assoc type bound in path selection`() = testExpr("""
         struct X;
         trait Foo<T> {}
@@ -2281,5 +2294,35 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a: <Foo<_> as Bar>::SelfTy = Foo(1);
             a;
         } //^ Foo<i32>
+    """)
+
+    fun `test select a supertrait with Self subst 1`() = testExpr("""
+        trait Foo<T: ?Sized> {}
+        trait Bar<T: ?Sized>: Foo<T> {}
+
+        trait Baz: Sized {
+            fn bar<T: Bar<Self>>(t: T) {
+                let a = foo(t);
+                a;
+            } //^ Self
+        }
+
+        fn foo<A: Foo<B>, B>(t: A) -> B { todo!() }
+    """)
+
+    fun `test select a supertrait with Self subst 2`() = testExpr("""
+        trait Foo {
+            type Item;
+        }
+        trait Bar: Foo {}
+
+        trait Baz: Sized {
+            fn bar<T: Bar<Item=Self>>(t: T) {
+                let a = foo(t);
+                a;
+            } //^ Self
+        }
+
+        fn foo<A: Foo>(t: A) -> A::Item { todo!() }
     """)
 }

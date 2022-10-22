@@ -724,6 +724,23 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                                              //^
     """)
 
+    fun `test bound associated type inside where clause`() = checkByCode("""
+        trait Tr { type Item; }
+                      //X
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) where B::Item: Sized { unimplemented!() } }
+                                               //^
+    """)
+
+    fun `test bound inherited associated type inside where clause`() = checkByCode("""
+        trait Tr1 { type Item; }
+                       //X
+        trait Tr2: Tr1 {}
+        struct S<A>(A);
+        impl<B: Tr2> S<B> { fn foo(self) where B::Item: Sized { unimplemented!() } }
+                                                //^
+    """)
+
     fun `test no stack overflow on self unification with Eq bound`() = checkByCode("""
         pub trait PartialEq<Rhs: ?Sized> {}
         pub trait Eq: PartialEq<Self> {}
