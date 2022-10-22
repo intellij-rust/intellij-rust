@@ -12,7 +12,7 @@ import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 @ExpandMacros(MacroExpansionScope.ALL, "std")
-class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate(RsPostfixTemplateProvider())) {
+class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate::class) {
     fun `test string`() = doTest("""
        fn main() {
            "Arbitrary string".println/*caret*/

@@ -12,7 +12,7 @@ import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 abstract class IterPostFixTemplateTestBase(private val key: String) :
-    RsPostfixTemplateTest(IterPostfixTemplate(key, RsPostfixTemplateProvider())) {
+    RsPostfixTemplateTest(IterPostfixTemplate::class, key) {
 
     fun `test non iterable expr`() = doTestNotApplicable("""
             let b = 5;

@@ -10,7 +10,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.MacroExpansionScope
 
-class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfixTemplateProvider())) {
+class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate::class) {
     fun `test not expr 1`() = doTestNotApplicable("""
         fn foo() {
             println!("test");.let/*caret*/

@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class DebugAssertPostfixTemplateTest : RsPostfixTemplateTest(DebugAssertPostfixTemplate(RsPostfixTemplateProvider())) {
+class DebugAssertPostfixTemplateTest : RsPostfixTemplateTest(DebugAssertPostfixTemplate::class) {
     fun `test not boolean expr`() = doTestNotApplicable("""
         fn main() {
             1234.debug_assert/*caret*/
