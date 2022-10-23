@@ -6,6 +6,7 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.getFlattenHierarchy
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
@@ -19,6 +20,9 @@ import org.rust.lang.core.types.ty.TyUnknown
  *     `T : Foo<U>`
  */
 data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>) : TypeFoldable<TraitRef> {
+    val flattenHierarchy: List<TraitRef>
+        get() = trait.getFlattenHierarchy(selfTy).map { TraitRef(selfTy, it) }
+
     override fun superFoldWith(folder: TypeFolder): TraitRef =
         TraitRef(selfTy.foldWith(folder), trait.foldWith(folder))
 

@@ -31,7 +31,7 @@ class TyTypeParameter private constructor(
 
     @Deprecated("Use ImplLookup.getEnvBoundTransitivelyFor")
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
-        traitBounds.flatMap { it.flattenHierarchy }
+        traitBounds.flatMap { it.getFlattenHierarchy() }
 
     val name: String? get() = parameter.name
 

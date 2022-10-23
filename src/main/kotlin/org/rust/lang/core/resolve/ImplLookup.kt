@@ -174,7 +174,7 @@ interface ParamEnv {
                         else -> Unit
                     }
                 }
-            }.flatMap { ref -> ref.trait.flattenHierarchy.map { TraitRef(ref.selfTy, it) } }
+            }.flatMap { it.flattenHierarchy }
                 .distinct()
 
             when (rawBounds.size) {
@@ -304,7 +304,7 @@ class ImplLookup(
                 val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
                 implsAndTraits += ty.trait.element.bounds.asSequence()
                     .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
-                    .flatMap { it.trait.flattenHierarchy.asSequence() }
+                    .flatMap { it.trait.getFlattenHierarchy().asSequence() }
                     .map { TraitImplSource.ProjectionBound(it.element) }
                     .distinct()
 
@@ -761,7 +761,7 @@ class ImplLookup(
             val subst = selfTy.trait.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
             selfTy.trait.element.bounds.asSequence()
                 .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), selfTy) }.isOk }
-                .flatMap { it.trait.flattenHierarchy.asSequence() }
+                .flatMap { it.trait.getFlattenHierarchy().asSequence() }
                 .distinct()
                 .filter { ctx.probe { ctx.combineBoundElements(it.substitute(subst), ref.trait) } }
                 .forEach { candidates.list.add(ProjectionCandidate(it)) }
