@@ -118,6 +118,7 @@ class RsImportCopyPasteProcessor : CopyPastePostProcessor<RsTextBlockTransferabl
 
         val importOffset = bounds.range.startOffset
 
+        // The visitor doesn't recurse, because the gathered `elements` contain all top-level items
         val visitor = ImportingVisitor(importOffset, data.importMap)
 
         runWriteAction {
@@ -177,7 +178,6 @@ private class ImportingVisitor(private val importOffset: Int, private val import
     override fun visitPatBinding(binding: RsPatBinding) {
         val ctx = AutoImportFix.findApplicableContext(binding)
         handleImport(binding, ctx)
-        super.visitPatBinding(binding)
     }
 
     private fun handleImport(element: RsElement, ctx: AutoImportFix.Context?) {
