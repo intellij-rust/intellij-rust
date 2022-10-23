@@ -8,6 +8,7 @@ package org.rust.ide.presentation
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.escaped
@@ -69,6 +70,13 @@ val RsNamedElement.presentationInfo: PresentationInfo?
             is RsPatBinding -> {
                 when (val patOwner = topLevelPattern.parent) {
                     is RsLetDecl -> Pair("variable", createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference)))
+                    is RsLetExpr -> {
+                        when (PsiTreeUtil.getParentOfType(patOwner, RsMatchArm::class.java, RsCondition::class.java)) {
+                            is RsMatchArm -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.pat)))
+                            is RsCondition -> Pair("condition binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
+                            else -> Pair("binding", createDeclarationInfo(this, identifier, true))
+                        }
+                    }
                     is RsValueParameter -> Pair("value parameter", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference)))
                     is RsMatchArm -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.pat)))
                     is RsCondition -> Pair("condition binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
