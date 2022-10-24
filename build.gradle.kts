@@ -507,7 +507,7 @@ project(":debugger") {
     dependencies {
         implementation(project(":"))
         antlr("org.antlr:antlr4:4.11.1")
-        implementation("org.antlr:antlr4-runtime:4.10.1")
+        implementation("org.antlr:antlr4-runtime:4.11.1")
         testImplementation(project(":", "testOutput"))
     }
     tasks {
