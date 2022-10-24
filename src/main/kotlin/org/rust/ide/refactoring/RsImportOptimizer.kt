@@ -17,6 +17,7 @@ import org.rust.ide.utils.import.COMPARATOR_FOR_SPECKS_IN_USE_GROUP
 import org.rust.ide.utils.import.UseItemWrapper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.stdext.withNext
 
 class RsImportOptimizer : ImportOptimizer {
@@ -33,8 +34,7 @@ class RsImportOptimizer : ImportOptimizer {
     }
 
     private fun reorderExternCrates(file: RsFile) {
-        val first = file.childrenOfType<RsElement>()
-            .firstOrNull { it !is RsInnerAttr } ?: return
+        val first = file.firstItem ?: return
         val externCrateItems = file.childrenOfType<RsExternCrateItem>()
         externCrateItems
             .sortedBy { it.referenceName }
@@ -132,7 +132,7 @@ class RsImportOptimizer : ImportOptimizer {
             // We should ignore all items before `{` in inline modules
             val offset = if (mod is RsModItem) mod.lbrace.textOffset + 1 else 0
             val first = mod.childrenOfType<RsElement>()
-                .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr } ?: return
+                .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr && it !is RsDocComment } ?: return
             val psiFactory = RsPsiFactory(mod.project)
             val sortedUses = uses
                 .asSequence()

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.util.SmartListMap
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.stdext.optimizeList
 import org.rust.stdext.replaceTrivialMap
@@ -200,3 +201,9 @@ private fun RsElement.processItem(
 private fun RsElement.isEnabledByCfgSelf() =
     this !is RsDocAndAttributeOwner || evaluateCfg() != ThreeValuedLogic.False
 
+val RsItemsOwner.firstItem: RsElement?
+    get() = itemsAndMacros.firstOrNull {
+        it !is RsAttr                   // #[outer] mod foo { #![inner] }
+            && it !is RsVis             // pub mod foo {}
+            && it !is RsDocComment      // mod foo { //! comment }
+    }

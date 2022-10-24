@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.ext.RsAttr
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.doc.psi.RsDocComment
 import kotlin.reflect.KClass
 
 sealed class RsContextType(
@@ -95,8 +96,8 @@ sealed class RsContextType(
 
     companion object {
         private fun owner(element: PsiElement): PsiElement? = PsiTreeUtil.findFirstParent(element) {
-            it is RsBlock || it is RsPat || it is RsItemElement || it is RsAttr || it is PsiFile
-                || it is RsMacro || it is RsMacroCall
+            it is RsBlock || it is RsPat || it is RsItemElement || it is PsiFile
+                || it is RsAttr || it is RsDocComment || it is RsMacro || it is RsMacroCall
         }
     }
 }
