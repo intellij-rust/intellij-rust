@@ -15,7 +15,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.profiler.ProfilerToolWindowManager
-import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.clion.perf.PerfProfilerSettings
 import com.intellij.profiler.clion.perf.PerfUtils
 import com.intellij.profiler.statistics.ProfilerUsageTriggerCollector
@@ -27,7 +26,6 @@ import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.lang.core.psi.RsFunction
 import org.rust.profiler.RsProfilerRunner
 import org.rust.profiler.legacy.RsProfilerRunnerLegacy
 import java.nio.file.Path
@@ -90,15 +88,14 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = PerfProfilerProcess(
+        val profilerProcess = createPerfProfilerProcess(
             handler,
             false,
             outputFile,
             configuration.name,
             project,
             System.currentTimeMillis(),
-            toolEnvironment,
-            RsFunction::class.java
+            toolEnvironment
         )
         ProfilerUsageTriggerCollector.logRecordingStarted(project, profilerProcess.profilerConfiguration.configurationTypeId, configuration.type.id)
         ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(profilerProcess)
