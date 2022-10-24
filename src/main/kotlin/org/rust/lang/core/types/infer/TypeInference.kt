@@ -221,10 +221,11 @@ class RsInferenceContext(
                 }
                 RsTypeInferenceWalker(this, TyUnknown).inferReplCodeFragment(element)
             }
-            is RsPathType, is RsTraitRef -> {
+            is RsPathType, is RsTraitRef, is RsStructLiteral -> {
                 val path = when (element) {
                     is RsPathType -> element.path
                     is RsTraitRef -> element.path
+                    is RsStructLiteral -> element.path
                     else -> null
                 }
                 val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration

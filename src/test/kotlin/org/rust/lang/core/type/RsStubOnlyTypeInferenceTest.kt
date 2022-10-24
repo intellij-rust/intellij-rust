@@ -314,4 +314,19 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S<42>
     """)
+
+    fun `test const argument in struct literal`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        #![feature(const_generics)]
+        pub struct S<const N1: usize>;
+        pub const C: usize = 42;
+    //- lib.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let a = S::<{ C }> {};
+            a;
+        } //^ S<42>
+    """)
 }
