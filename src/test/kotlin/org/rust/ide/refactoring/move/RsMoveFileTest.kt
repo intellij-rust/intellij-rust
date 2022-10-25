@@ -541,4 +541,29 @@ class RsMoveFileTest : RsMoveFileTestBase() {
             foo::foo_func();
         }
     """)
+
+    fun `test add mod declaration after doc comments`() = doTest(
+        "mod1/foo.rs",
+        "mod2",
+        """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+        mod foo;
+    //- mod2.rs
+        //! comment
+    //- mod1/foo.rs
+        pub fn func() {}
+    """, """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+    //- mod2.rs
+        //! comment
+        mod foo;
+    //- mod2/foo.rs
+        pub fn func() {}
+    """)
 }

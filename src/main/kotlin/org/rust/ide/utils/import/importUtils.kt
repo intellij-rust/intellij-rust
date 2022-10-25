@@ -193,7 +193,6 @@ private val RsUseItem.importingNames: Set<String>?
 private val RsUseItem.pathAsList: List<String>?
     get() = useSpeck?.path?.text?.split("::")
 
-private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr && it !is RsVis }
 val <T : RsElement> List<T>.lastElement: T? get() = maxByOrNull { it.textOffset }
 
 val RsElement.stdlibAttributes: RsFile.Attributes
