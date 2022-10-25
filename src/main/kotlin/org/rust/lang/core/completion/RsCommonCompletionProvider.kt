@@ -129,7 +129,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 }
 
                 // RsPathExpr can become a macro by adding a trailing `!`, so we add macros to completion
-                if (element.parent is RsPathExpr && element.qualifier == null) {
+                if (element.parent is RsPathExpr && !(element.hasColonColon && element.isAtLeastEdition2018)) {
                     processMacroCallPathResolveVariants(element, isCompletion = true, filtered)
                 }
 
