@@ -531,6 +531,21 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }     //X
     """)
 
+    fun `test custom derive inside a function body`() = checkByCode("""
+        use test_proc_macros::DeriveStructFooDeclaration;
+
+        fn main() {
+            #[derive(DeriveStructFooDeclaration)]  // struct Foo;
+            struct Bar;
+
+            impl Foo {
+                fn bar(&self) {}
+            }     //X
+
+            Foo.bar()
+        }     //^
+    """)
+
     override val followMacroExpansions: Boolean
         get() = true
 }
