@@ -68,7 +68,7 @@ object CargoTestLocator : SMTestLocator {
         if (lineNum != null) {
             object : PsiLocation<PsiElement>(project, element) {
                 override fun getOpenFileDescriptor(): OpenFileDescriptor? =
-                    virtualFile?.let { OpenFileDescriptor(project, it, lineNum, 0) }
+                    virtualFile?.let { OpenFileDescriptor(project, it, lineNum - 1, 0) }
             }
         } else {
             PsiLocation.fromPsiElement(element)
