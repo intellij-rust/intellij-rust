@@ -17,16 +17,18 @@ import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 
 object RsProcMacroPsiUtil {
     fun canBeInProcMacroCallBody(psiElement: PsiElement): Boolean {
-        if (!ProcMacroApplicationService.isEnabled()) return false
+        if (!ProcMacroApplicationService.isAnyEnabled()) return false
         return psiElement.ancestors.any { it is RsAttrProcMacroOwner && canHaveProcMacroCall(it) }
     }
 
     private fun canHaveProcMacroCall(item: RsAttrProcMacroOwner): Boolean {
         val checkDerives = item is RsStructOrEnumItemElement
         for (meta in item.getTraversedRawAttributes(withCfgAttrAttribute = false).metaItems) {
-            if (canBeProcMacroAttributeCall(meta)) return true
+            if (canBeProcMacroAttributeCall(meta) && ProcMacroApplicationService.isAttrEnabled()) return true
             if (checkDerives && meta.name == "derive") {
-                if (meta.metaItemArgs?.metaItemList.orEmpty().any(::canBeCustomDerive)) return true
+                if (meta.metaItemArgs?.metaItemList.orEmpty().any(::canBeCustomDerive)) {
+                    return ProcMacroApplicationService.isDeriveEnabled()
+                }
             }
         }
         return false

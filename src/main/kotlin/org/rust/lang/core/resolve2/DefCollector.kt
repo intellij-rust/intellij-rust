@@ -15,6 +15,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.resolve.Namespace
@@ -366,6 +367,12 @@ class DefCollector(
         val defData = RsMacroDataWithHash.fromDefInfo(def).ok() ?: return null
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val mixHash = defData.mixHash(callData) ?: return null
+
+        if (defData.data is RsProcMacroData && callData.data.macroBody is MacroCallBody.FunctionLike) {
+            if (!ProcMacroApplicationService.isFunctionLikeEnabled()) {
+                return null
+            }
+        }
         val (expandedFile, expansion) =
             macroExpanderShared.createExpansionStub(project, macroExpander, defData.data, callData.data, mixHash).ok()
                 ?: (null to null)

@@ -33,7 +33,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
                 val rootPathParent = path.rootPath().parent
                 if (rootPathParent is RsMetaItem) {
-                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isEnabled()) return
+                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isFullyEnabled()) return
                 }
 
                 val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED

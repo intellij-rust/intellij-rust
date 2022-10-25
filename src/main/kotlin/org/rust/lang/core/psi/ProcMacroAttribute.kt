@@ -120,10 +120,11 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             explicitCustomAttributes: CustomAttributes? = null,
             ignoreProcMacrosDisabled: Boolean = false
         ): ProcMacroAttribute<T> {
-            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isEnabled()) return None
+            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isAnyEnabled()) return None
             if (stub != null) {
                 if (!stub.mayHaveCustomAttrs) {
                     return if (stub.mayHaveCustomDerive && RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
                         if (withDerives) {
                             val queryAttributes = owner.getQueryAttributes(explicitCrate, stub, outerAttrsOnly = true)
                             Derive(queryAttributes.customDeriveMetaItems)
@@ -150,6 +151,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             queryAttributes.metaItems.forEachIndexed { index, meta ->
                 if (meta.name == "derive") {
                     return if (RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
                         if (withDerives) {
                             Derive(queryAttributes.customDeriveMetaItems)
                         } else {
@@ -159,7 +161,8 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                         None
                     }
                 }
-                if (RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(meta, customAttributes)) {
+                if (RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(meta, customAttributes)
+                    && (ignoreProcMacrosDisabled || ProcMacroApplicationService.isAttrEnabled())) {
                     return Attr(meta, index)
                 }
             }

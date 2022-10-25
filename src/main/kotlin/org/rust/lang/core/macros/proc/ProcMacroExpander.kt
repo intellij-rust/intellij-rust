@@ -39,7 +39,7 @@ class ProcMacroExpander private constructor(
     private val server: ProcMacroServerPool?,
     private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
 ) : MacroExpander<RsProcMacroData, ProcMacroExpansionError>() {
-    private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isEnabled()
+    private val isEnabled: Boolean = if (server != null) true else ProcMacroApplicationService.isAnyEnabled()
 
     private fun serverOrErr(): RsResult<ProcMacroServerPool, ProcMacroExpansionError> =
         server.toResult().mapErr { if (isEnabled) ExecutableNotFound else ProcMacroExpansionIsDisabled }
@@ -49,6 +49,10 @@ class ProcMacroExpander private constructor(
         call: RsMacroCallData
     ): RsResult<Pair<CharSequence, RangeMap>, ProcMacroExpansionError> {
         val server = serverOrErr().unwrapOrElse { return Err(it) }
+
+        if (call.macroBody is MacroCallBody.FunctionLike && !ProcMacroApplicationService.isFunctionLikeEnabled()) {
+            return Err(ProcMacroExpansionIsDisabled)
+        }
 
         val (macroCallBodyText, attrText) = when (val macroBody = call.macroBody) {
             is MacroCallBody.FunctionLike -> MappedText.single(macroBody.text, 0) to null

@@ -43,7 +43,7 @@ class RsUnusedImportInspection : RsLintInspection() {
 
             // It's common to include more imports than needed in doctest sample code
             if (ignoreDoctest && item.containingCrate is DoctestCrate) return
-            if (enableOnlyIfProcMacrosEnabled && !ProcMacroApplicationService.isEnabled() && !isUnitTestMode) return
+            if (enableOnlyIfProcMacrosEnabled && !ProcMacroApplicationService.isFullyEnabled() && !isUnitTestMode) return
 
             val owner = item.parent as? RsItemsOwner ?: return
             val usage = owner.pathUsage
@@ -123,7 +123,7 @@ class RsUnusedImportInspection : RsLintInspection() {
             val toolWrapper = profile.getInspectionTool(SHORT_NAME, project)
             val tool = toolWrapper?.tool as? RsUnusedImportInspection ?: return true
             if (!tool.enableOnlyIfProcMacrosEnabled) return true
-            return ProcMacroApplicationService.isEnabled()
+            return ProcMacroApplicationService.isFullyEnabled()
         }
 
         const val SHORT_NAME: String = "RsUnusedImport"

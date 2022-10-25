@@ -10,7 +10,16 @@
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.macros.proc" percentOfUsers="0">
-            <description>Enables procedural macro expansion</description>
+            <description>Enables all types of procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.function-like" percentOfUsers="0">
+            <description>Enables function-like procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.derive" percentOfUsers="0">
+            <description>Enables derive procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="0">
+            <description>Enables attribute procedural macro expansion</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="100">
             <description>Enables crates local index</description>

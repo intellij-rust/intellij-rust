@@ -45,6 +45,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.RsFileType
@@ -833,8 +834,19 @@ private class MacroExpansionServiceImplInner(
 
         val isProcMacro = resolveResult is Ok && resolveResult.ok.data is RsProcMacroData
             || resolveResult is Err && resolveResult.err is ResolveMacroWithoutPsiError.NoProcMacroArtifact
+
+        val procMacroExperimentalFeature = when (val callKind = call.kind) {
+            is RsPossibleMacroCallKind.MacroCall -> RsExperiments.FN_LIKE_PROC_MACROS
+            is RsPossibleMacroCallKind.MetaItem -> if (RsProcMacroPsiUtil.canBeCustomDerive(callKind.meta)) {
+                RsExperiments.DERIVE_PROC_MACROS
+            } else {
+                RsExperiments.ATTR_PROC_MACROS
+            }
+        }
+
         val procMacroExpansionIsDisabled = isProcMacro
-            && (!isFeatureEnabled(EVALUATE_BUILD_SCRIPTS) || !isFeatureEnabled(PROC_MACROS))
+            && (!isFeatureEnabled(EVALUATE_BUILD_SCRIPTS) || !isFeatureEnabled(PROC_MACROS) &&
+                !isFeatureEnabled(procMacroExperimentalFeature))
         if (procMacroExpansionIsDisabled) {
             return GetMacroExpansionError.ExpansionError(ProcMacroExpansionError.ProcMacroExpansionIsDisabled)
         }
