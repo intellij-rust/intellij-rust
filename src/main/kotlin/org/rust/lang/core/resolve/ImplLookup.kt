@@ -806,7 +806,7 @@ class ImplLookup(
         val (formalSelfTy, generics, constGenerics) = typeAndGenerics ?: return null
         val probe = ctx.probe {
             val (_, implTraitRef, _) =
-                prepareSubstAndTraitRefRaw(ctx, generics, constGenerics, formalSelfTy, formalTraitRef, ref.selfTy, 0)
+                prepareSubstAndTraitRefRaw(ctx, generics, constGenerics, formalSelfTy, formalTraitRef, 0)
             ctx.combineTraitRefs(implTraitRef, ref)
         }
         if (!probe) return null
@@ -943,7 +943,7 @@ class ImplLookup(
         }
         testAssert { !candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java) }
         testAssert { !candidate.formalTrait.containsTyOfClass(TyInfer::class.java) }
-        val (subst, preparedRef, typeObligations) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy, recursionDepth + 1)
+        val (subst, preparedRef, typeObligations) = candidate.prepareSubstAndTraitRef(ctx, recursionDepth + 1)
         ctx.combineTraitRefs(ref, preparedRef)
         // pre-resolve type vars to simplify caching of already inferred obligation on fulfillment
         val candidateSubst = ctx.resolveTypeVarsIfPossible(subst) +
@@ -1390,7 +1390,6 @@ private sealed class SelectionCandidate {
 
             fun prepareSubstAndTraitRef(
                 ctx: RsInferenceContext,
-                selfTy: Ty,
                 recursionDepth: Int
             ): Triple<Substitution, TraitRef, List<Obligation>> = prepareSubstAndTraitRefRaw(
                 ctx,
@@ -1398,7 +1397,6 @@ private sealed class SelectionCandidate {
                 impl.constGenerics,
                 formalSelfTy,
                 formalTrait,
-                selfTy,
                 recursionDepth
             )
         }
@@ -1446,18 +1444,19 @@ private fun prepareSubstAndTraitRefRaw(
     constGenerics: List<CtConstParameter>,
     formalSelfTy: Ty,
     formalTrait: BoundElement<RsTraitItem>,
-    selfTy: Ty,
     recursionDepth: Int
 ): Triple<Substitution, TraitRef, List<Obligation>> {
     val subst = Substitution(
         typeSubst = typeGenerics.associateWith { ctx.typeVarForParam(it) },
         constSubst = constGenerics.associateWith { ctx.constVarForParam(it) }
     )
+    val substSelfTy = formalSelfTy.substitute(subst)
     val boundSubst = formalTrait.substitute(subst)
+        .substitute(mapOf(TyTypeParameter.self() to substSelfTy).toTypeSubst())
         .subst
-        .substituteInValues(mapOf(TyTypeParameter.self() to selfTy).toTypeSubst())
-    val (normSelfTy, obligations) = ctx.normalizeAssociatedTypesIn(formalSelfTy.substitute(subst), recursionDepth)
-    return Triple(subst, TraitRef(normSelfTy, BoundElement(formalTrait.element, boundSubst)), obligations)
+    val rawImplTraitRef = TraitRef(substSelfTy, BoundElement(formalTrait.element, boundSubst))
+    val (implTraitRef, obligations) = ctx.normalizeAssociatedTypesIn(rawImplTraitRef, recursionDepth)
+    return Triple(subst, implTraitRef, obligations)
 }
 
 private fun <T : Ty> T.withObligations(obligations: List<Obligation> = emptyList()): TyWithObligations<T> =
