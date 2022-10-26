@@ -268,18 +268,19 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         item: LookupElement
     ) {
         val document = context.document
-        val startOffset = context.startOffset
-        val curUseItem = context.getElementOfType<RsUseItem>()
+
         if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
-            document.insertString(startOffset, RS_RAW_PREFIX)
+            document.insertString(context.startOffset, RS_RAW_PREFIX)
+            context.commitDocument() // Fixed PSI element escape
         }
 
         if (element is RsGenericDeclaration) {
             addGenericTypeCompletion(element, document, context)
         }
 
-        when (element) {
+        val curUseItem = context.getElementOfType<RsUseItem>()
 
+        when (element) {
             is RsMod -> {
                 when (scopeName) {
                     "self",
