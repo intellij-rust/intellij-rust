@@ -42,6 +42,7 @@ import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.MAY_HAV
 import org.rust.lang.core.stubs.RsAttributeOwnerStub.CommonStubAttrFlags.MAY_HAVE_CUSTOM_DERIVE
 import org.rust.lang.core.stubs.RsAttributeOwnerStub.FileStubAttrFlags.MAY_HAVE_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsAttributeOwnerStub.FileStubAttrFlags.MAY_HAVE_STDLIB_ATTRIBUTES
+import org.rust.lang.core.stubs.RsAttributeOwnerStub.FunctionStubAttrFlags.MAY_BE_PROC_MACRO_DEF
 import org.rust.lang.core.stubs.RsAttributeOwnerStub.ModStubAttrFlags.MAY_HAVE_MACRO_USE
 import org.rust.lang.core.stubs.RsAttributeOwnerStub.UseItemStubAttrFlags.MAY_HAVE_PRELUDE_IMPORT
 import org.rust.lang.core.stubs.RsEmptyStmtType.shouldCreateStub
@@ -84,7 +85,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 230
+        private const val STUB_VERSION = 231
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -885,7 +886,10 @@ class RsFunctionStub(
 
     // Method resolve optimization: stub field access is much faster than PSI traversing
     val hasSelfParameters: Boolean get() = BitUtil.isSet(flags, HAS_SELF_PARAMETER_MASK)
-    val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, FunctionStubAttrFlags.MAY_BE_PROC_MACRO_DEF)
+    val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, MAY_BE_PROC_MACRO_DEF)
+
+    /** Only for proc macro definitions */
+    val preferredBraces: MacroBraces get() = MacroBraces.values()[(flags shr PREFERRED_BRACES) and 3]
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -934,6 +938,9 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, HAS_SELF_PARAMETER_MASK, psi.hasSelfParameters)
 
+            val preferredBraces = if (BitUtil.isSet(flags, MAY_BE_PROC_MACRO_DEF)) psi.guessPreferredBraces() else MacroBraces.PARENS
+            flags = flags or (preferredBraces.ordinal shl PREFERRED_BRACES)
+
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
 
             return RsFunctionStub(
@@ -957,6 +964,11 @@ class RsFunctionStub(
         private val VARIADIC_MASK: Int = nextBitMask()
         private val ASYNC_MASK: Int = nextBitMask()
         private val HAS_SELF_PARAMETER_MASK: Int = nextBitMask()
+        private val PREFERRED_BRACES: Int = run {
+            val mask = nextBitMask()
+            nextBitMask()  // second bit
+            mask.countTrailingZeroBits()
+        }
     }
 }
 

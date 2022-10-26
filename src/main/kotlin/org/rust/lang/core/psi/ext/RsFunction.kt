@@ -243,6 +243,9 @@ val QueryAttributes<*>.isProcMacroDef
         "proc_macro_derive"
     )
 
+val RsFunction.preferredBraces: MacroBraces
+    get() = greenStub?.preferredBraces ?: guessPreferredBraces()
+
 private fun PsiReference.getFunctionCallUsage(): RsCallExpr? {
     val path = element
     val pathExpr = path.parent
