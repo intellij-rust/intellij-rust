@@ -14,11 +14,6 @@ jobs:
             - name: Checkout repo content
               uses: actions/checkout@v2
 
-            - name: Setup python
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.9
-
             - name: Install python packages
               run: pip install -r scripts/requirements.txt
 

@@ -18,11 +18,6 @@ jobs:
                   repository: ${{ github.repository_owner }}/intellij-rust.github.io
                   path: intellij-rust.github.io
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: 3.9
-
             - name: Install python packages
               run: pip install -r intellij-rust.github.io/requirements.txt
 

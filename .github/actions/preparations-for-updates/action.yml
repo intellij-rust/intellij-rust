@@ -12,11 +12,6 @@ runs:
               components: rust-src, rustfmt, clippy # should be synchronized with `check` workflow
               default: true
 
-        - name: Set up Python
-          uses: actions/setup-python@v3
-          with:
-              python-version: '3.10'
-
         - name: Set up git user
           run: |
               git config --local user.email "intellij.rust@gmail.com"
