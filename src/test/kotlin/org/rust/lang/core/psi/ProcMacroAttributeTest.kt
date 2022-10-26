@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.intellij.lang.annotations.Language
 import org.rust.*
+import org.rust.ide.experiments.RsExperiments.ATTR_PROC_MACROS
+import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.psi.ProcMacroAttributeTest.TestProcMacroAttribute.*
@@ -378,6 +380,29 @@ class ProcMacroAttributeTest : RsTestBase() {
             #[attr_as_is]
             mod foo {}
         """, None)
+    }
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
+    fun `test not a macro if attr macro expansion is disabled 1`() {
+        setExperimentalFeatureEnabled(ATTR_PROC_MACROS, false, testRootDisposable)
+        doTest("""
+            use test_proc_macros::attr_as_is;
+
+            #[attr_as_is]
+            mod foo {}
+        """, None)
+    }
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, DERIVE_PROC_MACROS)
+    fun `test not a macro if attr macro expansion is disabled 2`() {
+        setExperimentalFeatureEnabled(ATTR_PROC_MACROS, false, testRootDisposable)
+        doTest("""
+            use test_proc_macros::attr_as_is;
+
+            #[attr_as_is]
+            #[derive(Foo)]
+            struct S;
+        """, Derive)
     }
 
     private fun doTest(@Language("Rust") code: String, expectedAttr: TestProcMacroAttribute) {

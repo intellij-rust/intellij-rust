@@ -6,7 +6,10 @@
 package org.rust.lang.core.resolve
 
 import org.rust.*
+import org.rust.ide.experiments.RsExperiments.ATTR_PROC_MACROS
+import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.FN_LIKE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 
@@ -32,7 +35,41 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, FN_LIKE_PROC_MACROS)
+    fun `test simple function-like macro with only function-like macro expansion enabled`() = checkByCode("""
+        use test_proc_macros::function_like_as_is;
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        function_like_as_is! {
+            fn foo() -> Foo { Foo }
+        }
+
+        fn main() {
+            foo().bar()
+        }       //^
+    """)
+
     fun `test custom derive`() = checkByCode("""
+        use test_proc_macros::DeriveImplForFoo;
+
+        #[derive(DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
+        struct Foo;
+        struct Bar;
+        impl Bar {
+            fn bar(&self) {}
+        }     //X
+
+        fn main() {
+            Foo.foo().bar()
+        }           //^
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, DERIVE_PROC_MACROS)
+    fun `test custom derive with only derive macro expansion enabled`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
 
         #[derive(DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
@@ -418,6 +455,17 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
     """)
 
     fun `test attr expanded to attribute argument`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        #[attr_replace_with_attr(struct X{})]
+        foo! {}                       //X
+        fn main() {
+            let _: X;
+        }        //^
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, ATTR_PROC_MACROS)
+    fun `test attr macro with only attr macro expansion enabled`() = checkByCode("""
         use test_proc_macros::attr_replace_with_attr;
 
         #[attr_replace_with_attr(struct X{})]

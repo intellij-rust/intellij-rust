@@ -1609,7 +1609,7 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     }
 
     val lookup = ImplLookup.relativeTo(constParameter)
-    if (ProcMacroApplicationService.isEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
+    if (ProcMacroApplicationService.isFullyEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
         RsDiagnostic.NonStructuralMatchTypeAsConstGenericParameter(typeReference, ty.shortPresentableText)
             .addToHolder(holder)
     }

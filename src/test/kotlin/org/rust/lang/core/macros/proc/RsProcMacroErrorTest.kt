@@ -6,7 +6,10 @@
 package org.rust.lang.core.macros.proc
 
 import org.rust.*
+import org.rust.ide.experiments.RsExperiments.ATTR_PROC_MACROS
+import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
+import org.rust.ide.experiments.RsExperiments.FN_LIKE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.RsMacroExpansionErrorTestBase
@@ -24,6 +27,32 @@ import org.rust.lang.core.macros.errors.GetMacroExpansionError
 class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     @WithExperimentalFeatures()
     fun `test macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+        //^ procedural macro expansion is not enabled
+        fn foo() {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, DERIVE_PROC_MACROS, ATTR_PROC_MACROS)
+    fun `test function-like macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
+        use test_proc_macros::function_like_as_is;
+
+        function_like_as_is! {}
+        //^ procedural macro expansion is not enabled
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, FN_LIKE_PROC_MACROS, ATTR_PROC_MACROS)
+    fun `test derive macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
+        use test_proc_macros::DeriveImplForFoo;
+
+        #[derive(DeriveImplForFoo)]
+               //^ procedural macro expansion is not enabled
+        struct Foo;
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, FN_LIKE_PROC_MACROS, DERIVE_PROC_MACROS)
+    fun `test attr macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::attr_as_is;
 
         #[attr_as_is]
