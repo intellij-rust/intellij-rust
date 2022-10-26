@@ -2358,4 +2358,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo<A: Foo<B>, B>(t: A) -> B { todo!() }
     """)
+
+    @CheckTestmarkHit(TypeInferenceMarks.RecursiveProjectionNormalization::class)
+    fun `test recursive projection in impl type`() = testExpr("""
+        struct S<T>(T);
+        trait Trait { type Item; }
+        impl Trait for S<<S<()> as Trait>::Item> { type Item = (); }
+        fn foo<T: Trait>(_: T) -> T::Item { todo!() }
+        fn bar(a: S<()>) {
+            let b = foo(a);
+            b;
+        } //^ <unknown>
+    """)
 }

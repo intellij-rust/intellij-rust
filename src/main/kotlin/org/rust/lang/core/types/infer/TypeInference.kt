@@ -948,7 +948,7 @@ class RsInferenceContext(
             }
             ProjectionCacheEntry.InProgress -> {
                 // While normalized A::B we are asked to normalize A::B.
-                // TODO rustc halts the compilation immediately (panics) here
+                TypeInferenceMarks.RecursiveProjectionNormalization.hit()
                 TyWithObligations(TyUnknown)
             }
             ProjectionCacheEntry.Error -> {
@@ -1429,6 +1429,7 @@ data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldab
 
 object TypeInferenceMarks {
     object CyclicType : Testmark()
+    object RecursiveProjectionNormalization : Testmark()
     object QuestionOperator : Testmark()
     object MethodPickTraitScope : Testmark()
     object MethodPickTraitsOutOfScope : Testmark()
