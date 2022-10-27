@@ -8,6 +8,8 @@ package org.rust.ide.lineMarkers
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.icons.CargoIcons
 import org.rust.fileTree
 import org.rust.lang.RsFileType
@@ -224,6 +226,20 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         /// ```
         fn foo() {}
     """.trimIndent())
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test tests in dependency`() = doTestByFileTree("dep-lib/lib.rs") {
+        dir("dep-lib") {
+            rust("lib.rs", """
+                /// ```
+                /// let a = 5;
+                /// ```
+                fn foo() {}
+                #[test]
+                fn test() {}
+            """)
+        }
+    }
 
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
