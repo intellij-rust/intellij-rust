@@ -13,6 +13,9 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.ide.experiments.RsExperiments
+import org.rust.ide.experiments.RsExperiments.ATTR_PROC_MACROS
+import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
+import org.rust.ide.experiments.RsExperiments.FN_LIKE_PROC_MACROS
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
 import org.rust.lang.core.macros.errors.readMacroExpansionError
 import org.rust.lang.core.macros.errors.writeMacroExpansionError
@@ -83,6 +86,7 @@ class RsProcMacroExpanderTest : RsTestBase() {
     }
 
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+    @WithoutExperimentalFeatures(FN_LIKE_PROC_MACROS, DERIVE_PROC_MACROS, ATTR_PROC_MACROS)
     fun `test ProcMacroExpansionIsDisabled error 1`() {
         val expander = ProcMacroExpander.new(project, server = null)
         expander.checkError<ProcMacroExpansionError.ProcMacroExpansionIsDisabled>("", "", "")
