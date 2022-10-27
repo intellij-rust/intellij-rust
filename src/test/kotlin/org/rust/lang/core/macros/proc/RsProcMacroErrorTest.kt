@@ -35,6 +35,7 @@ class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     """)
 
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, DERIVE_PROC_MACROS, ATTR_PROC_MACROS)
+    @WithoutExperimentalFeatures(FN_LIKE_PROC_MACROS)
     fun `test function-like macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::function_like_as_is;
 
@@ -43,6 +44,7 @@ class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     """)
 
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, FN_LIKE_PROC_MACROS, ATTR_PROC_MACROS)
+    @WithoutExperimentalFeatures(DERIVE_PROC_MACROS)
     fun `test derive macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::DeriveImplForFoo;
 
@@ -52,6 +54,7 @@ class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     """)
 
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, FN_LIKE_PROC_MACROS, DERIVE_PROC_MACROS)
+    @WithoutExperimentalFeatures(ATTR_PROC_MACROS)
     fun `test attr macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::attr_as_is;
 
