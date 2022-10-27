@@ -580,6 +580,32 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ Foo<A1, 1, C1>
     """)
 
+    fun `test normalizable Self-related associated type path`() = testType("""
+        struct S<T>(T);
+        trait Foo<T> {
+            type Item;
+            fn foo(&self) -> Self::Item;
+        }
+        impl<T, C, R> Foo<T> for S<C> where C: Foo<R>
+        {
+            type Item = C::Item;
+            fn foo(&self) -> Self::Item { todo!() }
+        }                        //^ <C as Foo<R>>::Item
+    """, normalize = true)
+
+    fun `test normalizable associated type path with nested obligations`() = testType("""
+        struct W<T>(T);
+        trait Foo { type Item; }
+        impl<A, B> Foo for W<A> where A: Foo<Item=B> { type Item = B; }
+        struct S;
+        struct X;
+        impl Foo for S {
+            type Item = X;
+        }
+        type T = <W<S> as Foo>::Item;
+                              //^ X
+    """, normalize = true)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
