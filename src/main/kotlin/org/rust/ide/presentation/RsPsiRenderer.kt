@@ -456,6 +456,7 @@ open class RsPsiRenderer(
                         sb.append(", ")
                     }
                 }
+                @Suppress("NAME_SHADOWING")
                 assocTypeBindings.joinToWithBuffer(sb, ", ") { sb ->
                     appendPath(sb, this.path)
                     sb.append("=")
@@ -481,6 +482,7 @@ open class RsPsiRenderer(
         sb: StringBuilder,
         list: List<RsValueParameter>
     ) {
+        @Suppress("NAME_SHADOWING")
         list.joinToWithBuffer(sb, separator = ", ", prefix = "(", postfix = ")") { sb ->
             typeReference?.let { appendTypeReference(sb, it) }
         }
@@ -598,12 +600,12 @@ open class TypeSubstitutingPsiRenderer(
     options: PsiRenderingOptions,
     private val subst: Substitution
 ) : RsPsiRenderer(options) {
-    override fun appendTypeReference(sb: StringBuilder, ref: RsTypeReference) {
-        val ty = ref.rawType
+    override fun appendTypeReference(sb: StringBuilder, type: RsTypeReference) {
+        val ty = type.rawType
         if (ty is TyTypeParameter && subst[ty] != null) {
             sb.append(ty.substAndGetText(subst))
         } else {
-            super.appendTypeReference(sb, ref)
+            super.appendTypeReference(sb, type)
         }
     }
 

@@ -55,7 +55,6 @@ plugins {
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.1"
-    antlr
 }
 
 idea {
@@ -458,11 +457,6 @@ project(":") {
                 .forEach { it.resolve() }
         }
     }
-
-    // Exclude antlr4 from transitive dependencies of `:api` configuration (https://github.com/gradle/gradle/issues/820)
-    configurations.api {
-        setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
-    }
 }
 
 project(":idea") {
@@ -504,6 +498,14 @@ project(":debugger") {
             plugins.set(clionPlugins)
         }
     }
+
+    // Kotlin Gradle support doesn't generate proper extensions if the plugin is not declared in `plugin` block.
+    // But if we do it, `antlr` plugin will be applied to root project as well that we want to avoid.
+    // So, let's define all necessary things manually
+    val antlr by configurations
+    val generateGrammarSource: AntlrTask by tasks
+    val generateTestGrammarSource: AntlrTask by tasks
+
     dependencies {
         implementation(project(":"))
         antlr("org.antlr:antlr4:4.11.1")
@@ -511,8 +513,11 @@ project(":debugger") {
         testImplementation(project(":", "testOutput"))
     }
     tasks {
-        withType<KotlinCompile> {
-            dependsOn(":debugger:generateGrammarSource")
+        compileKotlin {
+            dependsOn(generateGrammarSource)
+        }
+        compileTestKotlin {
+            dependsOn(generateTestGrammarSource)
         }
 
         generateGrammarSource {

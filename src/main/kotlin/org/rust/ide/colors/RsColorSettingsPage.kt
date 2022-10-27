@@ -33,7 +33,10 @@ class RsColorSettingsPage : ColorSettingsPage {
             // TODO: The annotations in this file should be generable, and would be more accurate for it.
             val stream = RsColorSettingsPage::class.java.classLoader
                 .getResourceAsStream("org/rust/ide/colors/highlighterDemoText.rs")
-            StreamUtil.convertSeparators(StreamUtil.readText(stream, "UTF-8"))
+                ?: error("Cannot load resource `org/rust/ide/colors/highlighterDemoText.rs`")
+            stream.use {
+                StreamUtil.convertSeparators(it.reader().readText())
+            }
         }
     }
 }

@@ -162,7 +162,7 @@ fun String.toSnakeCase(upper: Boolean): String {
             } else {
                 char.isLowerCase()
             }
-            result.append(if (upper) char.toUpperCase() else char.toLowerCase())
+            result.append(if (upper) char.uppercaseChar() else char.lowercaseChar())
             firstWord = false
         }
     }

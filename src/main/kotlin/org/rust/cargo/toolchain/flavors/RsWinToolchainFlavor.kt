@@ -22,7 +22,7 @@ class RsWinToolchainFlavor : RsToolchainFlavor() {
             .filter { it.isDirectory() }
             .filter {
                 val name = FileUtil.getNameWithoutExtension(it.fileName.toString())
-                name.toLowerCase().startsWith("rust")
+                name.lowercase().startsWith("rust")
             }
             .map { it.resolve("bin") }
             .filter { it.isDirectory() }

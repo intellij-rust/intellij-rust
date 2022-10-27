@@ -699,5 +699,5 @@ enum class CargoCommands(val description: String, val options: List<CargoOption>
         )
     );
 
-    val presentableName: String get() = name.toLowerCase().replace('_', '-')
+    val presentableName: String get() = name.lowercase().replace('_', '-')
 }

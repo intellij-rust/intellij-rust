@@ -45,7 +45,7 @@ object RsPackageNameValidator {
         name[0].isDigit() -> "Package names starting with a digit cannot be used as a crate name"
         !name.all { it.isLetterOrDigit() || it == '-' || it == '_' } ->
             "Package names should contain only letters, digits, `-` and `_`"
-        SystemInfo.isWindows && name.toLowerCase() in WINDOWS_BLACKLIST -> "The name `$name` is a reserved Windows filename"
+        SystemInfo.isWindows && name.lowercase() in WINDOWS_BLACKLIST -> "The name `$name` is a reserved Windows filename"
         else -> null
     }
 }

@@ -256,7 +256,7 @@ private class PersistentCacheData(
 
                 if (!namesFileExists || localSerMgr.isNameStorageCorrupted) {
                     if (localSerMgr.isNameStorageCorrupted) {
-                        localSerMgr.repairNameStorage()
+                        localSerMgr.repairNameStorage(Exception("The storage has already been corrupted"))
                         if (localSerMgr.isNameStorageCorrupted) {
                             throw IOException("Serialization Manager is corrupted after repair")
                         }

@@ -31,6 +31,7 @@ import org.rust.lang.core.types.ty.stripReferences
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.parseRustStringCharacters
 import org.rust.openapiext.isUnitTestMode
+import org.rust.stdext.capitalized
 
 data class ParameterMatchInfo(val range: TextRange, val text: String)
 
@@ -395,7 +396,7 @@ private fun checkSpecifierType(argument: RsFormatMacroArg, parameter: FormatPara
     val expr = argument.expr
     val type = expr.type.stripReferences()
     if (type !in ALLOWED_SPECIFIERS_TYPES) {
-        return ErrorAnnotation(argument.textRange, "${parameter.specifier.capitalize()} specifier must be of type `usize`")
+        return ErrorAnnotation(argument.textRange, "${parameter.specifier.capitalized()} specifier must be of type `usize`")
     }
     return null
 }

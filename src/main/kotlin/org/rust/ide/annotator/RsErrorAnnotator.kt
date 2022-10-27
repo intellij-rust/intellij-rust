@@ -82,6 +82,7 @@ import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.areUnstableFeaturesAvailable
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.openapiext.isUnitTestMode
+import org.rust.stdext.capitalized
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -597,7 +598,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             )
             else -> {
                 val itemType = when (element) {
-                    is RsItemElement -> element.itemKindName.capitalize()
+                    is RsItemElement -> element.itemKindName.capitalized()
                     else -> "Item"
                 }
 

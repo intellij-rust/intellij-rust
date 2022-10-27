@@ -5,7 +5,6 @@
 
 package org.rust.ide.docs
 
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -46,7 +45,8 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         InlineFile(code)
 
         val (originalElement, offset) = findElement()
-        val element = DocumentationManager.getInstance(project)
+        @Suppress("DEPRECATION")
+        val element = com.intellij.codeInsight.documentation.DocumentationManager.getInstance(project)
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 
         val actual = RsDocumentationProvider().block(element, originalElement)?.trim()
@@ -74,7 +74,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
         // BACKCOMPAT: 2022.1
         @Suppress("DEPRECATION")
-        val element = DocumentationManager.getInstance(project)
+        val element = com.intellij.codeInsight.documentation.DocumentationManager.getInstance(project)
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 
         val actualUrls = RsDocumentationProvider().getUrlFor(element, originalElement)

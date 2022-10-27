@@ -27,6 +27,7 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.capitalized
 
 private typealias TestConfigProvider = (List<PsiElement>, Boolean) -> TestConfig?
 
@@ -205,7 +206,7 @@ private class DirectoryTestConfig(
     override val exact = false
 
     override val configurationName: String
-        get() = "${StringUtil.pluralize(commandName).capitalize()} in '${sourceElement.name}'"
+        get() = "${StringUtil.pluralize(commandName).capitalized()} in '${sourceElement.name}'"
 }
 
 private class MultipleFileTestConfig(
@@ -217,7 +218,7 @@ private class MultipleFileTestConfig(
     override val exact: Boolean = false
 
     override val configurationName: String
-        get() = "${commandName.capitalize()} multiple selected files"
+        get() = "${commandName.capitalized()} multiple selected files"
 }
 
  class SingleItemTestConfig(
@@ -236,7 +237,7 @@ private class MultipleFileTestConfig(
 
     override val configurationName: String
         get() = buildString {
-            append(commandName.capitalize())
+            append(commandName.capitalized())
             append(" ")
 
             if (sourceElement !is RsMod) {

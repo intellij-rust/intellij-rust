@@ -74,7 +74,7 @@ import java.nio.file.Paths
 
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
 
-// BACKCOMPAT: 2021.1. Added not to break binary compatibility with EduTools plugin
+// BACKCOMPAT: 2022.2. Added not to break binary compatibility with EduTools plugin
 @Suppress("DEPRECATION")
 fun RsToolchain.cargo(): Cargo = (this as RsToolchainBase).cargo()
 
