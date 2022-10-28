@@ -888,9 +888,10 @@ class RsInferenceContext(
     fun constVarForParam(const: CtConstParameter): Const = CtInferVar(const)
 
     fun <T : TypeFoldable<T>> fullyNormalizeAssociatedTypesIn(ty: T): T {
-        return ty.foldTyProjectionWith {
-            optNormalizeProjectionType(it, 0)?.value ?: TyUnknown
-        }
+        val (normalizedTy, obligations) = normalizeAssociatedTypesIn(ty)
+        obligations.forEach(fulfill::registerPredicateObligation)
+        fulfill.selectWherePossible()
+        return fullyResolve(normalizedTy)
     }
 
     /** Deeply normalize projection types. See [normalizeProjectionType] */
