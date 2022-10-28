@@ -20,6 +20,7 @@ import org.rust.cargo.runconfig.command.CargoRunConfigurationProducer
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.ide.refactoring.RsNamesValidator
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RS_RAW_PREFIX
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -136,7 +137,10 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return base.ancestorOrSelf()
     }
 
-    protected abstract fun isSuitable(element: PsiElement): Boolean
+    protected open fun isSuitable(element: PsiElement): Boolean {
+        val crate = (element as? RsElement)?.containingCrate?.asNotFake
+        return crate?.origin == PackageOrigin.WORKSPACE
+    }
 
     protected fun isIgnoredTest(element: PsiElement): Boolean =
         element is RsFunction && element.findOuterAttr("ignore") != null

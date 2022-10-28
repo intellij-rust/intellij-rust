@@ -37,12 +37,15 @@ class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase(
         registerDirectoryConfigProvider { dir -> createConfigForCargoPackage(dir) }
     }
 
-    override fun isSuitable(element: PsiElement): Boolean =
-        when (element) {
+    override fun isSuitable(element: PsiElement): Boolean {
+        if (!super.isSuitable(element)) return false
+        return when (element) {
             is RsMod -> hasTestFunction(element)
             is RsFunction -> element.isTest
+            is RsDocCodeFence -> true
             else -> false
         }
+    }
 
     private fun createConfigForCargoProject(dir: PsiDirectory): TestConfig? {
         val dirPath = dir.virtualFile.pathAsPath
@@ -70,7 +73,7 @@ class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase(
                 val ctx = originalElement.getDoctestCtx() ?: return@mapNotNull null
                 originalElement to ctx
             }
-            .singleOrNull()
+            .singleOrNull { (originalElement, _) -> isSuitable(originalElement) }
             ?: return null
         val target = codeFence.containingCargoTarget ?: return null
         val ownerPath = ctx.owner.crateRelativePath.configPath() ?: return null
@@ -137,7 +140,7 @@ private val KNOWN_DOCTEST_ATTRIBUTES = setOf(
 )
 
 fun RsDocCodeFence.getDoctestCtx(): DocTestContext? {
-    if (containingCrate?.areDoctestsEnabled != true) return null
+    if (!containingCrate.areDoctestsEnabled) return null
     if (DoctestInfo.hasUnbalancedCodeFencesBefore(this)) return null
 
     val owner = containingDoc.owner as? RsQualifiedNamedElement ?: return null
