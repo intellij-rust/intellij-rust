@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -237,4 +238,10 @@ fun setExperimentalFeatureEnabled(featureId: String, enabled: Boolean, disposabl
     val oldValue = isFeatureEnabled(featureId)
     setFeatureEnabled(featureId, enabled)
     Disposer.register(disposable) { setFeatureEnabled(featureId, oldValue) }
+}
+
+fun setRegistryOptionEnabled(registryValue: RegistryValue, enabled: Boolean, disposable: Disposable) {
+    val oldValue = registryValue.asBoolean()
+    registryValue.setValue(enabled)
+    Disposer.register(disposable) { registryValue.setValue(oldValue) }
 }

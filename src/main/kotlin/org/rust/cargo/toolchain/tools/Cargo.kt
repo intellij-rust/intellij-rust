@@ -282,20 +282,17 @@ class Cargo(
         // `--keep-going` is needed here to compile as many proc macro artifacts as possible
         val additionalArgs = mutableListOf("--message-format", "json", "--workspace", "--all-targets")
         val useKeepGoing = rustcVersion != null && rustcVersion.semver >= RUST_1_62
+        val envMap = mutableMapOf<String, String>()
         if (useKeepGoing) {
             additionalArgs += listOf("-Z", "unstable-options", "--keep-going")
+            envMap += RUSTC_BOOTSTRAP to "1"
         }
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
-        val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
-            val envMap = mutableMapOf(RUSTC_WRAPPER to nativeHelper.toString())
-            if (useKeepGoing) {
-                envMap += RUSTC_BOOTSTRAP to "1"
-            }
-            EnvironmentVariablesData.create(envMap, true)
-        } else {
-            EnvironmentVariablesData.DEFAULT
+        if (nativeHelper != null && USE_BUILD_SCRIPT_WRAPPER.asBoolean()) {
+            envMap += RUSTC_WRAPPER to nativeHelper.toString()
         }
 
+        val envs = EnvironmentVariablesData.create(envMap, true)
         val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs, environmentVariables = envs)
 
         val processOutput = commandLine.execute(owner, listener = listener)
@@ -535,6 +532,8 @@ class Cargo(
 
         @JvmStatic
         val TEST_NOCAPTURE_ENABLED_KEY: RegistryValue = Registry.get("org.rust.cargo.test.nocapture")
+
+        val USE_BUILD_SCRIPT_WRAPPER: RegistryValue = Registry.get("org.rust.cargo.evaluate.build.scripts.wrapper")
 
         const val NAME: String = "cargo"
         const val WRAPPER_NAME: String = "xargo"
