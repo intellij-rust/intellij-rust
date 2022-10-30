@@ -455,8 +455,13 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     private fun walkArm(discriminantCmt: Cmt, arm: RsMatchArm, mode: MatchMode) {
         arm.patList.forEach { walkPat(discriminantCmt, it, mode) }
         val guard = arm.matchArmGuard
-        if (guard?.let == null) { // TODO: support `if let guard` syntax
+        if (guard?.let == null) {
             guard?.expr?.let { consumeExpr(it) }
+        } else {
+            val init = guard.expr!!
+            walkExpr(init)
+            val initCmt = mc.processExpr(init)
+            guard.pat?.let { walkIrrefutablePat(initCmt, it) }
         }
         arm.expr?.let { consumeExpr(it) }
     }
