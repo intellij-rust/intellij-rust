@@ -10,7 +10,7 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.TreeAnchorizer
-import com.intellij.ide.util.treeView.smartTree.Filter
+import com.intellij.ide.util.treeView.smartTree.NodeProvider
 import com.intellij.ide.util.treeView.smartTree.Sorter
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
@@ -20,6 +20,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PlatformIcons
 import org.rust.ide.presentation.getPresentationForStructure
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnitTestMode
@@ -28,6 +29,8 @@ import org.rust.stdext.buildList
 class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
     StructureViewModelBase(file, editor, RsStructureViewElement(file)),
     StructureViewModel.ElementInfoProvider {
+
+    private val nodeProviders: List<NodeProvider<TreeElement>> = listOf(RsMacroExpandedItemsProvider())
 
     init {
         withSuitableClasses(
@@ -43,10 +46,6 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
         )
     }
 
-    override fun getFilters(): Array<Filter> = arrayOf(
-        RsMacroExpandedFilter()
-    )
-
     override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
 
     override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean =
@@ -57,6 +56,9 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
             is RsTypeAlias -> true
             else -> false
         }
+
+    override fun getNodeProviders(): Collection<NodeProvider<TreeElement>> = nodeProviders
+    override fun isEnabled(provider: NodeProvider<*>): Boolean = provider is RsMacroExpandedItemsProvider
 }
 
 class RsStructureViewElement(
@@ -81,22 +83,27 @@ class RsStructureViewElement(
             ?: PresentationData("", null, null, null)
     }
 
-    override fun getChildren(): Array<TreeElement> =
-        childElements.map(::RsStructureViewElement).toTypedArray()
+    override fun getChildren(): Array<TreeElement> {
+        return getChildren(showMacroExpansions = false).toTypedArray()
+    }
 
-    private val childElements: List<RsElement>
-        get() {
-            return when (val psi = psi) {
-                is RsEnumItem -> psi.variants
-                is RsTraitOrImpl -> psi.expandedMembers
-                is RsMod -> extractItems(psi)
-                is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
-                is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
-                is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
-                is RsReplCodeFragment -> psi.namedElementsUnique.values + psi.getVariablesDeclarations()
-                else -> emptyList()
-            }
-        }
+    fun getChildren(showMacroExpansions: Boolean): List<RsStructureViewElement> {
+        return getChildElements(showMacroExpansions).map(::RsStructureViewElement)
+    }
+
+    private fun getChildElements(showMacroExpansions: Boolean): List<RsElement> {
+        val items = when (val psi = psi) {
+            is RsEnumItem -> psi.variants
+            is RsTraitOrImpl -> psi.expandedMembers
+            is RsMod -> extractItems(psi)
+            is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
+            is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
+            is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
+            is RsReplCodeFragment -> psi.namedElementsUnique.values + psi.getVariablesDeclarations()
+            else -> emptyList()
+        }.filter { !(it.isExpandedFromMacro xor showMacroExpansions) }
+        return items
+    }
 
     private fun extractItems(psi: RsItemsOwner): List<RsElement> =
         extractItems(psi.itemsAndMacros)
