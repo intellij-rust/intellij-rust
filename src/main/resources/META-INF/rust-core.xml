@@ -1148,6 +1148,10 @@
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsStatementUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsItemUpDownMover"/>
 
+        <!-- Qualified Name Provider -->
+
+        <qualifiedNameProvider implementation="org.rust.ide.docs.RsQualifiedNameProvider"/>
+
         <!-- Run Anything -->
 
         <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"

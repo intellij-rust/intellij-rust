@@ -13,6 +13,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.crate.Crate
@@ -90,16 +92,15 @@ data class RsQualifiedName private constructor(
     }
 
     /** Tries to find rust qualified name element related to this qualified name */
-    fun findPsiElement(psiManager: PsiManager, context: RsElement): RsQualifiedNamedElement? {
+    fun findPsiElement(psiManager: PsiManager, project: Project): RsQualifiedNamedElement? {
         val item = childItems.lastOrNull() ?: parentItem
 
         // If it's link to crate, try to find the corresponding `lib.rs` file
         if (item.type == CRATE) {
-            return findCrateRoot(item, psiManager, context)
+            return project.cargoProjects.allProjects.mapNotNull { findCrateRoot(item, psiManager, it) }.firstOrNull()
         }
 
         // Otherwise, split search into two steps:
-        val project = context.project
         // First: look for `RsQualifiedNamedElement` with the same name as expected,
         // generate sequence of all possible reexports of this element and check
         // if any variant has the same `RsQualifiedName`
@@ -129,10 +130,10 @@ data class RsQualifiedName private constructor(
         return result
     }
 
-    private fun findCrateRoot(item: Item, psiManager: PsiManager, context: RsElement): RsFile? {
+    private fun findCrateRoot(item: Item, psiManager: PsiManager, project: CargoProject): RsFile? {
         var target: CargoWorkspace.Target? = null
 
-        loop@ for (pkg in context.cargoWorkspace?.packages.orEmpty()) {
+        loop@ for (pkg in project.workspace?.packages.orEmpty()) {
             val libTarget = pkg.libTarget
             if (libTarget?.normName == item.name) {
                 target = libTarget
@@ -378,6 +379,7 @@ data class RsQualifiedName private constructor(
                     MOD
                 }
                 is RsModDeclItem -> MOD
+                is RsEnumVariant -> ENUM
                 else -> error("Unexpected type: `$this`")
             }
             return Item(name, itemType, this)

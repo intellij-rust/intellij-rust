@@ -154,7 +154,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                 ?.reference
                 ?.resolveTypeAliasToImpl()
         } else {
-            qualifiedName.findPsiElement(psiManager, element)
+            qualifiedName.findPsiElement(psiManager, element.project)
         }
     }
 
