@@ -177,8 +177,8 @@ class CFGBuilder(
         return addAstNode(pat, patsExit)
     }
 
-    private fun processConditionPats(condition: RsCondition?, pred: CFGNode): CFGNode {
-        val pats = condition?.patList ?: return pred
+    private fun processConditionPats(letExpr: RsLetExpr, pred: CFGNode): CFGNode {
+        val pats = letExpr.patList ?: return pred
         val conditionExit = addDummyNode()
         for (pat in pats) {
             val patExit = process(pat, pred)
@@ -215,6 +215,13 @@ class CFGBuilder(
         val exit = process(letDecl.pat, initExit)
 
         finishWithAstNode(letDecl, exit)
+    }
+
+    override fun visitLetExpr(letExpr: RsLetExpr) {
+        val initExit = process(letExpr.expr, pred)
+        val exit = process(letExpr.pat, initExit)
+
+        finishWithAstNode(letExpr, exit)
     }
 
     override fun visitNamedFieldDecl(fieldDecl: RsNamedFieldDecl) = finishWith(pred)
@@ -392,8 +399,14 @@ class CFGBuilder(
         val condition = ifExpr.condition
         val expr = condition?.expr
 
-        val exprExit = process(expr, pred)
-        val conditionPatsExit = processConditionPats(condition, exprExit)
+        val (exprExit, conditionPatsExit) = if (expr is RsLetExpr) {
+            val exprExit = process(expr.expr, pred)
+            val conditionPatsExit = processConditionPats(expr, exprExit)
+            exprExit to conditionPatsExit
+        } else {
+            val exprExit = process(expr, pred)
+            exprExit to exprExit
+        }
 
         val thenExit = process(ifExpr.block, conditionPatsExit)
 
@@ -439,12 +452,17 @@ class CFGBuilder(
             val condition = whileExpr.condition
             val expr = condition?.expr
 
-            val exprExit = process(expr, loopBack)
-            addContainedEdge(exprExit, whileExprExit)
+            val exprExit = if (expr is RsLetExpr) {
+                val exprExit = process(expr.expr, loopBack)
+                addContainedEdge(exprExit, whileExprExit)
+                processConditionPats(expr, exprExit)
+            } else {
+                val exprExit = process(expr, loopBack)
+                addContainedEdge(exprExit, whileExprExit)
+                exprExit
+            }
 
-            val conditionPatsExit = processConditionPats(condition, exprExit)
-
-            val bodyExit = process(whileExpr.block, conditionPatsExit)
+            val bodyExit = process(whileExpr.block, exprExit)
 
             addContainedEdge(bodyExit, loopBack)
         }

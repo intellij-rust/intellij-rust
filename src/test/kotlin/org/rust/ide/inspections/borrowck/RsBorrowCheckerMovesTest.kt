@@ -391,12 +391,12 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
         impl Deref for SmartPointer {
             type Target = S;
-            
+
             fn deref(&self) -> &S {
                 &self.value
             }
         }
-        
+
         fn main() {
             let x = SmartPointer { value: S };
             <error descr="Cannot move">*x</error>;
@@ -470,6 +470,48 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
                 Some(s)
             } else {
                 x
+            };
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test if let chain 1`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let x: Option<S> = Some(S);
+
+            if let Some(s) = x && false {
+                Some(s)
+            } else {
+                <error descr="Use of moved value">x</error>
+            };
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test if let chain 2`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let x: Option<S> = Some(S);
+
+            if let Some(s) = x && let <error descr="Use of moved value">Some(s)</error> = x {
+                Some(s);
+            };
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test if let chain 3`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let x: Option<S> = Some(S);
+            let y: Option<S> = Some(S);
+
+            if let Some(s) = x && let Some(u) = y {
+                Some(s);
             };
         }
     """, checkWarn = false)
@@ -618,7 +660,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         struct S;
         fn main() {
             let v: Vec<S> = vec![S, S, S];
-            <error descr="Cannot move">if let [a, b, c] = v[..] {}</error>;
+            if <error descr="Cannot move">let [a, b, c] = v[..]</error> {};
         }
     """, checkWarn = false)
 
