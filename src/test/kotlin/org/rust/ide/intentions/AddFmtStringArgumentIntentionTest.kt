@@ -9,6 +9,9 @@ import org.intellij.lang.annotations.Language
 import org.rust.ide.intentions.addFmtStringArgument.AddFmtStringArgumentIntention
 
 class AddFmtStringArgumentIntentionTest : RsIntentionTestBase(AddFmtStringArgumentIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test no args`() = doTest("""
         fn main() {
             println!("x = /*caret*/");

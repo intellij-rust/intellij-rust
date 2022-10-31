@@ -14,6 +14,9 @@ import org.rust.singleProject
 import org.rust.workspaceOrFail
 
 class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     @MockCargoFeatures("foo")
     fun `test availability range`() = checkAvailableInSelectionOnly("""
         #[cfg(<selection>feature = "foo"</selection>)]

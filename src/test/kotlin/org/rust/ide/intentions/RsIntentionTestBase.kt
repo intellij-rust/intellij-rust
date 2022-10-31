@@ -24,7 +24,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     protected val intention: IntentionAction
         get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
 
-    protected open val previewExpected: Boolean get() = true
+    protected open val previewExpected: Boolean get() = intention.startInWriteAction()
 
     fun `test intention has documentation`() {
         if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return

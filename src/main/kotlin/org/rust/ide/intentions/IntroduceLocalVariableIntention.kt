@@ -5,9 +5,11 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.ide.refactoring.introduceVariable.extractExpression
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestors
@@ -39,4 +41,7 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
         extractExpression(editor, ctx, postfixLet = false)
     }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 }

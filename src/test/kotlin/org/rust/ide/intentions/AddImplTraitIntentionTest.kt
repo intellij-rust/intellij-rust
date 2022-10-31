@@ -6,6 +6,9 @@
 package org.rust.ide.intentions
 
 class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test empty trait`() = doAvailableTestWithLiveTemplate("""
         trait Foo {}
 

@@ -6,6 +6,9 @@
 package org.rust.ide.intentions
 
 class AddImportIntentionTest : RsIntentionTestBase(AddImportIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test not available in use statements`() = doUnavailableTest("""
         mod foo {
             pub struct Foo;
