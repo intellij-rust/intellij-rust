@@ -9,7 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.rust.RsTestBase
 
 abstract class RsIntentionTestPlatformBase : RsTestBase() {
-    protected fun checkPreviewAndLaunchAction(intention: IntentionAction) {
+    protected fun checkPreviewAndLaunchAction(intention: IntentionAction, preview: String?) {
         myFixture.launchAction(intention)
     }
 }

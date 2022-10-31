@@ -43,10 +43,11 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     protected fun doAvailableTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        @Language("Rust") preview: String? = null,
         fileName: String = "main.rs"
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
-        launchAction()
+        launchAction(preview?.trimIndent())
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -92,13 +93,14 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
-    protected fun launchAction() {
+    protected fun launchAction(@Language("Rust") preview: String? = null) {
         UIUtil.dispatchAllInvocationEvents()
         // Check preview only for intentions from Rust plugin
         if (intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) {
             if (previewExpected) {
-                checkPreviewAndLaunchAction(intention)
+                checkPreviewAndLaunchAction(intention, preview)
             } else {
+                val intention = intention
                 val previewInfo = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(project, intention, myFixture.file, myFixture.editor)
                 assertEquals(IntentionPreviewInfo.EMPTY, previewInfo)
                 myFixture.launchAction(intention)

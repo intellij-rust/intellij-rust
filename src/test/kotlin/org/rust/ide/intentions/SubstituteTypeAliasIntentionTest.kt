@@ -219,6 +219,16 @@ class SubstituteTypeAliasIntentionTest : RsIntentionTestBase(SubstituteTypeAlias
         fn foo<T: foo::Trait>() -> S {
             unimplemented!()
         }
+    """, preview = """
+        mod foo {
+            pub struct S;
+            pub trait Trait {
+                type Item = S;
+            }
+        }
+        fn foo<T: foo::Trait>() -> S {
+            unimplemented!()
+        }
     """)
 
     fun `test substitute type alias`() = doAvailableTest("""

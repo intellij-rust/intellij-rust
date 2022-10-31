@@ -101,19 +101,26 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     """)
 
     fun `test import unresolved type`() = doAvailableTest("""
-            use crate::a::foo;
-            mod a {
-                pub struct S;
-                pub fn foo() -> S { S }
-            }
-            fn main() { let var/*caret*/ = foo(); }
+        use crate::a::foo;
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+        fn main() { let var/*caret*/ = foo(); }
     """, """
-            use crate::a::{foo, S};
-            mod a {
-                pub struct S;
-                pub fn foo() -> S { S }
-            }
-            fn main() { let var: S = foo(); }
+        use crate::a::{foo, S};
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+        fn main() { let var: S = foo(); }
+    """, preview = """
+        use crate::a::foo;
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+        fn main() { let var: S = foo(); }
     """)
 
     fun `test try import unresolved type`() = doAvailableTest("""
@@ -148,64 +155,97 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
                 pub fn foo() -> S<P> { S(P) }
             }
             fn main() { let var: S<P> = foo(); }
+    """, preview = """
+            use crate::a::foo;
+            mod a {
+                pub struct S<T>(T);
+                pub struct P;
+                pub fn foo() -> S<P> { S(P) }
+            }
+            fn main() { let var: S<P> = foo(); }
     """)
 
     fun `test import type alias`() = doAvailableTest("""
-            use crate::a::{foo, A};
-            mod a {
-                pub struct S;
-                pub type A = S;
-                pub type B = A;
-                pub fn foo() -> B { S }
-            }
-            fn main() { let var/*caret*/ = foo(); }
+        use crate::a::{foo, A};
+        mod a {
+            pub struct S;
+            pub type A = S;
+            pub type B = A;
+            pub fn foo() -> B { S }
+        }
+        fn main() { let var/*caret*/ = foo(); }
     """, """
-            use crate::a::{foo, A, B};
-            mod a {
-                pub struct S;
-                pub type A = S;
-                pub type B = A;
-                pub fn foo() -> B { S }
-            }
-            fn main() { let var: B = foo(); }
+        use crate::a::{foo, A, B};
+        mod a {
+            pub struct S;
+            pub type A = S;
+            pub type B = A;
+            pub fn foo() -> B { S }
+        }
+        fn main() { let var: B = foo(); }
+    """, preview = """
+        use crate::a::{foo, A};
+        mod a {
+            pub struct S;
+            pub type A = S;
+            pub type B = A;
+            pub fn foo() -> B { S }
+        }
+        fn main() { let var: B = foo(); }
     """)
 
     fun `test import skip default type argument`() = doAvailableTest("""
-            use crate::a::foo;
-            mod a {
-                pub struct R;
-                pub struct S<T = R>(T);
-                pub fn foo() -> S<R> { S(R) }
-            }
-            fn main() { let var/*caret*/ = foo(); }
+        use crate::a::foo;
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn foo() -> S<R> { S(R) }
+        }
+        fn main() { let var/*caret*/ = foo(); }
     """, """
-            use crate::a::{foo, S};
-            mod a {
-                pub struct R;
-                pub struct S<T = R>(T);
-                pub fn foo() -> S<R> { S(R) }
-            }
-            fn main() { let var: S = foo(); }
+        use crate::a::{foo, S};
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn foo() -> S<R> { S(R) }
+        }
+        fn main() { let var: S = foo(); }
+    """, preview = """
+        use crate::a::foo;
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn foo() -> S<R> { S(R) }
+        }
+        fn main() { let var: S = foo(); }
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test import std type`() = doAvailableTest("""
-            use a::foo;
+        use a::foo;
 
-            mod a {
-                use std::collections::HashMap;
-                pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
-            }
-            fn main() { let var/*caret*/ = foo(); }
-    """, """
+        mod a {
             use std::collections::HashMap;
-            use a::foo;
+            pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
+        }
+        fn main() { let var/*caret*/ = foo(); }
+    """, """
+        use std::collections::HashMap;
+        use a::foo;
 
-            mod a {
-                use std::collections::HashMap;
-                pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
-            }
-            fn main() { let var: HashMap<i32, i32> = foo(); }
+        mod a {
+            use std::collections::HashMap;
+            pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
+        }
+        fn main() { let var: HashMap<i32, i32> = foo(); }
+    """, preview = """
+        use a::foo;
+
+        mod a {
+            use std::collections::HashMap;
+            pub fn foo() -> HashMap<i32, i32> { HashMap::new() }
+        }
+        fn main() { let var: HashMap<i32, i32> = foo(); }
     """)
 
     fun `test ref pat`() = doAvailableTest(
