@@ -631,8 +631,6 @@ project(":ml-completion") {
 
 task("runPrettyPrintersTests") {
     doLast {
-        // https://github.com/intellij-rust/intellij-rust/issues/9554
-        if (platformVersion == 223 && isFamily(FAMILY_WINDOWS)) return@doLast
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"

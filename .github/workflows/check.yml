@@ -204,6 +204,8 @@ jobs:
                   path: |
                       build/reports/tests
                       */build/reports/tests
+                      build/*sandbox*/system-test/testlog/idea.log
+                      */build/*sandbox*/system-test/testlog/idea.log
 
             - name: Verify plugin
               if: matrix.verify-plugin
