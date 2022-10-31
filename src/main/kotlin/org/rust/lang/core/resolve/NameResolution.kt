@@ -1504,10 +1504,41 @@ private fun processLexicalDeclarations(
         }
     }
 
-    fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
-        if (condition == null || condition == cameFrom) return false
-        val pat = condition.pat ?: return false
-        return processPattern(pat, processor)
+    fun processLetExprs(
+        expr: RsExpr?,
+        processor: RsResolveProcessor,
+        prevScope: MutableMap<String, Set<Namespace>> = hashMapOf()
+    ): Boolean {
+        if (expr == null || expr == cameFrom) return false
+
+        val shadowingProcessor = createProcessor(processor.names) { e ->
+            (e.name !in prevScope) && processor(e).also {
+                if (processor.acceptsName(e.name)) {
+                    prevScope[e.name] = VALUES
+                }
+            }
+        }
+
+        fun process(expr: RsExpr): Boolean {
+            when (expr) {
+                cameFrom -> return false
+
+                is RsLetExpr -> {
+                    val pat = expr.pat ?: return false
+                    return processPattern(pat, shadowingProcessor)
+                }
+
+                is RsBinaryExpr -> {
+                    if (expr.right?.let { process(it) } == true) return true
+                    return process(expr.left)
+                }
+
+                else -> return false
+            }
+        }
+
+
+        return process(expr)
     }
 
     when (scope) {
@@ -1603,12 +1634,19 @@ private fun processLexicalDeclarations(
         }
 
         is RsIfExpr -> {
-            // else branch of 'if let' expression shouldn't look into condition pattern
-            if (scope.elseBranch == cameFrom) return false
-            return processCondition(scope.condition, processor)
+            if (scope.block != cameFrom) return false
+            val expr = scope.condition?.expr
+            return processLetExprs(expr, processor)
         }
         is RsWhileExpr -> {
-            return processCondition(scope.condition, processor)
+            if (scope.block != cameFrom) return false
+            val expr = scope.condition?.expr
+            return processLetExprs(expr, processor)
+        }
+
+        is RsBinaryExpr -> {
+            if (scope.right != cameFrom) return false
+            return processLetExprs(scope.left, processor)
         }
 
         is RsLambdaExpr -> {
@@ -1620,12 +1658,10 @@ private fun processLexicalDeclarations(
         }
 
         is RsMatchArm -> {
-            val guardPat = scope.matchArmGuard?.pat
-            if (guardPat == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
+            val guardExpr = scope.matchArmGuard?.expr
+            if (guardExpr == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
             val prevScope = hashMapOf<String, Set<Namespace>>()
-            val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
-                processPattern(guardPat, shadowingProcessor)
-            }
+            val stop = processLetExprs(guardExpr, processor, prevScope)
             if (stop) return true
             return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
                 processPattern(scope.pat, shadowingProcessor)

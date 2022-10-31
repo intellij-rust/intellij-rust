@@ -75,7 +75,7 @@ fun RsElement.replaceWithAddingParentheses(expr: RsElement, factory: RsPsiFactor
     val needsParentheses = when {
         expr is RsBinaryExpr && (parent is RsBinaryExpr || parent.requiresSingleExpr) -> true
         expr.isBlockLikeExpr && parent.requiresSingleExpr -> true
-        expr is RsStructLiteral && (parent is RsMatchExpr || parent is RsForExpr || parent is RsCondition) -> true
+        expr is RsStructLiteral && (parent is RsMatchExpr || parent is RsForExpr || parent is RsCondition || parent is RsLetExpr) -> true
         else -> false
     }
     val newExpr = if (needsParentheses) {

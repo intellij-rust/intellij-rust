@@ -11,11 +11,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
+import org.rust.lang.core.psi.RsLetExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.LogicOp
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.operatorType
-import org.rust.lang.core.psi.ext.singleTailStmt
+import org.rust.lang.core.psi.ext.*
 
 class MergeIfsIntention : RsElementBaseIntentionAction<MergeIfsIntention.Context>() {
 
@@ -38,7 +36,8 @@ class MergeIfsIntention : RsElementBaseIntentionAction<MergeIfsIntention.Context
 
         val ifCondition = ifExpr.condition ?: return null
         val nestedIfCondition = nestedIfExpr.condition ?: return null
-        if (ifCondition.let != null || nestedIfCondition.let != null) return null
+        if (ifCondition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null  ||
+            nestedIfCondition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return null
         if (ifExpr.elseBranch != null || nestedIfExpr.elseBranch != null) return null
 
         return Context(

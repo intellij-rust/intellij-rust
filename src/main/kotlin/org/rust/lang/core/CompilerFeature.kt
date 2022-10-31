@@ -198,6 +198,7 @@ class CompilerFeature(
         val IN_BAND_LIFETIMES: CompilerFeature get() = get("in_band_lifetimes")
         val IRREFUTABLE_LET_PATTERNS: CompilerFeature get() = get("irrefutable_let_patterns")
         val LABEL_BREAK_VALUE: CompilerFeature get() = get("label_break_value")
+        val LET_CHAINS: CompilerFeature get() = get("let_chains")
         val LET_ELSE: CompilerFeature get() = get("let_else")
         val MIN_CONST_GENERICS: CompilerFeature get() = get("min_const_generics")
         val NON_MODRS_MODS: CompilerFeature get() = get("non_modrs_mods")
