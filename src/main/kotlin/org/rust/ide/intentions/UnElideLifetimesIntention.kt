@@ -75,12 +75,13 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
         }
     }
 
-    private val nameGenerator = generateSequence(0) { it + 1 }.map {
-        val abcSize = 'z' - 'a' + 1
-        val letter = 'a' + it % abcSize
-        val index = it / abcSize
-        return@map if (index == 0) "'$letter" else "'$letter$index"
-    }
+    private val nameGenerator: Sequence<String>
+        get() = generateSequence(0) { it + 1 }.map {
+            val abcSize = 'z' - 'a' + 1
+            val letter = 'a' + it % abcSize
+            val index = it / abcSize
+            return@map if (index == 0) "'$letter" else "'$letter$index"
+        }
 
     data class LifetimeContext(
         val fn: RsFunction,

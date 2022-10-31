@@ -25,6 +25,10 @@ import org.rust.stdext.isSortedWith
 fun ImportCandidate.import(context: RsElement) = info.import(context)
 
 fun ImportInfo.import(context: RsElement) {
+    // Imports are not very important for most intention preview,
+    // but would be nice to support it for `AddImportIntention`
+    if (context.isIntentionPreviewElement) return
+
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 

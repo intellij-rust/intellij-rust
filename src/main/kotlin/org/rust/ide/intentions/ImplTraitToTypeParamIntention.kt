@@ -13,10 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.getNextNonWhitespaceSibling
-import org.rust.lang.core.psi.ext.getPrevNonWhitespaceSibling
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.createSmartPointer
 
@@ -39,6 +36,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         // will appear in type parameter constrains which is invalid
         if (argType.descendantsOfType<RsTraitType>().any { it.impl != null }) {
             OuterImplTestMark.hit()
+            if (fnSignature.isIntentionPreviewElement) return
             HintManager.getInstance().showErrorHint(
                 editor,
                 "Please convert innermost `impl Trait` first",

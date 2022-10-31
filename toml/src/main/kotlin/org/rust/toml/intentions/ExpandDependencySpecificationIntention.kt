@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.rust.cargo.CargoConstants
 import org.rust.lang.core.psi.ext.endOffset
+import org.rust.toml.isCargoToml
 import org.rust.toml.isDependencyListHeader
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
@@ -24,7 +24,7 @@ class ExpandDependencySpecificationIntention : RsTomlElementBaseIntentionAction<
     override fun getFamilyName(): String = text
 
     override fun findApplicableContextInternal(project: Project, editor: Editor, element: PsiElement): TomlKeyValue? {
-        if (element.containingFile.name != CargoConstants.MANIFEST_FILE) return null
+        if (!element.containingFile.isCargoToml) return null
 
         val keyValue = element.parentOfType<TomlKeyValue>() ?: return null
         val table = keyValue.parent as? TomlTable ?: return null
