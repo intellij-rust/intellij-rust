@@ -117,7 +117,7 @@ abstract class RsToolchainBase(val location: Path) {
     }
 
     companion object {
-        val MIN_SUPPORTED_TOOLCHAIN = "1.41.0".parseSemVer()
+        val MIN_SUPPORTED_TOOLCHAIN = "1.56.0".parseSemVer()
 
         /** Environment variable to unlock unstable features of rustc and cargo.
          *  It doesn't change real toolchain.
