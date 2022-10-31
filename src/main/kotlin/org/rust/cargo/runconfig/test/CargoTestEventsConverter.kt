@@ -84,6 +84,7 @@ class CargoTestEventsConverter(
                     .trim()
                     .substringAfterLast(project.toolchain?.fileSeparator ?: File.separator)
                     .substringBeforeLast(".")
+                    .removeSuffix(")")
                     .takeIf { it.isNotEmpty() }
                     ?: error("Can't parse the executable name")
                 suitesStack.add(executableName)
