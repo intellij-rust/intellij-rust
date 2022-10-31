@@ -64,15 +64,6 @@ object CargoBuildManager {
 
     private val MIN_RUSTC_VERSION: SemVer = "1.48.0".parseSemVer()
 
-    val RsCommandConfiguration.isBuildToolWindowEnabled: Boolean
-        get() {
-            if (!project.isBuildToolWindowAvailable) return false
-            return beforeRunTasks.any { task ->
-                task is CargoBuildTaskProvider.BuildTask ||
-                    task is WasmPackBuildTaskProvider.BuildTask
-            }
-        }
-
     val Project.isBuildToolWindowAvailable: Boolean
         get() {
             if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
@@ -85,7 +76,8 @@ object CargoBuildManager {
     val CargoCommandConfiguration.isBuildToolWindowAvailable: Boolean
         get() {
             if (!project.isBuildToolWindowAvailable) return false
-            return !hasRemoteTarget || buildTarget.isLocal
+            val hasBuildBeforeRunTask = beforeRunTasks.any { task -> task is CargoBuildTaskProvider.BuildTask }
+            return hasBuildBeforeRunTask && (!hasRemoteTarget || buildTarget.isLocal)
         }
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
