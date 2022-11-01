@@ -142,6 +142,9 @@ class RsInferenceResult(
     fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
         resolvedMethods[call]?.type
 
+    fun getResolvedMethodSubst(call: RsMethodCall): Substitution =
+        resolvedMethods[call]?.subst ?: emptySubstitution
+
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
 
