@@ -344,5 +344,37 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         return shouldInc
     }
 
+    override fun getNameIdentifier(): PsiElement? =
+        getDeriveProcMacroNameIdentifier() ?: super.getNameIdentifier()
+
+    /**
+     * #[proc_macro_derive(Foo)]
+     *                     ~~~ returns this identifier
+     * pub fn func(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+     *
+     * returns null in case it is not possible to determine without resolve whether it is proc macro or not
+     */
+    private fun getDeriveProcMacroNameIdentifier(): PsiElement? {
+        val stub = greenStub
+        if (stub != null && !stub.mayBeProcMacroDef) return null  // fast path
+
+        val metaItem = rawOuterMetaItems.singleOrNull {
+            if (it.canBeAttrProcMacro()) return null
+            it.name == "proc_macro_derive"
+        } ?: return null
+        return metaItem.metaItemArgs?.metaItemList?.firstOrNull()?.path?.identifier
+    }
+
+    val functionName: String?
+        get() = if (isProcMacroDef) super.getNameIdentifier()?.unescapedText else name
+
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
+
+private fun RsMetaItem.canBeAttrProcMacro(): Boolean =
+    name == "cfg_attr"
+        || RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(this, CustomAttributes.EMPTY)
+
+/** See also [procMacroName] */
+val RsFunction.functionName: String?
+    get() = (this as RsFunctionImplMixin).functionName
