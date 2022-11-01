@@ -28,15 +28,16 @@ New features are regularly announced in [changelogs](https://intellij-rust.githu
 The plugin is compatible with all IntelliJ-based IDEs starting from the version 2022.2, with the following differences in the sets of the available features:
 
 
-|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate, [PyCharm] Professional, [GoLand] (commercial) | [WebStorm], [PhpStorm], other commercial IDEs |
-|------------------------|---|---|---|---|
-| Language support       | + | + | + | + |
-| Cargo support          | + | + | + | + |
-| Code coverage          | + | + | + | + |
-| Debugger               | - | + | +** | - |
-| Profiler               | - | + | - | - |
-| Valgrind Memcheck      | - | + | - | - |
-| [Detecting duplicates] | - | + | + | + |
+|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] | [IntelliJ IDEA] Ultimate, [GoLand] | [PyCharm] Professional | [WebStorm], [PhpStorm], other commercial IDEs |
+|------------------------|----------------------------------------------|---------|------------------------------------|------------------------|-----------------------------------------------|
+| Language support       | +                                            | +       | +                                  | +                      | +                                             |
+| Cargo support          | +                                            | +       | +                                  | +                      | +                                             |
+| Code coverage          | +                                            | +       | +                                  | +                      | +                                             |
+| [Detecting duplicates] | -                                            | +       | +                                  | +                      | +                                             |
+| Debugger               | -                                            | +       | +**                                | +**                    | -                                             |
+| Run targets            | -                                            | +       | +                                  | -                      | -                                             |
+| Profiler               | -                                            | +       | -                                  | -                      | -                                             |
+| Valgrind Memcheck      | -                                            | +       | -                                  | -                      | -                                             |
 
 
 \* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
