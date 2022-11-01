@@ -1110,6 +1110,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn foo() {
                 let a = <error descr="The self keyword was used in a static method [E0424]">self</error>;
             }
+            /// [link]: self
+            fn bar() {}
         }
     """)
 
@@ -1123,6 +1125,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test self expression outside function`() = checkErrors("""
         const C: () = <error descr="self value is not available in this context">self</error>;
+
+        /// [link]: self
+        struct Struct {}
     """)
 
     fun `test do not annotate 'self' in visibility restriction`() = checkErrors("""

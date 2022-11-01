@@ -663,6 +663,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
+        if (path.isInsideDocLink) return
         if (!checkSelfImport(holder, path)) return
         if (!checkCaptureVariableFromOuterFunction(holder, path)) return
 

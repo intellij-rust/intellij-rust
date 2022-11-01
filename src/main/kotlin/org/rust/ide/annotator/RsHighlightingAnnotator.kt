@@ -102,6 +102,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
     private fun highlightReference(element: RsReferenceElement, holder: AnnotationHolder): RsColor? {
         // These should be highlighted as keywords by the lexer
         if (element is RsPath && element.kind != PathKind.IDENTIFIER) return null
+        if (element is RsPath && element.isInsideDocLink) return null
         if (element is RsExternCrateItem && element.self != null) return null
 
         val parent = element.parent

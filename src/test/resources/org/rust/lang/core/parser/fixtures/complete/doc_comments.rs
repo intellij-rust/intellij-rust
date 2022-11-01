@@ -87,11 +87,29 @@
 ///
 /// <http://example.com>
 ///
-/// [link def]: http://example.com
+/// [link def 1]: http://example.com
+/// [link def 2]: index.html
 /// [`link def in backticks`]: http://example.com
-/// [not an url]: foobar
+/// [not an url 1]: foobar
+/// [not an url 2]: foo-bar
 /// [multiline]:
 /// foobar
+/// [hash only]: #hash
+/// [rust path]: foo::bar::baz
+/// [rust path with disambiguator 1]: fn@foo::bar::baz
+/// [rust path with disambiguator 2]: foo::bar::baz!()
+/// [rust path with disambiguator 3]: foo::bar::baz()
+/// [rust path with disambiguator 4]: foo::bar::baz!
+/// [rust path with hash]: foo::bar::baz#quux
+/// [rust path with disambiguator and hash 1]: foo::bar::baz!()#hash
+/// [rust path with disambiguator and hash 2]: fn@foo::bar::baz#hash
+/// [rust path generics]: Vec<i32>
+/// [rust path generics]: Vec<i32>::new()
+/// [rust path in backticks 1]: foo`
+/// [rust path in backticks 2]: `foo
+/// [rust path in backticks 3]: `foo`
+/// [rust path in backticks 4]: ```foo``
+/// [rust path in backticks 5]: `fn@Vec::new#hash`
 fn foo() {}
 
 mod foo {

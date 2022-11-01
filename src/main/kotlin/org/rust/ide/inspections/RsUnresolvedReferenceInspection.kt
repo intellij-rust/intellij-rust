@@ -36,6 +36,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                     if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isFullyEnabled()) return
                 }
 
+                if (path.isInsideDocLink) return
+
                 val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
                 val qualifier = path.qualifier
 

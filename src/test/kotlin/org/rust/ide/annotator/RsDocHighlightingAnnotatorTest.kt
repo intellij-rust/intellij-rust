@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ide.colors.RsColor
 
-class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnnotator::class) {
+class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnnotator::class, RsHighlightingAnnotator::class) {
     override fun setUp() {
         super.setUp()
         annotationFixture.registerSeverities(RsColor.values().map(RsColor::testSeverity))
@@ -173,6 +173,13 @@ class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnno
         /// <DOC_LINK>[ref]: /uri</DOC_LINK>
         /// [multiline]:
         /// foobar
+    """)
+
+    fun `test intra doc link`() = checkHighlightingStrict("""
+        /// <DOC_LINK>[rust path]: foo::bar</DOC_LINK>
+        /// <DOC_LINK>[rust path generics]: Vec<Struct></DOC_LINK>
+        pub fn <FUNCTION>func</FUNCTION>() {}
+        pub struct <STRUCT>Struct</STRUCT> {}
     """)
 
     fun `test code span`() = checkHighlightingStrict("""
