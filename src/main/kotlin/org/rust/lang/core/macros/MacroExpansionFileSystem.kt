@@ -126,8 +126,14 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         throw UnsupportedOperationException()
 
     @Throws(IOException::class)
-    override fun deleteFile(requestor: Any?, file: VirtualFile): Unit =
-        throw UnsupportedOperationException()
+    override fun deleteFile(requestor: Any?, file: VirtualFile) {
+        if (requestor != TrustedRequestor) {
+            throw UnsupportedOperationException()
+        }
+        val fsItem = convert(file) ?: return
+        val parent = fsItem.parent ?: throw IOException("Can't delete root (${file.path})")
+        parent.removeChild(fsItem.name, bump = true)
+    }
 
     @Throws(IOException::class)
     override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {

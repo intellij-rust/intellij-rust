@@ -142,13 +142,13 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         foo!(a);
         if_std! { if_std! { if_std! { foo!(b); } } }
         bar!(b);
-    """, "foo")
+    """, "foo", allowDumbMode = false)
 
     fun `test edit def 3`() = checkReExpanded(type(), """
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
         macro_rules! bar { () => { foo!(a/*caret*/); } }
         bar!();
-    """, "bar", "foo")
+    """, "bar", "foo", allowDumbMode = false)
 
     fun `test edit def 4`() = checkReExpanded(type(), """
         macro_rules! foo { () => { mod a/*caret*/ {} } }
