@@ -17,6 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import org.rust.RsTask
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
@@ -83,24 +85,6 @@ class MacroExpansionTask(
         MACRO_LOG.debug("Finished macro expansion task in $elapsed2 ms")
     }
 
-    private class FileCreation(
-        val crate: CratePersistentId,
-        val expansionName: String,
-        val content: String,
-        val ranges: RangeMap,
-    )
-
-    private class FileDeletion(
-        val crate: CratePersistentId,
-        val expansionName: String,
-        val file: FSItem.FSFile,
-    )
-
-    private data class FileAttributes(
-        val path: MacroExpansionVfsBatch.Path,
-        val rangeMap: RangeMap,
-    )
-
     private fun updateMacrosFiles(allDefMaps: List<CrateDefMap>) {
         val contentRoot = "/$MACRO_EXPANSION_VFS_ROOT/$projectDirectoryName"
         val batch = MacroExpansionVfsBatch(contentRoot)
@@ -111,14 +95,25 @@ class MacroExpansionTask(
         }
         if (!hasStaleExpansions && defMaps.isEmpty()) return
 
-        val files = collectFilesForCreationAndDeletion(defMaps)
+        var files = collectFilesForCreationAndDeletion(defMaps)
 
-        val singleChangeApplied = !batch.hasChanges
-            && files.first.size == 1
-            && files.second.size == 1
-            && applySingleChange(contentRoot, files.first.single(), files.second.single())
+        @Suppress("UnstableApiUsage")
+        val tryFastPath = !batch.hasChanges
+            && files.first.size == files.second.size
+            && files.first.size < FileBasedIndexProjectHandler.ourMinFilesToStartDumbMode
 
-        if (!singleChangeApplied) {
+        val fastPathApplied = if (tryFastPath) {
+            val applied = applyChangesFastPath(contentRoot, files.first, files.second)
+            if (!applied) {
+                // Since an error occurred, we have to re-calculate changed files
+                files = collectFilesForCreationAndDeletion(defMaps)
+            }
+            applied
+        } else {
+            false
+        }
+
+        if (!fastPathApplied) {
             val filesToWriteAttributes = createOrDeleteNeededFiles(files, batch)
             applyBatchAndWriteAttributes(batch, filesToWriteAttributes)
         }
@@ -157,73 +152,92 @@ class MacroExpansionTask(
         return pendingFileWrites to pendingFileDeletions
     }
 
-    /** An optimization for single macro change (i.e. typing in a macro call) */
-    private fun applySingleChange(
+    /** An optimization for small quantity of changed macros (i.e. typing in a macro call) */
+    private fun applyChangesFastPath(
         contentRoot: String,
-        singleWrite: FileCreation,
-        singleDeletion: FileDeletion
+        creations: List<FileCreation>,
+        deletions: List<FileDeletion>
     ): Boolean {
-        val oldPath = "$contentRoot/${singleDeletion.crate}/${expansionNameToPath(singleDeletion.expansionName)}"
-        val newPath = "$contentRoot/${singleWrite.crate}/${expansionNameToPath(singleWrite.expansionName)}"
-        val lastSlash = newPath.lastIndexOf('/')
-        if (lastSlash == -1) error("unreachable")
-        val newParentPath = newPath.substring(0, lastSlash)
-        val newName = newPath.substring(lastSlash + 1)
+        check(creations.size == deletions.size)
+
+        // TODO instead of `zip`ping deletions with creations randomly we could `zip` deletion with creation originated
+        //   from the same macro call. This way, we would perform less PSI modifications and hopefully invalidate
+        //   less caches
+        val prepared1 = deletions.zip(creations).map { (deletion, creation) ->
+            val oldPath = "$contentRoot/${deletion.crate}/${expansionNameToPath(deletion.expansionName)}"
+            val newPath = "$contentRoot/${creation.crate}/${expansionNameToPath(creation.expansionName)}"
+            val lastSlash = newPath.lastIndexOf('/')
+            if (lastSlash == -1) error("unreachable")
+            val newParentPath = newPath.substring(0, lastSlash)
+            val newName = newPath.substring(lastSlash + 1)
+            PreparedFileDeletionAndCreation1(creation, oldPath, newParentPath, newName)
+        }
 
         return invokeAndWaitIfNeeded {
-            val root = MacroExpansionFileSystem.getInstance().findFileByPath("/")!!
-            val oldFile = MacroExpansionFileSystem.getInstance().findFileByPath(oldPath)
-                ?: return@invokeAndWaitIfNeeded false
-            val oldPsiFile = oldFile.toPsiFile(project) ?: return@invokeAndWaitIfNeeded false
-            val (nearestNewParentFile, segmentsToCreate) = root.findNearestExistingFile(newParentPath)
+            val prepared2 = prepared1.map { (creation, oldPath, newParentPath, newName) ->
+                val root = MacroExpansionFileSystem.getInstance().findFileByPath("/")!!
+                val oldFile = MacroExpansionFileSystem.getInstance().findFileByPath(oldPath)
+                    ?: return@invokeAndWaitIfNeeded false
+                val oldPsiFile = oldFile.toPsiFile(project) ?: return@invokeAndWaitIfNeeded false
+                val (nearestNewParentFile, segmentsToCreate) = root.findNearestExistingFile(newParentPath)
+
+                oldFile.contentsToByteArray() // Ensure content is cached. If not, we can miss the modification
+                                              // event (hence miss invalidating of some caches)
+
+                PreparedFileDeletionAndCreation2(creation, newName, oldFile, oldPsiFile, nearestNewParentFile, segmentsToCreate)
+            }
 
             runWriteAction {
-                try {
-                    var newFileParent = nearestNewParentFile
-                    for (segment in segmentsToCreate) {
-                        newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
-                    }
-                    oldFile.contentsToByteArray() // Ensure content is cached. If not, we can miss the modification
-                                                  // event (hence miss invalidating of some caches)
-                    RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
-                        if (newFileParent != oldFile.parent) {
-                            oldFile.move(TrustedRequestor, newFileParent)
+                for ((creation, newName, oldFile, oldPsiFile, nearestNewParentFile, segmentsToCreate) in prepared2) {
+                    try {
+                        var newFileParent = nearestNewParentFile
+                        for (segment in segmentsToCreate) {
+                            newFileParent = newFileParent.createChildDirectory(TrustedRequestor, segment)
+                        }
+                        RsPsiManager.withIgnoredPsiEvents(oldPsiFile) {
+                            if (newFileParent != oldFile.parent) {
+                                oldFile.move(TrustedRequestor, newFileParent)
+                            } else {
+                                MoveToTheSameDir.hit()
+                            }
+                            oldFile.rename(TrustedRequestor, newName)
+                        }
+                        val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
+                        if (doc == null) {
+                            oldFile.getOutputStream(TrustedRequestor).use {
+                                it.write(creation.content.toByteArray())
+                            }
                         } else {
-                            MoveToTheSameDir.hit()
+                            UndoUtil.disableUndoFor(doc)
+                            CommandProcessor.getInstance().runUndoTransparentAction {
+                                doc.setText(creation.content)
+                            }
+                            UndoUtil.enableUndoFor(doc)
+                            MacroExpansionFileSystem.withAllowedWriting(oldFile) {
+                                FileDocumentManager.getInstance().saveDocument(doc)
+                            }
                         }
-                        oldFile.rename(TrustedRequestor, newName)
+                        oldFile.writeRangeMap(creation.ranges)
+                    } catch (e: IOException) {
+                        MACRO_LOG.error(e)
+                        try {
+                            oldFile.delete(TrustedRequestor)
+                        } catch (ignored: IOException) {
+                        }
+                        return@runWriteAction false
                     }
-                    val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
-                    if (doc == null) {
-                        oldFile.getOutputStream(TrustedRequestor).use {
-                            it.write(singleWrite.content.toByteArray())
-                        }
-                    } else {
-                        UndoUtil.disableUndoFor(doc)
-                        CommandProcessor.getInstance().runUndoTransparentAction {
-                            doc.setText(singleWrite.content)
-                        }
-                        UndoUtil.enableUndoFor(doc)
-                        MacroExpansionFileSystem.withAllowedWriting(oldFile) {
-                            FileDocumentManager.getInstance().saveDocument(doc)
-                        }
-                    }
-                    oldFile.writeRangeMap(singleWrite.ranges)
-                } catch (e: IOException) {
-                    MACRO_LOG.error(e)
-                    return@runWriteAction false
-                }
 
-                if (isUnitTestMode && runSyncInUnitTests) {
-                    // In unit tests macro expansion task works synchronously, so we have to
-                    // commit the document synchronously too
-                    val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
-                    if (doc != null) {
-                        PsiDocumentManager.getInstance(project).commitDocument(doc)
+                    if (isUnitTestMode && runSyncInUnitTests) {
+                        // In unit tests macro expansion task works synchronously, so we have to
+                        // commit the document synchronously too
+                        val doc = FileDocumentManager.getInstance().getCachedDocument(oldFile)
+                        if (doc != null) {
+                            PsiDocumentManager.getInstance(project).commitDocument(doc)
+                        }
                     }
-                }
 
-                modificationTracker.incModificationCount()
+                    modificationTracker.incModificationCount()
+                }
                 true
             }
         }
@@ -293,6 +307,40 @@ class MacroExpansionTask(
 
     override val runSyncInUnitTests: Boolean
         get() = true
+
+    private class FileCreation(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val content: String,
+        val ranges: RangeMap,
+    )
+
+    private class FileDeletion(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val file: FSItem.FSFile,
+    )
+
+    private data class FileAttributes(
+        val path: MacroExpansionVfsBatch.Path,
+        val rangeMap: RangeMap,
+    )
+
+    private data class PreparedFileDeletionAndCreation1(
+        val creation: FileCreation,
+        val oldPath: String,
+        val newParentPath: String,
+        val newName: String,
+    )
+
+    private data class PreparedFileDeletionAndCreation2(
+        val creation: FileCreation,
+        val newName: String,
+        val oldFile: VirtualFile,
+        val oldPsiFile: PsiFile,
+        val nearestNewParentFile: VirtualFile,
+        val segmentsToCreate: List<String>,
+    )
 
     object MoveToTheSameDir: Testmark()
 }
