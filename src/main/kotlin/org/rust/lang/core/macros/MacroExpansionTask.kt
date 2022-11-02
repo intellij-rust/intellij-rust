@@ -85,40 +85,6 @@ class MacroExpansionTask(
         MACRO_LOG.debug("Finished macro expansion task in $elapsed2 ms")
     }
 
-    private class FileCreation(
-        val crate: CratePersistentId,
-        val expansionName: String,
-        val content: String,
-        val ranges: RangeMap,
-    )
-
-    private class FileDeletion(
-        val crate: CratePersistentId,
-        val expansionName: String,
-        val file: FSItem.FSFile,
-    )
-
-    private data class FileAttributes(
-        val path: MacroExpansionVfsBatch.Path,
-        val rangeMap: RangeMap,
-    )
-
-    private data class PreparedFileDeletionAndCreation1(
-        val creation: FileCreation,
-        val oldPath: String,
-        val newParentPath: String,
-        val newName: String,
-    )
-
-    private data class PreparedFileDeletionAndCreation2(
-        val creation: FileCreation,
-        val newName: String,
-        val oldFile: VirtualFile,
-        val oldPsiFile: PsiFile,
-        val nearestNewParentFile: VirtualFile,
-        val segmentsToCreate: List<String>,
-    )
-
     private fun updateMacrosFiles(allDefMaps: List<CrateDefMap>) {
         val contentRoot = "/$MACRO_EXPANSION_VFS_ROOT/$projectDirectoryName"
         val batch = MacroExpansionVfsBatch(contentRoot)
@@ -341,6 +307,40 @@ class MacroExpansionTask(
 
     override val runSyncInUnitTests: Boolean
         get() = true
+
+    private class FileCreation(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val content: String,
+        val ranges: RangeMap,
+    )
+
+    private class FileDeletion(
+        val crate: CratePersistentId,
+        val expansionName: String,
+        val file: FSItem.FSFile,
+    )
+
+    private data class FileAttributes(
+        val path: MacroExpansionVfsBatch.Path,
+        val rangeMap: RangeMap,
+    )
+
+    private data class PreparedFileDeletionAndCreation1(
+        val creation: FileCreation,
+        val oldPath: String,
+        val newParentPath: String,
+        val newName: String,
+    )
+
+    private data class PreparedFileDeletionAndCreation2(
+        val creation: FileCreation,
+        val newName: String,
+        val oldFile: VirtualFile,
+        val oldPsiFile: PsiFile,
+        val nearestNewParentFile: VirtualFile,
+        val segmentsToCreate: List<String>,
+    )
 
     object MoveToTheSameDir: Testmark()
 }
