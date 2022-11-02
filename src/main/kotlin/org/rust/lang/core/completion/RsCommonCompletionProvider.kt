@@ -212,8 +212,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         Testmarks.OutOfScopeItemsCompletion.hit()
 
         val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
-        val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return
-        val candidates = ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
+        val importContext = ImportContext.from(path, ImportContext.Type.COMPLETION) ?: return
+        val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
         for (candidate in candidates) {
             val item = candidate.qualifiedNamedItem.item
@@ -239,10 +239,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         // We don't use `Type.COMPLETION` because we're importing the first segment of the 2-segment path,
         // so we don't want to relax the namespace filter
-        val importContext = ImportContext2.from(qualifier, ImportContext2.Type.AUTO_IMPORT) ?: return
+        val importContext = ImportContext.from(qualifier, ImportContext.Type.AUTO_IMPORT) ?: return
 
         val referenceName = qualifier.referenceName ?: return
-        val itemToCandidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
+        val itemToCandidates = ImportCandidatesCollector.getImportCandidates(importContext, referenceName)
             .groupBy { it.qualifiedNamedItem.item }
         for ((_, candidates) in itemToCandidates) {
             // Here all use path resolves to the same item, so we can just use the first of them
@@ -482,7 +482,7 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
-    val candidates = ImportCandidatesCollector2.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
+    val candidates = ImportCandidatesCollector.getImportCandidates(scope, listOf(resolveVariant))?.asSequence()
     return candidates.orEmpty().singleOrNull()
 }
 
