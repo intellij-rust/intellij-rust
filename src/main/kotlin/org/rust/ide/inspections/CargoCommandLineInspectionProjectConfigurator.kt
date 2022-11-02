@@ -21,6 +21,8 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.model.impl.CargoProjectsServiceImpl
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.lang.core.macros.MacroExpansionTaskListener
+import org.rust.taskQueue
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.exists
 
@@ -50,7 +52,9 @@ class CargoCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
         val refreshStarted = CountDownLatch(1)
         val refreshFinished = CountDownLatch(1)
-        project.messageBus.connect().subscribe(
+        val macroExpansionFinished = CountDownLatch(1)
+        val connection = project.messageBus.connect()
+        connection.subscribe(
             CargoProjectsService.CARGO_PROJECTS_REFRESH_TOPIC,
             object : CargoProjectsService.CargoProjectsRefreshListener {
                 override fun onRefreshStarted() {
@@ -61,6 +65,14 @@ class CargoCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
                 override fun onRefreshFinished(status: CargoProjectsService.CargoRefreshStatus) {
                     logger.info("Cargo project model loading finished: $status")
                     refreshFinished.countDown()
+                }
+            }
+        )
+        connection.subscribe(
+            MacroExpansionTaskListener.MACRO_EXPANSION_TASK_TOPIC,
+            object : MacroExpansionTaskListener {
+                override fun onMacroExpansionTaskFinished() {
+                    macroExpansionFinished.countDown()
                 }
             }
         )
@@ -86,6 +98,18 @@ class CargoCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
                 logger.error(status.reason)
             }
         }
+
+        logger.info("Expanding Rust macros...")
+        ProgressIndicatorUtils.awaitWithCheckCanceled(macroExpansionFinished)
+
+        // Ensure all Rust plugin tasks has been finished
+        val taskQueue = project.taskQueue
+        if (!taskQueue.isEmpty) {
+            while (!taskQueue.isEmpty) {
+                Thread.sleep(10)
+            }
+        }
+        logger.info("Rust macro expansion has been finished")
     }
 
     private class LoggerWrapper(
