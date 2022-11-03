@@ -454,7 +454,6 @@ private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModDa
             crate = containingCrate,
             externCrateName = crateName,
             needInsertExternCrateItem = needInsertExternCrateItem,
-            depth = null,
             crateRelativePath = crateRelativePath,
             hasModWithSameNameAsExternCrate = crateName in modData.childModules
         )

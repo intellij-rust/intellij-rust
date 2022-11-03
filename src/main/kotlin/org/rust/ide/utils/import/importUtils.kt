@@ -32,13 +32,7 @@ fun ImportInfo.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 
-    // depth of `mod` relative to module with `extern crate` item
-    // we use this info to create correct relative use item path if needed
-    val prefix = when (val relativeDepth = insertExternCrateIfNeeded(context)) {
-        null -> ""
-        0 -> "self::"
-        else -> "super::".repeat(relativeDepth)
-    }
+    insertExternCrateIfNeeded(context)
 
     val containingFile = context.containingFile
     val insertionScope = when {
@@ -55,14 +49,14 @@ fun ImportInfo.import(context: RsElement) {
         containingFile is RsFile && RsIncludeMacroIndex.getIncludedFrom(containingFile) != null -> containingFile
         else -> null
     } ?: context.containingMod
-    insertionScope.insertUseItem(psiFactory, "$prefix$usePath")
+    insertionScope.insertUseItem(psiFactory, usePath)
 }
 
 /**
  * Inserts an `extern crate` item if the crate of importing element differs from the crate of `context`.
  * Returns the relative depth of context `mod` relative to module with `extern crate` item.
  */
-fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
+fun ImportInfo.insertExternCrateIfNeeded(context: RsElement) {
     if (this is ImportInfo.ExternCrateImportInfo) {
         val crateRoot = context.crateRoot
         val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
@@ -74,19 +68,11 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
             // if crate of imported element is `core` and there is `#![no_std]`
             // we don't add corresponding extern crate item manually for the same reason
             attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.AutoInjectedCoreCrate.hit()
-            else -> {
-                if (needInsertExternCrateItem) {
-                    crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
-                } else {
-                    if (depth != null) {
-                        Testmarks.ExternCrateItemInNotCrateRoot.hit()
-                        return depth
-                    }
-                }
+            needInsertExternCrateItem -> {
+                crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
             }
         }
     }
-    return null
 }
 
 
@@ -211,7 +197,6 @@ val Crate.isCore: Boolean
 object Testmarks {
     object AutoInjectedStdCrate : Testmark()
     object AutoInjectedCoreCrate : Testmark()
-    object ExternCrateItemInNotCrateRoot : Testmark()
     object DoctestInjectionImport : Testmark()
     object IgnorePrivateImportInParentMod : Testmark()
 }
