@@ -31,5 +31,5 @@ class RsIconProvider : IconProvider() {
             && element.isCrateRoot
 
     private fun isBuildRs(element: RsFile): Boolean = // TODO containingTarget
-        element.isCrateRoot && element.crate?.kind == CargoWorkspace.TargetKind.CustomBuild
+        element.isCrateRoot && element.crate.kind == CargoWorkspace.TargetKind.CustomBuild
 }

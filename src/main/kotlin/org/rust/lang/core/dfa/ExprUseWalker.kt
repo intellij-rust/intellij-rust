@@ -232,7 +232,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             }
 
             is RsIfExpr -> {
-                expr.condition?.let { walkCondition(it) }
+                expr.condition?.expr?.let { walkExpr(it) }
                 expr.block?.let { walkBlock(it) }
                 expr.elseBranch?.ifExpr?.let { walkExpr(it) }
                 expr.elseBranch?.block?.let { walkBlock(it) }
@@ -255,7 +255,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsLoopExpr -> expr.block?.let { walkBlock(it) }
 
             is RsWhileExpr -> {
-                expr.condition?.let { walkCondition(it) }
+                expr.condition?.expr?.let { walkExpr(it) }
                 expr.block?.let { walkBlock(it) }
             }
 
@@ -300,6 +300,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsPathExpr -> usePath(expr)
 
             is RsRangeExpr -> expr.exprList.forEach(::walkExpr)
+
+            is RsLetExpr-> walkLetExpr(expr)
         }
     }
 
@@ -382,11 +384,11 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         }
     }
 
-    private fun walkCondition(condition: RsCondition) {
-        val init = condition.expr ?: return
+    private fun walkLetExpr(letExpr: RsLetExpr) {
+        val init = letExpr.expr ?: return
         walkExpr(init)
         val initCmt = mc.processExpr(init)
-        for (pat in condition.patList.orEmpty()) {
+        for (pat in letExpr.patList.orEmpty()) {
             walkIrrefutablePat(initCmt, pat)
         }
     }
@@ -455,9 +457,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     private fun walkArm(discriminantCmt: Cmt, arm: RsMatchArm, mode: MatchMode) {
         arm.patList.forEach { walkPat(discriminantCmt, it, mode) }
         val guard = arm.matchArmGuard
-        if (guard?.let == null) { // TODO: support `if let guard` syntax
-            guard?.expr?.let { consumeExpr(it) }
-        }
+        guard?.expr?.let { consumeExpr(it) }
         arm.expr?.let { consumeExpr(it) }
     }
 

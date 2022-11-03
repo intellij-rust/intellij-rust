@@ -12,11 +12,15 @@ object RsExperiments {
     @EnabledInStable
     const val TEST_TOOL_WINDOW = "org.rust.cargo.test.tool.window"
 
+    @EnabledInStable
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
 
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
 
     const val PROC_MACROS = "org.rust.macros.proc"
+    const val FN_LIKE_PROC_MACROS = "org.rust.macros.proc.function-like"
+    const val DERIVE_PROC_MACROS = "org.rust.macros.proc.derive"
+    const val ATTR_PROC_MACROS = "org.rust.macros.proc.attr"
 
     @EnabledInStable
     const val FETCH_ACTUAL_STDLIB_METADATA = "org.rust.cargo.fetch.actual.stdlib.metadata"

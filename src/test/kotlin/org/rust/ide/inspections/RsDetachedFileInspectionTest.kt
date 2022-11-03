@@ -8,6 +8,9 @@ package org.rust.ide.inspections
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.ide.inspections.fixes.withMockModuleAttachSelector
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.ext.containingCrate
 
 class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspection::class) {
     fun `test attached file`() = checkByFileTree("""
@@ -296,6 +299,30 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
             fn main() {}
         //- macro.rs
     """)
+
+    fun `test code insight after attach`() = checkFixByFileTreeWithoutHighlighting("Attach file to lib.rs", """
+    //- lib.rs
+        fn func() {}
+    //- foo.rs
+        fn main() {
+            super::func();
+        }        //^
+    """, """
+    //- lib.rs
+        mod foo;
+
+        fn func() {}
+    //- foo.rs
+        fn main() {
+            super::func();
+        }        //^
+    """).also {
+        val path = findElementInEditor<RsPath>()
+        val target = path.reference?.resolve()
+        check(target is RsFunction)
+        check(path.containingCrate == target.containingCrate)
+        check(myFixture.filterAvailableIntentions("Attach file to lib.rs").isEmpty())
+    }
 
     private fun checkFixWithMultipleModules(
         @Language("Rust") before: String,

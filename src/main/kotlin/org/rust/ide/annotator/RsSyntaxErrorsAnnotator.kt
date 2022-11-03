@@ -22,6 +22,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.capitalized
 import org.rust.stdext.pluralize
 import java.lang.Integer.max
 
@@ -47,12 +48,13 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
+            is RsLetExpr -> checkLetExpr(holder, element)
         }
     }
 }
 
 private fun checkItem(holder: AnnotationHolder, item: RsItemElement) {
-    checkItemOrMacro(item, item.itemKindName.pluralize().capitalize(), item.itemDefKeyword, holder)
+    checkItemOrMacro(item, item.itemKindName.pluralize().capitalized(), item.itemDefKeyword, holder)
 }
 
 private fun checkMacro(holder: AnnotationHolder, element: RsMacro) =
@@ -303,7 +305,7 @@ private fun checkTypeList(typeList: PsiElement, elementsName: String, holder: An
         if (newKind.canStandAfter(kind)) {
             kind = newKind
         } else {
-            val newStateName = newKind.presentableName.capitalize()
+            val newStateName = newKind.presentableName.capitalized()
             holder.newAnnotation(
                 HighlightSeverity.ERROR,
                 "$newStateName $elementsName must be declared prior to ${kind.presentableName} $elementsName"
@@ -338,12 +340,24 @@ private fun checkInvalidUnsafe(holder: AnnotationHolder, unsafe: PsiElement?, it
     }
 }
 
+private fun checkLetExpr(holder: AnnotationHolder, element: RsLetExpr) {
+    var ancestor = element.parent
+    while (when (ancestor) {
+        is RsCondition, is RsMatchArmGuard -> return
+        is RsBinaryExpr -> ancestor.binaryOp.andand != null
+        else -> false
+    }) {
+        ancestor = ancestor.parent
+    }
+    deny(element, holder, "`let` expressions are not supported here")
+}
+
 private enum class TypeKind {
     LIFETIME,
     TYPE,
     CONST;
 
-    val presentableName: String get() = name.toLowerCase()
+    val presentableName: String get() = name.lowercase()
 
     fun canStandAfter(prev: TypeKind): Boolean = this !== LIFETIME || prev === LIFETIME
 
@@ -398,5 +412,5 @@ private val PsiElement.rightVisibleLeaves: Sequence<PsiElement>
     get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this)) { el -> PsiTreeUtil.nextVisibleLeaf(el) }
 
 private val String.firstLower: String
-    get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
+    get() = if (isEmpty()) this else this[0].lowercaseChar() + substring(1)
 

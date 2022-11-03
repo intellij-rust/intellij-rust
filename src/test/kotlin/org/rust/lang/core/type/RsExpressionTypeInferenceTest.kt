@@ -433,6 +433,22 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ i32
     """)
 
+    fun `test if let`() = testExpr("""
+        struct S(i32);
+
+        fn main() {
+            if let S(i) = S(0) { i; };
+        }                      //^ i32
+    """)
+
+    fun `test if let chain`() = testExpr("""
+        struct S(i32);
+
+        fn main() {
+            if let S(i) = S(0) && let S(j) = S(0) {};
+        }                        //^ bool
+    """)
+
     fun `test match with return`() = testExpr("""
         fn main() {
             let a = match true {
@@ -789,13 +805,13 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ &S
     """)
 
-    fun `test match let guard`() = testExpr("""
+    fun `test match let chain guard`() = testExpr("""
         struct S(i32);
 
         fn foo() {
             match y {
-                _ if let S(i) = S(0) => 1,
-                         //^ i32
+                _ if let S(i) = S(0) && let S(j) = S(0) => 1,
+                                       //^ bool
                 _ => 0
             };
         }
@@ -1030,6 +1046,34 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = [1; COUNT];
             x;
           //^ [i32; 2]
+        }
+    """)
+
+    fun `test array size reference to const`() = testExpr("""
+        const FOO: usize = 2;
+        const COUNT: usize = FOO;
+        fn main() {
+            let x = [1; COUNT];
+            x;
+          //^ [i32; 2]
+        }
+    """)
+
+    fun `test array size reference to const with add`() = testExpr("""
+        const FOO: usize = 2;
+        const COUNT: usize = FOO + 1;
+        fn main() {
+            let x = [1; COUNT];
+            x;
+          //^ [i32; 3]
+        }
+    """)
+
+    fun `test unresolved array size`() = testExpr("""
+        fn main() {
+            let x = [1; UNRESOLVED];
+            x;
+          //^ [i32; <unknown>]
         }
     """)
 

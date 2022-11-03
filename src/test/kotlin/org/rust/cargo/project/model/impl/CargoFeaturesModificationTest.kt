@@ -158,7 +158,7 @@ class CargoFeaturesModificationTest : RsTestBase() {
         for ((i, action) in checkingSteps.withIndex()) {
             project.cargoProjects.modifyFeatures(pfs.cargoProject, setOf(PackageFeature(pfs.pkg, action.feature)), action.action)
             pfs = ProjectPackageFeatureState.capture(project)
-            assertEquals("${i + 1}th iteration, just ${action.action.toString().toLowerCase()} `${action.feature}` ",
+            assertEquals("${i + 1}th iteration, just ${action.action.toString().lowercase()} `${action.feature}` ",
                 action.result.trimIndent(),
                 baseFeatures.withState(pfs.pkg.featureState)
             )
@@ -184,7 +184,7 @@ class CargoFeaturesModificationTest : RsTestBase() {
         for ((i, action) in checkingSteps.withIndex()) {
             project.cargoProjects.modifyFeatures(pfs.cargoProject, setOf(PackageFeature(pfs.pkg, action.feature)), action.action)
             pfs = ProjectPackageFeatureState.capture(project)
-            assertEquals("${i + 1}th iteration, just ${action.action.toString().toLowerCase()} `${action.feature}` ",
+            assertEquals("${i + 1}th iteration, just ${action.action.toString().lowercase()} `${action.feature}` ",
                 action.result.trimIndent(),
                 baseFeatures.withState(pfs.featureState)
             )

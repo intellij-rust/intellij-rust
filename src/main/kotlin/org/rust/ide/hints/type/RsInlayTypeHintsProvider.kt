@@ -111,7 +111,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                         val pat = element.pat ?: return
                         presentTypeForPat(pat, element.expr)
                     }
-                    is RsCondition -> {
+                    is RsLetExpr -> {
                         val pat = element.pat ?: return
                         presentTypeForPat(pat, element.expr)
                     }

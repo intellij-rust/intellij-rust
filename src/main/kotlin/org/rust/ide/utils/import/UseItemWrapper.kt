@@ -41,7 +41,7 @@ class UseItemWrapper(val useItem: RsUseItem) : Comparable<UseItemWrapper> {
         compareValuesBy(this, other, { it.packageGroupLevel }, { it.useSpeckText })
 }
 
-private val RsUseSpeck.pathTextLower: String? get() = path?.text?.toLowerCase()
+private val RsUseSpeck.pathTextLower: String? get() = path?.text?.lowercase()
 
 val COMPARATOR_FOR_SPECKS_IN_USE_GROUP: Comparator<RsUseSpeck> =
     compareBy<RsUseSpeck> { it.path?.self == null }.thenBy { it.pathTextLower }

@@ -62,7 +62,7 @@ class CargoTestEventsConverter(
     private fun handleStartMessage(text: String) {
         when (converterState) {
             START_MESSAGE -> {
-                val clean = text.trim().toLowerCase()
+                val clean = text.trim().lowercase()
                 converterState = when {
                     clean == "running" -> EXECUTABLE_NAME
                     clean == "doc-tests" -> DOCTESTS_PACKAGE_NAME
@@ -84,6 +84,7 @@ class CargoTestEventsConverter(
                     .trim()
                     .substringAfterLast(project.toolchain?.fileSeparator ?: File.separator)
                     .substringBeforeLast(".")
+                    .removeSuffix(")")
                     .takeIf { it.isNotEmpty() }
                     ?: error("Can't parse the executable name")
                 suitesStack.add(executableName)
@@ -290,10 +291,10 @@ class CargoTestEventsConverter(
                 .addAttribute("nodeId", suite)
 
         private fun createTestStartedMessage(test: NodeId): ServiceMessageBuilder {
-            // target_name::name1::name2 (line i) -> target_name::name1::name2#(i - 1)
+            // target_name::name1::name2 (line i) -> target_name::name1::name2# i
             val name = test.replace(LINE_NUMBER_RE) {
                 val line = it.groups["line"]?.value ?: error("Failed to find `line` capturing group")
-                "#${line.toInt() - 1}"
+                "#${line.toInt()}"
             }
             return ServiceMessageBuilder.testStarted(test.name)
                 .addAttribute("nodeId", test)

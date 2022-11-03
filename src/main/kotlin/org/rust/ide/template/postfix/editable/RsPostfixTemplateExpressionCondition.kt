@@ -55,7 +55,7 @@ class RsPostfixTemplateExpressionCondition(private val expressionType: Type, pri
 
         return if (element.type.stripReferences() is TyAdt) {
             val adtItem = (element.type.stripReferences() as TyAdt).item
-            val adtFullPath = adtItem.containingCrate?.presentableName + adtItem.crateRelativePath
+            val adtFullPath = adtItem.containingCrate.presentableName + adtItem.crateRelativePath
 
             val useFullPath = typePath.isNotEmpty()
             if (useFullPath)

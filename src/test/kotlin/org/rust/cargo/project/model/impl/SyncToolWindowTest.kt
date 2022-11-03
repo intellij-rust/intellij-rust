@@ -11,15 +11,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import org.rust.MinRustcVersion
-import org.rust.WithExperimentalFeatures
+import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.toolwindow.CargoToolWindow
-import org.rust.fileTree
+import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
-import org.rust.launchAction
 import java.nio.file.Path
 
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
@@ -410,6 +408,36 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
                  -${project.root.name}
                   Failed to run custom build command for `with-build-script v0.1.0 (${FileUtil.toSystemDependentName(project.root.path)}/with-build-script)`
                 Build scripts evaluation failed
+               Getting Rust stdlib
+        """)
+    }
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
+    fun `test build script evaluation without build script wrapper`() {
+        setRegistryOptionEnabled(Cargo.USE_BUILD_SCRIPT_WRAPPER, false, testRootDisposable)
+
+        val project = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {}
+                """)
+            }
+        }
+        checkSyncViewTree("""
+            -
+             -finished
+              -Sync ${project.root.name} project
+               Getting toolchain version
+               -Updating workspace info
+                -Build scripts evaluation
+                 Checking hello v0.1.0
                Getting Rust stdlib
         """)
     }

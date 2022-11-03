@@ -51,7 +51,7 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
         CargoCommandConfigurationType.getInstance().factory
     )
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
-    configuration.setFromCmd(cargoCommandLine)
+    configuration.setFromCmd(cargoCommandLine.copy(emulateTerminal = configuration.emulateTerminal))
     return runnerAndConfigurationSettings
 }
 

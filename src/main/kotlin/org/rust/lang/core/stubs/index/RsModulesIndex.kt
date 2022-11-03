@@ -71,7 +71,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
         // because of the resolve check we do in [getDeclarationFor]
         private fun key(mod: RsFile): String? {
             val name = if (mod.name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(mod.name) else mod.parent?.name
-            return name?.toLowerCase()
+            return name?.lowercase()
         }
 
         private fun keys(mod: RsModDeclItem): Sequence<String> {
@@ -98,7 +98,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
                 }
             } else {
                 sequenceOf(mod.name)
-            }.mapNotNull { it?.toLowerCase() }
+            }.mapNotNull { it?.lowercase() }
         }
     }
 }

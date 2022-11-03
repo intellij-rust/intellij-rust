@@ -140,6 +140,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             val settings = runManager.createCargoCommandRunConfiguration(commandLine)
             val environment = ExecutionEnvironment(executor, runner, settings, project)
             val configuration = settings.configuration as? CargoCommandConfiguration ?: return@mapNotNull null
+            configuration.emulateTerminal = false
             val buildableElement = CargoBuildConfiguration(configuration, environment)
             ProjectModelBuildTaskImpl(buildableElement, false)
         }

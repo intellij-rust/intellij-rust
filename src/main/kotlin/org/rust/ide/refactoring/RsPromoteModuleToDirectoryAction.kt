@@ -21,6 +21,7 @@ import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
 
@@ -82,7 +83,7 @@ private val PsiElement.isPromotable: Boolean
     get() {
         if (this !is RsFile) return false
         return if (isCrateRoot) {
-            name != RsConstants.MAIN_RS_FILE && containingCrate?.kind?.isPromotable == true
+            name != RsConstants.MAIN_RS_FILE && containingCrate.asNotFake?.kind?.isPromotable == true
         } else {
             name != RsConstants.MOD_RS_FILE
         }

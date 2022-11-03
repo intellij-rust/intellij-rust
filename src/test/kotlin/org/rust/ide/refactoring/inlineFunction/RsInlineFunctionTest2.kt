@@ -899,6 +899,95 @@ class RsInlineFunctionTest2 : RsInlineTestBase() {
         impl Bar {}
     """)
 
+    fun `test replace Self if needed`() = doTest("""
+        fn func() {
+            Foo::new();
+        }
+
+        struct Foo {}
+        impl Foo {
+            fn /*caret*/new() -> Self {
+                Self {}
+            }
+            fn new2() -> Self {
+                Self::new()
+            }
+        }
+
+        trait Trait {
+            fn new3() -> Self;
+        }
+        impl Trait for Foo {
+            fn new3() -> Self {
+                Self::new()
+            }
+        }
+    """, """
+        fn func() {
+            Foo {};
+        }
+
+        struct Foo {}
+        impl Foo {
+            fn new2() -> Self {
+                Self {}
+            }
+        }
+
+        trait Trait {
+            fn new3() -> Self;
+        }
+        impl Trait for Foo {
+            fn new3() -> Self {
+                Self {}
+            }
+        }
+    """)
+
+    fun `test replace Self in method with generics`() = doTest("""
+        fn func(foo: Foo<i32>) {
+            foo.copy();
+        }
+
+        struct Foo<T> { t: T }
+        impl<T> Foo<T> {
+            fn /*caret*/copy(&self) -> Self {
+                let _: Self;
+                Self::new();
+                Self { t: self.t }
+            }
+        }
+    """, """
+        fn func(foo: Foo<i32>) {
+            let _: Foo<i32>;
+            Foo::<i32>::new();
+            Foo::<i32> { t: foo.t };
+        }
+
+        struct Foo<T> { t: T }
+        impl<T> Foo<T> {}
+    """)
+
+    fun `test replace Self in method with generics UFCS`() = doTest("""
+        fn func(x: i32) {
+            let _ = Foo::new(x);
+        }
+
+        struct Foo<T> { t: T }
+        impl<T> Foo<T> {
+            fn /*caret*/new(t: T) -> Self {
+                Self { t }
+            }
+        }
+    """, """
+        fn func(x: i32) {
+            let _ = Foo::<i32> { t: x };
+        }
+
+        struct Foo<T> { t: T }
+        impl<T> Foo<T> {}
+    """)
+
     fun `test nested function call`() = doTest("""
         fn main() {
             let _ = foo(foo(2));

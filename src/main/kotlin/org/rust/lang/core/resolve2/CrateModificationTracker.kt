@@ -16,6 +16,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
 import org.rust.lang.core.psi.shouldIndexFile
@@ -93,6 +94,9 @@ data class CrateMetaData(
     private val dependencies: Set<CratePersistentId>,
     private val dependenciesNames: Set<String>,
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
+    private val isFunctionLikeProcMacroExpansionEnabled: Boolean,
+    private val isDeriveProcMacroExpansionEnabled: Boolean,
+    private val isAttrProcMacroExpansionEnabled: Boolean,
 ) {
     constructor(crate: Crate) : this(
         name = crate.normName,
@@ -102,7 +106,10 @@ data class CrateMetaData(
         env = crate.env,
         dependencies = crate.flatDependencies.mapNotNullToSet { it.id },
         dependenciesNames = crate.dependencies.mapToSet { it.normName },
-        procMacroArtifact = crate.procMacroArtifact
+        procMacroArtifact = crate.procMacroArtifact,
+        isFunctionLikeProcMacroExpansionEnabled = ProcMacroApplicationService.isFunctionLikeEnabled(),
+        isDeriveProcMacroExpansionEnabled = ProcMacroApplicationService.isDeriveEnabled(),
+        isAttrProcMacroExpansionEnabled = ProcMacroApplicationService.isAttrEnabled(),
     )
 }
 

@@ -5,10 +5,12 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -20,6 +22,9 @@ class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntenti
     data class Context(val featureName: String, val element: RsElement)
 
     override fun getFamilyName() = RsBundle.message("intention.Rust.ToggleFeatureIntention.family.name")
+
+    // No intention preview because it doesn't modify any code
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val featureMetaItem = element.ancestorOrSelf<RsMetaItem>()

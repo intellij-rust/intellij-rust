@@ -13,7 +13,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.openapiext.isUnitTestMode
@@ -56,9 +55,10 @@ interface RustProjectSettingsService {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }
 
+        // BACKCOMPAT: 2022.2. Drop it
         @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
         @Deprecated("Use toolchain property")
-        fun setToolchain(toolchain: RsToolchain?) {
+        fun setToolchain(toolchain: org.rust.cargo.toolchain.RsToolchain?) {
             toolchainHomeDirectory = toolchain?.location?.systemIndependentPath
         }
     }
@@ -105,9 +105,10 @@ interface RustProjectSettingsService {
     val macroExpansionEngine: MacroExpansionEngine
     val doctestInjectionEnabled: Boolean
 
+    // BACKCOMPAT: 2022.2. Drop it
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")
-    fun getToolchain(): RsToolchain?
+    fun getToolchain(): org.rust.cargo.toolchain.RsToolchain?
 
     /*
      * Show a dialog for toolchain configuration

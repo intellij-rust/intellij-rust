@@ -10,11 +10,6 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: 3.7
-
             - name: Set milestone
               if: github.event.pull_request.merged && github.event.pull_request.milestone == null
               run: python scripts/set_milestone.py --token ${{ github.token }} --pull-request ${{ github.event.pull_request.number }}

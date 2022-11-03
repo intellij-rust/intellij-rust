@@ -602,6 +602,24 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         } //^ unresolved
     """)
 
+    fun `test macro 2 (unresolved when absolute path)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub macro foo() {}
+        fn main() {
+            ::foo!();
+        }   //^ unresolved
+    """)
+
+    @MockEdition(Edition.EDITION_2015)
+    fun `test macro 2 (resolved when absolute path in 2015 edition)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub macro foo() {}
+                //x
+        fn main() {
+            ::foo!();
+        }   //^ lib.rs
+    """)
+
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
     //- lib.rs
         mod foo {
@@ -763,6 +781,35 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ dep-lib/lib.rs
+    """)
+
+    fun `test absolute path using aliased extern crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+    //- main.rs
+        extern crate test_package as foo;
+
+        fn main() {
+            ::foo::func();
+        }        //^ lib.rs
+    """)
+
+    fun `test absolute path using aliased extern crate 2`() = stubOnlyResolve("""
+    //- lib.rs
+        extern crate self as foo;
+
+        fn main() {
+            ::foo::func();
+        }        //^ lib.rs
+        pub fn func() {}
+    """)
+
+    fun `test unresolved absolute path self`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+        fn main() {
+            ::self::func();
+        }         //^ unresolved
     """)
 
     fun `test extern crate in super chain (edition 2018)`() = stubOnlyResolve("""

@@ -52,6 +52,7 @@ import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST_PAT
 import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
 import org.rust.lang.core.CompilerFeature.Companion.IRREFUTABLE_LET_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.LABEL_BREAK_VALUE
+import org.rust.lang.core.CompilerFeature.Companion.LET_CHAINS
 import org.rust.lang.core.CompilerFeature.Companion.LET_ELSE
 import org.rust.lang.core.CompilerFeature.Companion.MIN_CONST_GENERICS
 import org.rust.lang.core.CompilerFeature.Companion.NON_MODRS_MODS
@@ -82,6 +83,7 @@ import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.areUnstableFeaturesAvailable
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.openapiext.isUnitTestMode
+import org.rust.stdext.capitalized
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -102,6 +104,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitFunction(o: RsFunction) = checkFunction(rsHolder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(rsHolder, o)
             override fun visitLetDecl(o: RsLetDecl) = checkLetDecl(rsHolder, o)
+            override fun visitLetExpr(o: RsLetExpr) = checkLetExpr(rsHolder, o)
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
             override fun visitLabelDecl(o: RsLabelDecl) = checkLabelDecl(rsHolder, o)
@@ -229,8 +232,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
         val parent = orPat.context
+        val parentParent = parent?.context
 
-        if (parent !is RsCondition && parent !is RsMatchArm) {
+        if (parent !is RsMatchArm && (parent !is RsLetExpr || parentParent !is RsCondition)) {
             OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
         }
 
@@ -597,7 +601,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             )
             else -> {
                 val itemType = when (element) {
-                    is RsItemElement -> element.itemKindName.capitalize()
+                    is RsItemElement -> element.itemKindName.capitalized()
                     else -> "Item"
                 }
 
@@ -612,7 +616,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkUnstableAttribute(ref: RsReferenceElement, holder: RsAnnotationHolder) {
         val startElement = ref.referenceNameElement?.takeIf { it.elementType == IDENTIFIER } ?: return
-        if (ref.containingCrate?.origin == PackageOrigin.STDLIB) return
+        if (ref.containingCrate.origin == PackageOrigin.STDLIB) return
         val element = ref.reference?.resolve() as? RsOuterAttributeOwner ?: return
         for (attr in element.queryAttributes.unstableAttributes) {
             val metaItems = attr.metaItemArgs?.metaItemList ?: continue
@@ -659,6 +663,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
+        if (path.isInsideDocLink) return
         if (!checkSelfImport(holder, path)) return
         if (!checkCaptureVariableFromOuterFunction(holder, path)) return
 
@@ -860,9 +865,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkMatchArmGuard(holder: RsAnnotationHolder, guard: RsMatchArmGuard) {
-        val let = guard.let
-        if (let != null) {
-            IF_LET_GUARD.check(holder, let, "if let guard")
+        val expr = guard.expr
+        if (expr is RsLetExpr) {
+            IF_LET_GUARD.check(holder, expr.let, "if let guard")
         }
     }
 
@@ -955,7 +960,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         for (bound in supertraits) {
             val requiredTrait = bound.traitRef ?: continue
             val boundTrait = requiredTrait.resolveToBoundTrait() ?: continue
-            val locallyBoundTrait = boundTrait.substitute(substitution)
+            val locallyBoundTrait = lookup.ctx.fullyNormalizeAssociatedTypesIn(boundTrait.substitute(substitution))
             if (locallyBoundTrait.containsTyOfClass(TyUnknown::class.java)) continue
 
             val canSelect = lookup.canSelect(TraitRef(type, locallyBoundTrait))
@@ -1198,10 +1203,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkCondition(holder: RsAnnotationHolder, element: RsCondition) {
-        val pat = element.pat
-        if (pat != null && pat.isIrrefutable) {
-            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
-        }
+        val pat = (element.expr as? RsLetExpr)?.pat
         if (pat is RsOrPat) {
             IF_WHILE_OR_PATTERNS.check(
                 holder,
@@ -1209,6 +1211,18 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 pat.patList.last(),
                 "multiple patterns in `if let` and `while let` are unstable"
             )
+        }
+    }
+
+    private fun checkLetExpr(holder: RsAnnotationHolder, element: RsLetExpr) {
+        val parent = element.parent
+        if (parent !is RsCondition && parent !is RsMatchArmGuard) {
+            LET_CHAINS.check(holder, element, null, "`let` expressions in this position are unstable")
+        }
+
+        val pat = element.pat
+        if (pat != null && pat.isIrrefutable) {
+            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
         }
     }
 
@@ -1609,7 +1623,7 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     }
 
     val lookup = ImplLookup.relativeTo(constParameter)
-    if (ProcMacroApplicationService.isEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
+    if (ProcMacroApplicationService.isFullyEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
         RsDiagnostic.NonStructuralMatchTypeAsConstGenericParameter(typeReference, ty.shortPresentableText)
             .addToHolder(holder)
     }

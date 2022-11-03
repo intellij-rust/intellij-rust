@@ -42,6 +42,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.*
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
+import org.rust.stdext.capitalized
 import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 import java.time.Duration
@@ -262,7 +263,7 @@ private data class RsExternalLinterFilteredMessage(
 
                     message.children
                         .filter { it.message.isNotBlank() }
-                        .map { "${it.level.capitalize()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
+                        .map { "${it.level.capitalized()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
                         .forEach { add(it) }
 
                     append(joinToString(prefix = "<br>", separator = "<br>") { formatMessage(it) }.escapeUrls())
@@ -272,7 +273,7 @@ private data class RsExternalLinterFilteredMessage(
             return RsExternalLinterFilteredMessage(
                 severity,
                 textRange,
-                message.message.capitalize(),
+                message.message.capitalized(),
                 tooltip,
                 message.collectQuickFixes(file, document)
             )

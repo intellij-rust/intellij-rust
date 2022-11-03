@@ -31,11 +31,6 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: '3.10'
-
             - name: Calculate git info
               id: calculate-git-info
               run: |
@@ -54,11 +49,6 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: '3.10'
-
             - name: Check license
               run: python scripts/check_license.py
 
@@ -71,7 +61,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' || !fromJSON(needs.calculate-git-info.outputs.is_master_branch) || !fromJSON(needs.calculate-git-info.outputs.checked) }}
         uses: ./.github/workflows/build-native-code.yml
         with:
-            rust-version: 1.63.0
+            rust-version: 1.64.0
             cache: true
 
     check-plugin:
@@ -81,7 +71,7 @@ jobs:
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
-                rust-version: [ 1.63.0, nightly-2022-10-01 ]
+                rust-version: [ 1.64.0, nightly-2022-10-01 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 222, 223 ]
                 # it's enough to verify plugin structure only once per platform version
@@ -90,7 +80,7 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       # Don't forget to update condition in `Set up additional env variables` step
-                      rust-version: 1.41.0
+                      rust-version: 1.56.0
                       base-ide: idea
                       platform-version: 222
                       verify-plugin: true
@@ -169,7 +159,7 @@ jobs:
                   cargo install --list
 
             - name: Set up additional env variables
-              if: matrix.rust-version == '1.41.0'
+              if: matrix.rust-version == '1.56.0'
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
                   echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.2" >> $GITHUB_ENV
@@ -214,6 +204,8 @@ jobs:
                   path: |
                       build/reports/tests
                       */build/reports/tests
+                      build/*sandbox*/system-test/testlog/idea.log
+                      */build/*sandbox*/system-test/testlog/idea.log
 
             - name: Verify plugin
               if: matrix.verify-plugin

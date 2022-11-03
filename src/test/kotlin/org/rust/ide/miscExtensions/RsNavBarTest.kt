@@ -122,6 +122,7 @@ class RsNavBarTest : RsTestBase() {
         extern crate foo/*caret*/;
     """, "foo")
 
+    @Suppress("UNREACHABLE_CODE", "UNUSED_PARAMETER")
     fun doTest(@Language("Rust") code: String, vararg items: String) {
         return  // TODO
         InlineFile(code).withCaret()

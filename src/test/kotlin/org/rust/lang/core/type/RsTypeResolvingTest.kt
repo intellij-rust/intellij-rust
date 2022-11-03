@@ -562,6 +562,13 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                              //^ <unknown>
     """)
 
+    fun `test no stack overflow when dyn trait used as a Self type in where clause`() = testType("""
+        trait Foo<T = ()> {}
+        trait Bar {}
+        fn foo<T>() where dyn Foo: Bar {}
+                        //^ dyn Foo<()>
+    """)
+
     fun `test mixed type and const arguments`() = testType("""
         struct A1;
         const B1: i32 = 1;
@@ -572,6 +579,32 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         type T = Foo<A1, B1, C1>;
                //^ Foo<A1, 1, C1>
     """)
+
+    fun `test normalizable Self-related associated type path`() = testType("""
+        struct S<T>(T);
+        trait Foo<T> {
+            type Item;
+            fn foo(&self) -> Self::Item;
+        }
+        impl<T, C, R> Foo<T> for S<C> where C: Foo<R>
+        {
+            type Item = C::Item;
+            fn foo(&self) -> Self::Item { todo!() }
+        }                        //^ <C as Foo<R>>::Item
+    """, normalize = true)
+
+    fun `test normalizable associated type path with nested obligations`() = testType("""
+        struct W<T>(T);
+        trait Foo { type Item; }
+        impl<A, B> Foo for W<A> where A: Foo<Item=B> { type Item = B; }
+        struct S;
+        struct X;
+        impl Foo for S {
+            type Item = X;
+        }
+        type T = <W<S> as Foo>::Item;
+                              //^ X
+    """, normalize = true)
 
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.

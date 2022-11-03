@@ -46,8 +46,9 @@ private val RUST_LANG_ALIASES = listOf(
     "no_run",
     "test_harness",
 //    "compile_fail", // don't highlight code that is expected to contain errors
+    "edition2015",
     "edition2018",
-    "edition2015"
+    "edition2021"
 )
 
 class RsDoctestLanguageInjector : MultiHostInjector {
@@ -59,7 +60,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
         val project = context.project
         if (!project.rustSettings.doctestInjectionEnabled) return
 
-        val crate = context.containingCrate ?: return
+        val crate = context.containingCrate
         if (!crate.areDoctestsEnabled) return // only library targets can have doctests
         val crateName = crate.normName
 
@@ -197,7 +198,7 @@ class DoctestInfo private constructor(
     companion object {
         fun fromCodeFence(codeFence: RsDocCodeFence): DoctestInfo? {
             if (!codeFence.project.rustSettings.doctestInjectionEnabled) return null
-            if (codeFence.containingCrate?.areDoctestsEnabled != true) return null
+            if (!codeFence.containingCrate.areDoctestsEnabled) return null
             if (hasUnbalancedCodeFencesBefore(codeFence)) return null
 
             val lang = codeFence.lang?.text ?: ""
@@ -239,7 +240,7 @@ class DoctestInfo private constructor(
             return DoctestInfo(docIndent, fenceIndent, contents, codeFence.text)
         }
 
-        private fun hasUnbalancedCodeFencesBefore(context: RsDocCodeFence): Boolean {
+        fun hasUnbalancedCodeFencesBefore(context: RsDocCodeFence): Boolean {
             val containingDoc = context.containingDoc
             val docOwner = containingDoc.owner ?: return false
             for (docElement in docOwner.docElements()) {

@@ -20,7 +20,10 @@ import org.rust.ide.refactoring.move.common.RsModDeclUsageInfo
 import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
 import org.rust.ide.utils.import.lastElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.firstItem
+import org.rust.lang.core.psi.ext.getChildModule
 
 /** See overview of move refactoring in comment for [RsMoveCommonProcessor] */
 class RsMoveFilesOrDirectoriesProcessor(
@@ -120,8 +123,7 @@ fun RsMod.insertModDecl(psiFactory: RsPsiFactory, modDecl: PsiElement) {
     if (anchor != null) {
         addAfter(modDecl, anchor)
     } else {
-        val firstItem = itemsAndMacros.firstOrNull { it !is RsAttr && it !is RsVis }
-            ?: (this as? RsModItem)?.rbrace
+        val firstItem = firstItem ?: (this as? RsModItem)?.rbrace
         addBefore(modDecl, firstItem)
     }
 

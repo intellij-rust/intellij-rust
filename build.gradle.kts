@@ -51,7 +51,7 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.7.20"
-    id("org.jetbrains.intellij") version "1.8.1"
+    id("org.jetbrains.intellij") version "1.10.0-SNAPSHOT"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.4.1"
@@ -75,6 +75,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
@@ -330,7 +331,6 @@ project(":plugin") {
             dependsOn(mergePluginJarTask)
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
-
         withType<PrepareSandboxTask> {
             dependsOn(named(compileNativeCodeTaskName))
 
@@ -487,6 +487,9 @@ project(":clion") {
 }
 
 project(":debugger") {
+    apply {
+        plugin("antlr")
+    }
     intellij {
         if (baseIDE == "idea") {
             plugins.set(listOf(nativeDebugPlugin))
@@ -495,9 +498,37 @@ project(":debugger") {
             plugins.set(clionPlugins)
         }
     }
+
+    // Kotlin Gradle support doesn't generate proper extensions if the plugin is not declared in `plugin` block.
+    // But if we do it, `antlr` plugin will be applied to root project as well that we want to avoid.
+    // So, let's define all necessary things manually
+    val antlr by configurations
+    val generateGrammarSource: AntlrTask by tasks
+    val generateTestGrammarSource: AntlrTask by tasks
+
     dependencies {
         implementation(project(":"))
+        antlr("org.antlr:antlr4:4.11.1")
+        implementation("org.antlr:antlr4-runtime:4.11.1")
         testImplementation(project(":", "testOutput"))
+    }
+    tasks {
+        compileKotlin {
+            dependsOn(generateGrammarSource)
+        }
+        compileTestKotlin {
+            dependsOn(generateTestGrammarSource)
+        }
+
+        generateGrammarSource {
+            arguments.add("-no-listener")
+            arguments.add("-visitor")
+            outputDirectory = file("src/gen/org/rust/debugger/lang")
+        }
+    }
+    // Exclude antlr4 from transitive dependencies of `:debugger:api` configuration (https://github.com/gradle/gradle/issues/820)
+    configurations.api {
+        setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
     }
 }
 
@@ -600,8 +631,6 @@ project(":ml-completion") {
 
 task("runPrettyPrintersTests") {
     doLast {
-        // https://github.com/intellij-rust/intellij-rust/issues/8482
-        if (platformVersion == 221) return@doLast
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"

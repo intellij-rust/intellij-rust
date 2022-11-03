@@ -8,24 +8,25 @@ package org.rust.lang.core.psi.ext
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.io.IOUtil
+import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
-import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
-import org.rust.lang.core.resolve.KnownDerivableTrait
 import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
 import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
@@ -94,13 +95,6 @@ val RsPossibleMacroCall.canBeMacroCall: Boolean
         is MetaItem -> RsProcMacroPsiUtil.canBeProcMacroCall(kind.meta)
     }
 
-val RsPossibleMacroCall.shouldSkipMacroExpansion: Boolean
-    get() = when (val kind = kind) {
-        is MetaItem -> !ProcMacroApplicationService.isEnabled()
-            || RsProcMacroPsiUtil.canBeCustomDerive(kind.meta) && KnownDerivableTrait.shouldUseHardcodedTraitDerive(kind.meta.name)
-        else -> false
-    }
-
 val RsPossibleMacroCall.isTopLevelExpansion: Boolean
     get() = when (val kind = kind) {
         is MacroCall -> kind.call.isTopLevelExpansion
@@ -143,7 +137,7 @@ private fun doPrepareProcMacroCallBody(
     return when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate)) {
         is ProcMacroAttribute.Attr -> {
             val attrIndex = attr.index
-            val crate = explicitCrate ?: owner.containingCrate ?: return null
+            val crate = explicitCrate ?: owner.containingCrate
             val body = doPrepareAttributeProcMacroCallBody(
                 project,
                 text,
@@ -155,7 +149,7 @@ private fun doPrepareProcMacroCallBody(
             PreparedProcMacroCallBody.Attribute(body, attr)
         }
         is ProcMacroAttribute.Derive -> {
-            val crate = explicitCrate ?: owner.containingCrate ?: return null
+            val crate = explicitCrate ?: owner.containingCrate
             val body = doPrepareCustomDeriveMacroCallBody(project, text, endOfAttrsOffset, crate) ?: return null
             PreparedProcMacroCallBody.Derive(body)
         }
@@ -425,7 +419,7 @@ val RsPossibleMacroCall.expansion: MacroExpansion?
 
 val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpansionError>
     get() {
-        return CachedValuesManager.getCachedValue(this) {
+        return CachedValuesManager.getCachedValue(this, RS_MACRO_CALL_EXPANSION_RESULT) {
             val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
                 // Use the original element only if macro bodies are equal. They
                 // will be different if completion invoked inside the macro body.
@@ -434,6 +428,10 @@ val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpans
             project.macroExpansionManager.getExpansionFor(originalOrSelf)
         }
     }
+
+@VisibleForTesting
+val RS_MACRO_CALL_EXPANSION_RESULT: Key<CachedValue<RsResult<MacroExpansion, GetMacroExpansionError>>> =
+    Key("org.rust.lang.core.psi.ext.RS_MACRO_CALL_EXPANSION_RESULT")
 
 fun RsPossibleMacroCall.expandMacrosRecursively(
     depthLimit: Int = getRecursionLimit(this),

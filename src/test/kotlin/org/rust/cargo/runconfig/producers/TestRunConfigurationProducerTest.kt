@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.findCargoProject
+import org.rust.lang.doc.psi.RsDocCodeFence
 import org.rust.openapiext.toPsiDirectory
 
 class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
@@ -350,5 +351,57 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             file("src/struct.rs", "#[test] fn test_foo() { /*caret*/assert!(true); }").open()
         }
         checkOnTopLevel<RsFunction>()
+    }
+
+    fun `test doctest`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                /// Documentation
+                /// ```/*caret*/
+                /// let a = 5;
+                /// ```
+                fn foo() {}
+            """.trimIndent()).open()
+        }
+        checkOnTopLevel<RsDocCodeFence>()
+    }
+
+    fun `test ignored doctest`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                /// Documentation
+                /// ```ignore/*caret*/
+                /// let a = 5;
+                /// ```
+                fn foo() {}
+            """.trimIndent()).open()
+        }
+        checkOnTopLevel<RsDocCodeFence>()
+    }
+
+    fun `test module top-level doctest`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                mod bar {
+                    //! Documentation
+                    //! ```/*caret*/
+                    //! let a = 5;
+                    //! ```
+                }
+            """.trimIndent()).open()
+        }
+        checkOnTopLevel<RsDocCodeFence>()
+    }
+
+    fun `test library top-level doctest`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                //! Documentation
+                //! ```/*caret*/
+                //! let a = 5;
+                //! ```
+            """.trimIndent()).open()
+        }
+        checkOnTopLevel<RsDocCodeFence>()
     }
 }

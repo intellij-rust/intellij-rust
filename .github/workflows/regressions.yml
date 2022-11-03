@@ -76,11 +76,6 @@ jobs:
                   distribution: corretto
                   java-version: 17
 
-            - name: Set up Python
-              uses: actions/setup-python@v1
-              with:
-                  python-version: 3.7
-
             - name: Set up Rust
               uses: actions-rs/toolchain@v1
               with:

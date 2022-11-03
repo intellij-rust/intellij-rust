@@ -11,7 +11,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
@@ -34,8 +33,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
                 val rootPathParent = path.rootPath().parent
                 if (rootPathParent is RsMetaItem) {
-                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isEnabled()) return
+                    if (!rootPathParent.isMacroCall || !ProcMacroApplicationService.isFullyEnabled()) return
                 }
+
+                if (path.isInsideDocLink) return
 
                 val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
                 val qualifier = path.qualifier
@@ -73,7 +74,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
             override fun visitExternCrateItem(externCrate: RsExternCrateItem) {
                 if (externCrate.reference.multiResolve().isEmpty() &&
-                    externCrate.containingCrate?.origin == PackageOrigin.WORKSPACE) {
+                    externCrate.containingCrate.origin == PackageOrigin.WORKSPACE) {
                     RsDiagnostic.CrateNotFoundError(externCrate.referenceNameElement, externCrate.referenceName)
                         .addToHolder(holder)
                 }
@@ -87,7 +88,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         val candidates = context?.candidates
         if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
 
-        if (element.containingCrate?.hasCyclicDevDependencies == true && element.isUnderCfgTest) {
+        if (element.containingCrate.hasCyclicDevDependencies && element.isUnderCfgTest) {
             return
         }
 

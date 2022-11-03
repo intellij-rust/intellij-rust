@@ -25,6 +25,7 @@ import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.utils.RsDiagnostic
@@ -61,7 +62,7 @@ class CompilerFeature(
             ThreeState.YES -> Unit
         }
 
-        val crate = rsElement.containingCrate ?: return UNKNOWN
+        val crate = rsElement.containingCrate.asNotFake ?: return UNKNOWN
         val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
         val possibleFeatureAttrs = attrs.asSequence()
@@ -197,6 +198,7 @@ class CompilerFeature(
         val IN_BAND_LIFETIMES: CompilerFeature get() = get("in_band_lifetimes")
         val IRREFUTABLE_LET_PATTERNS: CompilerFeature get() = get("irrefutable_let_patterns")
         val LABEL_BREAK_VALUE: CompilerFeature get() = get("label_break_value")
+        val LET_CHAINS: CompilerFeature get() = get("let_chains")
         val LET_ELSE: CompilerFeature get() = get("let_else")
         val MIN_CONST_GENERICS: CompilerFeature get() = get("min_const_generics")
         val NON_MODRS_MODS: CompilerFeature get() = get("non_modrs_mods")

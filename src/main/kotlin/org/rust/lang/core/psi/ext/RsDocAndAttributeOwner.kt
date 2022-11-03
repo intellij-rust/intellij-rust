@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsAttributeOwnerStub
 import org.rust.lang.core.stubs.RsFileStub
@@ -234,7 +235,7 @@ private fun <T : RsMetaItemPsiOrStub> RsAttributeOwnerPsiOrStub<T>.getExpandedAt
         rawMetaItems
     }
     if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return QueryAttributes(rawMetaItems)
-    val crate = explicitCrate ?: containingCrate ?: return QueryAttributes(rawMetaItems)
+    val crate = explicitCrate ?: containingCrate.asNotFake ?: return QueryAttributes(rawMetaItems)
     val evaluator = CfgEvaluator.forCrate(crate)
     return QueryAttributes(evaluator.expandCfgAttrs(rawMetaItems))
 }
@@ -500,7 +501,7 @@ sealed class LazyCfgEvaluator {
 
     object Lazy: LazyCfgEvaluator() {
         override fun createEvaluator(element: RsAttributeOwnerPsiOrStub<*>): CfgEvaluator? {
-            val crate = element.containingCrate ?: return null
+            val crate = element.containingCrate.asNotFake ?: return null
             return CfgEvaluator.forCrate(crate)
         }
     }

@@ -26,6 +26,7 @@ import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
+import org.rust.stdext.capitalized
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
@@ -66,7 +67,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
             messageConsumer.acceptText(context.parentId, detailedMessage.withNewLine())
         }
 
-        val message = rustcMessage.message.trim().capitalize().trimEnd('.')
+        val message = rustcMessage.message.trim().capitalized().trimEnd('.')
         if (message.startsWith("Aborting due") || message.endsWith("emitted")) return true
 
         val parentEventId = topMessage.package_id.substringBefore("(").trimEnd()
@@ -122,7 +123,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
             .let { if (kind in ERROR_OR_WARNING) it.substringAfter(":") else it }
             .removePrefix(" internal compiler error:")
             .trim()
-            .capitalize()
+            .capitalized()
             .trimEnd('.')
         when {
             message.startsWith("Compiling") || message.startsWith("Checking") ->

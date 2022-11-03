@@ -10,7 +10,16 @@
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.macros.proc" percentOfUsers="0">
-            <description>Enables procedural macro expansion</description>
+            <description>Enables all types of procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.function-like" percentOfUsers="0">
+            <description>Enables function-like procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.derive" percentOfUsers="0">
+            <description>Enables derive procedural macro expansion</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="0">
+            <description>Enables attribute procedural macro expansion</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="100">
             <description>Enables crates local index</description>
@@ -18,7 +27,7 @@
         <experimentalFeature id="org.rust.cargo.emulate.terminal" percentOfUsers="0">
             <description>Emulate terminal in output console by default</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="0">
+        <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
     </extensions>

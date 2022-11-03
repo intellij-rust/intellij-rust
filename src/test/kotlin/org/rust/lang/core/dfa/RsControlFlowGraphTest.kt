@@ -159,6 +159,35 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """)
 
+    fun `test if let chain`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x && let Some(u) = y { 1 };
+        }
+    """, """
+        digraph {
+            "0: Entry" -> "3: x";
+            "3: x" -> "4: s";
+            "4: s" -> "5: s";
+            "5: s" -> "6: Some(s)";
+            "6: Some(s)" -> "7: let Some(s) = x";
+            "7: let Some(s) = x" -> "8: y";
+            "8: y" -> "9: u";
+            "9: u" -> "10: u";
+            "10: u" -> "11: Some(u)";
+            "11: Some(u)" -> "12: let Some(u) = y";
+            "7: let Some(s) = x" -> "13: let Some(s) = x && let Some(u) = y";
+            "12: let Some(u) = y" -> "13: let Some(s) = x && let Some(u) = y";
+            "13: let Some(s) = x && let Some(u) = y" -> "14: 1";
+            "14: 1" -> "15: BLOCK";
+            "13: let Some(s) = x && let Some(u) = y" -> "16: IF";
+            "15: BLOCK" -> "16: IF";
+            "16: IF" -> "17: IF;";
+            "17: IF;" -> "18: BLOCK";
+            "18: BLOCK" -> "1: Exit";
+            "1: Exit" -> "2: Termination";
+        }
+    """)
+
     fun `test if let else`() = testCFG("""
         fn foo() {
             if let Some(s) = x { 1 } else { 2 };
@@ -179,6 +208,37 @@ class RsControlFlowGraphTest : RsTestBase() {
             "12: IF" -> "13: IF;";
             "13: IF;" -> "14: BLOCK";
             "14: BLOCK" -> "1: Exit";
+            "1: Exit" -> "2: Termination";
+        }
+    """)
+
+    fun `test if let chain else`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x && let Some(u) = y { 1 } else { 2 };
+        }
+    """, """
+        digraph {
+            "0: Entry" -> "3: x";
+            "3: x" -> "4: s";
+            "4: s" -> "5: s";
+            "5: s" -> "6: Some(s)";
+            "6: Some(s)" -> "7: let Some(s) = x";
+            "7: let Some(s) = x" -> "8: y";
+            "8: y" -> "9: u";
+            "9: u" -> "10: u";
+            "10: u" -> "11: Some(u)";
+            "11: Some(u)" -> "12: let Some(u) = y";
+            "7: let Some(s) = x" -> "13: let Some(s) = x && let Some(u) = y";
+            "12: let Some(u) = y" -> "13: let Some(s) = x && let Some(u) = y";
+            "13: let Some(s) = x && let Some(u) = y" -> "14: 1";
+            "14: 1" -> "15: BLOCK";
+            "13: let Some(s) = x && let Some(u) = y" -> "16: 2";
+            "16: 2" -> "17: BLOCK";
+            "15: BLOCK" -> "18: IF";
+            "17: BLOCK" -> "18: IF";
+            "18: IF" -> "19: IF;";
+            "19: IF;" -> "20: BLOCK";
+            "20: BLOCK" -> "1: Exit";
             "1: Exit" -> "2: Termination";
         }
     """)

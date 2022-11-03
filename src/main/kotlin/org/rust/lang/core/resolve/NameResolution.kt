@@ -31,6 +31,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
@@ -256,6 +257,20 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     return false
 }
 
+/**
+ * Variants from [processExternCrateResolveVariants] + all renamings `extern crate name as alias;`
+ * See https://doc.rust-lang.org/reference/names/preludes.html#extern-prelude
+ */
+fun processExternPreludeResolveVariants(ctx: PathResolutionContext, processor: RsResolveProcessor): Boolean {
+    val (project, defMap) = ctx.containingModInfo ?: return false
+    for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithNames(processor.names)) {
+        val externCrateRoot = externCrateDefMap.rootAsRsMod(project) ?: continue
+        if (processor(name, externCrateRoot)) return true
+    }
+    return false
+}
+
+/** Processes dependencies crates (specified in Cargo.toml) */
 fun processExternCrateResolveVariants(
     element: RsElement,
     isCompletion: Boolean,
@@ -268,7 +283,7 @@ fun processExternCrateResolveVariants(
     withSelf: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val crate = element.containingCrate ?: return false
+    val crate = element.containingCrate
 
     val visitedDeps = mutableSetOf<String>()
     fun processPackage(crate: Crate, dependencyName: String): Boolean {
@@ -370,7 +385,7 @@ fun processPathResolveVariants(ctx: PathResolutionContext, pathKind: RsPathResol
             }
         }
         is RsPathResolveKind.ExternCratePath -> {
-            processExternCrateResolveVariants(ctx.crateRoot ?: ctx.context, ctx.isCompletion, processor)
+            processExternPreludeResolveVariants(ctx, processor)
         }
         is RsPathResolveKind.AssocTypeBindingPath -> {
             processAssocTypeVariants(pathKind.parent, processor)
@@ -495,7 +510,7 @@ private fun processQualifiedPathResolveVariants1(
         // happens inside proc macro crate itself, all items are allowed
         val baseModContainingCrate = base.containingCrate
         val resolveBetweenDifferentTargets = baseModContainingCrate != containingMod.containingCrate
-        if (resolveBetweenDifferentTargets && baseModContainingCrate?.kind?.isProcMacro == true) {
+        if (resolveBetweenDifferentTargets && baseModContainingCrate.kind.isProcMacro) {
             return false
         }
     }
@@ -545,7 +560,7 @@ private fun processQualifiedPathResolveVariants1(
         // to only members of the current impl or implemented trait or its parent traits
         val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
             NameResolutionTestmarks.SelfRelatedTypeSpecialCase.hit()
-            base.implementedTrait?.flattenHierarchy
+            base.implementedTrait?.getFlattenHierarchy()
         } else {
             null
         }
@@ -654,7 +669,7 @@ private fun processTraitRelativePath(
     ns: Set<Namespace>,
     processor: RsResolveProcessor
 ): Boolean {
-    for (boundTrait in baseBoundTrait.flattenHierarchy) {
+    for (boundTrait in baseBoundTrait.getFlattenHierarchy()) {
         val source = TraitImplSource.Trait(boundTrait.element)
         if (processTraitMembers(boundTrait.element, ns, boundTrait.subst, TyUnknown, source, processor)) return true
     }
@@ -799,7 +814,7 @@ fun resolveStringPath(
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(crateRelativePath, it) }
         .filter {
             val crateRoot = it.containingFile.context as RsFile
-            val crateId = crateRoot.containingCrate?.id ?: return@filter false
+            val crateId = crateRoot.containingCrate.asNotFake?.id ?: return@filter false
             // ignore e.g. test/bench non-workspace crates
             project.defMapService.getOrUpdateIfNeeded(crateId) != null
         }
@@ -886,6 +901,7 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
 fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.qualifier
     return if (qualifier == null) {
+        if (path.hasColonColon && path.isAtLeastEdition2018) return false
         if (isCompletion) {
             processMacroCallVariantsInScope(path, ignoreLegacyMacros = false, processor)
         } else {
@@ -1202,7 +1218,7 @@ private val EXPORTED_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPOR
 
 private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
     // proc-macro crates are allowed to export only procedural macros.
-    if (scope.containingCrate?.kind?.isProcMacro == true) {
+    if (scope.containingCrate.kind.isProcMacro) {
         return scope.stubChildrenOfType<RsFunction>().mapNotNull { asProcMacroDefinition(it) }
     }
 
@@ -1488,10 +1504,41 @@ private fun processLexicalDeclarations(
         }
     }
 
-    fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
-        if (condition == null || condition == cameFrom) return false
-        val pat = condition.pat ?: return false
-        return processPattern(pat, processor)
+    fun processLetExprs(
+        expr: RsExpr?,
+        processor: RsResolveProcessor,
+        prevScope: MutableMap<String, Set<Namespace>> = hashMapOf()
+    ): Boolean {
+        if (expr == null || expr == cameFrom) return false
+
+        val shadowingProcessor = createProcessor(processor.names) { e ->
+            (e.name !in prevScope) && processor(e).also {
+                if (processor.acceptsName(e.name)) {
+                    prevScope[e.name] = VALUES
+                }
+            }
+        }
+
+        fun process(expr: RsExpr): Boolean {
+            when (expr) {
+                cameFrom -> return false
+
+                is RsLetExpr -> {
+                    val pat = expr.pat ?: return false
+                    return processPattern(pat, shadowingProcessor)
+                }
+
+                is RsBinaryExpr -> {
+                    if (expr.right?.let { process(it) } == true) return true
+                    return process(expr.left)
+                }
+
+                else -> return false
+            }
+        }
+
+
+        return process(expr)
     }
 
     when (scope) {
@@ -1587,12 +1634,19 @@ private fun processLexicalDeclarations(
         }
 
         is RsIfExpr -> {
-            // else branch of 'if let' expression shouldn't look into condition pattern
-            if (scope.elseBranch == cameFrom) return false
-            return processCondition(scope.condition, processor)
+            if (scope.block != cameFrom) return false
+            val expr = scope.condition?.expr
+            return processLetExprs(expr, processor)
         }
         is RsWhileExpr -> {
-            return processCondition(scope.condition, processor)
+            if (scope.block != cameFrom) return false
+            val expr = scope.condition?.expr
+            return processLetExprs(expr, processor)
+        }
+
+        is RsBinaryExpr -> {
+            if (scope.right != cameFrom) return false
+            return processLetExprs(scope.left, processor)
         }
 
         is RsLambdaExpr -> {
@@ -1604,12 +1658,10 @@ private fun processLexicalDeclarations(
         }
 
         is RsMatchArm -> {
-            val guardPat = scope.matchArmGuard?.pat
-            if (guardPat == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
+            val guardExpr = scope.matchArmGuard?.expr
+            if (guardExpr == null || scope.expr != cameFrom) return processPattern(scope.pat, processor)
             val prevScope = hashMapOf<String, Set<Namespace>>()
-            val stop = processWithShadowingAndUpdateScope(prevScope, ns, processor) { shadowingProcessor ->
-                processPattern(guardPat, shadowingProcessor)
-            }
+            val stop = processLetExprs(guardExpr, processor, prevScope)
             if (stop) return true
             return processWithShadowing(prevScope, ns, processor) { shadowingProcessor ->
                 processPattern(scope.pat, shadowingProcessor)

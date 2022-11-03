@@ -6,6 +6,8 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 
 class RsMacroBracketCompletionTest : RsCompletionTestBase() {
 
@@ -114,6 +116,26 @@ class RsMacroBracketCompletionTest : RsCompletionTestBase() {
         $MACRO_PLACEHOLDER
         fn main() {
             foo![/*caret*/]
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test bracket from documentation (proc macro)`() = doSingleCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        /// ```
+        /// foo! {}
+        /// ```
+        #[proc_macro]
+        pub fn foo(input: TokenStream) -> TokenStream { input }
+    //- lib.rs
+        fn main() {
+            foo/*caret*/
+        }
+    """, """
+        use dep_proc_macro::foo;
+
+        fn main() {
+            foo! {/*caret*/}
         }
     """)
 

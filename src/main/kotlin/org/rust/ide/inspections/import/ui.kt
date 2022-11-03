@@ -79,6 +79,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
         }
         val popup = object : ListPopupImpl(project, step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
+                @Suppress("UNCHECKED_CAST")
                 val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
                 val psiRenderer = RsImportCandidateCellRenderer()
                 return ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->

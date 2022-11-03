@@ -44,7 +44,7 @@ class RsMacroDataWithHash<out T : RsMacroData>(
                 }
                 def is RsFunction && def.isProcMacroDef -> {
                     val name = def.procMacroName ?: return null
-                    val procMacro = def.containingCrate?.procMacroArtifact ?: return null
+                    val procMacro = def.containingCrate.procMacroArtifact ?: return null
                     val hash = HashCode.mix(procMacro.hash, HashCode.compute(name))
                     RsMacroDataWithHash(RsProcMacroData(name, procMacro), hash)
                 }

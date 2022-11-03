@@ -373,15 +373,12 @@ fun pathPsiSubst(
         when (param) {
             is RsTypeParameter -> {
                 val defaultTy = param.typeReference ?: return@associateSubst null
-                val selfTy = if (parent is RsTraitRef && parent.parent is RsBound) {
-                    val pred = parent.ancestorStrict<RsWherePred>()
-                    if (pred != null) {
-                        pred.typeReference?.rawType
-                    } else {
-                        parent.ancestorStrict<RsTypeParameter>()?.declaredType
-                    } ?: TyUnknown
-                } else {
-                    null
+                val possibleTypeParamOrWherePred =
+                    ((((parent as? RsTraitRef)?.parent as? RsBound)?.parent as? RsPolybound)?.parent as? RsTypeParamBounds)?.parent
+                val selfTy = when (possibleTypeParamOrWherePred) {
+                    is RsWherePred -> possibleTypeParamOrWherePred.typeReference?.rawType ?: TyUnknown
+                    is RsTypeParameter -> possibleTypeParamOrWherePred.declaredType
+                    else -> null
                 }
                 TypeDefault(defaultTy, selfTy)
             }

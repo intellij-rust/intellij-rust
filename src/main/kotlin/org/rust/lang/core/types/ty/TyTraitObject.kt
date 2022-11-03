@@ -8,7 +8,7 @@ package org.rust.lang.core.types.ty
 import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.flattenHierarchy
+import org.rust.lang.core.psi.ext.getFlattenHierarchy
 import org.rust.lang.core.psi.ext.isAuto
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.psi.ext.withDefaultSubst
@@ -53,7 +53,7 @@ class TyTraitObject(
     override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyTraitObject(traits, region, aliasedBy)
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
-        traits.flatMap { it.flattenHierarchy }
+        traits.flatMap { it.getFlattenHierarchy(TyUnknown) }
 
     val baseTrait: RsTraitItem?
         get() {

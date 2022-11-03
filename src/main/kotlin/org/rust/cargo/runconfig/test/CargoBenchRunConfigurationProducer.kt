@@ -6,7 +6,10 @@
 package org.rust.cargo.runconfig.test
 
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.isBench
 import org.rust.lang.core.psi.ext.processExpandedItemsExceptImplsAndUses
@@ -14,12 +17,22 @@ import org.rust.lang.core.psi.ext.processExpandedItemsExceptImplsAndUses
 class CargoBenchRunConfigurationProducer : CargoTestRunConfigurationProducerBase() {
     override val commandName: String = "bench"
 
-    override fun isSuitable(element: PsiElement): Boolean =
-        when (element) {
+    init {
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsModDeclItem>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsFunction>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsMod>(elements, climbUp) }
+        registerConfigProvider { elements, climbUp -> createConfigForMultipleFiles(elements, climbUp) }
+        registerDirectoryConfigProvider { dir -> createConfigForDirectory(dir) }
+    }
+
+    override fun isSuitable(element: PsiElement): Boolean {
+        if (!super.isSuitable(element)) return false
+        return when (element) {
             is RsMod -> hasBenchFunction(element)
             is RsFunction -> element.isBench
             else -> false
         }
+    }
 
     companion object {
         private fun hasBenchFunction(mod: RsMod): Boolean =

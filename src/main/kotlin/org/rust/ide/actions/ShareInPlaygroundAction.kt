@@ -20,14 +20,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.USER_AGENT
 import org.rust.lang.core.psi.RsFile
@@ -73,7 +73,7 @@ class ShareInPlaygroundAction : DumbAwareAction() {
             if (!confirmShare(file, hasSelection)) return
 
             val channel = file.cargoProject?.rustcInfo?.version?.channel?.channel ?: "stable"
-            val edition = (file.crate?.edition ?: Edition.DEFAULT).presentation
+            val edition = file.crate.edition.presentation
 
             object : Task.Backgroundable(project, RsBundle.message("action.Rust.ShareInPlayground.progress.title")) {
 
@@ -137,7 +137,7 @@ class ShareInPlaygroundAction : DumbAwareAction() {
             if (!showConfirmation) {
                 return true
             }
-            val doNotAskOption = object : DialogWrapper.DoNotAskOption.Adapter() {
+            val doNotAskOption = object : DoNotAskOption.Adapter() {
                 override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
                     if (isSelected && exitCode == Messages.OK) {
                         PropertiesComponent.getInstance().setValue(SHOW_SHARE_IN_PLAYGROUND_CONFIRMATION, false, true)
@@ -151,15 +151,12 @@ class ShareInPlaygroundAction : DumbAwareAction() {
                 RsBundle.message("action.Rust.ShareInPlayground.confirmation", file.name)
             }
 
-            val answer = Messages.showOkCancelDialog(
-                message,
-                RsBundle.message("action.Rust.ShareInPlayground.text"),
-                Messages.getOkButton(),
-                Messages.getCancelButton(),
-                Messages.getQuestionIcon(),
-                doNotAskOption
-            )
-            return answer == Messages.OK
+            return MessageDialogBuilder.okCancel(RsBundle.message("action.Rust.ShareInPlayground.text"), message)
+                .yesText(Messages.getOkButton())
+                .noText(Messages.getCancelButton())
+                .icon(Messages.getQuestionIcon())
+                .doNotAsk(doNotAskOption)
+                .ask(file.project)
         }
     }
 

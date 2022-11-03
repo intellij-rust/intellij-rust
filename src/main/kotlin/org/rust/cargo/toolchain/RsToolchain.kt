@@ -7,7 +7,7 @@ package org.rust.cargo.toolchain
 
 import java.nio.file.Path
 
-// BACKCOMPAT: 2021.1. Added not to break binary compatibility with EduTools plugin
+// BACKCOMPAT: 2022.2. Added not to break binary compatibility with EduTools plugin
 @Deprecated("Use org.rust.cargo.toolchain.RsLocalToolchain")
 @Suppress("DEPRECATION")
 class RsToolchain(location: Path) : RsLocalToolchain(location) {

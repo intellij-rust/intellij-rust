@@ -33,6 +33,7 @@ import org.rust.cargo.runconfig.target.BuildTarget
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
+import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
 import org.rust.ide.experiments.RsExperiments
@@ -45,6 +46,9 @@ import javax.swing.JComponent
 class CargoCommandConfigurationEditor(project: Project)
     : RsCommandConfigurationEditor<CargoCommandConfiguration>(project) {
     private var panel: JComponent? = null
+
+    private val isRemoteTarget: Boolean
+        get() = DataManager.getInstance().getDataContext(panel).getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) != null
 
     override val command = RsCommandLineEditor(
         project, CargoCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
@@ -148,7 +152,12 @@ class CargoCommandConfigurationEditor(project: Project)
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.env = environmentVariables.envData
 
-        val rustupAvailable = project.toolchain?.isRustupAvailable ?: false
+        val toolchain = project.toolchain
+        if (toolchain is RsWslToolchain && isRemoteTarget) {
+            throw ConfigurationException("Run targets cannot be used alongside with WSL toolchain")
+        }
+
+        val rustupAvailable = toolchain?.isRustupAvailable ?: false
         channel.isEnabled = rustupAvailable || configChannel != RustChannel.DEFAULT
         if (!rustupAvailable && configChannel != RustChannel.DEFAULT) {
             throw ConfigurationException("Channel cannot be set explicitly because rustup is not available")
@@ -197,8 +206,6 @@ class CargoCommandConfigurationEditor(project: Project)
 
     private fun hideUnsupportedFieldsIfNeeded() {
         if (!ApplicationManager.getApplication().isDispatchThread) return
-        val localTarget = DataManager.getInstance().getDataContext(panel)
-            .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null
-        buildOnRemoteTarget.isVisible = !localTarget
+        buildOnRemoteTarget.isVisible = isRemoteTarget
     }
 }

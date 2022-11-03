@@ -19,14 +19,15 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.pom.Navigatable
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.PlatformIcons
+import com.intellij.util.containers.map2Array
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
-    StructureViewModelBase(file, editor, RsStructureViewElement(file)),
+class RsStructureViewModel(editor: Editor?, file: RsFileBase, expandMacros: Boolean = true) :
+    StructureViewModelBase(file, editor, RsStructureViewElement(file, expandMacros)),
     StructureViewModel.ElementInfoProvider {
 
     init {
@@ -60,7 +61,8 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase) :
 }
 
 class RsStructureViewElement(
-    psiArg: RsElement
+    psiArg: RsElement,
+    private val expandMacros: Boolean,
 ) : StructureViewTreeElement, Queryable {
 
     private val psiAnchor = TreeAnchorizer.getService().createAnchor(psiArg)
@@ -82,13 +84,13 @@ class RsStructureViewElement(
     }
 
     override fun getChildren(): Array<TreeElement> =
-        childElements.map(::RsStructureViewElement).toTypedArray()
+        childElements.map2Array { RsStructureViewElement(it, expandMacros) }
 
     private val childElements: List<RsElement>
         get() {
             return when (val psi = psi) {
                 is RsEnumItem -> psi.variants
-                is RsTraitOrImpl -> psi.expandedMembers
+                is RsTraitOrImpl -> if (expandMacros) psi.expandedMembers else psi.explicitMembers
                 is RsMod -> extractItems(psi)
                 is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
@@ -110,7 +112,9 @@ class RsStructureViewElement(
                     }
 
                     is RsMacroCall -> {
-                        addAll(extractItems(item.expansionFlatten.asSequence()))
+                        if (expandMacros) {
+                            addAll(extractItems(item.expansionFlatten.asSequence()))
+                        }
                     }
 
                     is RsUseItem -> Unit

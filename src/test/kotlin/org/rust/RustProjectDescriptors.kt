@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
@@ -334,13 +333,6 @@ open class WithCustomStdlibRustProjectDescriptor(
 }
 
 object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-
-    override fun setUp(fixture: CodeInsightTestFixture) {
-        val root = fixture.findFileInTempDir(".")!!
-        for (source in listOf("dep-lib/lib.rs", "trans-lib/lib.rs")) {
-            VfsTestUtil.createFile(root, source)
-        }
-    }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val testProcMacroArtifact1 = CargoWorkspaceData.ProcMacroArtifact(

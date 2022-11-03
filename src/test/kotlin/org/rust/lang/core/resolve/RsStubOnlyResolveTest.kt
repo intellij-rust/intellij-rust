@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import org.rust.CheckTestmarkHit
 import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun `test child mod`() = stubOnlyResolve("""
@@ -891,6 +893,14 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub mod foo {
             pub fn func() {}
         }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test resolve in detached file (stdlib item)`() = stubOnlyResolve("""
+    //- lib.rs
+    //- detached.rs
+        fn func(_: String) {}
+                 //^ ...string.rs
     """)
 
     fun `test method is not resolved to independent crate 1`() = stubOnlyResolve("""

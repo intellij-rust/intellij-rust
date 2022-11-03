@@ -68,6 +68,7 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
 
 private fun presentableName(psi: RsElement): String? {
     return when (psi) {
+        is RsFunction -> psi.functionName
         is RsNamedElement -> psi.name
         is RsImplItem -> {
             val type = psi.typeReference?.text ?: return null

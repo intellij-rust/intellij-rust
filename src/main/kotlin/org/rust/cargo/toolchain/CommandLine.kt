@@ -17,6 +17,7 @@ import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.emulateTerminalDefault
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
@@ -79,7 +80,7 @@ data class CargoCommandLine(
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val requiredFeatures: Boolean = true,
     val allFeatures: Boolean = false,
-    val emulateTerminal: Boolean = false,
+    val emulateTerminal: Boolean = emulateTerminalDefault,
     val withSudo: Boolean = false
 ) : RsCommandLineBase() {
 
@@ -114,7 +115,8 @@ data class CargoCommandLine(
             targets: List<CargoWorkspace.Target>,
             command: String,
             additionalArguments: List<String> = emptyList(),
-            usePackageOption: Boolean = true
+            usePackageOption: Boolean = true,
+            isDoctest: Boolean = false
         ): CargoCommandLine {
             val pkgs = targets.map { it.pkg }
             // Make sure the selection does not span more than one package.
@@ -128,7 +130,13 @@ data class CargoCommandLine(
                     CargoWorkspace.TargetKind.ExampleBin, is CargoWorkspace.TargetKind.ExampleLib ->
                         listOf("--example", target.name)
                     CargoWorkspace.TargetKind.Bench -> listOf("--bench", target.name)
-                    is CargoWorkspace.TargetKind.Lib -> listOf("--lib")
+                    is CargoWorkspace.TargetKind.Lib -> {
+                        if (isDoctest) {
+                            listOf("--doc")
+                        } else {
+                            listOf("--lib")
+                        }
+                    }
                     CargoWorkspace.TargetKind.CustomBuild,
                     CargoWorkspace.TargetKind.Unknown -> emptyList()
                 }

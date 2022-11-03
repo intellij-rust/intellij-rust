@@ -11,10 +11,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.utils.skipParenExprDown
 import org.rust.ide.utils.skipParenExprUp
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.LogicOp
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.*
 
 class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>() {
 
@@ -35,7 +32,7 @@ class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>(
         val operatorType = binaryOp.operatorType as? LogicOp ?: return null
         if (element.parent != binaryOp) return null
         val condition = binExpr.findCondition() ?: return null
-        if (condition.let != null) return null
+        if (condition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return null
         val conditionExpr = condition.skipParenExprDown() ?: return null
         val ifStatement = condition.ancestorOrSelf<RsIfExpr>() ?: return null
         return Context(binaryOp, operatorType, conditionExpr, ifStatement)

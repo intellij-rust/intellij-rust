@@ -46,16 +46,16 @@ import java.util.concurrent.atomic.AtomicReference
 @Service
 class RsResolveCache(project: Project) : Disposable {
     /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
-    private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
+    private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any>?> = AtomicReference(null)
 
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
-    private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
+    private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any>?> = AtomicReference(null)
     private val guard = RecursionManager.createGuard<PsiElement>("RsResolveCache")
 
-    private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?>
+    private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any>
         get() = _rustStructureDependentCache.getOrCreateMap()
 
-    private val anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any?>
+    private val anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any>
         get() = _anyPsiChangeDependentCache.getOrCreateMap()
 
     init {
@@ -121,7 +121,7 @@ class RsResolveCache(project: Project) : Disposable {
             else -> dep
         }
 
-    private fun getCacheFor(element: PsiElement, dep: ResolveCacheDependency): ConcurrentMap<PsiElement, Any?> {
+    private fun getCacheFor(element: PsiElement, dep: ResolveCacheDependency): ConcurrentMap<PsiElement, Any> {
         return when (dep) {
             ResolveCacheDependency.LOCAL, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE -> {
                 val owner = element.findModificationTrackerOwner(strict = false)
@@ -154,7 +154,7 @@ class RsResolveCache(project: Project) : Disposable {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <K : PsiElement, V> cache(map: ConcurrentMap<PsiElement, Any?>, element: K, result: V?) {
+    private fun <K : PsiElement, V> cache(map: ConcurrentMap<PsiElement, Any>, element: K, result: V?) {
         // optimization: less contention
         val cached = map[element] as V?
         if (cached !== null && cached === result) return
@@ -227,15 +227,15 @@ enum class ResolveCacheDependency {
     ANY_PSI_CHANGE,
 }
 
-private fun AtomicReference<ConcurrentMap<PsiElement, Any?>?>.getOrCreateMap(): ConcurrentMap<PsiElement, Any?> {
+private fun AtomicReference<ConcurrentMap<PsiElement, Any>?>.getOrCreateMap(): ConcurrentMap<PsiElement, Any> {
     while (true) {
         get()?.let { return it }
-        val map = createWeakMap<PsiElement, Any?>()
+        val map = createWeakMap<PsiElement, Any>()
         if (compareAndSet(null, map)) return map
     }
 }
 
-private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
+private fun <K: Any, V: Any> createWeakMap(): ConcurrentMap<K, V> {
     @Suppress("UnstableApiUsage")
     return object : ConcurrentWeakKeySoftValueHashMap<K, V>(
         100,
@@ -293,8 +293,8 @@ private val NULL_VALUE_REFERENCE = StrongValueReference<Any, Any>(NULL_RESULT)
 private val EMPTY_RESOLVE_RESULT = StrongValueReference<Any, Array<ResolveResult>>(ResolveResult.EMPTY_ARRAY)
 private val EMPTY_LIST = StrongValueReference<Any, List<Any>>(emptyList())
 
-private val LOCAL_CACHE_KEY: Key<CachedValue<ConcurrentMap<PsiElement, Any?>>> = Key.create("LOCAL_CACHE_KEY")
-private val LOCAL_CACHE_KEY2: Key<CachedValue<ConcurrentMap<PsiElement, Any?>>> = Key.create("LOCAL_CACHE_KEY2")
+private val LOCAL_CACHE_KEY: Key<CachedValue<ConcurrentMap<PsiElement, Any>>> = Key.create("LOCAL_CACHE_KEY")
+private val LOCAL_CACHE_KEY2: Key<CachedValue<ConcurrentMap<PsiElement, Any>>> = Key.create("LOCAL_CACHE_KEY2")
 
 private fun ensureValidResult(result: Any?): Unit = when (result) {
     is ResolveResult -> ensureValidPsi(result)

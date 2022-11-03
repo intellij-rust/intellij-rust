@@ -46,7 +46,7 @@ class ProcMacroApplicationService : Disposable {
 
     @Synchronized
     fun getServer(toolchain: RsToolchainBase, procMacroExpanderPath: Path): ProcMacroServerPool? {
-        if (!isEnabled()) return null
+        if (!isAnyEnabled()) return null
 
         val id = toolchain.distributionId
         val key = DistributionIdAndExpanderPath(id, procMacroExpanderPath)
@@ -83,8 +83,38 @@ class ProcMacroApplicationService : Disposable {
 
     companion object {
         fun getInstance(): ProcMacroApplicationService = service()
-        fun isEnabled(): Boolean = isFeatureEnabled(RsExperiments.PROC_MACROS)
-            && isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+        fun isFullyEnabled(): Boolean = isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+            && (
+            isFeatureEnabled(RsExperiments.PROC_MACROS) || isFeatureEnabled(RsExperiments.FN_LIKE_PROC_MACROS)
+                && isFeatureEnabled(RsExperiments.DERIVE_PROC_MACROS)
+                && isFeatureEnabled(RsExperiments.ATTR_PROC_MACROS)
+            )
+
+        fun isAnyEnabled(): Boolean = isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+            && (
+            isFeatureEnabled(RsExperiments.PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.FN_LIKE_PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.DERIVE_PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.ATTR_PROC_MACROS)
+            )
+
+        fun isFunctionLikeEnabled(): Boolean = isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+            && (
+            isFeatureEnabled(RsExperiments.PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.FN_LIKE_PROC_MACROS)
+            )
+
+        fun isDeriveEnabled(): Boolean = isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+            && (
+            isFeatureEnabled(RsExperiments.PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.DERIVE_PROC_MACROS)
+            )
+
+        fun isAttrEnabled(): Boolean = isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+            && (
+            isFeatureEnabled(RsExperiments.PROC_MACROS)
+                || isFeatureEnabled(RsExperiments.ATTR_PROC_MACROS)
+            )
 
         private val RsToolchainBase.distributionId: String
             get() = if (this is RsWslToolchain) wslPath.distributionId else "Local"

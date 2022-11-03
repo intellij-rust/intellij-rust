@@ -272,7 +272,7 @@ class RsMoveCommonProcessor(
     private fun checkMacroCallPath(path: RsPath): Boolean {
         if (path.parent !is RsMacroCall) return true
         val target = path.reference?.resolve() as? RsMacroDefinitionBase ?: return false
-        val targetCrate = target.containingCrate ?: return false
+        val targetCrate = target.containingCrate
         // TODO: support references to macros in same crate
         //  it is complicated: https://doc.rust-lang.org/reference/macros-by-example.html#scoping-exporting-and-importing
         return targetCrate != sourceMod.containingCrate && target != targetMod.containingCrate

@@ -40,6 +40,8 @@ class RsCommandLineSetup(val request: TargetEnvironmentRequest) {
         request.projectPathOnTarget
     )
 
+    // BACKCOMPAT: 2022.2
+    @Suppress("DEPRECATION")
     fun requestUploadIntoTarget(uploadPathString: String): TargetValue<String> {
         val uploadPath = FileUtil.toSystemDependentName(uploadPathString).toPath()
         val isDir = uploadPath.isDirectory()

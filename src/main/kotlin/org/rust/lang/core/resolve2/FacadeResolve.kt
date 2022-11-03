@@ -20,6 +20,8 @@ import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
+import org.rust.lang.core.crate.impl.FakeDetachedCrate
+import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
@@ -84,10 +86,7 @@ fun processItemDeclarationsUsingModInfo(
             val existingItemInScope = modData.visibleItems[name]
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
-            val externCrateRoot = externCrateDefMap.root.toRsMod(info)
-                // crate root can't multiresolve
-                .singleOrNull()
-                ?: continue
+            val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
             processor(name, externCrateRoot) && return true
         }
     }
@@ -416,7 +415,8 @@ fun getModInfo(scope0: RsItemsOwner): RsModInfo? {
     val crate = when (val crate = scope.containingCrate) {
         is CargoBasedCrate -> crate
         is DoctestCrate -> return project.getDoctestModInfo(scope, crate)
-        null -> return project.getDetachedModInfo(scope)
+        is FakeDetachedCrate -> return project.getDetachedModInfo(scope, crate)
+        is FakeInvalidCrate -> return null
         else -> error("unreachable")
     }
     testAssert { crate.rootModFile == null || shouldIndexFile(project, crate.rootModFile) }
@@ -462,7 +462,7 @@ private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData, crate: Crate):
     }
 }
 
-private fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String, T> {
+fun <T> Map<String, T>.entriesWithNames(names: Set<String>?): Map<String, T> {
     return if (names.isNullOrEmpty()) {
         this
     } else if (names.size == 1) {
@@ -514,7 +514,7 @@ private fun VisItem.scopedMacroToPsi(containingScope: RsItemsOwner): RsNamedElem
         .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
     if (legacyMacros.isNotEmpty()) return legacyMacros.singlePublicOrFirst()
 
-    if (name !in KNOWN_DERIVABLE_TRAITS || containingScope.containingCrate?.origin != PackageOrigin.STDLIB) {
+    if (name !in KNOWN_DERIVABLE_TRAITS || containingScope.containingCrate.origin != PackageOrigin.STDLIB) {
         items.named[name]
             ?.singleOrNull { it is RsMacro2 && matchesIsEnabledByCfg(it, this) }
             ?.let { return it as RsMacro2 }
@@ -642,6 +642,8 @@ private fun ModData.toRsModNullable(project: Project): List<RsMod> {
             }
         }
 }
+
+fun CrateDefMap.rootAsRsMod(project: Project): RsMod? = root.toRsMod(project).singleOrNull()
 
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
     expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()

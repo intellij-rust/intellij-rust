@@ -61,12 +61,14 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             addMethodAndFieldCompletion(element, result, context)
         }
 
-        if (element is RsPath && context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsForOutOfScopeItems(position, element, result, processedPathElements, context.expectedTy)
-        }
+        if (element is RsPath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+            if (context.isSimplePath && !element.isInsideDocLink) {
+                addCompletionsForOutOfScopeItems(position, element, result, processedPathElements, context.expectedTy)
+            }
 
-        if (element is RsPath && processedPathElements.isEmpty && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsForOutOfScopeFirstPathSegment(element, result, context)
+            if (processedPathElements.isEmpty) {
+                addCompletionsForOutOfScopeFirstPathSegment(element, result, context)
+            }
         }
     }
 
@@ -75,7 +77,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         element: RsReferenceElement,
         result: CompletionResultSet,
         context: RsCompletionContext,
-        processedPathNames: MultiMap<String, RsElement>
+        processedElements: MultiMap<String, RsElement>
     ) {
         collectCompletionVariants(result, context) {
             val processor = filterNotCfgDisabledItemsAndTestFunctions(it)
@@ -88,19 +90,21 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 is RsModDeclItem -> processModDeclResolveVariants(element, processor)
                 is RsPatBinding -> processPatBindingResolveVariants(element, true, processor)
                 is RsStructLiteralField -> processStructLiteralFieldResolveVariants(element, true, processor)
-                is RsPath -> processPathVariants(element, processedPathNames, processor)
+                is RsPath -> {
+                    val processor2 = addProcessedPathName(processor, processedElements)
+                    processPathVariants(element, processor2)
+                }
             }
         }
     }
 
-    private fun processPathVariants(
-        element: RsPath,
-        processedPathElements: MultiMap<String, RsElement>,
-        processor: RsResolveProcessor
-    ) {
+    private fun processPathVariants(element: RsPath, processor: RsResolveProcessor) {
         val parent = element.parent
         when {
-            parent is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
+            parent is RsMacroCall -> {
+                val filtered = filterNotAttributeAndDeriveProcMacros(processor)
+                processMacroCallPathResolveVariants(element, true, filtered)
+            }
             parent is RsMetaItem -> {
                 // Derive is handled by [RsDeriveCompletionProvider]
                 if (!RsProcMacroPsiUtil.canBeProcMacroAttributeCall(parent)) return
@@ -111,10 +115,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             parent is RsVisRestriction && parent.`in` == null -> return
             else -> {
                 val lookup = ImplLookup.relativeTo(element)
-                var filtered: RsResolveProcessor = filterPathCompletionVariantsByTraitBounds(
-                    addProcessedPathName(processor, processedPathElements),
-                    lookup
-                )
+                var filtered: RsResolveProcessor = filterPathCompletionVariantsByTraitBounds(processor, lookup)
+                if (parent !is RsUseSpeck) {
+                    filtered = filterNotAttributeAndDeriveProcMacros(filtered)
+                }
                 // Filters are applied in reverse order (the last filter is applied first)
                 val filters = listOf(
                     ::filterCompletionVariantsByVisibility,
@@ -127,7 +131,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 }
 
                 // RsPathExpr can become a macro by adding a trailing `!`, so we add macros to completion
-                if (element.parent is RsPathExpr && element.qualifier == null) {
+                if (element.parent is RsPathExpr && !(element.hasColonColon && element.isAtLeastEdition2018)) {
                     processMacroCallPathResolveVariants(element, isCompletion = true, filtered)
                 }
 
@@ -260,7 +264,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     }
                     false
                 })
-                processPathVariants(newPath, MultiMap<String, RsElement>(), processor)
+                processPathVariants(newPath, processor)
             }
         }
     }

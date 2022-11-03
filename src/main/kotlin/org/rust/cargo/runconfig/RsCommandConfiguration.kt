@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import org.jdom.Element
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.stdext.capitalized
 import java.nio.file.Path
 
 
@@ -30,7 +31,7 @@ abstract class RsCommandConfiguration(
         null
     }
 
-    override fun suggestedName(): String = command.substringBefore(' ').capitalize()
+    override fun suggestedName(): String = command.substringBefore(' ').capitalized()
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)

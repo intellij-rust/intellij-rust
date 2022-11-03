@@ -25,10 +25,9 @@ object RsPathManager {
             SystemInfo.isWindows -> "windows" to "$INTELLIJ_RUST_NATIVE_HELPER.exe"
             else -> return null
         }
-        @Suppress("UnstableApiUsage", "DEPRECATION")
         val arch = when {
             CpuArch.isIntel64() -> "x86-64"
-            SystemInfo.isMac && CpuArch.isArm64() -> "arm64"
+            CpuArch.isArm64() -> "arm64"
             else -> return null
         }
 

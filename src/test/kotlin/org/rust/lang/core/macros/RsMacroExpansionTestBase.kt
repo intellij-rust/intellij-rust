@@ -12,6 +12,7 @@ import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.crate.impl.FakeCrate
 import org.rust.lang.core.macros.errors.*
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
@@ -113,7 +114,8 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         call: RsMacroCall,
         def: RsMacroData
     ): RsResult<MacroExpansion, MacroExpansionAndParsingError<MacroExpansionError>> {
-        val crate = call.containingCrate ?: error("`containingCrate` for the macro call is null")
+        val crate = call.containingCrate
+        check(crate !is FakeCrate) { "Invalid `containingCrate` for the macro call" }
         val expander = FunctionLikeMacroExpander.forCrate(crate)
         val expansionResult = expander.expandMacro(
             RsMacroDataWithHash(def, null),

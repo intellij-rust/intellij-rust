@@ -322,13 +322,31 @@ FILE
           PsiElement(})('}')
       PsiWhiteSpace('\n\n    ')
       RsExprStmtImpl(EXPR_STMT)
+        RsCallExprImpl(CALL_EXPR)
+          RsPathExprImpl(PATH_EXPR)
+            RsPathImpl(PATH)
+              PsiElement(identifier)('foo12')
+          RsValueArgumentListImpl(VALUE_ARGUMENT_LIST)
+            PsiElement(()('(')
+            RsLambdaExprImpl(LAMBDA_EXPR)
+              RsValueParameterListImpl(VALUE_PARAMETER_LIST)
+                PsiElement(|)('|')
+                PsiElement(|)('|')
+              PsiErrorElement:'->' or <expr> expected, got ')'
+                <empty list>
+            PsiWhiteSpace(' ')
+            PsiElement())(')')
+        PsiElement(;)(';')
+      PsiWhiteSpace('\n\n    ')
+      RsExprStmtImpl(EXPR_STMT)
         RsIfExprImpl(IF_EXPR)
           PsiElement(if)('if')
           PsiWhiteSpace(' ')
           RsConditionImpl(CONDITION)
-            PsiElement(let)('let')
-            PsiErrorElement:<pattern> expected, got ';'
-              <empty list>
+            RsLetExprImpl(LET_EXPR)
+              PsiElement(let)('let')
+              PsiErrorElement:<pattern> expected, got ';'
+                <empty list>
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
       PsiWhiteSpace('\n    ')
@@ -337,9 +355,10 @@ FILE
           PsiElement(while)('while')
           PsiWhiteSpace(' ')
           RsConditionImpl(CONDITION)
-            PsiElement(let)('let')
-            PsiErrorElement:<pattern> expected, got ';'
-              <empty list>
+            RsLetExprImpl(LET_EXPR)
+              PsiElement(let)('let')
+              PsiErrorElement:<pattern> expected, got ';'
+                <empty list>
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
       PsiWhiteSpace('\n')

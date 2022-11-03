@@ -20,6 +20,7 @@ import org.rust.cargo.runconfig.command.CargoRunConfigurationProducer
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.ide.refactoring.RsNamesValidator
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RS_RAW_PREFIX
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -27,20 +28,13 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.capitalized
 
 private typealias TestConfigProvider = (List<PsiElement>, Boolean) -> TestConfig?
 
 abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProducer() {
     protected abstract val commandName: String
     private val testConfigProviders: MutableList<TestConfigProvider> = mutableListOf()
-
-    init {
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsModDeclItem>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsFunction>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigFor<RsMod>(elements, climbUp) }
-        registerConfigProvider { elements, climbUp -> createConfigForMultipleFiles(elements, climbUp) }
-        registerDirectoryConfigProvider { dir -> createConfigForDirectory(dir) }
-    }
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,
@@ -63,7 +57,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return true
     }
 
-    private fun registerConfigProvider(provider: TestConfigProvider) {
+    protected fun registerConfigProvider(provider: TestConfigProvider) {
         testConfigProviders.add(provider)
     }
 
@@ -88,7 +82,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return elements?.let { findTestConfig(it) }
     }
 
-    private fun createConfigForDirectory(dir: PsiDirectory): TestConfig? {
+    protected fun createConfigForDirectory(dir: PsiDirectory): TestConfig? {
         val filesConfig = createConfigForMultipleFiles(dir.targets, climbUp = false) ?: return null
 
         val sourceRoot = dir.sourceRoot ?: return null
@@ -98,7 +92,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return DirectoryTestConfig(commandName, filesConfig.targets, dir)
     }
 
-    private fun createConfigForMultipleFiles(elements: List<PsiElement>, climbUp: Boolean): TestConfig? {
+    protected fun createConfigForMultipleFiles(elements: List<PsiElement>, climbUp: Boolean): TestConfig? {
         val modConfigs = elements.mapNotNull { createConfigFor<RsMod>(listOf(it), climbUp) }
 
         if (modConfigs.size == 1) {
@@ -115,7 +109,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         return MultipleFileTestConfig(commandName, targets, modConfigs.first().sourceElement)
     }
 
-    private inline fun <reified T : RsQualifiedNamedElement> createConfigFor(
+    protected inline fun <reified T : RsQualifiedNamedElement> createConfigFor(
         elements: List<PsiElement>,
         climbUp: Boolean
     ): TestConfig? {
@@ -137,15 +131,18 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         )
     }
 
-    private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
+    protected inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
         if (base is T) return base
         if (!climbUp) return null
         return base.ancestorOrSelf()
     }
 
-    protected abstract fun isSuitable(element: PsiElement): Boolean
+    protected open fun isSuitable(element: PsiElement): Boolean {
+        val crate = (element as? RsElement)?.containingCrate?.asNotFake
+        return crate?.origin == PackageOrigin.WORKSPACE
+    }
 
-    private fun isIgnoredTest(element: PsiElement): Boolean =
+    protected fun isIgnoredTest(element: PsiElement): Boolean =
         element is RsFunction && element.findOuterAttr("ignore") != null
 
     companion object {
@@ -190,9 +187,10 @@ interface TestConfig {
     val sourceElement: PsiElement
     val originalElement: PsiElement get() = sourceElement
     val isIgnored: Boolean get() = false
+    val isDoctest: Boolean get() = false
 
     fun cargoCommandLine(): CargoCommandLine {
-        var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path))
+        var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path), isDoctest = isDoctest)
         if (exact) {
             commandLine = commandLine.withPositionalArgument("--exact")
         }
@@ -212,7 +210,7 @@ private class DirectoryTestConfig(
     override val exact = false
 
     override val configurationName: String
-        get() = "${StringUtil.pluralize(commandName).capitalize()} in '${sourceElement.name}'"
+        get() = "${StringUtil.pluralize(commandName).capitalized()} in '${sourceElement.name}'"
 }
 
 private class MultipleFileTestConfig(
@@ -224,10 +222,10 @@ private class MultipleFileTestConfig(
     override val exact: Boolean = false
 
     override val configurationName: String
-        get() = "${commandName.capitalize()} multiple selected files"
+        get() = "${commandName.capitalized()} multiple selected files"
 }
 
-private class SingleItemTestConfig(
+ class SingleItemTestConfig(
     override val commandName: String,
     override val path: String,
     val target: CargoWorkspace.Target,
@@ -243,7 +241,7 @@ private class SingleItemTestConfig(
 
     override val configurationName: String
         get() = buildString {
-            append(commandName.capitalize())
+            append(commandName.capitalized())
             append(" ")
 
             if (sourceElement !is RsMod) {

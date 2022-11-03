@@ -550,6 +550,30 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         fn func() {}
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no attr proc macro inside block`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        fn main() {
+            macro_/*caret*/
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no attr proc macro at top level`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        macro_/*caret*/
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

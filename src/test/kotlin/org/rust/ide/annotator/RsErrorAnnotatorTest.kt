@@ -1110,6 +1110,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn foo() {
                 let a = <error descr="The self keyword was used in a static method [E0424]">self</error>;
             }
+            /// [link]: self
+            fn bar() {}
         }
     """)
 
@@ -1123,6 +1125,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test self expression outside function`() = checkErrors("""
         const C: () = <error descr="self value is not available in this context">self</error>;
+
+        /// [link]: self
+        struct Struct {}
     """)
 
     fun `test do not annotate 'self' in visibility restriction`() = checkErrors("""
@@ -1804,6 +1809,28 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl Bar for S<Q> {}
     """)
 
+    fun `test no E0277 with PartialEq and Eq impls`() = checkErrors("""
+        struct Box<T>(T);
+        trait PartialEq<Rhs = Self> {}
+        trait Eq: PartialEq<Self> {}
+
+        impl<T: PartialEq> PartialEq for Box<T> {}
+        impl<T: Eq> Eq for Box<T> {}
+    """)
+
+    // Issue // https://github.com/intellij-rust/intellij-rust/issues/8786
+    fun `test no E0277 when Self-related associated type is mentioned in the parent trait`() = checkErrors("""
+        struct S;
+        trait Foo<T> {}
+        impl Foo<S> for S {}
+        trait Bar: Foo<Self::Foo> {
+            type Foo;
+        }
+        impl Bar for S {
+            type Foo = S;
+        }
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
@@ -2139,6 +2166,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![feature(let_else)]
         fn main() {
             let Some(x) = Some(1) else { return; };
+        }
+    """)
+
+    @MockRustcVersion("1.56.0")
+    fun `test let chains E0658 1`() = checkErrors("""
+        fn foo(x: Option<i32>) {
+            if let Some(_) = x {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) && (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) {};
+            if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> || <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> {};
+
+            match 0 {
+                _ if <error descr="if let guard is experimental [E0658]">let</error> Some(_) = x => 1,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 2,
+                _ if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> => 3,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) && (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 4,
+                _ if (<error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> && <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error>) => 5,
+                _ if <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> || <error descr="`let` expressions in this position are unstable [E0658]">let Some(_) = x</error> => 6,
+                _ => 7
+            };
+        }
+    """)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test let chains E0658 2`() = checkErrors("""
+        #![feature(let_chains)]
+        #![feature(if_let_guard)]
+        fn foo(x: Option<i32>) {
+            if let Some(_) = x {};
+            if (let Some(_) = x) {};
+            if let Some(_) = x && let Some(_) = x {};
+            if (let Some(_) = x) && (let Some(_) = x) {};
+            if (let Some(_) = x && let Some(_) = x) {};
+            if let Some(_) = x || let Some(_) = x {};
+
+            match 0 {
+                _ if let Some(_) = x => 1,
+                _ if (let Some(_) = x) => 2,
+                _ if let Some(_) = x && let Some(_) = x => 3,
+                _ if (let Some(_) = x) && (let Some(_) = x) => 4,
+                _ if (let Some(_) = x && let Some(_) = x) => 5,
+                _ if let Some(_) = x || let Some(_) = x => 6,
+                _ => 7
+            };
         }
     """)
 

@@ -31,6 +31,7 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.doc.psi.RsDocLinkDestination
 import org.rust.openapiext.Testmark
 import org.rust.stdext.mapToSet
 
@@ -268,18 +269,21 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         item: LookupElement
     ) {
         val document = context.document
-        val startOffset = context.startOffset
-        val curUseItem = context.getElementOfType<RsUseItem>()
+
         if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
-            document.insertString(startOffset, RS_RAW_PREFIX)
+            document.insertString(context.startOffset, RS_RAW_PREFIX)
+            context.commitDocument() // Fixed PSI element escape
         }
 
         if (element is RsGenericDeclaration) {
             addGenericTypeCompletion(element, document, context)
         }
 
-        when (element) {
+        if (context.getElementOfType<RsDocLinkDestination>() != null) return
 
+        val curUseItem = context.getElementOfType<RsUseItem>()
+
+        when (element) {
             is RsMod -> {
                 when (scopeName) {
                     "self",
@@ -302,9 +306,8 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     appendSemicolon(context, curUseItem)
                 }
                 element.isProcMacroDef -> {
-                    if (element.isBangProcMacroDef && !context.nextCharIs('!')) {
-                        document.insertString(context.selectionEndOffset, "!()")
-                        EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                    if (element.isBangProcMacroDef) {
+                        appendMacroBraces(context, document) { element.preferredBraces }
                     }
                 }
                 else -> {
@@ -342,26 +345,30 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
             is RsMacroDefinitionBase -> {
                 if (curUseItem == null) {
-                    var caretShift = 2
-                    if (!context.nextCharIs('!')) {
-                        val braces = element.preferredBraces
-                        val text = buildString {
-                            append("!")
-                            if (braces == MacroBraces.BRACES) {
-                                append(" ")
-                                caretShift = 3
-                            }
-                            append(braces.openText)
-                            append(braces.closeText)
-                        }
-                        document.insertString(context.selectionEndOffset, text)
-                    }
-                    EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
+                    appendMacroBraces(context, document) { element.preferredBraces }
                 } else {
                     appendSemicolon(context, curUseItem)
                 }
             }
         }
+    }
+
+    private fun appendMacroBraces(context: InsertionContext, document: Document, getBraces: () -> MacroBraces) {
+        var caretShift = 2
+        if (!context.nextCharIs('!')) {
+            val braces = getBraces()
+            val text = buildString {
+                append("!")
+                if (braces == MacroBraces.BRACES) {
+                    append(" ")
+                    caretShift = 3
+                }
+                append(braces.openText)
+                append(braces.closeText)
+            }
+            document.insertString(context.selectionEndOffset, text)
+        }
+        EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
     }
 }
 

@@ -7,6 +7,7 @@ package org.rust.lang.core.psi
 
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve2.resolveToProcMacroWithoutPsi
@@ -119,10 +120,11 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             explicitCustomAttributes: CustomAttributes? = null,
             ignoreProcMacrosDisabled: Boolean = false
         ): ProcMacroAttribute<T> {
-            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isEnabled()) return None
+            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isAnyEnabled()) return None
             if (stub != null) {
                 if (!stub.mayHaveCustomAttrs) {
                     return if (stub.mayHaveCustomDerive && RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
                         if (withDerives) {
                             val queryAttributes = owner.getQueryAttributes(explicitCrate, stub, outerAttrsOnly = true)
                             Derive(queryAttributes.customDeriveMetaItems)
@@ -135,7 +137,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                 }
             }
 
-            val crate = explicitCrate ?: owner.containingCrate ?: return None
+            val crate = explicitCrate ?: owner.containingCrate.asNotFake ?: return None
 
             // Stdlib uses many unstable built-in attributes that change frequently, and We may not be able to update
             // the `RS_BUILTIN_ATTRIBUTES` list in time. Let's just assume that stdlib can't have proc macros
@@ -149,6 +151,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             queryAttributes.metaItems.forEachIndexed { index, meta ->
                 if (meta.name == "derive") {
                     return if (RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
                         if (withDerives) {
                             Derive(queryAttributes.customDeriveMetaItems)
                         } else {
@@ -158,7 +161,8 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                         None
                     }
                 }
-                if (RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(meta, customAttributes)) {
+                if (RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(meta, customAttributes)
+                    && (ignoreProcMacrosDisabled || ProcMacroApplicationService.isAttrEnabled())) {
                     return Attr(meta, index)
                 }
             }

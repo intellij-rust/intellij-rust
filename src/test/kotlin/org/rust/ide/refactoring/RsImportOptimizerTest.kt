@@ -431,6 +431,9 @@ class RsImportOptimizerTest: RsTestBase() {
 
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test group imports by semantics`() = doTest("""
+    //- dep-lib/lib.rs
+    //- lib.rs
+        /*caret*/
         extern crate dep_lib_target;
 
         use bbb::{fff, eee};
@@ -443,6 +446,8 @@ class RsImportOptimizerTest: RsTestBase() {
 
         fn main() {}
     """, """
+    //- dep-lib/lib.rs
+    //- lib.rs
         extern crate dep_lib_target;
 
         use std::{io, mem};
@@ -652,6 +657,18 @@ class RsImportOptimizerTest: RsTestBase() {
         mod bar {
             #[cfg(not(intellij_rust))]
             use crate::foo::S;
+        }
+    """)
+
+    fun `test ignore reexport of legacy macro`() = checkNotChanged("""
+        macro_rules! foo1 { () => {} }
+        macro_rules! foo2 { () => {} }
+        macro_rules! foo3 { () => {} }
+        pub(crate) use foo1;
+        pub(crate) use foo2 as foo_alias;
+        pub(crate) use {foo3, inner::func};
+        mod inner {
+            pub fn func() {}
         }
     """)
 

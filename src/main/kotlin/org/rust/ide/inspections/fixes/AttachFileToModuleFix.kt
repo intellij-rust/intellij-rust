@@ -25,11 +25,13 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.firstItem
 import org.rust.lang.core.psi.rustFile
+import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.toPsiFile
 
 /**
@@ -198,5 +200,3 @@ fun withMockModuleAttachSelector(
         MOCK = null
     }
 }
-
-private val RsFile.firstItem: RsElement? get() = itemsAndMacros.firstOrNull { it !is RsAttr }

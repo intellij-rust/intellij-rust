@@ -270,7 +270,7 @@ val Crate.rustStructureModificationTracker: ModificationTracker
  * Returns [RsPsiManager.rustStructureModificationTracker] or [PsiModificationTracker.MODIFICATION_COUNT]
  * if `this` element is inside language injection
  */
-val RsElement.rustStructureOrAnyPsiModificationTracker: Any
+val RsElement.rustStructureOrAnyPsiModificationTracker: ModificationTracker
     get() {
         val containingFile = containingFile
         return when {
@@ -279,10 +279,10 @@ val RsElement.rustStructureOrAnyPsiModificationTracker: Any
             // literal. If a user change the literal, we can only be notified that the literal is changed.
             // So we have to invalidate the cached value on any PSI change
             containingFile.virtualFile is VirtualFileWindow ->
-                PsiModificationTracker.MODIFICATION_COUNT
+                PsiManager.getInstance(containingFile.project).modificationTracker
 
             containingFile.containingRsFileSkippingCodeFragments?.crate?.origin == PackageOrigin.WORKSPACE ->
-                project.rustStructureModificationTracker
+                containingFile.project.rustStructureModificationTracker
 
             else -> containingFile.project.rustPsiManager.rustStructureModificationTrackerInDependencies
         }

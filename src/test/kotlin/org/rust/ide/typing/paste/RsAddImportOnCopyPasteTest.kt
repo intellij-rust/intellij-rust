@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.ide.settings.RsCodeInsightSettings
 
 class RsAddImportOnCopyPasteTest : RsTestBase() {
     fun `test type reference`() = doCopyPasteTest("""
@@ -612,7 +613,7 @@ class RsAddImportOnCopyPasteTest : RsTestBase() {
     private fun doCopyPasteTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String
-    ) {
+    ) = withImportOnPaste {
         val testProject = fileTreeFromText(before).create()
         myFixture.configureFromTempProjectFile(testProject.fileWithSelection)
         myFixture.performEditorAction(IdeActions.ACTION_COPY)
@@ -621,5 +622,16 @@ class RsAddImportOnCopyPasteTest : RsTestBase() {
         myFixture.performEditorAction(IdeActions.ACTION_PASTE)
 
         fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
+    }
+
+    private fun withImportOnPaste(action: () -> Unit) {
+        val settings = RsCodeInsightSettings.getInstance()
+        val oldValue = settings.importOnPaste
+        settings.importOnPaste = true
+        try {
+            action()
+        } finally {
+            settings.importOnPaste = oldValue
+        }
     }
 }

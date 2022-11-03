@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -701,6 +702,46 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod1::mod2::foo!(/*caret*/)
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no attr proc macro completion inside block`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::*;
+        fn main() {
+            macro_/*caret*/
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no attr proc macro completion at top-level`() = checkNoCompletionByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::*;
+        macro_/*caret*/
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete proc macro in use item`() = checkContainsCompletionByFileTree(
+        listOf("macro_function", "macro_attr", "macro_derive"), """
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn macro_function(input: TokenStream) -> TokenStream { input }
+        #[proc_macro_attribute]
+        pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        #[proc_macro_derive(macro_derive)]
+        pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+    //- lib.rs
+        use dep_proc_macro::/*caret*/
+    """)
+
     fun `test no items completion at top-level`() = checkNoCompletion("""
         mod inner {
             pub mod foo1 {}
@@ -720,6 +761,35 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
 
         mod1::mod2::fo/*caret*/
+    """)
+
+    fun `test no macro completion if absolute path (top-level)`() = checkNoCompletion("""
+        macro_rules! foo1 { () => {} }
+        mod mod1 {
+            pub macro foo2() {}
+        }
+
+        ::fo/*caret*/
+    """)
+
+    fun `test no macro completion if absolute path (inside function)`() = checkNoCompletion("""
+        macro_rules! foo1 { () => {} }
+        mod mod1 {
+            pub macro foo2() {}
+        }
+
+        fn main() {
+            ::fo/*caret*/
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2015)
+    fun `test complete macro if absolute path in 2015 edition`() = checkContainsCompletion("foo", """
+        #[macro_export]
+        macro_rules! foo { () => {} }
+        fn main() {
+            ::fo/*caret*/
+        }
     """)
 
     fun `test macro don't suggests as function name`() = checkNoCompletion("""
@@ -1390,5 +1460,27 @@ class RsCompletionTest : RsCompletionTestBase() {
         struct Foo;
 
         fn foo<T: /*caret*/>() {}
+    """)
+
+    fun `test complete the raw identifier in use`() = checkCompletion("break", """
+        mod foo {
+            pub fn r#break() {}
+        }
+
+        fn main() {
+            use self::foo::b/*caret*/
+
+            r#break();
+        }
+    """, """
+        mod foo {
+            pub fn r#break() {}
+        }
+
+        fn main() {
+            use self::foo::r#break;/*caret*/
+
+            r#break();
+        }
     """)
 }

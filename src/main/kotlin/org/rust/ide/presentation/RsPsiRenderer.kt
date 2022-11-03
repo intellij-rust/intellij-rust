@@ -8,6 +8,7 @@ package org.rust.ide.presentation
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector2
 import org.rust.ide.utils.import.ImportContext2
+import org.rust.lang.core.crate.impl.FakeCrate
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -455,6 +456,7 @@ open class RsPsiRenderer(
                         sb.append(", ")
                     }
                 }
+                @Suppress("NAME_SHADOWING")
                 assocTypeBindings.joinToWithBuffer(sb, ", ") { sb ->
                     appendPath(sb, this.path)
                     sb.append("=")
@@ -480,6 +482,7 @@ open class RsPsiRenderer(
         sb: StringBuilder,
         list: List<RsValueParameter>
     ) {
+        @Suppress("NAME_SHADOWING")
         list.joinToWithBuffer(sb, separator = ", ", prefix = "(", postfix = ")") { sb ->
             typeReference?.let { appendTypeReference(sb, it) }
         }
@@ -597,12 +600,12 @@ open class TypeSubstitutingPsiRenderer(
     options: PsiRenderingOptions,
     private val subst: Substitution
 ) : RsPsiRenderer(options) {
-    override fun appendTypeReference(sb: StringBuilder, ref: RsTypeReference) {
-        val ty = ref.rawType
+    override fun appendTypeReference(sb: StringBuilder, type: RsTypeReference) {
+        val ty = type.rawType
         if (ty is TyTypeParameter && subst[ty] != null) {
             sb.append(ty.substAndGetText(subst))
         } else {
-            super.appendTypeReference(sb, ref)
+            super.appendTypeReference(sb, type)
         }
     }
 
@@ -756,7 +759,7 @@ class ImportingPsiRenderer(
                     }
                     if (importCandidate == null) {
                         val resolvedCrate = resolved.containingCrate
-                        if (resolvedCrate == null || resolvedCrate == context.containingCrate) {
+                        if (resolvedCrate is FakeCrate || resolvedCrate == context.containingCrate) {
                             sb.append("crate")
                         } else {
                             sb.append(resolvedCrate.normName)

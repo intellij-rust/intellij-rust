@@ -17,6 +17,7 @@ import org.rust.ide.utils.import.COMPARATOR_FOR_SPECKS_IN_USE_GROUP
 import org.rust.ide.utils.import.UseItemWrapper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.stdext.withNext
 
 class RsImportOptimizer : ImportOptimizer {
@@ -33,8 +34,7 @@ class RsImportOptimizer : ImportOptimizer {
     }
 
     private fun reorderExternCrates(file: RsFile) {
-        val first = file.childrenOfType<RsElement>()
-            .firstOrNull { it !is RsInnerAttr } ?: return
+        val first = file.firstItem ?: return
         val externCrateItems = file.childrenOfType<RsExternCrateItem>()
         externCrateItems
             .sortedBy { it.referenceName }
@@ -46,7 +46,9 @@ class RsImportOptimizer : ImportOptimizer {
 
     private fun optimizeAndReorderUseItems(file: RsFile) {
         file.forEachMod { mod, pathUsage ->
-            val uses = mod.childrenOfType<RsUseItem>()
+            val uses = mod
+                .childrenOfType<RsUseItem>()
+                .filterNot { it.isReexportOfLegacyMacro() }
             replaceOrderOfUseItems(mod, uses, pathUsage)
         }
     }
@@ -130,7 +132,7 @@ class RsImportOptimizer : ImportOptimizer {
             // We should ignore all items before `{` in inline modules
             val offset = if (mod is RsModItem) mod.lbrace.textOffset + 1 else 0
             val first = mod.childrenOfType<RsElement>()
-                .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr } ?: return
+                .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr && it !is RsDocComment } ?: return
             val psiFactory = RsPsiFactory(mod.project)
             val sortedUses = uses
                 .asSequence()
@@ -176,4 +178,26 @@ private fun RsFile.getAllModulesInFile(): List<RsMod> {
 private fun getPathUsage(mod: RsMod): PathUsageMap? {
     if (!RsUnusedImportInspection.isEnabled(mod.project)) return null
     return mod.pathUsage
+}
+
+// `macro_rules! foo { () => {} }`
+// `pub(crate) use foo_ as foo;`
+// `pub(crate) use foo;`
+private fun RsUseItem.isReexportOfLegacyMacro(): Boolean {
+    val useSpeck = useSpeck ?: return false
+    val useGroup = useSpeck.useGroup
+    return if (useGroup == null) {
+        useSpeck.isReexportOfLegacyMacro()
+    } else {
+        useSpeck.coloncolon == null && useGroup.useSpeckList.any { it.isReexportOfLegacyMacro() }
+    }
+}
+
+private fun RsUseSpeck.isReexportOfLegacyMacro(): Boolean {
+    val path = path ?: return false
+    return path.coloncolon == null
+        // TODO: Check not null when we will support resolving legacy macro in `use foo as bar;`
+        && path.reference?.resolve().let { it is RsMacro || it == null && alias != null }
+        && !isStarImport
+        && useGroup == null
 }

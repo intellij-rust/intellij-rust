@@ -142,6 +142,9 @@ class RsInferenceResult(
     fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
         resolvedMethods[call]?.type
 
+    fun getResolvedMethodSubst(call: RsMethodCall): Substitution =
+        resolvedMethods[call]?.subst ?: emptySubstitution
+
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
 
@@ -221,10 +224,11 @@ class RsInferenceContext(
                 }
                 RsTypeInferenceWalker(this, TyUnknown).inferReplCodeFragment(element)
             }
-            is RsPathType, is RsTraitRef -> {
+            is RsPathType, is RsTraitRef, is RsStructLiteral -> {
                 val path = when (element) {
                     is RsPathType -> element.path
                     is RsTraitRef -> element.path
+                    is RsStructLiteral -> element.path
                     else -> null
                 }
                 val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration
@@ -887,9 +891,10 @@ class RsInferenceContext(
     fun constVarForParam(const: CtConstParameter): Const = CtInferVar(const)
 
     fun <T : TypeFoldable<T>> fullyNormalizeAssociatedTypesIn(ty: T): T {
-        return ty.foldTyProjectionWith {
-            optNormalizeProjectionType(it, 0)?.value ?: TyUnknown
-        }
+        val (normalizedTy, obligations) = normalizeAssociatedTypesIn(ty)
+        obligations.forEach(fulfill::registerPredicateObligation)
+        fulfill.selectWherePossible()
+        return fullyResolve(normalizedTy)
     }
 
     /** Deeply normalize projection types. See [normalizeProjectionType] */
@@ -947,7 +952,7 @@ class RsInferenceContext(
             }
             ProjectionCacheEntry.InProgress -> {
                 // While normalized A::B we are asked to normalize A::B.
-                // TODO rustc halts the compilation immediately (panics) here
+                TypeInferenceMarks.RecursiveProjectionNormalization.hit()
                 TyWithObligations(TyUnknown)
             }
             ProjectionCacheEntry.Error -> {
@@ -1428,6 +1433,7 @@ data class ExpectedType(val ty: Ty, val coercable: Boolean = false) : TypeFoldab
 
 object TypeInferenceMarks {
     object CyclicType : Testmark()
+    object RecursiveProjectionNormalization : Testmark()
     object QuestionOperator : Testmark()
     object MethodPickTraitScope : Testmark()
     object MethodPickTraitsOutOfScope : Testmark()

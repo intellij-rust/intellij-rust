@@ -71,6 +71,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     enum class RestrictedConstExprMode { ON, OFF }
 
+    enum class ConditionMode { ON, OFF }
+
     enum class MacroCallParsingMode(
         val attrsAndVis: Boolean,
         val semicolon: Boolean,
@@ -99,6 +101,15 @@ object RustParserUtil : GeneratedParserUtilBase() {
         flags = BitUtil.set(flags, flag, mode)
     }
 
+    private fun PsiBuilder.pushFlags(vararg flagsAndValues: Pair<Int, Boolean>) {
+        val stack = flagStack
+        stack.push(flags)
+        flagStack = stack
+        for (flagAndValue in flagsAndValues) {
+            flags = BitUtil.set(flags, flagAndValue.first, flagAndValue.second)
+        }
+    }
+
     private fun PsiBuilder.popFlag() {
         flags = flagStack.pop()
     }
@@ -120,6 +131,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val MACRO_BRACE_BRACES: Int = makeBitMask(9)
 
     private val RESTRICTED_CONST_EXPR_MODE: Int = makeBitMask(10)
+    private val CONDITION_MODE: Int = makeBitMask(11)
 
     private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
         val flag = when (mode) {
@@ -196,6 +208,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         !BitUtil.isSet(b.flags, RESTRICTED_CONST_EXPR_MODE)
 
     @JvmStatic
+    fun checkLetExprAllowed(b: PsiBuilder, level: Int): Boolean =
+        BitUtil.isSet(b.flags, CONDITION_MODE)
+
+    @JvmStatic
     fun withRestrictedConstExprMode(b: PsiBuilder, level: Int, mode: RestrictedConstExprMode, parser: Parser): Boolean {
         val oldFlags = b.flags
         val newFlags = oldFlags.setFlag(RESTRICTED_CONST_EXPR_MODE, mode == RestrictedConstExprMode.ON)
@@ -206,8 +222,39 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     @JvmStatic
+    fun withConditionMode(b: PsiBuilder, level: Int, mode: ConditionMode, parser: Parser): Boolean {
+        val oldFlags = b.flags
+        val newFlags = oldFlags.setFlag(CONDITION_MODE, mode == ConditionMode.ON)
+        b.flags = newFlags
+        val result = parser.parse(b, level)
+        b.flags = oldFlags
+        return result
+    }
+
+    @JvmStatic
+    fun enterBlockExpr(b: PsiBuilder, level: Int, parser: Parser): Boolean {
+        val oldFlags = b.flags
+        val newFlags = oldFlags
+            .setFlag(RESTRICTED_CONST_EXPR_MODE, false)
+            .setFlag(CONDITION_MODE, false)
+        b.flags = newFlags
+        val result = parser.parse(b, level)
+        b.flags = oldFlags
+        return result
+    }
+
+    @JvmStatic
     fun setStmtMode(b: PsiBuilder, level: Int, mode: StmtMode): Boolean {
         b.pushFlag(STMT_EXPR_MODE, mode == StmtMode.ON)
+        return true
+    }
+
+    @JvmStatic
+    fun setLambdaExprMode(b: PsiBuilder, level: Int): Boolean {
+        b.pushFlags(
+            STMT_EXPR_MODE to false,
+            CONDITION_MODE to false
+        )
         return true
     }
 

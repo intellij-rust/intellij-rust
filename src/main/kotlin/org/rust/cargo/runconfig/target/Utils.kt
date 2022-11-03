@@ -91,7 +91,7 @@ private fun GeneralCommandLine.toTargeted(
     commandLineBuilder.setCharset(charset)
 
     val targetedExePath = if (uploadExecutable) setup.requestUploadIntoTarget(exePath) else TargetValue.fixed(exePath)
-    commandLineBuilder.setExePath(targetedExePath)
+    commandLineBuilder.exePath = targetedExePath
 
     val workDirectory = workDirectory
     if (workDirectory != null) {

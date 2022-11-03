@@ -181,7 +181,7 @@ val PsiFile.document: Document?
 val VirtualFile.fileId: Int
     get() = (this as VirtualFileWithId).id
 
-inline fun <Key, reified Psi : PsiElement> getElements(
+inline fun <Key: Any, reified Psi : PsiElement> getElements(
     indexKey: StubIndexKey<Key, Psi>,
     key: Key, project: Project,
     scope: GlobalSearchScope?

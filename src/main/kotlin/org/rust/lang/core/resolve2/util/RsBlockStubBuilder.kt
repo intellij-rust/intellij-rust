@@ -47,8 +47,13 @@ private class RsBlockStubBuilder : DefaultStubBuilder() {
     private fun shouldCreateStub(parentType: IElementType, nodeType: IElementType): Boolean =
         when (nodeType) {
             BLOCK -> parentType is IStubFileElementType<*>
+
             MACRO_CALL -> parentType.isBlockOrLocalMod()
-            PATH, USE_GROUP, USE_SPECK, ALIAS, ENUM_BODY, ENUM_VARIANT, VIS, VIS_RESTRICTION -> true
+
+            PATH, USE_GROUP, USE_SPECK, ALIAS,
+            ENUM_BODY, ENUM_VARIANT, VIS, VIS_RESTRICTION,
+            OUTER_ATTR, META_ITEM, META_ITEM_ARGS -> true
+
             else -> parentType.isBlockOrLocalMod() && nodeType in RS_ITEMS_AND_MACRO
         }
 

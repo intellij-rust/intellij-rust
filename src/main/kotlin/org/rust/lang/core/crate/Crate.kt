@@ -15,6 +15,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.crate.impl.FakeCrate
 import org.rust.lang.core.psi.RsFile
 
 /**
@@ -115,3 +116,5 @@ fun Crate.findDependency(normName: String): Crate? =
 
 fun Crate.hasTransitiveDependencyOrSelf(other: Crate): Boolean =
     other == this || other in flatDependencies
+
+val Crate.asNotFake: Crate? get() = takeIf { this !is FakeCrate }

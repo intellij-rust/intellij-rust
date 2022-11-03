@@ -3190,4 +3190,14 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         #[derive(<error descr="Unresolved reference: `Builder`">Builder/*caret*/</error>)]
         struct Foo {}
     """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no attr proc macro for bang call`() = checkAutoImportFixIsUnavailableByFileTree("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_attribute]
+        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        <error descr="Unresolved reference: `attr_as_is`">attr_as_is/*caret*/</error>!();
+    """)
 }

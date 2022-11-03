@@ -36,7 +36,7 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
             return if (elements.size < 2) {
                 elements.firstOrNull() as? RsNamedElement
             } else {
-                elements.find { it.containingCrate?.normName == crateName } as? RsNamedElement
+                elements.find { it.containingCrate.normName == crateName } as? RsNamedElement
             }
         }
 

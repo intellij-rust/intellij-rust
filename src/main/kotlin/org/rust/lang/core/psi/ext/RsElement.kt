@@ -8,6 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -21,17 +22,21 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
+import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.*
 
-interface RsElement : PsiElement {
+interface RsElement : PsiElement, UserDataHolderEx {
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
     val containingMod: RsMod
+        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
+            ?: error("Element outside of module: $text")
 
     val crateRoot: RsMod?
+        get() = containingRsFileSkippingCodeFragments?.crateRoot
 }
 
 val RsElement.cargoProject: CargoProject?
@@ -47,16 +52,16 @@ fun PsiFileSystemItem.findCargoProject(): CargoProject? {
 }
 
 fun PsiFileSystemItem.findCargoPackage(): CargoWorkspace.Package? {
-    if (this is RsFile) return this.crate?.cargoTarget?.pkg
+    if (this is RsFile) return this.crate.cargoTarget?.pkg
     val vFile = virtualFile ?: return null
     return project.cargoProjects.findPackageForFile(vFile)
 }
 
 val RsElement.containingCargoTarget: CargoWorkspace.Target?
-    get() = containingCrate?.cargoTarget
+    get() = containingCrate.cargoTarget
 
-val RsElement.containingCrate: Crate?
-    get() = containingRsFileSkippingCodeFragments?.crate
+val RsElement.containingCrate: Crate
+    get() = containingRsFileSkippingCodeFragments?.crate ?: FakeInvalidCrate(project)
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
@@ -98,17 +103,11 @@ val RsElement.isInAsyncContext: Boolean
 
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCrate
-        ?.findDependency(dependencyName)
+        .findDependency(dependencyName)
         ?.rootMod
 }
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
-    override val containingMod: RsMod
-        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
-            ?: error("Element outside of module: $text")
-
-    final override val crateRoot: RsMod?
-        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
@@ -120,13 +119,6 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val containingMod: RsMod
-        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
-            ?: error("Element outside of module: $text")
-
-    final override val crateRoot: RsMod?
-        get() = containingRsFileSkippingCodeFragments?.crateRoot
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()

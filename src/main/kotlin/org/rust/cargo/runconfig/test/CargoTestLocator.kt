@@ -68,7 +68,7 @@ object CargoTestLocator : SMTestLocator {
         if (lineNum != null) {
             object : PsiLocation<PsiElement>(project, element) {
                 override fun getOpenFileDescriptor(): OpenFileDescriptor? =
-                    virtualFile?.let { OpenFileDescriptor(project, it, lineNum, 0) }
+                    virtualFile?.let { OpenFileDescriptor(project, it, lineNum - 1, 0) }
             }
         } else {
             PsiLocation.fromPsiElement(element)
@@ -81,6 +81,11 @@ object CargoTestLocator : SMTestLocator {
 
     fun getTestUrl(function: RsQualifiedNamedElement): String =
         getTestUrl(function.qualifiedName ?: "")
+
+    fun getTestUrl(ctx: DocTestContext): String {
+        val owner = ctx.owner.qualifiedName ?: ""
+        return getTestUrl("$owner#${ctx.lineNumber}")
+    }
 
     private fun toQualifiedName(path: String): Pair<String, Int?> {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
