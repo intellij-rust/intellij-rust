@@ -9,7 +9,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.escapeIdentifierIfNeeded
-import org.rust.lang.core.psi.ext.QualifiedNamedItem2
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 
 sealed class ImportInfo {
 
@@ -57,18 +57,33 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(
-    val qualifiedNamedItem: QualifiedNamedItem2,
+class ImportCandidate(
+    val item: RsQualifiedNamedElement,
+    /**
+     * First segment is crate name (can be "crate").
+     * Last segment is item name.
+     */
+    val path: Array<String>,
+    /**
+     * Corresponds to `path.first()`.
+     * May differ from `item.containingCrate`
+     */
+    val crate: Crate,
+
     val info: ImportInfo,
     private val isRootPathResolved: Boolean,
 ): Comparable<ImportCandidate> {
+
+    val itemName: String
+        get() = path.last()
+
     override fun compareTo(other: ImportCandidate): Int =
         COMPARATOR.compare(this, other)
 
     companion object {
         private val COMPARATOR: Comparator<ImportCandidate> = compareBy(
             { !it.isRootPathResolved },
-            { it.qualifiedNamedItem.containingCrate.originOrder() },
+            { it.crate.originOrder() },
             { it.info.usePath },
         )
 

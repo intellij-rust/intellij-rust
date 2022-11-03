@@ -76,8 +76,8 @@ object ImportCandidatesCollector {
             .flatMap { context.getAllItemPathsInMod(it, nameToPriority::containsKey) }
         return context.convertToCandidates(itemsPaths)
             /** we need this filter in addition to [hasVisibleItemInRootScope] because there can be local imports */
-            .filter { it.qualifiedNamedItem.item !in processedElements[it.qualifiedNamedItem.itemName] }
-            .sortedBy { nameToPriority[it.qualifiedNamedItem.itemName] }
+            .filter { it.item !in processedElements[it.itemName] }
+            .sortedBy { nameToPriority[it.itemName] }
     }
 
     /**
@@ -117,7 +117,7 @@ object ImportCandidatesCollector {
             target.name
         } ?: return emptyList()
         return getImportCandidates(context, name)
-            .filter { it.qualifiedNamedItem.item == target }
+            .filter { it.item == target }
     }
 
     fun findImportCandidate(context: ImportContext, target: RsQualifiedNamedElement): ImportCandidate? =
@@ -137,16 +137,15 @@ private fun ImportContext.convertToCandidates(itemsPaths: List<ItemUsePath>): Li
             // cartesian product of `itemsPsi` and `paths`
             itemsPsi.flatMap { itemPsi ->
                 paths.map { path ->
-                    val qualifiedItem = QualifiedNamedItem2(itemPsi, path.path, path.crate)
-                    val importInfo = qualifiedItem.toImportInfo(rootDefMap, rootModData, path.needExternCrate)
+                    val importInfo = createImportInfo(path)
                     val isRootPathResolved = isRootPathResolved(importInfo.usePath)
-                    ImportCandidate(qualifiedItem, importInfo, isRootPathResolved)
+                    ImportCandidate(itemPsi, path.path, path.crate, importInfo, isRootPathResolved)
                 }
             }
         }
-        .filter { it.qualifiedNamedItem.item !is RsTraitItem || isUsefulTraitImport(it.info.usePath) }
+        .filter { it.item !is RsTraitItem || isUsefulTraitImport(it.info.usePath) }
         // for items which belongs to multiple namespaces (e.g. unit structs)
-        .distinctBy { it.qualifiedNamedItem.item to it.info.usePath }
+        .distinctBy { it.item to it.info.usePath }
         .sorted()
 
 @Suppress("ArrayInDataClass")
@@ -438,25 +437,25 @@ private fun ImportContext.createPathWithImportAdded(usePath: String): RsPath? {
         .createPathInTmpMod(rootPathText, rootMod, rootPathParsingMode, rootPathAllowedNamespaces, usePath, null)
 }
 
-private fun QualifiedNamedItem2.toImportInfo(defMap: CrateDefMap, modData: ModData, needExternCrate: Boolean): ImportInfo {
-    val crateName = path.first()
-    val path = path.map2Array(String::escapeIdentifierIfNeeded)
+private fun ImportContext.createImportInfo(path: ItemUsePath): ImportInfo {
+    val crateName = path.path.first()
+    val segments = path.path.map2Array(String::escapeIdentifierIfNeeded)
     return if (crateName == "crate") {
-        val usePath = path.joinToString("::").let {
-            if (defMap.isAtLeastEdition2018) it else it.removePrefix("crate::")
+        val usePath = segments.joinToString("::").let {
+            if (rootDefMap.isAtLeastEdition2018) it else it.removePrefix("crate::")
         }
         ImportInfo.LocalImportInfo(usePath)
     } else {
-        val needInsertExternCrateItem = needExternCrate
-            || !defMap.isAtLeastEdition2018 && !defMap.hasExternCrateInCrateRoot(crateName)
-        val crateRelativePath = path.copyOfRange(1, path.size).joinToString("::")
+        val needInsertExternCrateItem = path.needExternCrate
+            || !rootDefMap.isAtLeastEdition2018 && !rootDefMap.hasExternCrateInCrateRoot(crateName)
+        val crateRelativePath = segments.copyOfRange(1, segments.size).joinToString("::")
         ImportInfo.ExternCrateImportInfo(
-            crate = containingCrate,
+            crate = path.crate,
             externCrateName = crateName,
             needInsertExternCrateItem = needInsertExternCrateItem,
             depth = null,
             crateRelativePath = crateRelativePath,
-            hasModWithSameNameAsExternCrate = crateName in modData.childModules
+            hasModWithSameNameAsExternCrate = crateName in rootModData.childModules
         )
     }
 }
