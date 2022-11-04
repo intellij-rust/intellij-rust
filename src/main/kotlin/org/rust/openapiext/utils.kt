@@ -52,9 +52,6 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.util.CachedValueImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
@@ -445,14 +442,6 @@ fun <T> runWithEnabledFeatures(vararg featureIds: String, action: () -> T): T {
         action()
     } finally {
         currentValues.forEach { (featureId, currentValue) -> setFeatureEnabled(featureId, currentValue) }
-    }
-}
-
-class CachedValueDelegate<T>(provider: () -> CachedValueProvider.Result<T>) {
-    private val cachedValue: CachedValue<T> = CachedValueImpl(provider)
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return cachedValue.value
     }
 }
 

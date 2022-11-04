@@ -59,7 +59,7 @@ val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpt
 
 fun Project.buildProject() {
     checkIsDispatchThread()
-    val arguments = buildList<String> {
+    val arguments = buildList {
         val settings = rustSettings
         add("--all")
         if (settings.compileAllTargets) {

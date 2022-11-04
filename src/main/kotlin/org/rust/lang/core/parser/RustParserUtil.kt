@@ -69,9 +69,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
      */
     enum class StmtMode { ON, OFF }
 
-    enum class RestrictedConstExprMode { ON, OFF }
+    enum class RestrictedConstExprMode { ON, @Suppress("unused") OFF }
 
-    enum class ConditionMode { ON, OFF }
+    enum class ConditionMode { ON, @Suppress("unused") OFF }
 
     enum class MacroCallParsingMode(
         val attrsAndVis: Boolean,

@@ -153,7 +153,7 @@ private fun getFunctionAndArguments(expr: RsLitExpr): Pair<RsFunction, RsValueAr
     }
 }
 
-private abstract class RsLiteralWebReferenceProviderBase() : PsiReferenceProvider() {
+private abstract class RsLiteralWebReferenceProviderBase : PsiReferenceProvider() {
 
     // Web references do not point to any real PsiElement
     override fun acceptsTarget(target: PsiElement): Boolean = false

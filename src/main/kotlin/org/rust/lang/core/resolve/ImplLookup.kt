@@ -1307,17 +1307,6 @@ class ImplLookup(
     fun isEq(ty: Ty): Boolean = ty.isTraitImplemented(items.Eq)
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
     fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
-    fun isAnyFn(ty: Ty): Boolean = isFn(ty) || isFnOnce(ty) || isFnMut(ty)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFn(ty: Ty): Boolean = ty.isTraitImplemented(items.Fn)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnOnce(ty: Ty): Boolean = ty.isTraitImplemented(items.FnOnce)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnMut(ty: Ty): Boolean = ty.isTraitImplemented(items.FnMut)
-
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
         if (trait == null) return false

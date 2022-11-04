@@ -46,7 +46,6 @@ val RsElement.knownItems: KnownItems
  * [CargoProject]-related object that allows to lookup rust items in project dependencies,
  * including the standard library.
  */
-@Suppress("PropertyName")
 class KnownItems(
     private val lookup: KnownItemsLookup
 ) {
@@ -207,14 +206,6 @@ enum class KnownDerivableTrait(
     fun shouldUseHardcodedTraitDerive(): Boolean {
         // We don't use hardcoded impls for non-std derives if proc macro expansion is enabled
         return isStd || !ProcMacroApplicationService.isDeriveEnabled()
-    }
-
-    companion object {
-        /** Hardcoded trait impl vs proc macro expansion usage */
-        fun shouldUseHardcodedTraitDerive(deriveName: String?): Boolean {
-            val known = KNOWN_DERIVABLE_TRAITS[deriveName] ?: return false
-            return known.shouldUseHardcodedTraitDerive()
-        }
     }
 }
 

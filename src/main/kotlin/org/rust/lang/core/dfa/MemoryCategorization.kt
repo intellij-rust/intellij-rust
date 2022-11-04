@@ -139,9 +139,9 @@ enum class MutabilityCategory {
                 is MutableBorrow -> Declared
             }
 
-        fun from(BaseMut: MutabilityCategory, pointerKind: PointerKind): MutabilityCategory =
+        fun from(baseMut: MutabilityCategory, pointerKind: PointerKind): MutabilityCategory =
             when (pointerKind) {
-                PointerKind.Unique -> BaseMut.inherit()
+                PointerKind.Unique -> baseMut.inherit()
                 is BorrowedPointer -> from(pointerKind.borrowKind)
                 is UnsafePointer -> from(pointerKind.mutability)
             }

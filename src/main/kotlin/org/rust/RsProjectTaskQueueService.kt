@@ -64,7 +64,6 @@ interface RsTask {
         MACROS_CLEAR(canBeCanceledByOther = false),
         MACROS_UNPROCESSED,
         MACROS_FULL,
-        MACROS_WORKSPACE,
 
         /** Can't be canceled, cancels nothing. Should be the last variant of the enum. */
         INDEPENDENT(canBeCanceledByOther = false);

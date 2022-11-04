@@ -128,14 +128,14 @@ data class ErrorAnnotation(
 private val formatParser = Regex("""\{\{|}}|(\{([^}]*)}?)|(})""")
 
 @Language("Regexp")
-private const val argument = """([a-zA-Z_][\w+]*|\d+)"""
+private const val ARGUMENT = """([a-zA-Z_][\w+]*|\d+)"""
 private val formatParameterParser = Regex("""(?x) # enable comments
-^(?<id>$argument)?
+^(?<id>$ARGUMENT)?
 (:
     (.?[\^<>])?[+\-]?\#?
     0?(?!\$) # negative lookahead to parse 0$ as width and 00$ as zero padding followed by width
-    (?<width>$argument\$|\d+)?
-    (\.(?<precision>$argument\$|\d+|\*)?)? # specifying no precision after a dot is allowed
+    (?<width>$ARGUMENT\$|\d+)?
+    (\.(?<precision>$ARGUMENT\$|\d+|\*)?)? # specifying no precision after a dot is allowed
     (?<type>\w?\??)?
 )?\s*""")
 

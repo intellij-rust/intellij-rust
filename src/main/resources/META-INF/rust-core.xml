@@ -31,7 +31,7 @@
         <!-- Parser -->
 
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
-        <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
+        <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes" externalIdPrefix="rust."/>
 
         <!-- Sources -->
 
@@ -713,306 +713,382 @@
         <intentionAction>
             <className>org.rust.ide.intentions.ImplTraitToTypeParamIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddDeriveIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RemoveCurlyBracesIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ReplaceLineCommentWithBlockCommentIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ReplaceBlockCommentWithLineCommentIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddCurlyBracesIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RemoveDbgIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.WrapLambdaExprIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapSingleExprIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.DemorgansLawIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SimplifyBooleanExpressionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapToMatchIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapToTryIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddElseIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveTypeConstraintToWhereClauseIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MatchToIfLetIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveGuardToMatchArmIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SetMutableIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SetImmutableIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImplIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnElideLifetimesIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SpecifyTypeExplicitlyIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinWildcardsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleIgnoreTestIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveTypeConstraintToParameterListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.FlipBinaryExpressionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SplitIfIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MergeIfsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RsShowRecursiveMacroExpansionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RsShowSingleStepMacroExpansionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RunCargoExpandIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.GenerateDocStubIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.NestUseStatementsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.FlattenUseStatementsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopParameterListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinParameterListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopArgumentListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinArgumentListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopFieldListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinFieldListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopLiteralFieldListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinLiteralFieldListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopVariantListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinVariantListIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.InvertIfIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.DestructureIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.addFmtStringArgument.AddFmtStringArgumentIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertToStructIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertToTupleIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsPatIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsLiteralIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsLiteralRecursiveIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractEnumVariantIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.IntroduceLocalVariableIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertUFCSToMethodCallIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertMethodCallToUFCSIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImportIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImportForPatternIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SubstituteTypeAliasIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateFunctionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertClosureToFunctionIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertFunctionToClosureIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddRemainingArmsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddWildcardArmIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePubIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePubCrateIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePrivateIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ShareInPlaygroundIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleFeatureIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateStructIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateTupleStructIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImplTraitIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractStructFieldsIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapConstructorIntention</className>
             <category>Rust</category>
+            <language>Rust</language>
         </intentionAction>
 
         <!-- Run Configurations -->
@@ -1108,7 +1184,6 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsModulesIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
-        <stubIndex implementation="org.rust.lang.core.stubs.index.RsReexportIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsFeatureIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsCfgNotTestIndex"/>
 

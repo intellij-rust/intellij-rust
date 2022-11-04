@@ -13,6 +13,7 @@ import org.rust.lang.core.types.ty.*
  *
  * Follows https://github.com/rust-lang/rust/blob/master/compiler/rustc_typeck/src/check/expectation.rs#L11
  */
+@Suppress("KDocUnresolvedReference")
 sealed class Expectation {
     /** We know nothing about what type this expression should have */
     object NoExpectation : Expectation()

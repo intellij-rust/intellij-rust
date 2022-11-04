@@ -75,6 +75,7 @@ fun getHardcodeProcMacroProperties(packageName: String, macroName: String): Know
  *
  * @see RS_HARDCODED_PROC_MACRO_ATTRIBUTES
  */
+@Suppress("KDocUnresolvedReference")
 enum class KnownProcMacroKind {
     /** No special behavior */
     DEFAULT_PURE,

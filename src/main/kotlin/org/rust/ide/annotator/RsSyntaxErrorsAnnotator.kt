@@ -13,9 +13,9 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
-import com.intellij.psi.util.parentOfTypes
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.annotator.fixes.RemoveElementFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
@@ -510,17 +510,6 @@ private fun deny(
 ) {
     if (el == null) return
     holder.newAnnotation(severity, message)
-        .range(highlightElements.combinedRange ?: el.textRange).create()
-}
-
-private inline fun <reified T : RsElement> denyType(
-    el: PsiElement?,
-    holder: AnnotationHolder,
-    @InspectionMessage message: String,
-    vararg highlightElements: PsiElement?
-) {
-    if (el !is T) return
-    holder.newAnnotation(HighlightSeverity.ERROR, message)
         .range(highlightElements.combinedRange ?: el.textRange).create()
 }
 

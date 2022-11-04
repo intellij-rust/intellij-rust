@@ -132,7 +132,7 @@ class ControlFlowGraph private constructor(
              *
              * So, first of all, collect all the unexecuted [RsElement]s (including partially executed)
              */
-            val unexecutedElements = buildSet<RsElement> {
+            val unexecutedElements = buildSet {
                 val fullyExecutedNodeIndices = graph.depthFirstTraversal(entry).map { it.index }.toSet()
                 graph.forEachNode { node ->
                     if (node.index !in fullyExecutedNodeIndices) {

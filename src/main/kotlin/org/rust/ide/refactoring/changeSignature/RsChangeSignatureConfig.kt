@@ -81,7 +81,7 @@ class Parameter(
         get() = parseTypeReference() ?: factory.createType("()")
 
     fun parseTypeReference(): RsTypeReference? = type.item
-    fun parsePat(): RsPat? = factory.tryCreatePat(patText)
+    private fun parsePat(): RsPat? = factory.tryCreatePat(patText)
 
     fun hasValidPattern(): Boolean {
         if (parsePat() == null) {
