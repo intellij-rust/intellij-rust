@@ -5,8 +5,8 @@
 
 package org.rust.ide.docs
 
-import org.rust.CheckTestmarkHit
 import org.intellij.lang.annotations.Language
+import org.rust.CheckTestmarkHit
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.docs.RsDocumentationProvider.Testmarks
@@ -150,6 +150,27 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }            //^
 
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/foo/macro.bar.html")
+
+    fun `test bang proc macro`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[proc_macro]
+        fn foo(_input: TokenStream) -> TokenStream {}
+          //^
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
+    fun `test derive proc macro`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[proc_macro_derive(MyDerive)]
+                           //^
+        fn foo(_input: TokenStream) -> TokenStream {}
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/derive.MyDerive.html")
+
+    fun `test attribute proc macro`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[proc_macro_attribute]
+        fn foo(_attr: TokenStream, _input: TokenStream) -> TokenStream {}
+          //^
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/attr.foo.html")
 
     @CheckTestmarkHit(Testmarks.NonDependency::class)
     fun `test not external url for workspace package`() = doUrlTestByFileTree("""
