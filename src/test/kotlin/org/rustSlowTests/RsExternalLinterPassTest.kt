@@ -182,8 +182,8 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         Help: if this is intentional, prefix it with an underscore
     """)
 
-    @MinRustcVersion("1.45.0")
-    fun `test handle hyperlinks in errors`() = checkTooltip("""
+    @MaxRustcVersion("1.65.0")
+    fun `test handle hyperlinks in errors 1`() = checkTooltip("""
         #![deny(clippy::unwrap_used)]
         fn main() {
             let x = Some(());
@@ -194,6 +194,20 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         Note: the lint level is defined here
         Help: if you don't want to handle the `None` case gracefully, consider using `expect()` to provide a better panic message
         Help: for further information visit <a href='https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used'>https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used</a>
+    """, externalLinter = ExternalLinter.CLIPPY)
+
+    @MinRustcVersion("1.66.0-nightly")
+    fun `test handle hyperlinks in errors 2`() = checkTooltip("""
+        #![deny(clippy::unwrap_used)]
+        fn main() {
+            let x = Some(());
+            x.unwrap()
+        }
+    """, """
+        used `unwrap()` on `an Option` value
+        Help: if you don't want to handle the `None` case gracefully, consider using `expect()` to provide a better panic message
+        Help: for further information visit <a href='https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used'>https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used</a>
+        Note: the lint level is defined here
     """, externalLinter = ExternalLinter.CLIPPY)
 
     private fun doTest(
