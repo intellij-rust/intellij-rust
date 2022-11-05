@@ -27,16 +27,16 @@ jobs:
             is_master_branch: ${{ steps.calculate-git-info.outputs.is_master_branch }}
             checked: ${{ steps.calculate-git-info.outputs.checked }}
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
               with:
                   fetch-depth: 0
 
             - name: Calculate git info
               id: calculate-git-info
               run: |
-                  echo "::set-output name=is_bors_branch::${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}"
-                  echo "::set-output name=is_master_branch::${{ github.ref == 'refs/heads/master'}}"
-                  echo "::set-output name=checked::$(python scripts/has_successful_status.py --token ${{ github.token }} --ref ${{ github.sha }} --check_name check)"
+                  echo "is_bors_branch=${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/trying' }}" >> $GITHUB_OUTPUT
+                  echo "is_master_branch=${{ github.ref == 'refs/heads/master'}}" >> $GITHUB_OUTPUT
+                  echo "checked=$(python scripts/has_successful_status.py --token ${{ github.token }} --ref ${{ github.sha }} --check_name check)" >> $GITHUB_OUTPUT
 
             - name: Check git info
               run: |
@@ -47,7 +47,7 @@ jobs:
     check-license:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
 
             - name: Check license
               run: python scripts/check_license.py
@@ -96,7 +96,7 @@ jobs:
             DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
 
             - name: Set up JDK 17
               uses: actions/setup-java@v3
@@ -198,7 +198,7 @@ jobs:
 
             - name: Collect fail reports
               if: failure()
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: tests-report-${{ matrix.os }}-${{ matrix.rust-version }}-${{ matrix.base-ide }}-${{ matrix.platform-version }}
                   path: |

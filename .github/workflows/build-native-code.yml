@@ -57,7 +57,7 @@ jobs:
         container: ${{ matrix.config.container }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Cache native code artifact
               id: cache-native-code-artifact
@@ -100,7 +100,7 @@ jobs:
                   args: --manifest-path native-helper/Cargo.toml --target ${{ matrix.config.target }} --release
 
             - name: Publish
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
                   path: ${{ matrix.config.artifact_path }}

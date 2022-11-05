@@ -5,37 +5,37 @@ runs:
     using: composite
     steps:
         - name: Load linux x86 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: linux-x86-64
               path: bin/linux/x86-64
 
         - name: Load linux arm64 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: linux-arm64
               path: bin/linux/arm64
 
         - name: Load windows x86 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: windows-x86-64
               path: bin/windows/x86-64
 
         - name: Load windows amr64 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: windows-arm64
               path: bin/windows/arm64
 
         - name: Load macos x86 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: macos-x86-64
               path: bin/macos/x86-64
 
         - name: Load macos arm64 binaries
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v3
           with:
               name: macos-arm64
               path: bin/macos/arm64

@@ -25,15 +25,15 @@ jobs:
             rust-nightly: ${{ steps.fetch-commits.outputs.rust-nightly }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   fetch-depth: 0
 
             - name: Fetch latest commits
               id: fetch-commits
               run: |
-                  echo "::set-output name=rust-commit::$(git log -n 1 --format=format:%H)"
-                  echo "::set-output name=rust-nightly::$(python scripts/get_tag_commit.py --tag "rust-nightly")"
+                  echo "rust-commit=$(git log -n 1 --format=format:%H)" >> $GITHUB_OUTPUT
+                  echo "rust-nightly=$(python scripts/get_tag_commit.py --tag "rust-nightly")" >> $GITHUB_OUTPUT
 
             - name: Show commits
               run: |
@@ -67,7 +67,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Set up JDK 17
               uses: actions/setup-java@v3
@@ -88,7 +88,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   fetch-depth: 0
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
