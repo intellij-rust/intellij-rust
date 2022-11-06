@@ -5,10 +5,12 @@
 
 package org.rust.ide.intentions.createFromUsage
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
@@ -99,4 +101,7 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
 
         return factory.tryCreateStruct("${visibility}struct ${ctx.name}$suffix")
     }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 }

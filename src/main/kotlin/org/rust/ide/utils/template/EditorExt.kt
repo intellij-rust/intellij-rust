@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import org.rust.lang.core.psi.ext.isIntentionPreviewElement
 import org.rust.openapiext.checkWriteAccessAllowed
 
 fun Editor.buildAndRunTemplate(
@@ -20,7 +21,9 @@ fun Editor.buildAndRunTemplate(
     elementsToReplace: List<SmartPsiElementPointer<out PsiElement>>,
     listener: TemplateEditingListener? = null,
 ) {
-    checkWriteAccessAllowed()
+    if (!owner.isIntentionPreviewElement) {
+        checkWriteAccessAllowed()
+    }
     val tbl = newTemplateBuilder(owner) ?: return
     for (elementPointer in elementsToReplace) {
         val element = elementPointer.element ?: continue

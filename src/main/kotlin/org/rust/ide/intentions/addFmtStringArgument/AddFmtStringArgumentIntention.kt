@@ -6,9 +6,11 @@
 package org.rust.ide.intentions.addFmtStringArgument
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.isExprOrStmtContext
@@ -24,6 +26,9 @@ import org.rust.openapiext.runWriteCommandAction
 class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringArgumentIntention.Context>() {
     override fun getText(): String = "Add format string argument"
     override fun getFamilyName(): String = text
+
+    override fun startInWriteAction(): Boolean = false
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiFile = currentFile
 
     class Context(val literal: RsLitExpr, val macroCall: RsMacroCall)
 
@@ -113,6 +118,9 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
             editor.caretModel.moveToOffset(editor.caretModel.offset + newPlaceholder.length)
         }
     }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 
     companion object {
         private val FORMAT_MACROS: Set<String> =

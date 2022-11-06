@@ -10,6 +10,9 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.intentions.createFromUsage.CreateFunctionIntention
 
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test function availability range`() = checkAvailableInSelectionOnly("""
         fn main() {
             <selection>foo</selection>(bar::baz);

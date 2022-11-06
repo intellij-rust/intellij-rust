@@ -8,20 +8,23 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
-abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
+abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsIntentionTestPlatformBase() {
 
     protected val intention: IntentionAction
         get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
+
+    protected open val previewExpected: Boolean get() = intention.startInWriteAction()
 
     fun `test intention has documentation`() {
         if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return
@@ -40,10 +43,11 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     protected fun doAvailableTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        @Language("Rust") preview: String? = null,
         fileName: String = "main.rs"
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
-        launchAction()
+        launchAction(preview?.trimIndent())
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -89,9 +93,21 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
-    protected fun launchAction() {
+    protected fun launchAction(@Language("Rust") preview: String? = null) {
         UIUtil.dispatchAllInvocationEvents()
-        myFixture.launchAction(intention)
+        // Check preview only for intentions from Rust plugin
+        if (intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) {
+            if (previewExpected) {
+                checkPreviewAndLaunchAction(intention, preview)
+            } else {
+                val intention = intention
+                val previewInfo = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(project, intention, myFixture.file, myFixture.editor)
+                assertEquals(IntentionPreviewInfo.EMPTY, previewInfo)
+                myFixture.launchAction(intention)
+            }
+        } else {
+            myFixture.launchAction(intention)
+        }
     }
 
     protected fun doUnavailableTest(@Language("Rust") before: String, fileName: String = "main.rs") {

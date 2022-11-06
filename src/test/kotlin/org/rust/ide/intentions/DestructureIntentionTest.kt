@@ -343,6 +343,17 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
         fn main() {
             let S {} = foo();
         }
+    """, preview = """
+        use crate::a::foo;
+
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+
+        fn main() {
+            let S {} = foo();
+        }
     """)
 
     fun `test import unresolved type alias`() = doAvailableTest("""
@@ -359,6 +370,18 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class
         }
     """, """
         use crate::a::{foo, R};
+
+        mod a {
+            pub struct S;
+            pub type R = S;
+            pub fn foo() -> R { S }
+        }
+
+        fn main() {
+            let R {} = foo();
+        }
+    """, preview = """
+        use crate::a::foo;
 
         mod a {
             pub struct S;

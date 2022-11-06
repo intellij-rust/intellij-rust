@@ -8,6 +8,9 @@ package org.rust.ide.intentions
 import org.rust.ide.intentions.createFromUsage.CreateTupleStructIntention
 
 class CreateTupleStructIntentionTest : RsIntentionTestBase(CreateTupleStructIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test tuple struct availability range`() = checkAvailableInSelectionOnly("""
         fn main() {
             <selection>Foo</selection>(0);

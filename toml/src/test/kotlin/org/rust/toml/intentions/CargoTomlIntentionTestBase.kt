@@ -14,7 +14,7 @@ abstract class CargoTomlIntentionTestBase(intentionClass: KClass<out IntentionAc
     protected fun doAvailableTest(
         @Language("TOML") before: String,
         @Language("TOML") after: String
-    ) = doAvailableTest(before, after, "Cargo.toml")
+    ) = doAvailableTest(before, after, fileName = "Cargo.toml")
 
     protected fun doUnavailableTest(@Language("TOML") before: String) =
         doUnavailableTest(before, "Cargo.toml")

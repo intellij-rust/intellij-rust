@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -22,9 +22,6 @@ import org.rust.openapiext.Testmark
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
-
-    // No intention preview because it creates new file
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
         val mod = element.ancestorOrSelf<RsModItem>() ?: return null
@@ -51,6 +48,10 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
 
         ctx.delete()
     }
+
+    // No intention preview because it creates new file
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 
     object Testmarks {
         object CopyAttrs : Testmark()

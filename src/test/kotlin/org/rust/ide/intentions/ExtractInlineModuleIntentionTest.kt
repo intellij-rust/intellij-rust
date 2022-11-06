@@ -11,6 +11,7 @@ import org.rust.fileTree
 
 class ExtractInlineModuleIntentionTest : RsIntentionTestBase(ExtractInlineModuleIntention::class) {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
+    override val previewExpected: Boolean get() = false
 
     fun `test availability range`() = checkAvailableInSelectionOnly("""
         #[attr]

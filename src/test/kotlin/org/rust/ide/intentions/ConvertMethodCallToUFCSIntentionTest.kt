@@ -288,6 +288,17 @@ class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCa
         fn bar(a: foo::Foo) {
             Foo::bar(&a);
         }
+    """, preview = """
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn bar(&self) {}
+            }
+        }
+
+        fn bar(a: foo::Foo) {
+            Foo::bar(&a);
+        }
     """)
 
     fun `test generic trait`() = doAvailableTest("""
@@ -462,6 +473,19 @@ class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCa
     """, """
         use crate::foo::Bar;
 
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo(self) {}
+            }
+
+            pub type Bar = Foo;
+        }
+
+        fn bar(x: foo::Bar) {
+            Bar::foo(x);
+        }
+    """, preview = """
         mod foo {
             pub struct Foo;
             impl Foo {

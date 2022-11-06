@@ -170,6 +170,23 @@ class AddRemainingArmsIntentionTest : RsIntentionTestBase(AddRemainingArmsIntent
                 Alias::Bar => {}
             }
         }
+    """, preview = """
+        mod foo {
+            pub enum Enum {
+                Foo,
+                Bar
+            }
+            pub type Alias = Enum;
+
+            pub fn bar() -> Alias { Enum::Foo }
+        }
+
+        fn bar() {
+            match foo::bar() {
+                Alias::Foo => {}
+                Alias::Bar => {}
+            }
+        }
     """)
 
     fun `test match aliased enum by alias`() = doAvailableTest("""

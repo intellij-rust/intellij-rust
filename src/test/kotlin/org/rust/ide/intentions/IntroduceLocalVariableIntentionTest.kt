@@ -11,6 +11,9 @@ package org.rust.ide.intentions
  * [org.rust.ide.refactoring.RsIntroduceVariableHandlerTest] are also applicable.
  */
 class IntroduceLocalVariableIntentionTest : RsIntentionTestBase(IntroduceLocalVariableIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test unavailable if there is a variable`() = doUnavailableTest("""
         fn main() {
             let a = /*caret*/foo();

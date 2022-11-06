@@ -5,10 +5,12 @@
 
 package org.rust.ide.intentions.createFromUsage
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.lints.isCamelCase
 import org.rust.ide.intentions.RsElementBaseIntentionAction
@@ -80,4 +82,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
         }
         return factory.tryCreateStruct("${visibility}struct ${ctx.name}($fields);")
     }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 }
