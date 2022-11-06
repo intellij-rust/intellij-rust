@@ -62,7 +62,7 @@ jobs:
             - name: Cache native code artifact
               id: cache-native-code-artifact
               if: inputs.cache
-              uses: actions/cache@v2.1.4
+              uses: actions/cache@v3
               with:
                   path: ${{ matrix.config.artifact_path }}
                   key: ${{ matrix.config.arch }}-${{ matrix.config.os }}-native-helper-${{ inputs.rust-version }}-${{ hashFiles('native-helper/src/**', 'native-helper/Cargo.toml', 'native-helper/Cargo.lock') }}
