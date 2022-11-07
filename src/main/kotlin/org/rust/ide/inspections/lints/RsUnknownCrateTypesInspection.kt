@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.annotator.fixes.NameSuggestionFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.RsPsiPattern
@@ -28,7 +29,11 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
                         element, elementValue, KNOWN_CRATE_TYPES, 1
                     ) { RsPsiFactory(element.project).createExpression("\"$it\"") }
 
-                    holder.registerLintProblem(element, "Invalid `crate_type` value", fixes = fixes)
+                    holder.registerLintProblem(
+                        element,
+                        RsBundle.message("inspection.UnknownCrateTypes.text"),
+                        fixes = fixes
+                    )
                 }
             }
         }

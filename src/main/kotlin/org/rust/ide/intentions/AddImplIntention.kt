@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.startOffset
 
 class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>() {
-    override fun getText() = "Add impl block"
+    override fun getText() = RsBundle.message("inspection.AddImpl.text")
     override fun getFamilyName() = text
 
     class Context(val type: RsStructOrEnumItemElement, val name: String)

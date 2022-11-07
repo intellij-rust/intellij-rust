@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsTypeReference
@@ -29,7 +30,7 @@ import org.rust.lang.core.psi.ext.mutability
  * ```
  */
 open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntention.Context>() {
-    override fun getText() = "Set reference mutable"
+    override fun getText() = RsBundle.message("intention.Rust.SetMutable.text")
     override fun getFamilyName() = text
 
     open val mutable = true

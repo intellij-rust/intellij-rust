@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.rust.RsBundle
 import org.rust.ide.inspections.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.selfParameter
 
 class RsVariableMutableInspection : RsLocalInspectionTool() {
-    override fun getDisplayName(): String = "No mutable required"
+    override fun getDisplayName() = RsBundle.message("inspection.VariableMutable.name")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
@@ -28,7 +29,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
                 if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(o, it) }) return
                 holder.registerProblem(
                     o,
-                    "Variable `${o.identifier.text}` does not need to be mutable",
+                    RsBundle.message("inspection.VariableMutable.text", o.identifier.text),
                     RemoveMutableFix()
                 )
             }

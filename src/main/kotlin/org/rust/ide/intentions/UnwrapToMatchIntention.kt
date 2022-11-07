@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.UnwrapToMatchIntention.ReceiverType.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -18,7 +19,7 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
 class UnwrapToMatchIntention: RsElementBaseIntentionAction<UnwrapToMatchIntention.Context>() {
-    override fun getText() = "Replace .unwrap() with match"
+    override fun getText() = RsBundle.message("intention.Rust.UnwrapToMatch.text")
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {

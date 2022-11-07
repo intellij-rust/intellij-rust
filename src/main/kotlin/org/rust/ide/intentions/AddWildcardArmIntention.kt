@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.Pattern
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.arms
 
 class AddWildcardArmIntention : AddRemainingArmsIntention() {
 
-    override fun getText(): String = AddWildcardArmFix.NAME
+    override fun getText(): String = RsBundle.message("inspection.AddWildcardArm.Fix.text")
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? =
         super.findApplicableContext(project, editor, element)

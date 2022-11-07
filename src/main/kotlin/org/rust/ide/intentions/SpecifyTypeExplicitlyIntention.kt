@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.RsLetDecl
@@ -27,9 +28,9 @@ import org.rust.lang.core.types.type
 
 
 class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeExplicitlyIntention.Context>() {
-    override fun getFamilyName() = "Specify type explicitly"
+    override fun getFamilyName() = text
 
-    override fun getText() = "Specify type explicitly"
+    override fun getText() = RsBundle.message("intention.Rust.SpecifyType.text")
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null

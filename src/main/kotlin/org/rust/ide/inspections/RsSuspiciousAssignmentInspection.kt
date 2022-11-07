@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
@@ -23,7 +24,7 @@ import org.rust.lang.core.psi.ext.startOffset
  * QuickFix 2: Change `a =? b` to `a = ?b`
  */
 class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Suspicious assignment"
+    override fun getDisplayName() = RsBundle.message("inspection.SuspiciousAssignment.name")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
@@ -56,9 +57,16 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                     holder.registerProblem(
                         expr,
                         TextRange(expr.left.text.length, uExprOffset),
-                        "Suspicious assignment. Did you mean `$subst1` or `$subst2`?",
-                        SubstituteTextFix.replace("Change to `$subst1`", file, substRange, " $op= "),
-                        SubstituteTextFix.replace("Change to `$subst2`", file, substRange, " = $op"))
+                        RsBundle.message("inspection.SuspiciousAssignment.text", subst1, subst2),
+                        SubstituteTextFix.replace(
+                            RsBundle.message("inspection.SuspiciousAssignment.fix", subst1),
+                            file, substRange, " $op= "
+                        ),
+                        SubstituteTextFix.replace(
+                            RsBundle.message("inspection.SuspiciousAssignment.fix", subst2),
+                            file, substRange, " = $op"
+                        )
+                    )
                 }
             }
         }

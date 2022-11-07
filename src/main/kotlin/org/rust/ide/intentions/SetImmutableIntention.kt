@@ -5,6 +5,8 @@
 
 package org.rust.ide.intentions
 
+import org.rust.RsBundle
+
 /**
  * Set reference immutable
  *
@@ -19,6 +21,6 @@ package org.rust.ide.intentions
  * ```
  */
 class SetImmutableIntention : SetMutableIntention() {
-    override fun getText() = "Set reference immutable"
+    override fun getText() = RsBundle.message("intention.Rust.SetImmutable.text")
     override val mutable = false
 }

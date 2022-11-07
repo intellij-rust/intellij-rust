@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import org.rust.RsBundle
 import org.rust.openapiext.document
 
 /**
@@ -22,7 +23,7 @@ import org.rust.openapiext.document
  * @param substitution The text that will be placed starting from `range.startOffset`. If `null`, no text will be inserted.
  */
 class SubstituteTextFix private constructor(
-    @IntentionName private val fixName: String = "Substitute",
+    @IntentionName private val fixName: String = RsBundle.message("inspection.SubstituteText.Fix.default.name"),
     file: PsiFile,
     range: TextRange,
     private val substitution: String?
@@ -32,7 +33,7 @@ class SubstituteTextFix private constructor(
         .createSmartPsiFileRangePointer(file, range)
 
     override fun getName(): String = fixName
-    override fun getFamilyName() = "Substitute one text to another"
+    override fun getFamilyName() = RsBundle.message("inspection.SubstituteText.Fix.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val file = fileWithRange.containingFile ?: return

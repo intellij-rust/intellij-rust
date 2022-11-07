@@ -8,13 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.expandStructFields
 import org.rust.ide.utils.expandTupleStructFields
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.elementType
 
 class AddStructFieldsPatIntention : RsElementBaseIntentionAction<AddStructFieldsPatIntention.Context>() {
-    override fun getText() = "Replace .. with actual fields"
+    override fun getText() = RsBundle.message("intention.Rust.AddStructFieldsPat.text")
 
     override fun getFamilyName() = text
 
