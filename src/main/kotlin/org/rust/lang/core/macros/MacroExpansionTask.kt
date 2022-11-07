@@ -296,6 +296,13 @@ class MacroExpansionTask(
         return true
     }
 
+    override fun onFinished() {
+        if (project.isDisposed) return
+
+        project.messageBus.syncPublisher(MacroExpansionTaskListener.MACRO_EXPANSION_TASK_TOPIC)
+            .onMacroExpansionTaskFinished()
+    }
+
     override val waitForSmartMode: Boolean
         get() = true
 
