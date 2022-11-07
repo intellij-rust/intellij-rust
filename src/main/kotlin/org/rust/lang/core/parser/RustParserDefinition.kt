@@ -24,7 +24,9 @@ import org.rust.lang.RsDebugInjectionListener
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.lang.core.stubs.RsPathStub
 import org.rust.lang.doc.psi.RsDocCommentElementType
+import org.rust.lang.doc.psi.RsDocLinkDestination
 import org.rust.lang.doc.psi.ext.isDocCommentLeafToken
 
 class RustParserDefinition : ParserDefinition {
@@ -62,12 +64,17 @@ class RustParserDefinition : ParserDefinition {
         if (leftElementType == EOL_COMMENT) {
             return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
         }
+        val rightElementType = right.elementType
         if (leftElementType.isDocCommentLeafToken) {
-            return if (right.elementType.isDocCommentLeafToken) {
-                ParserDefinition.SpaceRequirements.MAY
-            } else {
-                ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+            return when {
+                rightElementType.isDocCommentLeafToken -> ParserDefinition.SpaceRequirements.MAY
+                /** See [RsDocLinkDestination] */
+                right.treeParent?.elementType == RsPathStub.Type -> ParserDefinition.SpaceRequirements.MAY
+                else -> ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
             }
+        }
+        if (rightElementType.isDocCommentLeafToken && left.treeParent?.elementType == RsPathStub.Type) {
+            return ParserDefinition.SpaceRequirements.MAY
         }
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
