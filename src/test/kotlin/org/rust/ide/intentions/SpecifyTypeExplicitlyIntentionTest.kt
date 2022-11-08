@@ -257,4 +257,24 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
         """ fn main() { let ref mut var/*caret*/ = 42; } """,
         """ fn main() { let ref mut var: i32 = 42; } """
     )
+
+    fun `test import shadowed type`() = doAvailableTest("""
+        pub mod m1 {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+        pub mod m2 { pub struct S; }
+        use m2::S;
+        use crate::m1::foo;
+        fn main() { let s/*caret*/ = foo(); }
+    """, """
+        pub mod m1 {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+        pub mod m2 { pub struct S; }
+        use m2::S;
+        use crate::m1::foo;
+        fn main() { let s: crate::m1::S = foo(); }
+    """)
 }
