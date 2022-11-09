@@ -5,19 +5,23 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.template.buildAndRunTemplate
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsPathType
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.createSmartPointer
 
 class AddAssocTypeBindingsFix(
     element: PsiElement,
+    @SafeFieldForPreview
     private val missingTypes: List<String>
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getText(): String = "Add missing associated types"

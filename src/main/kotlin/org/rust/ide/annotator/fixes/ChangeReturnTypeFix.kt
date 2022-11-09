@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,6 +28,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 
 class ChangeReturnTypeFix(
     element: RsElement,
+    @SafeFieldForPreview
     private val actualTy: Ty
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     private val _text: String = run {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionName
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import org.rust.lang.core.psi.ext.findPreviewCopyIfNeeded
 import org.rust.openapiext.document
 
 /**
@@ -28,6 +30,7 @@ class SubstituteTextFix private constructor(
     private val substitution: String?
 ) : LocalQuickFix {
 
+    @SafeFieldForPreview
     private val fileWithRange = SmartPointerManager.getInstance(file.project)
         .createSmartPsiFileRangePointer(file, range)
 
@@ -35,7 +38,7 @@ class SubstituteTextFix private constructor(
     override fun getFamilyName() = "Substitute one text to another"
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val file = fileWithRange.containingFile ?: return
+        val file = fileWithRange.containingFile?.findPreviewCopyIfNeeded(descriptor.startElement.containingFile) ?: return
         val range = fileWithRange.range ?: return
         val document = file.document
         document?.deleteString(range.startOffset, range.endOffset)

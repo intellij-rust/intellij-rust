@@ -6,7 +6,6 @@
 package org.rust.ide.annotator.fixes
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -26,6 +25,6 @@ class AddAttrParenthesesFix(element: RsMetaItem, private val attrName: String) :
 
         // Place caret between parentheses, so the user can immediately start typing
         val offset = replaced.metaItemArgs?.lparen?.textOffset ?: return
-        PsiNavigationSupport.getInstance().createNavigatable(project, file.virtualFile, offset + 1).navigate(true)
+        editor?.caretModel?.moveToOffset(offset + 1)
     }
 }

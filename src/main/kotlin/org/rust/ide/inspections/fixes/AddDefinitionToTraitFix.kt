@@ -30,7 +30,7 @@ class AddDefinitionToTraitFix(member: RsAbstractable) : LocalQuickFixAndIntentio
         val member = startElement as? RsAbstractable ?: return
         val impl = member.parent?.parent as? RsImplItem ?: return
         val traitRef = impl.traitRef ?: return
-        val trait = traitRef.resolveToTrait() ?: return
+        val trait = traitRef.resolveToTrait()?.findPreviewCopyIfNeeded(file) ?: return
 
         val factory = RsPsiFactory(project)
         val newMember = member.copy().makeAbstract(factory) as RsAbstractable

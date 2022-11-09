@@ -36,6 +36,7 @@ class RemoveParameterFix(binding: RsPatBinding, private val bindingName: String)
 }
 
 private fun removeArguments(function: RsFunction, parameterIndex: Int) {
+    if (function.isIntentionPreviewElement) return
     val calls = function.findFunctionCalls() + function.findMethodCalls()
     calls.forEach { call ->
         val arguments = when (call) {

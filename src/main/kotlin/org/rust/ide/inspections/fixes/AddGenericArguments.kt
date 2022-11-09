@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -22,6 +23,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.createSmartPointer
 
 class AddGenericArguments(
+    @SafeFieldForPreview
     private val declaration: SmartPsiElementPointer<RsGenericDeclaration>,
     element: RsElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,9 +20,12 @@ import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
-class CreateStructFieldFromConstructorFix(
-    structLiteralField: RsStructLiteralField
-) : LocalQuickFixAndIntentionActionOnPsiElement(structLiteralField) {
+class CreateStructFieldFromConstructorFix private constructor(
+    struct: RsStructItem,
+    private val fieldName: String,
+    @SafeFieldForPreview
+    private val fieldType: Ty,
+) : LocalQuickFixAndIntentionActionOnPsiElement(struct) {
     override fun getText() = "Create field"
 
     override fun getFamilyName(): String = text
@@ -33,10 +37,7 @@ class CreateStructFieldFromConstructorFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val field = startElement as RsStructLiteralField
-        val fieldName = field.identifier?.text ?: return
-        val fieldType = field.type
-        val struct = field.resolveToStructItem() ?: return
+        val struct = startElement as? RsStructItem ?: return
         val pub = struct.visibility == RsVisibility.Public
         val psiFactory = RsPsiFactory(project)
         val structBlockFields = struct.blockFields
@@ -59,14 +60,14 @@ class CreateStructFieldFromConstructorFix(
 
     companion object {
         fun tryCreate(field: RsStructLiteralField): CreateStructFieldFromConstructorFix? {
-            if (field.identifier == null) return null
-            val type = field.type
-            if (!canUse(type)) return null
+            val fieldName = field.identifier?.text ?: return null
+            val fieldType = field.type
+            if (!canUse(fieldType)) return null
             val struct = field.resolveToStructItem() ?: return null
             if (struct.tupleFields != null) return null
             val structBlockFields = struct.blockFields
             if (structBlockFields != null && structBlockFields.rbrace == null || struct.identifier == null) return null
-            return CreateStructFieldFromConstructorFix(field)
+            return CreateStructFieldFromConstructorFix(struct, fieldName, fieldType)
         }
 
         private fun RsStructLiteralField.resolveToStructItem(): RsStructItem? {

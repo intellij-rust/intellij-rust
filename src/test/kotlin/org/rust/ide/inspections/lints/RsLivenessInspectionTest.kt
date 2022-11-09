@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::class) {
@@ -710,7 +711,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn bar() {
             foo();
         }
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo() {}
+        fn bar() {
+            foo(1);
+        }
+    """))
 
     fun `test remove function argument trailing comma`() = checkFixByText("Remove parameter `a`", """
         fn foo(<warning>a/*caret*/</warning>: u32,) {}
@@ -722,7 +728,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn bar() {
             foo();
         }
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo() {}
+        fn bar() {
+            foo(1,);
+        }
+    """))
 
     fun `test remove function argument at the beginning`() = checkFixByText("Remove parameter `a`", """
         fn foo(<warning>a/*caret*/</warning>: u32, _: u32, _: i32) {}
@@ -734,7 +745,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn bar() {
             foo(2, 3);
         }
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo(_: u32, _: i32) {}
+        fn bar() {
+            foo(1, 2, 3);
+        }
+    """))
 
     fun `test remove function argument in the middle`() = checkFixByText("Remove parameter `a`", """
         fn foo(_: u32, <warning>a/*caret*/</warning>: u32, _: i32) {}
@@ -746,7 +762,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn bar() {
             foo(1, 3);
         }
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo(_: u32, _: i32) {}
+        fn bar() {
+            foo(1, 2, 3);
+        }
+    """))
 
     fun `test remove function argument at the end`() = checkFixByText("Remove parameter `a`", """
         fn foo(_: u32, <warning>a/*caret*/</warning>: u32) {}
@@ -758,7 +779,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn bar() {
             foo(1);
         }
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo(_: u32) {}
+        fn bar() {
+            foo(1, 2);
+        }
+    """))
 
     // https://github.com/intellij-rust/intellij-rust/issues/6513
     fun `test remove function argument when function is used as an argument`() = checkFixByText("Remove parameter `x`", """
@@ -795,7 +821,16 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             let s = S;
             S::foo(s, 2);
         }
-    """)
+    """, preview = ExplicitPreview("""
+        struct S;
+        impl S {
+            fn foo(&self, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            S::foo(s, 1, 2);
+        }
+    """))
 
     fun `test remove method argument method call`() = checkFixByText("Remove parameter `a`", """
         struct S;
@@ -815,7 +850,16 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             let s = S;
             s.foo(2);
         }
-    """)
+    """, preview = ExplicitPreview("""
+        struct S;
+        impl S {
+            fn foo(&self, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            s.foo(1, 2);
+        }
+    """))
 
     fun `test use after async block with infinite loop`() = checkByText("""
         fn foo() {

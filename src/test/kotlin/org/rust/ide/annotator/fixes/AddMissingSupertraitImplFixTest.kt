@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -355,7 +356,18 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
         impl A for S {}
 
         impl foo::B/*caret*/ for S {}
-    """)
+    """, preview = ExplicitPreview("""
+        mod foo {
+            pub trait A {}
+            pub trait B: A {}
+        }
+
+        struct S;
+
+        impl A for S {}
+
+        impl foo::B for S {}
+    """))
 
     fun `test empty supertrait with an impl for normalizable associated type`() = checkFixByText("Implement missing supertrait(s)", """
         struct Struct;
