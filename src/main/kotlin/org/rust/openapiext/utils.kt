@@ -176,7 +176,7 @@ val VirtualFile.document: Document?
     get() = FileDocumentManager.getInstance().getDocument(this)
 
 val PsiFile.document: Document?
-    get() = PsiDocumentManager.getInstance(project).getDocument(this)
+    get() = viewProvider.document
 
 val VirtualFile.fileId: Int
     get() = (this as VirtualFileWithId).id
