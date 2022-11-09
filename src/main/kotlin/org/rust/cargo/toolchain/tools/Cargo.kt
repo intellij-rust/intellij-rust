@@ -295,10 +295,13 @@ class Cargo(
         val envs = EnvironmentVariablesData.create(envMap, true)
         val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs, environmentVariables = envs)
 
-        val processOutput = commandLine.execute(owner, listener = listener)
+        val processResult = commandLine.execute(owner, listener = listener)
+        if (processResult is Err) {
+            LOG.warn("Build script evaluation failed", processResult.err)
+        }
+        val processOutput = processResult
             .ignoreExitCode()
             .unwrapOrElse {
-                LOG.warn(it)
                 return BuildMessages.FAILED
             }
 
