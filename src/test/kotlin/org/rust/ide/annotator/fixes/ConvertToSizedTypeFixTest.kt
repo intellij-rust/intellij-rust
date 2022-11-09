@@ -11,19 +11,19 @@ import org.rust.ide.annotator.RsErrorAnnotator
 
 class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
-    fun `test convert function arg to reference`() = checkFixByText("Convert to reference", """
+    fun `test convert function arg to reference`() = doTest("Convert to reference", """
         fn foo(slice: <error>[u8]/*caret*/</error>) {}
     """, """
         fn foo(slice: &[u8]) {}
     """)
 
-    fun `test convert function return type to reference`() = checkFixByText("Convert to reference", """
+    fun `test convert function return type to reference`() = doTest("Convert to reference", """
         fn foo() -> <error>[u8]/*caret*/</error> { unimplemented!() }
     """, """
         fn foo() -> &[u8] { unimplemented!() }
     """)
 
-    fun `test convert function arg to Box`() = checkFixByText("Convert to Box", """
+    fun `test convert function arg to Box`() = doTest("Convert to Box", """
         trait Foo {}
         fn foo(foo: <error>Foo/*caret*/</error>) {}
     """, """
@@ -31,7 +31,7 @@ class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo(foo: Box<Foo>) {}
     """)
 
-    fun `test convert function return type to Box`() = checkFixByText("Convert to Box", """
+    fun `test convert function return type to Box`() = doTest("Convert to Box", """
         trait Foo {}
         fn foo() -> <error>Foo/*caret*/</error> { unimplemented!() }
     """, """
@@ -39,18 +39,13 @@ class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo() -> Box<Foo> { unimplemented!() }
     """)
 
-    private fun checkFixByText(
+    private fun doTest(
         fixName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-    ) {
-        super.checkFixByText(
-            fixName,
-            "#[lang = \"sized\"] trait Sized {}\n" + before.trimIndent(),
-            "#[lang = \"sized\"] trait Sized {}\n" + after.trimIndent(),
-            checkWarn = true,
-            checkInfo = false,
-            checkWeakWarn = false,
-        )
-    }
+    ) = checkFixByText(
+        fixName,
+        "#[lang = \"sized\"] trait Sized {}\n" + before.trimIndent(),
+        "#[lang = \"sized\"] trait Sized {}\n" + after.trimIndent(),
+    )
 }
