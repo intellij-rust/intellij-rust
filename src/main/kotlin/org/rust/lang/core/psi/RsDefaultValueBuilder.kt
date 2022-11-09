@@ -132,6 +132,7 @@ class RsDefaultValueBuilder(
         bindings: Map<String, RsPatBinding>
     ): List<RsStructLiteralField> {
         val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
+        val isMultiline = forceMultiLine || structLiteral.textContains('\n')
 
         val addedFields = mutableListOf<RsStructLiteralField>()
         for (fieldDecl in fieldsToAdd) {
@@ -141,7 +142,11 @@ class RsDefaultValueBuilder(
             val addBefore = findPlaceToAdd(field, structLiteral.structLiteralFieldList, declaredFields)
             val added = if (addBefore == null) {
                 ensureTrailingComma(structLiteral.structLiteralFieldList)
-                structLiteral.addBefore(field, structLiteral.rbrace) as RsStructLiteralField
+                val added = structLiteral.addBefore(field, structLiteral.rbrace) as RsStructLiteralField
+                if (isMultiline && fieldDecl == fieldsToAdd.last()) {
+                    structLiteral.addAfter(psiFactory.createComma(), added)
+                }
+                added
             } else {
                 val comma = structLiteral.addBefore(psiFactory.createComma(), addBefore)
                 structLiteral.addBefore(field, comma) as RsStructLiteralField
