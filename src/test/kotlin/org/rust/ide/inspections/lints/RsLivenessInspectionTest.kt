@@ -20,7 +20,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         fn foo(_x: i32) -> i32 {
             return 42;
         }
-    """)
+    """, preview = null)
 
     fun `test dead uninit variable`() = checkFixByText("Rename to `_x`", """
         fn foo() {
@@ -34,7 +34,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             let y = 5;
             y;
         }
-    """)
+    """, preview = null)
 
     fun `test dead init variable`() = checkByText("""
         fn foo() {

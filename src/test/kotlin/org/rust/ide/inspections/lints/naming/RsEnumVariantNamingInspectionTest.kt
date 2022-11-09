@@ -37,7 +37,7 @@ class RsEnumVariantNamingInspectionTest : RsInspectionsTestBase(RsEnumVariantNam
         fn enum_var_use() {
             let a = ToFix::VarBar;
         }
-    """)
+    """, preview = null)
 
     fun `test enum variant not support case`() = checkByText("""
         enum EnumVar {

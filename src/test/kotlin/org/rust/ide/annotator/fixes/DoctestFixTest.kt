@@ -94,6 +94,7 @@ class DoctestFixTest : RsAnnotationTestBase() {
             checkWarn = false,
             checkInfo = false,
             checkWeakWarn = false,
+            preview = null,
         )
     }
 }

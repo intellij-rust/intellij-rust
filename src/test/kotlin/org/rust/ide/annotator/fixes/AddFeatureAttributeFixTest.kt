@@ -26,7 +26,7 @@ class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         #![feature(crate_visibility_modifier)]
 
         crate/*caret*/ struct Foo;
-    """)
+    """, preview = null)
 
     @MockRustcVersion("1.29.0-nightly")
     fun `test add crate_visibility_modifier feature after all feature attributes`() =
@@ -39,7 +39,7 @@ class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
             #![feature(crate_visibility_modifier)]
 
             crate/*caret*/ type Foo = i128;
-        """)
+        """, preview = null)
 
     @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.28.0")
@@ -55,5 +55,5 @@ class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         #![feature(crate_in_paths)]
 
         use crate/*caret*/::foo::Foo;
-    """)
+    """, preview = null)
 }

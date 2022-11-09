@@ -5,7 +5,9 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -34,4 +36,7 @@ class RenameFix(
         }, {
             RefactoringFactory.getInstance(project).createRename(it, newName).run()
         })
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 }

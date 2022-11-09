@@ -77,7 +77,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- a/mod.rs
             /*caret*/mod foo;
         //- a/foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file to a parent mod file`() = checkFixByFileTree("Attach file to a.rs", """
         //- lib.rs
@@ -91,7 +91,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- a.rs
             /*caret*/mod foo;
         //- a/foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file to library root`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -104,7 +104,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             fn test() {}
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file to binary root`() = checkFixByFileTree("Attach file to main.rs", """
         //- main.rs
@@ -117,7 +117,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             fn main() {}
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file to selected module 1`() = checkFixWithMultipleModules("""
         //- main.rs
@@ -185,7 +185,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             fn foo() {}
         //- a/b/mod.rs
-    """)
+    """, preview = null)
 
     fun `test attach file find existing mod item`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -197,7 +197,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
             mod a;
             mod foo;
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file multiple mod items`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -211,7 +211,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
             mod b;
             mod foo;
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file find last existing mod item`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -237,7 +237,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             fn test2() {}
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file skip attributes`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -252,7 +252,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             mod foo;
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file skip attributes with comments`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -271,7 +271,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             mod foo;
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file skip comments`() = checkFixByFileTree("Attach file to lib.rs", """
         //- lib.rs
@@ -285,7 +285,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
             //! bar
             mod foo;
         //- foo.rs
-    """)
+    """, preview = null)
 
     fun `test attach file with keywork-like name`() = checkFixByFileTree("Attach file to main.rs", """
         //- main.rs
@@ -298,7 +298,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
 
             fn main() {}
         //- macro.rs
-    """)
+    """, preview = null)
 
     fun `test code insight after attach`() = checkFixByFileTreeWithoutHighlighting("Attach file to lib.rs", """
     //- lib.rs
@@ -316,7 +316,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         fn main() {
             super::func();
         }        //^
-    """).also {
+    """, preview = null).also {
         val path = findElementInEditor<RsPath>()
         val target = path.reference?.resolve()
         check(target is RsFunction)
@@ -332,7 +332,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         withMockModuleAttachSelector({ _, modules ->
             modules.find { it.name == moduleName }
         }) {
-            checkFixByFileTree("Attach file to a module", before, after)
+            checkFixByFileTree("Attach file to a module", before, after, preview = null)
         }
     }
 }

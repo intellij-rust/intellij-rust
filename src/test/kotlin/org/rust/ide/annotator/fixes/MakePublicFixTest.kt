@@ -593,7 +593,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         pub mod foo {
             pub fn bar() {}
         }
-    """, stubOnly = false)
+    """, stubOnly = false, preview = null)
 
     fun `test make mod decl public`() = checkFixByFileTree("Make `bar` public", """
     //- main.rs
@@ -655,5 +655,5 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn main() {
             test_package::foo::A/*caret*/;
         }
-    """)
+    """, preview = null)
 }
