@@ -87,7 +87,7 @@ class ProcMacroExpander private constructor(
             Triple(null, macroCallBodyTokenMap, loweredMacroCallBodyRanges)
         }
         val lib = def.artifact.path.toString()
-        val env = call.packageEnv
+        val env = call.env
         return expandMacroAsTtWithErrInternal(server, macroCallBodyTt, attrSubtree, def.name, lib, env).map {
             val (text, ranges) = MappedSubtree(it, mergedTokenMap).toMappedText()
             text to mergedRanges.mapAll(ranges)
