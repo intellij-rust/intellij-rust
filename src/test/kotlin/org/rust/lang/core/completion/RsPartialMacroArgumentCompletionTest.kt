@@ -135,6 +135,39 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         }
     """, setOf("iii", "i32"))
 
+    fun `test last resort completion with mismatched input`() = doTest("""
+        macro_rules! my_macro {
+            (#[foo] fn $ i:ident () $ b:block ) => ( fn $ i () $ b );
+        }
+
+        struct Baz;
+
+        my_macro! {
+            #[test] // expected #[foo]
+            fn foo() {
+                let a: Ba/*caret*/
+            }
+        }
+
+        pub mod other {
+            pub struct BazOutOfScope;
+        }
+    """, setOf("Baz"), setOf("BazOutOfScope"))
+
+    fun `test last resort completion with unresolved macro`() = doTest("""
+        struct Baz;
+
+        unresolved_macro! {
+            fn foo() {
+                let a: Ba/*caret*/
+            }
+        }
+
+        pub mod other {
+            pub struct BazOutOfScope;
+        }
+    """, setOf("Baz"), setOf("BazOutOfScope"))
+
     private fun doTest(@Language("Rust") code: String, contains: Set<String>, notContains: Set<String> = emptySet()) {
         RsPartialMacroArgumentCompletionProvider.Testmarks.Touched.checkHit {
             RsFullMacroArgumentCompletionProvider.Testmarks.Touched.checkNotHit {

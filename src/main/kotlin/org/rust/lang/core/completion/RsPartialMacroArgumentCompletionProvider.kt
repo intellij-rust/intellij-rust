@@ -12,14 +12,12 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.MacroExpansionContext.EXPR
 import org.rust.lang.core.macros.MacroExpansionContext.STMT
-import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.decl.FragmentKind
 import org.rust.lang.core.macros.decl.FragmentKind.*
 import org.rust.lang.core.macros.decl.MacroGraphWalker
-import org.rust.lang.core.macros.expansionContext
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -32,7 +30,7 @@ import org.rust.openapiext.Testmark
  */
 object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        fun addCompletions(fragment: RsCodeFragment, offset: Int) {
+        fun addCompletions(fragment: PsiElement, offset: Int) {
             val element = fragment.findElementAt(offset) ?: return
             rerunCompletion(parameters.withPosition(element, offset), result)
         }
@@ -48,14 +46,18 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
 
         val bodyTextRange = macroCall.bodyTextRange ?: return
         val macroCallBody = macroCall.macroBody ?: return
-        val macro = macroCall.resolveToMacro() ?: return
-        val graph = macro.graph ?: return
+        val macro = macroCall.resolveToMacro()
+        val graph = macro?.graph
         val offsetInArgument = parameters.offset - bodyTextRange.startOffset
 
         Testmarks.Touched.hit()
 
-        val walker = MacroGraphWalker(project, graph, macroCallBody, offsetInArgument)
-        val fragmentDescriptors = walker.run().takeIf { it.isNotEmpty() } ?: return
+        val fragmentDescriptors = if (graph != null) {
+            MacroGraphWalker(project, graph, macroCallBody, offsetInArgument).run()
+        } else {
+            emptyList()
+        }
+
         val usedKinds = mutableSetOf<FragmentKind>()
 
         for ((fragmentText, caretOffsetInFragment, kind) in fragmentDescriptors) {
@@ -70,6 +72,20 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
 
             addCompletions(codeFragment, caretOffsetInFragment)
             usedKinds.add(kind)
+        }
+
+        // The "last resort" completion - try to parse the entire macro body as a plain Rust code
+        if (usedKinds.isEmpty()) {
+            val codeFragment = RsPsiFactory(project, markGenerated = false, eventSystemEnabled = true)
+                .createFile(macroCallBody)
+            codeFragment.putUserData(FORCE_OUT_OF_SCOPE_COMPLETION, false)
+            for (child in codeFragment.children) {
+                if (child is RsExpandedElement) {
+                    child.setContext(macroCall)
+                }
+            }
+            addCompletions(codeFragment, offsetInArgument)
+            return
         }
     }
 
