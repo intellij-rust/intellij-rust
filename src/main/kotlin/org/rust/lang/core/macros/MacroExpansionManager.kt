@@ -1019,7 +1019,7 @@ private data class CachedMemExpansionResult(
 
 private fun extractExpansionResult(
     cachedResultSoftReference: SoftReference<CachedMemExpansionResult>?,
-    modificationTrackers: Array<ModificationTracker>,
+    modificationTrackers: Array<Any>,
 ): CachedValueProvider.Result<RsResult<MacroExpansion, GetMacroExpansionError>>? {
     val cachedResult = cachedResultSoftReference?.get()
     if (cachedResult != null && cachedResult.modificationCount == modificationTrackers.modificationCount()) {
@@ -1039,17 +1039,24 @@ private fun memExpansionResult(
 }
 
 // Note: the cached result must be invalidated when `RsFile.cachedData` is invalidated
-private fun getModificationTrackersForMemExpansion(call: RsPossibleMacroCall): Array<ModificationTracker> {
+private fun getModificationTrackersForMemExpansion(call: RsPossibleMacroCall): Array<Any> {
     val structureModTracker = call.rustStructureOrAnyPsiModificationTracker
-    return if (call is RsMacroCall) {
-        arrayOf(structureModTracker, call.modificationTracker)
-    } else {
-        arrayOf(structureModTracker)
+    return when {
+        // Non-physical PSI does not have event system, but we can track the file changes
+        !call.isPhysical -> arrayOf(structureModTracker, call.containingFile)
+
+        call is RsMacroCall -> arrayOf(structureModTracker, call.modificationTracker)
+        else -> arrayOf(structureModTracker)
     }
 }
 
-private fun Array<ModificationTracker>.modificationCount(): Long =
-    sumOf { it.modificationCount }
+private fun Array<Any>.modificationCount(): Long = sumOf {
+    when (it) {
+        is ModificationTracker -> it.modificationCount
+        is PsiFile -> it.modificationStamp
+        else -> error("Unknown dependency: ${it.javaClass}")
+    }
+}
 
 private val RS_EXPANSION_MACRO_CALL = Key.create<RsPossibleMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
