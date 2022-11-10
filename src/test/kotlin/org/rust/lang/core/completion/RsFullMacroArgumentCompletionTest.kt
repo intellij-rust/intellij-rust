@@ -90,4 +90,21 @@ class RsFullMacroArgumentCompletionTest : RsCompletionTestBase() {
         impl Foo { fn bar(&self) {} }
         foo!(Foo, bar(/*caret*/));
     """)
+
+    // TODO extra `()`
+    fun `test method with a caret in the middle if the identifier`() = doSingleCompletion("""
+        macro_rules! foo {
+            ($ e:expr, $ i:ident) => { fn foo() { $ e.$ i(); } };
+        }
+        struct Foo;
+        impl Foo { fn bar(&self) {} }
+        foo!(Foo, b/*caret*/ar);
+    """, """
+        macro_rules! foo {
+            ($ e:expr, $ i:ident) => { fn foo() { $ e.$ i(); } };
+        }
+        struct Foo;
+        impl Foo { fn bar(&self) {} }
+        foo!(Foo, bar(/*caret*/)ar);
+    """)
 }

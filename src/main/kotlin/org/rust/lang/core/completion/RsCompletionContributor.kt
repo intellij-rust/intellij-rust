@@ -17,6 +17,8 @@ import org.rust.lang.core.completion.lint.RsRustcLintCompletionProvider
 import org.rust.lang.core.completion.sort.RS_COMPLETION_WEIGHERS
 import org.rust.lang.core.completion.sort.RsCompletionWeigher
 import org.rust.lang.core.or
+import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.stdext.exhaustive
 
 class RsCompletionContributor : CompletionContributor() {
@@ -50,6 +52,14 @@ class RsCompletionContributor : CompletionContributor() {
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
         extend(type, provider.elementPattern, provider)
+    }
+
+    override fun beforeCompletion(context: CompletionInitializationContext) {
+        super.beforeCompletion(context)
+        // TODO use `in RS_IDENTIFIER_TOKENS` instead of `== RsElementTypes.IDENTIFIER`
+        if (context.file.findElementAt(context.startOffset)?.elementType == RsElementTypes.IDENTIFIER) {
+            context.dummyIdentifier = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED
+        }
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
