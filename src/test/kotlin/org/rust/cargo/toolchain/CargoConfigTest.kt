@@ -43,6 +43,40 @@ class CargoConfigTest : RsWithToolchainTestBase() {
         assertEquals("wasm32-unknown-unknown", buildTarget)
     }
 
+    fun `test custom build target`() {
+        val testProject = buildProject {
+            dir(".cargo") {
+                toml("config", """
+                    [build]
+                    target = "custom-target.json"
+                """)
+            }
+            file("custom-target.json", """
+                {
+                    "llvm-target": "aarch64-unknown-none",
+                    "data-layout": "e-m:e-i64:64-f80:128-n8:16:32:64-S128",
+                    "arch": "aarch64",
+                    "target-endian": "little",
+                    "target-pointer-width": "64",
+                    "target-c-int-width": "32",
+                    "os": "none",
+                    "executables": true,
+                    "linker-flavor": "ld.lld",
+                    "linker": "rust-lld",
+                    "panic-strategy": "abort",
+                    "disable-redzone": true,
+                    "features": "-mmx,-sse,+soft-float"
+                }
+            """)
+            file("Cargo.toml", CARGO_TOML)
+            dir("src") { file("main.rs") }
+        }
+
+        val buildTarget = project.cargoProjects.singleWorkspace().cargoConfig.buildTarget
+
+        assertEquals(testProject.root.findChild("custom-target.json")!!.path, buildTarget)
+    }
+
     fun `test env`() {
         buildProject {
             dir(".cargo") {

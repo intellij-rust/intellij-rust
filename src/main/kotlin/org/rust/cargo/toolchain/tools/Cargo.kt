@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
@@ -230,7 +231,7 @@ class Cargo(
      */
     fun getConfig(
         owner: Project,
-        projectDirectory: Path?
+        projectDirectory: Path
     ): RsResult<CargoConfig, RsProcessExecutionOrDeserializationException> {
         val parameters = mutableListOf("-Z", "unstable-options", "config", "get")
 
@@ -248,7 +249,7 @@ class Cargo(
         }
 
         val buildTargetNode = tree.at("/build/target")
-        val buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
+        var buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
         val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
             // Value can be either string or object with additional `forced` and `relative` params.
             // https://doc.rust-lang.org/cargo/reference/config.html#env
@@ -267,6 +268,12 @@ class Cargo(
             }
         }.toMap()
 
+        // If build target ends with `.json`, it's a custom toolchain.
+        // To make it work in all cases (for example, fetching stdlib metadata for the same build target),
+        // we save the corresponding path as absolute one not to depend on working directory
+        if (buildTarget != null && buildTarget.endsWith(".json")) {
+            buildTarget = projectDirectory.resolve(buildTarget).toAbsolutePath().systemIndependentPath
+        }
         return Ok(CargoConfig(buildTarget, env))
     }
 
