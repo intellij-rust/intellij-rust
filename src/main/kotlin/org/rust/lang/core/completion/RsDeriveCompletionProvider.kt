@@ -16,8 +16,8 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.utils.import.ImportCandidate
-import org.rust.ide.utils.import.ImportCandidatesCollector2
-import org.rust.ide.utils.import.ImportContext2
+import org.rust.ide.utils.import.ImportCandidatesCollector
+import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.completion.RsLookupElementProperties.ElementKind
@@ -87,8 +87,8 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
     }
 
     private fun addCompletionsForOutOfScopeDerives(path: RsPath, result: CompletionResultSet, processedElements: MultiMap<String, RsElement>) {
-        val importContext = ImportContext2.from(path, ImportContext2.Type.COMPLETION) ?: return
-        val candidates = ImportCandidatesCollector2.getCompletionCandidates(importContext, result.prefixMatcher, processedElements)
+        val importContext = ImportContext.from(path, ImportContext.Type.COMPLETION) ?: return
+        val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedElements)
         for (candidate in candidates) {
             val item = candidate.qualifiedNamedItem.item
             if (item !is RsFunction || !item.isCustomDeriveProcMacroDef) continue

@@ -19,8 +19,8 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
-import org.rust.ide.utils.import.ImportCandidatesCollector2
-import org.rust.ide.utils.import.ImportContext2
+import org.rust.ide.utils.import.ImportCandidatesCollector
+import org.rust.ide.utils.import.ImportContext
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -130,15 +130,15 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             }
 
             val referenceName = basePath.referenceName ?: return null
-            val importContext = ImportContext2.from(path, ImportContext2.Type.AUTO_IMPORT) ?: return null
-            val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, referenceName)
+            val importContext = ImportContext.from(path, ImportContext.Type.AUTO_IMPORT) ?: return null
+            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, referenceName)
 
             return Context(GENERAL_PATH, candidates)
         }
 
         fun findApplicableContext(pat: RsPatBinding): Context? {
-            val importContext = ImportContext2.from(pat, ImportContext2.Type.AUTO_IMPORT) ?: return null
-            val candidates = ImportCandidatesCollector2.getImportCandidates(importContext, pat.referenceName)
+            val importContext = ImportContext.from(pat, ImportContext.Type.AUTO_IMPORT) ?: return null
+            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, pat.referenceName)
             if (candidates.isEmpty()) return null
             return Context(GENERAL_PATH, candidates)
         }
@@ -146,7 +146,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         fun findApplicableContext(methodCall: RsMethodCall): Context? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
             if (results.isEmpty()) return Context(METHOD, emptyList())
-            val candidates = ImportCandidatesCollector2.getImportCandidates(methodCall, results) ?: return null
+            val candidates = ImportCandidatesCollector.getImportCandidates(methodCall, results) ?: return null
             return Context(METHOD, candidates)
         }
 
@@ -167,7 +167,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
                 if (it !is ResolvedPath.AssocItem) return null
                 it.source
             }
-            val candidates = ImportCandidatesCollector2.getTraitImportCandidates(path, sources) ?: return null
+            val candidates = ImportCandidatesCollector.getTraitImportCandidates(path, sources) ?: return null
             return Context(ASSOC_ITEM_PATH, candidates)
         }
     }

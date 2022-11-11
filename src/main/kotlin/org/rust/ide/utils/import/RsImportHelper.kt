@@ -59,17 +59,17 @@ object RsImportHelper {
 
     fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {
         if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return
-        val importContext = ImportContext2.from(context, ImportContext2.Type.OTHER) ?: return
+        val importContext = ImportContext.from(context, ImportContext.Type.OTHER) ?: return
         for (element in elements) {
-            val candidate = ImportCandidatesCollector2.findImportCandidate(importContext, element)
+            val candidate = ImportCandidatesCollector.findImportCandidate(importContext, element)
             candidate?.import(context)
         }
     }
 
     // finds path to `element` from `context.containingMod`, taking into account reexports and glob imports
     fun findPath(context: RsElement, element: RsQualifiedNamedElement): String? {
-        val importContext = ImportContext2.from(context, ImportContext2.Type.OTHER) ?: return null
-        val candidate = ImportCandidatesCollector2.findImportCandidate(importContext, element)
+        val importContext = ImportContext.from(context, ImportContext.Type.OTHER) ?: return null
+        val candidate = ImportCandidatesCollector.findImportCandidate(importContext, element)
         return candidate?.info?.usePath
     }
 

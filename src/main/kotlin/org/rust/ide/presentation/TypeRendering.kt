@@ -5,8 +5,8 @@
 
 package org.rust.ide.presentation
 
-import org.rust.ide.utils.import.ImportCandidatesCollector2
-import org.rust.ide.utils.import.ImportContext2
+import org.rust.ide.utils.import.ImportCandidatesCollector
+import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.core.psi.RsConstParameter
 import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.psi.RsTraitItem
@@ -299,8 +299,8 @@ private data class TypeRenderer(
         if (element is RsQualifiedNamedElement && element in useQualifiedName) {
             val candidate = run {
                 if (context == null) return@run null
-                val importContext = ImportContext2.from(context, ImportContext2.Type.OTHER) ?: return@run null
-                ImportCandidatesCollector2.findImportCandidate(importContext, element)
+                val importContext = ImportContext.from(context, ImportContext.Type.OTHER) ?: return@run null
+                ImportCandidatesCollector.findImportCandidate(importContext, element)
             }
             candidate?.info?.usePath ?: element.qualifiedName
         } else {
