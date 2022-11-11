@@ -8,18 +8,19 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.IntentionManager
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.ide.checkNoPreview
+import org.rust.ide.checkPreviewAndLaunchAction
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
-abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsIntentionTestPlatformBase() {
+abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
 
     protected val intention: IntentionAction
         get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
@@ -47,7 +48,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         fileName: String = "main.rs"
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
-        launchAction(preview?.trimIndent())
+        launchAction(preview)
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -98,11 +99,9 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         // Check preview only for intentions from Rust plugin
         if (intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) {
             if (previewExpected) {
-                checkPreviewAndLaunchAction(intention, preview)
+                myFixture.checkPreviewAndLaunchAction(intention, preview)
             } else {
-                val intention = intention
-                val previewInfo = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(project, intention, myFixture.file, myFixture.editor)
-                assertEquals(IntentionPreviewInfo.EMPTY, previewInfo)
+                myFixture.checkNoPreview(intention)
                 myFixture.launchAction(intention)
             }
         } else {

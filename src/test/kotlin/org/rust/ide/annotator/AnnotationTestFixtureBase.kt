@@ -7,7 +7,10 @@ package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.SuppressIntentionActionFromFix
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ExtensionTestUtil
@@ -15,7 +18,10 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.rust.findAnnotationInstance
+import org.rust.ide.checkNoPreview
+import org.rust.ide.checkPreviewAndLaunchAction
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import kotlin.reflect.KClass
 
@@ -102,6 +108,7 @@ abstract class AnnotationTestFixtureBase(
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        preview: Preview? = SamePreviewAsResult,
     ) = checkFix(
         fixName,
         before,
@@ -109,6 +116,7 @@ abstract class AnnotationTestFixtureBase(
         configure = this::configureByText,
         checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
         checkAfter = this::checkByText,
+        preview = preview,
     )
 
     fun checkFixPartial(
@@ -120,7 +128,9 @@ abstract class AnnotationTestFixtureBase(
     ) = checkFix(fixName, before, before,
         configure = this::configureByText,
         checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
-        checkAfter = { })
+        checkAfter = { },
+        preview = SamePreviewAsResult,
+    )
 
     fun checkFixIsUnavailable(
         fixName: String,
@@ -158,6 +168,7 @@ abstract class AnnotationTestFixtureBase(
         fixName: String,
         before: String,
         after: String,
+        preview: Preview? = SamePreviewAsResult,
     ) = checkFix(
         fixName,
         before,
@@ -165,6 +176,7 @@ abstract class AnnotationTestFixtureBase(
         configure = this::configureByText,
         checkBefore = {},
         checkAfter = this::checkByText,
+        preview = preview,
     )
 
     protected open fun <T> check(
@@ -186,10 +198,11 @@ abstract class AnnotationTestFixtureBase(
         configure: (String) -> Unit,
         checkBefore: () -> Unit,
         checkAfter: (String) -> Unit,
+        preview: Preview?,
     ) {
         configure(before)
         checkBefore()
-        applyQuickFix(fixName)
+        applyQuickFix(fixName, preview)
         checkAfter(after)
     }
 
@@ -197,9 +210,24 @@ abstract class AnnotationTestFixtureBase(
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
-    fun applyQuickFix(name: String) {
+    fun applyQuickFix(name: String, preview: Preview?) {
         val action = codeInsightFixture.findSingleIntention(name)
-        codeInsightFixture.launchAction(action)
+        if (!skipPreview(action)) {
+            if (preview != null) {
+                val previewText = (preview as? ExplicitPreview)?.text
+                codeInsightFixture.checkPreviewAndLaunchAction(action, previewText)
+            } else {
+                codeInsightFixture.checkNoPreview(action)
+                codeInsightFixture.launchAction(action)
+            }
+        } else {
+            codeInsightFixture.launchAction(action)
+        }
+    }
+
+    private fun skipPreview(intention: IntentionAction): Boolean {
+        val unwrapped = IntentionActionDelegate.unwrap(intention)
+        return unwrapped is SuppressIntentionActionFromFix
     }
 
     fun registerSeverities(severities: List<HighlightSeverity>) {
@@ -207,3 +235,7 @@ abstract class AnnotationTestFixtureBase(
         SeveritiesProvider.EP_NAME.point.registerExtension(testSeverityProvider, testRootDisposable)
     }
 }
+
+sealed interface Preview
+object SamePreviewAsResult : Preview
+class ExplicitPreview(@Language("Rust") val text: String): Preview

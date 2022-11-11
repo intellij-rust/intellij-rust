@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -28,7 +29,8 @@ data class DerefRefPath(val derefs: Int, val refs: List<Mutability>)
 class ConvertToTyWithDerefsRefsFix(
     expr: RsExpr,
     ty: Ty,
-    val path: DerefRefPath
+    @SafeFieldForPreview
+    private val path: DerefRefPath
 ) : ConvertToTyFix(expr, ty, formatRefs(path)) {
     override fun invoke(
         project: Project,

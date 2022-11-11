@@ -34,7 +34,7 @@ class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspectio
         fn const_use() {
             let a = CONST_FOO;
         }
-    """)
+    """, preview = null)
 
     fun `test constant not support case`() = checkByText("""
         const 常量: u32 = 12;

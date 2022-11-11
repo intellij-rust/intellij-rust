@@ -42,7 +42,7 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
             let dwarfs_count = 7;
             let legs_count = dwarfs_count * 2;
         }
-    """)
+    """, preview = null)
 
     fun `test tuple variables`() = checkByText("""
         fn loc_var() {
@@ -61,7 +61,7 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
             let (real, imaginary) = (7.2, 3.5);
             println!("{} + {}i", real, imaginary);
         }
-    """)
+    """, preview = null)
 
     // Issue #730. The inspection must not be applied in the following cases
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)

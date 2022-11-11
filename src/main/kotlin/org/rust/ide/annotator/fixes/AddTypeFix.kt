@@ -19,7 +19,7 @@ import org.rust.openapiext.createSmartPointer
 /**
  * Adds type ascription after the given element.
  */
-class AddTypeFix(anchor: PsiElement, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
+class AddTypeFix(anchor: PsiElement, ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
     private val typeText: String = ty.renderInsertionSafe()
 
     override fun getFamilyName(): String = "Add type"

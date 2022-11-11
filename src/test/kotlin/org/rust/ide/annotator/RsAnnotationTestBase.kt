@@ -53,13 +53,15 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
-    ) = annotationFixture.checkFixByText(fixName, before, after, checkWarn, checkInfo, checkWeakWarn)
+        preview: Preview? = SamePreviewAsResult,
+    ) = annotationFixture.checkFixByText(fixName, before, after, checkWarn, checkInfo, checkWeakWarn, preview)
 
     protected fun checkFixByTextWithoutHighlighting(
         fixName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-    ) = annotationFixture.checkFixByTextWithoutHighlighting(fixName, before, after)
+        preview: Preview? = SamePreviewAsResult,
+    ) = annotationFixture.checkFixByTextWithoutHighlighting(fixName, before, after, preview)
 
     protected fun checkByFileTree(
         @Language("Rust") text: String,
@@ -78,14 +80,16 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         stubOnly: Boolean = true,
-    ) = annotationFixture.checkFixByFileTree(fixName, before, after, checkWarn, checkInfo, checkWeakWarn, stubOnly)
+        preview: Preview? = SamePreviewAsResult,
+    ) = annotationFixture.checkFixByFileTree(fixName, before, after, checkWarn, checkInfo, checkWeakWarn, stubOnly, preview)
 
     protected fun checkFixByFileTreeWithoutHighlighting(
         fixName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         stubOnly: Boolean = true,
-    ) = annotationFixture.checkFixByFileTreeWithoutHighlighting(fixName, before, after, stubOnly)
+        preview: Preview? = SamePreviewAsResult,
+    ) = annotationFixture.checkFixByFileTreeWithoutHighlighting(fixName, before, after, stubOnly, preview)
 
     protected fun checkFixByTextWithLiveTemplate(
         fixName: String,

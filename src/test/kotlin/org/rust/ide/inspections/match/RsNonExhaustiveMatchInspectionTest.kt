@@ -8,6 +8,7 @@ package org.rust.ide.inspections.match
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection
 
@@ -500,7 +501,22 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
                 E::B => {}
             };
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::E::A;
+        use crate::a::foo;
+
+        mod a {
+            pub enum E { A, B }
+            pub fn foo() -> E { E::A }
+        }
+
+        fn main() {
+            match foo() {
+                A => {}
+                E::B => {}
+            };
+        }
+    """))
 
     fun `test no add _ pattern for empty match`() = checkFixIsUnavailable("Add _ pattern", """
         fn main() {
@@ -961,7 +977,21 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
                 FooBar::Bar => {}
             };
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::foo;
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            match foo() {
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            };
+        }
+    """))
 
     fun `test no match body with enum expr`() = checkFixByText("Add remaining patterns", """
         enum E { A, B, C }

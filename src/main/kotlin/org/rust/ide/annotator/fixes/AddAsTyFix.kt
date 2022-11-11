@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,7 +20,11 @@ import org.rust.lang.core.types.ty.Ty
 /**
  * For the given `expr` adds cast to the given type `ty`
  */
-class AddAsTyFix(expr: RsExpr, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class AddAsTyFix(
+    expr: RsExpr,
+    @SafeFieldForPreview
+    private val ty: Ty,
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     override fun getFamilyName(): String = "Add safe cast"
 

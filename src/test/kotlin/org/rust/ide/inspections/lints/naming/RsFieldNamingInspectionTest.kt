@@ -45,7 +45,7 @@ class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspectio
         fn enum_use() {
             let mut a = EnumToFix::Test{ field_foo: 12 };
         }
-    """)
+    """, preview = null)
 
     fun `test struct fields`() = checkByText("""
         struct Foo {
@@ -76,7 +76,7 @@ class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspectio
         fn struct_use() {
             let a = Foo { is_deleted: false };
         }
-    """)
+    """, preview = null)
 
     fun `test enum variant field not support case`() = checkByText("""
         enum EnumVarField {

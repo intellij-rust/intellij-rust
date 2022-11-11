@@ -5,11 +5,12 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.util.text.EditDistance
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.text.EditDistance
 
 /**
  * Changes the text of some element to the suggested name using the provided function.
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFile
 class NameSuggestionFix<T : PsiElement>(
     element: T,
     private val newName: String,
+    @SafeFieldForPreview
     private val elementFactory: (name: String) -> T
 ): LocalQuickFixOnPsiElement(element) {
     override fun getFamilyName(): String = "Change name of element"

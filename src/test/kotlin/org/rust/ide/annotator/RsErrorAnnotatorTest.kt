@@ -58,7 +58,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             println!("Hello, World!");
         }
     //- bar/foo.rs
-    """)
+    """, preview = null)
 
     @MockRustcVersion("1.30.0")
     fun `test create file quick fix 2`() = checkFixByFileTree("Create module file `foo.rs`", """
@@ -80,7 +80,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             println!("Hello, World!");
         }
     //- bar/foo.rs
-    """)
+    """, preview = null)
 
     fun `test create file in subdirectory quick fix 1`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
     //- main.rs
@@ -101,7 +101,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             println!("Hello, World!");
         }
     //- bar/foo/mod.rs
-    """)
+    """, preview = null)
 
     @MockRustcVersion("1.30.0")
     fun `test create file in subdirectory quick fix 2`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
@@ -123,7 +123,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             println!("Hello, World!");
         }
     //- bar/foo/mod.rs
-    """)
+    """, preview = null)
 
     fun `test create file in existing subdirectory quick fix`() = checkFixByFileTree("Create module file `bar/mod.rs`", """
     //- main.rs
@@ -134,7 +134,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         mod bar;
     //- bar/mod.rs
     //- bar/some_random_file_to_create_a_directory.txt
-    """)
+    """, preview = null)
 
     fun `test no E0583 if no semicolon after module declaration`() = checkByText("""
         mod foo<error descr="';' or '{' expected"> </error>
@@ -153,7 +153,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- foo/mod.rs
         mod bar;
     //- foo/bar.rs
-    """)
+    """, preview = null)
 
     @MockRustcVersion("1.29.0")
     fun `test create file in subdirectory and expand module quick fix`() = checkFixByFileTree("Create module file `bar/mod.rs`", """
@@ -167,7 +167,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- foo/mod.rs
         mod bar;
     //- foo/bar/mod.rs
-    """)
+    """, preview = null)
 
     fun `test paths`() = checkErrors("""
         fn main() {
@@ -4743,7 +4743,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![feature(abi_x86_interrupt)]
 
         extern "x86-interrupt"/*caret*/ fn extern_fn() {}
-    """)
+    """, preview = null)
 
     fun `test edition 2015 keyword as lifetime name`() = checkErrors("""
         struct Me<<error descr="Lifetimes cannot use keyword names">'type</error>> {

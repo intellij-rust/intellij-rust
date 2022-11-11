@@ -49,6 +49,7 @@ open class RsAnnotationTestFixture<C>(
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         stubOnly: Boolean = true,
+        preview: Preview? = SamePreviewAsResult,
     ) = checkFix(
         fixName,
         before,
@@ -56,6 +57,7 @@ open class RsAnnotationTestFixture<C>(
         configure = { configureByFileTree(it, stubOnly) },
         checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
         checkAfter = this::checkByFileTree,
+        preview = preview,
     )
 
     fun checkFixByFileTreeWithoutHighlighting(
@@ -63,6 +65,7 @@ open class RsAnnotationTestFixture<C>(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         stubOnly: Boolean = true,
+        preview: Preview? = SamePreviewAsResult,
     ) = checkFix(
         fixName,
         before,
@@ -70,6 +73,7 @@ open class RsAnnotationTestFixture<C>(
         configure = { configureByFileTree(it, stubOnly) },
         checkBefore = {},
         checkAfter = this::checkByFileTree,
+        preview = preview,
     )
 
     fun checkFixIsUnavailableByFileTree(

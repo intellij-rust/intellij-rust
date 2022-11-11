@@ -7,6 +7,7 @@ package org.rust.ide.inspections.typecheck
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
@@ -149,7 +150,19 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         fn foo() -> (S, A) {
             bar()
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::bar;
+
+        mod a {
+            pub struct S;
+            pub type A = S;
+            pub fn bar() -> (S, A) { (S, A) }
+        }
+
+        fn foo() -> (S, A) {
+            bar()
+        }
+    """))
 
     fun `test import unresolved type (replace)`() = checkFixByText("Change return type of function 'foo' to '(S, A)'", """
         use crate::a::bar;
@@ -175,7 +188,19 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         fn foo() -> (S, A) {
             bar()
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::bar;
+
+        mod a {
+            pub struct S;
+            pub type A = S;
+            pub fn bar() -> (S, A) { (S, A) }
+        }
+
+        fn foo() -> (S, A) {
+            bar()
+        }
+    """))
 
     fun `test import skip default type argument`() = checkFixByText("Change return type of function 'foo' to 'S'", """
         use crate::a::bar;
@@ -201,7 +226,19 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         fn foo() -> S {
             bar()
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::bar;
+
+        mod a {
+            pub struct R;
+            pub struct S<T = R>(T);
+            pub fn bar() -> S { S(R) }
+        }
+
+        fn foo() -> S {
+            bar()
+        }
+    """))
 
     fun `test import aliased type`() = checkFixByText("Change return type of function 'foo' to 'S'", """
         use crate::a::bar;
@@ -227,7 +264,19 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
         fn foo() -> S {
             bar()
         }
-    """)
+    """, preview = ExplicitPreview("""
+        use crate::a::bar;
+
+        mod a {
+            pub struct R;
+            pub type S = R;
+            pub fn bar() -> S { R }
+        }
+
+        fn foo() -> S {
+            bar()
+        }
+    """))
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test do not offer fix in closure without an explicit return type passed to a function`() = checkFixIsUnavailable("Change return type of closure", """
@@ -378,7 +427,14 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
                 test_package::Foo/*caret*/
             }
         }
-    """)
+    """, preview = ExplicitPreview("""
+        pub use test_package::Foo;
+        mod inner {
+            fn func() -> Foo {
+                test_package::Foo
+            }
+        }
+    """))
 
     fun `test use correct path 2`() = checkFixByFileTree("Change return type of function 'func' to 'test_package::Foo'", """
     //- lib.rs

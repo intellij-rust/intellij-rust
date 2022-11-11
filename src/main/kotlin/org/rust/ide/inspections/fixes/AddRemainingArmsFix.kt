@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -14,7 +15,11 @@ import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.type
 
-open class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : LocalQuickFixOnPsiElement(match) {
+open class AddRemainingArmsFix(
+    match: RsMatchExpr,
+    @SafeFieldForPreview
+    private val patterns: List<Pattern>,
+) : LocalQuickFixOnPsiElement(match) {
     override fun getFamilyName(): String = NAME
     override fun getText(): String = familyName
 

@@ -33,7 +33,7 @@ class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingI
             type AssocFoo;
             fn bar(foo: &Self::AssocFoo) {}
         }
-    """)
+    """, preview = null)
 
     fun `test associated type not support case`() = checkByText("""
         trait Foo {

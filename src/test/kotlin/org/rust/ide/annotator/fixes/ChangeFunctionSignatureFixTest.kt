@@ -21,7 +21,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(1);
         }
-    """)
+    """, preview = null)
 
     fun `test no parameters add multiple parameters`() = checkFixByText("<html>Change signature to foo(<b>i32</b>, <b>bool</b>)</html>", """
         fn foo() {}
@@ -35,7 +35,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(1, false);
         }
-    """)
+    """, preview = null)
 
     fun `test add additional parameter same type forward`() = checkFixByText("Add `i32` as `1st` parameter to function `foo`", """
         fn foo(a: i32) {}
@@ -51,7 +51,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, 1);
             foo(, 5);
         }
-    """)
+    """, preview = null)
 
     fun `test add additional parameter same type backward`() = checkFixByText("Add `i32` as `2nd` parameter to function `foo`", """
         fn foo(a: i32) {}
@@ -67,7 +67,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, 1);
             foo(5, );
         }
-    """)
+    """, preview = null)
 
     fun `test add additional parameter different type`() = checkFixByText("Add `bool` as `2nd` parameter to function `foo`", """
         fn foo(a: i32) {}
@@ -83,7 +83,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, false);
             foo(5, );
         }
-    """)
+    """, preview = null)
 
     fun `test add multiple additional parameters forward`() = checkFixByText("<html>Change signature to foo(i32, <b>bool</b>, i32, <b>i32</b>)</html>", """
         fn foo(a: i32, b: i32) {}
@@ -99,7 +99,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, false, 3, 4);
             foo(0, , 1, );
         }
-    """)
+    """, preview = null)
 
     fun `test add multiple additional parameters backward`() = checkFixByText("<html>Change signature to foo(<b>i32</b>, <b>bool</b>, i32, i32)</html>", """
         fn foo(a: i32, b: i32) {}
@@ -115,7 +115,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, false, 3, 4);
             foo(, , 0, 1);
         }
-    """)
+    """, preview = null)
 
     fun `test change signature total type mismatch`() = checkFixByText("<html>Change signature to foo(<b>bool</b>, <b>bool</b>, <b>bool</b>)</html>", """
         fn foo(a: i32, b: i32) {}
@@ -129,7 +129,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(true, true, true);
         }
-    """)
+    """, preview = null)
 
     fun `test do not offer add parameter fix if argument count would not match 1`() = checkFixIsUnavailable("<html>Change signature to foo(<b>bool</b>, <b>bool</b>, <b>bool</b>, i32, i32)</html>", """
         fn foo(a: i32, b: i32) {}
@@ -165,7 +165,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(s: S) {
             s.foo(0);
         }
-    """)
+    """, preview = null)
 
     fun `test add unknown type`() = checkFixByText("Add `_` as `1st` parameter to function `foo`", """
         fn foo() {}
@@ -179,7 +179,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(Unknown);
         }
-    """)
+    """, preview = null)
 
     fun `test add aliased type`() = checkFixByText("Add `Foo` as `1st` parameter to function `foo`", """
         fn foo() {}
@@ -197,7 +197,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(f: Foo) {
             foo(f);
         }
-    """)
+    """, preview = null)
 
     fun `test add type with default type argument`() = checkFixByText("Add `Foo` as `1st` parameter to function `foo`", """
         fn foo() {}
@@ -215,7 +215,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(f: Foo) {
             foo(f);
         }
-    """)
+    """, preview = null)
 
     fun `test import added argument type`() = checkFixByText("Add `S` as `1st` parameter to function `bar`", """
         mod foo {
@@ -241,7 +241,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             let s = S;
             foo::bar(s);
         }
-    """)
+    """, preview = null)
 
     fun `test import changed argument type`() = checkFixByText("Change type of parameter `a` of function `bar` to `S`", """
         mod foo {
@@ -267,7 +267,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             let s = S;
             foo::bar(s);
         }
-    """)
+    """, preview = null)
 
     fun `test do not offer on tuple struct constructors`() = checkFixIsUnavailable("Add", """
         struct S(u32);
@@ -291,7 +291,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             let x = 5;
             foo(x);
         }
-    """)
+    """, preview = null)
 
     fun `test skip existing parameter name`() = checkFixByText("Add `i32` as `2nd` parameter to function `foo`", """
         fn foo(i: i32) {}
@@ -305,7 +305,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn main() {
             foo(1, 2);
         }
-    """)
+    """, preview = null)
 
     fun `test unavailable on correct method UFCS`() = checkFixIsUnavailable("Change", """
         struct S {}
@@ -343,7 +343,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(true);
         }
-    """)
+    """, preview = null)
 
     fun `test change type complex binding`() = checkFixByText("Change type of `1st` parameter of function `foo` to `bool`", """
         fn foo((a, b): (u32, u32)) {}
@@ -355,7 +355,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(true);
         }
-    """)
+    """, preview = null)
 
     fun `test change multiple parameter types`() = checkFixByText("<html>Change signature to foo(<b>bool</b>, <b>&str</b>)</html>", """
         fn foo(a: u32, b: u32) {}
@@ -367,7 +367,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(true/*caret*/, "foo");
         }
-    """)
+    """, preview = null)
 
     fun `test change type parameter in the middle`() = checkFixByText("Change type of `2nd` parameter of function `foo` to `bool`", """
         fn foo(x: u32, (a, b): (u32, u32), c: u32) {}
@@ -379,7 +379,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(0, true, 1);
         }
-    """)
+    """, preview = null)
 
     fun `test remove parameter simple binding`() = checkFixByText("Remove parameter `b` from function `foo`", """
         fn foo(a: u32, b: u32) {}
@@ -391,7 +391,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(0);
         }
-    """)
+    """, preview = null)
 
     fun `test remove parameter complex binding`() = checkFixByText("Remove `2nd` parameter from function `foo`", """
         fn foo(x: u32, (a, b): (u32, u32)) {}
@@ -403,7 +403,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(0);
         }
-    """)
+    """, preview = null)
 
     fun `test remove multiple parameters`() = checkFixByText("<html>Change signature to foo()</html>", """
         fn foo(a: u32, b: u32) {}
@@ -415,7 +415,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo();
         }
-    """)
+    """, preview = null)
 
     fun `test change type and remove parameters`() = checkFixByText("<html>Change signature to foo(<b>bool</b>)</html>", """
         fn foo(a: u32, b: u32, c: u32) {}
@@ -427,7 +427,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar() {
             foo(true);
         }
-    """)
+    """, preview = null)
 
     fun `test remove parameters change usage`() = checkFixByText("<html>Change signature to foo()</html>", """
         fn foo(a: u32, b: u32) {}
@@ -441,7 +441,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo();
             foo();
         }
-    """)
+    """, preview = null)
 
     fun `test change method type`() = checkFixByText("Change type of parameter `a` of method `foo` to `&str`", """
         struct S {}
@@ -461,7 +461,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(s: S) {
             s.foo("");
         }
-    """)
+    """, preview = null)
 
     fun `test change method parameter type UFCS`() = checkFixByText("Change type of parameter `a` of method `foo` to `&str`", """
         struct S {}
@@ -481,7 +481,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(s: S) {
             S::foo(&s, "");
         }
-    """)
+    """, preview = null)
 
     fun `test remove method parameter type UFCS`() = checkFixByText("Remove parameter `a` from method `foo`", """
         struct S {}
@@ -501,7 +501,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(s: S) {
             S::foo(&s);
         }
-    """)
+    """, preview = null)
 
     fun `test add method parameter UFCS`() = checkFixByText("Add `bool` as `1st` parameter to method `foo`", """
         struct S {}
@@ -521,7 +521,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn bar(s: S) {
             S::foo(&s, true, 1);
         }
-    """)
+    """, preview = null)
 
     fun `test add multiple additional parameters forward with normalizable associated types`() = checkFixByText("<html>Change signature to foo(i32, <b>bool</b>, i32, <b>i32</b>)</html>", """
         struct Struct;
@@ -545,5 +545,5 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
             foo(0, false, 3, 4);
             foo(0, , 1, );
         }
-    """)
+    """, preview = null)
 }

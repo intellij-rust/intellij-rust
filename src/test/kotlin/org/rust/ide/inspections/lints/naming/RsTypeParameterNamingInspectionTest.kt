@@ -25,7 +25,7 @@ class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParamete
         fn type_params<<warning descr="Type parameter `to` should have a camel case name such as `To`">t<caret>o</warning>: Clone> () {}
     """, """
         fn type_params<To: Clone> () {}
-    """)
+    """, preview = null)
 
     fun `test type parameters with where`() = checkByText("""
         fn type_params<
@@ -38,7 +38,7 @@ class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParamete
         fn type_params<<warning descr="Type parameter `base` should have a camel case name such as `Base`">b<caret>ase</warning>>(b: &base) where base: Clone {}
     """, """
         fn type_params<Base>(b: &Base) where Base: Clone {}
-    """)
+    """, preview = null)
 
     fun `test type parameter not support case`() = checkByText("""
         fn type_params<类型: Clone>() { }

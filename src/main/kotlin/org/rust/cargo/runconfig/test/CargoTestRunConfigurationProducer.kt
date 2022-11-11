@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig.test
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -19,6 +18,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocCodeFence
+import org.rust.openapiext.document
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.capitalized
@@ -146,9 +146,7 @@ fun RsDocCodeFence.getDoctestCtx(): DocTestContext? {
     val owner = containingDoc.owner as? RsQualifiedNamedElement ?: return null
 
     val containingFile = originalElement.containingFile
-    val project = containingFile.project
-    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-    val document = psiDocumentManager.getDocument(containingFile) ?: return null
+    val document = containingFile.document ?: return null
     val textOffset = originalElement.startOffset
 
     // Cargo uses 1-based line numbers

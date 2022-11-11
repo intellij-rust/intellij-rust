@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -17,7 +18,11 @@ import org.rust.lang.core.types.ty.Ty
 /**
  * For the given `expr` converts it to the type `ty` with `ty::from(expr)`
  */
-class ConvertToTyUsingFromTraitFix(expr: RsExpr, val ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "From") {
+class ConvertToTyUsingFromTraitFix(
+    expr: RsExpr,
+    @SafeFieldForPreview
+    private val ty: Ty,
+) : ConvertToTyUsingTraitFix(expr, ty, "From") {
     override fun invoke(
         project: Project,
         file: PsiFile,

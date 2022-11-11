@@ -29,7 +29,7 @@ class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNam
         fn static_use() {
             let a = STATIC_FOO;
         }
-    """)
+    """, preview = null)
 
     fun `test extern static`() = checkByText("""
         extern {
