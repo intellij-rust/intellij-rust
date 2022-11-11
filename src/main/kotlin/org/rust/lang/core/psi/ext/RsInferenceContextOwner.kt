@@ -25,8 +25,6 @@ val RsInferenceContextOwner.body: RsElement?
         is RsExpressionCodeFragment -> expr
         is RsReplCodeFragment -> this
         is RsPathCodeFragment -> this
-        is RsPathType -> path.typeArgumentList
-        is RsTraitRef -> path.typeArgumentList
-        is RsStructLiteral -> path.typeArgumentList
+        is RsPath -> typeArgumentList
         else -> null
     }
