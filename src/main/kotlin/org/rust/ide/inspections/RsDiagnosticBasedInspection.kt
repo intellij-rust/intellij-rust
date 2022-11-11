@@ -7,7 +7,7 @@ package org.rust.ide.inspections
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.selfInferenceResult
 import org.rust.lang.utils.addToHolder
 
 abstract class RsDiagnosticBasedInspection : RsLocalInspectionTool() {
@@ -22,7 +22,7 @@ abstract class RsDiagnosticBasedInspection : RsLocalInspectionTool() {
     }
 
     private fun collectDiagnostics(holder: RsProblemsHolder, element: RsInferenceContextOwner) {
-        for (it in element.inference.diagnostics) {
+        for (it in element.selfInferenceResult.diagnostics) {
             if (it.inspectionClass == javaClass) it.addToHolder(holder)
         }
     }

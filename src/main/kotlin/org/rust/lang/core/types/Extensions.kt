@@ -107,7 +107,7 @@ val RsTypeReference.lifetimeElidable: Boolean
 
 private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
 
-val RsInferenceContextOwner.inference: RsInferenceResult
+val RsInferenceContextOwner.selfInferenceResult: RsInferenceResult
     get() = CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
         val inferred = inferTypesIn(this)
 
@@ -123,7 +123,7 @@ val PsiElement.inferenceContextOwner: RsInferenceContextOwner?
         }?.first as? RsInferenceContextOwner
 
 val PsiElement.inference: RsInferenceResult?
-    get() = inferenceContextOwner?.inference
+    get() = inferenceContextOwner?.selfInferenceResult
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown

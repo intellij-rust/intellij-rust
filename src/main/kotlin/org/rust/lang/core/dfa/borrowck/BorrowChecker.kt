@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.controlFlowGraph
 import org.rust.lang.core.types.infer.RsInferenceResult
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.selfInferenceResult
 
 class BorrowCheckContext private constructor(
     val inference: RsInferenceResult,
@@ -31,7 +31,7 @@ class BorrowCheckContext private constructor(
             // TODO: handle body represented by RsExpr
             val body = owner.body as? RsBlock ?: return null
             val cfg = owner.controlFlowGraph ?: return null
-            return BorrowCheckContext(owner.inference, body, cfg)
+            return BorrowCheckContext(owner.selfInferenceResult, body, cfg)
         }
     }
 

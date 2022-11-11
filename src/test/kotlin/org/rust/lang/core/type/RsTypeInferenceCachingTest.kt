@@ -10,14 +10,14 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.selfInferenceResult
 
 class RsTypeInferenceCachingTest : RsTestBase() {
     private val complete: () -> Unit = { myFixture.completeBasic() }
     private fun type(text: String = "a"): () -> Unit = { myFixture.type(text) }
 
     private fun List<RsFunction>.collectStamps(): Map<String, Long> =
-        associate { it.name!! to it.inference.getTimestamp() }
+        associate { it.name!! to it.selfInferenceResult.getTimestamp() }
 
 
     private fun checkReinferred(action: () -> Unit, @Language("Rust") code: String, vararg names: String) {

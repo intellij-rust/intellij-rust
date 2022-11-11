@@ -12,7 +12,7 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.controlFlowGraph
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.infer.RsInferenceResult
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.selfInferenceResult
 
 enum class DeclarationKind { Parameter, Variable }
 
@@ -58,7 +58,7 @@ class LivenessContext private constructor(
         fun buildFor(owner: RsInferenceContextOwner): LivenessContext? {
             val body = owner.body as? RsBlock ?: return null
             val cfg = owner.controlFlowGraph ?: return null
-            return LivenessContext(owner.inference, body, cfg)
+            return LivenessContext(owner.selfInferenceResult, body, cfg)
         }
     }
 }
