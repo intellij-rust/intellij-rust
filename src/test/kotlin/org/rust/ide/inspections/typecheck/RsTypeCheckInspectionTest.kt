@@ -416,7 +416,7 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
 
         fn main() {
-            S::<"">::foo(); // TODO: issue https://github.com/intellij-rust/intellij-rust/issues/8150
+            S::<<error descr="mismatched types [E0308]expected `usize`, found `&str`">""</error>>::foo();
             S::<<error descr="mismatched types [E0308]expected `usize`, found `&str`">""</error>>.bar();
         }
     """)

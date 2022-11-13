@@ -192,7 +192,9 @@ private PathIdent ::= <<parsePathIdent>>
 
 fake Path ::= (Path '::' | '::' | TypeQual)? (identifier | self | super | 'Self' | crate) PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
-                 "org.rust.lang.core.psi.ext.RsMethodOrPath" ]
+                 "org.rust.lang.core.psi.ext.RsMethodOrPath"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -281,7 +283,6 @@ ValuePathGenericArgsNoTypeQual ::= <<pathMode 'VALUE' 'TypeQualsMode.OFF' PathIm
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= TypePathGenericArgsNoTypeQual {
-  implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1000,7 +1001,6 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
 }
 
 PathType ::= TypePathGenericArgs {
-  implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1194,8 +1194,7 @@ LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? 
 }
 
 StructLiteral ::= <<checkStructAllowed>> OuterAttr* ValuePathGenericArgsNoTypeQual StructLiteralBody {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

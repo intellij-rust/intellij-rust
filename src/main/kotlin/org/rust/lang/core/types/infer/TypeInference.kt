@@ -154,6 +154,22 @@ class RsInferenceResult(
 
     @TestOnly
     fun getTimestamp(): Long = timestamp
+
+    companion object {
+        @JvmStatic
+        val EMPTY: RsInferenceResult = RsInferenceResult(
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptyMap(),
+            emptySet(),
+            emptyList(),
+        )
+    }
 }
 
 /**
@@ -224,18 +240,12 @@ class RsInferenceContext(
                 }
                 RsTypeInferenceWalker(this, TyUnknown).inferReplCodeFragment(element)
             }
-            is RsPathType, is RsTraitRef, is RsStructLiteral -> {
-                val path = when (element) {
-                    is RsPathType -> element.path
-                    is RsTraitRef -> element.path
-                    is RsStructLiteral -> element.path
-                    else -> null
-                }
-                val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration
-                if (path != null && declaration != null) {
+            is RsPath -> {
+                val declaration = resolvePathRaw(element, lookup).singleOrNull()?.element as? RsGenericDeclaration
+                if (declaration != null) {
                     val constParameters = mutableListOf<RsConstParameter>()
                     val constArguments = mutableListOf<RsElement>()
-                    for ((param, value) in pathPsiSubst(path, declaration).constSubst) {
+                    for ((param, value) in pathPsiSubst(element, declaration).constSubst) {
                         if (value is RsPsiSubstitution.Value.Present) {
                             constParameters += param
                             constArguments += value.value

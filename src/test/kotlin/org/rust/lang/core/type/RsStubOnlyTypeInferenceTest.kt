@@ -329,4 +329,21 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S<42>
     """)
+
+    fun `test const argument in a path qualifier type parameter list`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        pub struct S<const A: i32>;
+        impl<const B: i32> S<B> {
+            fn foo() -> Self { todo!() }
+        }
+        pub const C: i32 = 1;
+    //- lib.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let a = S::<{ C }>::foo();
+            a;
+        } //^ S<1>
+    """)
 }

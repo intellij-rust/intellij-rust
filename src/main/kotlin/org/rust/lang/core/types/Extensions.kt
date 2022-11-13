@@ -29,7 +29,7 @@ import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.stdext.withPrevious
+import org.rust.stdext.withNext
 
 
 private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
@@ -107,23 +107,34 @@ val RsTypeReference.lifetimeElidable: Boolean
 
 private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
 
-val RsInferenceContextOwner.inference: RsInferenceResult
-    get() = CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
-        val inferred = inferTypesIn(this)
+val RsInferenceContextOwner.selfInferenceResult: RsInferenceResult
+    get() {
+        if (this is RsPath) {
+            val parent = parent
+            if (parent != null && !parent.isAllowedPathParent()) {
+                return RsInferenceResult.EMPTY
+            }
+        }
+        return CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
+            val inferred = inferTypesIn(this)
 
-        createResult(inferred)
+            createResult(inferred)
+        }
     }
 
 val PsiElement.inferenceContextOwner: RsInferenceContextOwner?
     get() = contexts
-        .withPrevious()
-        .find { (it, prev) ->
+        .withNext()
+        .find { (it, next) ->
             if (it !is RsInferenceContextOwner) return@find false
-            it !is RsStructLiteral || prev is RsPath
+            it !is RsPath || next != null && next.isAllowedPathParent()
         }?.first as? RsInferenceContextOwner
 
+private fun PsiElement.isAllowedPathParent() =
+    this is RsPathType || this is RsTraitRef || this is RsStructLiteral || this is RsPath
+
 val PsiElement.inference: RsInferenceResult?
-    get() = inferenceContextOwner?.inference
+    get() = inferenceContextOwner?.selfInferenceResult
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown
