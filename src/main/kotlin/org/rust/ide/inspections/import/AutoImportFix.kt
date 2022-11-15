@@ -8,6 +8,8 @@ package org.rust.ide.inspections.import
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.BatchQuickFix
+import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
@@ -31,7 +33,7 @@ import org.rust.openapiext.checkWriteAccessNotAllowed
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement, private val context: Context) :
-    LocalQuickFixOnPsiElement(element), PriorityAction, HintAction {
+    LocalQuickFixOnPsiElement(element), BatchQuickFix, PriorityAction, HintAction {
 
     private var isConsumed: Boolean = false
 
@@ -60,6 +62,23 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             }
         }
         isConsumed = true
+    }
+
+    override fun applyFix(
+        project: Project,
+        descriptors: Array<CommonProblemDescriptor>,
+        psiElementsToIgnore: List<PsiElement>,
+        refreshViews: Runnable?
+    ) {
+        project.runWriteCommandAction {
+            for (descriptor in descriptors) {
+                val fix = descriptor.fixes?.filterIsInstance<AutoImportFix>()?.singleOrNull() ?: continue
+                val candidate = fix.context.candidates.singleOrNull() ?: continue
+                val context = fix.startElement as? RsElement ?: continue
+                candidate.import(context)
+            }
+        }
+        refreshViews?.run()
     }
 
     private fun chooseItemAndImport(
