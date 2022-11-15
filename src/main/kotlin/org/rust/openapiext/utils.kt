@@ -13,11 +13,9 @@ import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -84,6 +82,13 @@ val isUnderDarkTheme: Boolean
 
 fun <T> Project.runWriteCommandAction(command: () -> T): T {
     return WriteCommandAction.runWriteCommandAction(this, Computable { command() })
+}
+
+/** This is modification of [runUndoTransparentWriteAction] which applies formatting to modified code */
+fun Project.runUndoTransparentWriteCommandAction(command: () -> Unit) {
+    CommandProcessor.getInstance().runUndoTransparentAction {
+        WriteCommandAction.runWriteCommandAction(this, command)
+    }
 }
 
 val Project.modules: Collection<Module>

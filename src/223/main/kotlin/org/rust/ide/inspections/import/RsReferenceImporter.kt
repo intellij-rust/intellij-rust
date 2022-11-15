@@ -11,10 +11,12 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.inspections.shouldIgnoreUnresolvedReference
 import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.openapiext.runUndoTransparentWriteCommandAction
 import java.util.function.BooleanSupplier
 
 class RsReferenceImporter : ReferenceImporter {
@@ -30,12 +32,14 @@ class RsReferenceImporter : ReferenceImporter {
             is RsMethodCall -> AutoImportFix.findApplicableContext(element)
             else -> return null
         }
-        if (context == null || context.candidates.size != 1) return null
+        val candidate = context?.candidates?.singleOrNull() ?: return null
 
         if (element.shouldIgnoreUnresolvedReference()) return null
 
         return BooleanSupplier {
-            AutoImportFix(element, context).invoke(element.project)
+            file.project.runUndoTransparentWriteCommandAction {
+                candidate.import(element)
+            }
             true
         }
     }
