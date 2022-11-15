@@ -49,7 +49,7 @@ class RsLivenessInspection : RsLintInspection() {
                 for (deadDeclaration in liveness.deadDeclarations) {
                     val name = deadDeclaration.binding.name ?: continue
                     if (name.startsWith("_")) continue
-                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind)
+                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind, func)
                 }
             }
         }
@@ -58,7 +58,8 @@ class RsLivenessInspection : RsLintInspection() {
         holder: RsProblemsHolder,
         binding: RsPatBinding,
         name: String,
-        kind: DeclarationKind
+        kind: DeclarationKind,
+        function: RsFunction,
     ) {
         if (!binding.isPhysical) return
 
@@ -80,7 +81,13 @@ class RsLivenessInspection : RsLintInspection() {
         val fixes = mutableListOf<LocalQuickFix>(RenameFix(binding, "_$name"))
         if (isSimplePat) {
             when (kind) {
-                Parameter -> fixes.add(RemoveParameterFix(binding, name))
+                Parameter -> {
+                    val owner = function.owner
+                    val isTraitOrTraitImpl = owner.isTraitImpl || owner is RsAbstractableOwner.Trait
+                    if (!isTraitOrTraitImpl && !function.isProcMacroDef) {
+                        fixes.add(RemoveParameterFix(binding, name))
+                    }
+                }
                 Variable -> {
                     if (binding.topLevelPattern.parent is RsLetDecl) {
                         fixes.add(RemoveVariableFix(binding, name))
