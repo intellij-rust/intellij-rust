@@ -33,8 +33,8 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
             if (outputLifetimes.any { it != null } || outputLifetimes.size > 1) return null
         }
 
-        val refArgs = ctx.inputs + listOfNotNull(ctx.self)
-        if (refArgs.isEmpty() || refArgs.any { it.lifetimes.any { lifetime -> lifetime != null } }) return null
+        val inputLifetimes = ctx.inputs.flatMap { it.lifetimes } + ctx.self?.lifetimes.orEmpty()
+        if (inputLifetimes.isEmpty() || inputLifetimes.any { it != null }) return null
 
         return ctx
     }
