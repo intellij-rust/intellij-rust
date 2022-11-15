@@ -263,9 +263,9 @@
         <!-- Description Provider -->
 
         <elementDescriptionProvider implementation="org.rust.ide.presentation.RsDescriptionProvider"/>
-        <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
+        <breadcrumbsInfoProvider implementation="org.rust.ide.structure.RsBreadcrumbsInfoProvider"/>
 
-        <navbar implementation="org.rust.ide.navigationToolbar.RsNavBarModelExtension" order="first"/>
+        <navbar implementation="org.rust.ide.structure.RsNavBarModelExtension" order="first"/>
 
         <!-- Spell-checker -->
 

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.miscExtensions
+package org.rust.ide.structure
 
 import com.intellij.ide.navigationToolbar.NavBarModel
 import com.intellij.ide.navigationToolbar.NavBarPresentation

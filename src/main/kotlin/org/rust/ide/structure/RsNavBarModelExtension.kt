@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.navigationToolbar
+package org.rust.ide.structure
 
 import com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 import com.intellij.ide.structureView.StructureViewModel
@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider
-import org.rust.ide.structure.RsStructureViewModel
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
