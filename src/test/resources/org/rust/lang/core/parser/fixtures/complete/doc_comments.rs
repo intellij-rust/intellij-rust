@@ -110,7 +110,16 @@
 /// [rust path in backticks 3]: `foo`
 /// [rust path in backticks 4]: ```foo``
 /// [rust path in backticks 5]: `fn@Vec::new#hash`
-fn foo() {}
+fn foo1() {}
+
+/// [bar1] - rust path
+/// [`bar2`] - rust path in backticks
+/// [  bar3 ] - rust path with spaces
+/// [ `bar4` ] - rust path in backticks with spaces
+/// [label] - markdown label reference
+///
+/// [label]: func
+fn foo2() {}
 
 mod foo {
     //!
