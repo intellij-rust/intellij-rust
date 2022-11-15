@@ -162,7 +162,7 @@ private class ImportingVisitor(private val range: TextRange, private val importM
         if (ctx != null) {
             val candidate = ctx.candidates.find {
                 val fqn = importMap.elementToFqn(element, range)
-                fqn == it.qualifiedNamedItem.item.qualifiedName
+                fqn == it.item.qualifiedName
             }
             if (candidate != null) {
                 candidates.add(candidate)

@@ -216,8 +216,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
         for (candidate in candidates) {
-            val item = candidate.qualifiedNamedItem.item
-            val scopeEntry = SimpleScopeEntry(candidate.qualifiedNamedItem.itemName, item)
+            val item = candidate.item
+            val scopeEntry = SimpleScopeEntry(candidate.itemName, item)
 
             if (item is RsEnumItem
                 && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
@@ -243,7 +243,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         val referenceName = qualifier.referenceName ?: return
         val itemToCandidates = ImportCandidatesCollector.getImportCandidates(importContext, referenceName)
-            .groupBy { it.qualifiedNamedItem.item }
+            .groupBy { it.item }
         for ((_, candidates) in itemToCandidates) {
             // Here all use path resolves to the same item, so we can just use the first of them
             val firstUsePath = candidates.first().info.usePath

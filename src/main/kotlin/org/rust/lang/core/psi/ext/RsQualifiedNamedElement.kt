@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB_DEPENDENCY
 import org.rust.cargo.util.AutoInjectedCrates.STD
-import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
@@ -495,29 +494,4 @@ data class RsQualifiedName private constructor(
             ASSOCIATEDTYPE -> TYPES
             ASSOCIATEDCONSTANT, TYMETHOD, METHOD -> VALUES
         }
-}
-
-interface QualifiedNamedItemBase {
-    val item: RsQualifiedNamedElement
-    val itemName: String?
-    val parentCrateRelativePath: String?
-    val containingCrate: Crate?
-}
-
-class QualifiedNamedItem2(
-    override val item: RsQualifiedNamedElement,
-    /**
-     * First segment is crate name (can be "crate").
-     * Last segment is item name.
-     */
-    val path: Array<String>,
-    /** corresponds to `path.first()` */
-    override val containingCrate: Crate,
-) : QualifiedNamedItemBase {
-    override val itemName: String
-        get() = path.last()
-    override val parentCrateRelativePath: String
-        get() = path.copyOfRange(1, path.size - 1).joinToString("::")
-
-    override fun toString(): String = path.joinToString("::")
 }

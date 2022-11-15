@@ -90,7 +90,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
         val importContext = ImportContext.from(path, ImportContext.Type.COMPLETION) ?: return
         val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedElements)
         for (candidate in candidates) {
-            val item = candidate.qualifiedNamedItem.item
+            val item = candidate.item
             if (item !is RsFunction || !item.isCustomDeriveProcMacroDef) continue
             val name = item.procMacroName ?: continue
             result.addElement(createLookupElement(name, candidate))
