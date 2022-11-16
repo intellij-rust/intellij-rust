@@ -1101,7 +1101,6 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsReexportIndex"/>
-        <stubIndex implementation="org.rust.lang.core.stubs.index.RsExternCrateReexportIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsFeatureIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsCfgNotTestIndex"/>
 

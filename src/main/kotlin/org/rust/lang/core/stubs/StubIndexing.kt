@@ -15,7 +15,6 @@ import org.rust.lang.core.stubs.index.*
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
-    RsExternCrateReexportIndex.index(stub, this)
 }
 
 fun IndexSink.indexStructItem(stub: RsStructItemStub) {
