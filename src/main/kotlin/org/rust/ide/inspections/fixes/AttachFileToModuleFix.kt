@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloon
-import org.rust.lang.RsConstants
+import org.rust.lang.RsConstants.MOD_RS_FILE
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsPsiFactory
@@ -33,6 +33,7 @@ import org.rust.openapiext.fullWidthCell
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.exhaustive
 
 /**
  * Attaches a file to a Rust module.
@@ -56,13 +57,12 @@ class AttachFileToModuleFix(
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val rsFile = startElement as? RsFile ?: return
         val availableModules = findAvailableModulesForFile(project, rsFile)
-        if (availableModules.isEmpty()) return
 
-        if (availableModules.size == 1) {
-            insertFileToModule(rsFile, availableModules[0])
-        } else if (availableModules.size > 1) {
-            selectModule(rsFile, availableModules)?.let { insertFileToModule(rsFile, it) }
-        }
+        when (availableModules.size) {
+            0 -> return
+            1 -> insertFileToModule(rsFile, availableModules[0])
+            else -> selectModule(rsFile, availableModules)?.let { insertFileToModule(rsFile, it) }
+        }.exhaustive
     }
 
     override fun startInWriteAction(): Boolean {
@@ -73,13 +73,13 @@ class AttachFileToModuleFix(
         fun findAvailableModulesForFile(project: Project, file: RsFile): List<RsFile> {
             val virtualFile = file.virtualFile ?: return emptyList()
             val pkg = project.cargoProjects.findPackageForFile(virtualFile) ?: return emptyList()
-
             val directory = virtualFile.parent ?: return emptyList()
+
             val modules = mutableListOf<RsFile>()
 
             if (file.isModuleFile) {
                 // module file in parent directory
-                modules.addIfNotNull(findModule(file, project, directory.parent?.findFileByRelativePath(RsConstants.MOD_RS_FILE)))
+                modules.addIfNotNull(findModule(file, project, directory.parent?.findFileByRelativePath(MOD_RS_FILE)))
 
                 // package target roots in parent directory
                 for (target in pkg.targets) {
@@ -90,7 +90,7 @@ class AttachFileToModuleFix(
                 }
             } else {
                 // mod.rs in the same directory
-                modules.addIfNotNull(findModule(file, project, directory.findFileByRelativePath(RsConstants.MOD_RS_FILE)))
+                modules.addIfNotNull(findModule(file, project, directory.findFileByRelativePath(MOD_RS_FILE)))
 
                 // module file in parent directory
                 if (pkg.edition >= CargoWorkspace.Edition.EDITION_2018) {
@@ -182,7 +182,7 @@ private fun insertModItem(item: RsModDeclItem, module: RsFile): RsModDeclItem {
 }
 
 private val RsFile.isModuleFile
-    get() = name == RsConstants.MOD_RS_FILE
+    get() = name == MOD_RS_FILE
 
 typealias ModuleAttachSelector = (file: RsFile, availableModules: List<RsFile>) -> RsFile?
 
