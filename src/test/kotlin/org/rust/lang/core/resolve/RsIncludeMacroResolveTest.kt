@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 
+@ExpandMacros
 class RsIncludeMacroResolveTest : RsResolveTestBase() {
 
     fun `test resolve struct to included file`() = checkResolve("""
@@ -158,7 +159,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Struct;
     """)
 
-    @ExpandMacros
     fun `test include macro in macro 1`() = checkResolve("""
     //- lib.rs
         macro_rules! generate_include {
@@ -187,7 +187,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Foo;
     """)
 
-    @ExpandMacros
     fun `test include macro in macro 3`() = checkResolve("""
     //- lib.rs
         macro_rules! generate_include {
@@ -209,7 +208,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Foo;
     """)
 
-    @ExpandMacros
     fun `test macro call in included file 1`() = checkResolve("""
     //- main.rs
         macro_rules! foo {
@@ -221,7 +219,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         //^ main.rs
     """)
 
-    @ExpandMacros
     fun `test macro call in included file 2`() = checkResolve("""
     //- main.rs
         macro_rules! gen_use {

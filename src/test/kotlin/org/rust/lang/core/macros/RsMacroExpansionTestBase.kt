@@ -125,7 +125,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         )
         return expansionResult.map {
             it.elements.forEach { el ->
-                el.setContext(call.context as RsElement)
+                el.setContext(call.contextToSetForExpansion as RsElement)
                 el.setExpandedFrom(call)
             }
             it

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
 import org.rust.WithExperimentalFeatures
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
@@ -16,6 +17,7 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
+@ExpandMacros
 @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
