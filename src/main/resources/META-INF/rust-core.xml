@@ -1108,7 +1108,6 @@
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsTypeAliasIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroIndex"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroCallIndex"/>
 
         <!-- Notifications -->
 
