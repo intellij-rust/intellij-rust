@@ -21,31 +21,6 @@ sealed class ImportInfo {
         val crate: Crate,
         val externCrateName: String,
         val needInsertExternCrateItem: Boolean,
-        /**
-         * Relative depth of importing path's module to module with extern crate item.
-         * Used for creation of relative use path.
-         *
-         * For example, in the following case
-         * ```rust
-         * // lib.rs from bar crate
-         * pub struct Bar {}
-         * ```
-         *
-         * ```rust
-         * // main.rs from our crate
-         * mod foo {
-         *     extern crate bar;
-         *     mod baz {
-         *          fn f(bar: Bar/*caret*/) {}
-         *     }
-         * }
-         * ```
-         *
-         * relative depth of path `Bar` is `1`, so we should add `self::` prefix to use path.
-         *
-         * Can be null if extern crate item is absent or it is in crate root.
-         */
-        val depth: Int?,
         crateRelativePath: String,
         hasModWithSameNameAsExternCrate: Boolean = false,
     ) : ImportInfo() {

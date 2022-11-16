@@ -453,7 +453,6 @@ private fun ImportContext.createImportInfo(path: ItemUsePath): ImportInfo {
             crate = path.crate,
             externCrateName = crateName,
             needInsertExternCrateItem = needInsertExternCrateItem,
-            depth = null,
             crateRelativePath = crateRelativePath,
             hasModWithSameNameAsExternCrate = crateName in rootModData.childModules
         )
