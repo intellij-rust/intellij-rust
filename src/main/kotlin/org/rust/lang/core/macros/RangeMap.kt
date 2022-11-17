@@ -18,8 +18,11 @@ import kotlin.math.min
 /**
  * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
  */
-@Suppress("DataClassPrivateConstructor")
-data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
+data class RangeMap(val ranges: List<MappedTextRange>) {
+
+    constructor(range: MappedTextRange) : this(listOf(range))
+
+    constructor(ranges: SmartList<MappedTextRange>) : this(ranges.optimizeList())
 
     fun isEmpty(): Boolean = ranges.isEmpty()
 
@@ -71,10 +74,6 @@ data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
             val size = data.readInt()
             val ranges = (0 until size).map { data.readMappedTextRange() }
             return RangeMap(ranges)
-        }
-
-        fun from(ranges: SmartList<MappedTextRange>): RangeMap {
-            return RangeMap(ranges.optimizeList())
         }
     }
 }

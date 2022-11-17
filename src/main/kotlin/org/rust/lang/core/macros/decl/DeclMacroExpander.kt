@@ -183,7 +183,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
             }
             return Err(DeclMacroExpansionError.DefSyntax)
         }
-        return Ok(sb to RangeMap.from(ranges))
+        return Ok(sb to RangeMap(ranges))
     }
 
     private fun substituteMacro(

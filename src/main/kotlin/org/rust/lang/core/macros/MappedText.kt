@@ -15,7 +15,7 @@ data class MappedText(val text: String, val ranges: RangeMap) {
             return if (text.isNotEmpty()) {
                 MappedText(
                     text,
-                    RangeMap.from(SmartList(MappedTextRange(srcOffset, 0, text.length)))
+                    RangeMap(MappedTextRange(srcOffset, 0, text.length))
                 )
             } else {
                 EMPTY
@@ -44,7 +44,7 @@ class MutableMappedText private constructor(
         }
     }
 
-    fun toMappedText(): MappedText = MappedText(sb.toString(), RangeMap.from(SmartList(ranges)))
+    fun toMappedText(): MappedText = MappedText(sb.toString(), RangeMap(SmartList(ranges)))
 
     override fun toString(): String {
         return sb.toString()

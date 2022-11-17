@@ -28,7 +28,7 @@ fun PsiBuilder.lowerDocCommentsToPsiBuilder(project: Project): Pair<PsiBuilder, 
 }
 
 private fun PsiBuilder.defaultRangeMap(): RangeMap= if (originalText.isNotEmpty()) {
-    RangeMap.from(SmartList(MappedTextRange(0, 0, originalText.length)))
+    RangeMap(MappedTextRange(0, 0, originalText.length))
 } else {
     RangeMap.EMPTY
 }
@@ -78,7 +78,7 @@ fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
         }
     }
 
-    return sb to RangeMap.from(ranges)
+    return sb to RangeMap(ranges)
 }
 
 private fun PsiBuilder.hasDocComments(): Boolean {
