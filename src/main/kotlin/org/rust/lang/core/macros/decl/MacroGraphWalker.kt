@@ -8,6 +8,7 @@ package org.rust.lang.core.macros.decl
 import com.intellij.lang.PsiBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.TokenType
 import org.rust.lang.core.macros.decl.MGNodeData.*
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import java.util.*
@@ -24,16 +25,20 @@ class MacroGraphWalker(
 ) {
     private enum class Status { Active, Dead, Finished }
 
-    data class FragmentDescriptor(
-        val fragmentText: String,
-        val caretOffsetInFragment: Int,
-        val kind: FragmentKind
-    )
+    sealed class FooBar {
+        data class LiteralDescriptor(val text: String) : FooBar()
+
+        data class FragmentDescriptor(
+            val fragmentText: String,
+            val caretOffsetInFragment: Int,
+            val kind: FragmentKind
+        ) : FooBar()
+    }
 
     data class State(
         val position: MacroGraphNode,
         val marker: PsiBuilder.Marker?,
-        val descriptor: FragmentDescriptor?
+        val descriptor: FooBar?
     )
 
     private fun rollbackToState(state: State) {
@@ -47,10 +52,10 @@ class MacroGraphWalker(
     private var position: MacroGraphNode = graph.getNode(0)
     private var status: Status = Status.Active
 
-    private var descriptor: FragmentDescriptor? = null
-    private val result: MutableList<FragmentDescriptor> = mutableListOf()
+    private var descriptor: FooBar? = null
+    private val result: MutableList<FooBar> = mutableListOf()
 
-    fun run(): List<FragmentDescriptor> {
+    fun run(): List<FooBar> {
         processStack.push(State(position, builder.mark(), descriptor))
 
         while (processStack.isNotEmpty()) {
@@ -91,7 +96,21 @@ class MacroGraphWalker(
         when (val matcher = position.data) {
             is Literal -> {
                 if (!builder.isSameToken(matcher.value)) {
-                    status = Status.Dead
+                    val fragmentStart = builder.currentOffset
+                    val textRange = TextRange(fragmentStart, fragmentStart + matcher.value.text.length)
+                    if (textRange.contains(caretOffset)) {
+                        val text = generateSequence(position) { graph.outgoingEdges(it).map { it.target }.singleOrNull() }
+                            .map { it.data }
+                            .takeWhile { it is Literal }
+                            .filterIsInstance<Literal>()
+                            .joinToString(separator = "") {
+                                it.value.text + if (it.value.treeNext == null || it.value.treeNext?.elementType == TokenType.WHITE_SPACE) " " else ""
+                            }
+                        descriptor = FooBar.LiteralDescriptor(text)
+                        status = Status.Finished
+                    } else {
+                        status = Status.Dead
+                    }
                 }
             }
             is Fragment -> {
@@ -103,7 +122,7 @@ class MacroGraphWalker(
                             val fragmentEnd = min(builder.currentOffset, callBody.length)
                             val fragmentText = callBody.substring(fragmentStart, fragmentEnd)
                             val caretOffsetInFragment = caretOffset - fragmentStart
-                            descriptor = FragmentDescriptor(fragmentText, caretOffsetInFragment, matcher.kind)
+                            descriptor = FooBar.FragmentDescriptor(fragmentText, caretOffsetInFragment, matcher.kind)
                         }
                     }
                 } else {

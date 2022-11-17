@@ -7,6 +7,7 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
@@ -58,18 +59,26 @@ object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
         val fragmentDescriptors = walker.run().takeIf { it.isNotEmpty() } ?: return
         val usedKinds = mutableSetOf<FragmentKind>()
 
-        for ((fragmentText, caretOffsetInFragment, kind) in fragmentDescriptors) {
-            if (kind in usedKinds) continue
+        for (desc in fragmentDescriptors) {
+            when (desc) {
+                is MacroGraphWalker.FooBar.FragmentDescriptor -> {
+                    val (fragmentText, caretOffsetInFragment, kind) = desc
+                    if (kind in usedKinds) continue
 
-            val codeFragment = when (kind) {
-                Expr, Path -> RsExpressionCodeFragment(project, fragmentText, macroCall)
-                Stmt -> RsStatementCodeFragment(project, fragmentText, macroCall)
-                Ty -> RsTypeReferenceCodeFragment(project, fragmentText, macroCall)
-                else -> null
-            } ?: continue
+                    val codeFragment = when (kind) {
+                        Expr, Path -> RsExpressionCodeFragment(project, fragmentText, macroCall)
+                        Stmt -> RsStatementCodeFragment(project, fragmentText, macroCall)
+                        Ty -> RsTypeReferenceCodeFragment(project, fragmentText, macroCall)
+                        else -> null
+                    } ?: continue
 
-            addCompletions(codeFragment, caretOffsetInFragment)
-            usedKinds.add(kind)
+                    addCompletions(codeFragment, caretOffsetInFragment)
+                    usedKinds.add(kind)
+                }
+                is MacroGraphWalker.FooBar.LiteralDescriptor -> {
+                    result.addElement(LookupElementBuilder.create(desc.text).bold().toKeywordElement())
+                }
+            }
         }
     }
 
