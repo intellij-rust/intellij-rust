@@ -53,10 +53,8 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                     //^
     """)
 
-    // TODO implement `getContext()` in all RsPat PSI elements
     @CheckTestmarkHit(Testmarks.Touched::class)
-    fun `test pattern context`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test pattern context`() = checkByCode("""
         const X: i32 = 0;
             //X
         macro_rules! foo { ($($ i:tt)*) => { $( $ i )* }; }
@@ -68,7 +66,6 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
             }
         }
     """)
-    }
 
     @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test lifetime`() = checkByCode("""

@@ -543,6 +543,7 @@ private TopPat ::= &'|' OrPat | Pat { name = "pattern" }
 
 Pat ::= SimplePat OrPatLeft? {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
+  mixin = "org.rust.lang.core.psi.ext.RsPatImplMixin"
   name = "pattern"
 }
 
