@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.psi.stubs.StubElement
 import gnu.trove.THashMap
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
@@ -17,14 +18,16 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsItemsOwner
 import org.rust.lang.core.psi.ext.body
+import org.rust.lang.core.psi.ext.stubDescendantOfTypeOrStrict
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
 import org.rust.lang.core.resolve2.util.DollarCrateMap
+import org.rust.lang.core.resolve2.util.buildStub
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
-import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.getWithRethrow
@@ -295,7 +298,7 @@ class DefCollector(
     private data class ExpansionOutput(
         val call: MacroCallInfo,
         val def: MacroDefInfo,
-        val expandedFile: RsFileStub?,
+        val expandedFile: StubElement<out RsItemsOwner>?,
         val expansion: ExpansionResultOk?,
         val mixHash: HashCode,
     )
@@ -373,10 +376,34 @@ class DefCollector(
                 return null
             }
         }
-        val (expandedFile, expansion) =
+
+        val (expandedFile, expansion) = if (call.containingMod.isBlock) {
+            expandMacroInBlock(callData.data, defData.data, mixHash)
+        } else {
             macroExpanderShared.createExpansionStub(project, macroExpander, defData.data, callData.data, mixHash).ok()
-                ?: (null to null)
+        } ?: (null to null)
         return ExpansionOutput(call, def, expandedFile, expansion, mixHash)
+    }
+
+    /**
+     * fn main() {
+     *     // should be expanded in statement context
+     *     gen!();
+     * }
+     */
+    private fun expandMacroInBlock(
+        callData: RsMacroCallData,
+        defData: RsMacroData,
+        mixHash: HashCode
+    ): Pair<StubElement<RsBlock>, ExpansionResultOk>? {
+        val expansion = macroExpanderShared.cachedExpand(macroExpander, defData, callData, mixHash).ok()
+            ?: return null
+        val macroExpansionContext = MacroExpansionContext.STMT
+        val expandedText = macroExpansionContext.prepareExpandedTextForParsing(expansion.text)
+        val expandedFile = RsPsiFactory(project, markGenerated = false).createPsiFile(expandedText) as? RsFile ?: return null
+        val expandedBlock = expandedFile.stubDescendantOfTypeOrStrict<RsBlock>() ?: return null
+        val expandedStub = expandedBlock.buildStub() ?: return null
+        return expandedStub to expansion.shiftDstRangesRight(macroExpansionContext.expansionFileStartOffset)
     }
 
     private fun recordExpansion(result: ExpansionOutput) {

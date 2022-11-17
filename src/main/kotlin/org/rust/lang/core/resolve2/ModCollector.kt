@@ -78,7 +78,7 @@ fun collectScope(
 }
 
 fun collectExpandedElements(
-    expandedFile: RsFileStub,
+    scope: StubElement<out RsItemsOwner>,
     call: MacroCallInfo,
     context: ModCollectorContext,
     dollarCrateHelper: DollarCrateHelper?
@@ -91,7 +91,7 @@ fun collectExpandedElements(
         dollarCrateHelper,
         includeMacroFile = null
     )
-    collector.collectMod(expandedFile, propagateLegacyMacros = true)
+    collector.collectMod(scope, propagateLegacyMacros = true)
 }
 
 /**

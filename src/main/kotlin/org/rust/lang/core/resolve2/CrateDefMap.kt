@@ -282,8 +282,10 @@ class ModData(
     val isEnum: Boolean = false,
     /** Normal cargo crate with physical crate root, etc */
     val isNormalCrate: Boolean = true,
-    /** not-null when `this` corresponds to [RsBlock]. See [getHangingModInfo] */
+    /** not-null when `this` corresponds to [RsBlock], [RsCodeFragment], etc. See [getHangingModInfo] */
     val context: ModData? = null,
+    /** scope is [RsBlock] */
+    val isBlock: Boolean = false,
     /** Only for debug */
     val crateDescription: String,
 ) {

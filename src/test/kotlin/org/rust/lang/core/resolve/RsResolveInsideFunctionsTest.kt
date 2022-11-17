@@ -346,6 +346,21 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
     """)
     }
 
+    fun `test macro expanded to import inside block`() = checkByCode("""
+        mod inner {
+            pub fn func() {}
+        }
+        macro_rules! gen {
+            () => {
+                { use inner::func; }
+            }
+        }
+        fn main() {
+            gen!();
+            func();
+        } //^ unresolved
+    """)
+
     fun `test macro expanded to $crate import`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]
@@ -407,5 +422,25 @@ class RsResolveInsideFunctionsTest : RsResolveTestBase() {
             let foo = test_package::gen!();
             foo.func();
         }     //^ lib.rs
+    """)
+
+    fun `test nested macro expanded to $crate import`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn foo() {}
+             //X
+        #[macro_export]
+        macro_rules! gen {
+            () => {
+                as_is! {
+                    use $ crate::foo;
+                }
+            }
+        }
+    //- main.rs
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*} }
+        fn main() {
+            test_package::gen!();
+            foo();
+        } //^ lib.rs
     """)
 }
