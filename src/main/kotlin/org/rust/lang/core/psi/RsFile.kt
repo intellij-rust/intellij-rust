@@ -47,10 +47,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.resolve2.DefMapService
-import org.rust.lang.core.resolve2.ModData
-import org.rust.lang.core.resolve2.findModDataFor
-import org.rust.lang.core.resolve2.toRsMod
+import org.rust.lang.core.resolve2.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.openapiext.toPsiFile
@@ -140,12 +137,12 @@ class RsFile(
         }
 
         // Note: `this` file can be not a module (can be included with `include!()` macro)
-        val allModData = findModDataFor(this)
-        val modData = allModData.pickSingleModData()
-        if (modData != null) {
+        val allInclusionPoints = findFileInclusionPointsFor(this)
+        val inclusionPoint = allInclusionPoints.pickSingleInclusionPoint()
+        if (inclusionPoint != null) {
             val crateGraph = project.crateGraph
-            val crates = allModData.mapNotNull { crateGraph.findCrateById(it.crate) }
-            val crate = crates.find { it.id == modData.crate }
+            val crates = allInclusionPoints.mapNotNull { crateGraph.findCrateById(it.modData.crate) }
+            val crate = crates.find { it.id == inclusionPoint.modData.crate }
                 ?: return CachedData(crate = FakeInvalidCrate(project))
             return CachedData(
                 crate.cargoProject,
@@ -153,8 +150,8 @@ class RsFile(
                 crate.rootMod,
                 crate,
                 crates,
-                modData.isDeeplyEnabledByCfg,
-                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId && virtualFile.id != modData.fileId,
+                inclusionPoint.modData.isDeeplyEnabledByCfg,
+                isIncludedByIncludeMacro = inclusionPoint.includeMacroIndex != null,
             )
         }
 
@@ -203,7 +200,7 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            val modData = findModDataFor(this).pickSingleModData() ?: return null
+            val modData = findFileInclusionPointsFor(this).pickSingleInclusionPoint()?.modData ?: return null
             val parenModData = modData.parent ?: return null
             return parenModData.toRsMod(project).firstOrNull()
         }
@@ -333,12 +330,12 @@ private data class CachedData(
 
 // A rust file can be included in multiple places, but currently IntelliJ Rust works properly only with one
 // inclusion point, so we have to choose one
-private fun List<ModData>.pickSingleModData(): ModData? {
+private fun List<FileInclusionPoint>.pickSingleInclusionPoint(): FileInclusionPoint? {
     if (isEmpty()) return null
     singleOrNull()?.let { return it }
 
     // If there are still multiple options, choose one deterministically
-    return minByOrNull { it.crate }
+    return minByOrNull { it.modData.crate }
 }
 
 private fun VirtualFile.getInjectedFromIfDoctestInjection(project: Project): RsFile? {

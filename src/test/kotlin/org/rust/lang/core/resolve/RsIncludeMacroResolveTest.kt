@@ -148,6 +148,22 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         struct Foo;
     """)
 
+    fun `test include file in included file in included file`() = checkResolve("""
+    //- lib.rs
+        include!("foo.rs");
+        fn foo(x: Foo) {}
+                 //^ baz.rs
+    //- foo.rs
+        mod aaa {}
+        include!("bar.rs");
+    //- bar.rs
+        mod bbb {}
+        mod ccc {}
+        include!("baz.rs");
+    //- baz.rs
+        struct Foo;
+    """)
+
     fun `test mod decl in included file`() = checkResolve("""
     //- lib.rs
         include!("inner/foo.rs");
