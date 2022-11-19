@@ -18,7 +18,9 @@ object RsExperiments {
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
 
     const val PROC_MACROS = "org.rust.macros.proc"
+    @EnabledInStable
     const val FN_LIKE_PROC_MACROS = "org.rust.macros.proc.function-like"
+    @EnabledInStable
     const val DERIVE_PROC_MACROS = "org.rust.macros.proc.derive"
     const val ATTR_PROC_MACROS = "org.rust.macros.proc.attr"
 
