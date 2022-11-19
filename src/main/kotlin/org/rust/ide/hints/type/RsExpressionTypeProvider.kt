@@ -16,6 +16,8 @@ import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.contexts
+import org.rust.lang.core.types.adjustments
+import org.rust.lang.core.types.infer.Adjustment
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 import org.rust.openapiext.escaped
@@ -33,17 +35,92 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
             .toList()
 
     override fun getInformationHint(element: PsiElement): String {
-        val type = getType(element)
-        return type.render(skipUnchangedDefaultTypeArguments = false).escaped
+        val (type, adjustedType) = getType(element)
+        return if (adjustedType != null) {
+            val (alignedType, alignedCoerced) = renderAndAlignTypes(type, adjustedType)
+            """
+                <html>
+                    <table>
+                        <tr>
+                            <td style="color: #909090">Type:</td>
+                            <td style="font-family: monospace;">$alignedType</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #909090">Coerced type:</td>
+                            <td style="font-family: monospace;">$alignedCoerced</td>
+                        </tr>
+                    </table>
+                </html>
+            """.trimIndent()
+        } else {
+            renderTy(type).escaped
+        }
     }
 
-    private fun getType(element: PsiElement): Ty = when (element) {
-        is MyFakePsiElement -> getType(element.elementInMacroExpansion)
-        is RsExpr -> element.type
-        is RsPat -> element.type
-        is RsPatField -> element.type
-        is RsStructLiteralField -> element.type
+    private fun getType(element: PsiElement): Pair<Ty, AdjustedType?> {
+        val (type, adjustments) = getTypeAndAdjustments(element)
+        val derefTy = adjustments.asSequence()
+            .takeWhile { it is Adjustment.Deref }
+            .lastOrNull()
+            ?.target
+            ?: type
+        val finalTy = adjustments.lastOrNull()?.target
+        return if (finalTy == null) {
+            type to null
+        } else {
+            type to AdjustedType(derefTy, finalTy)
+        }
+    }
+
+    private fun getTypeAndAdjustments(element: PsiElement): Pair<Ty, List<Adjustment>> = when (element) {
+        is MyFakePsiElement -> getTypeAndAdjustments(element.elementInMacroExpansion)
+        is RsExpr -> element.type to element.adjustments
+        is RsPat -> element.type to emptyList()
+        is RsPatField -> element.type to emptyList()
+        is RsStructLiteralField -> element.type to element.adjustments
         else -> error("Unexpected element type: $element")
+    }
+
+    private fun renderTy(ty: Ty): String = ty.render(skipUnchangedDefaultTypeArguments = false)
+
+    private fun renderAndAlignTypes(type: Ty, adjustedType: AdjustedType): Pair<String, String> {
+        val (l1, _, l3) = alignTypes(renderTy(type), renderTy(adjustedType.derefTy), renderTy(adjustedType.finalTy))
+
+        val ty1aligned = "\u00A0".repeat(l1.alignment) + l1.text.escaped
+        val ty3aligned = "\u00A0".repeat(l3.alignment) + l3.text.escaped
+
+        return ty1aligned to ty3aligned
+    }
+
+    private fun alignTypes(ty1: String, ty2: String, ty3: String): Triple<AlignedType, AlignedType, AlignedType> {
+        val (t1, t2) = alignTypes(ty1, ty2)
+        val (t2a, t3) = alignTypes(ty2, ty3)
+
+        val diff = t2a.alignment - t2.alignment
+        return if (diff > 0) {
+            Triple(t1.adjust(diff), t2a, t3)
+        } else {
+            Triple(t1, t2, t3.adjust(-diff))
+        }
+    }
+
+    private fun alignTypes(ty1: String, ty2: String): Pair<AlignedType, AlignedType> {
+        val ty1alignment = ty2.indexOf(ty1).takeIf { it != -1 } ?: 0
+        val ty2alignment = ty1.indexOf(ty2).takeIf { it != -1 } ?: 0
+
+        return AlignedType(ty1, ty1alignment) to AlignedType(ty2, ty2alignment)
+    }
+
+    private data class AdjustedType(
+        val derefTy: Ty,
+        val finalTy: Ty
+    )
+
+    private data class AlignedType(
+        val text: String,
+        val alignment: Int
+    ) {
+        fun adjust(offset: Int): AlignedType = AlignedType(text, alignment + offset)
     }
 }
 
