@@ -6,26 +6,23 @@
 package org.rust.ide.ssr
 
 import com.intellij.codeInsight.template.TemplateContextType
-import com.intellij.dupLocator.util.NodeFilter
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.structuralsearch.StructuralSearchProfile
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
+import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.rust.ide.template.RsContextType
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsLifetime
 
-class RsStructuralSearchProvider : StructuralSearchProfile() {
-    override fun getLexicalNodesFilter(): NodeFilter = NodeFilter { it is PsiWhiteSpace }
-
+class RsStructuralSearchProfile : StructuralSearchProfile() {
     override fun isMyLanguage(language: Language): Boolean = language == RsLanguage
     override fun getDefaultFileType(fileType: LanguageFileType?): LanguageFileType = fileType ?: RsFileType
 
@@ -37,7 +34,7 @@ class RsStructuralSearchProvider : StructuralSearchProfile() {
 
     override fun createMatchingVisitor(globalVisitor: GlobalMatchingVisitor): PsiElementVisitor = RsMatchingVisitor(globalVisitor)
 
-    // override fun getPredefinedTemplates(): Array<Configuration> = KotlinPredefinedConfigurations.createPredefinedTemplates()
+    override fun getPredefinedTemplates(): Array<Configuration> = RsPredefinedConfigurations.createPredefinedTemplates()
 
     override fun isIdentifier(element: PsiElement?): Boolean = element?.node?.elementType == IDENTIFIER
 
@@ -56,12 +53,12 @@ private class RsCompiledPattern : CompiledPattern() {
         }
     }
 
-    override fun getTypedVarPrefixes(): Array<String> = arrayOf(RsStructuralSearchProvider.TYPED_VAR_PREFIX)
+    override fun getTypedVarPrefixes(): Array<String> = arrayOf(RsStructuralSearchProfile.TYPED_VAR_PREFIX)
 
     override fun isTypedVar(str: String): Boolean = when {
         str.isEmpty() -> false
-        str[0] == '@' -> str.drop(1).startsWith(RsStructuralSearchProvider.TYPED_VAR_PREFIX)
-        else -> str.startsWith(RsStructuralSearchProvider.TYPED_VAR_PREFIX)
+        str[0] == '@' -> str.drop(1).startsWith(RsStructuralSearchProfile.TYPED_VAR_PREFIX)
+        else -> str.startsWith(RsStructuralSearchProfile.TYPED_VAR_PREFIX)
     }
 
     override fun getTypedVarString(element: PsiElement): String {

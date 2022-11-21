@@ -1212,7 +1212,7 @@
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineValue.RsInlineValueHandler"/>
         <inlineActionHandler implementation="org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasHandler"/>
 
-        <structuralsearch.profile implementation="org.rust.ide.ssr.RsStructuralSearchProvider"/>
+        <structuralsearch.profile implementation="org.rust.ide.ssr.RsStructuralSearchProfile"/>
 
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"
