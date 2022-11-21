@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -87,6 +88,15 @@ class MacroExpansionTask(
 
     private fun updateMacrosFiles(allDefMaps: List<CrateDefMap>) {
         val contentRoot = "/$MACRO_EXPANSION_VFS_ROOT/$projectDirectoryName"
+
+        if (lastUpdatedMacrosAt.isEmpty() && allDefMaps.isNotEmpty()) {
+            // Check the VFS during the first MacroExpansionTask run after project reopening
+            val contentRootVirtualFile = expansionFileSystem.findFileByPath(contentRoot)
+            if (contentRootVirtualFile != null) {
+                VfsUtil.markDirtyAndRefresh(false, true, true, contentRootVirtualFile)
+            }
+        }
+
         val batch = MacroExpansionVfsBatch(contentRoot)
         val hasStaleExpansions = deleteStaleExpansions(allDefMaps, batch)
 
