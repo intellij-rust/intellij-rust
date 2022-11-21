@@ -311,6 +311,7 @@
   {"name":"specialization","state":"incomplete","since":"1.7.0"},
   {"name":"stmt_expr_attributes","state":"active","since":"1.6.0"},
   {"name":"strict_provenance","state":"active","since":"1.61.0"},
+  {"name":"string_deref_patterns","state":"active","since":"1.67.0"},
   {"name":"target_feature_11","state":"active","since":"1.45.0"},
   {"name":"thread_local","state":"active","since":"1.0.0"},
   {"name":"trait_alias","state":"active","since":"1.24.0"},
