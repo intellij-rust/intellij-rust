@@ -19,6 +19,21 @@ jobs:
             - name: Update nightly
               run: python scripts/update_nightly.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
+    update-stable:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+            - name: Prepare for updates
+              uses: ./.github/actions/preparations-for-updates
+              with:
+                  toolchain: stable
+
+            - name: Update stable
+              run: python scripts/update_stable.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
     update-compiler-features:
         runs-on: ubuntu-latest
         steps:
