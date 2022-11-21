@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2015
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition.EDITION_2018
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB_DEPENDENCY
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -170,12 +169,7 @@ private fun Crate.shouldAutoInjectDependency(dependency: Crate.Dependency, stdli
  */
 private fun injectPrelude(defMap: CrateDefMap) {
     val preludeCrate = defMap.stdlibAttributes.getAutoInjectedCrate() ?: return
-    val preludeName = when (val edition = defMap.metaData.edition) {
-        // BACKCOMPAT: Rust 1.55.0. Always use "rust_$edition"
-        // We don't use "rust_2015" and "rust_2018" in order to be compatible with old rustc
-        EDITION_2015, EDITION_2018 -> "v1"
-        else -> "rust_${edition.presentation}"
-    }
+    val preludeName = "rust_${defMap.metaData.edition.presentation}"
     val path = arrayOf("" /* absolute path */, preludeCrate, "prelude", preludeName)
     val result = defMap.resolvePathFp(defMap.root, path, ResolveMode.IMPORT, withInvisibleItems = false)
     val resultItem = result.resolvedDef.types.singleOrNull() ?: return

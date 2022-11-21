@@ -38,7 +38,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoPackage
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
@@ -499,7 +498,7 @@ class Cargo(
                 emulateTerminal,
                 // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
                 // https://github.com/intellij-rust/intellij-rust/issues/7320
-                if (project.isBuildToolWindowAvailable) withSudo else false,
+                if (isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) withSudo else false,
                 http = http
             ).withEnvironment("RUSTC", rustcExecutable)
         }

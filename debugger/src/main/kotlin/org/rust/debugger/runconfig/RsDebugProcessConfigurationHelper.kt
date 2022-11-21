@@ -21,7 +21,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.cargo.util.parseSemVer
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon
@@ -39,9 +38,6 @@ class RsDebugProcessConfigurationHelper(
     private val frameIndex = process.currentFrameIndex
 
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
-
-    // BACKCOMPAT: Rust 1.45. Drop this property
-    private val rustcVersion = cargoProject?.rustcInfo?.version?.semver
 
     private val prettyPrintersPath: String? = toolchain?.toRemotePath(PP_PATH)
 
@@ -106,19 +102,10 @@ class RsDebugProcessConfigurationHelper(
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val basePath = "$sysroot/lib/rustlib/etc"
-
-                // BACKCOMPAT: Rust 1.45. Drop the first branch
-                if (rustcVersion != null && rustcVersion < RUST_1_46) {
-                    val lldbRustFormattersPath = "$basePath/lldb_rust_formatters.py".systemDependentAndEscaped()
-                    executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbRustFormattersPath" """)
-                    executeInterpreterCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
-                    executeInterpreterCommand(threadId, frameIndex, """type category enable Rust""")
-                } else {
-                    val lldbLookupPath = "$basePath/$LLDB_LOOKUP.py".systemDependentAndEscaped()
-                    val lldbCommandsPath = "$basePath/lldb_commands".systemDependentAndEscaped()
-                    executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbLookupPath" """)
-                    executeInterpreterCommand(threadId, frameIndex, """command source "$lldbCommandsPath" """)
-                }
+                val lldbLookupPath = "$basePath/$LLDB_LOOKUP.py".systemDependentAndEscaped()
+                val lldbCommandsPath = "$basePath/lldb_commands".systemDependentAndEscaped()
+                executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbLookupPath" """)
+                executeInterpreterCommand(threadId, frameIndex, """command source "$lldbCommandsPath" """)
             }
 
             LLDBRenderers.BUNDLED -> {
@@ -154,14 +141,6 @@ class RsDebugProcessConfigurationHelper(
             GDBRenderers.NONE -> return
         }
 
-        // BACKCOMPAT: Rust 1.45. Remove `GDB_LOOKUP` local variable
-        @Suppress("LocalVariableName")
-        val GDB_LOOKUP = if (rustcVersion != null && rustcVersion < RUST_1_46) {
-            "gdb_rust_pretty_printing"
-        } else {
-            GDB_LOOKUP
-        }
-
         // Avoid multiline Python scripts due to https://youtrack.jetbrains.com/issue/CPP-9090
         val command = """python """ +
             """sys.path.insert(0, "$path"); """ +
@@ -188,9 +167,6 @@ class RsDebugProcessConfigurationHelper(
 
     companion object {
         private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
-
-        // BACKCOMPAT: Rust 1.45. Drop this property
-        private val RUST_1_46 = "1.46.0".parseSemVer()
 
         /**
          * Should be synchronized with `rust_types.py`

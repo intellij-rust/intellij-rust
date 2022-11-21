@@ -33,14 +33,15 @@ import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.confirmLoadingUntrustedProject
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.buildList
 import java.util.concurrent.*
@@ -64,7 +65,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
         }
 
         val configuration = context.runConfiguration as? CargoCommandConfiguration
-        if (configuration?.hasRemoteTarget == true || !project.isBuildToolWindowAvailable) {
+        if (configuration?.hasRemoteTarget == true || !isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) {
             invokeLater { project.buildProject() }
             return rejectedPromise()
         }

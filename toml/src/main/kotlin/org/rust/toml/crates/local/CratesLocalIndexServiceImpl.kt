@@ -536,10 +536,7 @@ private class CratesLocalIndexUpdateTask(
 
     @Throws(IOException::class, RevisionSyntaxException::class)
     private fun readRegistryHeadCommitHash(repository: Repository): String {
-        // BACKCOMPAT: Rust 1.49
-        // Since 1.50 there should always be CARGO_REGISTRY_INDEX_TAG
-        val objectId = repository.resolve(CARGO_REGISTRY_INDEX_TAG)
-            ?: repository.resolve(CARGO_REGISTRY_INDEX_TAG_PRE_1_50) // throws IOException
+        val objectId = repository.resolve(CARGO_REGISTRY_INDEX_TAG) // throws IOException
 
         return objectId?.name ?: run {
             LOG.error("Failed to resolve remote branch in the cargo registry index repository")
@@ -653,7 +650,6 @@ private class CratesLocalIndexUpdateTask(
 
 
 private val LOG: Logger = logger<CratesLocalIndexServiceImpl>()
-private const val CARGO_REGISTRY_INDEX_TAG_PRE_1_50: String = "origin/master"
 private const val CARGO_REGISTRY_INDEX_TAG: String = "origin/HEAD"
 private const val INVALID_COMMIT_HASH: String = "<invalid>"
 private const val CRATES_INDEX_VERSION: Int = 1

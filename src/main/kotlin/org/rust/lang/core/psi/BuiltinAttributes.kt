@@ -136,8 +136,6 @@ val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
     "prelude_import",
     "rustc_paren_sugar",
     "rustc_inherit_overflow_checks",
-    // BACKCOMPAT: Rust 1.53
-    "rustc_args_required_const",
     "rustc_reservation_impl",
     "rustc_test_marker",
     "rustc_unsafe_specialization_marker",

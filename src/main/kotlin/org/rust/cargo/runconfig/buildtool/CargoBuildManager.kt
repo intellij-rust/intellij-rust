@@ -30,17 +30,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.ParsedCommand
 import org.rust.cargo.runconfig.target.localBuildArgsForRemoteRun
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
-import org.rust.cargo.util.parseSemVer
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.RsNotifications
 import org.rust.openapiext.isFeatureEnabled
@@ -57,20 +54,9 @@ object CargoBuildManager {
     private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         CompletableFuture.completedFuture(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
-    private val MIN_RUSTC_VERSION: SemVer = "1.48.0".parseSemVer()
-
-    val Project.isBuildToolWindowAvailable: Boolean
-        get() {
-            if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
-            val minVersion = cargoProjects.allProjects
-                .mapNotNull { it.rustcInfo?.version?.semver }
-                .minOrNull() ?: return false
-            return minVersion >= MIN_RUSTC_VERSION
-        }
-
     val CargoCommandConfiguration.isBuildToolWindowAvailable: Boolean
         get() {
-            if (!project.isBuildToolWindowAvailable) return false
+            if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
             val hasBuildBeforeRunTask = beforeRunTasks.any { task -> task is CargoBuildTaskProvider.BuildTask }
             return hasBuildBeforeRunTask && (!hasRemoteTarget || buildTarget.isLocal)
         }
