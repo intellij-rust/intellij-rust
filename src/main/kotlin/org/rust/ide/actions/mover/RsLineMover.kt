@@ -19,8 +19,8 @@ import org.rust.openapiext.Testmark
 
 abstract class RsLineMover : LineMover() {
     override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
-        if (file !is RsFile && super.checkAvailable(editor, file, info, down)) return false
-        @Suppress("USELESS_ELVIS") // NotNull annotation is wrong :(
+        if (file !is RsFile) return false
+        if (!super.checkAvailable(editor, file, info, down)) return false
         val originalRange = info.toMove ?: return false
         val psiRange = StatementUpDownMover.getElementRange(editor, file, originalRange) ?: return false
         if (psiRange.first == null || psiRange.second == null) return false
