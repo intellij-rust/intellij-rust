@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.util.SmartList
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.crate.Crate
@@ -81,7 +80,7 @@ class ProcMacroExpander private constructor(
                 subtree.copy(delimiter = null),
                 // TODO try shift TokenMap offsets instead
                 macroCallBodyTokenMap.merge(map),
-                RangeMap.from(SmartList(loweredMacroCallBodyRanges.ranges + shiftedRanges))
+                RangeMap(loweredMacroCallBodyRanges.ranges + shiftedRanges)
             )
         } else {
             Triple(null, macroCallBodyTokenMap, loweredMacroCallBodyRanges)

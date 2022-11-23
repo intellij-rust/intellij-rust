@@ -39,7 +39,7 @@ private class SubtreeTextBuilder(
 
     fun toText(): Pair<CharSequence, RangeMap> {
         subtree.appendSubtree()
-        return sb to RangeMap.from(ranges)
+        return sb to RangeMap(ranges)
     }
 
     private fun TokenTree.Subtree.appendSubtree() {
