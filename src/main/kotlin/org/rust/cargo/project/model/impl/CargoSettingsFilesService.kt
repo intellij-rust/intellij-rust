@@ -16,6 +16,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.openapiext.isFeatureEnabled
 
 @Service
@@ -63,18 +64,6 @@ class CargoSettingsFilesService(private val project: Project) {
         val root = contentRoot ?: return
         out["${root.path}/${CargoConstants.MANIFEST_FILE}"] = SettingFileType.CONFIG
 
-        val (buildScriptFile, settingType) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-            // Ideally, we should add any child module of build script target as config files as well.
-            // But it's a quite rare case, so let's implement it separately if it's really needed
-            val buildScriptFile = targets.find { it.kind.isCustomBuild }?.crateRoot ?: root.findFileByRelativePath(CargoConstants.BUILD_FILE)
-            buildScriptFile to SettingFileType.CONFIG
-        } else {
-            root.findFileByRelativePath(CargoConstants.BUILD_FILE) to SettingFileType.IMPLICIT_TARGET
-        }
-        if (buildScriptFile != null) {
-            out[buildScriptFile.path] = settingType
-        }
-
         // Here we track only existing implicit target files.
         // It's enough because `com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware.getSettingsFiles`
         // will be called on new file creation by the platform, so we need to provide a list of all possible implicit target files here
@@ -89,6 +78,26 @@ class CargoSettingsFilesService(private val project: Project) {
                 if (file.fileType == RsFileType) {
                     out[file.path] = SettingFileType.IMPLICIT_TARGET
                 }
+            }
+        }
+
+        val (buildScriptFile, settingType) = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+            // Ideally, we should add any child module of build script target as config files as well.
+            // But it's a quite rare case, so let's implement it separately if it's really needed
+            val buildScriptFile = targets.find { it.kind.isCustomBuild }?.crateRoot ?: root.findFileByRelativePath(CargoConstants.BUILD_FILE)
+            buildScriptFile to SettingFileType.CONFIG
+        } else {
+            root.findFileByRelativePath(CargoConstants.BUILD_FILE) to SettingFileType.IMPLICIT_TARGET
+        }
+        if (buildScriptFile != null) {
+            out[buildScriptFile.path] = settingType
+        }
+
+        if (ProcMacroApplicationService.isAnyEnabled()) {
+            val procMacroLibCrateRoot = targets.find { it.kind.isProcMacro }?.crateRoot
+            if (procMacroLibCrateRoot != null) {
+                // Ideally, we should add any child module of proc macro lib target as config files as well.
+                out[procMacroLibCrateRoot.path] = SettingFileType.CONFIG
             }
         }
     }
