@@ -672,6 +672,57 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
+    fun `test remove unused import inside function`() = doTest("""
+        mod inner {
+            pub fn func1() {}
+            pub fn func2() {}
+        }
+        fn test1() {
+            use inner::func1;
+        }
+        fn test2() {
+            use inner::func1;
+            use inner::func2;
+            func1();
+        }
+    """, """
+        mod inner {
+            pub fn func1() {}
+            pub fn func2() {}
+        }
+        fn test1() {}
+        fn test2() {
+            use inner::func1;
+            func1();
+        }
+    """)
+
+    fun `test keep used import in order inside function`() = doTest("""
+        mod inner {
+            pub fn func1() {}
+            pub fn func2() {}
+        }
+        fn main() {
+            use inner::func1;
+            func1();
+
+            use inner::func2;
+            func2();
+        }
+    """, """
+        mod inner {
+            pub fn func1() {}
+            pub fn func2() {}
+        }
+        fn main() {
+            use inner::func1;
+            func1();
+
+            use inner::func2;
+            func2();
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
         checkEditorAction(code, excepted, "OptimizeImports")
 

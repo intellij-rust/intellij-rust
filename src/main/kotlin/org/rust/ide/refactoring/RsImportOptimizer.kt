@@ -45,11 +45,14 @@ class RsImportOptimizer : ImportOptimizer {
     }
 
     private fun optimizeAndReorderUseItems(file: RsFile) {
-        file.forEachMod { mod, pathUsage ->
-            val uses = mod
-                .childrenOfType<RsUseItem>()
-                .filterNot { it.isReexportOfLegacyMacro() }
-            replaceOrderOfUseItems(mod, uses, pathUsage)
+        val factory = RsPsiFactory(file.project)
+        file.forEachScope { scope, uses, pathUsage ->
+            when (scope) {
+                is RsMod -> replaceOrderOfUseItems(scope, uses, pathUsage)
+                is RsBlock -> {
+                    uses.forEach { optimizeUseItem(it, factory, pathUsage) }
+                }
+            }
         }
     }
 
@@ -57,9 +60,10 @@ class RsImportOptimizer : ImportOptimizer {
 
         fun optimizeUseItems(file: RsFile) {
             val factory = RsPsiFactory(file.project)
-            file.forEachMod { mod, pathUsage ->
-                val uses = mod.childrenOfType<RsUseItem>()
-                uses.forEach { optimizeUseItem(it, factory, pathUsage) }
+            file.forEachScope { scope, uses, pathUsage ->
+                if (scope is RsMod) {
+                    uses.forEach { optimizeUseItem(it, factory, pathUsage) }
+                }
             }
         }
 
@@ -128,12 +132,12 @@ class RsImportOptimizer : ImportOptimizer {
             return true
         }
 
-        private fun replaceOrderOfUseItems(mod: RsMod, uses: Collection<RsUseItem>, pathUsage: PathUsageMap?) {
+        private fun replaceOrderOfUseItems(scope: RsItemsOwner, uses: Collection<RsUseItem>, pathUsage: PathUsageMap?) {
             // We should ignore all items before `{` in inline modules
-            val offset = if (mod is RsModItem) mod.lbrace.textOffset + 1 else 0
-            val first = mod.childrenOfType<RsElement>()
+            val offset = if (scope is RsModItem) scope.lbrace.textOffset + 1 else 0
+            val first = scope.childrenOfType<RsElement>()
                 .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr && it !is RsDocComment } ?: return
-            val psiFactory = RsPsiFactory(mod.project)
+            val psiFactory = RsPsiFactory(scope.project)
             val sortedUses = uses
                 .asSequence()
                 .map { UseItemWrapper(it) }
@@ -144,10 +148,12 @@ class RsImportOptimizer : ImportOptimizer {
                 .sorted()
 
             for ((useWrapper, nextUseWrapper) in sortedUses.withNext()) {
-                val addedUseItem = mod.addBefore(useWrapper.useItem, first)
-                mod.addAfter(psiFactory.createNewline(), addedUseItem)
-                if (useWrapper.packageGroupLevel != nextUseWrapper?.packageGroupLevel) {
-                    mod.addAfter(psiFactory.createNewline(), addedUseItem)
+                val addedUseItem = scope.addBefore(useWrapper.useItem, first)
+                scope.addAfter(psiFactory.createNewline(), addedUseItem)
+                val addNewLine = useWrapper.packageGroupLevel != nextUseWrapper?.packageGroupLevel
+                    && (nextUseWrapper != null || scope is RsMod)
+                if (addNewLine) {
+                    scope.addAfter(psiFactory.createNewline(), addedUseItem)
                 }
             }
             uses.forEach {
@@ -158,26 +164,20 @@ class RsImportOptimizer : ImportOptimizer {
     }
 }
 
-private fun RsFile.forEachMod(callback: (RsMod, PathUsageMap?) -> Unit) {
-    getAllModulesInFile()
-        .filter { it.childOfType<RsUseItem>() != null }
-        .map { it to getPathUsage(it) }
-        .forEach { (mod, pathUsage) -> callback(mod, pathUsage) }
-}
-
-private fun RsFile.getAllModulesInFile(): List<RsMod> {
-    val result = mutableListOf<RsMod>()
-    fun go(mod: RsMod) {
-        result += mod
-        mod.childrenOfType<RsModItem>().forEach(::go)
+private fun RsFile.forEachScope(callback: (RsItemsOwner, List<RsUseItem>, PathUsageMap?) -> Unit) {
+    val usesByScope = descendantsOfType<RsUseItem>()
+        .filterNot { it.isReexportOfLegacyMacro() }
+        .groupBy { it.parent }
+    for ((scope, uses) in usesByScope) {
+        if (scope !is RsMod && scope !is RsBlock) continue
+        val pathUsage = getPathUsage(scope as RsItemsOwner)
+        callback(scope, uses, pathUsage)
     }
-    go(this)
-    return result
 }
 
-private fun getPathUsage(mod: RsMod): PathUsageMap? {
-    if (!RsUnusedImportInspection.isEnabled(mod.project)) return null
-    return mod.pathUsage
+private fun getPathUsage(scope: RsItemsOwner): PathUsageMap? {
+    if (!RsUnusedImportInspection.isEnabled(scope.project)) return null
+    return scope.pathUsage
 }
 
 // `macro_rules! foo { () => {} }`
