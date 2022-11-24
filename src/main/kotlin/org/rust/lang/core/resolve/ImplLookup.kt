@@ -6,8 +6,15 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.injected.isInsideInjection
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.hasTransitiveDependencyOrSelf
 import org.rust.lang.core.psi.*
@@ -23,10 +30,7 @@ import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateWin
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
-import org.rust.stdext.buildList
-import org.rust.stdext.exhaustive
-import org.rust.stdext.swapRemoveAt
-import org.rust.stdext.withPrevious
+import org.rust.stdext.*
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
@@ -235,7 +239,8 @@ class ImplLookup(
     private val project: Project,
     private val containingCrate: Crate,
     val items: KnownItems,
-    private val paramEnv: ParamEnv = ParamEnv.EMPTY
+    private val paramEnv: ParamEnv,
+    context: RsElement? = null
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val traitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>> = hashMapOf()
@@ -258,6 +263,17 @@ class ImplLookup(
     private val intoIteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
         val trait = items.IntoIterator ?: return@lazy null
         trait.findAssociatedType("Item")?.let { trait to it }
+    }
+
+    private val implsFromNestedMacros: Map<TyFingerprint, List<RsCachedImplItem>> by lazy(NONE) {
+        @Suppress("NAME_SHADOWING")
+        val context = context ?: return@lazy emptyMap()
+        val ancestorItem = context.contexts.withPrevious().findLast { (it, prev) ->
+            it is RsFunction && (prev == null || prev is RsBlock)
+                || it is RsFile && it.isInsideInjection
+        }?.first as? RsElement
+            ?: return@lazy emptyMap()
+        ancestorItem.implsFromNestedMacros
     }
 
     val ctx: RsInferenceContext by lazy(NONE) {
@@ -374,6 +390,7 @@ class ImplLookup(
         indexCache.findPotentialImpls(tyf)
             .asSequence()
             .filter { useImplsFromCrate(it.containingCrates) }
+            .plus(implsFromNestedMacros[tyf].orEmpty())
 
     private fun findPotentialAliases(tyf: TyFingerprint) =
         indexCache.findPotentialAliases(tyf)
@@ -1315,7 +1332,7 @@ class ImplLookup(
             } else {
                 ParamEnv.EMPTY
             }
-            return ImplLookup(psi.project, psi.containingCrate, psi.knownItems, paramEnv)
+            return ImplLookup(psi.project, psi.containingCrate, psi.knownItems, paramEnv, psi)
         }
     }
 }
@@ -1461,3 +1478,81 @@ private fun prepareSubstAndTraitRefRaw(
 
 private fun <T : Ty> T.withObligations(obligations: List<Obligation> = emptyList()): TyWithObligations<T> =
     TyWithObligations(this, obligations)
+
+/**
+ * The Rust plugin does not index impls expanded from macro calls located inside function bodies, so if we want to take
+ * them into account during type inference, we have to collect them manually
+ */
+private val RsElement.implsFromNestedMacros: Map<TyFingerprint, List<RsCachedImplItem>>
+    get() = CachedValuesManager.getCachedValue(this, IMPLS_FROM_NESTED_MACROS_KEY) {
+        val result = doGetImplsFromNestedMacros(this)
+        if (this is RsFunction) {
+            createCachedResult(result)
+        } else {
+            CachedValueProvider.Result(result, PsiModificationTracker.MODIFICATION_COUNT)
+        }
+    }
+
+private val IMPLS_FROM_NESTED_MACROS_KEY: Key<CachedValue<Map<TyFingerprint, List<RsCachedImplItem>>>> =
+    Key.create("IMPLS_FROM_NESTED_MACROS_KEY")
+
+private fun doGetImplsFromNestedMacros(element: RsElement): Map<TyFingerprint, List<RsCachedImplItem>> {
+    val body = when (element) {
+        is RsFunction -> element.block ?: return emptyMap()
+        is RsFile -> element
+        else -> error("Unexpected element type: $element")
+    }
+
+    val macroCalls = mutableListOf<RsPossibleMacroCall>()
+    val impls = mutableListOf<RsImplItem>()
+
+    collectNestedMacroCallsAndImpls(body, macroCalls, if (element.isInsideInjection) impls else null)
+
+    while (macroCalls.isNotEmpty()) {
+        val macroCall = macroCalls.removeLast()
+
+        // Optimization: skip hardcoded special macros
+        if (macroCall is RsMacroCall && macroCall.macroArgument == null) {
+            val macroDef = macroCall.resolveToMacro()
+            if (macroDef != null && macroDef.containingCrate.origin == PackageOrigin.STDLIB) {
+                continue
+            }
+        }
+
+        val expansion = macroCall.expansion ?: continue
+        for (expandedElement in expansion.elements) {
+            collectNestedMacroCallsAndImpls(expandedElement, macroCalls, impls)
+        }
+    }
+
+    val implMap = hashMapOf<TyFingerprint, MutableList<RsCachedImplItem>>()
+
+    for (impl in impls) {
+        val typeRef = impl.typeReference ?: continue
+        for (tyf in TyFingerprint.create(typeRef, impl.typeParameters.mapNotNull { it.name })) {
+            val list = implMap.getOrPut(tyf) { mutableListOf() }
+            list += RsCachedImplItem.forImpl(impl)
+        }
+    }
+
+    return implMap
+}
+
+private fun collectNestedMacroCallsAndImpls(
+    root: RsElement,
+    macroCalls: MutableList<RsPossibleMacroCall>,
+    impls: MutableList<RsImplItem>?,
+) {
+    val possibleMacroCallsOrImpls = root.descendantsOfTypeOrSelf<RsAttrProcMacroOwner>()
+    for (possibleMacroCall in possibleMacroCallsOrImpls) {
+        when (val attr = possibleMacroCall.procMacroAttributeWithDerives) {
+            is ProcMacroAttribute.Attr -> macroCalls += attr.attr
+            is ProcMacroAttribute.Derive -> macroCalls += attr.derives
+            ProcMacroAttribute.None -> when (possibleMacroCall) {
+                is RsMacroCall -> macroCalls += possibleMacroCall
+                is RsImplItem -> impls?.add(possibleMacroCall)
+            }
+        }
+    }
+}
+

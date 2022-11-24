@@ -367,3 +367,6 @@ val RsFile.isDoctestInjection: Boolean
 
 val RsElement.isDoctestInjection: Boolean
     get() = (contextualFile as? RsFile)?.isDoctestInjection == true
+
+val RsElement.isInsideInjection: Boolean
+    get() = (contextualFile as? RsFile)?.virtualFile is VirtualFileWindow

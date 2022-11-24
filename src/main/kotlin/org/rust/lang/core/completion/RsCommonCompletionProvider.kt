@@ -42,7 +42,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         result: CompletionResultSet
     ) {
         // Use original position if possible to re-use caches of the real file
-        val position = parameters.position.safeGetOriginalOrSelf()
+        val position = parameters.position
         val element = position.parent as RsReferenceElement
         if (position !== element.referenceNameElement) return
 

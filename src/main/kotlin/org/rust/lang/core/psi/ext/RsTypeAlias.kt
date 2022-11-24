@@ -10,16 +10,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.rustPsiManager
-import org.rust.lang.core.psi.rustStructureModificationTracker
+import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.resolve.RsCachedTypeAlias
 import org.rust.lang.core.stubs.RsTypeAliasStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
@@ -57,11 +54,6 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     val cachedImplItem: CachedValue<RsCachedTypeAlias> = CachedValueImpl {
         val cachedTypeAlias = RsCachedTypeAlias(this)
-        val modTracker = if (cachedTypeAlias.containingCrate?.origin == PackageOrigin.WORKSPACE) {
-            project.rustStructureModificationTracker
-        } else {
-            project.rustPsiManager.rustStructureModificationTrackerInDependencies
-        }
-        CachedValueProvider.Result(cachedTypeAlias, modTracker)
+        RsCachedImplItem.toCachedResult(this, containingCrate, cachedTypeAlias)
     }
 }
