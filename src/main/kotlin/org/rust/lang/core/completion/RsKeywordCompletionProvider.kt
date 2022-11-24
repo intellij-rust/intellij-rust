@@ -49,5 +49,5 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
         else -> return builder
     }
 
-    return builder.withInsertHandler { ctx, _ -> ctx.addSuffix(suffix) }
+    return builder.withInsertHandler { ctx, _ -> if (ctx.completionChar.toString() != suffix) ctx.addSuffix(suffix) }
 }

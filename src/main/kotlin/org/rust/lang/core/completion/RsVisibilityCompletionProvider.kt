@@ -29,7 +29,9 @@ class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>(
                 LookupElementBuilder.create(name)
                     .bold()
                     .withInsertHandler { ctx, _ ->
-                        insertSpaceIfNeeded(ctx)
+                        if (ctx.completionChar != ' ') {
+                            insertSpaceIfNeeded(ctx)
+                        }
                         ctx.editor.caretModel.moveToOffset(ctx.selectionEndOffset)
                     }
                     .toKeywordElement(priority)

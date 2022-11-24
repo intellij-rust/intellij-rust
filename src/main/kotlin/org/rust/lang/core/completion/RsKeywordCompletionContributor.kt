@@ -107,6 +107,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 if (isLetExpr && !hasSemicolon) tail += ';'
                 context.document.insertString(context.selectionEndOffset, tail)
                 EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+
+                if (context.completionChar == ' ') {
+                    context.setAddCompletionChar(false)
+                }
             }
     }
 
