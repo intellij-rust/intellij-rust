@@ -263,7 +263,21 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
 }
 
 private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypeParameterList) {
-    if (element.parent is RsImplItem || element.parent is RsFunction) {
+    val parent = element.parent
+    if (parent is RsImplItem || parent is RsFunction) {
+        if ((parent as? RsFunction)?.owner == RsAbstractableOwner.Foreign) {
+            val genericsCount = element.typeParameterList.size
+            val constCount = element.constParameterList.size
+            if (genericsCount > 0 || constCount > 0) {
+                val kinds = when {
+                    constCount == 0 -> "type"
+                    genericsCount == 0 -> "const"
+                    else -> "type or const"
+                }
+                RsDiagnostic.ConstOrTypeParamsInExternError(element, kinds).addToHolder(holder)
+            }
+        }
+
         element.typeParameterList
             .mapNotNull { it.typeReference }
             .forEach {
