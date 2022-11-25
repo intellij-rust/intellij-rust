@@ -225,6 +225,9 @@ class MacroExpansionManagerImpl(
         val expansion: RsResult<MacroExpansion, GetMacroExpansionError> = run {
             val includingFile = call.findIncludingFile()
                 ?: return@run Err(GetMacroExpansionError.IncludingFileNotFound)
+            if (getIncludedFrom(includingFile) != call) {
+                return@run Err(GetMacroExpansionError.FileIncludedIntoMultiplePlaces)
+            }
             val items = includingFile.stubChildrenOfType<RsExpandedElement>()
             Ok(MacroExpansion.Items(includingFile, items))
         }
@@ -733,6 +736,11 @@ private class MacroExpansionServiceImplInner(
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
         val expansionFile = getExpansionFile(info.defMap, macroIndex)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, macroIndex)))
+
+        if (getExpandedFromByExpansionFile(expansionFile) != call) {
+            return everChanged(Err(GetMacroExpansionError.InconsistentExpansionExpandedFrom))
+        }
+
         val expansion = Ok(getExpansionFromExpandedFile(MacroExpansionContext.ITEM, expansionFile)!!)
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, modificationTracker, call.modificationTracker)
@@ -748,13 +756,16 @@ private class MacroExpansionServiceImplInner(
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall? {
         checkReadAccessAllowed()
         val parent = element.stubParent as? RsFile ?: return null
-        return CachedValuesManager.getCachedValue(parent, GET_EXPANDED_FROM_KEY) {
+        return getExpandedFromByExpansionFile(parent)
+    }
+
+    private fun getExpandedFromByExpansionFile(parent: RsFile) =
+        CachedValuesManager.getCachedValue(parent, GET_EXPANDED_FROM_KEY) {
             CachedValueProvider.Result.create(
                 doGetExpandedFromForExpansionFile(parent),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
         }
-    }
 
     private fun doGetExpandedFromForExpansionFile(parent: RsFile): RsPossibleMacroCall? {
         val (defMap, expansionName) = getDefMapForExpansionFile(parent) ?: return null
