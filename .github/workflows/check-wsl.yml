@@ -54,9 +54,9 @@ jobs:
               with:
                   distribution: Ubuntu-20.04
                   wsl-shell-user: test
-
-            - name: Set up WSL default user
-              run: C:\hostedtoolcache\windows\Ubuntu\20.4.0\x64\ubuntu.exe config --default-user test
+                  wsl-conf: |
+                      [user]
+                      default = test
 
             - name: Set up Rust
               shell: wsl-bash {0}
@@ -65,6 +65,7 @@ jobs:
             - name: Set up nightly Rust
               shell: wsl-bash {0}
               run: |
+                  echo $HOME
                   source $HOME/.cargo/env
                   rustup install --profile minimal nightly
                   rustup +nightly component add rust-src
