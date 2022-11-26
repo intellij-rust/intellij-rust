@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
+import org.rust.ide.icons.addUnsafeMark
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
@@ -160,7 +161,7 @@ val RsFunction.isActuallyUnsafe: Boolean
                 // See https://github.com/rustwasm/wasm-bindgen
                 context.queryAttributes.hasAttribute("wasm_bindgen") -> false
                 // Some Rust intrinsics are safe. This info is hardcoded in compiler
-                context.externAbi.litExpr?.stringValue == "rust-intrinsic" -> name !in SAFE_INTRINSICS
+                (context as? RsForeignModItemImplMixin)?.abi == "rust-intrinsic" -> name !in SAFE_INTRINSICS
                 else -> true
             }
         } else {
@@ -306,6 +307,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override fun getIcon(flags: Int): Icon {
+        var hasVisibility = true
         val baseIcon = when (val owner = owner) {
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
                 when {
@@ -315,17 +317,19 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
                 }
 
             is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
-                val icon = when {
+                if (!owner.isInherentImpl) {
+                    hasVisibility = false
+                }
+                when {
                     isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
                     isAssocFn -> RsIcons.ASSOC_FUNCTION
                     isAbstract -> RsIcons.ABSTRACT_METHOD
                     else -> RsIcons.METHOD
                 }
-                if (!owner.isInherentImpl) return icon
-                icon
             }
         }
-        return iconWithVisibility(flags, baseIcon)
+        val icon = if (isActuallyUnsafe) baseIcon.addUnsafeMark() else baseIcon
+        return if (hasVisibility) iconWithVisibility(flags, icon) else icon
     }
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
