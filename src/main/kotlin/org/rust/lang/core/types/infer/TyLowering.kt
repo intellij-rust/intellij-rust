@@ -9,10 +9,8 @@ import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.MacroExpansion
-import org.rust.lang.core.macros.calculateMacroExpansionDepth
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.RsPathResolveResult
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
@@ -166,7 +164,6 @@ class TyLowering private constructor(
             }
 
             is RsMacroType -> {
-                if (type.calculateMacroExpansionDepth() >= DEFAULT_RECURSION_LIMIT) return TyUnknown
                 val expansion = type.macroCall.expansion as? MacroExpansion.Type ?: return TyUnknown
                 lowerTy(expansion.type, null)
             }

@@ -47,7 +47,6 @@ class RsTypeInferenceWalker(
 ) {
     private var tryTy: Ty? = returnTy
     private var yieldTy: Ty? = null
-    private var macroExprDepth: Int = 0
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
@@ -1228,19 +1227,6 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferMacroExprType(macroExpr: RsMacroExpr, expected: Expectation): Ty {
-        if (macroExprDepth > DEFAULT_RECURSION_LIMIT) {
-            TypeInferenceMarks.MacroExprDepthLimitReached.hit()
-            return TyUnknown
-        }
-        macroExprDepth++
-        try {
-            return inferMacroExprType0(macroExpr, expected)
-        } finally {
-            macroExprDepth--
-        }
-    }
-
-    private fun inferMacroExprType0(macroExpr: RsMacroExpr, expected: Expectation): Ty {
         val macroCall = macroExpr.macroCall
 
         val definition = macroCall.resolveToMacro()

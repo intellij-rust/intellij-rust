@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
@@ -140,13 +139,11 @@ fun RsItemsOwner.processExpandedItemsInternal(
     withMacroCalls: Boolean = false,
     processor: (RsElement) -> Boolean
 ): Boolean {
-    val recursionLimit = getRecursionLimit(this)
-    return itemsAndMacros.any { it.processItem(withMacroCalls, recursionLimit, processor) }
+    return itemsAndMacros.any { it.processItem(withMacroCalls, processor) }
 }
 
 private fun RsElement.processItem(
     withMacroCalls: Boolean,
-    recursionLimit: Int,
     processor: (RsElement) -> Boolean
 ): Boolean {
     val derives: Sequence<RsMetaItem>? = if (this is RsAttrProcMacroOwner) {
@@ -157,7 +154,7 @@ private fun RsElement.processItem(
                 }
                 if (!isEnabledByCfgSelf()) return false
                 return attr.attr.expansion?.elements.orEmpty().any {
-                    it.processItem(withMacroCalls, recursionLimit, processor)
+                    it.processItem(withMacroCalls, processor)
                 }
             }
             is ProcMacroAttribute.Derive -> attr.derives
@@ -173,8 +170,8 @@ private fun RsElement.processItem(
                 if (processor(this)) return true
             }
             if (isEnabledByCfgSelf()) {
-                processExpansionRecursively(recursionLimit) {
-                    it.processItem(withMacroCalls, recursionLimit, processor)
+                processExpansionRecursively {
+                    it.processItem(withMacroCalls, processor)
                 }
             }
         }
@@ -190,7 +187,7 @@ private fun RsElement.processItem(
             if (processor(derive)) return true
         }
         val result = derive.expansion?.elements.orEmpty().any {
-            it.processItem(withMacroCalls, recursionLimit, processor)
+            it.processItem(withMacroCalls, processor)
         }
         if (result) return true
     }
