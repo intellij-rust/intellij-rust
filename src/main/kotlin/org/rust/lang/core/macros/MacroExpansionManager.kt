@@ -132,6 +132,10 @@ interface MacroExpansionManager {
             }
         }
     }
+
+    object Testmarks {
+        object TooDeepExpansion : Testmark()
+    }
 }
 
 @JvmField
@@ -724,14 +728,21 @@ private class MacroExpansionServiceImplInner(
             return expandMacroOld(call)
         }
 
-        val containingFile: VirtualFile? = call.containingFile.virtualFile
+        val containingFile = call.containingFile
+        val containingRsFile = containingFile.containingRsFileSkippingCodeFragments
+        val containingVirtualFile: VirtualFile? = containingFile.virtualFile
+        val info = getModInfo(call.containingMod)
+            ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
 
-        if (!call.isTopLevelExpansion || containingFile?.fileSystem?.isSupportedFs != true) {
+        if (containingRsFile != null && containingRsFile.macroExpansionDepth >= info.defMap.recursionLimit) {
+            MacroExpansionManager.Testmarks.TooDeepExpansion.hit()
+            return everChanged(Err(GetMacroExpansionError.TooDeepExpansion))
+        }
+
+        if (!call.isTopLevelExpansion || containingVirtualFile?.fileSystem?.isSupportedFs != true) {
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
-        val info = getModInfo(call.containingMod)
-            ?: return everChanged(Err(GetMacroExpansionError.ModDataNotFound))
         val macroIndex = info.getMacroIndex(call, info.crate)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
         val expansionFile = getExpansionFile(info.defMap, macroIndex)
@@ -1033,8 +1044,7 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
             }
         }
         if (context != null) {
-            // `lazy = false` in order to prevent deep stack overflow if the expansion is deep
-            expansion.file.setRsFileContext(context, lazy = false)
+            expansion.file.setRsFileContext(context, isInMemoryMacroExpansion = true)
         }
         expansion
     }.mapErr {

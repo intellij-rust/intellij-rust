@@ -83,6 +83,7 @@ class RsFile(
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
     val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
+    val macroExpansionDepth: Int get() = cachedData.macroExpansionDepth
 
     /** Used for in-memory macro expansions */
     @Volatile
@@ -133,6 +134,7 @@ class RsFile(
                 crates = listOf(crate),
                 isDeeplyEnabledByCfg = true, // Macros are ony expanded in cfg-enabled mods
                 isIncludedByIncludeMacro = false, // An expansion file obviously can't be included
+                macroExpansionDepth = 0, // TODO should be actual expansion depth, but it's not strictly necessary
             )
         }
 
@@ -183,12 +185,14 @@ class RsFile(
     }
 
     /** Very internal utility, do not use */
-    fun inheritCachedDataFrom(other: RsFile, lazy: Boolean) {
-        forcedCachedData = if (lazy) {
-            { other.cachedData }
-        } else {
-            val cachedData = other.cachedData
+    fun inheritCachedDataFrom(other: RsFile, isInMemoryMacroExpansion: Boolean) {
+        forcedCachedData = if (isInMemoryMacroExpansion) {
+            // Make it non-lazy to prevent stack overflow if the expansion is too deep
+            val otherCachedData = other.cachedData
+            val cachedData = otherCachedData.copy(macroExpansionDepth = otherCachedData.macroExpansionDepth + 1);
             { cachedData }
+        } else {
+            { other.cachedData }
         }
     }
 
@@ -326,6 +330,11 @@ private data class CachedData(
     val crates: List<Crate> = emptyList(),
     val isDeeplyEnabledByCfg: Boolean = true,
     val isIncludedByIncludeMacro: Boolean = false,
+    /**
+     * Note: it accounts only for in-memory macro calls depth. Top-level macro calls don't need it because
+     * their depth is checked in [DefCollector]
+     */
+    val macroExpansionDepth: Int = 0
 )
 
 // A rust file can be included in multiple places, but currently IntelliJ Rust works properly only with one

@@ -44,7 +44,7 @@ interface RsExpandedElement : RsElement {
 }
 
 fun RsExpandedElement.setContext(context: RsElement) {
-    (containingFile as? RsFile)?.setRsFileContext(context, lazy = true)
+    (containingFile as? RsFile)?.setRsFileContext(context, isInMemoryMacroExpansion = false)
     setExpandedElementContext(context)
 }
 
@@ -54,10 +54,10 @@ fun RsExpandedElement.setExpandedElementContext(context: RsElement) {
 }
 
 /** Internal. Use [setContext] */
-fun RsFile.setRsFileContext(context: RsElement, lazy: Boolean) {
+fun RsFile.setRsFileContext(context: RsElement, isInMemoryMacroExpansion: Boolean) {
     val contextContainingFile = context.containingRsFileSkippingCodeFragments
     if (contextContainingFile != null) {
-        inheritCachedDataFrom(contextContainingFile, lazy)
+        inheritCachedDataFrom(contextContainingFile, isInMemoryMacroExpansion)
     }
 }
 

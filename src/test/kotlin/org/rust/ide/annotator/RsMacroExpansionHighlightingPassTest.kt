@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.colors.RsColor
 import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionManager
 
 // More tests are located in `RsHighlightingAnnotatorTest` (most of those tests are executed
 // in both plain and macro context)
@@ -54,6 +55,16 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         <ATTRIBUTE>#</ATTRIBUTE><ATTRIBUTE>[allow</ATTRIBUTE><ATTRIBUTE>(foo</ATTRIBUTE><ATTRIBUTE>)]</ATTRIBUTE>
         fn <FUNCTION>main</FUNCTION>() {
             <ATTRIBUTE>#!</ATTRIBUTE><ATTRIBUTE>[crate_type = <STRING>"lib"</STRING></ATTRIBUTE><ATTRIBUTE>]</ATTRIBUTE>
+        }
+    """)
+
+    @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
+    fun `test infinite recursive macro`() = checkHighlighting("""
+        macro_rules! foo {
+            ($ i:ident) => { foo!($ i) };
+        }
+        fn main() {
+            let _ = foo!(a);
         }
     """)
 

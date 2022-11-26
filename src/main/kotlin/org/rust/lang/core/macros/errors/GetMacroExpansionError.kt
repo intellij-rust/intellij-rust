@@ -28,6 +28,7 @@ sealed class GetMacroExpansionError {
 
     object ModDataNotFound : GetMacroExpansionError()
     object InconsistentExpansionExpandedFrom : GetMacroExpansionError()
+    object TooDeepExpansion : GetMacroExpansionError()
     object NoMacroIndex : GetMacroExpansionError()
     object ExpansionNameNotFound : GetMacroExpansionError()
     object ExpansionFileNotFound : GetMacroExpansionError()
@@ -85,6 +86,8 @@ sealed class GetMacroExpansionError {
         ModDataNotFound -> "internal error: can't find ModData for containing mod of the macro call"
         InconsistentExpansionExpandedFrom -> "internal error: `macro.expansion.expandedFrom != macro`; " +
             "maybe the macro invocation is inside a module that conflicts with another module name?"
+        ModDataNotFound -> "can't find ModData for containing mod of the macro call"
+        TooDeepExpansion -> "recursion limit reached"
         NoMacroIndex -> "can't find macro index of the macro call"
         ExpansionNameNotFound -> "internal error: expansion name not found"
         ExpansionFileNotFound -> "the macro is not yet expanded"
