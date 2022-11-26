@@ -17,5 +17,5 @@ class RsUnixToolchainFlavor : RsToolchainFlavor() {
             .map { it.toPath() }
             .filter { it.isDirectory() }
 
-    override fun isApplicable(): Boolean = SystemInfo.isUnix
+    override fun isApplicable(): Boolean = super.isApplicable() && SystemInfo.isUnix
 }

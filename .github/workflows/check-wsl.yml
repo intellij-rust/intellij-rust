@@ -1,0 +1,125 @@
+name: check WSL
+
+on:
+    push:
+        branches:
+            - master
+            - staging
+            - trying
+    pull_request:
+
+# Allow cancelling all previous runs for the same branch
+# See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build-native-code:
+        uses: ./.github/workflows/build-native-code.yml
+        with:
+            rust-version: 1.64.0
+            cache: true
+
+    check-plugin:
+        needs: [ build-native-code ]
+        strategy:
+            matrix:
+                os: [ windows-latest ]
+                rust-version: [ 1.64.0 ]
+                base-ide: [ idea ]
+                platform-version: [ 223 ]
+                default-edition-for-tests: [ 2021 ]
+
+        runs-on: ${{ matrix.os }}
+        timeout-minutes: 120
+        env:
+            ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
+            ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+            ORG_GRADLE_PROJECT_compileNativeCode: false
+            DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
+            CI_WSL: true
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Set up JDK 17
+              uses: actions/setup-java@v3
+              with:
+                  distribution: corretto
+                  java-version: 17
+
+            - name: Set up WSL
+              uses: Vampire/setup-wsl@v1
+              with:
+                  distribution: Ubuntu-20.04
+                  wsl-shell-user: test
+
+            - name: Set up WSL default user
+              run: C:\hostedtoolcache\windows\Ubuntu\20.4.0\x64\ubuntu.exe config --default-user test
+
+            - name: Set up Rust
+              shell: wsl-bash {0}
+              run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${{ matrix.rust-version }} -c rust-src rustfmt clippy
+
+            - name: Set up nightly Rust
+              shell: wsl-bash {0}
+              run: |
+                  source $HOME/.cargo/env
+                  rustup install --profile minimal nightly
+                  rustup +nightly component add rust-src
+
+            - name: Check environment
+              shell: wsl-bash {0}
+              run: |
+                  source $HOME/.cargo/env
+                  rustc --version
+                  rustup component list --installed
+                  cargo install --list
+
+            - name: Set up test env variables
+              shell: wsl-bash {0}
+              run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
+
+            - name: Create symlink for Rust stdlib Unix
+              shell: wsl-bash {0}
+              run: |
+                  echo "$RUST_SRC_WITH_SYMLINK"
+                  source $HOME/.cargo/env
+                  ln -s $(rustc --print sysroot)/lib/rustlib/src/rust $RUST_SRC_WITH_SYMLINK
+
+            - name: Load native binaries
+              uses: ./.github/actions/load-native-binaries
+
+            - name: Download
+              uses: gradle/gradle-build-action@v1
+              with:
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
+
+            - name: Build
+              uses: gradle/gradle-build-action@v1
+              with:
+                  arguments: "assemble testClasses -Pkotlin.incremental=false --no-daemon"
+
+            - name: Check
+              uses: gradle/gradle-build-action@v1
+              with:
+                  arguments: "check -PexcludeTests=org/rustPerformanceTests/** --continue -Pkotlin.incremental=false --no-daemon"
+
+            - name: Collect fail reports
+              if: failure()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: tests-report-wsl-${{ matrix.rust-version }}-${{ matrix.base-ide }}-${{ matrix.platform-version }}
+                  path: |
+                      build/reports/tests
+                      */build/reports/tests
+                      build/*sandbox*/system-test/testlog/idea.log
+                      */build/*sandbox*/system-test/testlog/idea.log
+
+    check:
+        needs: [ check-plugin ]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Finish check
+              run: echo "Check finished successfully!"

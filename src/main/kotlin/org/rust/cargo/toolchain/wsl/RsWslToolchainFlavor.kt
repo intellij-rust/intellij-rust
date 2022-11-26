@@ -32,7 +32,7 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
     }
 
     override fun isApplicable(): Boolean =
-        WSLUtil.isSystemCompatible() && isFeatureEnabled(WSL_TOOLCHAIN)
+        super.isApplicable() && WSLUtil.isSystemCompatible() && isFeatureEnabled(WSL_TOOLCHAIN)
 
     override fun isValidToolchainPath(path: Path): Boolean =
         WslPath.isWslUncPath(path.toString()) && super.isValidToolchainPath(path)

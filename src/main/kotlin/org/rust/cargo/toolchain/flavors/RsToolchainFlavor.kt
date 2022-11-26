@@ -23,7 +23,7 @@ abstract class RsToolchainFlavor {
      * Flavor is added to result in [getApplicableFlavors] if this method returns true.
      * @return whether this flavor is applicable.
      */
-    protected open fun isApplicable(): Boolean = true
+    protected open fun isApplicable(): Boolean = !System.getenv("CI_WSL").toBoolean()
 
     /**
      * Checks if the path is the name of a Rust toolchain of this flavor.

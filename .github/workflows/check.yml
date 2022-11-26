@@ -1,17 +1,6 @@
 name: check
 
-on:
-    push:
-        branches:
-            - master
-            - staging
-            - trying
-    pull_request:
-    # Trigger workflow every day to create/update caches for other builds
-    # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
-    # to get more details about cache access
-    schedule:
-        -   cron: '0 3 * * *'
+on: [ workflow_dispatch ]
 
 # Allow cancelling all previous runs for the same branch
 # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
