@@ -548,7 +548,7 @@ Pat ::= SimplePat OrPatLeft? {
 }
 
 private SimplePat ::= PatWild
-                    | PatRest
+                    | (PatRest !PatConst)
                     | PatRef
                     | PatTup
                     | PatSlice
@@ -563,7 +563,7 @@ private SimplePat ::= PatWild
 OrPat ::= '|'? SimplePat ('|' SimplePat)*
 left OrPatLeft ::= ('|' SimplePat)+ { elementType = OrPat }
 
-private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|' | const
+private Pat_first ::= '_' | '..' | '...' | '..=' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|' | const
 
 PatBox ::= box SimplePat
 
@@ -586,7 +586,9 @@ private PatField_with_recover ::= !('}' | '..') PatField (',' | & '}') {
 private PatField_recover ::= !('}' | '..' | ref | mut | box | identifier | INTEGER_LITERAL)
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr | &const BlockExpr
-PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
+
+PatRange ::= PatConst? ('..' | '...' | '..=') PatConst? { pin = 2 }
+
 
 PatTup ::= '(' PatParenListElem_with_recover* ')'
 PatSlice ::= '[' PatBracketListElem_with_recover* ']'
