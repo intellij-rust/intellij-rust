@@ -1,0 +1,50 @@
+{
+    "icons": {
+        "expui": {
+            "rust.svg": "icons/rust.svg",
+            "rustBuild.svg": "icons/rustBuild.svg",
+            "rustReload.svg": "icons/rustReload.svg",
+            "rustRepl.svg": "icons/rustRepl.svg",
+            "toolWindow.svg": "icons/toolWindow.svg",
+
+            "rustFile.svg": "icons/rustFile.svg",
+            "rustMain.svg": "icons/rustMain.svg",
+            "rustMod.svg": "icons/rustMod.svg",
+
+            "cargo.svg": "icons/cargo.svg",
+            "cargoGenerate.svg": "icons/cargoGenerate.svg",
+            "cargoLock.svg": "icons/cargoLock.svg",
+
+            "targets.svg": "icons/targets.svg",
+            "targetBin.svg": "icons/targetBin.svg",
+            "targetLib.svg": "icons/targetLib.svg",
+            "targetTest.svg": "icons/targetTest.svg",
+            "targetBench.svg": "icons/targetBench.svg",
+            "targetExample.svg": "icons/targetExample.svg",
+            "targetCustomBuild.svg": "icons/targetCustomBuild.svg",
+
+            "nodes": {
+                "struct.svg": "icons/nodes/struct.svg",
+                "field.svg": "icons/nodes/field.svg",
+                "union.svg": "icons/nodes/union.svg",
+                "enum.svg": "icons/nodes/enum.svg",
+                "enumVariant.svg": "icons/nodes/enumVariant.svg",
+                "trait.svg": "icons/nodes/trait.svg",
+                "impl.svg": "icons/nodes/impl.svg",
+                "abstractConstant.svg": "icons/nodes/abstractConstant.svg",
+                "abstractTypeAlias.svg": "icons/nodes/abstractTypeAlias.svg",
+                "abstractMethod.svg": "icons/nodes/abstractMethod.svg",
+                "abstractFunction.svg": "icons/nodes/abstractFunction.svg",
+                "constant.svg": "icons/nodes/constant.svg",
+                "static.svg": "icons/nodes/static.svg",
+                "typeAlias.svg": "icons/nodes/typeAlias.svg",
+                "method.svg": "icons/nodes/method.svg",
+                "function.svg": "icons/nodes/function.svg",
+                "module.svg": "icons/nodes/module.svg",
+                "macro.svg": "icons/nodes/macro.svg",
+                "macro2.svg": "icons/nodes/macro2.svg",
+                "macroP.svg": "icons/nodes/macroP.svg"
+            }
+        }
+    }
+}

@@ -1082,7 +1082,7 @@
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
-                    icon="/icons/tool-window.svg"/>
+                    icon="/icons/toolWindow.svg"/>
 
         <statusBarWidgetFactory id="rustExternalLinterWidget"
                                 implementation="org.rust.ide.status.RsExternalLinterWidgetFactory"
@@ -1095,10 +1095,11 @@
                             serviceImplementation="org.rust.cargo.util.UnitTestRustcCacheServiceImpl"
                             testServiceImplementation="org.rust.cargo.util.TestUnitTestRustcCacheService"/>
 
-        <!-- Icon Provider -->
+        <!-- Icons -->
 
         <fileIconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
         <iconProvider implementation="org.rust.ide.icons.RsIconProvider"/>
+        <iconMapper mappingFile="RustIconMappings.json"/>
 
         <!-- Indices -->
 
@@ -1465,7 +1466,7 @@
 
         <action id="Cargo.RunExternalLinter"
                 class="org.rust.ide.actions.RsRunExternalLinterAction"
-                icon="/icons/external-linter.svg"/>
+                icon="/icons/externalLinter.svg"/>
 
         <action id="Cargo.ToggleExternalLinterOnTheFlyAction"
                 class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"/>
@@ -1497,7 +1498,7 @@
 
         <action id="Rust.ConsoleREPL"
                 class="org.rust.ide.console.RunRustConsoleAction"
-                icon="/icons/repl.svg">
+                icon="/icons/rustRepl.svg">
         </action>
 
         <group id="Rust.Tools"
