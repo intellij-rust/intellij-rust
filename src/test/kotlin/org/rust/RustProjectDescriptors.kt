@@ -128,7 +128,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         )
     }
 
-    protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
+    protected open fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
         id = "$name 0.0.1",
         contentRootUrl = contentRoot,
         name = name,
@@ -158,7 +158,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         outDirUrl = null
     )
 
-    private fun testTarget(crateRootUrl: String, name: String, kind: TargetKind, doctest: Boolean = true): Target =
+    protected fun testTarget(crateRootUrl: String, name: String, kind: TargetKind, doctest: Boolean = true): Target =
         Target(crateRootUrl, name, kind, DEFAULT_EDITION_FOR_TESTS, doctest, requiredFeatures = emptyList())
 }
 
