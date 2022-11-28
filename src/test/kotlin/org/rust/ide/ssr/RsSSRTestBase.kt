@@ -8,11 +8,10 @@ package org.rust.ide.ssr
 import com.intellij.structuralsearch.inspection.SSBasedInspection
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
-import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsFileType
 
-abstract class RsStructuralSearchTestBase : RsTestBase() {
+abstract class RsSSRTestBase : RsTestBase() {
     private var inspection: SSBasedInspection? = null
 
     override fun setUp() {
@@ -21,7 +20,7 @@ abstract class RsStructuralSearchTestBase : RsTestBase() {
         myFixture.enableInspections(inspection)
     }
 
-    protected fun doTest(@Language("Rust") code: String, pattern: String) {
+    protected fun doTest(code: String, pattern: String) {
         InlineFile(code.trimIndent())
 
         val configuration = SearchConfiguration().apply {

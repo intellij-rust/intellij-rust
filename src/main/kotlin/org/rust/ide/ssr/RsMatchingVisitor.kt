@@ -8,7 +8,11 @@ package org.rust.ide.ssr
 import com.intellij.psi.PsiElement
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+import org.rust.ide.utils.import.ImportCandidatesCollector
+import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.stringValue
 
 class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : RsVisitor() {
     private fun getHandler(element: PsiElement) = myMatchingVisitor.matchContext.pattern.getHandler(element)
@@ -30,24 +34,26 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
         }
     }
 
+    private fun match(e1: PsiElement?, e2: PsiElement?) = myMatchingVisitor.match(e1, e2)
+
     override fun visitStructItem(o: RsStructItem) {
         val struct = getElement<RsStructItem>() ?: return
         myMatchingVisitor.result =
             matchOuterAttrList(o.outerAttrList, struct.outerAttrList) &&
-                myMatchingVisitor.match(o.vis, struct.vis) &&
+                match(o.vis, struct.vis) &&
                 matchIdentifier(o.identifier, struct.identifier) &&
-                myMatchingVisitor.match(o.typeParameterList, struct.typeParameterList) &&
-                myMatchingVisitor.match(o.whereClause, struct.whereClause) &&
-                myMatchingVisitor.match(o.blockFields, struct.blockFields) &&
-                myMatchingVisitor.match(o.tupleFields, struct.tupleFields)
+                match(o.typeParameterList, struct.typeParameterList) &&
+                match(o.whereClause, struct.whereClause) &&
+                match(o.blockFields, struct.blockFields) &&
+                match(o.tupleFields, struct.tupleFields)
     }
 
     override fun visitTypeParameterList(o: RsTypeParameterList) {
         val parameters = getElement<RsTypeParameterList>() ?: return
         myMatchingVisitor.result =
-            myMatchingVisitor.matchInAnyOrder(o.typeParameterList, parameters.typeParameterList) &&
-                myMatchingVisitor.matchInAnyOrder(o.lifetimeParameterList, parameters.lifetimeParameterList) &&
-                myMatchingVisitor.matchInAnyOrder(o.constParameterList, parameters.constParameterList)
+            myMatchingVisitor.matchSequentially(o.typeParameterList, parameters.typeParameterList) &&
+                myMatchingVisitor.matchSequentially(o.lifetimeParameterList, parameters.lifetimeParameterList) &&
+                myMatchingVisitor.matchSequentially(o.constParameterList, parameters.constParameterList)
     }
 
     override fun visitWhereClause(o: RsWhereClause) {
@@ -56,32 +62,63 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
     }
 
     override fun visitWherePred(o: RsWherePred) {
-        // TODO
-        super.visitWherePred(o)
+        val where = getElement<RsWherePred>() ?: return
+        myMatchingVisitor.result = match(o.typeReference, where.typeReference)
+            && match(o.typeParamBounds, where.typeParamBounds)
     }
 
     override fun visitTypeParameter(o: RsTypeParameter) {
         val parameter = getElement<RsTypeParameter>() ?: return
         myMatchingVisitor.result =
             matchOuterAttrList(o.outerAttrList, parameter.outerAttrList) &&
-                myMatchingVisitor.match(o.typeParamBounds, parameter.typeParamBounds) &&
-                myMatchingVisitor.match(o.typeReference, parameter.typeReference) &&
+                match(o.typeParamBounds, parameter.typeParamBounds) &&
+                match(o.typeReference, parameter.typeReference) &&
                 matchIdentifier(o.identifier, parameter.identifier)
     }
 
+    override fun visitTypeArgumentList(o: RsTypeArgumentList) {
+        val list = getElement<RsTypeArgumentList>() ?: return
+        myMatchingVisitor.result = myMatchingVisitor.matchSequentially(o.typeArguments, list.typeArguments)
+    }
+
     override fun visitTypeParamBounds(o: RsTypeParamBounds) {
-        // TODO
-        super.visitTypeParamBounds(o)
+        val bounds = getElement<RsTypeParamBounds>() ?: return
+        myMatchingVisitor.result = myMatchingVisitor.matchInAnyOrder(o.polyboundList, bounds.polyboundList)
+    }
+
+    override fun visitPolybound(o: RsPolybound) {
+        val polybound = getElement<RsPolybound>() ?: return
+        myMatchingVisitor.result = match(o.bound, polybound.bound)
+            && match(o.forLifetimes, polybound.forLifetimes)
+    }
+
+    override fun visitBound(o: RsBound) {
+        val bound = getElement<RsBound>() ?: return
+        myMatchingVisitor.result = match(o.lifetime, bound.lifetime)
+            && match(o.traitRef, bound.traitRef)
+    }
+
+    override fun visitTraitRef(o: RsTraitRef) {
+        val trait = getElement<RsTraitRef>() ?: return
+        myMatchingVisitor.result = match(o.path, trait.path)
     }
 
     override fun visitLifetimeParameter(o: RsLifetimeParameter) {
-        // TODO
-        super.visitLifetimeParameter(o)
+        val lifetime = getElement<RsLifetimeParameter>() ?: return
+        myMatchingVisitor.result = matchIdentifier(o.quoteIdentifier, lifetime.quoteIdentifier)
     }
 
     override fun visitConstParameter(o: RsConstParameter) {
-        // TODO
-        super.visitConstParameter(o)
+        val const = getElement<RsConstParameter>() ?: return
+        myMatchingVisitor.result = match(o.typeReference, const.typeReference)
+            && matchIdentifier(o.identifier, const.identifier)
+    }
+
+    override fun visitConstant(o: RsConstant) {
+        val constant = getElement<RsConstant>() ?: return
+        myMatchingVisitor.result = matchIdentifier(o.identifier, constant.identifier) &&
+            match(o.typeReference, constant.typeReference) &&
+            match(o.expr, constant.expr)
     }
 
     override fun visitBlockFields(o: RsBlockFields) {
@@ -93,9 +130,9 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
         val field = getElement<RsNamedFieldDecl>() ?: return
         myMatchingVisitor.result =
             matchOuterAttrList(o.outerAttrList, field.outerAttrList) &&
-                myMatchingVisitor.match(o.vis, field.vis) &&
+                match(o.vis, field.vis) &&
                 matchIdentifier(o.identifier, field.identifier) &&
-                myMatchingVisitor.match(o.typeReference, field.typeReference)
+                match(o.typeReference, field.typeReference)
     }
 
     override fun visitTupleFields(o: RsTupleFields) {
@@ -107,8 +144,8 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
         val field = getElement<RsTupleFieldDecl>() ?: return
         myMatchingVisitor.result =
             matchOuterAttrList(o.outerAttrList, field.outerAttrList) &&
-                myMatchingVisitor.match(o.vis, field.vis) &&
-                myMatchingVisitor.match(o.typeReference, field.typeReference)
+                match(o.vis, field.vis) &&
+                match(o.typeReference, field.typeReference)
     }
 
     override fun visitTypeReference(o: RsTypeReference) {
@@ -119,13 +156,11 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
 
     override fun visitRefLikeType(o: RsRefLikeType) {
         val refType = getElement<RsRefLikeType>() ?: return
-        myMatchingVisitor.result =
-            matchIdentifier(o.mut, refType.mut) &&
-                matchIdentifier(o.const, refType.const) &&
-                matchIdentifier(o.mul, refType.mul) &&
-                matchIdentifier(o.and, refType.and) &&
-                myMatchingVisitor.match(o.typeReference, refType.typeReference) &&
-                myMatchingVisitor.match(o.lifetime, refType.lifetime)
+        myMatchingVisitor.result = (o.mut == null) == (refType.mut == null) &&
+                (o.const == null) == (refType.const == null) &&
+                (o.mul == null) == (refType.mul == null) &&
+                match(o.typeReference, refType.typeReference) &&
+                match(o.lifetime, refType.lifetime)
     }
 
     override fun visitLifetime(o: RsLifetime) {
@@ -138,26 +173,77 @@ class RsMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : 
         myMatchingVisitor.result = matchTextOrVariable(o, vis)
     }
 
+    override fun visitInnerAttr(o: RsInnerAttr) {
+        val attr = getElement<RsInnerAttr>() ?: return
+        myMatchingVisitor.result = match(o.metaItem, attr.metaItem)
+    }
+
     override fun visitOuterAttr(o: RsOuterAttr) {
         val attr = getElement<RsOuterAttr>() ?: return
-        myMatchingVisitor.result = myMatchingVisitor.match(o.metaItem, attr.metaItem)
+        myMatchingVisitor.result = match(o.metaItem, attr.metaItem)
     }
 
     override fun visitMetaItem(o: RsMetaItem) {
         val metaItem = getElement<RsMetaItem>() ?: return
-        // TODO
-        myMatchingVisitor.result =
-            myMatchingVisitor.match(o.compactTT, metaItem.compactTT) &&
-                myMatchingVisitor.match(o.litExpr, metaItem.litExpr) &&
-                myMatchingVisitor.match(o.metaItemArgs, metaItem.metaItemArgs) &&
-                myMatchingVisitor.match(o.path, metaItem.path) &&
-                myMatchingVisitor.match(o.eq, metaItem.eq)
+        myMatchingVisitor.result = match(o.compactTT, metaItem.compactTT) &&
+            match(o.litExpr, metaItem.litExpr) &&
+            match(o.metaItemArgs, metaItem.metaItemArgs) &&
+            match(o.path, metaItem.path)
+    }
+
+    override fun visitMetaItemArgs(o: RsMetaItemArgs) {
+        val metaItemArgs = getElement<RsMetaItemArgs>() ?: return
+        myMatchingVisitor.result = myMatchingVisitor.matchInAnyOrder(o.metaItemList, metaItemArgs.metaItemList)
+    }
+
+    override fun visitPathType(o: RsPathType) {
+        val path = getElement<RsPathType>() ?: return
+
+        // Match the last path component
+        val lastPartMatching = matchIdentifier(o.path.identifier, path.path.identifier) &&
+            match(o.path.typeArgumentList, path.path.typeArgumentList) &&
+            match(o.path.valueParameterList, path.path.valueParameterList)
+        if (!lastPartMatching) {
+            myMatchingVisitor.result = false
+            return
+        }
+
+        // Perfect match
+        if (match(o.path.path, path.path.path)) {
+            myMatchingVisitor.result = true
+            return
+        }
+
+        // Match a corresponding import candidate
+        val codeReference = path.path.reference?.resolve()
+        val codeIdentifier = path.path.identifier?.text
+        val context = ImportContext.from(path, ImportContext.Type.OTHER)
+        if (context == null || codeIdentifier == null) {
+            myMatchingVisitor.result = false
+            return
+        }
+        val target = o.text.split("::").dropLast(1).joinToString("::")
+        myMatchingVisitor.result = ImportCandidatesCollector
+            .getImportCandidates(context, codeIdentifier)
+            .filter { it.item == codeReference }
+            .any { it.path.dropLast(1).joinToString("::") == target }
     }
 
     override fun visitPath(o: RsPath) {
         val path = getElement<RsPath>() ?: return
-        // TODO
-        myMatchingVisitor.result = matchIdentifier(o.identifier, path.identifier)
+        myMatchingVisitor.result = matchIdentifier(o.identifier, path.identifier) &&
+            match(o.typeArgumentList, path.typeArgumentList) &&
+            match(o.valueParameterList, path.valueParameterList) &&
+            match(o.path, path.path)
+    }
+
+    override fun visitLitExpr(o: RsLitExpr) {
+        val litExpr = getElement<RsLitExpr>() ?: return
+        myMatchingVisitor.result = o.booleanValue == litExpr.booleanValue &&
+            o.integerValue == litExpr.integerValue &&
+            o.floatValue == litExpr.floatValue &&
+            o.charValue == litExpr.charValue &&
+            o.stringValue == litExpr.stringValue
     }
 
     private fun matchOuterAttrList(treeAttrList: List<RsOuterAttr>, patternAttrList: List<RsOuterAttr>): Boolean = myMatchingVisitor.matchInAnyOrder(treeAttrList, patternAttrList)

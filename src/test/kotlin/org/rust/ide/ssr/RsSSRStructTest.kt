@@ -5,7 +5,7 @@
 
 package org.rust.ide.ssr
 
-class RsStructuralSearchStructTest : RsStructuralSearchTestBase() {
+class RsSSRStructTest : RsSSRTestBase() {
     fun `test empty struct`() = doTest("""
         struct S;
         <warning>struct SS;</warning>
