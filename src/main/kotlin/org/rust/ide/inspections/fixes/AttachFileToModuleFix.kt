@@ -70,7 +70,22 @@ class AttachFileToModuleFix(
     }
 
     companion object {
-        fun findAvailableModulesForFile(project: Project, file: RsFile): List<RsFile> {
+
+        fun createIfCompatible(project: Project, file: RsFile): AttachFileToModuleFix? {
+            val availableModules = findAvailableModulesForFile(project, file)
+            return if (availableModules.isNotEmpty()) {
+                val moduleLabel = if (availableModules.size == 1) {
+                    availableModules[0].name
+                } else {
+                    null
+                }
+                AttachFileToModuleFix(file, moduleLabel)
+            } else {
+                null
+            }
+        }
+
+        private fun findAvailableModulesForFile(project: Project, file: RsFile): List<RsFile> {
             val virtualFile = file.virtualFile ?: return emptyList()
             val pkg = project.cargoProjects.findPackageForFile(virtualFile) ?: return emptyList()
             val directory = virtualFile.parent ?: return emptyList()
