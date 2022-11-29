@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.ext.ancestors
 
@@ -27,7 +25,14 @@ private fun areAncestorTypesEquals(psi1: PsiElement, psi2: PsiElement): Boolean 
     psi1.ancestors.zip(psi2.ancestors).all { (a, b) -> a.javaClass == b.javaClass }
 
 fun rerunCompletion(parameters: CompletionParameters, result: CompletionResultSet) {
-    CompletionService.getCompletionService().getVariantsFromContributors(parameters, null) {
+    // BACKCOMPAT 2022.3: `LiveTemplateCompletionContributor` throws an exception on 2022.3 when invoked
+    //  with a light virtual file. See https://github.com/intellij-rust/intellij-rust/issues/9822
+    //  Here we exclude `LiveTemplateCompletionContributor` from completion. This approach works since
+    //  `LiveTemplateCompletionContributor` is the first in the completion list
+    val liveTemplateContributor = CompletionContributor.forParameters(parameters)
+        .firstOrNull { it is LiveTemplateCompletionContributor }
+
+    CompletionService.getCompletionService().getVariantsFromContributors(parameters, liveTemplateContributor) {
         result.addElement(it.lookupElement)
     }
 }
