@@ -107,4 +107,84 @@ class RsFullMacroArgumentCompletionTest : RsCompletionTestBase() {
         impl Foo { fn bar(&self) {} }
         foo!(Foo, bar(/*caret*/)ar);
     """)
+
+    fun `test a macro call in type context`() = doSingleCompletion("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        struct FooBar;
+        type T = foo!(F/*caret*/);
+    """, """
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        struct FooBar;
+        type T = foo!(FooBar/*caret*/);
+    """)
+
+    fun `test a macro call in statement context`() = doSingleCompletion("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            foo! {
+                fn bar() {
+                    F/*caret*/
+                }
+            }
+        }
+    """, """
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            foo! {
+                fn bar() {
+                    FooBar/*caret*/
+                }
+            }
+        }
+    """)
+
+    fun `test a macro call in expression context`() = doSingleCompletion("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            let a = foo!(
+                F/*caret*/
+            );
+        }
+    """, """
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            let a = foo!(
+                FooBar/*caret*/
+            );
+        }
+    """)
+
+    fun `test a macro call in pattern context`() = doSingleCompletion("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            let foo!(F/*caret*/) = FooBar;
+        }
+    """, """
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        fn main() {
+            struct FooBar;
+            let foo!(FooBar/*caret*/) = FooBar;
+        }
+    """)
 }
