@@ -433,7 +433,7 @@
         <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
                          displayName="Self convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSelfConventionInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsSelfConventionInspection"/>
 
         <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
                          displayName="Struct naming convention"

@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ide.inspections.lints.RsSelfConventionInspection
+
 /**
  * Tests for inspections suppression
  */
