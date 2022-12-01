@@ -11,11 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
-import org.rust.RsTestBase
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.toPsiFile
-import org.rust.withTestDialog
 
 class RsFindUsagesTest : RsTestBase() {
 
@@ -215,6 +216,21 @@ class RsFindUsagesTest : RsTestBase() {
                 let a = 2;
             }     //^
             let _ = a; // - null
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test variable in attr proc macro`() = doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        fn foo() -> i32 {
+            let x = 1;
+              //^
+            let y = x * 2;// - expr
+            let x = x * 3 + y;// - expr
+            x
         }
     """)
 

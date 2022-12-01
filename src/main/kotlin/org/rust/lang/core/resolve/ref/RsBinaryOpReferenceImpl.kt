@@ -18,7 +18,7 @@ class RsBinaryOpReferenceImpl(
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
-    override fun resolveInner(): List<RsElement> {
+    override fun multiResolveUncached(): List<RsElement> {
         val operator = element.operatorType as? OverloadableBinaryOperator ?: return emptyList()
         return collectResolveVariants(operator.fnName) { processBinaryOpVariants(element, operator, it) }
     }

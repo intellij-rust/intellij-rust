@@ -718,6 +718,25 @@ class RenameTest : RsTestBase() {
     """)
 
     @ExpandMacros(WORKSPACE)
+    fun `test rename function expanded from declarative macro 2`() = doTest("bar", """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn foo/*caret*/() {}
+        }
+        fn main() {
+            foo();
+        }
+    """, """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        foo! {
+            fn bar() {}
+        }
+        fn main() {
+            bar();
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
     fun `test rename lifetime in function expanded from declarative macro`() = doTest("'b", """
         macro_rules! foo { ($ i:item) => { $ i }; }
         foo! {
@@ -799,6 +818,89 @@ class RenameTest : RsTestBase() {
 
         fn main() {
             let _: Bar;
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename pat binding expanded from attr proc macro 1`() = doTest("bar", """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            let /*caret*/foo = 0;
+            let _ = foo;
+        }
+    """, """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            let /*caret*/bar = 0;
+            let _ = bar;
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename pat binding expanded from attr proc macro 2`() = doTest("bar", """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            let foo = 0;
+            let _ = /*caret*/foo;
+        }
+    """, """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            let bar = 0;
+            let _ = /*caret*/bar;
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename function expanded from attr proc macro with a reference in that macro 1`() = doTest("bar", """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            fn /*caret*/foo() {}
+            let _ = foo();
+        }
+    """, """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            fn /*caret*/bar() {}
+            let _ = bar();
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename function expanded from attr proc macro with a reference in that macro 2`() = doTest("bar", """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            fn foo() {}
+            let _ = /*caret*/foo();
+        }
+    """, """
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            fn bar() {}
+            let _ = /*caret*/bar();
+        }
+    """)
+
+    @ExpandMacros(WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test rename lifetime expanded from attr proc macro`() = doTest("bar", """
+        #[test_proc_macros::attr_as_is]
+        fn foo<'foo/*caret*/>() {
+            let _: &'foo i32;
+        }
+    """, """
+        #[test_proc_macros::attr_as_is]
+        fn foo<'bar/*caret*/>() {
+            let _: &'bar i32;
         }
     """)
 

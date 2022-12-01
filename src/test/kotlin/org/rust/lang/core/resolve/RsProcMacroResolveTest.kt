@@ -646,4 +646,26 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
             func();
         } //^ main.rs
     """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test real attr proc macro`() = stubOnlyResolve("""
+    //- main.rs
+        use test_proc_macros::attr_as_is;
+
+        #[attr_as_is]
+          //^ ...test-proc-macros/src/lib.rs
+        fn main() {}
+    """)
+
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test real attr proc macro under cfg_attr`() = stubOnlyResolve("""
+    //- main.rs
+        use test_proc_macros::attr_as_is;
+
+        #[cfg_attr(unix, attr_as_is)]
+                       //^ ...test-proc-macros/src/lib.rs
+        fn main() {}
+    """)
 }

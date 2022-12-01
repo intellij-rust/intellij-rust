@@ -16,9 +16,9 @@ class RsModReferenceImpl(
     modDecl: RsModDeclItem
 ) : RsReferenceCached<RsModDeclItem>(modDecl) {
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsFile && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsFile && super.isReferenceToInner(element)
 }
