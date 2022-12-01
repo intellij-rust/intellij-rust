@@ -141,3 +141,39 @@ pub fn attr_declare_struct_with_name(attr: TokenStream, _item: TokenStream) -> T
 pub fn attr_hardcoded_not_a_macro(_attr: TokenStream, item: TokenStream) -> TokenStream {
    panic!("Must not be called")
 }
+
+/// Such a macro call
+/// ```ignore
+/// #[attr_add_to_fn_beginning(let a = 0;)]
+/// fn main() {
+///     let _ = a;
+/// }
+/// ```
+/// will be expanded to
+/// ```ignore
+/// fn main() {
+///     let a = 0;
+///     let _ = a;
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn attr_add_to_fn_beginning(attr: TokenStream, item: TokenStream) -> TokenStream {
+    item.into_iter().map(|tt| {
+        match tt {
+            TokenTree::Group(g) => {
+                if g.delimiter() == Delimiter::Brace {
+                    let mut dg = Group::new(
+                        g.delimiter(),
+                        attr.clone().into_iter().chain(g.stream().into_iter()).collect()
+                    );
+                    dg.set_span(g.span());
+                    TokenTree::Group(dg)
+                } else {
+                    TokenTree::Group(g)
+                }
+            }
+            TokenTree::Ident(..) => tt,
+            TokenTree::Punct(..) | TokenTree::Literal(..) => tt,
+        }
+    }).collect()
+}
