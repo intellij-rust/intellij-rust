@@ -321,11 +321,11 @@ private fun MappedTextRange.fromBodyRelativeRange(call: RsPossibleMacroCall): Ma
     return MappedTextRange(newSrcOffset, dstOffset, length)
 }
 
-fun RsMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRange? {
+fun RsPossibleMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRange? {
     return mapRangeFromExpansionToCallBody(range).singleOrNull()?.takeIf { it.length == range.length }
 }
 
-private fun RsMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
+private fun RsPossibleMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
     val expansion = expansion ?: return emptyList()
     return mapRangeFromExpansionToCallBody(expansion, this, range)
 }

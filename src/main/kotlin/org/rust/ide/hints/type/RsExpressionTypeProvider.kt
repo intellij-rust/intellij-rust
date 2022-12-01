@@ -13,7 +13,10 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsPat
+import org.rust.lang.core.psi.RsPatField
+import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.contexts
 import org.rust.lang.core.types.adjustments
@@ -126,7 +129,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
 
 /** A hack around [ExpressionTypeProvider] to make it work inside macro calls (by following macro expansions) */
 private fun PsiElement.wrapExpandedElements(): PsiElement? {
-    val macroCall = findMacroCallExpandedFromNonRecursive() as? RsMacroCall
+    val macroCall = findMacroCallExpandedFromNonRecursive()
     return if (macroCall != null) {
         val rangeInExpansion = textRange
         val rangeInMacroCall = macroCall.mapRangeFromExpansionToCallBodyStrict(rangeInExpansion)
