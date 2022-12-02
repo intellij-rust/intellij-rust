@@ -13,7 +13,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
 @ExpandMacros
-class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class) {
+class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class, RsAttrHighlightingAnnotator::class) {
 
     override fun setUp() {
         super.setUp()

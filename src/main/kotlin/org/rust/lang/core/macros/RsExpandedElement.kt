@@ -258,7 +258,7 @@ fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
 fun PsiElement.findExpansionElements(): List<PsiElement>? {
     val mappedElements = findExpansionElementsNonRecursive() ?: return null
     return mappedElements.flatMap { mappedElement ->
-        mappedElement.findExpansionElements() ?: listOf(mappedElement)
+        mappedElement.findExpansionElements()?.takeIf { it.isNotEmpty() } ?: listOf(mappedElement)
     }
 }
 
@@ -266,13 +266,13 @@ fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
 private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
-    val call = ancestors.toList().asReversed().asSequence().mapNotNull {
+    val call = ancestors.toList().asReversed().firstNotNullOfOrNull {
         when (it) {
             is RsMacroArgument -> it.ancestorStrict<RsMacroCall>()
             is RsAttrProcMacroOwner -> it.procMacroAttribute.attr
             else -> null
         }
-    }.firstOrNull() ?: return null
+    } ?: return null
     val expansion = call.expansion ?: return null
     val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
     val expansionFile = expansion.file
