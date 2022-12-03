@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.RsMacroArgument
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
 /**
  *  [RsExpandedElement]s are those elements which exist in temporary,
@@ -32,9 +31,10 @@ interface RsExpandedElement : RsElement {
             if (parent is RsFile && !isIndexAccessForbidden) {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
-                    project.macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
+                    val macroExpansionManager = project.macroExpansionManager
+                    macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
                     if (parent.isIncludedByIncludeMacro) {
-                        RsIncludeMacroIndex.getIncludedFrom(parent)?.let { return it.containingMod }
+                        macroExpansionManager.getIncludedFrom(parent)?.let { return it.containingMod }
                     }
                 }
             }
@@ -86,7 +86,7 @@ val PsiElement.includedFrom: RsMacroCall?
     get() {
         val containingFile = stubParent as? RsFile ?: return null
         return if (containingFile.isIncludedByIncludeMacro) {
-            RsIncludeMacroIndex.getIncludedFrom(containingFile)
+            containingFile.project.macroExpansionManager.getIncludedFrom(containingFile)
         } else {
             null
         }
@@ -121,7 +121,10 @@ val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
 
 val PsiElement.isExpandedFromIncludeMacro: Boolean
-    get() = includedFrom != null
+    get() {
+        val containingFile = stubParent as? RsFile ?: return false
+        return containingFile.isIncludedByIncludeMacro
+    }
 
 private data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
 

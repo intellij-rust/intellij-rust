@@ -17,6 +17,7 @@ sealed class GetMacroExpansionError {
     object MacroExpansionIsDisabled : GetMacroExpansionError()
     object MacroExpansionEngineIsNotReady : GetMacroExpansionError()
     object IncludingFileNotFound : GetMacroExpansionError()
+    object FileIncludedIntoMultiplePlaces : GetMacroExpansionError()
     object OldEngineStd : GetMacroExpansionError()
 
     object MemExpAttrMacro : GetMacroExpansionError()
@@ -26,6 +27,7 @@ sealed class GetMacroExpansionError {
     ) : GetMacroExpansionError()
 
     object ModDataNotFound : GetMacroExpansionError()
+    object InconsistentExpansionExpandedFrom : GetMacroExpansionError()
     object NoMacroIndex : GetMacroExpansionError()
     object ExpansionNameNotFound : GetMacroExpansionError()
     object ExpansionFileNotFound : GetMacroExpansionError()
@@ -50,6 +52,8 @@ sealed class GetMacroExpansionError {
         MacroExpansionIsDisabled -> "macro expansion is disabled in project settings"
         MacroExpansionEngineIsNotReady -> "macro expansion engine is not ready"
         IncludingFileNotFound -> "including file is not found"
+        FileIncludedIntoMultiplePlaces -> "including file included in multiple places; " +
+            "IntelliJ-Rust supports only inclusion into one place"
         OldEngineStd -> "the old macro expansion engine can't expand macros in Rust stdlib"
         MemExpAttrMacro -> "the old macro expansion engine can't expand an attribute or derive macro"
         is MemExpParsingError -> "can't parse `$expansionText` as `$context`"
@@ -78,7 +82,9 @@ sealed class GetMacroExpansionError {
                 "(maybe it's not provided for your platform by IntelliJ-Rust)"
             ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> "procedural macro expansion is not enabled"
         }
-        ModDataNotFound -> "can't find ModData for containing mod of the macro call"
+        ModDataNotFound -> "internal error: can't find ModData for containing mod of the macro call"
+        InconsistentExpansionExpandedFrom -> "internal error: `macro.expansion.expandedFrom != macro`; " +
+            "maybe the macro invocation is inside a module that conflicts with another module name?"
         NoMacroIndex -> "can't find macro index of the macro call"
         ExpansionNameNotFound -> "internal error: expansion name not found"
         ExpansionFileNotFound -> "the macro is not yet expanded"

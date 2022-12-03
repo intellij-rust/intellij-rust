@@ -35,6 +35,7 @@ import org.rust.lang.core.stubs.RsAttrProcMacroOwnerStub
 import org.rust.lang.core.stubs.RsAttributeOwnerStub
 import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.utils.evaluation.CfgEvaluator
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.testAssert
 import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
@@ -425,8 +426,38 @@ val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpans
                 // will be different if completion invoked inside the macro body.
                 it.macroBody == this.macroBody
             } ?: this
-            project.macroExpansionManager.getExpansionFor(originalOrSelf)
+            val result = project.macroExpansionManager.getExpansionFor(originalOrSelf)
+            checkExpansionResult(this, result.value)
+            result
         }
+    }
+
+private fun checkExpansionResult(call: RsPossibleMacroCall, result: RsResult<MacroExpansion, GetMacroExpansionError>) {
+    if (!isUnitTestMode) return
+    if (result !is Ok) return
+    if (call.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+    val expandedElement = result.ok.elements.firstOrNull() ?: return
+
+    val expandedFrom = expandedElement.expandedOrIncludedFrom
+    check(expandedFrom == call) {
+        "macro.expansion.expandedFrom != macro; macro: `$call`, expandedFrom: `$expandedFrom`"
+    }
+
+    val expandedElementContext = expandedElement.context
+    val macroCallContext = call.contextToSetForExpansion
+    check(expandedElementContext == macroCallContext) {
+        "macro.expansion.context != macro.context; macro: `$call`, expandedElementContext: `$expandedElementContext`"
+    }
+}
+
+/**
+ * Equivalent to `this.context` in the case of [RsMacroCall], but `this.owner?.context` in the case of
+ * [RsMetaItem]. Use as a [RsExpandedElement.getContext] for elements expanded from this macro
+ */
+val RsPossibleMacroCall.contextToSetForExpansion: PsiElement?
+    get() = when (val kind = kind) {
+        is MacroCall -> kind.call.context
+        is MetaItem -> kind.meta.owner?.context
     }
 
 @VisibleForTesting

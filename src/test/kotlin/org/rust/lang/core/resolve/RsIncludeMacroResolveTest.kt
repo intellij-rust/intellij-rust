@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 
+@ExpandMacros
 class RsIncludeMacroResolveTest : RsResolveTestBase() {
 
     fun `test resolve struct to included file`() = checkResolve("""
@@ -147,6 +148,22 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         struct Foo;
     """)
 
+    fun `test include file in included file in included file`() = checkResolve("""
+    //- lib.rs
+        include!("foo.rs");
+        fn foo(x: Foo) {}
+                 //^ baz.rs
+    //- foo.rs
+        mod aaa {}
+        include!("bar.rs");
+    //- bar.rs
+        mod bbb {}
+        mod ccc {}
+        include!("baz.rs");
+    //- baz.rs
+        struct Foo;
+    """)
+
     fun `test mod decl in included file`() = checkResolve("""
     //- lib.rs
         include!("inner/foo.rs");
@@ -158,7 +175,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Struct;
     """)
 
-    @ExpandMacros
     fun `test include macro in macro 1`() = checkResolve("""
     //- lib.rs
         macro_rules! generate_include {
@@ -187,7 +203,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Foo;
     """)
 
-    @ExpandMacros
     fun `test include macro in macro 3`() = checkResolve("""
     //- lib.rs
         macro_rules! generate_include {
@@ -209,7 +224,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         pub struct Foo;
     """)
 
-    @ExpandMacros
     fun `test macro call in included file 1`() = checkResolve("""
     //- main.rs
         macro_rules! foo {
@@ -221,7 +235,6 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         //^ main.rs
     """)
 
-    @ExpandMacros
     fun `test macro call in included file 2`() = checkResolve("""
     //- main.rs
         macro_rules! gen_use {

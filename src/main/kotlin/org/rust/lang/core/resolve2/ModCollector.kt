@@ -60,18 +60,24 @@ fun collectScope(
     context: ModCollectorContext,
     modMacroIndex: MacroIndex = modData.macroIndex,
     dollarCrateHelper: DollarCrateHelper? = null,
-    includeMacroFile: VirtualFile? = null,
+    includeMacroIndex: MacroIndex? = null,
     propagateLegacyMacros: Boolean = false,
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
         .takeIf { modData.isNormalCrate }
+
+    val includeMacroFile = if (includeMacroIndex != null) {
+        (scope as RsFile).virtualFile!!
+    } else {
+        null
+    }
 
     val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper, includeMacroFile)
     collector.collectMod(scope.getOrBuildStub() ?: return emptyMap(), propagateLegacyMacros)
 
     if (hashCalculator != null && scope is RsFile) {
         val fileHash = hashCalculator.getFileHash()
-        context.defMap.addVisitedFile(scope, modData, fileHash)
+        context.defMap.addVisitedFile(scope, modData, fileHash, includeMacroIndex)
     }
 
     return collector.legacyMacros

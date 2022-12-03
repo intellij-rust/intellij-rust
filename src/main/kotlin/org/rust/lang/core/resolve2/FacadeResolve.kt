@@ -648,7 +648,7 @@ fun CrateDefMap.rootAsRsMod(project: Project): RsMod? = root.toRsMod(project).si
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
     expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
 
-fun findModDataFor(file: RsFile): List<ModData> {
+fun findFileInclusionPointsFor(file: RsFile): List<FileInclusionPoint> {
     val project = file.project
     val defMapService = project.defMapService
     val virtualFile = file.virtualFile ?: return emptyList()
@@ -676,12 +676,19 @@ fun findModDataFor(file: RsFile): List<ModData> {
         .mapNotNull { crateId ->
             val defMap = defMapService.getOrUpdateIfNeeded(crateId) ?: return@mapNotNull null
             val fileInfo = defMap.fileInfos[virtualFile.id] ?: return@mapNotNull null
-            fileInfo.modData
+            FileInclusionPoint(defMap, fileInfo.modData, fileInfo.includeMacroIndex)
         }
 
     return if (rawList.size == 1) {
         rawList
     } else {
-        rawList.filter { it.isDeeplyEnabledByCfg }.ifEmpty { rawList }
+        rawList.filter { it.modData.isDeeplyEnabledByCfg }.ifEmpty { rawList }
     }
 }
+
+data class FileInclusionPoint(
+    val defMap: CrateDefMap,
+    val modData: ModData,
+    /** Non-null if the file is included via `include!` macro */
+    val includeMacroIndex: MacroIndex?
+)

@@ -594,6 +594,31 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }     //^
     """)
 
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/9531
+    fun `test no stack overflow with derives in included file`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_export]
+        macro_rules! my_include {
+          ($ package: tt) => {
+            include!(concat!($ package, ".rs"));
+          };
+        }
+
+        pub mod f1 {
+          crate::my_include!("f1");
+          pub mod f2 {
+             crate::my_include!("f2");
+          }
+          type T = Foo;
+        }        //^ main.rs
+    //- f1.rs
+        use test_proc_macros::DeriveStructFooDeclaration;
+        #[derive(DeriveStructFooDeclaration)]
+        pub struct Struct1;
+        #[derive(DeriveImplForFoo)]
+        pub struct Struct2;
+    """)
+
     override val followMacroExpansions: Boolean
         get() = true
 }

@@ -89,7 +89,6 @@ fun IndexSink.indexMacroDef(stub: RsMacro2Stub) {
 
 fun IndexSink.indexMacroCall(stub: RsMacroCallStub) {
     RsMacroCallIndex.indexMacroCall(this)
-    RsIncludeMacroIndex.index(stub, this)
 }
 
 fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {

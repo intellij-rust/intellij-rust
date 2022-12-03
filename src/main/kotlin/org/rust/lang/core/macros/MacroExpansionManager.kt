@@ -79,6 +79,7 @@ interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
     fun getExpansionFor(call: RsPossibleMacroCall): MacroExpansionCachedResult
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall?
+    fun getIncludedFrom(file: RsFile): RsMacroCall?
 
     /**
      * An optimized equivalent for:
@@ -89,6 +90,7 @@ interface MacroExpansionManager {
      *     null -> null
      * }
      * ```
+     * or `getExpandedFrom(macroCall)?.contextToSetForExpansion`
      */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
@@ -223,6 +225,9 @@ class MacroExpansionManagerImpl(
         val expansion: RsResult<MacroExpansion, GetMacroExpansionError> = run {
             val includingFile = call.findIncludingFile()
                 ?: return@run Err(GetMacroExpansionError.IncludingFileNotFound)
+            if (getIncludedFrom(includingFile) != call) {
+                return@run Err(GetMacroExpansionError.FileIncludedIntoMultiplePlaces)
+            }
             val items = includingFile.stubChildrenOfType<RsExpandedElement>()
             Ok(MacroExpansion.Items(includingFile, items))
         }
@@ -239,6 +244,10 @@ class MacroExpansionManagerImpl(
         } else {
             null
         }
+    }
+
+    override fun getIncludedFrom(file: RsFile): RsMacroCall? {
+        return inner?.getIncludedFrom(file)
     }
 
     override fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement? {
@@ -727,6 +736,11 @@ private class MacroExpansionServiceImplInner(
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
         val expansionFile = getExpansionFile(info.defMap, macroIndex)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, macroIndex)))
+
+        if (getExpandedFromByExpansionFile(expansionFile) != call) {
+            return everChanged(Err(GetMacroExpansionError.InconsistentExpansionExpandedFrom))
+        }
+
         val expansion = Ok(getExpansionFromExpandedFile(MacroExpansionContext.ITEM, expansionFile)!!)
         return if (call is RsMacroCall) {
             CachedValueProvider.Result.create(expansion, modificationTracker, call.modificationTracker)
@@ -742,20 +756,43 @@ private class MacroExpansionServiceImplInner(
     fun getExpandedFrom(element: RsExpandedElement): RsPossibleMacroCall? {
         checkReadAccessAllowed()
         val parent = element.stubParent as? RsFile ?: return null
-        return CachedValuesManager.getCachedValue(parent, GET_EXPANDED_FROM_KEY) {
+        return getExpandedFromByExpansionFile(parent)
+    }
+
+    private fun getExpandedFromByExpansionFile(parent: RsFile) =
+        CachedValuesManager.getCachedValue(parent, GET_EXPANDED_FROM_KEY) {
             CachedValueProvider.Result.create(
                 doGetExpandedFromForExpansionFile(parent),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
         }
-    }
 
     private fun doGetExpandedFromForExpansionFile(parent: RsFile): RsPossibleMacroCall? {
         val (defMap, expansionName) = getDefMapForExpansionFile(parent) ?: return null
         val (modData, macroIndex, kind) = defMap.expansionNameToMacroCall[expansionName] ?: return null
         val crate = project.crateGraph.findCrateById(defMap.crate) ?: return null  // todo remove crate from RsModInfo
         val info = RsModInfo(project, defMap, modData, crate, dataPsiHelper = null)
-        return info.findMacroCall(macroIndex, kind)
+        return info.findMacroCallByMacroIndex(macroIndex, kind)
+    }
+
+    fun getIncludedFrom(file: RsFile): RsMacroCall? {
+        checkReadAccessAllowed()
+        return CachedValuesManager.getCachedValue(file, GET_INCLUDED_FROM_KEY) {
+            CachedValueProvider.Result.create(
+                doGetIncludedFrom(file),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        }
+    }
+
+    private fun doGetIncludedFrom(file: RsFile): RsMacroCall? {
+        val crate = file.crate
+        val crateId = crate.id ?: return null
+        val (defMap, modData, includeMacroIndex) = findFileInclusionPointsFor(file).find { it.defMap.crate == crateId }
+            ?: return null
+        if (includeMacroIndex == null) return null
+        val info = RsModInfo(project, defMap, modData, crate, dataPsiHelper = null)
+        return info.findMacroCallByMacroIndex(includeMacroIndex, FUNCTION_LIKE) as? RsMacroCall
     }
 
     /** @see MacroExpansionManager.getContextOfMacroCallExpandedFrom */
@@ -776,22 +813,45 @@ private class MacroExpansionServiceImplInner(
         return modData.toRsMod(project).singleOrNull()
     }
 
-    private fun RsModInfo.findMacroCall(macroIndex: MacroIndex, kind: RsProcMacroKind): RsPossibleMacroCall? {
-        val modIndex = modData.macroIndex
+    private fun RsModInfo.findMacroCallByMacroIndex(macroIndex: MacroIndex, kind: RsProcMacroKind): RsPossibleMacroCall? {
         val ownerIndex = if (kind == DERIVE) macroIndex.parent else macroIndex
-        val parentIndex = ownerIndex.parent
-        val parent = if (MacroIndex.equals(parentIndex, modIndex)) {
-            modData.toRsMod(this).singleOrNull()
-        } else {
-            getExpansionFile(defMap, parentIndex)
-        } ?: return null
-        val owner = parent.findItemWithMacroIndex(ownerIndex.last, crate)
+
+        val scope = findScope(ownerIndex) ?: return null
+        val owner = scope.findItemWithMacroIndex(ownerIndex.last, crate)
         return if (kind == FUNCTION_LIKE) {
             owner as? RsMacroCall
         } else {
             if (owner !is RsAttrProcMacroOwner) return null
             owner.findAttrOrDeriveMacroCall(macroIndex.last, crate)
         }
+    }
+
+    private fun RsModInfo.findScope(ownerIndex: MacroIndex): RsMod? {
+        val nestedIndices = mutableListOf<Int>()
+        val nearestKnownParent: RsMod = run {
+            val modIndex = modData.macroIndex
+            var parentIndex = ownerIndex
+            while (true) {
+                parentIndex = parentIndex.parent
+                if (MacroIndex.equals(parentIndex, modIndex)) {
+                    return@run modData.toRsMod(this).singleOrNull()
+                }
+                if (parentIndex in defMap.macroCallToExpansionName) {
+                    return@run getExpansionFile(defMap, parentIndex)
+                }
+                nestedIndices += parentIndex.last
+            }
+            @Suppress("UNREACHABLE_CODE")
+            null
+        } ?: return null
+
+        var parent: RsMod = nearestKnownParent
+        for (macroIndexInParent in nestedIndices.asReversed()) {
+            val macroCall = parent.findItemWithMacroIndex(macroIndexInParent, crate) as? RsMacroCall
+                ?: return null
+            parent = macroCall.findIncludingFile() ?: return null
+        }
+        return parent
     }
 
     private fun RsAttrProcMacroOwner.findAttrOrDeriveMacroCall(
@@ -920,6 +980,7 @@ private class MacroExpansionServiceImplInner(
 }
 
 private val GET_EXPANDED_FROM_KEY: Key<CachedValue<RsPossibleMacroCall?>> = Key.create("GET_EXPANDED_FROM_KEY")
+private val GET_INCLUDED_FROM_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("GET_INCLUDED_FROM_KEY")
 private val GET_CONTEXT_OF_MACRO_CALL_EXPANDED_FROM_KEY: Key<CachedValue<PsiElement?>> =
     Key.create("GET_CONTEXT_OF_MACRO_CALL_EXPANDED_FROM_KEY")
 
@@ -964,7 +1025,7 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
         storeRangeMap,
         useCache = true
     ).map { expansion ->
-        val context = call.context as? RsElement
+        val context = call.contextToSetForExpansion as? RsElement
         expansion.elements.forEach {
             it.setExpandedFrom(call)
             if (context != null) {
