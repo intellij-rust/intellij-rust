@@ -282,3 +282,10 @@ val RsSelfParameter.isRefLike: Boolean
         val typeReference = typeReference ?: return false
         return typeReference.descendantsOfTypeOrSelf<RsRefLikeType>().any { it.and != null }
     }
+
+fun RsFunction.hasMissingLifetimes(): Boolean {
+    if (retType == null) return false
+    if (selfParameter?.isRefLike == true) return false
+    val (inputLifetimes, outputLifetimes) = collectLifetimesFromFnSignature(this) ?: return false
+    return outputLifetimes.any { it is Unnamed } && inputLifetimes.size != 1
+}
