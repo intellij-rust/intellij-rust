@@ -187,17 +187,17 @@ jobs:
               uses: ./.github/actions/load-native-binaries
 
             - name: Download
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
 
             - name: Build
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: "assemble testClasses -Pkotlin.incremental=false --no-daemon"
 
             - name: Check
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: "check -PexcludeTests=org/rustPerformanceTests/** --continue -Pkotlin.incremental=false --no-daemon"
 
@@ -214,12 +214,12 @@ jobs:
 
             - name: Verify plugin
               if: matrix.verify-plugin
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:verifyPlugin"
 
             - name: Check bundled Rust formatters
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: "runPrettyPrintersTests --no-daemon"
 
