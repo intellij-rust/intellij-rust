@@ -1,0 +1,16 @@
+[
+    {
+        "name": "regressions-1",
+        "projects": [
+            {"name": "cargo", "repository": "rust-lang/cargo"},
+            {"name": "tokio", "repository": "tokio-rs/tokio"},
+            {"name": "amethyst", "repository": "amethyst/amethyst"}
+        ]
+    },
+    {
+        "name": "regressions-2",
+        "projects": [
+            {"name": "stdlib"}
+        ]
+    }
+]

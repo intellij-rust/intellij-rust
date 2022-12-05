@@ -1,0 +1,126 @@
+name: regressions-template
+
+on:
+    workflow_call:
+        inputs:
+            projects-matrix-file:
+                required: true
+                type: string
+            analyze-dependencies:
+                required: true
+                type: boolean
+
+jobs:
+    prepare:
+        runs-on: ubuntu-latest
+        outputs:
+            base-commit: ${{ steps.base-commit.outputs.base-commit }}
+            projects-matrix: ${{ steps.projects-matrix.outputs.projects-matrix }}
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            # In case of `workflow_dispatch` event, `github.sha` points to latest commit of chosen branch
+            # So, we need to find the latest common commit for master branch and chosen one
+            # to calculate difference only for branch changes
+            - name: Calculate base commit for workflow_dispatch or push event
+              if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+              run: echo "BASE_COMMIT=$(git merge-base origin/master ${{ github.sha }})" >> $GITHUB_ENV
+
+            # For pull request event, GitHub produces additional merge commit with `master` branch and PR branch as parents
+            # In this case, we want to check difference between master branch and merge commit
+            # so emit hash of `origin/master` branch itself as base commit
+            - name: Calculate base commit for pull_request event
+              if: github.event_name == 'pull_request'
+              run: echo "BASE_COMMIT=$(git rev-parse origin/master)" >> $GITHUB_ENV
+
+            - name: Emit base commit
+              id: base-commit
+              run: echo "base-commit=$BASE_COMMIT" >> $GITHUB_OUTPUT
+
+            - name: Show commits
+              run: |
+                  echo "current commit:"
+                  git log ${{ github.sha }} -n 1 --pretty=short
+                  echo "base commit:"
+                  git log ${{ steps.base-commit.outputs.base-commit }} -n 1 --pretty=short
+
+            - name: Emit projects matrix
+              id: projects-matrix
+              run: |
+                projects=$(cat ${{ inputs.projects-matrix-file }})
+                projects=${projects//$'\n'/}  # remove newline characters
+                echo "projects-matrix=$projects" >> $GITHUB_OUTPUT
+
+    check:
+        needs: [ prepare ]
+        name: ${{ matrix.batch.name }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                batch: ${{ fromJson(needs.prepare.outputs.projects-matrix) }}
+        env:
+            ORG_GRADLE_PROJECT_showStandardStreams: true
+            PROJECTS: ${{ toJSON(matrix.batch.projects) }}
+            ANALYZE_DEPENDENCIES: ${{ inputs.analyze-dependencies }}
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Set up JDK 17
+              uses: actions/setup-java@v3
+              with:
+                  distribution: corretto
+                  java-version: 17
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  components: rust-src
+                  default: true
+
+            - name: Install amethyst dependencies
+              run: sudo apt-get install -y libasound2-dev
+
+            - name: Checkout projects
+              run: python scripts/fetch_projects.py --projects $'${{ toJSON(matrix.batch.projects) }}'
+
+            - name: Download
+              uses: gradle/gradle-build-action@v1
+              with:
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false"
+
+            - name: Check with changes
+              uses: gradle/gradle-build-action@v1
+              env:
+                  RESULT_SUFFIX: _with_changes
+              with:
+                  arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest\""
+
+            - name: Checkout base version
+              run: git checkout ${{ needs.prepare.outputs.base-commit }}
+
+            - name: Check without changes
+              uses: gradle/gradle-build-action@v1
+              env:
+                  RESULT_SUFFIX: _without_changes
+              with:
+                  arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest\""
+
+            - name: Checkout current version
+              run: git checkout ${{ github.sha }}
+
+            - name: Calculate regressions
+              run: python scripts/calculate_regressions.py --projects $'${{ toJSON(matrix.batch.projects) }}'
+
+            - name: Upload results
+              if: ${{ always() }}
+              uses: actions/upload-artifact@v3
+              with:
+                  name: ${{ matrix.batch.name }}
+                  path: regressions/

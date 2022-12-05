@@ -1,0 +1,10 @@
+name: regressions-extended
+
+on: [ workflow_dispatch ]
+
+jobs:
+    main:
+        uses: ./.github/workflows/regressions-template.yml
+        with:
+            projects-matrix-file: .github/workflows/regressions-extended.json
+            analyze-dependencies: true
