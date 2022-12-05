@@ -2,19 +2,17 @@
 
 // lldb-command:run
 
-// lldb-command:print r
-// lldbr-check:[...]r = strong=2, weak=1 { value = 42 }
-// lldbg-check:[...]$0 = strong=2, weak=1 { value = 42 }
-// lldb-command:print r_weak
-// lldbr-check:[...]r_weak = strong=2, weak=1 { value = 42 }
-// lldbg-check:[...]$1 = strong=2, weak=1 { value = 42 }
+// lldb-command:frame variable r
+// lldb-check:(alloc::rc::Rc<i32>) r = strong=2, weak=1 { value = 42 }
 
-// lldb-command:print a
-// lldbr-check:[...]a = strong=2, weak=1 { data = 42 }
-// lldbg-check:[...]$2 = strong=2, weak=1 { data = 42 }
-// lldb-command:print a_weak
-// lldbr-check:[...]a_weak = strong=2, weak=1 { data = 42 }
-// lldbg-check:[...]$3 = strong=2, weak=1 { data = 42 }
+// lldb-command:frame variable r_weak
+// lldb-check:(alloc::rc::Weak<i32>) r_weak = strong=2, weak=1 { value = 42 }
+
+// lldb-command:frame variable a
+// lldb-check:(alloc::sync::Arc<i32>) a = strong=2, weak=1 { data = 42 }
+
+// lldb-command:frame variable a_weak
+// lldb-check:(alloc::sync::Weak<i32>) a_weak = strong=2, weak=1 { data = 42 }
 
 // === GDB TESTS ==================================================================================
 

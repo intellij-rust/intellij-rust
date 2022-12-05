@@ -2,12 +2,11 @@
 
 // lldb-command:run
 
-// lldb-command:print a
-// lldbr-check:[...]a = -1 [...]
-// lldbg-check:[...]$0 = -1 [...]
-// lldb-command:print b
-// lldbr-check:[...]b = 1024 [...]
-// lldbg-check:[...]$1 = 1024 [...]
+// lldb-command:frame variable a
+// lldb-check:(core::num::nonzero::NonZeroI32) a = -1 [...]
+
+// lldb-command:frame variable b
+// lldb-check:(core::num::nonzero::NonZeroUsize) b = 1024 [...]
 
 // === GDB TESTS ===================================================================================
 

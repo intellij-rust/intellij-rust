@@ -35,7 +35,6 @@ struct Settings {
 struct LLDBSettings {
     python: String,
     lldb_batchmode: String,
-    native_rust: bool
 }
 
 /// Expects "lldb" or "gdb as the first argument
@@ -69,7 +68,6 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
                 lldb_python: path,
                 lldb_batchmode: lldb_settings.lldb_batchmode,
                 python: lldb_settings.python,
-                native_rust: lldb_settings.native_rust,
             })
         },
 

@@ -2,36 +2,43 @@
 
 // lldb-command:run
 
-// lldb-command:print s1
-// lldbr-check:[...]s1 = "A∆й中" [...]
-// lldbg-check:[...]$0 = "A∆й中" [...]
-// lldb-command:print s2
-// lldbr-check:[...]s2 = "A∆й中" [...]
-// lldbg-check:[...]$1 = "A∆й中" [...]
-// lldb-command:print s3
-// lldbr-check:[...]s3 = "A∆й中" [...]
-// lldbg-check:[...]$2 = "A∆й中" [...]
-// lldb-command:print s4
-// lldbr-check:[...]s4 = "A∆й中" [...]
-// lldbg-check:[...]$3 = "A∆й中" [...]
-// lldb-command:print s5
-// lldbr-check:[...]s5 = "A∆й中" [...]
-// lldbg-check:[...]$4 = "A∆й中" [...]
-// lldb-command:print empty_s1
-// lldbr-check:[...]empty_s1 = "" [...]
-// lldbg-check:[...]$5 = "" [...]
-// lldb-command:print empty_s2
-// lldbr-check:[...]empty_s2 = "" [...]
-// lldbg-check:[...]$6 = "" [...]
-// lldb-command:print empty_s3
-// lldbr-check:[...]empty_s3 = "" [...]
-// lldbg-check:[...]$7 = "" [...]
-// lldb-command:print empty_s4
-// lldbr-check:[...]empty_s4 = "" [...]
-// lldbg-check:[...]$8 = "" [...]
-// lldb-command:print empty_s5
-// lldbr-check:[...]empty_s5 = "" [...]
-// lldbg-check:[...]$9 = "" [...]
+// lldb-command:frame variable s1
+// lldb-unix-check:(&str) s1 = "A∆й中" [...]
+// lldb-windows-check:[...] s1 = "A∆й中" [...]
+
+// lldb-command:frame variable s2
+// lldb-check:(alloc::string::String) s2 = "A∆й中" [...]
+
+// lldb-command:frame variable s3
+// lldb-unix-check:(&mut str) s3 = "A∆й中" [...]
+// lldb-windows-check:[...] s3 = "A∆й中" [...]
+
+// lldb-command:frame variable s4
+// lldb-unix-check:(*mut str) s4 = "A∆й中" [...]
+// lldb-windows-check:[...] s4 = "A∆й中" [...]
+
+// lldb-command:frame variable s5
+// lldb-unix-check:(*const str) s5 = "A∆й中" [...]
+// lldb-windows-check:[...] s5 = "A∆й中" [...]
+
+// lldb-command:frame variable empty_s1
+// lldb-unix-check:(&str) empty_s1 = "" [...]
+// lldb-windows-check:[...] empty_s1 = "" [...]
+
+// lldb-command:frame variable empty_s2
+// lldb-check:(alloc::string::String) empty_s2 = "" [...]
+
+// lldb-command:frame variable empty_s3
+// lldb-unix-check:(&mut str) empty_s3 = "" [...]
+// lldb-windows-check:[...] empty_s3 = "" [...]
+
+// lldb-command:frame variable empty_s4
+// lldb-unix-check:(*mut str) empty_s4 = "" [...]
+// lldb-windows-check:[...] empty_s4 = "" [...]
+
+// lldb-command:frame variable empty_s5
+// lldb-unix-check:(*const str) empty_s5 = "" [...]
+// lldb-windows-check:[...] empty_s5 = "" [...]
 
 // === GDB TESTS ==================================================================================
 
