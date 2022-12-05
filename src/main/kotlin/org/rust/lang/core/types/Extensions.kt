@@ -203,6 +203,7 @@ private val BORROW_CHECKER_KEY: Key<CachedValue<BorrowCheckResult>> = Key.create
 
 val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
     get() = CachedValuesManager.getCachedValue(this, BORROW_CHECKER_KEY) {
+        if (!existsAfterExpansion) return@getCachedValue createResult(null)
         val bccx = BorrowCheckContext.buildFor(this)
         val borrowCheckResult = bccx?.check()
         createResult(borrowCheckResult)
@@ -225,6 +226,7 @@ private val CONTROL_FLOW_KEY: Key<CachedValue<ControlFlowGraph>> = Key.create("C
 
 val RsInferenceContextOwner.controlFlowGraph: ControlFlowGraph?
     get() = CachedValuesManager.getCachedValue(this, CONTROL_FLOW_KEY) {
+        if (!existsAfterExpansion) return@getCachedValue createResult(null)
         val regionScopeTree = getRegionScopeTree(this)
         val cfg = (body as? RsBlock)?.let { ControlFlowGraph.buildFor(it, regionScopeTree) }
         createResult(cfg)
@@ -234,6 +236,7 @@ private val LIVENESS_KEY: Key<CachedValue<Liveness>> = Key.create("LIVENESS_KEY"
 
 val RsInferenceContextOwner.liveness: Liveness?
     get() = CachedValuesManager.getCachedValue(this, LIVENESS_KEY) {
+        if (!existsAfterExpansion) return@getCachedValue createResult(null)
         val livenessContext = LivenessContext.buildFor(this)
         val livenessResult = livenessContext?.check()
         createResult(livenessResult)
