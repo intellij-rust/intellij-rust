@@ -1455,7 +1455,6 @@ object TypeInferenceMarks {
     object WinnowParamCandidateLoses : Testmark()
     object WinnowObjectOrProjectionCandidateWins : Testmark()
     object TraitSelectionOverflow : Testmark()
-    object MacroExprDepthLimitReached : Testmark()
     object UnsizeToTraitObject : Testmark()
     object UnsizeArrayToSlice : Testmark()
     object UnsizeStruct : Testmark()

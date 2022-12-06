@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.macroName
-import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.stdext.exhaustive
 
 
@@ -91,7 +90,7 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiTreeProcessor):
         return true
     }
 
-    val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor, getRecursionLimit(element))
+    val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
     element.accept(visitor)
 
     return visitor.result
@@ -99,7 +98,6 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiTreeProcessor):
 
 private class RsWithMacrosRecursiveElementWalkingVisitor(
     private val processor: PsiTreeProcessor,
-    private val recursionLimit: Int,
 ) : PsiRecursiveElementWalkingVisitor() {
 
     var result: Boolean = true
@@ -135,12 +133,9 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
     }
 
     private fun processMacro(element: RsPossibleMacroCall) {
-        if (recursionLimit == 0) {
-            return
-        }
         val expansion = element.expansion ?: return
         for (expandedElement in expansion.elements) {
-            val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor, recursionLimit - 1)
+            val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
             expandedElement.accept(visitor)
         }
     }

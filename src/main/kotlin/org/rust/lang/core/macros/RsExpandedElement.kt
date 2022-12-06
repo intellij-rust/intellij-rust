@@ -44,7 +44,7 @@ interface RsExpandedElement : RsElement {
 }
 
 fun RsExpandedElement.setContext(context: RsElement) {
-    (containingFile as? RsFile)?.setRsFileContext(context, lazy = true)
+    (containingFile as? RsFile)?.setRsFileContext(context, isInMemoryMacroExpansion = false)
     setExpandedElementContext(context)
 }
 
@@ -54,10 +54,10 @@ fun RsExpandedElement.setExpandedElementContext(context: RsElement) {
 }
 
 /** Internal. Use [setContext] */
-fun RsFile.setRsFileContext(context: RsElement, lazy: Boolean) {
+fun RsFile.setRsFileContext(context: RsElement, isInMemoryMacroExpansion: Boolean) {
     val contextContainingFile = context.containingRsFileSkippingCodeFragments
     if (contextContainingFile != null) {
-        inheritCachedDataFrom(contextContainingFile, lazy)
+        inheritCachedDataFrom(contextContainingFile, isInMemoryMacroExpansion)
     }
 }
 
@@ -98,16 +98,6 @@ val RsExpandedElement.expandedOrIncludedFrom: RsPossibleMacroCall?
 fun PsiElement.findMacroCallExpandedFrom(): RsPossibleMacroCall? {
     val found = findMacroCallExpandedFromNonRecursive()
     return found?.findMacroCallExpandedFrom() ?: found
-}
-
-fun PsiElement.calculateMacroExpansionDepth(): Int {
-    var macroCall = findMacroCallExpandedFromNonRecursive() ?: return 0
-    var counter = 1
-    while (true) {
-        macroCall = macroCall.findMacroCallExpandedFromNonRecursive() ?: break
-        counter++
-    }
-    return counter
 }
 
 fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsPossibleMacroCall? {
