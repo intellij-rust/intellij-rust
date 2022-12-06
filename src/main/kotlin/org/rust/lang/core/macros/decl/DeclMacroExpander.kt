@@ -124,9 +124,9 @@ private class NestingState(
 )
 
 class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, DeclMacroExpansionError>() {
-   override fun expandMacroAsTextWithErr(
-       def: RsDeclMacroData,
-       call: RsMacroCallData
+    override fun expandMacroAsTextWithErr(
+        def: RsDeclMacroData,
+        call: RsMacroCallData
     ): RsResult<Pair<CharSequence, RangeMap>, DeclMacroExpansionError> {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call).unwrapOrElse { return Err(it) }
         val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return Err(DeclMacroExpansionError.DefSyntax)
@@ -174,8 +174,47 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     private data class MatchedPattern(val case: RsMacroCase, val subst: MacroSubstitution, val ranges: RangeMap)
 
+    private class MacroStringBuilder {
+        val inner: StringBuilder = StringBuilder()
+        private var lastFragment: MetaVarValue.Fragment? = null
+
+        val length: Int get() = inner.length
+
+        fun append(s: String) {
+            if (s.isEmpty()) return
+            inner.append(s)
+            lastFragment = null
+        }
+
+        /** Ensures that the buffer ends (or [str] starts) with a whitespace and appends [str] to the buffer */
+        fun safeAppend(str: CharSequence) {
+            if (inner.isNotEmpty() && !inner.last().isWhitespace() && str.isNotEmpty() && !str.first().isWhitespace()) {
+                inner.append(' ')
+            }
+            inner.append(str)
+            lastFragment = null
+        }
+
+        fun safeAppend(fragment: MetaVarValue.Fragment) {
+            val lastFragment = lastFragment
+            if (lastFragment != null && lastFragment.offsetInCallBody + lastFragment.value.length == fragment.offsetInCallBody) {
+                // fragments were adjacent in macro call body - no need to add whitespace
+                inner.append(fragment.value)
+            } else {
+                safeAppend(fragment.value)
+            }
+            this.lastFragment = fragment
+        }
+
+        fun delete(start: Int, end: Int) {
+            if (start == end) return
+            inner.delete(start, end)
+            lastFragment = null
+        }
+    }
+
     private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): RsResult<Pair<CharSequence, RangeMap>, DeclMacroExpansionError> {
-        val sb = StringBuilder()
+        val sb = MacroStringBuilder()
         val ranges = SmartList<MappedTextRange>()
         if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) {
             if (sb.length > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
@@ -183,11 +222,11 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
             }
             return Err(DeclMacroExpansionError.DefSyntax)
         }
-        return Ok(sb to RangeMap(ranges))
+        return Ok(sb.inner to RangeMap(ranges))
     }
 
     private fun substituteMacro(
-        sb: StringBuilder,
+        sb: MacroStringBuilder,
         ranges: MutableList<MappedTextRange>,
         root: ASTNode,
         subst: MacroSubstitution,
@@ -211,7 +250,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
                                 sb.append(value.value)
                                 sb.append(")")
                             } else {
-                                sb.safeAppend(value.value)
+                                sb.safeAppend(value)
                             }
                             if (value.offsetInCallBody != -1 && value.value.isNotEmpty()) {
                                 ranges.mergeAdd(
@@ -270,14 +309,6 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
         return true
     }
 
-    /** Ensures that the buffer ends (or [str] starts) with a whitespace and appends [str] to the buffer */
-    private fun StringBuilder.safeAppend(str: CharSequence) {
-        if (!isEmpty() && !last().isWhitespace() && str.isNotEmpty() && !str.first().isWhitespace()) {
-            append(" ")
-        }
-        append(str)
-    }
-
     private fun checkRanges(call: RsMacroCallData, expandedText: CharSequence, ranges: RangeMap) {
         if (!isUnitTestMode) return
         val callBody = (call.macroBody as? MacroCallBody.FunctionLike)?.text ?: return
@@ -292,7 +323,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
     }
 
     companion object {
-        const val EXPANDER_VERSION = 16
+        const val EXPANDER_VERSION = 17
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )

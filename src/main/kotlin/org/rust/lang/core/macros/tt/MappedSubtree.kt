@@ -46,18 +46,14 @@ private class SubtreeTextBuilder(
         delimiter?.let { appendDelimiterPart(it, DelimiterBracePart.OPEN) }
         for ((tokenTree, nextTokenTree) in tokenTrees.asSequence().withNext()) {
             when (tokenTree) {
-                is TokenTree.Leaf -> tokenTree.appendLeaf(nextTokenTree)
+                is TokenTree.Leaf -> tokenTree.appendLeaf(nextTokenTree, delimiter != null)
                 is TokenTree.Subtree -> tokenTree.appendSubtree()
             }
         }
         delimiter?.let { appendDelimiterPart(it, DelimiterBracePart.CLOSE) }
     }
 
-    private fun TokenTree.Leaf.appendLeaf(nextTokenTree: TokenTree?) {
-        val nextId = when (nextTokenTree) {
-            is TokenTree.Leaf -> nextTokenTree.id
-            is TokenTree.Subtree, null -> null
-        }
+    private fun TokenTree.Leaf.appendLeaf(nextTokenTree: TokenTree?, hasDelimiter: Boolean) {
         val (text, spacing) = when (this) {
             is TokenTree.Leaf.Literal -> text to Spacing.Alone
             is TokenTree.Leaf.Ident -> text to Spacing.Alone
@@ -73,7 +69,16 @@ private class SubtreeTextBuilder(
         if (meta != null) {
             sb.append(meta.rightTrivia)
 
-            if (meta.rightTrivia.isEmpty() && spacing == Spacing.Alone && (id < 0 || nextId != id + 1)) {
+            val canOmitSpace = when (nextTokenTree) {
+                // `let x = 0;` - don't add space between `0` and `;` since they are adjacent
+                // note that [id] is negative for tokens generated from macro def body
+                is TokenTree.Leaf -> id >= 0 && id + 1 == nextTokenTree.id
+                // `func()` - don't add space before `(`
+                is TokenTree.Subtree -> true
+                // `func(1)` - don't add space after `1`
+                null -> hasDelimiter
+            }
+            if (meta.rightTrivia.isEmpty() && spacing == Spacing.Alone && !canOmitSpace) {
                 sb.append(" ")
             }
         } else if (spacing == Spacing.Alone) {
