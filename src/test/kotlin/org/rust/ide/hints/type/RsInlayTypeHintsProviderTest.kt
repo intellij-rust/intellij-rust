@@ -6,10 +6,8 @@
 package org.rust.ide.hints.type
 
 import com.intellij.openapi.vfs.VirtualFileFilter
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.fileTreeFromText
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.hints.parameter.RsInlayParameterHintsProvider
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
@@ -529,5 +527,30 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
                 .find(|x<hint text="[:  [& [& i32]]]"/>| **x == 1)
                 .unwrap();
         }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test inside attribute macro call body`() = checkByText("""
+        #[test_proc_macros::attr_as_is]
+        fn test1() {
+            let x1/*hint text="[:  i32]"*/ = 0;
+            let mut x2/*hint text="[:  i32]"*/ = 0;
+            let x3/*hint text="[:  i32]"*/ = bar();
+
+            let x4: Option<_/*hint text="[:  i32]"*/> = Option::Some(0);
+            match x4 {
+                Option::Some(x5/*hint text="[:  i32]"*/) => {},
+                Option::None => {},
+            }
+
+            consume(|x/*hint text="[:  i32]"*/| {});
+        }
+        fn bar() -> i32 { 0 }
+        enum Option<T> { Some(T), None }
+
+        $fnTypes
+        fn consume(_: impl Fn(i32)) {}
     """)
 }
