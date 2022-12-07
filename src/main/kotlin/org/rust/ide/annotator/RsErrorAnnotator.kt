@@ -118,6 +118,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatField(o: RsPatField) = checkPatField(rsHolder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(rsHolder, o)
             override fun visitPatRest(o: RsPatRest) = checkPatRest(rsHolder, o)
+            override fun visitPatRange(o: RsPatRange) = checkPatRange(rsHolder, o)
             override fun visitOrPat(o: RsOrPat) = checkOrPat(rsHolder, o)
             override fun visitPath(o: RsPath) = checkPath(rsHolder, o)
             override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = checkDuplicates(rsHolder, o)
@@ -659,6 +660,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val parent = patRest.parent
         if (parent is RsPatSlice || parent is RsPatIdent && parent.parent is RsPatSlice) {
             SLICE_PATTERNS.check(holder, patRest, "subslice patterns")
+        }
+    }
+
+    private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
+        val op = range.op?.takeUnless { it == range.dotdot } ?: return
+        if (range.start != null && range.end == null) {
+            RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)
         }
     }
 

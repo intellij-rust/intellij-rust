@@ -3462,6 +3462,25 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test inclusive range pat with no end E0586`() = checkErrors("""
+        fn foo() {
+            match 0 {
+                 ..   => {},
+                1..   => {},
+                 ..2  => {},
+                1..2  => {},
+                 ..=  => {},
+                1<error descr="inclusive ranges must be bounded at the end (`..=b` or `a..=b`) [E0586]">..=</error>  => {},
+                 ..=2 => {},
+                1..=2 => {},
+                 ...  => {},
+                1<error descr="inclusive ranges must be bounded at the end (`..=b` or `a..=b`) [E0586]">...</error>  => {},
+                 ...2 => {},
+                1...2 => {},
+            }
+        }
+    """)
+
     fun `test arbitrary enum discriminant without repr E0732`() = checkErrors("""
         #![feature(arbitrary_enum_discriminant)]
         enum <error descr="`#[repr(inttype)]` must be specified [E0732]">Enum</error> {
