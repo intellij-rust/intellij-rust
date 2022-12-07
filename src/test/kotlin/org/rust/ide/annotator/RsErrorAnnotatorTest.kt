@@ -3462,6 +3462,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.66.0")
     fun `test inclusive range pat with no end E0586`() = checkErrors("""
         fn foo() {
             match 0 {
@@ -3480,6 +3481,48 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
     """)
+
+    @MockRustcVersion("1.65.0")
+    fun `test half open range patterns E0658 1`() = checkErrors("""
+        fn foo() {
+            match 0 {
+                 ..   => {},
+                1..   => {},
+                 <error descr="half-open range patterns is experimental [E0658]">..2</error>  => {},
+                1..2  => {},
+                 ..=  => {},
+                1<error>..=</error>  => {},
+                 <error descr="half-open range patterns is experimental [E0658]">..=2</error> => {},
+                1..=2 => {},
+                 ...  => {},
+                1<error>...</error>  => {},
+                 <error descr="half-open range patterns is experimental [E0658]">...2</error> => {},
+                1...2 => {},
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.65.0-nightly")
+    fun `test half open range patterns E0658 2`() = checkErrors("""
+        #![feature(half_open_range_patterns)]
+        fn foo() {
+            match 0 {
+                 ..   => {},
+                1..   => {},
+                 ..2  => {},
+                1..2  => {},
+                 ..=  => {},
+                1<error>..=</error>  => {},
+                 ..=2 => {},
+                1..=2 => {},
+                 ...  => {},
+                1<error>...</error>  => {},
+                 ...2 => {},
+                1...2 => {},
+            }
+        }
+    """)
+
 
     fun `test arbitrary enum discriminant without repr E0732`() = checkErrors("""
         #![feature(arbitrary_enum_discriminant)]

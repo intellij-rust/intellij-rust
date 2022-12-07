@@ -44,6 +44,7 @@ import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_TYPES
 import org.rust.lang.core.CompilerFeature.Companion.GENERATORS
 import org.rust.lang.core.CompilerFeature.Companion.GENERIC_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.HALF_OPEN_RANGE_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.IF_LET_GUARD
 import org.rust.lang.core.CompilerFeature.Companion.IF_WHILE_OR_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.INHERENT_ASSOCIATED_TYPES
@@ -664,6 +665,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
+        if (range.start == null && range.end != null) {
+            HALF_OPEN_RANGE_PATTERNS.check(holder, range, "half-open range patterns")
+        }
+
         val op = range.op?.takeUnless { it == range.dotdot } ?: return
         if (range.start != null && range.end == null) {
             RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)

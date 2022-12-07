@@ -210,6 +210,7 @@ class CompilerFeature(
         val START: CompilerFeature get() = get("start")
         val UNBOXED_CLOSURES: CompilerFeature get() = get("unboxed_closures")
         val WASM_ABI: CompilerFeature get() = get("wasm_abi")
+        val HALF_OPEN_RANGE_PATTERNS: CompilerFeature get() = get("half_open_range_patterns")
     }
 }
 
