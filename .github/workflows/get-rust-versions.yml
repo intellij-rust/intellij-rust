@@ -1,0 +1,41 @@
+# This workflow exists to avoid using hardcoded versions of the toolchain in different places.
+# In an ideal world, top-level constants (not yet implemented) or workflow-level environment variables
+# would be used, but they are not supported in all needed places.
+
+name: get rust versions
+on:
+    workflow_call:
+        outputs:
+            stable:
+                value: ${{ jobs.get_versions.outputs.stable }}
+            nightly:
+                value: ${{ jobs.get_versions.outputs.nightly }}
+            old:
+                value: ${{ jobs.get_versions.outputs.old }}
+            matrix:
+                description: 'String like ["%stable%", "%nightly-yyyy-mm-dd%"].
+                         Added for `check` workflow, because there is no way to make a sequence from two outputs.'
+                value: ${{ jobs.get_versions.outputs.matrix }}
+
+env:
+    STABLE: "1.64.0"
+    NIGHTLY: "nightly-2022-11-05"
+    OLD: "1.56.0"
+
+jobs:
+    get_versions:
+        runs-on: ubuntu-latest
+        outputs:
+            stable: ${{ steps.versions.outputs.stable }}
+            nightly: ${{ steps.versions.outputs.nightly }}
+            old: ${{ steps.versions.outputs.old }}
+            matrix: ${{ steps.versions.outputs.matrix }}
+        steps:
+            -   name: setup all version
+                id: versions
+                run: |
+                    echo "stable=${{ env.STABLE }}" >> $GITHUB_OUTPUT
+                    echo "nightly=${{ env.NIGHTLY }}" >> $GITHUB_OUTPUT
+                    echo "old=${{ env.OLD }}" >> $GITHUB_OUTPUT
+                    echo "matrix=[\"${{ env.STABLE }}\", \"${{ env.NIGHTLY }}\"]" >> $GITHUB_OUTPUT
+

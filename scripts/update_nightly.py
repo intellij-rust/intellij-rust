@@ -4,9 +4,9 @@ import re
 from common import execute_command, env
 from updater import UpdaterBase
 
-CHECK_WORKFLOW_PATH = ".github/workflows/check.yml"
+WORKFLOW_PATH = ".github/workflows/get-rust-versions.yml"
 RUSTC_VERSION_RE = re.compile(r".* \(\w*\s*(\d{4}-\d{2}-\d{2})\)")
-WORKFLOW_RUSTC_VERSION_RE = re.compile(r"(rust-version: \[.*nightly-)\d{4}-\d{2}-\d{2}(.*])")
+WORKFLOW_RUSTC_VERSION_RE = re.compile(r'(?<=NIGHTLY: "nightly-)\d{4}-\d{2}-\d{2}')
 
 
 class NightlyUpdater(UpdaterBase):
@@ -15,19 +15,19 @@ class NightlyUpdater(UpdaterBase):
         output = execute_command("rustc", "-V")
         match_result = RUSTC_VERSION_RE.match(output)
         date = match_result.group(1)
-        with open(CHECK_WORKFLOW_PATH) as f:
+        with open(WORKFLOW_PATH) as f:
             workflow_text = f.read()
 
         result = re.search(WORKFLOW_RUSTC_VERSION_RE, workflow_text)
         if result is None:
             raise ValueError("Failed to find the current version of nightly rust")
 
-        new_workflow_text = re.sub(WORKFLOW_RUSTC_VERSION_RE, f"\\g<1>{date}\\g<2>", workflow_text)
+        new_workflow_text = re.sub(WORKFLOW_RUSTC_VERSION_RE, date, workflow_text)
         if new_workflow_text == workflow_text:
             print("The latest nightly rustc version is already used")
             return
 
-        with open(CHECK_WORKFLOW_PATH, "w") as f:
+        with open(WORKFLOW_PATH, "w") as f:
             f.write(new_workflow_text)
 
 
