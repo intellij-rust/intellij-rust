@@ -113,7 +113,7 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
             *newArgs.toTypedArray()
         )
 
-        project.runWriteCommandAction {
+        project.runWriteCommandAction(text) {
             macroCall.replace(newMacroCall) as RsMacroCall
             editor.caretModel.moveToOffset(editor.caretModel.offset + newPlaceholder.length)
         }

@@ -7,7 +7,6 @@ package org.rust.ide.refactoring
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
@@ -23,6 +22,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
+import org.rust.openapiext.runWriteCommandAction
 
 class RsDowngradeModuleToFile : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it.isDirectoryMod }
@@ -48,16 +48,11 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            runWriteCommandAction(
-                project,
-                RsBundle.message("action.Rust.RsDowngradeModuleToFile.text"),
-                "action.Rust.RsDowngradeModuleToFile",
-                {
-                    for (element in elements) {
-                        contractModule(element as PsiFileSystemItem)
-                    }
+            project.runWriteCommandAction(RsBundle.message("action.Rust.RsDowngradeModuleToFile.text")) {
+                for (element in elements) {
+                    contractModule(element as PsiFileSystemItem)
                 }
-            )
+            }
         }
     }
 }

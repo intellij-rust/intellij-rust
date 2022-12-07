@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -33,10 +34,19 @@ class RustfmtFileAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (cargoProject, rustfmt, document) = getContext(e) ?: return
         checkWriteAccessNotAllowed()
-        val formattedText = cargoProject.project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
-            reformatDocumentAndGetText(cargoProject, rustfmt, document)
-        } ?: return
-        cargoProject.project.runWriteCommandAction { document.setText(formattedText) }
+        val formattedText = cargoProject.project
+            .computeWithCancelableProgress(RsBundle.message("action.Cargo.RustfmtFile.progress")) {
+                reformatDocumentAndGetText(cargoProject, rustfmt, document)
+            } ?: return
+        val fileName = document.virtualFile?.presentableName
+        val commandName = if (fileName != null) {
+            RsBundle.message("action.Cargo.RustfmtFile.file.text", fileName)
+        } else {
+            RsBundle.message("action.Cargo.RustfmtFile.default.text")
+        }
+        cargoProject.project.runWriteCommandAction(commandName) {
+            document.setText(formattedText)
+        }
     }
 
     private fun reformatDocumentAndGetText(cargoProject: CargoProject, rustfmt: Rustfmt, document: Document): String? {

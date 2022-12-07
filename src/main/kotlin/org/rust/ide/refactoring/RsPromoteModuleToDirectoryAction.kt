@@ -7,7 +7,6 @@ package org.rust.ide.refactoring
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -24,6 +23,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
+import org.rust.openapiext.runWriteCommandAction
 
 class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
@@ -51,17 +51,14 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
             val files = elements.filterIsInstance<RsFile>()
-            WriteCommandAction.runWriteCommandAction(
-                project,
+            project.runWriteCommandAction(
                 RsBundle.message("action.Rust.RsPromoteModuleToDirectoryAction.text"),
-                "action.Rust.RsPromoteModuleToDirectoryAction",
-                {
-                    for (element in files) {
-                        expandModule(element)
-                    }
-                },
-                *files.toTypedArray()
-            )
+                *files.toTypedArray(),
+            ) {
+                for (element in files) {
+                    expandModule(element)
+                }
+            }
         }
     }
 

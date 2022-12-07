@@ -80,8 +80,33 @@ val isUnderDarkTheme: Boolean
         return lookAndFeel?.theme?.isDark == true || UIUtil.isUnderDarcula()
     }
 
-fun <T> Project.runWriteCommandAction(command: () -> T): T {
-    return WriteCommandAction.runWriteCommandAction(this, Computable { command() })
+/**
+ * Perform a write action for the provided project.
+ *
+ * This method should be used for the implementation of all user-initiated IDE actions.
+ * i.e. those which should appear in the Undo/Redo stack. It explicitly requires the name
+ * and groupId of the action are provided, unlike the `WriteCommandAction` methods which
+ * allow omitting that information or to use "Undefined" defaults.
+ *
+ * Actions which should not be undoable by the user, such as internal macro expansion or
+ * actions in tests, should not use this method. You can use methods on `WriteCommandAction`
+ * instead.
+ *
+ * @param commandName the name of the action which will appear for the user in the Undo/Redo stack.
+ * @param files files modified by the action. This may be safely omitted if a single file is
+ *      modified. Otherwise, it is recommended to explicitly specify modified files, to ensure
+ *      that the operation doesn't fail halfway due to some files being non-writable.
+ * @param command the write action to perform. It can also return some value.
+ */
+fun <T> Project.runWriteCommandAction(
+    @Suppress("UnstableApiUsage")
+    @NlsContexts.Command commandName: String,
+    vararg files: PsiFile,
+    command: () -> T
+): T {
+    return WriteCommandAction.writeCommandAction(this, *files)
+        .withName(commandName)
+        .compute<T, RuntimeException>(command)
 }
 
 /** This is modification of [runUndoTransparentWriteAction] which applies formatting to modified code */

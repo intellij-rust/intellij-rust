@@ -39,7 +39,9 @@ class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
-        extractExpression(editor, ctx, postfixLet = false)
+        extractExpression(
+            editor, ctx, postfixLet = false, "Introduce Local Variable"
+        )
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
