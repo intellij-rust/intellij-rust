@@ -20,6 +20,9 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    get-rust-versions:
+        uses: ./.github/workflows/get-rust-versions.yml
+
     calculate-git-info:
         runs-on: ubuntu-latest
         outputs:
@@ -47,13 +50,13 @@ jobs:
     check-license:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v2
 
             - name: Check license
               run: python scripts/check_license.py
 
     build-native-code:
-        needs: [ calculate-git-info ]
+        needs: [ calculate-git-info, get-rust-versions ]
         # `fromJSON` is used here to convert string output to boolean
         # We always want to trigger all workflow jobs on `schedule` event because it creates/updates caches for other builds.
         # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
@@ -61,17 +64,20 @@ jobs:
         if: ${{ github.event_name == 'schedule' || !fromJSON(needs.calculate-git-info.outputs.is_master_branch) || !fromJSON(needs.calculate-git-info.outputs.checked) }}
         uses: ./.github/workflows/build-native-code.yml
         with:
-            rust-version: 1.64.0
+            rust-version:  ${{ needs.get-rust-versions.outputs.stable }}
             cache: true
 
     check-plugin:
-        needs: [ calculate-git-info, build-native-code ]
+        needs: [ calculate-git-info, build-native-code, get-rust-versions ]
         strategy:
             # `fromJSON` is used here to convert string output to boolean
             fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
-                rust-version: [ 1.64.0, nightly-2022-11-05 ]
+                # `fromJSON` is used here to convert string output to sequence.
+                # `matrix-version` is a string with list of stable + nightly versions.
+                # Make sequence from two outputs with version is not possible here.
+                rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
                 platform-version: [ 222, 223 ]
                 # it's enough to verify plugin structure only once per platform version
@@ -79,8 +85,7 @@ jobs:
                 default-edition-for-tests: [ 2021 ]
                 include:
                     - os: ubuntu-latest
-                      # Don't forget to update condition in `Set up additional env variables` step
-                      rust-version: 1.56.0
+                      rust-version: ${{ needs.get-rust-versions.outputs.old }}
                       base-ide: idea
                       platform-version: 222
                       verify-plugin: true
@@ -159,7 +164,7 @@ jobs:
                   cargo install --list
 
             - name: Set up additional env variables
-              if: matrix.rust-version == '1.56.0'
+              if: matrix.rust-version == needs.get-rust-versions.outputs.old
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
                   echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.2" >> $GITHUB_ENV
