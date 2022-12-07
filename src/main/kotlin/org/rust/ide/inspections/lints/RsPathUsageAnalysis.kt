@@ -9,11 +9,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
-import org.rust.openapiext.TreeStatus
+import org.rust.openapiext.TreeStatus.SKIP_CHILDREN
+import org.rust.openapiext.TreeStatus.VISIT_CHILDREN
 import org.rust.openapiext.processElementsWithMacros
 
 interface PathUsageMap {
@@ -62,27 +64,25 @@ private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
     val crate = owner.containingCrate
     if (!owner.existsAfterExpansion(crate)) return usage
 
-    for (child in owner.children) {
-        handleSubtree(child, usage, crate)
-    }
+    handleSubtree(owner, usage, crate)
     return usage
 }
 
 private fun handleSubtree(root: PsiElement, usage: PathUsageMapMutable, crate: Crate) {
     processElementsWithMacros(root) { element ->
-        if (handleElement(element, usage, crate)) {
-            TreeStatus.VISIT_CHILDREN
-        } else {
-            TreeStatus.SKIP_CHILDREN
+        when {
+            element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf(crate) -> SKIP_CHILDREN
+            element is RsModItem && element != root -> SKIP_CHILDREN
+            else -> {
+                handleElement(element, usage)
+                VISIT_CHILDREN
+            }
         }
     }
 }
 
-private fun handleElement(element: PsiElement, usage: PathUsageMapMutable, crate: Crate): Boolean {
-    if (element is RsDocAndAttributeOwner && !element.existsAfterExpansionSelf(crate)) return false
-
-    return when (element) {
-        is RsModItem -> false
+private fun handleElement(element: PsiElement, usage: PathUsageMapMutable) {
+    when (element) {
         is RsPatIdent -> {
             val name = element.patBinding.referenceName
             val targets = element.patBinding.reference.multiResolve()
@@ -90,37 +90,29 @@ private fun handleElement(element: PsiElement, usage: PathUsageMapMutable, crate
             if (targets.isNotEmpty()) {
                 usage.recordPath(name, targets)
             }
-            true
         }
         is RsPath -> {
-            val name = element.referenceName ?: return true
+            val name = element.referenceName ?: return
             if (element.qualifier != null || element.typeQual != null) {
                 val requiredTraits = getAssociatedItemRequiredTraits(element).orEmpty()
                 usage.recordMethod(name, requiredTraits)
             } else {
                 val useSpeck = element.parentOfType<RsUseSpeck>()
                 if (useSpeck == null || useSpeck.isTopLevel) {
-                    if (name in IGNORED_USE_PATHS) return true
+                    if (name in IGNORED_USE_PATHS) return
                     val targets = element.reference?.multiResolve().orEmpty()
                     usage.recordPath(name, targets)
                 }
             }
-            true
-        }
-        is RsMacroCall -> {
-            handleSubtree(element.path, usage, crate)
-            true
         }
         is RsMethodCall -> {
             val requiredTraits = getMethodRequiredTraits(element).orEmpty()
             usage.recordMethod(element.referenceName, requiredTraits)
-            true
         }
-        else -> true
     }
 }
 
-private val IGNORED_USE_PATHS = listOf("crate", "self", "super")
+private val IGNORED_USE_PATHS = listOf("crate", MACRO_DOLLAR_CRATE_IDENTIFIER, "self", "super")
 
 private fun getMethodRequiredTraits(call: RsMethodCall): Set<RsTraitItem>? {
     val result = call.inference?.getResolvedMethod(call) ?: return null

@@ -494,6 +494,24 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test usage inside attribute proc macro expansion 2`() = checkByText("""
+        mod inner {
+            pub fn bar() {}
+        }
+        /*warning descr="Unused import: `inner::bar`"*/use inner::bar;/*warning**/
+
+        struct Foo {}
+        impl Foo {
+            #[test_proc_macros::attr_replace_with_attr]
+            fn foo() {
+                bar();
+            }
+        }
+    """)
+
     fun `test deny lint`() = checkByText("""
         #![deny(unused_imports)]
 
