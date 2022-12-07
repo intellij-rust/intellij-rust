@@ -12,7 +12,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.NonNls
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.psi.*
@@ -25,14 +24,13 @@ fun extractExpression(
     expr: RsExpr,
     postfixLet: Boolean,
     @Suppress("UnstableApiUsage")
-    @NlsContexts.Command commandName: String,
-    @NonNls groupId: String
+    @NlsContexts.Command commandName: String
 ) {
     if (!expr.isValid) return
     val occurrences = findOccurrences(expr)
     showOccurrencesChooser(editor, expr, occurrences) { occurrencesToReplace ->
         ExpressionReplacer(expr.project, editor, expr)
-            .replaceElementForAllExpr(occurrencesToReplace, postfixLet, commandName, groupId)
+            .replaceElementForAllExpr(occurrencesToReplace, postfixLet, commandName)
     }
 }
 
@@ -48,8 +46,7 @@ private class ExpressionReplacer(
         exprs: List<RsExpr>,
         postfixLet: Boolean,
         @Suppress("UnstableApiUsage")
-        @NlsContexts.Command commandName: String,
-        @NonNls groupId: String
+        @NlsContexts.Command commandName: String
     ) {
         val anchor = findAnchor(exprs, chosenExpr) ?: return
         val sortedExprs = exprs.sortedBy { it.startOffset }
@@ -66,7 +63,7 @@ private class ExpressionReplacer(
         val let = createLet(suggestedNames.default)
         val name = psiFactory.createExpression(suggestedNames.default)
 
-        project.runWriteCommandAction(commandName, groupId) {
+        project.runWriteCommandAction(commandName) {
             val letBinding = if (inlinableExprStmt != null) {
                 // `inline let` is a statement, i.e. it returns `()`, so this replacement produces equivalent
                 // code only when the replaced expression had a value coerced to `()`, i.e. it is either `expr;`,

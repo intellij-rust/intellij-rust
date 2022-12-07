@@ -81,10 +81,7 @@ private class ParamIntroducer(
         } else {
             findFunctionUsages(function)
         }
-        project.runWriteCommandAction(
-            RefactoringBundle.message("introduce.parameter.title"),
-            "refactoring.IntroduceParameter"
-        ) {
+        project.runWriteCommandAction(RefactoringBundle.message("introduce.parameter.title")) {
             appendNewArgument(functionUsages, expr)
             if (replaceForTrait) {
                 getTraitAndImpls(traitFunction)

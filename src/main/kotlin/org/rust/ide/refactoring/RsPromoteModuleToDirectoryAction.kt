@@ -53,7 +53,6 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
             val files = elements.filterIsInstance<RsFile>()
             project.runWriteCommandAction(
                 RsBundle.message("action.Rust.RsPromoteModuleToDirectoryAction.text"),
-                "action.Rust.PromoteModuleToDirectoryAction",
                 *files.toTypedArray(),
             ) {
                 for (element in files) {

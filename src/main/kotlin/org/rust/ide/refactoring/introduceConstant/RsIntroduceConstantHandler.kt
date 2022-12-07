@@ -101,10 +101,7 @@ private fun replaceWithConstant(
 
     val const = factory.createConstant(name, expr)
 
-    project.runWriteCommandAction(
-        RefactoringBundle.message("introduce.constant.title"),
-        "refactoring.IntroduceConstant"
-    ) {
+    project.runWriteCommandAction(RefactoringBundle.message("introduce.constant.title")) {
         val newline = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n")
         val context = candidate.parent
         val insertedConstant = context.addBefore(const, candidate.anchor) as RsConstant

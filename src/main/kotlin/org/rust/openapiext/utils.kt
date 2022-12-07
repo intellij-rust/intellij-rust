@@ -59,7 +59,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
-import org.jetbrains.annotations.NonNls
 import org.rust.cargo.RustfmtWatcher
 import org.rust.ide.annotator.RsExternalLinterPass
 import java.lang.ref.SoftReference
@@ -94,9 +93,6 @@ val isUnderDarkTheme: Boolean
  * instead.
  *
  * @param commandName the name of the action which will appear for the user in the Undo/Redo stack.
- * @param groupId an arbitrary string which corresponds to the operation. Actions with the same
- *      groupId may be merged in the Undo/Redo stack, while actions with different groupId are
- *      always undone individually.
  * @param files files modified by the action. This may be safely omitted if a single file is
  *      modified. Otherwise, it is recommended to explicitly specify modified files, to ensure
  *      that the operation doesn't fail halfway due to some files being non-writable.
@@ -105,13 +101,11 @@ val isUnderDarkTheme: Boolean
 fun <T> Project.runWriteCommandAction(
     @Suppress("UnstableApiUsage")
     @NlsContexts.Command commandName: String,
-    @NonNls groupId: String,
     vararg files: PsiFile,
     command: () -> T
 ): T {
     return WriteCommandAction.writeCommandAction(this, *files)
         .withName(commandName)
-        .withGroupId(groupId)
         .compute<T, RuntimeException>(command)
 }
 

@@ -251,10 +251,7 @@ val MOVE_TARGET_FILE_PATH_KEY: Key<Path> = Key("RS_MOVE_TARGET_FILE_PATH_KEY")
 
 /** Creates new rust file and attaches it to parent mod */
 private fun createNewRustFile(filePath: Path, project: Project, crateRoot: RsMod?, requestor: Any?): RsFile? {
-    return project.runWriteCommandAction(
-        RefactoringBundle.message("move.title"),
-        "refactoring.move"
-    ) {
+    return project.runWriteCommandAction(RefactoringBundle.message("move.title")) {
         val fileSystem = (crateRoot as? RsFile)?.virtualFile?.fileSystem ?: LocalFileSystem.getInstance()
         createNewFile(filePath, fileSystem, requestor) { virtualFile ->
             val file = virtualFile.toPsiFile(project)?.rustFile ?: return@createNewFile null

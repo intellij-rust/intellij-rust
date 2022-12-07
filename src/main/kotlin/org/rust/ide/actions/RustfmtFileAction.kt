@@ -44,7 +44,7 @@ class RustfmtFileAction : DumbAwareAction() {
         } else {
             RsBundle.message("action.Cargo.RustfmtFile.default.text")
         }
-        cargoProject.project.runWriteCommandAction(commandName, "action.Cargo.RustfmtFile") {
+        cargoProject.project.runWriteCommandAction(commandName) {
             document.setText(formattedText)
         }
     }

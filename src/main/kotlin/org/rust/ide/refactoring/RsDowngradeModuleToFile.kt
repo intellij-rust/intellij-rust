@@ -48,10 +48,7 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            project.runWriteCommandAction(
-                RsBundle.message("action.Rust.RsDowngradeModuleToFile.text"),
-                "action.Rust.DowngradeModuleToFile"
-            ) {
+            project.runWriteCommandAction(RsBundle.message("action.Rust.RsDowngradeModuleToFile.text")) {
                 for (element in elements) {
                     contractModule(element as PsiFileSystemItem)
                 }
