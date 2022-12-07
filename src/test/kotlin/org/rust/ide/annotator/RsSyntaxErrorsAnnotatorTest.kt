@@ -460,4 +460,23 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             };
         }
     """)
+    fun `test range pats`() = checkErrors("""
+        fn foo() {
+            match 0 {
+                 ..   => {}, // `..` patterns are not allowed here
+                1..   => {},
+                 ..2  => {},
+                1..2  => {},
+                 <error descr="Unexpected `..=`">..=</error>  => {},
+                1..=  => {},
+                 ..=2 => {},
+                1..=2 => {},
+                 <error descr="Unexpected `...`">...</error>  => {},
+                1...  => {},
+                 <error descr="Range-to patterns with `...` are not allowed">...</error>2 => {},
+                1...2 => {}, // `...` range patterns are deprecated
+            }
+        }
+    """)
+
 }

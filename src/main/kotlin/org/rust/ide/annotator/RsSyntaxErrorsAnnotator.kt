@@ -49,6 +49,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
             is RsLetExpr -> checkLetExpr(holder, element)
+            is RsPatRange -> checkPatRange(holder, element)
         }
     }
 }
@@ -350,6 +351,23 @@ private fun checkLetExpr(holder: AnnotationHolder, element: RsLetExpr) {
         ancestor = ancestor.parent
     }
     deny(element, holder, "`let` expressions are not supported here")
+}
+
+private fun checkPatRange(holder: AnnotationHolder, element: RsPatRange) {
+    val start = element.start
+    val end = element.end
+    when {
+        element.dotdot != null -> when {
+            start == null && end == null -> deny(element.dotdot, holder, "Unexpected `..`")
+        }
+        element.dotdoteq != null -> when {
+            start == null && end == null -> deny(element.dotdoteq, holder, "Unexpected `..=`")
+        }
+        element.dotdotdot != null -> when {
+            start == null && end == null -> deny(element.dotdotdot, holder, "Unexpected `...`")
+            start == null -> deny(element.dotdotdot, holder, "Range-to patterns with `...` are not allowed")
+        }
+    }
 }
 
 private enum class TypeKind {
