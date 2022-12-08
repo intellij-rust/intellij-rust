@@ -44,6 +44,7 @@ import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_TYPES
 import org.rust.lang.core.CompilerFeature.Companion.GENERATORS
 import org.rust.lang.core.CompilerFeature.Companion.GENERIC_ASSOCIATED_TYPES
+import org.rust.lang.core.CompilerFeature.Companion.HALF_OPEN_RANGE_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.IF_LET_GUARD
 import org.rust.lang.core.CompilerFeature.Companion.IF_WHILE_OR_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.INHERENT_ASSOCIATED_TYPES
@@ -118,6 +119,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatField(o: RsPatField) = checkPatField(rsHolder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(rsHolder, o)
             override fun visitPatRest(o: RsPatRest) = checkPatRest(rsHolder, o)
+            override fun visitPatRange(o: RsPatRange) = checkPatRange(rsHolder, o)
             override fun visitOrPat(o: RsOrPat) = checkOrPat(rsHolder, o)
             override fun visitPath(o: RsPath) = checkPath(rsHolder, o)
             override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = checkDuplicates(rsHolder, o)
@@ -659,6 +661,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val parent = patRest.parent
         if (parent is RsPatSlice || parent is RsPatIdent && parent.parent is RsPatSlice) {
             SLICE_PATTERNS.check(holder, patRest, "subslice patterns")
+        }
+    }
+
+    private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
+        if (range.start == null && range.end != null) {
+            HALF_OPEN_RANGE_PATTERNS.check(holder, range, "half-open range patterns")
+        }
+
+        val op = range.op?.takeUnless { it == range.dotdot } ?: return
+        if (range.start != null && range.end == null) {
+            RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)
         }
     }
 
@@ -1433,18 +1446,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0586: inclusive range with no end
     private fun checkRangeExpr(holder: RsAnnotationHolder, range: RsRangeExpr) {
-        val dotdoteq = range.dotdoteq ?: range.dotdotdot ?: return
-        if (dotdoteq == range.dotdotdot) {
+        val op = range.dotdotdot ?: range.dotdoteq ?: return
+        if (op == range.dotdotdot) {
             // rustc doesn't have an error code for this ("error: unexpected token: `...`")
-            holder.createErrorAnnotation(
-                dotdoteq,
-                "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range"
-            )
+            holder.createErrorAnnotation(op, "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range")
             return
         }
-        val expr = range.exprList.singleOrNull() ?: return
-        if (expr.startOffsetInParent < dotdoteq.startOffsetInParent) {
-            RsDiagnostic.InclusiveRangeWithNoEndError(dotdoteq).addToHolder(holder)
+
+        if (range.end == null) {
+            RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)
         }
     }
 
