@@ -49,19 +49,22 @@ class ModCollectorBase private constructor(
         var macroIndexInParent = 0
         for (item in items) {
             if (item !is RsExternCrateItemStub) {
-                macroIndexInParent += collectElement(item, macroIndexInParent)
+                collectElement(item, macroIndexInParent)
+            }
+            if (item.hasMacroIndex()) {
+                macroIndexInParent++
             }
         }
     }
 
-    private fun collectElement(element: StubElement<out PsiElement>, macroIndexInParent: Int): Int {
+    private fun collectElement(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
         var customDerives = emptyList<RsMetaItemStub>()
         if (element is RsAttrProcMacroOwnerStub) {
             // TODO store CustomAttributes in defMap, pass it to getProcMacroAttributeRaw
             when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(element, element, crate, withDerives = true)) {
                 is ProcMacroAttribute.Attr -> {
                     collectAttrProcMacroCall(element, attr, macroIndexInParent)
-                    return 1
+                    return
                 }
                 is ProcMacroAttribute.Derive -> if (element.mayHaveCustomDerive) {
                     customDerives = attr.derives.toList()
@@ -79,8 +82,6 @@ class ModCollectorBase private constructor(
                 MacroIndex(intArrayOf(macroIndexInParent, i))
             )
         }
-
-        return if (element.hasMacroIndexIgnoringProcMacros() || customDerives.isNotEmpty()) 1 else 0
     }
 
     private fun collectElementWithoutAttrMacros(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
@@ -681,39 +682,8 @@ private fun DataOutput.writePath(path: Array<String>) {
     }
 }
 
-private fun StubElement<*>.hasMacroIndexIgnoringProcMacros(): Boolean =
-    this is RsMacroCallStub || this is RsMacroStub || this is RsModItemStub || this is RsModDeclItemStub
+fun StubElement<*>.hasMacroIndex(): Boolean =
+    this is RsModDeclItemStub || this is RsAttrProcMacroOwnerStub
 
-private fun PsiElement.hasMacroIndexIgnoringProcMacros(): Boolean =
-    this is RsMacroCall || this is RsMacro || this is RsModItem || this is RsModDeclItem
-
-fun StubElement<*>.hasMacroIndex(crate: Crate): Boolean {
-    if (hasMacroIndexIgnoringProcMacros()) return true
-    if (this !is RsAttrProcMacroOwnerStub) return false
-    val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
-        this,
-        this,
-        crate,
-        withDerives = true
-    )
-    return when (attr) {
-        ProcMacroAttribute.None -> false
-        is ProcMacroAttribute.Attr -> true
-        is ProcMacroAttribute.Derive -> attr.derives.any()
-    }
-}
-
-fun PsiElement.hasMacroIndex(crate: Crate): Boolean {
-    if (hasMacroIndexIgnoringProcMacros()) return true
-    if (this !is RsAttrProcMacroOwner) return false
-    val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
-        this,
-        explicitCrate = crate,
-        withDerives = true
-    )
-    return when (attr) {
-        ProcMacroAttribute.None -> false
-        is ProcMacroAttribute.Attr -> true
-        is ProcMacroAttribute.Derive -> attr.derives.any()
-    }
-}
+fun PsiElement.hasMacroIndex(): Boolean =
+    this is RsModDeclItem || this is RsAttrProcMacroOwner

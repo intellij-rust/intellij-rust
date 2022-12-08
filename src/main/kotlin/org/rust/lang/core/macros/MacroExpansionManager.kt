@@ -829,7 +829,7 @@ private class MacroExpansionServiceImplInner(
         val ownerIndex = if (kind == DERIVE) macroIndex.parent else macroIndex
 
         val scope = findScope(ownerIndex) ?: return null
-        val owner = scope.findItemWithMacroIndex(ownerIndex.last, crate)
+        val owner = scope.findItemWithMacroIndex(ownerIndex.last)
         return if (kind == FUNCTION_LIKE) {
             owner as? RsMacroCall
         } else {
@@ -859,7 +859,7 @@ private class MacroExpansionServiceImplInner(
 
         var parent: RsMod = nearestKnownParent
         for (macroIndexInParent in nestedIndices.asReversed()) {
-            val macroCall = parent.findItemWithMacroIndex(macroIndexInParent, crate) as? RsMacroCall
+            val macroCall = parent.findItemWithMacroIndex(macroIndexInParent) as? RsMacroCall
                 ?: return null
             parent = macroCall.findIncludingFile() ?: return null
         }

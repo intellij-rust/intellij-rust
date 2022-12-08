@@ -290,36 +290,36 @@ fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroInde
             }
             else -> continue
         } ?: return null
-        val indexInParent = getMacroIndexInParent(current, parent, elementCrate)
+        val indexInParent = getMacroIndexInParent(current, parent)
         return parentIndex.append(indexInParent)
     }
     return null
 }
 
-private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement, crate: Crate): Int {
+private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement): Int {
     val itemStub = (item as? StubBasedPsiElement<*>)?.greenStub
     val parentStub = if (parent is PsiFileBase) parent.greenStub else (parent as? StubBasedPsiElement<*>)?.greenStub
     return if (itemStub != null && parentStub != null) {
         parentStub.childrenStubs.asSequence()
             .takeWhile { it !== itemStub }
-            .count { it.hasMacroIndex(crate) }
+            .count { it.hasMacroIndex() }
     } else {
         parent.children.asSequence()
             .takeWhile { it !== item }
-            .count { it.hasMacroIndex(crate) }
+            .count { it.hasMacroIndex() }
     }
 }
 
-fun PsiElement.findItemWithMacroIndex(macroIndexInParent: Int, crate: Crate): PsiElement {
+fun PsiElement.findItemWithMacroIndex(macroIndexInParent: Int): PsiElement {
     val parentStub = if (this is PsiFileBase) greenStub else (this as? StubBasedPsiElement<*>)?.greenStub
     return if (parentStub != null) {
         parentStub.childrenStubs.asSequence()
-            .filter { it.hasMacroIndex(crate) }
+            .filter { it.hasMacroIndex() }
             .elementAt(macroIndexInParent)
             .psi
     } else {
         children.asSequence()
-            .filter { it.hasMacroIndex(crate) }
+            .filter { it.hasMacroIndex() }
             .elementAt(macroIndexInParent)
     }
 }

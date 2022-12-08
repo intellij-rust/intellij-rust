@@ -29,13 +29,13 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
         mod mod2;
         macro_rules! macro3 { () => {} }
     """, """
-        [0, 0] macro macro0
-        [0, 1] macro0!()
-        [0, 2] macro macro1
-        [0, 3] mod mod1
-        [0, 4] macro macro2
-        [0, 5] mod mod2
-        [0, 6] macro macro3
+        [0, 1] macro macro0
+        [0, 2] macro0!()
+        [0, 3] macro macro1
+        [0, 4] mod mod1
+        [0, 5] macro macro2
+        [0, 6] mod mod2
+        [0, 7] macro macro3
     """)
 
     @ExpandMacros(MacroExpansionScope.WORKSPACE)
@@ -53,17 +53,17 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
         struct Struct;
         macro_rules! macro2 { () => {} }
     """, """
-        [1, 0] macro macro0
-        [1, 1] #[attr_as_is]
-        [1, 1, 0] fn func
-        [1, 2] macro macro1
-        [1, 3] struct Struct
-        [1, 3, 0] #[derive(DeriveMacroFooThatExpandsToStructFoo)]
-        [1, 3, 0, 0] macro foo
-        [1, 3, 1] #[derive(DeriveMacroFooInvocation)]
-        [1, 3, 1, 0] foo!()
-        [1, 3, 1, 0, 0] struct Foo
-        [1, 4] macro macro2
+        [1, 1] macro macro0
+        [1, 2] #[attr_as_is]
+        [1, 2, 0] fn func
+        [1, 3] macro macro1
+        [1, 4] struct Struct
+        [1, 4, 0] #[derive(DeriveMacroFooThatExpandsToStructFoo)]
+        [1, 4, 0, 0] macro foo
+        [1, 4, 1] #[derive(DeriveMacroFooInvocation)]
+        [1, 4, 1, 0] foo!()
+        [1, 4, 1, 0, 0] struct Foo
+        [1, 5] macro macro2
     """)
 
     fun doTest(@Language("Rust") code: String, itemIndices: String) {
