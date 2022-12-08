@@ -840,6 +840,28 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
+    fun `test impl for alias with multiple aliases with the same name`() = checkByCode("""
+        mod a {
+            pub struct X;
+            pub type Y = X;
+            impl Y { pub fn foo(&self) {} }
+        }
+        mod b {
+            pub struct X;
+            pub type Y = X;
+            impl Y { pub fn foo(&self) {} }
+                          //X
+        }
+        mod c {
+            pub struct X;
+            pub type Y = X;
+            impl Y { pub fn foo(&self) {} }
+        }
+        fn main() {
+            b::X.foo();
+        }      //^
+    """)
+
     fun `test primitive vs mod`() = checkByCode("""
         mod impls {
             #[lang = "str"]

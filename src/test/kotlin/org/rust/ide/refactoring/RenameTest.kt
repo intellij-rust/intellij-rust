@@ -839,6 +839,22 @@ class RenameTest : RsTestBase() {
         struct Struct {}
     """)
 
+    fun `test path inside doc link`() = doTest("bar", """
+        /// 1 [link1](foo)
+        /// 2 [link2]
+        ///
+        /// [link2]: foo
+        fn test() {}
+        fn foo/*caret*/() {}
+    """, """
+        /// 1 [link1](bar)
+        /// 2 [link2]
+        ///
+        /// [link2]: bar
+        fn test() {}
+        fn bar() {}
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,

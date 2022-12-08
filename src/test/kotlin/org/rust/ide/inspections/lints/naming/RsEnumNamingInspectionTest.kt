@@ -29,7 +29,7 @@ class RsEnumNamingInspectionTest : RsInspectionsTestBase(RsEnumNamingInspection:
         fn enum_use() {
             let a = EnumFoo::Var;
         }
-    """)
+    """, preview = null)
 
     fun `test enum not support case`() = checkByText("""
         enum 枚举 {}

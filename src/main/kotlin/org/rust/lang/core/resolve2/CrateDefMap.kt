@@ -162,13 +162,13 @@ class CrateDefMap(
         }
     }
 
-    fun addVisitedFile(file: RsFile, modData: ModData, fileHash: HashCode) {
+    fun addVisitedFile(file: RsFile, modData: ModData, fileHash: HashCode, includeMacroIndex: MacroIndex?) {
         val fileId = file.virtualFile.fileId
         // TODO: File included in module tree multiple times ?
         // testAssert { fileId !in fileInfos }
         val existing = fileInfos[fileId]
         if (existing != null && !modData.isDeeplyEnabledByCfg && existing.modData.isDeeplyEnabledByCfg) return
-        fileInfos[fileId] = FileInfo(file.modificationStampForResolve, modData, fileHash)
+        fileInfos[fileId] = FileInfo(file.modificationStampForResolve, modData, fileHash, includeMacroIndex)
     }
 
     override fun toString(): String = crateDescription
@@ -196,6 +196,8 @@ class FileInfo(
     /** Optimization for [CrateDefMap.getModData] */
     val modData: ModData,
     val hash: HashCode,
+    /** Non-null if the file is included via `include!` macro */
+    val includeMacroIndex: MacroIndex?
 )
 
 /**
@@ -282,8 +284,10 @@ class ModData(
     val isEnum: Boolean = false,
     /** Normal cargo crate with physical crate root, etc */
     val isNormalCrate: Boolean = true,
-    /** not-null when `this` corresponds to [RsBlock]. See [getHangingModInfo] */
+    /** not-null when `this` corresponds to [RsBlock], [RsCodeFragment], etc. See [getHangingModInfo] */
     val context: ModData? = null,
+    /** scope is [RsBlock] */
+    val isBlock: Boolean = false,
     /** Only for debug */
     val crateDescription: String,
 ) {

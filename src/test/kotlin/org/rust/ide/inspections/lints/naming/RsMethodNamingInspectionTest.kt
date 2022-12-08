@@ -43,7 +43,7 @@ class RsMethodNamingInspectionTest : RsInspectionsTestBase(RsMethodNamingInspect
             let f = Foo {};
             f.met_bar();
         }
-    """)
+    """, preview = null)
 
     fun `test trait methods`() = checkByText("""
         trait Foo {

@@ -23,7 +23,6 @@ import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.resolve2.getRecursionLimit
 import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.isUnitTestMode
@@ -169,20 +168,13 @@ val RsMacroCall.expansionFlatten: List<RsExpandedElement>
         return list
     }
 
-fun RsMacroCall.processExpansionRecursively(recursionLimit: Int, processor: (RsExpandedElement) -> Boolean): Boolean =
-    processExpansionRecursively(processor, recursionLimit)
-
-fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean =
-    processExpansionRecursively(processor, getRecursionLimit(this))
-
-private fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean, recursionLimit: Int): Boolean {
-    if (recursionLimit == 0) return true
-    return expansion?.elements.orEmpty().any { it.processRecursively(processor, recursionLimit) }
+fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean {
+    return expansion?.elements.orEmpty().any { it.processRecursively(processor) }
 }
 
-private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean, recursionLimit: Int): Boolean {
+private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean): Boolean {
     return when (this) {
-        is RsMacroCall -> existsAfterExpansionSelf && processExpansionRecursively(processor, recursionLimit - 1)
+        is RsMacroCall -> existsAfterExpansionSelf && processExpansionRecursively(processor)
         else -> processor(this)
     }
 }

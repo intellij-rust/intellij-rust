@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.declaration
@@ -124,9 +125,15 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             }
 
             private fun presentTypePlaceholders(declaration: RsLetDecl) {
-                if (!declaration.existsAfterExpansion(crate)) return
-                val inferredType = declaration.pat?.type ?: return
-                val formalType = declaration.typeReference?.rawType ?: return
+                run {
+                    // optimization - skip processing if no type placeholders
+                    val typeReference = declaration.typeReference ?: return
+                    if (typeReference.descendantOfTypeOrSelf<RsInferType>() == null) return
+                }
+
+                val expandedDeclaration = declaration.getExpanded { it.let } ?: return
+                val inferredType = expandedDeclaration.pat?.type ?: return
+                val formalType = expandedDeclaration.typeReference?.rawType ?: return
                 val placeholders = formalType.collectInferTys()
                     .mapNotNull {
                         if (it is TyInfer.TyVar && it.origin is RsInferType) {
@@ -136,16 +143,21 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                         }
                     }
 
-                val infer = declaration.implLookup.ctx
+                val infer = expandedDeclaration.implLookup.ctx
                 infer.combineTypes(inferredType, formalType)
 
-                for ((rawType, typeElement) in placeholders) {
+                for ((rawType, expandedTypeElement) in placeholders) {
                     val type = infer.resolveTypeVarsIfPossible(rawType)
                     if (type is TyInfer || type is TyUnknown) continue
 
+                    val offset = if (declaration == expandedDeclaration) {
+                        expandedTypeElement.endOffset
+                    } else {
+                        expandedTypeElement.findElementExpandedFrom()?.endOffset ?: return
+                    }
                     val presentation = typeHintsFactory.typeHint(type)
                     val finalPresentation = presentation.withDisableAction(declaration.project)
-                    sink.addInlineElement(typeElement.endOffset, false, finalPresentation, false)
+                    sink.addInlineElement(offset, false, finalPresentation, false)
                 }
             }
 
@@ -171,19 +183,29 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
 
                 for (binding in pat.descendantsOfType<RsPatBinding>()) {
                     if (binding.referenceName.startsWith("_")) continue
-                    if (binding.reference.resolve()?.isConstantLike == true) continue
-                    if (binding.type is TyUnknown) continue
-
                     presentTypeForBinding(binding)
                 }
             }
 
             private fun presentTypeForBinding(binding: RsPatBinding) {
-                if (!binding.existsAfterExpansion(crate)) return
-                val presentation = typeHintsFactory.typeHint(binding.type)
+                val bindingExpanded = binding.getExpanded { it.identifier } ?: return
+                if (bindingExpanded.reference.resolve()?.isConstantLike == true) return
+                if (bindingExpanded.type is TyUnknown) return
+
+                val presentation = typeHintsFactory.typeHint(bindingExpanded.type)
                 val finalPresentation = presentation.withDisableAction(project)
                 sink.addInlineElement(binding.endOffset, false, finalPresentation, false)
             }
+
+            private inline fun <reified T : PsiElement> T.getExpanded(getLeaf: (T) -> PsiElement): T? =
+                when (getCodeStatus(crate)) {
+                    RsCodeStatus.CFG_DISABLED -> null
+                    RsCodeStatus.ATTR_PROC_MACRO_CALL -> {
+                        val leafExpanded = getLeaf(this).findExpansionElements()?.singleOrNull()
+                        leafExpanded?.parent as? T
+                    }
+                    else -> this
+                }
         }
     }
 

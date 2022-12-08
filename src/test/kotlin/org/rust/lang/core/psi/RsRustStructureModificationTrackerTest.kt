@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.resolve2.defMapService
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
-import org.rust.openapiext.runWriteCommandAction
 
 class RsRustStructureModificationTrackerTest : RsTestBase() {
     private enum class TestAction(val function: (Long, Long) -> Boolean, val comment: String) {
@@ -284,7 +284,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         """)
 
         checkModCount(INC) {
-            project.runWriteCommandAction {
+            WriteCommandAction.runWriteCommandAction(project) {
                 myFixture.file.childOfType<RsUseItem>()!!.delete()
             }
         }

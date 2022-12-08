@@ -9,7 +9,7 @@ jobs:
     update-nightly:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -22,7 +22,7 @@ jobs:
     update-compiler-features:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 

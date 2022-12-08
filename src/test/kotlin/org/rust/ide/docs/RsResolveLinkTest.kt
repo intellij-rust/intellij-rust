@@ -111,6 +111,30 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/fn.foo.html")
 
+    fun `test bang proc macro fqn link`() = doTest("""
+        #[proc_macro]
+        pub fn foo(_item: TokenStream) -> TokenStream {}
+             //X
+        struct Bar;
+              //^
+    """, "test_package/macro.foo.html")
+
+    fun `test derive proc macro fqn link`() = doTest("""
+        #[proc_macro_derive(Derive)]
+        pub fn foo(_item: TokenStream) -> TokenStream {}
+             //X
+        struct Bar;
+              //^
+    """, "test_package/derive.Derive.html")
+
+    fun `test attribute proc macro fqn link`() = doTest("""
+        #[proc_macro_attribute]
+        pub fn foo(_attr: TokenStream, _item: TokenStream) -> TokenStream {}
+             //X
+        struct Bar;
+              //^
+    """, "test_package/attr.foo.html")
+
     fun `test const fqn link`() = doTest("""
         const FOO: i32 = 0;
             //X

@@ -54,33 +54,60 @@ private class LinkTextParts private constructor(
  * - Parse path using usual parser (it will parse generics if any)
  */
 object RsDocLinkDestinationParser {
-    fun parse(text: CharSequence, charTable: CharTable): TreeElement {
-        val info = parseLink(text) ?: return docDataLeaf(text, charTable)
-        return parsePathAndCreateNodes(info, charTable) ?: docDataLeaf(text, charTable)
+
+    fun parse(text: CharSequence, charTable: CharTable): TreeElement =
+        doParse(text, charTable, isShortLink = false) ?: docDataLeaf(text, charTable)
+
+    fun parseShortLink(text: CharSequence, charTable: CharTable): TreeElement? =
+        doParse(text, charTable, isShortLink = true)
+
+    private fun doParse(text: CharSequence, charTable: CharTable, isShortLink: Boolean): TreeElement? {
+        val info = parseLink(text, isShortLink) ?: return null
+        val path = parseRsPath(info.content, charTable) ?: return null
+        return parsePathAndCreateNodes(info, path, charTable)
     }
 
-    private fun parseLink(text: CharSequence): LinkTextParts? {
+    private fun parseLink(text: CharSequence, isShortLink: Boolean): LinkTextParts? {
         if (text.isEmpty() || text.contains("/")) return null
 
         return LinkTextParts(text)
-            .trimBackticks()
+            .run { if (isShortLink) preprocessShortLink() else this }
+            ?.trimBackticks()
             ?.removeHashAnchor()
             ?.removeDisambiguator()
             ?.takeIf { canBeCorrectLink(it.content) }
     }
 
+    private fun LinkTextParts.preprocessShortLink(): LinkTextParts? =
+        trimBrackets()
+            .trimWhitespaces()
+
+    // "[func]" -> "func"
+    private fun LinkTextParts.trimBrackets(): LinkTextParts {
+        val content = content
+        return if (content.startsWith('[') && content.endsWith(']')) {
+            subSequence(1, content.length - 1)
+        } else {
+            this
+        }
+    }
+
     // "`func`" -> "func"
     // Remove any number of backticks at the beginning and end.
     // Rustdoc also removes backticks in the middle, but we don't support it
-    private fun LinkTextParts.trimBackticks(): LinkTextParts? {
+    private fun LinkTextParts.trimBackticks(): LinkTextParts? = trimChar { it == '`' }
+
+    private fun LinkTextParts.trimWhitespaces(): LinkTextParts? = trimChar { it.isWhitespace() }
+
+    private fun LinkTextParts.trimChar(filter: (Char) -> Boolean): LinkTextParts? {
         val content = content
         var start = 0
         var end = content.length
-        while (content[start] == '`') {
+        while (filter(content[start])) {
             ++start
         }
         if (start == end) return null
-        while (content[end - 1] == '`') {
+        while (filter(content[end - 1])) {
             --end
         }
         return subSequence(start, end)
@@ -131,8 +158,7 @@ object RsDocLinkDestinationParser {
 
     private fun Char.isAlphanumeric(): Boolean = Character.isAlphabetic(code) || isDigit()
 
-    private fun parsePathAndCreateNodes(info: LinkTextParts, charTable: CharTable): TreeElement? {
-        val path = parseRsPath(info.content, charTable) ?: return null
+    private fun parsePathAndCreateNodes(info: LinkTextParts, path: TreeElement, charTable: CharTable): TreeElement? {
         val root = DOC_LINK_DEFINITION.createCompositeNode()
         val prefix = info.prefix
         val suffix = info.suffix

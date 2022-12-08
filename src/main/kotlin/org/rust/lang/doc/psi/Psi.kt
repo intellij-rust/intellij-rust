@@ -79,6 +79,8 @@ interface RsDocInlineLink : RsDocLink {
     val linkDestination: RsDocLinkDestination
 }
 
+sealed interface RsDocPathLinkParent : RsDocElement
+
 /**
  * ```
  * /// [link label]
@@ -86,7 +88,7 @@ interface RsDocInlineLink : RsDocLink {
  *
  * Then, the link should be defined with [RsDocLinkDefinition]
  */
-interface RsDocLinkReferenceShort : RsDocLink {
+interface RsDocLinkReferenceShort : RsDocLink, RsDocPathLinkParent {
     val linkLabel: RsDocLinkLabel
 }
 
@@ -158,7 +160,7 @@ interface RsDocLinkTitle : RsDocElement
  *
  * A child of [RsDocInlineLink] or [RsDocLinkDefinition]
  */
-interface RsDocLinkDestination : RsDocElement
+interface RsDocLinkDestination : RsDocPathLinkParent
 
 /**
  * A [markdown code fence](https://spec.commonmark.org/0.29/#fenced-code-blocks).

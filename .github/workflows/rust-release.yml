@@ -32,18 +32,18 @@ jobs:
             release-branch: ${{ steps.get-release-branch.outputs.release-branch }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - id: get-release-branch
               run: |
                   branch=$(python scripts/get_release_branch.py)
-                  echo "::set-output name=release-branch::$branch"
+                  echo "release-branch=$branch" >> $GITHUB_OUTPUT
 
     update-changelog-link:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -67,9 +67,9 @@ jobs:
               run: |
                 if ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.type == 'stable' }}
                 then
-                  echo "::set-output name=channel::stable"
+                  echo "channel=stable" >> $GITHUB_OUTPUT
                 else
-                  echo "::set-output name=channel::beta"
+                  echo "channel=beta" >> $GITHUB_OUTPUT
                 fi
 
     fetch-latest-changes:
@@ -80,7 +80,7 @@ jobs:
             rust-release: ${{ steps.fetch-commits.outputs.rust-release }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   ref: ${{ needs.get-release-branch.outputs.release-branch }}
                   fetch-depth: 0
@@ -88,8 +88,8 @@ jobs:
             - name: Fetch latest commits
               id: fetch-commits
               run: |
-                  echo "::set-output name=rust-commit::$(git log -n 1 --format=format:%H)"
-                  echo "::set-output name=rust-release::$(python scripts/get_tag_commit.py --tag "rust-${{ needs.get-channel.outputs.channel }}")"
+                  echo "rust-commit=$(git log -n 1 --format=format:%H)" >> $GITHUB_OUTPUT
+                  echo "rust-release=$(python scripts/get_tag_commit.py --tag "rust-${{ needs.get-channel.outputs.channel }}")" >> $GITHUB_OUTPUT
 
             - name: Show commits
               run: |
@@ -122,7 +122,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   ref: ${{ needs.get-release-branch.outputs.release-branch }}
 
@@ -145,7 +145,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   fetch-depth: 0
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}

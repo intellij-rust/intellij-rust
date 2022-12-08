@@ -5,10 +5,9 @@
 
 package org.rust.lang.core.type
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.lang.core.macros.MacroExpansionManager
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test function call`() = testExpr("""
@@ -1747,7 +1746,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test macro type`() = testExpr("""
         fn main() {
-          macro_rules! i32_ty {
+            macro_rules! i32_ty {
                 () => { i32 }
             }
             let a: i32_ty!() = unresolved();
@@ -1755,9 +1754,11 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ i32
     """)
 
+    @ExpandMacros
+    @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
     fun `test infinite macro type`() = testExpr("""
         fn main() {
-          macro_rules! infinite {
+            macro_rules! infinite {
                 () => { infinite!() }
             }
             let a: infinite!() = unresolved();

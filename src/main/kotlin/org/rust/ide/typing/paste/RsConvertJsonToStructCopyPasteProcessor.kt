@@ -366,7 +366,9 @@ private fun replacePlaceholders(
     invokeLater {
         if (editor.isDisposed) return@invokeLater
 
-        editor.project?.runWriteCommandAction {
+        editor.project?.runWriteCommandAction(
+            RsBundle.message("copy.paste.convert.json.to.struct.dialog.title")
+        ) {
             if (!file.isValid) return@runWriteCommandAction
             val template = editor.newTemplateBuilder(file) ?: return@runWriteCommandAction
 

@@ -8,6 +8,9 @@ package org.rust.ide.intentions
 import org.rust.ide.intentions.createFromUsage.CreateStructIntention
 
 class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::class) {
+
+    override val previewExpected: Boolean get() = false
+
     fun `test struct availability range`() = checkAvailableInSelectionOnly("""
         fn main() {
             <selection>Foo</selection> { a: 0 };

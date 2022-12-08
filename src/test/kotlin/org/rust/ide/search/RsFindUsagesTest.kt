@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
@@ -206,6 +207,16 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
+    fun `test variable defined by a macro`() = doTestByText("""
+        macro_rules! foo { ($($ t:tt)*) => { $($ t)* }; }
+        fn main() {
+            foo! {
+                let a = 2;
+            }     //^
+            let _ = a; // - null
+        }
+    """)
+
     fun `test method from trait`() = doTestByText("""
         struct B1; struct B2;
         trait A { fn foo(self, x: i32); }
@@ -281,6 +292,7 @@ class RsFindUsagesTest : RsTestBase() {
         fn func(_: super::Foo) {} // - type reference
     """)
 
+    @ExpandMacros
     fun `test usage in included file`() = doTestByFileTree("""
     //- main.rs
         mod foo;

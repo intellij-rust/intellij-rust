@@ -74,7 +74,7 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
     }
 
     override fun getUseScope(): SearchScope {
-        val owner = PsiTreeUtil.getParentOfType(this,
+        val owner = PsiTreeUtil.getContextOfType(this,
             RsBlock::class.java,
             RsFunction::class.java,
             RsLambdaExpr::class.java

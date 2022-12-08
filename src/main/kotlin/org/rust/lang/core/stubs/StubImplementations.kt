@@ -198,8 +198,9 @@ private object BlockMayHaveStubsHeuristic {
         while (true) {
             val token = b.tokenType ?: break
             val looksLikeStubElement = token in ITEM_DEF_KWS
-                // `const` but not `*const` and not `raw const`
+                // `const` but not `*const`, `raw const` or `const {}`
                 || token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
+                    && b.lookAhead(1) != LBRACE
                 // `#!`
                 || token == EXCL && prevToken == SHA
                 // `macro_rules!`

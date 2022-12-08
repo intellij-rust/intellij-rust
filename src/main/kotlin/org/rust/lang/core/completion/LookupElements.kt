@@ -31,7 +31,7 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.lang.doc.psi.RsDocLinkDestination
+import org.rust.lang.doc.psi.RsDocPathLinkParent
 import org.rust.openapiext.Testmark
 import org.rust.stdext.mapToSet
 
@@ -279,7 +279,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
             addGenericTypeCompletion(element, document, context)
         }
 
-        if (context.getElementOfType<RsDocLinkDestination>() != null) return
+        if (context.getElementOfType<RsDocPathLinkParent>() != null) return
 
         val curUseItem = context.getElementOfType<RsUseItem>()
 

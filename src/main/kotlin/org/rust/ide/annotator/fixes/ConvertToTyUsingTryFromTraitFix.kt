@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -26,8 +27,10 @@ import org.rust.lang.core.types.ty.TyAdt
 @Suppress("KDocUnresolvedReference")
 abstract class ConvertToTyUsingTryTraitFix(
     expr: RsExpr,
+    @SafeFieldForPreview
     private val ty: Ty,
     traitName: String,
+    @SafeFieldForPreview
     private val fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr, Ty) -> RsExpr
 ) : ConvertToTyUsingTraitFix(expr, ty, traitName) {
 
@@ -49,6 +52,7 @@ abstract class ConvertToTyUsingTryTraitFix(
 abstract class ConvertToTyUsingTryTraitAndUnpackFix(
     expr: RsExpr,
     ty: Ty,
+    @SafeFieldForPreview
     private val errTy: Ty,
     traitName: String,
     fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr, Ty) -> RsExpr

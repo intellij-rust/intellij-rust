@@ -13,12 +13,11 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.getTraversedRawAttributes
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
+import org.rust.stdext.singleOrFilter
 
 class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -32,12 +31,11 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
             crateName: String = AutoInjectedCrates.CORE
         ): RsNamedElement? {
             checkCommitIsNotInProgress(project)
-            val elements = getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
-            return if (elements.size < 2) {
-                elements.firstOrNull() as? RsNamedElement
-            } else {
-                elements.find { it.containingCrate.normName == crateName } as? RsNamedElement
-            }
+            return getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
+                .filterIsInstance<RsNamedElement>()
+                .singleOrFilter { it.containingCrate.normName == crateName }
+                .singleOrFilter { it.existsAfterExpansion }
+                .firstOrNull()
         }
 
         fun index(psi: RsItemElement, sink: IndexSink) {

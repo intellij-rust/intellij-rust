@@ -13,7 +13,6 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.stdext.isSortedWith
@@ -25,16 +24,14 @@ import org.rust.stdext.isSortedWith
 fun ImportCandidate.import(context: RsElement) = info.import(context)
 
 fun ImportInfo.import(context: RsElement) {
+    // Imports are not very important for most intention preview,
+    // but would be nice to support it for `AddImportIntention`
+    if (context.isIntentionPreviewElement) return
+
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
 
-    // depth of `mod` relative to module with `extern crate` item
-    // we use this info to create correct relative use item path if needed
-    val prefix = when (val relativeDepth = insertExternCrateIfNeeded(context)) {
-        null -> ""
-        0 -> "self::"
-        else -> "super::".repeat(relativeDepth)
-    }
+    insertExternCrateIfNeeded(context)
 
     val containingFile = context.containingFile
     val insertionScope = when {
@@ -48,17 +45,17 @@ fun ImportInfo.import(context: RsElement) {
             ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
         }
         containingFile is RsCodeFragment -> containingFile.importTarget
-        containingFile is RsFile && RsIncludeMacroIndex.getIncludedFrom(containingFile) != null -> containingFile
+        containingFile is RsFile && containingFile.isIncludedByIncludeMacro -> containingFile
         else -> null
     } ?: context.containingMod
-    insertionScope.insertUseItem(psiFactory, "$prefix$usePath")
+    insertionScope.insertUseItem(psiFactory, usePath)
 }
 
 /**
  * Inserts an `extern crate` item if the crate of importing element differs from the crate of `context`.
  * Returns the relative depth of context `mod` relative to module with `extern crate` item.
  */
-fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
+fun ImportInfo.insertExternCrateIfNeeded(context: RsElement) {
     if (this is ImportInfo.ExternCrateImportInfo) {
         val crateRoot = context.crateRoot
         val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
@@ -70,19 +67,11 @@ fun ImportInfo.insertExternCrateIfNeeded(context: RsElement): Int? {
             // if crate of imported element is `core` and there is `#![no_std]`
             // we don't add corresponding extern crate item manually for the same reason
             attributes == RsFile.Attributes.NO_STD && crate.isCore -> Testmarks.AutoInjectedCoreCrate.hit()
-            else -> {
-                if (needInsertExternCrateItem) {
-                    crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
-                } else {
-                    if (depth != null) {
-                        Testmarks.ExternCrateItemInNotCrateRoot.hit()
-                        return depth
-                    }
-                }
+            needInsertExternCrateItem -> {
+                crateRoot?.insertExternCrateItem(RsPsiFactory(context.project), externCrateName)
             }
         }
     }
-    return null
 }
 
 
@@ -207,7 +196,6 @@ val Crate.isCore: Boolean
 object Testmarks {
     object AutoInjectedStdCrate : Testmark()
     object AutoInjectedCoreCrate : Testmark()
-    object ExternCrateItemInNotCrateRoot : Testmark()
     object DoctestInjectionImport : Testmark()
     object IgnorePrivateImportInParentMod : Testmark()
 }

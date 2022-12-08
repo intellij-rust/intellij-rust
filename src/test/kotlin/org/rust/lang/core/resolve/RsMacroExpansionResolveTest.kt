@@ -1029,4 +1029,23 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             func();
         } //^
     """)
+
+    // TODO should actually be resolved
+    fun `test macro call in a module with duplicate name`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! foo {
+            () => { struct Foo; };
+        }
+        mod bar {
+            foo! {}
+        }
+        mod bar {
+            foo! {}
+            type T = Foo;
+                   //^ unresolved
+        }
+        mod bar {
+            foo! {}
+        }
+    """)
 }

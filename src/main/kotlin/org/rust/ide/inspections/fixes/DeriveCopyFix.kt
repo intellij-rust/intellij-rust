@@ -25,7 +25,7 @@ class DeriveCopyFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiEl
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         val pathExpr = startElement as? RsPathExpr ?: return
         val type = pathExpr.type as? TyAdt ?: return
-        val item = type.item
+        val item = type.item.findPreviewCopyIfNeeded(file)
 
         val implLookup = ImplLookup.relativeTo(item)
         val isCloneImplemented = implLookup.isClone(type)

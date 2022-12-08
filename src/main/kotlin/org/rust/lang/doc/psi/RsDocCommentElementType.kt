@@ -16,6 +16,7 @@ import com.intellij.psi.tree.ILazyParseableElementType
 import com.intellij.util.CharTable
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.RsLanguage
 import org.rust.lang.doc.psi.RsDocElementTypes.DOC_DATA
@@ -31,10 +32,9 @@ class RsDocCommentElementType(debugName: String) : ILazyParseableElementType(deb
         val textMap = RsDocTextMap.new(chameleon.chars, RsDocKind.of(this))
 
         val root = RsDocCommentImpl(this, text = null)
-        RsDocMarkdownAstBuilder(textMap, charTable).buildTree(
-            root,
-            MarkdownParser(CommonMarkFlavourDescriptor()).buildMarkdownTreeFromString(textMap.mappedText.toString())
-        )
+        val markdownRoot = MarkdownParser(CommonMarkFlavourDescriptor()).buildMarkdownTreeFromString(textMap.mappedText)
+        val linkMap = LinkMap.buildLinkMap(markdownRoot, textMap.mappedText)
+        RsDocMarkdownAstBuilder(textMap, charTable, linkMap).buildTree(root, markdownRoot)
 
         return root.firstChildNode
     }
@@ -44,7 +44,8 @@ class RsDocCommentElementType(debugName: String) : ILazyParseableElementType(deb
 
 private class RsDocMarkdownAstBuilder(
     private val textMap: RsDocTextMap,
-    private val charTable: CharTable
+    private val charTable: CharTable,
+    private val linkMap: LinkMap,
 ) {
     private var prevNodeEnd = 0
 
@@ -87,10 +88,34 @@ private class RsDocMarkdownAstBuilder(
                 return
             }
         }
+        if (node is RsDocLinkReferenceShort && tryParseShortDocLinkAsRsPath(node, markdownNode)) {
+            return
+        }
 
         for (markdownChild in markdownNode.children) {
             visitNode(node, markdownChild)
         }
+    }
+
+    /**
+     * ```
+     * /// [bar1] - direct link, refers to `bar1`, parsed as RsPath
+     * /// [bar2] - label, refers to `bar3`
+     * ///
+     * /// [bar2]: bar3
+     * pub fn foo() {}
+     * ```
+     */
+    private fun tryParseShortDocLinkAsRsPath(node: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode): Boolean {
+        val textRangeMapped = textMap.mapTextRangeFromMarkdownToRust(markdownNode.textRange)
+        val mappedText = textMap.mapFully(textRangeMapped) ?: return false
+        if (!mappedText.startsWith('[') || !mappedText.endsWith(']')) return false
+        if (linkMap.getLinkInfo(mappedText) != null) return false
+
+        val linkNode = RsDocLinkDestinationParser.parseShortLink(mappedText, charTable) ?: return false
+        node.rawAddChildrenWithoutNotifications(linkNode)
+        prevNodeEnd = textRangeMapped.endOffset
+        return true
     }
 
     private fun CompositeElement.insertLeaves(startOffset: Int, endOffset: Int) {
@@ -116,7 +141,7 @@ private class RsDocMarkdownAstBuilder(
 
 private class RsDocTextMap(
     val originalText: CharSequence,
-    val mappedText: CharSequence,
+    val mappedText: String,
     private val offsetMap: IntArray, // mappedText -> originalText map
     private val pieces: List<Piece>
 ) {
@@ -194,7 +219,7 @@ private class RsDocTextMap(
             check(mappedText.length < map.size)
             check(mappedText.indices.all { map[it + 1] > map[it] })
 
-            return RsDocTextMap(text, mappedText, map, pieces)
+            return RsDocTextMap(text, mappedText.toString(), map, pieces)
         }
 
         private fun MutableList<Piece>.mergeOrAddGapWithWS(str: CharSequence) {

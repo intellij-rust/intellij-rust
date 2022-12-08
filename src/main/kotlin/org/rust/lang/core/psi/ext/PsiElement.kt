@@ -332,3 +332,19 @@ fun PsiElement.isKeywordLike(): Boolean {
         else -> false
     }
 }
+
+/**
+ * Consider we do some `resolve` in a quick-fix which is called in preview mode.
+ * Quick-fix is called on copy of the original file, but `resolve` will return original element.
+ * We will have an exception if we try to modify the original element.
+ * Thus, we should call this function on `resolve` result to obtain element in the copy of the original file.
+ */
+fun <T: PsiElement> T.findPreviewCopyIfNeeded(copyFile: PsiFile): T {
+    if (!copyFile.isIntentionPreviewElement) return this
+    return when (containingFile) {
+        copyFile -> this
+        copyFile.originalFile -> PsiTreeUtil.findSameElementInCopy(this, copyFile)
+        // TODO this is incorrect, intention will fail with "Must not change PSI outside write action"
+        else -> this
+    }
+}

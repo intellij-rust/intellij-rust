@@ -350,6 +350,12 @@ class ExpansionResultOk(
         .toIntArray()
 )
 
+fun ExpansionResultOk.shiftDstRangesRight(offset: Int): ExpansionResultOk {
+    val dollarCrateOccurrences = dollarCrateOccurrences.map { it + offset }.toIntArray()
+    val ranges = ranges.ranges.map { it.dstShiftRight(offset) }
+    return ExpansionResultOk(text, RangeMap(ranges), dollarCrateOccurrences)
+}
+
 private object ExpansionResultExternalizer : DataExternalizer<RsResult<ExpansionResultOk, MacroExpansionError>> {
     @Throws(IOException::class)
     override fun save(out: DataOutput, value: RsResult<ExpansionResultOk, MacroExpansionError>) {

@@ -15,6 +15,8 @@ import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.ide.checkNoPreview
+import org.rust.ide.checkPreviewAndLaunchAction
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
@@ -22,6 +24,8 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
 
     protected val intention: IntentionAction
         get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
+
+    protected open val previewExpected: Boolean get() = intention.startInWriteAction()
 
     fun `test intention has documentation`() {
         if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return
@@ -40,10 +44,11 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     protected fun doAvailableTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        @Language("Rust") preview: String? = null,
         fileName: String = "main.rs"
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
-        launchAction()
+        launchAction(preview)
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -89,9 +94,19 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
-    protected fun launchAction() {
+    protected fun launchAction(@Language("Rust") preview: String? = null) {
         UIUtil.dispatchAllInvocationEvents()
-        myFixture.launchAction(intention)
+        // Check preview only for intentions from Rust plugin
+        if (intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) {
+            if (previewExpected) {
+                myFixture.checkPreviewAndLaunchAction(intention, preview)
+            } else {
+                myFixture.checkNoPreview(intention)
+                myFixture.launchAction(intention)
+            }
+        } else {
+            myFixture.launchAction(intention)
+        }
     }
 
     protected fun doUnavailableTest(@Language("Rust") before: String, fileName: String = "main.rs") {

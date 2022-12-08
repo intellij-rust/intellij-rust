@@ -6,7 +6,9 @@
 package org.rust.ide.hints.type
 
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.openapiext.escaped
 
 
@@ -80,6 +82,42 @@ class RsExpressionTypeProviderTest : RsTestBase() {
             };
         }
     """, "i32, S")
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attr proc macro`() = doTest("""
+        use test_proc_macros::attr_add_to_fn_beginning;
+
+        #[attr_add_to_fn_beginning(let a = 0;)]
+        fn main() {
+            let _ = /*caret*/a;
+        }
+    """, "i32")
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attr proc macro 2`() = doTest("""
+        fn foo(x: i32) -> i32 { x }
+
+        #[test_proc_macros::attr_as_is]
+        fn main() {
+            let _ = /*caret*/foo(0);
+        }
+    """, "fn(i32) -> i32, i32")
+
+    fun `test inside macro call`() = doTest("""
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+
+        fn foo() -> i32 { 0 }
+
+        fn main() {
+            as_is! {
+                /*caret*/foo();
+            }
+        }
+    """, "fn() -> i32, i32")
 
     private fun doTest(@Language("Rust") code: String, type: String) {
         InlineFile(code).withCaret()

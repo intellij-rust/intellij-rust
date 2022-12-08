@@ -9,11 +9,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.psi.ext.startOffset
@@ -55,11 +57,14 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
-        val createdType = factory.createType(ctx.type.renderInsertionSafe())
         val letDecl = ctx.letDecl
+        val (toImport, toQualify) = RsImportHelper.getTypeReferencesInfoFromTys(letDecl, ctx.type)
+
+        val createdType = factory.createType(ctx.type.renderInsertionSafe(letDecl, useQualifiedName = toQualify))
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)
-        importTypeReferencesFromTy(ctx.letDecl, ctx.type)
+
+        RsImportHelper.importElements(letDecl, toImport)
     }
 
 

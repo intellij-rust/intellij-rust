@@ -101,6 +101,7 @@ private fun createHangingModData(scope: RsItemsOwner, contextInfo: RsModInfo): M
         hasMacroUse = false,
         isNormalCrate = false,
         context = contextData,
+        isBlock = scope is RsBlock,
         crateDescription = "$pathSegment in ${contextData.crateDescription}",
     )
 

@@ -433,7 +433,7 @@
         <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
                          displayName="Self convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSelfConventionInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsSelfConventionInspection"/>
 
         <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
                          displayName="Struct naming convention"
@@ -1104,7 +1104,6 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsExternCrateReexportIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsFeatureIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsCfgNotTestIndex"/>
-        <stubIndex implementation="org.rust.lang.core.stubs.index.RsIncludeMacroIndex"/>
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsTypeAliasIndex"/>

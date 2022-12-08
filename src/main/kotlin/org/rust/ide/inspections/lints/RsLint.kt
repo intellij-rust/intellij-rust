@@ -38,7 +38,8 @@ enum class RsLint(
     UnknownCrateTypes("unknown_crate_types", defaultLevel = DENY),
     // CLippy lints
     NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy")),
-    DoubleMustUse("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy"));
+    DoubleMustUse("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy")),
+    WrongSelfConvention("clippy::wrong_self_convention", listOf("clippy::style", "clippy::all", "clippy"));
 
     /**
      * Returns the level of the lint for the given PSI element.

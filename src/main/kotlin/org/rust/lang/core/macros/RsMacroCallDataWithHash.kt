@@ -13,7 +13,7 @@ class RsMacroCallDataWithHash(
 ) {
     fun hashWithEnv(): HashCode? {
         val bodyHash = bodyHash ?: return null
-        val env = data.packageEnv
+        val env = data.env
             .entries
             .sortedBy { it.key }
             .joinToString(separator = ";") { it.key + "=" + it.value }

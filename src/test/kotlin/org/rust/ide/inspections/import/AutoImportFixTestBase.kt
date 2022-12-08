@@ -25,23 +25,23 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         checkOptimizeImports: Boolean = true,
-    ) = doTest(checkOptimizeImports) { checkFixByText(AutoImportFix.NAME, before, after) }
+    ) = doTest(checkOptimizeImports) { checkFixByText(AutoImportFix.NAME, before, after, preview = null) }
 
     protected fun checkAutoImportFixByTextWithoutHighlighting(
         @Language("Rust") before: String,
         @Language("Rust") after: String
-    ) = doTest { checkFixByTextWithoutHighlighting(AutoImportFix.NAME, before, after) }
+    ) = doTest { checkFixByTextWithoutHighlighting(AutoImportFix.NAME, before, after, preview = null) }
 
     protected fun checkAutoImportFixByFileTree(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         checkOptimizeImports: Boolean = true,
-    ) = doTest(checkOptimizeImports) { checkFixByFileTree(AutoImportFix.NAME, before, after) }
+    ) = doTest(checkOptimizeImports) { checkFixByFileTree(AutoImportFix.NAME, before, after, preview = null) }
 
     protected fun checkAutoImportFixByFileTreeWithoutHighlighting(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-    ) = doTest { checkFixByFileTreeWithoutHighlighting(AutoImportFix.NAME, before, after) }
+    ) = doTest { checkFixByFileTreeWithoutHighlighting(AutoImportFix.NAME, before, after, preview = null) }
 
     protected fun checkAutoImportFixByTextWithMultipleChoice(
         @Language("Rust") before: String,
@@ -50,7 +50,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         @Language("Rust") after: String,
     ) = doTest {
         checkAutoImportWithMultipleChoice(expectedElements, choice) {
-            checkFixByText(AutoImportFix.NAME, before, after)
+            checkFixByText(AutoImportFix.NAME, before, after, preview = null)
         }
     }
 
@@ -61,7 +61,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         @Language("Rust") after: String,
     ) = doTest {
         checkAutoImportWithMultipleChoice(expectedElements, choice) {
-            checkFixByFileTree(AutoImportFix.NAME, before, after)
+            checkFixByFileTree(AutoImportFix.NAME, before, after, preview = null)
         }
     }
 
@@ -71,7 +71,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
     ) = doTest {
         checkAutoImportWithMultipleChoice(expectedElements, choice = null) {
             configureByText(before)
-            annotationFixture.applyQuickFix(AutoImportFix.NAME)
+            annotationFixture.applyQuickFix(AutoImportFix.NAME, preview = null)
         }
     }
 

@@ -6,7 +6,6 @@
 package org.rust.ide.inspections.fixes
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -23,8 +22,7 @@ class AddMainFnFix(file: PsiElement) : LocalQuickFixAndIntentionActionOnPsiEleme
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         val function = file.add(RsPsiFactory(project).createFunction("fn main() { }")) as RsFunction
-        if (editor == null) return
         val offset = function.block?.lbrace?.textOffset ?: return
-        PsiNavigationSupport.getInstance().createNavigatable(project, file.virtualFile, offset + 1).navigate(true)
+        editor?.caretModel?.moveToOffset(offset + 1)
     }
 }

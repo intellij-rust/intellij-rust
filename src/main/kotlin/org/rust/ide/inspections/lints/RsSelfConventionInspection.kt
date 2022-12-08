@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
@@ -16,7 +17,10 @@ import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
 
-class RsSelfConventionInspection : RsLocalInspectionTool() {
+class RsSelfConventionInspection : RsLintInspection() {
+
+    override fun getLint(element: PsiElement): RsLint = RsLint.WrongSelfConvention
+
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {

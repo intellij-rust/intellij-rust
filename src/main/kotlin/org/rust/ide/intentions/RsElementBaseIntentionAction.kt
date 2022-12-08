@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.ext.isIntentionPreviewElement
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 
@@ -42,7 +43,7 @@ abstract class RsElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntentionAc
     final override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val ctx = findApplicableContext(project, editor, element) ?: return
 
-        if (startInWriteAction()) {
+        if (startInWriteAction() && !element.isIntentionPreviewElement) {
             checkWriteAccessAllowed()
         }
 

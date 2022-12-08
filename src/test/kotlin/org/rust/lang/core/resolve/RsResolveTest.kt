@@ -6,6 +6,8 @@
 package org.rust.lang.core.resolve
 
 import org.rust.MockRustcVersion
+import org.rust.WithoutExperimentalFeatures
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
@@ -1547,6 +1549,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @WithoutExperimentalFeatures(RsExperiments.DERIVE_PROC_MACROS)
     fun `test derive serde Serialize`() = checkByCode("""
         #[lang = "serde::Serialize"]
         trait Serialize { fn serialize(&self); }

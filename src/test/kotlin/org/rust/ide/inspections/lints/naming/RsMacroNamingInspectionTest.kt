@@ -25,7 +25,7 @@ class RsMacroNamingInspectionTest : RsInspectionsTestBase(RsMacroNamingInspectio
     """, """
         macro_rules! macro_foo { () => {}; }
         macro_foo!();
-    """)
+    """, preview = null)
 
     fun `test macros with raw identifier`() = checkFixByText("Rename to `macro_foo`", """
         macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">r#Macro/*caret*/Foo</warning> { () => {}; }
@@ -33,7 +33,7 @@ class RsMacroNamingInspectionTest : RsInspectionsTestBase(RsMacroNamingInspectio
     """, """
         macro_rules! macro_foo { () => {}; }
         macro_foo!();
-    """)
+    """, preview = null)
 
     fun `test macro not support case`() = checkByText("""
         macro_rules! 宏 { () => {}; }

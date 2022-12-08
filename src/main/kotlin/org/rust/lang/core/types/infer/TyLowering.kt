@@ -9,10 +9,8 @@ import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.MacroExpansion
-import org.rust.lang.core.macros.calculateMacroExpansionDepth
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.RsPathResolveResult
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
@@ -36,10 +34,12 @@ import org.rust.lang.utils.evaluation.tryEvaluate
  * Prefer using [org.rust.lang.core.types.rawType]/[org.rust.lang.core.types.normType]
  */
 class TyLowering private constructor(
-    private val resolvedNestedPaths: Map<RsPath, List<RsPathResolveResult<RsElement>>>
+    givenResolvedNestedPaths: Map<RsPath, List<RsPathResolveResult<RsElement>>>
 ) {
-    private val declaredTypeCache = hashMapOf<RsTypeDeclarationElement, Ty>()
-    private val genericParametersCache = hashMapOf<RsGenericDeclaration, List<RsGenericParameter>>()
+    private val resolvedNestedPaths: MutableMap<RsPath, List<RsPathResolveResult<RsElement>>> =
+        HashMap(givenResolvedNestedPaths)
+    private val declaredTypeCache: MutableMap<RsTypeDeclarationElement, Ty> = hashMapOf()
+    private val genericParametersCache: MutableMap<RsGenericDeclaration, List<RsGenericParameter>> = hashMapOf()
 
     // Keep in sync with TyFingerprint-create
     private fun lowerTy(type: RsTypeReference, defaultTraitObjectRegion: Region?): Ty {
@@ -74,14 +74,14 @@ class TyLowering private constructor(
                     target is RsTraitOrImpl && path.hasCself -> {
                         if (target is RsImplItem) {
                             val typeReference = target.typeReference
-                            if (typeReference == null || typeReference.isAncestorOf(path)) {
+                            if (typeReference == null || path.contexts.contains(typeReference)) {
                                 // `impl {}` or `impl Self {}`
                                 TyUnknown
                             } else {
-                                lowerTy(typeReference, null)
+                                declaredTypeCache.getOrPut(target) { lowerTy(typeReference, null) }
                             }
                         } else {
-                            TyTypeParameter.self(target)
+                            declaredTypeCache.getOrPut(target) { TyTypeParameter.self(target) }
                         }
                     }
 
@@ -166,7 +166,6 @@ class TyLowering private constructor(
             }
 
             is RsMacroType -> {
-                if (type.calculateMacroExpansionDepth() >= DEFAULT_RECURSION_LIMIT) return TyUnknown
                 val expansion = type.macroCall.expansion as? MacroExpansion.Type ?: return TyUnknown
                 lowerTy(expansion.type, null)
             }
@@ -176,9 +175,12 @@ class TyLowering private constructor(
     }
 
     private fun rawMultiResolvePath(path: RsPath): List<RsPathResolveResult<RsElement>> {
-        return resolvedNestedPaths[path]
-            ?: path.reference?.rawMultiResolve()
-            ?: emptyList()
+        val resolvedNestedPaths = resolvedNestedPaths
+        val alreadyResolved = resolvedNestedPaths[path]
+        if (alreadyResolved == null) {
+            resolvedNestedPaths += RsPathReferenceImpl.resolveNeighborPaths(path)
+        }
+        return resolvedNestedPaths[path] ?: emptyList()
     }
 
     private fun <T : RsElement> instantiatePathGenerics(
@@ -268,12 +270,7 @@ class TyLowering private constructor(
 
     companion object {
         fun lowerTypeReference(type: RsTypeReference): Ty {
-            val resolvedNestedPaths = if (type is RsPathType) {
-                RsPathReferenceImpl.resolveAllNestedPaths(type.path)
-            } else {
-                emptyMap()
-            }
-            return TyLowering(resolvedNestedPaths).lowerTy(type, null).foldTyPlaceholderWithTyInfer()
+            return TyLowering(emptyMap()).lowerTy(type, null).foldTyPlaceholderWithTyInfer()
         }
 
         fun <T : RsElement> lowerPathGenerics(

@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.ref.deepResolve
 
@@ -62,4 +65,8 @@ fun RsPat.skipUnnecessaryTupDown(): RsPat {
         pat = pat.patList.singleOrNull() ?: return pat
     }
     return pat
+}
+
+abstract class RsPatImplMixin(node: ASTNode) : RsElementImpl(node), RsPat {
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

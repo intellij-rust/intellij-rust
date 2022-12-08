@@ -50,11 +50,11 @@ val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
-    kotlin("jvm") version "1.7.20"
-    id("org.jetbrains.intellij") version "1.10.0-SNAPSHOT"
+    kotlin("jvm") version "1.7.22"
+    id("org.jetbrains.intellij") version "1.10.0"
     id("org.jetbrains.grammarkit") version "2021.2.2"
     id("net.saliman.properties") version "1.5.2"
-    id("org.gradle.test-retry") version "1.4.1"
+    id("org.gradle.test-retry") version "1.5.0"
 }
 
 idea {
@@ -398,12 +398,12 @@ project(":") {
     }
 
     dependencies {
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.4") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.1") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
         }
-        api("io.github.z4kn4fein:semver:1.3.3") {
+        api("io.github.z4kn4fein:semver:1.4.0") {
             excludeKotlinDeps()
         }
         testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
@@ -548,7 +548,7 @@ project(":toml") {
         plugins.set(listOf(tomlPlugin))
     }
     dependencies {
-        implementation("org.eclipse.jgit:org.eclipse.jgit:6.3.0.202209071007-r") { exclude("org.slf4j") }
+        implementation("org.eclipse.jgit:org.eclipse.jgit:6.4.0.202211300538-r") { exclude("org.slf4j") }
 
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))

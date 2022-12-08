@@ -17,7 +17,7 @@ import org.rust.lang.core.resolve2.ModData
 import org.rust.lang.core.resolve2.RsModInfo
 import org.rust.lang.core.resolve2.getModInfo
 
-class ImportContext2 private constructor(
+class ImportContext private constructor(
     /** Info of mod in which auto-import or completion is called */
     val rootInfo: RsModInfo,
     /** Mod in which auto-import or completion is called */
@@ -31,13 +31,13 @@ class ImportContext2 private constructor(
     val rootDefMap: CrateDefMap get() = rootInfo.defMap
 
     companion object {
-        fun from(path: RsPath, type: Type = Type.AUTO_IMPORT): ImportContext2? =
+        fun from(path: RsPath, type: Type = Type.AUTO_IMPORT): ImportContext? =
             from(path, type, PathInfo.from(path, type == Type.COMPLETION))
 
-        fun from(context: RsElement, type: Type = Type.AUTO_IMPORT, pathInfo: PathInfo? = null): ImportContext2? {
+        fun from(context: RsElement, type: Type = Type.AUTO_IMPORT, pathInfo: PathInfo? = null): ImportContext? {
             val rootMod = context.containingMod
             val info = getModInfo(rootMod) ?: return null
-            return ImportContext2(info, rootMod, type, pathInfo)
+            return ImportContext(info, rootMod, type, pathInfo)
         }
     }
 

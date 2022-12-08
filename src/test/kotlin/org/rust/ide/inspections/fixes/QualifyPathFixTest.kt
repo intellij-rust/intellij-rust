@@ -9,6 +9,7 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 
@@ -161,5 +162,7 @@ class QualifyPathFixTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection
         extern crate dep_lib_target;
 
         fn foo(t: dep_lib_target::foo::Bar) {}
-    """)
+    """, preview = ExplicitPreview("""
+        fn foo(t: dep_lib_target::foo::Bar) {}
+    """))
 }

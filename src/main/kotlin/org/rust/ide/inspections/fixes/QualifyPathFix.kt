@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -13,12 +14,14 @@ import org.rust.ide.utils.import.ImportInfo
 import org.rust.ide.utils.import.insertExternCrateIfNeeded
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.isIntentionPreviewElement
 
 /**
  * Fix that qualifies a path.
  */
 class QualifyPathFix(
     path: RsPath,
+    @SafeFieldForPreview
     private val importInfo: ImportInfo
 ) : LocalQuickFixOnPsiElement(path) {
     override fun getText(): String = "Qualify path to `${importInfo.usePath}`"
@@ -30,7 +33,9 @@ class QualifyPathFix(
         val fullPath = "$qualifiedPath${path.typeArgumentList?.text.orEmpty()}"
         val newPath = RsPsiFactory(project).tryCreatePath(fullPath) ?: return
 
-        importInfo.insertExternCrateIfNeeded(path)
+        if (!file.isIntentionPreviewElement) {
+            importInfo.insertExternCrateIfNeeded(path)
+        }
         path.replace(newPath)
     }
 }

@@ -8,8 +8,13 @@ package org.rust.ide.intentions
 import org.rust.MockAdditionalCfgOptions
 
 class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention::class) {
-    fun `test unavailable without references`() = doUnavailableTest("""
+    fun `test unavailable without references 1`() = doUnavailableTest("""
         fn bar/*caret*/(x: i32) -> i32 {}
+    """)
+
+    fun `test unavailable without references 2`() = doUnavailableTest("""
+        fn bar/*caret*/(x: T) -> T {}
+        struct T;
     """)
 
     fun `test unavailable in block body`() = doUnavailableTest("""

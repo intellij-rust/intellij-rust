@@ -28,13 +28,24 @@ fn patterns() {
     // https://github.com/rust-lang/rfcs/blob/master/text/2535-or-patterns.md#precedence
     let i @ p | q = x;
     let i @ (p | q) = x;
+    let i @ 50.. = x;
 
     match 10 {
         -100 => x,
         X => x,
         Q::T => x,
-        0..2 => x,
-        2...4 => x,
+        .. => x,
+        ..= => x,
+        ... => x,
+        0.. => x,
+        2..= => x,
+        1... => x,
+        ..3 => x,
+        ..=5 => x,
+        ...4 => x,
+        6..8 => x,
+        8..=10 => x,
+        10...12 => x,
         V..=10 => x,
         W..20 => x,
         Y::Z..50 => x,

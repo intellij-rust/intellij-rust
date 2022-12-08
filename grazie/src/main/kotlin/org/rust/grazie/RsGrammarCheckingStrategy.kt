@@ -16,7 +16,7 @@ import com.intellij.grazie.utils.LinkedSet
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.elementTypeOrNull
 import org.rust.lang.doc.psi.RsDocComment
 
 class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
@@ -53,7 +53,7 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
     }
 
     override fun getContextRootTextDomain(root: PsiElement): TextDomain {
-        return when (root.elementType) {
+        return when (root.elementTypeOrNull) {
             in RS_ALL_STRING_LITERALS -> TextDomain.LITERALS
             in RS_DOC_COMMENTS -> TextDomain.DOCS
             in RS_REGULAR_COMMENTS -> TextDomain.COMMENTS
@@ -62,7 +62,7 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
     }
 
     override fun getRootsChain(root: PsiElement): List<PsiElement> {
-        return if (root.elementType in RS_REGULAR_COMMENTS) {
+        return if (root.elementTypeOrNull in RS_REGULAR_COMMENTS) {
             StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, RS_REGULAR_COMMENTS_SET).toList()
         } else {
             super.getRootsChain(root)

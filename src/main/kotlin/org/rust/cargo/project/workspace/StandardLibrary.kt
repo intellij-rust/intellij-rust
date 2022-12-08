@@ -338,8 +338,7 @@ class StdlibDataFetcher private constructor(
             listener = listener
         ).unwrapOrElse {
             listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
-            LOG.error(it)
-            return
+            throw it
         }
 
         val rootPackageId = metadataProject.workspace_members.first()

@@ -6,7 +6,8 @@
 package org.rust.lang.core.type
 
 import org.rust.CheckTestmarkHit
-import org.rust.lang.core.types.infer.TypeInferenceMarks
+import org.rust.ExpandMacros
+import org.rust.lang.core.macros.MacroExpansionManager
 
 class RsMacroTypeInferenceTest : RsTypificationTestBase() {
     override val followMacroExpansions: Boolean get() = true
@@ -128,7 +129,8 @@ class RsMacroTypeInferenceTest : RsTypificationTestBase() {
         } //^ <unknown>
     """)
 
-    @CheckTestmarkHit(TypeInferenceMarks.MacroExprDepthLimitReached::class)
+    @ExpandMacros
+    @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
     fun `test infinite recursion`() = testExpr("""
         macro_rules! foo { () => { foo!(); }; }
         fn main() {

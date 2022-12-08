@@ -33,8 +33,8 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
             if (outputLifetimes.any { it != null } || outputLifetimes.size > 1) return null
         }
 
-        val refArgs = ctx.inputs + listOfNotNull(ctx.self)
-        if (refArgs.isEmpty() || refArgs.any { it.lifetimes.any { lifetime -> lifetime != null } }) return null
+        val inputLifetimes = ctx.inputs.flatMap { it.lifetimes } + ctx.self?.lifetimes.orEmpty()
+        if (inputLifetimes.isEmpty() || inputLifetimes.any { it != null }) return null
 
         return ctx
     }
@@ -75,12 +75,13 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
         }
     }
 
-    private val nameGenerator = generateSequence(0) { it + 1 }.map {
-        val abcSize = 'z' - 'a' + 1
-        val letter = 'a' + it % abcSize
-        val index = it / abcSize
-        return@map if (index == 0) "'$letter" else "'$letter$index"
-    }
+    private val nameGenerator: Sequence<String>
+        get() = generateSequence(0) { it + 1 }.map {
+            val abcSize = 'z' - 'a' + 1
+            val letter = 'a' + it % abcSize
+            val index = it / abcSize
+            return@map if (index == 0) "'$letter" else "'$letter$index"
+        }
 
     data class LifetimeContext(
         val fn: RsFunction,

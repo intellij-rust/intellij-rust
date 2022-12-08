@@ -47,10 +47,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.lang.core.resolve2.DefMapService
-import org.rust.lang.core.resolve2.ModData
-import org.rust.lang.core.resolve2.findModDataFor
-import org.rust.lang.core.resolve2.toRsMod
+import org.rust.lang.core.resolve2.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.openapiext.toPsiFile
@@ -86,6 +83,7 @@ class RsFile(
     override val crateRoot: RsMod? get() = cachedData.crateRoot
     val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
     val isIncludedByIncludeMacro: Boolean get() = cachedData.isIncludedByIncludeMacro
+    val macroExpansionDepth: Int get() = cachedData.macroExpansionDepth
 
     /** Used for in-memory macro expansions */
     @Volatile
@@ -136,16 +134,17 @@ class RsFile(
                 crates = listOf(crate),
                 isDeeplyEnabledByCfg = true, // Macros are ony expanded in cfg-enabled mods
                 isIncludedByIncludeMacro = false, // An expansion file obviously can't be included
+                macroExpansionDepth = 0, // TODO should be actual expansion depth, but it's not strictly necessary
             )
         }
 
         // Note: `this` file can be not a module (can be included with `include!()` macro)
-        val allModData = findModDataFor(this)
-        val modData = allModData.pickSingleModData()
-        if (modData != null) {
+        val allInclusionPoints = findFileInclusionPointsFor(this)
+        val inclusionPoint = allInclusionPoints.pickSingleInclusionPoint()
+        if (inclusionPoint != null) {
             val crateGraph = project.crateGraph
-            val crates = allModData.mapNotNull { crateGraph.findCrateById(it.crate) }
-            val crate = crates.find { it.id == modData.crate }
+            val crates = allInclusionPoints.mapNotNull { crateGraph.findCrateById(it.modData.crate) }
+            val crate = crates.find { it.id == inclusionPoint.modData.crate }
                 ?: return CachedData(crate = FakeInvalidCrate(project))
             return CachedData(
                 crate.cargoProject,
@@ -153,8 +152,8 @@ class RsFile(
                 crate.rootMod,
                 crate,
                 crates,
-                modData.isDeeplyEnabledByCfg,
-                isIncludedByIncludeMacro = virtualFile is VirtualFileWithId && virtualFile.id != modData.fileId,
+                inclusionPoint.modData.isDeeplyEnabledByCfg,
+                isIncludedByIncludeMacro = inclusionPoint.includeMacroIndex != null,
             )
         }
 
@@ -186,12 +185,14 @@ class RsFile(
     }
 
     /** Very internal utility, do not use */
-    fun inheritCachedDataFrom(other: RsFile, lazy: Boolean) {
-        forcedCachedData = if (lazy) {
-            { other.cachedData }
-        } else {
-            val cachedData = other.cachedData
+    fun inheritCachedDataFrom(other: RsFile, isInMemoryMacroExpansion: Boolean) {
+        forcedCachedData = if (isInMemoryMacroExpansion) {
+            // Make it non-lazy to prevent stack overflow if the expansion is too deep
+            val otherCachedData = other.cachedData
+            val cachedData = otherCachedData.copy(macroExpansionDepth = otherCachedData.macroExpansionDepth + 1);
             { cachedData }
+        } else {
+            { other.cachedData }
         }
     }
 
@@ -203,7 +204,7 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            val modData = findModDataFor(this).pickSingleModData() ?: return null
+            val modData = findFileInclusionPointsFor(this).pickSingleInclusionPoint()?.modData ?: return null
             val parenModData = modData.parent ?: return null
             return parenModData.toRsMod(project).firstOrNull()
         }
@@ -329,16 +330,21 @@ private data class CachedData(
     val crates: List<Crate> = emptyList(),
     val isDeeplyEnabledByCfg: Boolean = true,
     val isIncludedByIncludeMacro: Boolean = false,
+    /**
+     * Note: it accounts only for in-memory macro calls depth. Top-level macro calls don't need it because
+     * their depth is checked in [DefCollector]
+     */
+    val macroExpansionDepth: Int = 0
 )
 
 // A rust file can be included in multiple places, but currently IntelliJ Rust works properly only with one
 // inclusion point, so we have to choose one
-private fun List<ModData>.pickSingleModData(): ModData? {
+private fun List<FileInclusionPoint>.pickSingleInclusionPoint(): FileInclusionPoint? {
     if (isEmpty()) return null
     singleOrNull()?.let { return it }
 
     // If there are still multiple options, choose one deterministically
-    return minByOrNull { it.crate }
+    return minByOrNull { it.modData.crate }
 }
 
 private fun VirtualFile.getInjectedFromIfDoctestInjection(project: Project): RsFile? {

@@ -9,7 +9,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.escapeIdentifierIfNeeded
-import org.rust.lang.core.psi.ext.QualifiedNamedItem2
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 
 sealed class ImportInfo {
 
@@ -21,31 +21,6 @@ sealed class ImportInfo {
         val crate: Crate,
         val externCrateName: String,
         val needInsertExternCrateItem: Boolean,
-        /**
-         * Relative depth of importing path's module to module with extern crate item.
-         * Used for creation of relative use path.
-         *
-         * For example, in the following case
-         * ```rust
-         * // lib.rs from bar crate
-         * pub struct Bar {}
-         * ```
-         *
-         * ```rust
-         * // main.rs from our crate
-         * mod foo {
-         *     extern crate bar;
-         *     mod baz {
-         *          fn f(bar: Bar/*caret*/) {}
-         *     }
-         * }
-         * ```
-         *
-         * relative depth of path `Bar` is `1`, so we should add `self::` prefix to use path.
-         *
-         * Can be null if extern crate item is absent or it is in crate root.
-         */
-        val depth: Int?,
         crateRelativePath: String,
         hasModWithSameNameAsExternCrate: Boolean = false,
     ) : ImportInfo() {
@@ -57,18 +32,33 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(
-    val qualifiedNamedItem: QualifiedNamedItem2,
+class ImportCandidate(
+    val item: RsQualifiedNamedElement,
+    /**
+     * First segment is crate name (can be "crate").
+     * Last segment is item name.
+     */
+    val path: Array<String>,
+    /**
+     * Corresponds to `path.first()`.
+     * May differ from `item.containingCrate`
+     */
+    val crate: Crate,
+
     val info: ImportInfo,
     private val isRootPathResolved: Boolean,
 ): Comparable<ImportCandidate> {
+
+    val itemName: String
+        get() = path.last()
+
     override fun compareTo(other: ImportCandidate): Int =
         COMPARATOR.compare(this, other)
 
     companion object {
         private val COMPARATOR: Comparator<ImportCandidate> = compareBy(
             { !it.isRootPathResolved },
-            { it.qualifiedNamedItem.containingCrate.originOrder() },
+            { it.crate.originOrder() },
             { it.info.usePath },
         )
 

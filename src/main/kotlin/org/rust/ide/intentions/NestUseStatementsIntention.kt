@@ -78,13 +78,16 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
 
     private fun makeGroupedPath(basePath: String, useSpecks: List<RsUseSpeck>): String {
         val useSpecksInGroup = useSpecks.flatMap { useSpeck ->
-            // Remove first group
-            val useGroup = useSpeck.useGroup
-            if (useSpeck.path?.referenceName == basePath && useGroup != null) {
-                useGroup.useSpeckList.map { it.text }
-            } else {
-                listOf(deleteBasePath(useSpeck.text, basePath))
+            if (useSpeck.path?.text == basePath) {
+                // Remove first group
+                useSpeck.useGroup?.let { useGroup ->
+                    return@flatMap useGroup.useSpeckList.map { it.text }
+                }
+                useSpeck.alias?.let { alias ->
+                    return@flatMap listOf("self ${alias.text}")
+                }
             }
+            listOf(deleteBasePath(useSpeck.text, basePath))
         }
         return useSpecksInGroup.joinToString(",\n", "$basePath::{\n", "\n}")
     }

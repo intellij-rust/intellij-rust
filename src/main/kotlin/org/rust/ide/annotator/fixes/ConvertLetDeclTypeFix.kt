@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import org.rust.lang.core.types.ty.Ty
 class ConvertLetDeclTypeFix(
     decl: RsLetDecl,
     private val fixText: String,
+    @SafeFieldForPreview
     private val ty: Ty
 ) : LocalQuickFixAndIntentionActionOnPsiElement(decl) {
     override fun getFamilyName(): String = "Convert type of local variable"

@@ -33,4 +33,12 @@ class RsDocLinkResolveTest : RsResolveTestBase() {
         fn bar() {}
          //X
     """)
+
+    fun `test short links`() = checkByCode("""
+        /// [bar]
+           //^
+        fn foo() {}
+        fn bar() {}
+         //X
+    """)
 }

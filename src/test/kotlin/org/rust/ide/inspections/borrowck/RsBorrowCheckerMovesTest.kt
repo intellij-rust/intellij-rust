@@ -5,12 +5,10 @@
 
 package org.rust.ide.inspections.borrowck
 
-import org.rust.ExpandMacros
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.lang.core.macros.MacroExpansionManager
 import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
@@ -733,6 +731,8 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @ExpandMacros
+    @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
     fun `test infinitely recursive macro call`() = checkByText("""
         macro_rules! infinite_macro {
             ($ e:expr) => { infinite_macro!($ e) };

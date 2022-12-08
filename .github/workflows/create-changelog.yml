@@ -9,10 +9,10 @@ jobs:
     create-changelog:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
 
             - name: Checkout intellij-rust.github.io repo
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
                   repository: ${{ github.repository_owner }}/intellij-rust.github.io

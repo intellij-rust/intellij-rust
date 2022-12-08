@@ -20,3 +20,41 @@ updates:
       labels: [ ]
       assignees:
           - "Undin"
+
+    # Updates action versions in workflows located in `.github/workflows`
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "04:00" # UTC
+      open-pull-requests-limit: 10
+      labels: [ ]
+      assignees:
+          - "Undin"
+
+    # Update action versions in composite actions located in `.github/actions/%action_name%`
+    # Currently, dependabot doesn't scan `.github/actions` automatically at all
+    # as well as it doesn't scan subdirectories, so we have to provide update item for each composite action.
+    # See https://github.com/dependabot/dependabot-core/issues/4178 for details
+    - package-ecosystem: "github-actions"
+      directory: "/.github/actions/load-native-binaries"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "04:00" # UTC
+      open-pull-requests-limit: 10
+      labels: [ ]
+      assignees:
+          - "Undin"
+
+    - package-ecosystem: "github-actions"
+      directory: "/.github/actions/preparations-for-updates"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "04:00" # UTC
+      open-pull-requests-limit: 10
+      labels: [ ]
+      assignees:
+          - "Undin"

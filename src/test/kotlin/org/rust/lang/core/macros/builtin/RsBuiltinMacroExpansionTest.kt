@@ -9,6 +9,7 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
+import org.rust.lang.core.psi.ext.contextToSetForExpansion
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.stdext.unwrapOrElse
 
@@ -27,7 +28,7 @@ class RsBuiltinMacroExpansionTest : RsMacroExpansionTestBase() {
         )
         val result = expansionResult.map {
             it.elements.forEach { el ->
-                el.setContext(call.context as RsElement)
+                el.setContext(call.contextToSetForExpansion as RsElement)
                 el.setExpandedFrom(call)
             }
             it

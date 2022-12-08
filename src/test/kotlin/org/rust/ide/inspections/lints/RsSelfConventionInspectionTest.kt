@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.lints.RsSelfConventionInspection
 
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
     fun `test from`() = checkByText("""
@@ -119,6 +121,46 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
             fn into_foo(<warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">self: &Self</warning>) -> u32 { 0 }
             fn into_foo_mut(<warning descr="methods called `into_*` usually take self by value; consider choosing a less ambiguous name">self: &mut Self</warning>) -> u32 { 0 }
             fn from_nothing(<warning descr="methods called `from_*` usually take no self; consider choosing a less ambiguous name">self: Self</warning>) -> u32 { 0 }
+        }
+    """)
+
+    fun `test allow`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            #[allow(clippy::wrong_self_convention)]
+            fn to_f32<'a>(a: String) -> Foo {
+                Foo
+            }
+
+            #[allow(clippy::style)]
+            fn from_string<'a>(&self) -> String {
+                3.7
+            }
+
+            #[allow(clippy::all)]
+            fn to_foo(self) -> String {
+                String::new()
+            }
+
+            #[allow(clippy)]
+            fn from_feet<'a>(&self) -> i32 {
+                7
+            }
+        }
+    """)
+
+    fun `test global allow`() = checkByText("""
+        #![allow(clippy::wrong_self_convention)]
+
+        struct Foo;
+        impl Foo {
+            fn from_i32(self) -> i32 {
+                7
+            }
+
+            fn to_f32(self) -> Foo {
+                7.6
+            }
         }
     """)
 }

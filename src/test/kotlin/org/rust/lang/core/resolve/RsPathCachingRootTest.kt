@@ -8,9 +8,12 @@ package org.rust.lang.core.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathType
+import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.descendantsOfTypeOrSelf
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
+import org.rust.lang.core.types.rawType
 
 class RsPathCachingRootTest : RsTestBase() {
     fun `test path arguments`() = doTest("""
@@ -31,40 +34,38 @@ class RsPathCachingRootTest : RsTestBase() {
                       //X        //^        //^        //^        //^            //^
     """)
 
-    // TODO move the caching root upper
-    fun `test expr path arguments 1`() = doTest("""
+    fun `test expr path arguments`() = doTest("""
         struct Foo<A, B>(A, B);
         struct Bar<T>(T);
         struct Baz;
         fn main() {
-            let _ = Foo::<Bar<Bar<Bar<Baz>>>, Bar<Bar<Bar<Baz>>>>(1, 2);
-                        //X //^ //^ //^
+            let _ = Foo::<   Bar<Bar<Bar<Baz>>>, Bar<Bar<Bar<Baz>>>>(1, 2);
+                       //X //^ //^ //^ //^     //^ //^ //^ //^
         }
     """)
 
-    fun `test expr path arguments 2`() = doTest("""
+    fun `test caching root is null for expr path`() = checkCachingRootIsNull("""
         struct Foo<A, B>(A, B);
         struct Bar<T>(T);
         struct Baz;
         fn main() {
-            let _ = Foo::<Bar<Bar<Bar<Baz>>>, Bar<Bar<Bar<Baz>>>>(1, 2);
-                                            //X //^ //^ //^
+            let _ = Foo::<Bar<Baz>, Bar<Baz>>(1, 2);
+                  //^
         }
     """)
 
     fun `test path arguments in parens`() = doTest("""
         struct Foo<T>(T);
         struct Bar;
-        type T = (Foo<(Foo<(Foo<(Foo<(Bar)>)>)>)>);
-                //X  //^  //^  //^  //^
+        type T = (   Foo<(Foo<(Foo<(Foo<(Bar)>)>)>)>);
+               //X //^  //^  //^  //^  //^
     """)
 
-    // TODO move the caching root upper
     fun `test tuple`() = doTest("""
         struct Foo<T>(T);
         struct Bar;
-        type T = (Foo<Bar>, Foo<Bar>);
-                //X //^
+        type T = (   Foo<Bar>, Foo<Bar>);
+               //X //^ //^   //^ //^
     """)
 
     fun `test path arguments with tuple`() = doTest("""
@@ -88,32 +89,40 @@ class RsPathCachingRootTest : RsTestBase() {
                //X  //^  //^ //^ //^
     """)
 
-    // TODO move the caching root upper
     fun `test path arguments with fn pointer`() = doTest("""
         struct Foo<T>(T);
         struct Bar;
-        type T = Foo<fn(Foo<Foo<Foo<Bar>>>) -> Foo<Foo<Foo<Bar>>>>;
-                      //X //^ //^ //^
+        type T = Foo<fn(Foo<Foo<Foo<Bar>>>, Foo<Bar>) -> Foo<Foo<Foo<Bar>>>>;
+               //X    //^ //^ //^ //^     //^ //^      //^ //^ //^ //^
     """)
 
-    // TODO move the caching root upper
     fun `test path arguments with trait object`() = doTest("""
         trait Trait<T> {}
         trait Sync {}
         struct Foo<T>(T);
         struct Bar;
         type T = Foo<dyn Trait<Foo<Foo<Foo<Bar>>>> + Sync>;
-                        //X  //^ //^ //^ //^
+               //X      //^  //^ //^ //^ //^       //^
     """)
 
-    // TODO move the caching root upper
     fun `test fn sugar`() = doTest("""
         #[lang = "fn_once"]
         trait FnOnce<Args> { type Output; }
         struct Foo<T>(T);
         struct Bar;
-        type T = dyn FnOnce(Foo<Foo<Bar>>) -> Foo<Foo<Bar>>;
-                          //X //^ //^
+        type T = Foo<dyn FnOnce(Foo<Foo<Bar>>) -> Foo<Foo<Bar>>>;
+               //X     //^    //^ //^ //^       //^ //^ //^
+    """)
+
+    fun `test trait object with assoc type binding`() = doTest("""
+        trait Trait {
+            type Item;
+        }
+        trait Sync {}
+        struct Foo<T>(T);
+        struct Bar;
+        type T = dyn Trait<Item = Foo<Foo<Foo<Bar>>>> + Sync;
+               //X //^          //^ //^ //^ //^       //^
     """)
 
     fun `test fn signature 1`() = doTest("""
@@ -171,22 +180,46 @@ class RsPathCachingRootTest : RsTestBase() {
 
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
-        val paths = findElementsWithDataAndOffsetInEditor<RsPath>().map { it.first }
-        val root = findElementAndDataInEditor<RsElement>("X").first
+        val paths = findElementsWithDataAndOffsetInEditor<RsPath>().map { it.first }.toMutableList()
+        var root = findElementAndDataInEditor<RsElement>("X").first
+        if (root is RsPath && root.parent is RsPathType) {
+            paths += root
+            root = root.parent as RsElement
+        }
         for (path in paths) {
-            assertEquals(root, RsPathReferenceImpl.getRootCachingElement(path))
+            val actualRoot = RsPathReferenceImpl.getRootCachingElement(path)
+            check(root == actualRoot) {
+                "Unexpected caching root for element `${path.text}`. Expected `${root.text}`, got `${actualRoot?.text}`"
+            }
         }
         val pathSet = paths.toMutableSet()
         if (root is RsPath && root !in pathSet) {
-            assertEquals(root, RsPathReferenceImpl.getRootCachingElement(root))
+            val actualRoot = RsPathReferenceImpl.getRootCachingElement(root)
+            check(root == actualRoot) {
+                "Unexpected caching root for the root itself. Expected `${root.text}`, got `${actualRoot?.text}`"
+            }
             pathSet += root
         }
-        val collectedPaths = RsPathReferenceImpl.collectNestedPathsFromRoot(root)
-        assertSameElements(pathSet, collectedPaths)
+        val collectedPaths = RsPathReferenceImpl.collectNestedPathsFromRoot(root).toSet()
+        if (pathSet != collectedPaths) {
+            assertEquals(pathSet.joinToString("\n") { it.text }, collectedPaths.joinToString("\n") { it.text })
+        }
 
         val collectedPaths2 = root.descendantsOfTypeOrSelf<RsPath>()
             .filter { RsPathReferenceImpl.getRootCachingElement(it) == root }
+            .toSet()
+        if (pathSet != collectedPaths2) {
+            assertEquals(pathSet.joinToString("\n") { it.text }, collectedPaths2.joinToString("\n") { it.text })
+        }
 
-        assertSameElements(pathSet, collectedPaths2)
+        if (root is RsTypeReference) {
+            root.rawType
+        }
+    }
+
+    private fun checkCachingRootIsNull(@Language("Rust") code: String) {
+        InlineFile(code)
+        val path = findElementInEditor<RsPath>()
+        assertNull(RsPathReferenceImpl.getRootCachingElement(path))
     }
 }

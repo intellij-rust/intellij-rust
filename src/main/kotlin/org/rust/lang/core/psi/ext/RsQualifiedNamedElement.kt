@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB_DEPENDENCY
 import org.rust.cargo.util.AutoInjectedCrates.STD
-import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
@@ -306,6 +305,7 @@ data class RsQualifiedName private constructor(
             val name = when (itemType) {
                 CRATE -> containingCrate.asNotFake?.normName
                 MOD -> (this as? RsMod)?.modName
+                DERIVE -> (this as? RsFunction)?.procMacroName
                 else -> name
             } ?: return null
 
@@ -322,7 +322,13 @@ data class RsQualifiedName private constructor(
                 is RsTraitItem -> TRAIT
                 is RsTraitAlias -> TRAITALIAS
                 is RsTypeAlias -> TYPE
-                is RsFunction -> FN
+                is RsFunction -> when {
+                    !isProcMacroDef -> FN
+                    isCustomDeriveProcMacroDef -> DERIVE
+                    isAttributeProcMacroDef -> ATTR
+                    isBangProcMacroDef -> MACRO
+                    else -> null
+                }
                 is RsConstant -> CONSTANT
                 is RsMacro, is RsMacro2 -> MACRO
                 is RsMod -> if (isCrateRoot) CRATE else MOD
@@ -404,6 +410,8 @@ data class RsQualifiedName private constructor(
         FN,
         CONSTANT,
         MACRO,
+        ATTR,
+        DERIVE,
         PRIMITIVE,
         KEYWORD,
 
@@ -428,6 +436,8 @@ data class RsQualifiedName private constructor(
                     "fn" -> FN
                     "constant" -> CONSTANT
                     "macro" -> MACRO
+                    "attr" -> ATTR
+                    "derive" -> DERIVE
                     "primitive" -> PRIMITIVE
                     "keyword" -> KEYWORD
                     else -> {
@@ -475,7 +485,7 @@ data class RsQualifiedName private constructor(
             STRUCT -> TYPES_N_VALUES
             UNION, ENUM, TRAIT, TRAITALIAS, TYPE, MOD, CRATE -> TYPES
             FN, CONSTANT -> VALUES
-            MACRO -> MACROS  // including bang proc macros
+            MACRO, ATTR, DERIVE -> MACROS  // including bang proc macros
             PRIMITIVE, KEYWORD -> null
 
             // child item type
@@ -484,29 +494,4 @@ data class RsQualifiedName private constructor(
             ASSOCIATEDTYPE -> TYPES
             ASSOCIATEDCONSTANT, TYMETHOD, METHOD -> VALUES
         }
-}
-
-interface QualifiedNamedItemBase {
-    val item: RsQualifiedNamedElement
-    val itemName: String?
-    val parentCrateRelativePath: String?
-    val containingCrate: Crate?
-}
-
-class QualifiedNamedItem2(
-    override val item: RsQualifiedNamedElement,
-    /**
-     * First segment is crate name (can be "crate").
-     * Last segment is item name.
-     */
-    val path: Array<String>,
-    /** corresponds to `path.first()` */
-    override val containingCrate: Crate,
-) : QualifiedNamedItemBase {
-    override val itemName: String
-        get() = path.last()
-    override val parentCrateRelativePath: String
-        get() = path.copyOfRange(1, path.size - 1).joinToString("::")
-
-    override fun toString(): String = path.joinToString("::")
 }

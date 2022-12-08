@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.RsMacroArgument
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
 /**
  *  [RsExpandedElement]s are those elements which exist in temporary,
@@ -32,9 +31,10 @@ interface RsExpandedElement : RsElement {
             if (parent is RsFile && !isIndexAccessForbidden) {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
-                    project.macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
+                    val macroExpansionManager = project.macroExpansionManager
+                    macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
                     if (parent.isIncludedByIncludeMacro) {
-                        RsIncludeMacroIndex.getIncludedFrom(parent)?.let { return it.containingMod }
+                        macroExpansionManager.getIncludedFrom(parent)?.let { return it.containingMod }
                     }
                 }
             }
@@ -44,7 +44,7 @@ interface RsExpandedElement : RsElement {
 }
 
 fun RsExpandedElement.setContext(context: RsElement) {
-    (containingFile as? RsFile)?.setRsFileContext(context, lazy = true)
+    (containingFile as? RsFile)?.setRsFileContext(context, isInMemoryMacroExpansion = false)
     setExpandedElementContext(context)
 }
 
@@ -54,10 +54,10 @@ fun RsExpandedElement.setExpandedElementContext(context: RsElement) {
 }
 
 /** Internal. Use [setContext] */
-fun RsFile.setRsFileContext(context: RsElement, lazy: Boolean) {
+fun RsFile.setRsFileContext(context: RsElement, isInMemoryMacroExpansion: Boolean) {
     val contextContainingFile = context.containingRsFileSkippingCodeFragments
     if (contextContainingFile != null) {
-        inheritCachedDataFrom(contextContainingFile, lazy)
+        inheritCachedDataFrom(contextContainingFile, isInMemoryMacroExpansion)
     }
 }
 
@@ -86,7 +86,7 @@ val PsiElement.includedFrom: RsMacroCall?
     get() {
         val containingFile = stubParent as? RsFile ?: return null
         return if (containingFile.isIncludedByIncludeMacro) {
-            RsIncludeMacroIndex.getIncludedFrom(containingFile)
+            containingFile.project.macroExpansionManager.getIncludedFrom(containingFile)
         } else {
             null
         }
@@ -100,16 +100,6 @@ fun PsiElement.findMacroCallExpandedFrom(): RsPossibleMacroCall? {
     return found?.findMacroCallExpandedFrom() ?: found
 }
 
-fun PsiElement.calculateMacroExpansionDepth(): Int {
-    var macroCall = findMacroCallExpandedFromNonRecursive() ?: return 0
-    var counter = 1
-    while (true) {
-        macroCall = macroCall.findMacroCallExpandedFromNonRecursive() ?: break
-        counter++
-    }
-    return counter
-}
-
 fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsPossibleMacroCall? {
     return stubAncestors
         .filterIsInstance<RsExpandedElement>()
@@ -121,7 +111,10 @@ val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
 
 val PsiElement.isExpandedFromIncludeMacro: Boolean
-    get() = includedFrom != null
+    get() {
+        val containingFile = stubParent as? RsFile ?: return false
+        return containingFile.isIncludedByIncludeMacro
+    }
 
 private data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
 
@@ -321,11 +314,11 @@ private fun MappedTextRange.fromBodyRelativeRange(call: RsPossibleMacroCall): Ma
     return MappedTextRange(newSrcOffset, dstOffset, length)
 }
 
-fun RsMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRange? {
+fun RsPossibleMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRange? {
     return mapRangeFromExpansionToCallBody(range).singleOrNull()?.takeIf { it.length == range.length }
 }
 
-private fun RsMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
+private fun RsPossibleMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
     val expansion = expansion ?: return emptyList()
     return mapRangeFromExpansionToCallBody(expansion, this, range)
 }

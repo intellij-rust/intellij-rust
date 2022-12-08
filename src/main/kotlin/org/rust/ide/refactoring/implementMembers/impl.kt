@@ -52,7 +52,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 fun generateMissingTraitMembers(impl: RsImplItem) {
     val (implInfo, trait) = findMembersToImplement(impl) ?: return
 
-    runWriteAction {
+    RsIntentionPreviewUtils.write {
         insertNewTraitMembers(implInfo.missingImplementations, impl, trait, null)
     }
 }
@@ -72,7 +72,9 @@ private fun insertNewTraitMembers(
     trait: BoundElement<RsTraitItem>,
     editor: Editor?
 ) {
-    checkWriteAccessAllowed()
+    if (!impl.isIntentionPreviewElement) {
+        checkWriteAccessAllowed()
+    }
     if (selected.isEmpty()) return
 
     val gen = MembersGenerator(RsPsiFactory(impl.project), impl, trait)

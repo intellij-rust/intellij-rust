@@ -21,8 +21,9 @@ import java.util.*
 @RunWith(Parameterized::class)
 class CustomRealProjectAnalysisTest(
     @Suppress("unused") private val projectName: String,
-    private val info: RealProjectInfo
-) : RsRealProjectAnalysisTest() {
+    private val info: RealProjectInfo,
+    analyzeDependencies: Boolean,
+) : RsRealProjectAnalysisTest(analyzeDependencies) {
 
     @Test
     fun test() {
@@ -37,7 +38,8 @@ class CustomRealProjectAnalysisTest(
         fun data(): Collection<Array<Any>> {
             val projectsStr = System.getenv("PROJECTS") ?: error("Can't find `PROJECTS` env variable")
             val projects = JsonMapper().registerKotlinModule().readValue<List<RealProjectInfo>>(projectsStr)
-            return projects.map { arrayOf(it.name, it) }
+            val analyzeDependencies = System.getenv("ANALYZE_DEPENDENCIES").toBooleanStrict()
+            return projects.map { arrayOf(it.name, it, analyzeDependencies) }
         }
     }
 

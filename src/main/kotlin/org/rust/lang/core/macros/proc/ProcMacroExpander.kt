@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.util.SmartList
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.lang.core.crate.Crate
@@ -81,13 +80,13 @@ class ProcMacroExpander private constructor(
                 subtree.copy(delimiter = null),
                 // TODO try shift TokenMap offsets instead
                 macroCallBodyTokenMap.merge(map),
-                RangeMap.from(SmartList(loweredMacroCallBodyRanges.ranges + shiftedRanges))
+                RangeMap(loweredMacroCallBodyRanges.ranges + shiftedRanges)
             )
         } else {
             Triple(null, macroCallBodyTokenMap, loweredMacroCallBodyRanges)
         }
         val lib = def.artifact.path.toString()
-        val env = call.packageEnv
+        val env = call.env
         return expandMacroAsTtWithErrInternal(server, macroCallBodyTt, attrSubtree, def.name, lib, env).map {
             val (text, ranges) = MappedSubtree(it, mergedTokenMap).toMappedText()
             text to mergedRanges.mapAll(ranges)
@@ -210,7 +209,7 @@ class ProcMacroExpander private constructor(
         psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 6
+        const val EXPANDER_VERSION: Int = 7
 
         fun forCrate(crate: Crate): ProcMacroExpander {
             val project = crate.project

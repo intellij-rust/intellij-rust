@@ -49,7 +49,7 @@ private inline fun <reified T : Any> load(): String = T::class.java.name
 @Suppress("unused")
 private fun load(p: KProperty<*>): String = p.name
 
-val PsiFile.isCargoToml: Boolean get() = virtualFile?.name == CargoConstants.MANIFEST_FILE
+val PsiFile.isCargoToml: Boolean get() = name == CargoConstants.MANIFEST_FILE
 
 val TomlKeySegment.isDependencyKey: Boolean
     get() {

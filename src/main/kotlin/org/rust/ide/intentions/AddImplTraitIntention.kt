@@ -6,12 +6,14 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.CodeInsightUtilCore
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import org.rust.ide.inspections.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
@@ -105,4 +107,8 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             tmp.runInline()
         }
     }
+
+    // No intention preview because user has to choose trait manually
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 }

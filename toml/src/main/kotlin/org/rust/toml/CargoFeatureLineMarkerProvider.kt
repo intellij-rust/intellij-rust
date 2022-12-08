@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer.Alignment
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.awt.RelativePoint
 import org.rust.cargo.CargoConstants
@@ -36,6 +35,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.findCargoProject
+import org.rust.openapiext.document
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.saveAllDocuments
 import org.toml.lang.psi.*
@@ -148,7 +148,7 @@ private object ToggleFeatureAction : GutterIconNavigationHandler<PsiElement> {
         val featureName = element.ancestorStrict<TomlKeySegment>()?.name ?: return
         val oldState = context.cargoPackage.featureState.getOrDefault(featureName, FeatureState.Disabled)
         val newState = !oldState
-        val tomlDoc = PsiDocumentManager.getInstance(context.cargoProject.project).getDocument(element.containingFile)
+        val tomlDoc = element.containingFile.document
         val isDocUnsaved = tomlDoc != null && FileDocumentManager.getInstance().isDocumentUnsaved(tomlDoc)
 
         if (isDocUnsaved) {

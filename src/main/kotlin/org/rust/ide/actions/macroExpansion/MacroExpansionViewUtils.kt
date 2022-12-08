@@ -117,11 +117,8 @@ private fun getMacroExpansions(macroToExpand: RsPossibleMacroCall, expandRecursi
         return singleStepExpansion
     }
 
-    val expansionText = if (expandRecursively) {
-        macroToExpand.expandMacrosRecursively(replaceDollarCrate = true)
-    } else {
-        macroToExpand.expandMacrosRecursively(depthLimit = 1, replaceDollarCrate = true)
-    }
+    val depthLimit = if (expandRecursively) Int.MAX_VALUE else 1
+    val expansionText = macroToExpand.expandMacrosRecursively(depthLimit, replaceDollarCrate = true)
 
     return parseExpandedTextWithContext(
         macroToExpand.expansionContext,

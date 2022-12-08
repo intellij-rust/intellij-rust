@@ -25,7 +25,7 @@ import org.rustSlowTests.cargo.runconfig.waitFinished
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 
-@WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS)
+@WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
 class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
 
     private val notificationAware get() = AutoImportProjectNotificationAware.getInstance(project)
@@ -48,7 +48,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 edition = "2018"
 
                 [workspace]
-                members = [ "subproject", "custom_build_script" ]
+                members = [ "subproject", "custom_build_script", "proc_macro_lib" ]
             """)
             configs()
             allTargets()
@@ -83,6 +83,24 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 }
                 rust("build.rs", "fn main() {}")
             }
+            dir("proc_macro_lib") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "proc_macro_lib"
+                    version = "0.1.0"
+                    edition = "2018"
+
+                    [lib]
+                    path = "src/custom_lib.rs"
+                    proc-macro = true
+                """)
+                dir("src") {
+                    rust("custom_lib.rs", """
+                        mod foo;
+                    """)
+                    rust("foo.rs", "")
+                }
+            }
         }.create()
 
         assertNotificationAware(event = "after project creation")
@@ -101,6 +119,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         // TODO: Ideally, we need to detect changes of children modules of build scripts as well
         testProject.checkFileModification("custom_build_script/build/foo.rs", triggered = false)
         testProject.checkFileModification("custom_build_script/build.rs", triggered = false)
+        // Proc macro lib
+        testProject.checkFileModification("proc_macro_lib/src/custom_lib.rs", triggered = true)
+        // TODO: Ideally, we need to detect change of children modules of proc macro lib as well
+        testProject.checkFileModification("proc_macro_lib/src/foo.rs", triggered = false)
         // Implicit crate roots
         testProject.checkFileModification("src/lib.rs", triggered = false)
         testProject.checkFileModification("src/main.rs", triggered = false)
@@ -128,7 +150,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 edition = "2018"
 
                 [workspace]
-                members = [ "subproject", "custom_build_script" ]
+                members = [ "subproject", "custom_build_script", "proc_macro_lib" ]
             """)
             configs()
             allTargets()
@@ -163,6 +185,24 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 }
                 rust("build.rs", "fn main() {}")
             }
+            dir("proc_macro_lib") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "proc_macro_lib"
+                    version = "0.1.0"
+                    edition = "2018"
+
+                    [lib]
+                    path = "src/custom_lib.rs"
+                    proc-macro = true
+                """)
+                dir("src") {
+                    rust("custom_lib.rs", """
+                        mod foo;
+                    """)
+                    rust("foo.rs", "")
+                }
+            }
         }.create()
 
         assertNotificationAware(event = "after project creation")
@@ -181,6 +221,10 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         // TODO: Ideally, we need to detect changes of children modules of build scripts as well
         testProject.checkFileDeletion("custom_build_script/build/foo.rs", triggered = false)
         testProject.checkFileDeletion("custom_build_script/build.rs", triggered = false)
+        // Proc macro lib
+        testProject.checkFileDeletion("proc_macro_lib/src/custom_lib.rs", triggered = true)
+        // TODO: Ideally, we need to detect change of children modules of proc macro lib as well
+        testProject.checkFileDeletion("proc_macro_lib/src/foo.rs", triggered = false)
         // Implicit crate roots
         testProject.checkFileDeletion("src/main.rs", triggered = true)
         testProject.checkFileDeletion("src/lib.rs", triggered = true)
@@ -206,7 +250,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                 edition = "2018"
 
                 [workspace]
-                members = [ "subproject", "custom_build_script" ]
+                members = [ "subproject", "custom_build_script", "proc_macro_lib" ]
             """)
             noTargets()
 
@@ -237,6 +281,23 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
                     rust("main.rs", "fn main() {}")
                 }
             }
+            dir("proc_macro_lib") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "proc_macro_lib"
+                    version = "0.1.0"
+                    edition = "2018"
+
+                    [lib]
+                    path = "src/custom_lib.rs"
+                    proc-macro = true
+                """)
+                dir("src") {
+                    rust("custom_lib.rs", """
+                        mod foo;
+                    """)
+                }
+            }
         }.create()
         assertNotificationAware(event = "initial project creation")
 
@@ -249,6 +310,9 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileCreation("build.rs", triggered = true)
         testProject.checkFileCreation("subproject/build.rs", triggered = true)
         testProject.checkFileCreation("custom_build_script/build.rs", triggered = false)
+        // Proc macro lib
+        // TODO: Ideally, we need to detect change of children modules of proc macro lib as well
+        testProject.checkFileCreation("proc_macro_lib/src/foo.rs", triggered = false)
         // Implicit crate roots
         testProject.checkFileCreation("src/main.rs", triggered = true)
         testProject.checkFileCreation("src/lib.rs", triggered = true)

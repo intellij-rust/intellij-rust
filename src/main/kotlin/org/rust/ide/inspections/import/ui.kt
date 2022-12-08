@@ -21,7 +21,6 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.utils.import.ImportCandidate
-import org.rust.ide.utils.import.ImportInfo
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -75,7 +74,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
             }
 
             override fun getTextFor(value: ImportCandidatePsiElement): String = value.importCandidate.info.usePath
-            override fun getIconFor(value: ImportCandidatePsiElement): Icon? = value.importCandidate.qualifiedNamedItem.item.getIcon(0)
+            override fun getIconFor(value: ImportCandidatePsiElement): Icon? = value.importCandidate.item.getIcon(0)
         }
         val popup = object : ListPopupImpl(project, step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
@@ -98,7 +97,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
 }
 
 private class ImportCandidatePsiElement(val importCandidate: ImportCandidate) : FakePsiElement() {
-    override fun getParent(): PsiElement? = importCandidate.qualifiedNamedItem.item.parent
+    override fun getParent(): PsiElement? = importCandidate.item.parent
 }
 
 private class RsImportCandidateCellRenderer : DefaultPsiElementCellRenderer() {
@@ -106,20 +105,21 @@ private class RsImportCandidateCellRenderer : DefaultPsiElementCellRenderer() {
     private val Any.importCandidate: ImportCandidate? get() = (this as? ImportCandidatePsiElement)?.importCandidate
 
     override fun getIcon(element: PsiElement): Icon =
-        element.importCandidate?.qualifiedNamedItem?.item?.getIcon(iconFlags) ?: super.getIcon(element)
+        element.importCandidate?.item?.getIcon(iconFlags) ?: super.getIcon(element)
 
     override fun getElementText(element: PsiElement): String =
-        element.importCandidate?.qualifiedNamedItem?.itemName ?: super.getElementText(element)
+        element.importCandidate?.itemName ?: super.getElementText(element)
 
     override fun getContainerText(element: PsiElement, name: String): String? {
         val importCandidate = element.importCandidate
         return if (importCandidate != null) {
-            val crateName = (importCandidate.info as? ImportInfo.ExternCrateImportInfo)?.externCrateName
-            val parentPath = importCandidate.qualifiedNamedItem.parentCrateRelativePath
-            val container = when {
-                crateName == null -> parentPath
-                parentPath.isEmpty() -> crateName
-                else -> "$crateName::$parentPath"
+            val path = importCandidate.path
+            val container = if (path.size == 1) {
+                path.single()
+            } else {
+                path.dropLast(1)
+                    .joinToString("::")
+                    .removePrefix("crate::")
             }
             "($container)"
         } else {
@@ -128,7 +128,7 @@ private class RsImportCandidateCellRenderer : DefaultPsiElementCellRenderer() {
     }
 
     override fun getItemLocation(value: Any?): TextWithIcon? {
-        val crate = value?.importCandidate?.qualifiedNamedItem?.containingCrate ?: return null
+        val crate = value?.importCandidate?.crate ?: return null
         return when (crate.origin) {
             PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> TextWithIcon(crate.normName, RsIcons.RUST)
             PackageOrigin.DEPENDENCY -> TextWithIcon(crate.normName, CargoIcons.ICON)

@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.selfInferenceResult
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Severity
 
@@ -53,7 +54,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
 
     private fun checkNoInferenceErrors() {
         val errors = myFixture.file.descendantsOfType<RsInferenceContextOwner>().asSequence()
-            .flatMap { it.inference.diagnostics.asSequence() }
+            .flatMap { it.selfInferenceResult.diagnostics.asSequence() }
             .map { it.element to it.prepare() }
             .filter { it.second.severity == Severity.ERROR }
             .toList()

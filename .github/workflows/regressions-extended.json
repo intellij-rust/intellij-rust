@@ -1,0 +1,34 @@
+[
+    {
+        "name": "regressions-cargo",
+        "projects": [{"name": "cargo", "repository": "rust-lang/cargo"}]
+    },
+    {
+        "name": "regressions-tokio",
+        "projects": [{"name": "tokio", "repository": "tokio-rs/tokio"}]
+    },
+    {
+        "name": "regressions-clap",
+        "projects": [{"name": "clap", "repository": "clap-rs/clap"}]
+    },
+    {
+        "name": "regressions-diesel",
+        "projects": [{"name": "diesel", "repository": "diesel-rs/diesel", "exclude": ["rust-toolchain"]}]
+    },
+    {
+        "name": "regressions-rust-analyzer",
+        "projects": [{"name": "rust-analyzer", "repository": "rust-analyzer/rust-analyzer"}]
+    },
+    {
+        "name": "regressions-xi-editor",
+        "projects": [{"name": "xi-editor", "repository": "xi-editor/xi-editor"}]
+    },
+    {
+        "name": "regressions-nalgebra",
+        "projects": [{"name": "nalgebra", "repository": "dimforge/nalgebra"}]
+    },
+    {
+        "name": "regressions-stdlib",
+        "projects": [{"name": "stdlib"}]
+    }
+]

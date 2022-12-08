@@ -29,7 +29,7 @@ class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInsp
         fn test (arg_baz: u32) {
             println!("{}", arg_baz);
         }
-    """)
+    """, preview = null)
 
     fun `test method arguments`() = checkByText("""
         struct Foo {}
@@ -63,7 +63,7 @@ class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInsp
                 println!("{}", m_arg);
             }
         }
-    """)
+    """, preview = null)
 
     fun `test fun argument not support case`() = checkByText("""
         fn test(名字: &str) { }

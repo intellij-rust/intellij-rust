@@ -103,7 +103,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 0: 92,
                 1: 0/*caret*/,
                 2: 92,
-                3: 0
+                3: 0,
             };
         }
     """)
@@ -175,7 +175,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 name: "".to_string(),
                 vertices: vec![],
                 faces: vec![],
-                material: None
+                material: None,
             };
         }
     """)
@@ -284,7 +284,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 trivial_struct: TrivialStruct,
                 empty_tuple_struct: EmptyTupleStruct(),
                 empty_struct: EmptyStruct {},
-                unsupported_type_field: ()
+                unsupported_type_field: (),
             };
         }
     """)
@@ -331,7 +331,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 d: Cell::new(0.0),
                 e: RefCell::new(0),
                 f: UnsafeCell::new(0),
-                g: Mutex::new("".to_string())
+                g: Mutex::new("".to_string()),
             };
         }
     """)
@@ -452,7 +452,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 e: 0,
                 f,
                 g,
-                obj
+                obj,
             };
         }
     """)
@@ -563,9 +563,9 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                 metadata: MetaData {
                     author: "".to_string(),
                     licence: None,
-                    specVersion: 0
+                    specVersion: 0,
                 },
-                tupleStruct: TupleStruct(0, 0)
+                tupleStruct: TupleStruct(0, 0),
             };
         }
     """)
@@ -626,8 +626,8 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
                     author: "".to_string(),
                     licence: None,
                     specVersion: 0,
-                    tool: ToolInfo { name: "".to_string(), toolVersion: "".to_string() }
-                }
+                    tool: ToolInfo { name: "".to_string(), toolVersion: "".to_string() },
+                },
             };
         }
     """)
@@ -759,6 +759,23 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
 
         fn main() {
             let _ = S { foo: T(0)/*caret*/ };
+        }
+    """)
+
+    fun `test don't add trailing comma if last field already exists`() = checkBothQuickFix("""
+        struct Foo { x: i32, y: i32 }
+        fn main() {
+            let foo = <error>Foo</error> {/*caret*/
+                y: 2
+            };
+        }
+    """, """
+        struct Foo { x: i32, y: i32 }
+        fn main() {
+            let foo = Foo {
+                x: 0,
+                y: 2
+            };
         }
     """)
 

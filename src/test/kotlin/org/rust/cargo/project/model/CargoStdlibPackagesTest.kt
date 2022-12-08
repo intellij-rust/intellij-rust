@@ -43,6 +43,48 @@ class CargoStdlibPackagesTest : RsWithToolchainTestBase() {
         }
     }
 
+    fun `test target specific dependencies with custom build target`() {
+        buildProject {
+            dir(".cargo") {
+                toml("config", """
+                    [build]
+                    target = "custom-target.json"
+                """)
+            }
+            file("custom-target.json", """
+                {
+                    "llvm-target": "aarch64-unknown-none",
+                    "data-layout": "e-m:e-i64:64-f80:128-n8:16:32:64-S128",
+                    "arch": "aarch64",
+                    "target-endian": "little",
+                    "target-pointer-width": "64",
+                    "target-c-int-width": "32",
+                    "os": "none",
+                    "executables": true,
+                    "linker-flavor": "ld.lld",
+                    "linker": "rust-lld",
+                    "panic-strategy": "abort",
+                    "disable-redzone": true,
+                    "features": "-mmx,-sse,+soft-float"
+                }
+            """)
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
+            }
+        }
+
+        val workspace = project.cargoProjects.singleProject().workspaceOrFail()
+        val hashbrownPkg = workspace.packages.first { it.name == HASHBROWN }
+        assertEquals(PackageOrigin.STDLIB_DEPENDENCY, hashbrownPkg.origin)
+    }
+
     fun `test recover corrupted stdlib dependency directory`() {
         buildProject {
             toml("Cargo.toml", """

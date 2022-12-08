@@ -7,6 +7,7 @@ package org.rust.lang.core.dfa
 
 import org.intellij.lang.annotations.Language
 import org.rust.*
+import org.rust.lang.core.macros.MacroExpansionManager
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -1347,6 +1348,8 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """)
 
+    @ExpandMacros
+    @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
     fun `test infinitely recursive macro call`() = testCFG("""
         macro_rules! infinite_macro {
             () => { infinite_macro!() };
@@ -1361,8 +1364,8 @@ class RsControlFlowGraphTest : RsTestBase() {
             "0: Entry" -> "3: 1";
             "3: 1" -> "4: 1;";
             "4: 1;" -> "5: infinite_macro ! ( )";
-            "5: infinite_macro ! ( )" -> "2: Termination";
-            "6: Unreachable" -> "7: infinite_macro ! ( )";
+            "5: infinite_macro ! ( )" -> "6: infinite_macro ! ( )";
+            "6: infinite_macro ! ( )" -> "7: infinite_macro ! ( )";
             "7: infinite_macro ! ( )" -> "8: infinite_macro ! ( )";
             "8: infinite_macro ! ( )" -> "9: infinite_macro ! ( )";
             "9: infinite_macro ! ( )" -> "10: infinite_macro ! ( )";
@@ -1488,14 +1491,11 @@ class RsControlFlowGraphTest : RsTestBase() {
             "129: infinite_macro ! ( )" -> "130: infinite_macro ! ( )";
             "130: infinite_macro ! ( )" -> "131: infinite_macro ! ( )";
             "131: infinite_macro ! ( )" -> "132: infinite_macro ! ( )";
-            "132: infinite_macro ! ( )" -> "133: infinite_macro ! ( )";
-            "133: infinite_macro ! ( )" -> "134: infinite_macro ! ( )";
-            "134: infinite_macro ! ( )" -> "135: infinite_macro ! ( )";
-            "135: infinite_macro ! ( )" -> "136: infinite_macro ! ( );";
-            "136: infinite_macro ! ( );" -> "137: 2";
-            "137: 2" -> "138: 2;";
-            "138: 2;" -> "139: BLOCK";
-            "139: BLOCK" -> "1: Exit";
+            "132: infinite_macro ! ( )" -> "133: infinite_macro ! ( );";
+            "133: infinite_macro ! ( );" -> "134: 2";
+            "134: 2" -> "135: 2;";
+            "135: 2;" -> "136: BLOCK";
+            "136: BLOCK" -> "1: Exit";
             "1: Exit" -> "2: Termination";
         }
     """)
