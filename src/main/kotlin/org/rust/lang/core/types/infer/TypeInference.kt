@@ -1151,10 +1151,13 @@ class RsInferenceContext(
             .find { it.element == source.value }?.subst ?: emptySubstitution
 
         is TraitImplSource.ProjectionBound -> {
-            val ty = selfTy as TyProjection
-            val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
-            val bound = ty.trait.element.bounds
-                .find { it.trait.element == source.value && probe { combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
+            @Suppress("NAME_SHADOWING")
+            val selfTy = selfTy as TyProjection
+            val subst = selfTy.trait.subst + selfTy.target.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
+            val bound = selfTy.trait.element.bounds.asSequence()
+                .filter { probe { combineTypes(it.selfTy.substitute(subst), selfTy) }.isOk }
+                .flatMap { it.flattenHierarchy.asSequence() }
+                .find { it.trait.element == source.value }
             bound?.trait?.subst?.substituteInValues(subst) ?: emptySubstitution
         }
 

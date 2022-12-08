@@ -1688,6 +1688,24 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test generic associated type is sized E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
+        pub trait Deref { type Target: ?Sized; }
+        pub struct Rc<T>(T);
+        impl<T> Deref for Rc<T> { type Target = T; }
+
+        trait PointerFamily {
+            type Pointer<T>: Deref<Target = T>;
+        }
+        struct RcFamily;
+        impl PointerFamily for RcFamily {
+            type Pointer<T> = Rc<T>;
+        }
+        fn foo<T: PointerFamily>() -> T::Pointer<i32> { // No error here
+            todo!()
+        }
+    """)
+
     fun `test supertrait is not implemented E0277 simple trait`() = checkErrors("""
         trait A {}
         trait B: A {}

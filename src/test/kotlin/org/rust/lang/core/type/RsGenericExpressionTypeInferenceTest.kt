@@ -2314,6 +2314,31 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ X
     """)
 
+    fun `test generic assoc type bound selection 1`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item<T>: Foo<T>; }
+        fn bar<T: Bar>(_: T, b: T::Item<X>) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    fun `test generic assoc type bound selection 2`() = testExpr("""
+        struct X;
+        trait Foo { type Item<T>: Bar1<T> + Bar2<T>; }
+        trait Bar1<T>: Baz<T> {}
+        trait Bar2<T>: Baz<T> {}
+        trait Baz<T> {}
+        fn baz<A: Baz<B>, B>(t: A) -> B { unimplemented!() }
+
+        fn foobar<T: Foo>(a: T::Item<X>) {
+            let b = baz(a);
+            b;
+        } //^ X
+    """)
+
     fun `test infer type parameter from associated type binding`() = testExpr("""
         trait Foo { type Item; }
         fn foo<A, B>(a: A) -> B where A: Foo<Item = B> { unimplemented!() }
@@ -2711,5 +2736,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = foo(a);
             b;
         } //^ X
+    """)
+
+    fun `test method from generic assoc type bound`() = testExpr("""
+        trait Foo { type Item<A>: Bar<A>; }
+        trait Bar<B>: Baz<B> {}
+        trait Baz<C> {
+            fn baz(&self) -> C { todo!() }
+        }
+        fn foobar<D: Foo>(a: D::Item<i32>) {
+            let b = a.baz();
+            b;
+        } //^ i32
     """)
 }

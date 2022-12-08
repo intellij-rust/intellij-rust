@@ -301,7 +301,7 @@ class ImplLookup(
                 }
             }
             is TyProjection -> {
-                val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
+                val subst = ty.trait.subst + ty.target.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
                 implsAndTraits += ty.trait.element.bounds.asSequence()
                     .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
                     .flatMap { it.trait.getFlattenHierarchy().asSequence() }
@@ -758,7 +758,7 @@ class ImplLookup(
     private fun assembleCandidatesFromProjectedTys(ref: TraitRef, candidates: SelectionCandidateSet) {
         val selfTy = ref.selfTy
         if (selfTy is TyProjection) {
-            val subst = selfTy.trait.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
+            val subst = selfTy.trait.subst + selfTy.target.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
             selfTy.trait.element.bounds.asSequence()
                 .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), selfTy) }.isOk }
                 .flatMap { it.trait.getFlattenHierarchy().asSequence() }
@@ -968,7 +968,7 @@ class ImplLookup(
 
     private fun confirmProjectionCandidate(ref: TraitRef, candidate: ProjectionCandidate): Selection {
         ref.selfTy as TyProjection
-        val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
+        val subst = ref.selfTy.trait.subst + ref.selfTy.target.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
         ctx.combineTraitRefs(ref, TraitRef(ref.selfTy, candidate.bound.substitute(subst)))
         return Selection(ref.trait.element, emptyList())
     }

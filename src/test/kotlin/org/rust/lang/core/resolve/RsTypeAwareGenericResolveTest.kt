@@ -1187,6 +1187,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
+    fun `test generic assoc type bound method`() = checkByCode("""
+        trait Foo { type Item<A>: Bar; }
+        trait Bar: Baz {}
+        trait Baz {
+            fn baz(&self) {}
+        }    //X
+
+        fn foobar<T: Foo>(a: T::Item<i32>) {
+            a.baz();
+        }   //^
+    """)
+
     // The go-to-declaration behavior differs in this case. See `RsGotoDeclarationTest`
     @CheckTestmarkHit(NameResolutionTestmarks.SelfRelatedTypeSpecialCase::class)
     fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 1)`() = checkByCode("""
