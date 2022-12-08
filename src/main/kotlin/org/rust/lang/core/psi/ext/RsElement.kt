@@ -10,11 +10,12 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.*
-import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.util.Query
+import com.intellij.util.containers.addIfNotNull
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -207,4 +208,46 @@ fun RsElement.searchReferences(scope: SearchScope? = null): Query<PsiReference> 
     } else {
         ReferencesSearch.search(this, scope)
     }
+}
+
+/**
+ * struct Foo {}
+ * ~~~~~~~~~~~~~ this
+ * impl Foo {
+ *     fn new() -> Self { ... }
+ *                 ~~~~ this resolves to impl, so usual [searchReferences] will not find it
+ * }
+ */
+fun RsElement.searchReferencesWithSelf(): List<PsiReference> {
+    val references = ReferencesSearch.search(this).toMutableList()
+    val searchHelper = PsiSearchHelper.getInstance(project)
+    references += references.flatMap {
+        it.findSelfReferences(searchHelper) ?: emptyList()
+    }
+    return references
+}
+
+/**
+ * impl Foo {
+ *      ~~~~ this
+ *     fn new() -> Self { ... }
+ *                 ~~~~ result
+ * }
+ */
+private fun PsiReference.findSelfReferences(searchHelper: PsiSearchHelper): List<PsiReference>? {
+    val implPath = element as? RsPath ?: return null
+    val implType = implPath.parent as? RsPathType ?: return null
+    val impl = implType.parent as? RsImplItem ?: return null
+    if (impl.typeReference != implType) return null
+
+    val result = mutableListOf<PsiReference>()
+    val processor = TextOccurenceProcessor run@{ element, offset ->
+        if (offset != 0) return@run true
+        val path = (element.parent as? RsPath)?.takeIf { it.cself == element } ?: return@run true
+        result.addIfNotNull(path.reference.takeIf { it?.resolve() == impl })
+        true
+    }
+    val searchScope = LocalSearchScope(impl)
+    searchHelper.processElementsWithWord(processor, searchScope, "Self", UsageSearchContext.IN_CODE, true, false)
+    return result
 }

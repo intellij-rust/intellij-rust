@@ -169,6 +169,25 @@ class ConvertToTupleRefactoringTest : RsTestBase() {
                 T2: Trait;
     """)
 
+    fun `test replace Self in impls`() = doAvailableTest("""
+        struct Test/*caret*/ { a: i32, b: i32 }
+        impl Test {
+            fn new() -> Self {
+                let b = 1;
+                Self { a: 0, b }
+            }
+        }
+    """, """
+        struct Test(i32, i32);
+
+        impl Test {
+            fn new() -> Self {
+                let b = 1;
+                Self(0, b)
+            }
+        }
+    """)
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
         myFixture.launchAction("Rust.RsConvertToTuple")

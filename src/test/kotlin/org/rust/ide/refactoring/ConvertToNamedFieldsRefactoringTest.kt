@@ -211,6 +211,25 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """)
 
+    fun `test convert Self in impls`() = doAvailableTest("""
+        struct Test/*caret*/(i32);
+        impl Test {
+            fn new() -> Self {
+                Self(0)
+            }
+        }
+    """, """
+        struct Test {
+            _0: i32,
+        }
+
+        impl Test {
+            fn new() -> Self {
+                Self { _0: 0 }
+            }
+        }
+    """)
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
         myFixture.launchAction("Rust.RsConvertToNamedFields")
