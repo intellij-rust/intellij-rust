@@ -168,7 +168,8 @@ private data class TypeRenderer(
                     if (includeTypeArguments) append(formatTraitGenerics(ty.trait, render, false))
                     append(">::")
                 }
-                append(ty.target.name)
+                append(ty.target.element.name)
+                if (includeTypeArguments) append(formatProjectionGenerics(ty, render))
             }
             is TyTraitObject -> ty.traits.joinToString("+", "dyn ") { formatTrait(it, render) }
             is TyAnon -> ty.traits.joinToString("+", "impl ") { formatTrait(it, render) }
@@ -227,6 +228,11 @@ private data class TypeRenderer(
 
     private fun formatAdtGenerics(adt: TyAdt, render: (Ty) -> String): String {
         val visibleTypes = formatGenerics(adt.item, adt.typeParameterValues, render)
+        return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
+    }
+
+    private fun formatProjectionGenerics(projection: TyProjection, render: (Ty) -> String): String {
+        val visibleTypes = formatGenerics(projection.target.element, projection.typeParameterValues, render)
         return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
     }
 

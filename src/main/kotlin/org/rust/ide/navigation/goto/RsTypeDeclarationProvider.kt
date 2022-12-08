@@ -47,7 +47,7 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
                     else -> null
                 }
             }
-            is TyProjection -> target
+            is TyProjection -> target.element
             is TyReference -> referenced.baseTypeDeclaration()
             is TyPointer -> referenced.baseTypeDeclaration()
             is TyArray -> base.baseTypeDeclaration()

@@ -1156,8 +1156,8 @@ class RsTypeInferenceWalker(
         val okType = tryItem.findAssociatedType("Output")
             ?: tryItem.findAssociatedType("Ok")
             ?: return TyUnknown
-        return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(base, BoundElement(tryItem), okType))
-            .register()
+        val projection = TyProjection.valueOf(base, BoundElement(tryItem), BoundElement(okType))
+        return ctx.normalizeAssociatedTypesIn(projection).register()
     }
 
     private fun inferRangeType(expr: RsRangeExpr): Ty {
@@ -1458,7 +1458,7 @@ class RsTypeInferenceWalker(
         val assocType = tryTrait.findAssociatedType("Output")
             ?: tryTrait.findAssociatedType("Ok")
             ?: return
-        val projection = TyProjection.valueOf(resultTy, assocType)
+        val projection = TyProjection.valueOf(resultTy, BoundElement(assocType))
         val obligation = Obligation(Predicate.Projection(projection, assocTypeTy))
         fulfill.registerPredicateObligation(obligation)
     }
@@ -1497,14 +1497,14 @@ class RsTypeInferenceWalker(
     private fun Ty.lookupRawFutureOutputTy(lookup: ImplLookup): Ty {
         val futureTrait = lookup.items.Future ?: return TyUnknown
         val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType)
+        val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType.withSubst())
         return selection.ok()?.register() ?: TyUnknown
     }
 
     private fun Ty.lookupIntoFutureOutputTy(lookup: ImplLookup): Ty {
         val intoFutureTrait = lookup.items.IntoFuture ?: return TyUnknown
         val outputType = intoFutureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, intoFutureTrait.withSubst()), outputType)
+        val selection = lookup.selectProjection(TraitRef(this, intoFutureTrait.withSubst()), outputType.withSubst())
         return selection.ok()?.register() ?: TyUnknown
     }
 

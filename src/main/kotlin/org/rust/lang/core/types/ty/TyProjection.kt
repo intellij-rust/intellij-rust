@@ -9,13 +9,11 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.psi.ext.withDefaultSubst
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.HAS_TY_PROJECTION_MASK
-import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.mergeElementFlags
 
 /**
  * Represents projection of an associated type.
@@ -38,8 +36,8 @@ import org.rust.lang.core.types.mergeElementFlags
 data class TyProjection private constructor(
     val type: Ty,
     val trait: BoundElement<RsTraitItem>,
-    val target: RsTypeAlias
-): Ty(type.flags or mergeElementFlags(trait) or HAS_TY_PROJECTION_MASK) {
+    val target: BoundElement<RsTypeAlias>
+) : Ty(type.flags or mergeElementFlags(trait) or mergeElementFlags(target) or HAS_TY_PROJECTION_MASK) {
 
     /**
      * Extracts the underlying trait reference from this projection.
@@ -49,26 +47,31 @@ data class TyProjection private constructor(
     val traitRef: TraitRef
         get() = TraitRef(type, trait)
 
+    val typeArguments: List<Ty>
+        get() = target.element.typeParameters.map { typeParameterValues[it] ?: TyUnknown }
+
+    override val typeParameterValues: Substitution
+        get() = target.subst
+
     override fun superFoldWith(folder: TypeFolder): Ty =
-        TyProjection(type.foldWith(folder), trait.foldWith(folder), target)
+        TyProjection(type.foldWith(folder), trait.foldWith(folder), target.foldWith(folder))
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        type.visitWith(visitor) || trait.visitWith(visitor)
+        type.visitWith(visitor) || trait.visitWith(visitor) || target.visitWith(visitor)
 
     companion object {
-        fun valueOf(type: Ty, trait: BoundElement<RsTraitItem>, target: RsTypeAlias): TyProjection {
-            check(trait.element == (target.owner as? RsAbstractableOwner.Trait)?.trait)
+        fun valueOf(type: Ty, trait: BoundElement<RsTraitItem>, target: BoundElement<RsTypeAlias>): TyProjection {
+            check(trait.element == (target.element.owner as? RsAbstractableOwner.Trait)?.trait)
             return TyProjection(type, trait, target)
         }
 
-        fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
-            type,
-            (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
-                ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait"),
-            target
-        )
+        fun valueOf(type: Ty, target: BoundElement<RsTypeAlias>): TyProjection {
+            val trait = (target.element.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
+                ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait")
+            return valueOf(type, trait, target)
+        }
 
-        fun valueOf(target: RsTypeAlias): TyProjection =
+        fun valueOf(target: BoundElement<RsTypeAlias>): TyProjection =
             valueOf(TyTypeParameter.self(), target)
     }
 }

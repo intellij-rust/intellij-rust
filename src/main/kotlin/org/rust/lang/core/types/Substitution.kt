@@ -27,7 +27,7 @@ open class Substitution(
     @Suppress("MemberVisibilityCanBePrivate")
     val regionSubst: Map<ReEarlyBound, Region> = emptyMap(),
     val constSubst: Map<CtConstParameter, Const> = emptyMap()
-): TypeFoldable<Substitution> {
+) : TypeFoldable<Substitution> {
     val types: Collection<Ty> get() = typeSubst.values
     val regions: Collection<Region> get() = regionSubst.values
     val consts: Collection<Const> get() = constSubst.values
@@ -81,14 +81,20 @@ open class Substitution(
 
     fun zipConstValues(other: Substitution): List<Pair<Const, Const>> = zipValues(constSubst, other.constSubst)
 
+    fun mapTypeKeys(transform: (Map.Entry<TyTypeParameter, Ty>) -> TyTypeParameter): Substitution =
+        Substitution(typeSubst.mapKeys(transform), regionSubst, constSubst)
+
     fun mapTypeValues(transform: (Map.Entry<TyTypeParameter, Ty>) -> Ty): Substitution =
         Substitution(typeSubst.mapValues(transform), regionSubst, constSubst)
+
+    fun mapConstKeys(transform: (Map.Entry<CtConstParameter, Const>) -> CtConstParameter): Substitution =
+        Substitution(typeSubst, regionSubst, constSubst.mapKeys(transform))
 
     fun mapConstValues(transform: (Map.Entry<CtConstParameter, Const>) -> Const): Substitution =
         Substitution(typeSubst, regionSubst, constSubst.mapValues(transform))
 
     fun visitValues(visitor: TypeVisitor): Boolean =
-            types.any { it.visitWith(visitor) } ||
+        types.any { it.visitWith(visitor) } ||
             regions.any { it.visitWith(visitor) } ||
             consts.any { it.visitWith(visitor) }
 

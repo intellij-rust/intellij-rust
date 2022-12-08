@@ -131,7 +131,7 @@ val PsiElement.inferenceContextOwner: RsInferenceContextOwner?
         }?.first as? RsInferenceContextOwner
 
 private fun PsiElement.isAllowedPathParent() =
-    this is RsPathType || this is RsTraitRef || this is RsStructLiteral || this is RsPath
+    this is RsPathType || this is RsTraitRef || this is RsStructLiteral || this is RsAssocTypeBinding || this is RsPath
 
 val PsiElement.inference: RsInferenceResult?
     get() = inferenceContextOwner?.selfInferenceResult

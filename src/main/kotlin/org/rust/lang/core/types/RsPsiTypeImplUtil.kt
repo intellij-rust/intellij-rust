@@ -8,6 +8,7 @@ package org.rust.lang.core.types
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.withDefaultSubst
 import org.rust.lang.core.types.infer.TyLowering
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
@@ -24,7 +25,7 @@ object RsPsiTypeImplUtil {
         if (typeReference != null) return typeReference.typeWithRecursionGuard
         return when (psi.owner) {
             is RsAbstractableOwner.Free -> TyUnknown
-            is RsAbstractableOwner.Trait -> TyProjection.valueOf(psi)
+            is RsAbstractableOwner.Trait -> TyProjection.valueOf(psi.withDefaultSubst())
             is RsAbstractableOwner.Impl -> TyUnknown
             is RsAbstractableOwner.Foreign -> TyUnknown
         }

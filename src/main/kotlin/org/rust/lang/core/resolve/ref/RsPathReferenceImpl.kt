@@ -553,7 +553,7 @@ private fun pathTypeParameters(path: RsPath): RsPsiPathParameters? {
     }
 }
 
-private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
+fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
     collectResolveVariants(binding.path.referenceName) { processAssocTypeVariants(trait, it) }
         .singleOrNull() as? RsTypeAlias?
 
@@ -633,9 +633,8 @@ private fun RsPathReference.tryAdvancedResolveTypeAliasToImpl(): BoundElement<Rs
 
     // 3. Try to select a concrete impl for the associated type
     val lookup = ImplLookup.relativeTo(element)
-    val selection = lookup.selectStrict(
-        (TyProjection.valueOf(resolved).substitute(resolvedBoundElement.subst) as TyProjection).traitRef
-    ).ok()
+    val projection = TyProjection.valueOf(resolved.withDefaultSubst()).substitute(resolvedBoundElement.subst) as TyProjection
+    val selection = lookup.selectStrict(projection.traitRef).ok()
     if (selection?.impl !is RsImplItem) return null
     val element = selection.impl.expandedMembers.types.find { it.name == resolved.name } ?: return null
     val newSubst = lookup.ctx.fullyResolveWithOrigins(selection.subst)
