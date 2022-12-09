@@ -19,9 +19,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.openapiext.filterIsInstanceQuery
@@ -119,25 +117,6 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>>
             .filter { !it.hasQ } // ignore `?Sized`
             .mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
     }
-
-fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =
-    BoundElement(this, defaultSubstitution(this))
-
-private fun defaultSubstitution(item: RsTraitItem): Substitution {
-    val typeSubst = item.typeParameters.associate {
-        val parameter = TyTypeParameter.named(it)
-        parameter to parameter
-    }
-    val regionSubst = item.lifetimeParameters.associate {
-        val parameter = ReEarlyBound(it)
-        parameter to parameter
-    }
-    val constSubst = item.constParameters.associate {
-        val parameter = CtConstParameter(it)
-        parameter to parameter
-    }
-    return Substitution(typeSubst, regionSubst, constSubst)
-}
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
 

@@ -8,10 +8,9 @@ package org.rust.lang.core.psi.ext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.rawType
-import org.rust.lang.core.types.toTypeSubst
+import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 
@@ -64,6 +63,25 @@ fun <T : RsGenericDeclaration> T.withSubst(vararg subst: Ty): BoundElement<T> {
         }.toTypeSubst()
     }
     return BoundElement(this, substitution)
+}
+
+fun <T : RsGenericDeclaration> T.withDefaultSubst(): BoundElement<T> =
+    BoundElement(this, defaultSubstitution(this))
+
+private fun <T : RsGenericDeclaration> defaultSubstitution(item: T): Substitution {
+    val typeSubst = item.typeParameters.associate {
+        val parameter = TyTypeParameter.named(it)
+        parameter to parameter
+    }
+    val regionSubst = item.lifetimeParameters.associate {
+        val parameter = ReEarlyBound(it)
+        parameter to parameter
+    }
+    val constSubst = item.constParameters.associate {
+        val parameter = CtConstParameter(it)
+        parameter to parameter
+    }
+    return Substitution(typeSubst, regionSubst, constSubst)
 }
 
 private val LOG: Logger = logger<RsGenericDeclaration>()

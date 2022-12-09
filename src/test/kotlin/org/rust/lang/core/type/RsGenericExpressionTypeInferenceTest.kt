@@ -863,6 +863,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test bound generic associated type`() = testExpr("""
+        trait Tr { type Item<A>; }
+        struct S<B>(B);
+        impl<C: Tr> S<C> { fn foo(self) -> C::Item<u8> { unimplemented!() } }
+
+        struct X;
+        struct Vec<T>(T);
+        impl Tr for X { type Item<D> = Vec<D>; }
+
+        fn main() {
+            let a = S(X).foo();
+            a;
+        } //^ Vec<u8>
+    """)
+
     fun `test bound associated type in explicit UFCS form`() = testExpr("""
         trait Tr { type Item; }
         struct S<A>(A);
@@ -874,6 +889,20 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S(X).foo();
             a;
         } //^ u8
+    """)
+
+    fun `test bound generic associated type in explicit UFCS form`() = testExpr("""
+        trait Tr { type Item<A>; }
+        struct S<B>(B);
+        impl<C: Tr> S<C> { fn foo(self) -> <C as Tr>::Item<u8> { unimplemented!() } }
+
+        struct X;
+        impl Tr for X { type Item<D> = Vec<D>; }
+        struct Vec<T>(T);
+        fn main() {
+            let a = S(X).foo();
+            a;
+        } //^ Vec<u8>
     """)
 
     fun `test bound inherited associated type`() = testExpr("""
@@ -891,6 +920,22 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test bound inherited generic associated type`() = testExpr("""
+        trait Tr1 { type Item<A>; }
+        trait Tr2: Tr1 {}
+        struct S<B>(B);
+        impl<C: Tr2> S<C> { fn foo(self) -> C::Item<u8> { unimplemented!() } }
+
+        struct X;
+        struct Vec<T>(T);
+        impl Tr1 for X { type Item<D> = Vec<D>; }
+        impl Tr2 for X {}
+        fn main() {
+            let a = S(X).foo();
+            a;
+        } //^ Vec<u8>
+    """)
+
     fun `test bound inherited associated type in explicit UFCS form`() = testExpr("""
         trait Tr1 { type Item; }
         trait Tr2: Tr1 {}
@@ -906,6 +951,22 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test bound inherited generic associated type in explicit UFCS form`() = testExpr("""
+        trait Tr1 { type Item<A>; }
+        trait Tr2: Tr1 {}
+        struct S<B>(B);
+        impl<C: Tr2> S<C> { fn foo(self) -> <C as Tr1>::Item<u8> { unimplemented!() } }
+
+        struct X;
+        struct Vec<T>(T);
+        impl Tr1 for X { type Item<D> = Vec<D>; }
+        impl Tr2 for X {}
+        fn main() {
+            let a = S(X).foo();
+            a;
+        } //^ Vec<u8>
+    """)
+
     fun `test 2 bound associated types`() = testExpr("""
         trait Tr { type Item; }
         struct S<A, B>(A, B);
@@ -919,6 +980,23 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S(X, Y).foo();
             a;
         } //^ (u8, u16)
+    """)
+
+    fun `test 2 bound generic associated types`() = testExpr("""
+        trait Tr { type Item<A>; }
+        struct S<B, C>(B, C);
+        impl<D: Tr, E: Tr> S<D, E> { fn foo(self) -> (D::Item<u8>, E::Item<u16>) { unimplemented!() } }
+
+        struct X;
+        struct Y;
+        struct Vec<T>(T);
+        struct Option<T>(T);
+        impl Tr for X { type Item<F> = Vec<F>; }
+        impl Tr for Y { type Item<G> = Option<G>; }
+        fn main() {
+            let a = S(X, Y).foo();
+            a;
+        } //^ (Vec<u8>, Option<u16>)
     """)
 
     fun `test recursive receiver substitution using associated type`() = testExpr("""
@@ -939,6 +1017,27 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S1(X).wrap().wrap().wrap().fold();
             a;
         } //^ X
+    """)
+
+    fun `test recursive receiver substitution using generic associated type`() = testExpr("""
+        trait Tr {
+            type Item<A>;
+            fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() }
+            fn fold(self) -> Self::Item<Y> where Self: Sized { unimplemented!() }
+        }
+
+        struct X; struct Y;
+        struct S1<B>(B);
+        struct S<C>(C);
+        struct Result<A, B>(A, B);
+
+        impl<D> Tr for S1<D> { type Item<E> = Result<D, E>; }
+        impl<F: Tr> Tr for S<F> { type Item<G> = F::Item<G>; }
+
+        fn main() {
+            let a = S1(X).wrap().wrap().wrap().fold();
+            a;
+        } //^ Result<X, Y>
     """)
 
     fun `test recursive receiver substitution using inherited associated type`() = testExpr("""
@@ -963,6 +1062,30 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = S1(X).wrap().wrap().wrap().fold();
             a;
         } //^ X
+    """)
+
+    fun `test recursive receiver substitution using inherited generic associated type`() = testExpr("""
+        trait Tr1 { type Item<A>; }
+        trait Tr: Tr1 {
+            fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() }
+            fn fold(self) -> Self::Item<Y> where Self: Sized { unimplemented!() }
+        }
+
+        struct X; struct Y;
+        struct S1<A>(A);
+        struct S<B>(B);
+        struct Result<A, B>(A, B);
+
+        impl<C>     Tr1 for S1<C> { type Item<D> = Result<C, D>; }
+        impl<E: Tr> Tr1 for S<E>  { type Item<F> = E::Item<F>; }
+
+        impl<G>     Tr for S1<G> {}
+        impl<H: Tr> Tr for S<H>  {}
+
+        fn main() {
+            let a = S1(X).wrap().wrap().wrap().fold();
+            a;
+        } //^ Result<X, Y>
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1549
@@ -1002,6 +1125,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ <T as Tr>::Item
     """)
 
+    fun `test non-inferable generic associated type`() = testExpr("""
+        trait Tr {
+            type Item<A>;
+            fn bar<B>(&self, x: B) -> Self::Item<B> { unimplemented!() }
+        }
+        fn foo<T: Tr>(t: T) {
+            let a = t.bar(0);
+            a;
+        } //^ <T as Tr>::Item<i32>
+    """)
+
     fun `test fn return associated type`() = testExpr("""
         trait Tr { type Item; }
         struct S;
@@ -1013,6 +1147,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = foo(S);
             x;
           //^ i32
+        }
+    """)
+
+    fun `test fn return generic associated type`() = testExpr("""
+        trait Tr { type Item<A>; }
+        struct S;
+        struct Vec<T>(T);
+        impl Tr for S {
+            type Item<B> = Vec<B>;
+        }
+        fn foo<T: Tr, C>(t: T, i: C) -> T::Item<C> { unimplemented!() }
+        fn main() {
+            let x = foo(S, 0);
+            x;
+          //^ Vec<i32>
         }
     """)
 
@@ -1030,6 +1179,22 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = get2(0usize);
             (a, b);
         } //^ (X, Y)
+    """)
+
+    fun `test fn return generic associated type with generic trait bound`() = testExpr("""
+        trait SliceIndex<T> { type Output<A>; }
+        struct S1; struct S2;
+        struct X<B>(B); struct Y<B>(B);
+        fn get1<I: SliceIndex<S1>, U>(index: I, x: U) -> I::Output<U> { unimplemented!() }
+        fn get2<I: SliceIndex<S2>, U>(index: I, x: U) -> <I as SliceIndex<S2>>::Output<U>
+        { unimplemented!() }
+        impl SliceIndex<S1> for usize { type Output<C> = X<C>; }
+        impl SliceIndex<S2> for usize { type Output<C> = Y<C>; }
+        fn main() {
+            let a = get1(0usize, 1u8);
+            let b = get2(0usize, 1u16);
+            (a, b);
+        } //^ (X<u8>, Y<u16>)
     """)
 
     fun `test associated type bound`() = testExpr("""
@@ -1503,6 +1668,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test generic associated type binding in trait bound 1`() = testExpr("""
+        trait Tr { type Item<A>; }
+
+        fn foo<B: Tr<Item<u8>=u16>>(_: B) {
+            let a: B::Item<u8> = 0;
+            a;
+        } //^ u16
+    """)
+
+    fun `test generic associated type binding in trait bound 2`() = expect<Throwable> {
+        testExpr("""
+            trait Tr { type Item<A>; }
+
+            fn foo<B: Tr<Item<i8>=u16>>(_: B) {
+                let a: B::Item<u8> = 0;
+                a
+            } //^ <unknown>
+        """)
+    }
+
     fun `test associated type binding in trait object`() = testExpr("""
         trait Tr {
             type Item;
@@ -1515,6 +1700,31 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test generic associated type binding in trait object 1`() = testExpr("""
+        trait Tr {
+            type Item<A>;
+            fn foo(&self) -> Self::Item<u8>;
+        }
+
+        fn foo(a: &Tr<Item<u8>=u16>) {
+            let b = a.foo();
+            b;
+        } //^ u16
+    """)
+
+    fun `test generic associated type binding in trait object 2`() = expect<Throwable> {
+        testExpr("""
+            trait Tr {
+                type Item<A>;
+                fn foo(&self) -> Self::Item<u8>;
+            }
+
+            fn foo(a: &Tr<Item<i8>=u16>) {
+                let b = a.foo();
+                b;
+            } //^ <unknown>
+        """)
+    }
     fun `test aliased associated type binding in trait object`() = testExpr("""
         trait Tr {
             type Item;
@@ -1528,6 +1738,36 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ u8
     """)
+
+    fun `test aliased generic associated type binding in trait object 1`() = testExpr("""
+        trait Tr {
+            type Item<A>;
+            fn foo(&self) -> Self::Item<u8>;
+        }
+
+        type TrAlias<T> = Tr<Item<u8>=T>;
+
+        fn foo(a: &TrAlias<u8>) {
+            let b = a.foo();
+            b;
+        } //^ u8
+    """)
+
+    fun `test aliased generic associated type binding in trait object 2`() = expect<Throwable> {
+        testExpr("""
+            trait Tr {
+                type Item<A>;
+                fn foo(&self) -> Self::Item<u8>;
+            }
+
+            type TrAlias<T> = Tr<Item<i8>=T>;
+
+            fn foo(a: &TrAlias<u8>) {
+                let b = a.foo();
+                b;
+            } //^ <unknown>
+        """)
+    }
 
     fun `test associated type binding in 'impl Trait'`() = testExpr("""
         trait Tr {
@@ -1563,6 +1803,34 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             bar;
         } //^ Bar
     """)
+
+    fun `test generic associated type binding in 'impl Trait' 1`() = testExpr("""
+        trait Tr {
+            type Item<A>;
+            fn foo(&self) -> Self::Item<u8>;
+        }
+
+        fn new() -> impl Tr<Item<u8>=u16> { unimplemented!() }
+        fn main() {
+            let b = new().foo();
+            b;
+        } //^ u16
+    """)
+
+    fun `test generic associated type binding in 'impl Trait' 2`() = expect<Throwable> {
+        testExpr("""
+            trait Tr {
+                type Item<A>;
+                fn foo(&self) -> Self::Item<u8>;
+            }
+
+            fn new() -> impl Tr<Item<i8>=u16> { unimplemented!() }
+            fn main() {
+                let b = new().foo();
+                b;
+            } //^ <unknown>
+        """)
+    }
 
     fun `test select trait from unconstrained integer`() = testExpr("""
         struct X;
@@ -1727,6 +1995,24 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }      //^ X
     """)
 
+    fun `test struct field with generic associated type`() = testExpr("""
+        struct Foo<V: Trait, U, const N: usize> {
+            input: <V as Trait>::Item<U, N>,
+        }
+        trait Trait { type Item<U, const N: usize>; }
+        struct S; struct X<U, const N: usize>;
+        impl Trait for S {
+            type Item<U, const N: usize> = X<U, N>;
+        }
+        fn main() {
+            let foo1 = Foo::<S, u8, 0> {
+                input: X,
+            };
+
+            foo1.input;
+        }      //^ X<u8, 0>
+    """)
+
     // Issue https://github.com/intellij-rust/intellij-rust/issues/4026
     fun `test tuple struct field with associated type`() = testExpr("""
         struct Foo<V: Trait>(<V as Trait>::Item);
@@ -1740,6 +2026,20 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
             foo1.0;
         }      //^ X
+    """)
+
+    fun `test tuple struct field with generic associated type`() = testExpr("""
+        struct Foo<V: Trait, U, const N: usize>(<V as Trait>::Item<U, N>);
+        trait Trait { type Item<U, const N: usize>; }
+        struct S; struct X<U, const N: usize>;
+        impl Trait for S {
+            type Item<U, const N: usize> = X<U, N>;
+        }
+        fn main() {
+            let foo1 = Foo::<S, u8, 0>(X);
+
+            foo1.0;
+        }      //^ X<u8, 0>
     """)
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3999
@@ -2011,6 +2311,31 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn bar<T: Bar>(_: T, b: T::Item) {
             let a = foo(b);
             a;
+        } //^ X
+    """)
+
+    fun `test generic assoc type bound selection 1`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item<T>: Foo<T>; }
+        fn bar<T: Bar>(_: T, b: T::Item<X>) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    fun `test generic assoc type bound selection 2`() = testExpr("""
+        struct X;
+        trait Foo { type Item<T>: Bar1<T> + Bar2<T>; }
+        trait Bar1<T>: Baz<T> {}
+        trait Bar2<T>: Baz<T> {}
+        trait Baz<T> {}
+        fn baz<A: Baz<B>, B>(t: A) -> B { unimplemented!() }
+
+        fn foobar<T: Foo>(a: T::Item<X>) {
+            let b = baz(a);
+            b;
         } //^ X
     """)
 
@@ -2411,5 +2736,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = foo(a);
             b;
         } //^ X
+    """)
+
+    fun `test method from generic assoc type bound`() = testExpr("""
+        trait Foo { type Item<A>: Bar<A>; }
+        trait Bar<B>: Baz<B> {}
+        trait Baz<C> {
+            fn baz(&self) -> C { todo!() }
+        }
+        fn foobar<D: Foo>(a: D::Item<i32>) {
+            let b = a.baz();
+            b;
+        } //^ i32
     """)
 }

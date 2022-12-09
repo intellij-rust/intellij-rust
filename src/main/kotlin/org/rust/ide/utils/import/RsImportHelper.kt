@@ -157,7 +157,7 @@ object RsImportHelper {
                     is TyTraitObject -> result += ty.traits.map { it.element }
                     is TyProjection -> {
                         result += ty.trait.element
-                        result += ty.target
+                        result += ty.target.element
                     }
                 }
                 return ty.superVisitWith(this)

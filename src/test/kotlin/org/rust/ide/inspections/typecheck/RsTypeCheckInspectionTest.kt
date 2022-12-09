@@ -33,12 +33,14 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         #![feature(const_generics_defaults)]
         struct S<const N: usize = <error>1u8</error>>;
         trait T<const N: usize = <error>1u8</error>> {
+            type Item<const N: usize>;
             fn foo<const N: usize>(&self) -> S<N>;
         }
         impl T<<error>1u8</error>> for S<<error>1u8</error>> {
+            type Item<const N: usize> = ();
             fn foo<const N: usize>(self) -> S<<error>1u8</error>> { self }
         }
-        fn bar(x: S<<error>1u8</error>>) -> S<<error>1u8</error>> {
+        fn bar(x: S<<error>1u8</error>>, y: &dyn T<Item<<error>1u8</error>>=u8>) -> S<<error>1u8</error>> {
             let s: S<<error>1u8</error>> = S::<<error>1u8</error>>;
             s.foo::<<error>1u8</error>>()
         }

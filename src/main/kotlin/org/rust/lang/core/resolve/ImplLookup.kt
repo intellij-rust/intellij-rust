@@ -301,7 +301,7 @@ class ImplLookup(
                 }
             }
             is TyProjection -> {
-                val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
+                val subst = ty.trait.subst + ty.target.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
                 implsAndTraits += ty.trait.element.bounds.asSequence()
                     .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
                     .flatMap { it.trait.getFlattenHierarchy().asSequence() }
@@ -758,7 +758,7 @@ class ImplLookup(
     private fun assembleCandidatesFromProjectedTys(ref: TraitRef, candidates: SelectionCandidateSet) {
         val selfTy = ref.selfTy
         if (selfTy is TyProjection) {
-            val subst = selfTy.trait.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
+            val subst = selfTy.trait.subst + selfTy.target.subst + mapOf(TyTypeParameter.self() to selfTy.type).toTypeSubst()
             selfTy.trait.element.bounds.asSequence()
                 .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), selfTy) }.isOk }
                 .flatMap { it.trait.getFlattenHierarchy().asSequence() }
@@ -968,7 +968,7 @@ class ImplLookup(
 
     private fun confirmProjectionCandidate(ref: TraitRef, candidate: ProjectionCandidate): Selection {
         ref.selfTy as TyProjection
-        val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
+        val subst = ref.selfTy.trait.subst + ref.selfTy.target.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
         ctx.combineTraitRefs(ref, TraitRef(ref.selfTy, candidate.bound.substitute(subst)))
         return Selection(ref.trait.element, emptyList())
     }
@@ -1127,7 +1127,8 @@ class ImplLookup(
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
         val trait = op.findTrait(items) ?: return null
         val assocType = trait.findAssociatedType("Output") ?: return null
-        return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(lhsType, trait.withSubst(rhsType), assocType))
+        val projection = TyProjection.valueOf(lhsType, trait.withSubst(rhsType), assocType.withSubst())
+        return ctx.normalizeAssociatedTypesIn(projection)
     }
 
     private fun selectProjection(
@@ -1136,12 +1137,12 @@ class ImplLookup(
         vararg subst: Ty
     ): SelectionResult<TyWithObligations<Ty>?> {
         val (trait, assocType) = traitAndOutput
-        return selectProjection(TraitRef(selfTy, trait.withSubst(*subst)), assocType)
+        return selectProjection(TraitRef(selfTy, trait.withSubst(*subst)), assocType.withSubst())
     }
 
     fun selectProjection(
         ref: TraitRef,
-        assocType: RsTypeAlias,
+        assocType: BoundElement<RsTypeAlias>,
         recursionDepth: Int = 0
     ): SelectionResult<TyWithObligations<Ty>?> =
         select(ref, recursionDepth).map { selection ->
@@ -1161,7 +1162,7 @@ class ImplLookup(
 
     fun selectProjectionStrict(
         ref: TraitRef,
-        assocType: RsTypeAlias,
+        assocType: BoundElement<RsTypeAlias>,
         recursionDepth: Int = 0
     ): SelectionResult<TyWithObligations<Ty>?> {
         return selectStrict(ref, recursionDepth).map { selection ->
@@ -1173,7 +1174,7 @@ class ImplLookup(
 
     fun selectProjectionStrictWithDeref(
         ref: TraitRef,
-        assocType: RsTypeAlias,
+        assocType: BoundElement<RsTypeAlias>,
         recursionDepth: Int = 0
     ): SelectionResult<TyWithObligations<Ty>?> =
         coercionSequence(ref.selfTy)
@@ -1184,7 +1185,7 @@ class ImplLookup(
     fun selectAllProjectionsStrict(ref: TraitRef): Map<RsTypeAlias, Ty>? = ctx.probe {
         val selection = select(ref).ok() ?: return@probe null
         val assocValues = ref.trait.element.associatedTypesTransitively.associateWith { assocType ->
-            lookupAssociatedType(ref.selfTy, selection, assocType)
+            lookupAssociatedType(ref.selfTy, selection, BoundElement(assocType))
                 ?.let { ctx.normalizeAssociatedTypesIn(it) }
                 ?.withObligations(selection.nestedObligations)
                 ?: TyWithObligations(TyUnknown)
@@ -1199,7 +1200,7 @@ class ImplLookup(
         }
     }
 
-    private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
+    private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: BoundElement<RsTypeAlias>): Ty? {
         return when {
             res.impl is RsImplItem -> lookupAssocTypeInSelection(res, assocType)
             selfTy is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
@@ -1212,18 +1213,38 @@ class ImplLookup(
         }
     }
 
-    private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
-        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.rawType?.substitute(selection.subst)
+    private fun lookupAssocTypeInSelection(selection: Selection, assocDef: BoundElement<RsTypeAlias>): Ty? {
+        val assocImpl = selection.impl.associatedTypesTransitively.find { it.name == assocDef.element.name } ?: return null
+        val subst = substFromTraitToImpl(assocDef, assocImpl)
+        return assocImpl.typeReference?.rawType?.substitute(selection.subst + subst)
+    }
+
+    private fun substFromTraitToImpl(boundAssocDef: BoundElement<RsTypeAlias>, assocImpl: RsTypeAlias): Substitution {
+        val (assocDef, subst) = boundAssocDef
+
+        val defTypeParameters = assocDef.typeParameters.map { TyTypeParameter.named(it) }
+        val implTypeParameters = assocImpl.typeParameters.map { TyTypeParameter.named(it) }
+        val typeSubst = defTypeParameters.zip(implTypeParameters).toMap()
+
+        val defConstParameters = assocDef.constParameters.map { CtConstParameter(it) }
+        val implConstParameters = assocImpl.constParameters.map { CtConstParameter(it) }
+        val constSubst = defConstParameters.zip(implConstParameters).toMap()
+
+        return subst
+            .mapTypeKeys { (key, _) -> typeSubst.getOrDefault(key, key) }
+            .mapConstKeys { (key, _) -> constSubst.getOrDefault(key, key) }
+    }
 
     private fun lookupAssocTypeInBounds(
         subst: Sequence<BoundElement<RsTraitItem>>,
         trait: RsTraitOrImpl,
-        assocType: RsTypeAlias
+        assocType: BoundElement<RsTypeAlias>
     ): Ty? {
         return subst
             .find { it.element == trait }
             ?.assoc
-            ?.get(assocType)
+            ?.get(assocType.element)
+            ?.substitute(assocType.subst)
     }
 
     private fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
