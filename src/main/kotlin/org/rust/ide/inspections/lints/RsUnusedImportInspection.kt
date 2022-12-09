@@ -153,6 +153,7 @@ fun RsUseSpeck.isUsed(pathUsage: PathUsageMap): Boolean {
     val useItem = ancestorStrict<RsUseItem>() ?: return true
     if (!isApplicableForUseItem(useItem)) return true
     return isUseSpeckUsed(this, pathUsage)
+        || RsLint.UnusedImports.explicitLevel(useItem) == RsLintLevel.ALLOW
 }
 
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {

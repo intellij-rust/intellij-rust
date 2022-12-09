@@ -660,6 +660,15 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
+    fun `test keep unused import with allow lint`() = checkNotChanged("""
+        #[allow(unused_imports)]
+        use foo::S;
+
+        mod foo {
+            pub struct S;
+        }
+    """)
+
     fun `test ignore reexport of legacy macro`() = checkNotChanged("""
         macro_rules! foo1 { () => {} }
         macro_rules! foo2 { () => {} }
