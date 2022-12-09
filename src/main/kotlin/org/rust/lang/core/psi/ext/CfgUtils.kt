@@ -49,12 +49,13 @@ val PsiElement.isCfgUnknown: Boolean
  * See tests in `RsCodeStatusTest`
  */
 fun PsiElement.getCodeStatus(crate: Crate?): RsCodeStatus {
+    var result = RsCodeStatus.CODE
     for ((it, cameFrom) in stubAncestors.withPrevious().toList().asReversed()) {
         when (it) {
             is RsDocAndAttributeOwner -> {
                 when (it.evaluateCfg(crate)) {
                     ThreeValuedLogic.False -> return RsCodeStatus.CFG_DISABLED
-                    ThreeValuedLogic.Unknown -> return RsCodeStatus.CFG_UNKNOWN
+                    ThreeValuedLogic.Unknown -> result = RsCodeStatus.CFG_UNKNOWN
                     ThreeValuedLogic.True -> Unit
                 }
                 if (it is RsAttrProcMacroOwner) {
@@ -76,7 +77,7 @@ fun PsiElement.getCodeStatus(crate: Crate?): RsCodeStatus {
         }
     }
 
-    return RsCodeStatus.CODE
+    return result
 }
 
 /**
