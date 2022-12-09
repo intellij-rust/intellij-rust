@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.ProcMacroAttribute
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
-import org.rust.lang.core.psi.ext.RsPossibleMacroCall
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.exhaustive
 
 
@@ -91,7 +88,7 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiTreeProcessor):
     }
 
     val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
-    element.accept(visitor)
+    visitor.visitElement(element)
 
     return visitor.result
 }
@@ -104,13 +101,18 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
         private set
 
     override fun visitElement(element: PsiElement) {
+        /**
+         * It is extremely important NOT to call `super.visitElement(element.child)` here,
+         * because it will be equivalent to `super.visitElement(element)`
+         */
+
         val procMacroAttribute = (element as? RsAttrProcMacroOwner)?.procMacroAttributeWithDerives
         if (tryProcessAttrProcMacro(procMacroAttribute)) return
 
         when (processor.execute(element)) {
             TreeStatus.VISIT_CHILDREN -> {
                 if (element is RsMacroCall && shouldExpandMacro(element)) {
-                    processMacro(element)
+                    processMacro(element, element.path)
                 } else {
                     super.visitElement(element)
                 }
@@ -132,25 +134,25 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
         return element.macroArgument != null || isWriteMacro
     }
 
-    private fun processMacro(element: RsPossibleMacroCall) {
+    private fun processMacro(element: RsPossibleMacroCall, path: RsElement?) {
         val expansion = element.expansion ?: return
+        val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
+        if (path != null) visitor.visitElement(path)
         for (expandedElement in expansion.elements) {
-            val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
-            expandedElement.accept(visitor)
+            visitor.visitElement(expandedElement)
         }
     }
 
     private fun tryProcessAttrProcMacro(procMacroAttribute: ProcMacroAttribute<RsMetaItem>?): Boolean {
         if (procMacroAttribute !is ProcMacroAttribute.Attr) return false
-        super.visitElement(procMacroAttribute.attr)
-        processMacro(procMacroAttribute.attr)
+        processMacro(procMacroAttribute.attr, procMacroAttribute.attr.path)
         return true
     }
 
     private fun tryProcessDeriveProcMacro(procMacroAttribute: ProcMacroAttribute<RsMetaItem>?) {
         if (procMacroAttribute !is ProcMacroAttribute.Derive) return
         for (derive in procMacroAttribute.derives) {
-            processMacro(derive)
+            processMacro(derive, path = null)
         }
     }
 }
