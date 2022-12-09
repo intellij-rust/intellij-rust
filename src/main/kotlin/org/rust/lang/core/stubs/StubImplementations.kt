@@ -1744,8 +1744,6 @@ class RsMacroCallStub(
                 procMacroInfo,
             )
         }
-
-        override fun indexStub(stub: RsMacroCallStub, sink: IndexSink) = sink.indexMacroCall(stub)
     }
 }
 
