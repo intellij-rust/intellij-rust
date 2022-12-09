@@ -32,7 +32,6 @@ private val RS_HARDCODED_PROC_MACRO_ATTRIBUTES: Map<String, Map<String, KnownPro
     ),
     "serial_test_derive" to mapOf("serial" to KnownProcMacroKind.TEST_WRAPPER),
     "cortex_m_rt_macros" to mapOf("entry" to KnownProcMacroKind.CUSTOM_MAIN),
-    "test_case" to mapOf("test_case" to KnownProcMacroKind.CUSTOM_TEST),
     "ndk_macro" to mapOf("main" to KnownProcMacroKind.CUSTOM_MAIN),
     "quickcheck_macros" to mapOf("quickcheck" to KnownProcMacroKind.CUSTOM_TEST),
     "async_recursion" to mapOf("async_recursion" to KnownProcMacroKind.IDENTITY),
