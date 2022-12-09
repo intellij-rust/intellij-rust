@@ -666,6 +666,46 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
+    fun `test impl defined by macro inside a function body`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident) => {
+                impl $ i {
+                    fn foo(&self) -> Bar {}
+                }
+            }
+        }
+
+        struct Foo;
+        struct Bar;
+        fn main() {
+            foo!(Foo);
+            impl Bar { fn bar(&self) {} }
+                        //X
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test impl defined by macro inside a parent function body`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident) => {
+                impl $ i {
+                    fn foo(&self) -> Bar {}
+                }
+            }
+        }
+
+        struct Foo;
+        struct Bar;
+        fn main() {
+            foo!(Foo);
+            fn bar() {
+                impl Bar { fn bar(&self) {} }
+                            //X
+                Foo.foo().bar();
+            }           //^
+        }
+    """)
+
     fun `test mod declared with macro`() = stubOnlyResolve("""
     //- main.rs
         macro_rules! foo {

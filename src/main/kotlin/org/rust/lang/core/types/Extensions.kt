@@ -5,13 +5,10 @@
 
 package org.rust.lang.core.types
 
-import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.dfa.Cmt
 import org.rust.lang.core.dfa.ControlFlowGraph
 import org.rust.lang.core.dfa.MemoryCategorizationContext
@@ -31,28 +28,6 @@ import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.stdext.withNext
 
-
-private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
-    val structureModificationTracker = project.rustStructureModificationTracker
-
-    return when {
-        // The case of injected language. Injected PSI don't have it's own event system, so can only
-        // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
-        // literal. If a user change the literal, we can only be notified that the literal is changed.
-        // So we have to invalidate the cached value on any PSI change
-        containingFile.virtualFile is VirtualFileWindow -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
-
-        // Invalidate cached value of code fragment on any PSI change
-        this is RsCodeFragment -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
-
-        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
-        // cached value will be invalidated if the modification counter is incremented.
-        else -> {
-            val modificationTracker = contextOrSelf<RsModificationTrackerOwner>()?.modificationTracker
-            Result.create(value, listOfNotNull(structureModificationTracker, modificationTracker))
-        }
-    }
-}
 
 /**
  * A [Ty]pe of the type reference without normalization of normalizable associated type projections
@@ -118,7 +93,7 @@ val RsInferenceContextOwner.selfInferenceResult: RsInferenceResult
         return CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
             val inferred = inferTypesIn(this)
 
-            createResult(inferred)
+            createCachedResult(inferred)
         }
     }
 
@@ -203,10 +178,10 @@ private val BORROW_CHECKER_KEY: Key<CachedValue<BorrowCheckResult>> = Key.create
 
 val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
     get() = CachedValuesManager.getCachedValue(this, BORROW_CHECKER_KEY) {
-        if (!existsAfterExpansion) return@getCachedValue createResult(null)
+        if (!existsAfterExpansion) return@getCachedValue createCachedResult(null)
         val bccx = BorrowCheckContext.buildFor(this)
         val borrowCheckResult = bccx?.check()
-        createResult(borrowCheckResult)
+        createCachedResult(borrowCheckResult)
     }
 
 fun RsNamedElement?.asTy(): Ty =
@@ -226,18 +201,18 @@ private val CONTROL_FLOW_KEY: Key<CachedValue<ControlFlowGraph>> = Key.create("C
 
 val RsInferenceContextOwner.controlFlowGraph: ControlFlowGraph?
     get() = CachedValuesManager.getCachedValue(this, CONTROL_FLOW_KEY) {
-        if (!existsAfterExpansion) return@getCachedValue createResult(null)
+        if (!existsAfterExpansion) return@getCachedValue createCachedResult(null)
         val regionScopeTree = getRegionScopeTree(this)
         val cfg = (body as? RsBlock)?.let { ControlFlowGraph.buildFor(it, regionScopeTree) }
-        createResult(cfg)
+        createCachedResult(cfg)
     }
 
 private val LIVENESS_KEY: Key<CachedValue<Liveness>> = Key.create("LIVENESS_KEY")
 
 val RsInferenceContextOwner.liveness: Liveness?
     get() = CachedValuesManager.getCachedValue(this, LIVENESS_KEY) {
-        if (!existsAfterExpansion) return@getCachedValue createResult(null)
+        if (!existsAfterExpansion) return@getCachedValue createCachedResult(null)
         val livenessContext = LivenessContext.buildFor(this)
         val livenessResult = livenessContext?.check()
-        createResult(livenessResult)
+        createCachedResult(livenessResult)
     }

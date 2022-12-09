@@ -21,13 +21,12 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
          //X
     """, "lib.rs")
 
-    // BACKCOMPAT: Rust 1.50. Vec struct was moved into `vec/mod.rs` since Rust 1.51
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test resolve std element`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
         /// Vec::new()
-        /// //^ ...vec.rs|...vec/mod.rs
+        /// //^ ...vec/mod.rs
         /// ```
         pub fn foo() {}
     """)
@@ -191,4 +190,40 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         /// ```
         fn foo() {}
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test impl`() = checkByCode("""
+        /// ```
+        /// use test_package::Bar;
+        /// struct Foo;
+        /// impl Foo {
+        ///      fn foo(&self) -> Bar {}
+        /// }
+        /// Foo.foo().bar();
+        ///         //^
+        /// ```
+        pub struct Bar;
+        impl Bar {
+            pub fn bar(&self) {}
+        }        //X
+    """, "lib.rs")
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test impl outside of main`() = checkByCode("""
+        /// ```
+        /// use test_package::Bar;
+        /// struct Foo;
+        /// impl Foo {
+        ///      fn foo(&self) -> Bar {}
+        /// }
+        /// fn main() {
+        ///     Foo.foo().bar();
+        ///             //^
+        /// }
+        /// ```
+        pub struct Bar;
+        impl Bar {
+            pub fn bar(&self) {}
+        }        //X
+    """, "lib.rs")
 }

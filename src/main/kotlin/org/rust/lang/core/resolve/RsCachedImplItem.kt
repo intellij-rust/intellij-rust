@@ -5,15 +5,16 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.SmartList
 import com.intellij.util.recursionSafeLazy
 import gnu.trove.THashMap
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTraitRef
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.isValidProjectMemberAndContainingCrate
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -74,6 +75,22 @@ class RsCachedImplItem(
     companion object {
         fun forImpl(impl: RsImplItem): RsCachedImplItem {
             return (impl as RsImplItemImplMixin).cachedImplItem.value
+        }
+
+        fun <T> toCachedResult(psi: RsElement, containingCrate: Crate?, cachedImpl: T): CachedValueProvider.Result<T> {
+            val containingFile = psi.containingFile
+            val modTracker = if (containingCrate?.origin == PackageOrigin.WORKSPACE) {
+                containingFile.project.rustStructureModificationTracker
+            } else {
+                containingFile.project.rustPsiManager.rustStructureModificationTrackerInDependencies
+            }
+            val deps = if (!containingFile.isPhysical || containingFile.virtualFile is VirtualFileWindow) {
+                // Non-physical PSI does not have event system, but we can track the file changes
+                listOf(modTracker, ModificationTracker { containingFile.modificationStamp })
+            } else {
+                listOf(modTracker)
+            }
+            return CachedValueProvider.Result.create(cachedImpl, deps)
         }
     }
 }

@@ -579,7 +579,7 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }     //X
     """)
 
-    fun `test custom derive inside a function body`() = checkByCode("""
+    fun `test custom derive expanding to a struct inside a function body`() = checkByCode("""
         use test_proc_macros::DeriveStructFooDeclaration;
 
         fn main() {
@@ -592,6 +592,37 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
 
             Foo.bar()
         }     //^
+    """)
+
+    fun `test custom derive expanding to an impl inside a function body`() = checkByCode("""
+        use test_proc_macros::DeriveImplForFoo;
+
+        fn main() {
+            #[derive(DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
+            struct Foo;
+            struct Bar;
+            impl Bar {
+                fn bar(&self) {}
+            }     //X
+
+            Foo.foo().bar()
+        }           //^
+    """)
+
+    fun `test attr expanded to an impl inside a function body`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        fn main() {
+            #[attr_replace_with_attr(impl Foo { fn foo(&self) -> Bar {} })]
+            foobar!();
+            struct Foo;
+            struct Bar;
+            impl Bar {
+                fn bar(&self) {}
+            }     //X
+
+            Foo.foo().bar()
+        }           //^
     """)
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/9531
