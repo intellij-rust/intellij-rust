@@ -91,6 +91,17 @@ class RsCodeStatusTest : RsTestBase() {
         }
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test proc macro wins over cfg-unknown`() = doTest("""
+        #[cfg(test)]
+        mod tests {
+            #[attr]
+            fn bar () {
+               //^ ATTR_PROC_MACRO_CALL
+            }
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val (element, data) = findElementAndDataInEditor<RsElement>()
