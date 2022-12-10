@@ -1624,10 +1624,21 @@ sealed class RsDiagnostic(
             fixes = listOf(AddAssocTypeBindingsFix(element, missingTypes.map { it.name }))
         )
     }
+
+    class ConstOrTypeParamsInExternError(
+        element: PsiElement,
+        private val kinds: String
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0044,
+            "Foreign items may not have $kinds parameters"
+        )
+    }
 }
 
 enum class RsErrorCode {
-    E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
+    E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0044, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0191, E0198, E0199,
     E0200, E0201, E0220, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
