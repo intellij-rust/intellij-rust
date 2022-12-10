@@ -153,6 +153,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         const /*caret*/
     """)
 
+    fun `test const with space`() = checkCompletion("const", """
+        con/*caret*/
+    """, """
+        const /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub const`() = checkCompletion("const", """
         pub con/*caret*/
     """, """
@@ -164,6 +170,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         enum /*caret*/
     """)
+
+    fun `test enum with space`() = checkCompletion("enum", """
+        enu/*caret*/
+    """, """
+        enum /*caret*/
+    """, completionChar = ' ')
 
     fun `test enum at the file very beginning`() = checkCompletion("enum",
         "enu/*caret*/",
@@ -240,6 +252,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         extern /*caret*/
     """)
 
+    fun `test extern with space`() = checkCompletion("extern", """
+        ext/*caret*/
+    """, """
+        extern /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub extern`() = checkCompletion("extern", """
         pub ext/*caret*/
     """, """
@@ -264,6 +282,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         extern crate /*caret*/
     """)
 
+    fun `test extern crate with space`() = checkCompletion("crate", """
+        extern cr/*caret*/
+    """, """
+        extern crate /*caret*/
+    """, completionChar = ' ')
+
     fun `test crate not applied at file beginning`() = checkNotContainsCompletion("extern crate", "crat/*caret*/")
 
     fun `test crate not applied without prefix`() = checkNotContainsCompletion("extern crate", """
@@ -277,6 +301,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     fun `test pub fn`() = checkContainsCompletion("fn", """
         pub f/*caret*/
     """)
+
+    fun `test fn with space`() = checkCompletion("fn", """
+        f/*caret*/
+    """, """
+        fn /*caret*/
+    """, completionChar = ' ')
 
     fun `test fn after pub(crate)`() = checkContainsCompletion("fn", """
         pub(crate) f/*caret*/
@@ -303,6 +333,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         impl /*caret*/
     """)
+
+    fun `test impl with space`() = checkCompletion("impl", """
+        imp/*caret*/
+    """, """
+        impl /*caret*/
+    """, completionChar = ' ')
 
     fun `test unsafe impl`() = checkCompletion("impl", """
         unsafe im/*caret*/
@@ -360,6 +396,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         mod /*caret*/
     """)
 
+    fun `test mod with space`() = checkCompletion("mod", """
+        mo/*caret*/
+    """, """
+        mod /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub mod`() = checkCompletion("mod", """
         pub mo/*caret*/
     """, """
@@ -376,6 +418,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test mut with space`() = checkCompletion("mut", """
+        fn main() {
+            let mu/*caret*/
+        }
+    """, """
+        fn main() {
+            let mut /*caret*/
+        }
+    """, completionChar = ' ')
+
     fun `test return within fn`() = checkCompletion("return", """
         fn main() {
             re/*caret*/
@@ -385,6 +437,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
             return;/*caret*/
         }
     """)
+
+    fun `test return with space within fn`() = checkCompletion("return", """
+        fn main() {
+            re/*caret*/
+        }
+    """, """
+        fn main() {
+            return;/*caret*/
+        }
+    """, completionChar = ' ')
 
     fun `test return within assoc fn`() = checkCompletion("return", """
         struct Foo;
@@ -432,6 +494,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         static /*caret*/
     """)
 
+    fun `test static with space`() = checkCompletion("static", """
+        sta/*caret*/
+    """, """
+        static /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub static`() = checkCompletion("static", """
         pub stat/*caret*/
     """, """
@@ -444,6 +512,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         struct /*caret*/
     """)
 
+    fun `test struct with space`() = checkCompletion("struct", """
+        str/*caret*/
+    """, """
+        struct /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub struct`() = checkCompletion("struct", """
         pub str/*caret*/
     """, """
@@ -455,6 +529,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         trait /*caret*/
     """)
+
+    fun `test trait with space`() = checkCompletion("trait", """
+        tra/*caret*/
+    """, """
+        trait /*caret*/
+    """, completionChar = ' ')
 
     fun `test pub trait`() = checkCompletion("trait", """
         pub tra/*caret*/
@@ -474,6 +554,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         type /*caret*/
     """)
 
+    fun `test type with space`() = checkCompletion("type", """
+        typ/*caret*/
+    """, """
+        type /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub type`() = checkCompletion("type", """
         pub typ/*caret*/
     """, """
@@ -486,6 +572,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         unsafe /*caret*/
     """)
 
+    fun `test unsafe with space`() = checkCompletion("unsafe", """
+        uns/*caret*/
+    """, """
+        unsafe /*caret*/
+    """, completionChar = ' ')
+
     fun `test pub unsafe`() = checkCompletion("unsafe", """
         pub unsa/*caret*/
     """, """
@@ -497,6 +589,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         use /*caret*/
     """)
+
+    fun `test use with space`() = checkCompletion("use", """
+        us/*caret*/
+    """, """
+        use /*caret*/
+    """, completionChar = ' ')
 
     fun `test pub use`() = checkCompletion("use", """
         pub us/*caret*/
@@ -514,6 +612,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test else with space`() = checkCompletion("else", """
+        fn main() {
+            if true { } /*caret*/
+        }
+    """, """
+        fn main() {
+            if true { } else { /*caret*/ }
+        }
+    """, completionChar = ' ')
+
     fun `test else if`() = checkCompletion("else if", """
         fn main() {
             if true { } /*caret*/
@@ -523,6 +631,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
             if true { } else if /*caret*/ { }
         }
     """)
+
+    fun `test else if with space`() = checkCompletion("else if", """
+        fn main() {
+            if true { } /*caret*/
+        }
+    """, """
+        fn main() {
+            if true { } else /*caret*/
+        }
+    """, completionChar = ' ')
 
     fun `test let else without semicolon`() = checkCompletion("else", """
         fn main() {
@@ -543,6 +661,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
             let x = 0 else { /*caret*/ };
         }
     """)
+
+    fun `test let else before semicolon with space`() = checkCompletion("else", """
+        fn main() {
+            let x = 0 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let x = 0 else { /*caret*/ };
+        }
+    """, completionChar = ' ')
 
     fun `test let else after semicolon`() = checkNoCompletion("""
         fn main() {
@@ -576,6 +704,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         fn foo<T>(t: T) where /*caret*/
     """)
+
+    fun `test where in generic function with space`() = checkCompletion("where", """
+        fn foo<T>(t: T) whe/*caret*/
+    """, """
+        fn foo<T>(t: T) where /*caret*/
+    """, completionChar = ' ')
 
     fun `test where in generic function with ret type`() = checkCompletion("where", """
         fn foo<T>(t: T) -> i32 whe/*caret*/
@@ -692,6 +826,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
             /*lookup*/ /*caret*/ { }
         }
     """)
+
+    fun `test if or match in start of statement with space`() = checkCompletion(CONDITION_KEYWORDS, """
+        fn foo() {
+            /*caret*/
+        }
+    """, """
+        fn foo() {
+            /*lookup*/ /*caret*/ { }
+        }
+    """, completionChar = ' ')
 
     fun `test if or match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
@@ -932,10 +1076,11 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     private fun checkCompletion(
         lookupStrings: List<String>,
         @Language("Rust") before: String,
-        @Language("Rust") after: String
+        @Language("Rust") after: String,
+        completionChar: Char = '\n'
     ) {
         for (lookupString in lookupStrings) {
-            checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString))
+            checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString), completionChar)
         }
     }
 

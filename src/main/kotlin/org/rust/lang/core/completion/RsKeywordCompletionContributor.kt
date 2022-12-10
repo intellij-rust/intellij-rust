@@ -254,6 +254,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         .withInsertHandler { ctx, _ ->
             ctx.document.insertString(ctx.selectionEndOffset, " {  }")
             EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
+
+            if (ctx.completionChar == ' ') {
+                ctx.setAddCompletionChar(false)
+            }
         }
 
     companion object {
