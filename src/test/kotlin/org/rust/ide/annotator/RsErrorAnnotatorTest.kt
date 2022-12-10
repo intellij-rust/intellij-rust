@@ -3486,7 +3486,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             match 0 {
                  ..   => {},
                 1..   => {},
-                 ..2  => {},
+                 <error>..2</error>  => {},
                 1..2  => {},
                  ..=  => {},
                 1<error descr="inclusive ranges must be bounded at the end (`..=b` or `a..=b`) [E0586]">..=</error>  => {},
@@ -3506,7 +3506,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             match 0 {
                  ..   => {},
                 1..   => {},
-                 <error descr="half-open range patterns is experimental [E0658]">..2</error>  => {},
+                 <error descr="half-open range patterns is experimental [E0658]"><error>..2</error></error>  => {},
                 1..2  => {},
                  ..=  => {},
                 1<error>..=</error>  => {},
@@ -3527,7 +3527,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             match 0 {
                  ..   => {},
                 1..   => {},
-                 ..2  => {},
+                 <error>..2</error>  => {},
                 1..2  => {},
                  ..=  => {},
                 1<error>..=</error>  => {},
@@ -3541,6 +3541,46 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.11.0")
+    fun `test exclusive range patterns E0658 1`() = checkErrors("""
+        fn foo() {
+            match 0 {
+                 ..   => {},
+                1..   => {},
+                 <error descr="exclusive range patterns is experimental [E0658]"><error>..2</error></error>  => {},
+                1..2  => {},
+                 ..=  => {},
+                1<error>..=</error>  => {},
+                 <error>..=2</error> => {},
+                1..=2 => {},
+                 ...  => {},
+                1<error>...</error>  => {},
+                 <error>...2</error> => {},
+                1...2 => {},
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.11.0-nightly")
+    fun `test exclusive range patterns E0658 2`() = checkErrors("""
+        #![feature(exclusive_range_pattern)]
+        fn foo() {
+            match 0 {
+                 ..   => {},
+                1..   => {},
+                 <error>..2</error>  => {},
+                1..2  => {},
+                 ..=  => {},
+                1<error>..=</error>  => {},
+                 <error>..=2</error> => {},
+                1..=2 => {},
+                 ...  => {},
+                1<error>...</error>  => {},
+                 <error>...2</error> => {},
+                1...2 => {},
+            }
+        }
+    """)
 
     fun `test arbitrary enum discriminant without repr E0732`() = checkErrors("""
         #![feature(arbitrary_enum_discriminant)]
