@@ -21,7 +21,7 @@ def main():
 
     updater = CompilerFeatureUpdater(repo, args.token, branch_name="update-compiler-features",
                                      message="Update compiler features",
-                                     assignee="Undin")
+                                     assignee="neonaot")
     updater.update()
 
 
