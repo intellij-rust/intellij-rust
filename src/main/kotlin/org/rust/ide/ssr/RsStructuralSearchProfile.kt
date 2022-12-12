@@ -68,6 +68,6 @@ private class RsCompiledPattern : CompiledPattern() {
             is RsLifetime -> typedVarString.drop(1)
             else -> typedVarString
         }
-        return if (modifiedString.firstOrNull() == '@') modifiedString.drop(1) else modifiedString
+        return modifiedString.removePrefix("@")
     }
 }
