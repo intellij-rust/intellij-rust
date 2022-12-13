@@ -1362,10 +1362,8 @@ sealed class ResolvedPath {
             return if (entry is AssocItemScopeEntry) {
                 AssocItem(entry.element, entry.source)
             } else {
-                entry.element?.let {
-                    val isVisible = entry.isVisibleFrom(context.containingMod)
-                    Item(it, isVisible)
-                }
+                val isVisible = entry.isVisibleFrom(context.containingMod)
+                Item(entry.element, isVisible)
             }
         }
 

@@ -184,6 +184,7 @@ class CompilerFeature(
         val C_UNWIND: CompilerFeature get() = get("c_unwind")
         val C_VARIADIC: CompilerFeature get() = get("c_variadic")
         val DECL_MACRO: CompilerFeature get() = get("decl_macro")
+        val EXCLUSIVE_RANGE_PATTERN: CompilerFeature get() = get("exclusive_range_pattern")
         val EXTERN_CRATE_SELF: CompilerFeature get() = get("extern_crate_self")
         val EXTERN_TYPES: CompilerFeature get() = get("extern_types")
         val FORMAT_ARGS_CAPTURE: CompilerFeature get() = get("format_args_capture")

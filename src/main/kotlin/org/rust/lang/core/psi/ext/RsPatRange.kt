@@ -12,6 +12,9 @@ import org.rust.lang.core.psi.RsPatRange
 val RsPatRange.isInclusive: Boolean
     get() = dotdotdot != null || dotdoteq != null
 
+val RsPatRange.isExclusive: Boolean
+    get() = dotdot != null
+
 val RsPatRange.op: PsiElement?
     get() = dotdot ?: dotdotdot ?: dotdoteq
 

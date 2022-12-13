@@ -79,7 +79,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
     private fun addCompletionsForInScopeDerives(path: RsPath, result: CompletionResultSet, processedElements: MultiMap<String, RsElement>) {
         val processor = createProcessor { e ->
             result.addElement(createLookupElement(e.name))
-            e.element?.let { processedElements.putValue(e.name, it) }
+            processedElements.putValue(e.name, e.element)
             false
         }
         val filtered = filterDeriveProcMacros(processor)

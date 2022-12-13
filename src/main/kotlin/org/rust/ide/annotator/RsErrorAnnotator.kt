@@ -40,6 +40,7 @@ import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
 import org.rust.lang.core.CompilerFeature.Companion.CRATE_IN_PATHS
 import org.rust.lang.core.CompilerFeature.Companion.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature.Companion.DECL_MACRO
+import org.rust.lang.core.CompilerFeature.Companion.EXCLUSIVE_RANGE_PATTERN
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_TYPES
 import org.rust.lang.core.CompilerFeature.Companion.GENERATORS
@@ -665,6 +666,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
+        if (range.isExclusive && range.start == null) {
+            EXCLUSIVE_RANGE_PATTERN.check(holder, range, "exclusive range patterns")
+        }
+
         if (range.start == null && range.end != null) {
             HALF_OPEN_RANGE_PATTERNS.check(holder, range, "half-open range patterns")
         }
