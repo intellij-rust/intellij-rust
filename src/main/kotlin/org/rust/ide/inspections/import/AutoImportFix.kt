@@ -130,7 +130,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     companion object {
         const val NAME = "Import"
 
-        fun findApplicableContext(path: RsPath): Context? {
+        fun findApplicableContext(path: RsPath, type: ImportContext.Type = ImportContext.Type.AUTO_IMPORT): Context? {
             if (path.reference == null) return null
 
             // `impl Future<Output=i32>`
@@ -139,7 +139,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             if (parent is RsAssocTypeBinding && parent.eq != null && parent.path == path) return null
 
             val basePath = path.basePath()
-            if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED) return null
+            if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED && type != ImportContext.Type.OTHER) return null
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
@@ -148,14 +148,14 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             }
 
             val referenceName = basePath.referenceName ?: return null
-            val importContext = ImportContext.from(path, ImportContext.Type.AUTO_IMPORT) ?: return null
+            val importContext = ImportContext.from(path, type) ?: return null
             val candidates = ImportCandidatesCollector.getImportCandidates(importContext, referenceName)
 
             return Context(GENERAL_PATH, candidates)
         }
 
         fun findApplicableContext(pat: RsPatBinding): Context? {
-            val importContext = ImportContext.from(pat, ImportContext.Type.AUTO_IMPORT) ?: return null
+            val importContext = ImportContext.from(pat) ?: return null
             val candidates = ImportCandidatesCollector.getImportCandidates(importContext, pat.referenceName)
             if (candidates.isEmpty()) return null
             return Context(GENERAL_PATH, candidates)
