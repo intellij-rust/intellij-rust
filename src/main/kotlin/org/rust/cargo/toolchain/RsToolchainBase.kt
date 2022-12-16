@@ -127,6 +127,12 @@ abstract class RsToolchainBase(val location: Path) {
         const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
         const val RUSTC_WRAPPER: String = "RUSTC_WRAPPER"
 
+        /**
+         * Environment variable used to keep original value of `RUSTC_BOOTSTRAP` variable
+         * to be able to restore original value for subprocesses if needed
+         */
+        const val ORIGINAL_RUSTC_BOOTSTRAP = "INTELLIJ_ORIGINAL_RUSTC_BOOTSTRAP"
+
         @JvmOverloads
         fun suggest(projectDir: Path? = null): RsToolchainBase? {
             val distribution = projectDir?.let { WslPath.getDistributionByWindowsUncPath(it.toString()) }

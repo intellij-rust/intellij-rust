@@ -45,6 +45,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.find
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoTargets
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.ORIGINAL_RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.impl.BuildMessages
@@ -292,7 +293,17 @@ class Cargo(
         val envMap = mutableMapOf<String, String>()
         if (useKeepGoing) {
             additionalArgs += listOf("-Z", "unstable-options", "--keep-going")
+            val originalRustcBootstrapValue = System.getenv(RUSTC_BOOTSTRAP)
             envMap += RUSTC_BOOTSTRAP to "1"
+            // Actually, we need to pass `RUSTC_BOOTSTRAP=1` environment variable here only for `cargo`
+            // and don't want to propagate it to `rustc` call because it may produce different results.
+            // So we use `INTELLIJ_ORIGINAL_RUSTC_BOOTSTRAP` environment variable to keep original value
+            // of `RUSTC_BOOTSTRAP` and restore it (if needed) for `rustc` call in native-helper binary
+            //
+            // See https://github.com/intellij-rust/intellij-rust/issues/9700
+            if (originalRustcBootstrapValue != null) {
+                envMap += ORIGINAL_RUSTC_BOOTSTRAP to originalRustcBootstrapValue
+            }
         }
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         if (nativeHelper != null && USE_BUILD_SCRIPT_WRAPPER.asBoolean()) {
