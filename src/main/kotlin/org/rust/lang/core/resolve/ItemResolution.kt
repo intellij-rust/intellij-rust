@@ -15,43 +15,54 @@ import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.lang.core.resolve2.processItemDeclarations
+import org.rust.stdext.BREAK
+import org.rust.stdext.CONTINUE
+import org.rust.stdext.ShouldStop
+import org.rust.stdext.mapBreak
 
 fun processItemOrEnumVariantDeclarations(
     scope: RsElement,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
     withPrivateImports: () -> Boolean
-): Boolean {
+): ShouldStop {
     when (scope) {
         // https://github.com/rust-lang/rfcs/blob/master/text/2338-type-alias-enum-variants.md
         is RsTypeAlias -> {
             val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
-                ?.path?.reference?.advancedDeepResolve() ?: return false
-            if (item is RsEnumItem) {
-                if (processAllWithSubst(item.variants, subst, processor)) return true
+                ?.path?.reference?.advancedDeepResolve() ?: return CONTINUE
+            return if (item is RsEnumItem) {
+                processAllWithSubst(item.variants, subst, processor)
+            } else {
+                CONTINUE
             }
         }
+
         is RsImplItem -> {
             val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
-                ?.path?.reference?.advancedDeepResolve() ?: return false
-            if (item is RsEnumItem) {
-                if (processAllWithSubst(item.variants, subst, processor)) return true
+                ?.path?.reference?.advancedDeepResolve() ?: return CONTINUE
+            return if (item is RsEnumItem) {
+                processAllWithSubst(item.variants, subst, processor)
+            } else {
+                CONTINUE
             }
         }
+
         is RsEnumItem -> {
-            if (processAll(scope.variants, processor)) return true
+            return processAll(scope.variants, processor)
         }
+
         is RsMod -> {
             val ipm = if (withPrivateImports()) {
                 ItemProcessingMode.WITH_PRIVATE_IMPORTS
             } else {
                 ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
             }
-            if (processItemDeclarations(scope, ns, processor, ipm)) return true
+            return processItemDeclarations(scope, ns, processor, ipm)
         }
-    }
 
-    return false
+        else -> return CONTINUE
+    }
 }
 
 enum class ItemProcessingMode(val withExternCrates: Boolean) {

@@ -26,8 +26,7 @@ import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.utils.escapeRust
 import org.rust.lang.utils.evaluation.evaluate
-import org.rust.stdext.exhaustive
-import org.rust.stdext.joinToWithBuffer
+import org.rust.stdext.*
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsTypeReference.getStubOnlyText(
@@ -719,14 +718,14 @@ class ImportingPsiRenderer(
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
         val elementToName = mutableMapOf<RsElement, String>()
         processNestedScopesUpwards(context, TYPES_N_VALUES, createProcessor {
-            val element = it.element as? RsNamedElement ?: return@createProcessor false
+            val element = it.element as? RsNamedElement ?: return@createProcessor CONTINUE
             for (namespace in element.namespaces) {
                 nameToElement[it.name to namespace] = element
                 if (it.name != "_" && element !in elementToName) {
                     elementToName[element] = it.name
                 }
             }
-            false
+            CONTINUE
         })
         nameToElement to elementToName
     }

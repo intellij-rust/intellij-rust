@@ -299,10 +299,10 @@ class ImplLookup(
         when (ty) {
             is TyTraitObject -> {
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; CONTINUE }
             }
             is TyFunction -> {
-                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; CONTINUE }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
                 listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
             }
@@ -328,7 +328,7 @@ class ImplLookup(
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
-                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
+                findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; CONTINUE }
                 if (ty is TyTuple || ty is TyUnit) {
                     listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
                 }
@@ -347,41 +347,48 @@ class ImplLookup(
             .filter { it.isKnownDerivable }
     }
 
-    private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
+    private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): ShouldStop {
         return processTyFingerprintsWithAliases(selfTy) { tyFingerprint ->
             findExplicitImplsWithoutAliases(selfTy, tyFingerprint, processor)
         }
     }
 
-    private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
+    private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): ShouldStop {
         val impls = findPotentialImpls(tyf)
-        return impls.any { cachedImpl ->
-            if (cachedImpl.isNegativeImpl) return@any false
-            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@any false
+        return impls.tryForEach { cachedImpl ->
+            if (cachedImpl.isNegativeImpl) return@tryForEach CONTINUE
+            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@tryForEach CONTINUE
             val isAppropriateImpl = canCombineTypes(selfTy, type, generics, constGenerics) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
                 (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
-            isAppropriateImpl && processor(cachedImpl)
+            if (isAppropriateImpl) {
+                processor(cachedImpl)
+            } else {
+                CONTINUE
+            }
         }
     }
 
-    private fun processTyFingerprintsWithAliases(selfTy: Ty, processor: RsProcessor<TyFingerprint>): Boolean {
+    private fun processTyFingerprintsWithAliases(selfTy: Ty, processor: RsProcessor<TyFingerprint>): ShouldStop {
         val fingerprint = TyFingerprint.create(selfTy)
         if (fingerprint != null) {
             val set = mutableSetOf(fingerprint)
-            if (processor(fingerprint)) return true
+            processor(fingerprint).mapBreak { return BREAK }
             val aliases = findPotentialAliases(fingerprint)
-            val result = aliases.any {
-                val name = it.name ?: return@any false
+            aliases.tryForEach {
+                val name = it.name ?: return@tryForEach CONTINUE
                 val aliasFingerprint = TyFingerprint(name)
                 val isAppropriateAlias = run {
                     val (declaredType, generics, constGenerics) = it.typeAndGenerics
                     canCombineTypes(selfTy, declaredType, generics, constGenerics)
                 }
-                isAppropriateAlias && set.add(aliasFingerprint) && processor(aliasFingerprint)
-            }
-            if (result) return true
+                if (isAppropriateAlias && set.add(aliasFingerprint)) {
+                    processor(aliasFingerprint)
+                } else {
+                    CONTINUE
+                }
+            }.mapBreak { return BREAK }
         }
         return processor(TyFingerprint.TYPE_PARAMETER_OR_MACRO_FINGERPRINT)
     }
@@ -799,21 +806,22 @@ class ImplLookup(
         assembleDerivedCandidates(ref, candidates)
         assembleCandidatesFromImpls(ref) {
             candidates.list += it
-            false
+            CONTINUE
         }
     }
 
-    private fun assembleCandidatesFromImpls(ref: TraitRef, processor: RsProcessor<SelectionCandidate>): Boolean {
+    private fun assembleCandidatesFromImpls(ref: TraitRef, processor: RsProcessor<SelectionCandidate>): ShouldStop {
         return processTyFingerprintsWithAliases(ref.selfTy) { tyFingerprint ->
             assembleImplCandidatesWithoutAliases(ref, tyFingerprint, processor)
         }
     }
 
-    private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
+    private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): ShouldStop {
         val impls = findPotentialImpls(tyf)
-        return impls.any {
-            val candidate = it.trySelectCandidate(ref)
-            candidate != null && processor(candidate)
+        return impls.tryForEach {
+            it.trySelectCandidate(ref)
+                ?.let { candidate -> processor(candidate) }
+                ?: CONTINUE
         }
     }
 
