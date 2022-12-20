@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 
 class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctionNotFoundInspection::class) {
 
@@ -149,5 +147,32 @@ class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctio
     fun `test that the main function does not exist in the external binary crate`() = checkByFileTree("""
     //- dep-lib/lib.rs
         fn foo() { /*caret*/ }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg disabled main`() = checkByFileTree("""
+    //- main.rs
+        /*error descr="`main` function not found in crate `test-package` [E0601]"*/
+        #[cfg(not(intellij_rust))]
+        fn main() {}/*caret*/
+        /*error**/
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg enabled main`() = checkByFileTree("""
+    //- main.rs
+        #[cfg(intellij_rust)]
+        fn main() {}/*caret*/
+    """)
+
+    fun `test main expanded from macro`() = checkByFileTree("""
+    //- main.rs
+        macro_rules! id {
+            ($($ tt:tt)*) => { $($ tt)* };
+        }
+
+        id! {
+            fn main() {}
+        }/*caret*/
     """)
 }

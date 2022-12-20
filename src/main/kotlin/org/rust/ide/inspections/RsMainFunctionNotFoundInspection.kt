@@ -13,9 +13,7 @@ import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.childOfType
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
@@ -33,9 +31,10 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
 
                     if (file.queryAttributes.hasAttribute("no_main")) return
                     if (START.availability(file) == FeatureAvailability.AVAILABLE) return
-                    if (file.childrenOfType<RsFunction>().lastOrNull { fn -> "main" == fn.name } != null) return
-
-                    RsDiagnostic.MainFunctionNotFound(file, crate.presentableName).addToHolder(holder)
+                    val hasMainFunction = file.processExpandedItemsExceptImplsAndUses { it is RsFunction && "main" == it.name }
+                    if (!hasMainFunction) {
+                        RsDiagnostic.MainFunctionNotFound(file, crate.presentableName).addToHolder(holder)
+                    }
                 }
             }
         }
