@@ -195,6 +195,7 @@ allprojects {
 
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
+        implementation("ch.epfl.scala:bsp4j:2.1.0-M3")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 

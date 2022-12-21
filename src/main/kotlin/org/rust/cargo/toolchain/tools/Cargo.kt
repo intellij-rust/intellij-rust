@@ -17,6 +17,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -28,6 +29,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
@@ -170,12 +172,17 @@ class Cargo(
         projectDirectory: Path,
         buildTarget: String?,
         toolchainOverride: String? = null,
-        listener: ProcessListener? = null
+        listener: ProcessListener? = null,
+        useBSP: Boolean = true
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         if (buildTarget != null) {
             additionalArgs.add("--filter-platform")
             additionalArgs.add(buildTarget)
+        }
+
+        if (useBSP) {
+            connectToBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener)
         }
 
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
@@ -190,6 +197,19 @@ class Cargo(
         } catch (e: JacksonException) {
             Err(RsDeserializationException(e))
         }
+    }
+
+    fun connectToBSP(
+        owner: Project,
+        projectDirectory: Path,
+        buildTarget: String?,
+        toolchainOverride: String? = null,
+        listener: ProcessListener? = null,
+    ) {
+        println("Connecting to BSP server")
+        val bspService = owner.service<BspConnectionService>()
+        val bspServer = bspService.getBspServer()
+        println("BSP server: $bspServer")
     }
 
     fun vendorDependencies(

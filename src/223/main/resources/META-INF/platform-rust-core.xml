@@ -2,5 +2,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="true" restartRequired="false"
                      description="Enable Rust MSVC support in LLDB (Windows-only)"/>
+        <projectService serviceInterface="org.rust.bsp.service.BspConnectionService"
+                            serviceImplementation="org.rust.bsp.service.BspConnectionServiceImpl"/>
     </extensions>
 </idea-plugin>
