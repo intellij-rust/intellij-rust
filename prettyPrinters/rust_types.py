@@ -19,8 +19,11 @@ class RustType(object):
     STD_OS_STRING = "StdOsString"
     STD_PATH_BUF = "StdPathBuf"
     STD_STR = "StdStr"
+    STD_MSVC_STR = "StdMsvcStr"
+    STD_MSVC_STR_DOLLAR = "StdMsvcStrDollar"
     STD_SLICE = "StdSlice"
     STD_MSVC_SLICE = "StdMsvcSlice"
+    STD_MSVC_SLICE2 = "StdMsvcSlice2"
     STD_OS_STR = "StdOsStr"
     STD_PATH = "StdPath"
     STD_CSTRING = "StdCString"
@@ -46,15 +49,37 @@ class RustType(object):
     STD_RANGE_TO = "StdRangeTo"
     STD_RANGE_TO_INCLUSIVE = "StdRangeToInclusive"
 
+    ANY_STR = [STD_STR, STD_MSVC_STR, STD_MSVC_STR_DOLLAR]
+    ANY_SLICE = [STD_SLICE, STD_MSVC_SLICE, STD_MSVC_SLICE2]
 
+
+#################################################################################################################
 # Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
+################################################################################################################
+
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
-# str, mut str, const str*, mut str* (vanilla LLDB); &str, &mut str, *const str, *mut str (Rust-enabled LLDB)
-STD_STR_REGEX = re.compile(r"^[&*]?(const |mut )?str\*?$")
+
+# &str, &mut str, *const str, *mut str
+STD_STR_REGEX = re.compile(r"^(&|&mut |\*const |\*mut )str$")
+
+# BACKCOMPAT: Rust 1.66
+# str, ptr_const$<str>, ptr_mut$<str>
+STD_MSVC_STR_REGEX = re.compile(r"^(str)|((ptr_const|ptr_mut)\$<str>)$")
+
+# Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
+# str$, ref$<str$>, ref_mut$<str$>, ptr_const$<str$>, ptr_mut$<str$>
+STD_MSVC_STR_DOLLAR_REGEX = re.compile(r"^(str\$)|((ref|ref_mut|ptr_const|ptr_mut)\$<str\$>)$")
+
 # &[T], &mut [T], *const [T], *mut [T]
 STD_SLICE_REGEX = re.compile(r"^(&|&mut |\*const |\*mut )?\[.*]$")
+
+# BACKCOMPAT: Rust 1.66
 # slice$<T>, ptr_const$<slice$<T> >, ptr_mut$<slice$<T> >
 STD_MSVC_SLICE_REGEX = re.compile(r"^(slice\$<.+>)|((ptr_const|ptr_mut)\$<slice\$<.+> >)$")
+
+# Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
+# slice2$<T>, ref$<slice2$<T> >, ref_mut$<slice2$<T> >, ptr_const$<slice2$<T> >, ptr_mut$<slice2$<T> >
+STD_MSVC_SLICE2_REGEX = re.compile(r"^(slice2\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\$\<slice2\$<.+> \>?)$")
 
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
 STD_OS_STR_REGEX = re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$")
@@ -94,8 +119,11 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_PATH_BUF: STD_PATH_BUF_REGEX,
     RustType.STD_PATH: STD_PATH_REGEX,
     RustType.STD_STR: STD_STR_REGEX,
+    RustType.STD_MSVC_STR: STD_MSVC_STR_REGEX,
+    RustType.STD_MSVC_STR_DOLLAR: STD_MSVC_STR_DOLLAR_REGEX,
     RustType.STD_SLICE: STD_SLICE_REGEX,
     RustType.STD_MSVC_SLICE: STD_MSVC_SLICE_REGEX,
+    RustType.STD_MSVC_SLICE2: STD_MSVC_SLICE2_REGEX,
     RustType.STD_OS_STR: STD_OS_STR_REGEX,
     RustType.STD_CSTRING: STD_CSTRING_REGEX,
     RustType.STD_CSTR: STD_CSTR_REGEX,

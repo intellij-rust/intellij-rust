@@ -21,6 +21,7 @@ typeName
 
 msvcTypeName
     : msvcStr
+    | msvcStrDollar
     | msvcNever
     | msvcTuple
     | msvcPtr_const
@@ -29,11 +30,15 @@ msvcTypeName
     | msvcRef_mut
     | msvcArray
     | msvcSlice
+    | msvcSlice2
     | msvcEnum
     | msvcEnum2
     ;
 
+//BACKCOMPAT: Rust 1.66
 msvcStr: STR ;
+
+msvcStrDollar: STR_DOLLAR ;
 
 msvcNever: NEVER ;
 
@@ -61,8 +66,13 @@ msvcArray
     : ARRAY LT type=typeName COMMA length=WORD GT
     ;
 
+//BACKCOMPAT: Rust 1.66
 msvcSlice
     : SLICE LT type=typeName GT
+    ;
+
+msvcSlice2
+    : SLICE2 LT type=typeName GT
     ;
 
 //BACKCOMPAT: Rust 1.64
@@ -136,6 +146,7 @@ commaSeparatedList
     ;
 
 STR : 'str' ;
+STR_DOLLAR : 'str$' ;
 NEVER: 'never$' ;
 TUPLE : 'tuple$' ;
 PTR_CONST: 'ptr_const$' ;
@@ -144,6 +155,7 @@ REF: 'ref$' ;
 REF_MUT: 'ref_mut$' ;
 ARRAY : 'array$' ;
 SLICE : 'slice$' ;
+SLICE2 : 'slice2$' ;
 ENUM: 'enum$' ;
 ENUM2: 'enum2$' ;
 

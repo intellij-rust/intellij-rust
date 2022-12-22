@@ -13,10 +13,10 @@
 // lldbg-check:[...]$2 = "A∆й中" [...]
 // lldb-command:print s4
 // lldbr-check:[...]s4 = "A∆й中" [...]
-// TODO: update pretty-printer (does not work since Rust 1.55) and add `lldbg-check`
+// lldbg-check:[...]$3 = "A∆й中" [...]
 // lldb-command:print s5
 // lldbr-check:[...]s5 = "A∆й中" [...]
-// TODO: update pretty-printer (does not work since Rust 1.55) and add `lldbg-check`
+// lldbg-check:[...]$4 = "A∆й中" [...]
 // lldb-command:print empty_s1
 // lldbr-check:[...]empty_s1 = "" [...]
 // lldbg-check:[...]$5 = "" [...]
@@ -28,10 +28,10 @@
 // lldbg-check:[...]$7 = "" [...]
 // lldb-command:print empty_s4
 // lldbr-check:[...]empty_s4 = "" [...]
-// TODO: update pretty-printer (does not work since Rust 1.55) and add `lldbg-check`
+// lldbg-check:[...]$8 = "" [...]
 // lldb-command:print empty_s5
 // lldbr-check:[...]empty_s5 = "" [...]
-// TODO: update pretty-printer (does not work since Rust 1.55) and add `lldbg-check`
+// lldbg-check:[...]$9 = "" [...]
 
 // === GDB TESTS ==================================================================================
 
