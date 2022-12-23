@@ -97,6 +97,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
     private fun tryHandleRustcArtifact(jsonObject: JsonObject): Boolean {
         val rustcArtifact = CompilerArtifactMessage.fromJson(jsonObject) ?: return false
 
+        //TODO: Maybe filter out executables and libs that are not tests in case of `context.isTestBuild`?
         val isSuitableTarget = when (rustcArtifact.target.cleanKind) {
             CargoMetadata.TargetKind.BIN -> true
             CargoMetadata.TargetKind.EXAMPLE -> {
@@ -104,6 +105,8 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
                 rustcArtifact.target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
             }
             CargoMetadata.TargetKind.TEST -> true
+            //TODO: Do we need libs? It looks like `cargo test` don't use library targets
+            // https://doc.rust-lang.org/cargo/reference/cargo-targets.html#integration-tests
             CargoMetadata.TargetKind.LIB -> rustcArtifact.profile.test
             else -> false
         }

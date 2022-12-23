@@ -24,6 +24,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAva
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.hasRemoteTarget
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -64,9 +65,12 @@ abstract class RsExecutableRunner(
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state !is CargoRunStateBase) return null
 
+        val runCargoCommand = state.prepareCommandLine().copy(emulateTerminal = false)
+        val isCargoTest = runCargoCommand.command == "test"
+
         val artifacts = environment.artifacts.orEmpty()
-        val artifact = artifacts.firstOrNull()
-        val binaries = artifact?.executables.orEmpty()
+        val artifact = artifacts.firstOrNull { !isCargoTest || it.target.cleanKind == CargoMetadata.TargetKind.TEST }
+        val executables = artifact?.executables.orEmpty()
 
         @Suppress("UnstableApiUsage")
         @DialogMessage
@@ -77,7 +81,9 @@ abstract class RsExecutableRunner(
             else -> null
         }
 
-        val errorMessage = checkErrors(artifacts, "artifact") ?: checkErrors(binaries, "binary")
+        val errorMessage = checkErrors(executables, "binary")
+        val singleExecutable = executables.single()
+
         if (errorMessage != null) {
             environment.project.showErrorDialog(errorMessage)
             return null
@@ -89,14 +95,13 @@ abstract class RsExecutableRunner(
                 .firstOrNull { it.origin == PackageOrigin.WORKSPACE }
         }
 
-        val runCargoCommand = state.prepareCommandLine().copy(emulateTerminal = false)
         val workingDirectory = pkg?.rootDirectory
-            ?.takeIf { runCargoCommand.command == "test" }
+            ?.takeIf { isCargoTest }
             ?: runCargoCommand.workingDirectory
         val environmentVariables = runCargoCommand.environmentVariables.run { with(envs + pkg?.env.orEmpty()) }
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
         val runExecutable = state.toolchain.createGeneralCommandLine(
-            binaries.single().toPath(),
+            singleExecutable.toPath(),
             workingDirectory,
             runCargoCommand.redirectInputFrom,
             runCargoCommand.backtraceMode,

@@ -205,6 +205,7 @@ data class CompilerArtifactMessage(
                  * in case of disabled build tool window
                  */
                 // BACKCOMPAT: Cargo 0.34.0
+                //TODO: the name `executables` is confusing since these files are not only executables, but also libs. Do we really need them?
                 filenames.filter { !it.endsWith(".dSYM") && !it.endsWith(".pdb") }
             }
         }
