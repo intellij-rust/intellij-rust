@@ -31,8 +31,8 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getBspServer(): BspServer {
         if (bspServer == null) {
-            getBspConnectionDetailsFile()
-                ?.let { println("Details: $it"); parseBspConnectionDetails(it) }
+            bspServer = getBspConnectionDetailsFile()
+                ?.let { parseBspConnectionDetails(it) }
                 ?.let { createBspServer(it) }
         }
         return bspServer!!

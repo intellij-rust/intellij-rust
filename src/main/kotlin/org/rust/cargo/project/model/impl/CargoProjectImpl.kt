@@ -39,6 +39,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.BspConstants
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
@@ -74,10 +75,12 @@ import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
 
 
-@State(name = "CargoProjects", storages = [
-    Storage(StoragePathMacros.WORKSPACE_FILE),
-    Storage("misc.xml", deprecated = true)
-])
+@State(
+    name = "CargoProjects", storages = [
+        Storage(StoragePathMacros.WORKSPACE_FILE),
+        Storage("misc.xml", deprecated = true)
+    ]
+)
 open class CargoProjectsServiceImpl(
     final override val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element>, Disposable {
@@ -247,6 +250,7 @@ open class CargoProjectsServiceImpl(
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
         val guessManifest = suggestManifests().firstOrNull()
+            ?: tryBspWorkspace().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
@@ -254,6 +258,12 @@ open class CargoProjectsServiceImpl(
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
         }
     }
+
+    private fun tryBspWorkspace(): Sequence<VirtualFile> =
+        project.modules
+            .asSequence()
+            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+            .mapNotNull { it.findChild(BspConstants.BSP_WORKSPACE) }
 
     override fun suggestManifests(): Sequence<VirtualFile> =
         project.modules
