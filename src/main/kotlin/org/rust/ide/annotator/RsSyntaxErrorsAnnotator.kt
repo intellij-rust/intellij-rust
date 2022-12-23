@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.annotator.fixes.RemoveElementFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
@@ -24,7 +24,6 @@ import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Mutability
-import org.rust.lang.core.types.infer.constGenerics
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
@@ -36,6 +35,7 @@ import java.lang.Integer.max
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
+            is RsBreakExpr -> checkBreakExpr(holder, element)
             is RsExternAbi -> checkExternAbi(holder, element)
             is RsItemElement -> {
                 checkItem(holder, element)
@@ -76,6 +76,23 @@ private fun checkImplItem(holder: AnnotationHolder, item: RsImplItem) {
         RsDiagnostic.UnsafeInherentImplError(
             typeReference, listOf(RemoveElementFix(unsafe))
         ).addToHolder(holder)
+    }
+}
+
+private fun checkBreakExpr(holder: AnnotationHolder, item: RsBreakExpr) {
+    item.expr ?: return
+    val label = item.label
+    val loop = if (label != null) {
+        // Do return, because an error code E0426 was raised if the definition of the label was not found
+        val labelBlock = label.reference.resolve() ?: return
+        labelBlock.parent
+    } else {
+        // Use RsItemElement::class as a separator
+        item.parentOfTypes(RsForExpr::class, RsWhileExpr::class, RsLoopExpr::class, RsItemElement::class)
+    }
+    when (loop) {
+        is RsForExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "for").addToHolder(holder)
+        is RsWhileExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "while").addToHolder(holder)
     }
 }
 
