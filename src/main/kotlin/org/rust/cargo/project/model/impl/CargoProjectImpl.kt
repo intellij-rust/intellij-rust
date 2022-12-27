@@ -250,7 +250,7 @@ open class CargoProjectsServiceImpl(
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
         val guessManifest = suggestManifests().firstOrNull()
-            ?: tryBspWorkspace().firstOrNull()
+            ?: suggestBspWorkspace().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
@@ -259,7 +259,7 @@ open class CargoProjectsServiceImpl(
         }
     }
 
-    private fun tryBspWorkspace(): Sequence<VirtualFile> =
+    private fun suggestBspWorkspace(): Sequence<VirtualFile> =
         project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
