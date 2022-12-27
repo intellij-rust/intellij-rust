@@ -6,8 +6,13 @@
 package org.rust.bsp.service
 
 import com.intellij.openapi.components.Service
+import org.rust.bsp.BspClient
 
 @Service
 interface BspConnectionService {
     fun getBspServer(): BspServer
+
+    fun getBspClient(): BspClient
+
+    fun doStaff()
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.bsp.BspConstants
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.ide.notifications.RsEditorNotificationPanel
@@ -40,6 +41,7 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
                 val file = e.getData(PlatformDataKeys.VIRTUAL_FILE)
                 if (file?.isCargoToml == true) file else chooseFile(project, e)
             }
+
             else -> e.getData(PlatformDataKeys.VIRTUAL_FILE)
         } ?: return
 
@@ -58,8 +60,11 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
         return if (isUnitTestMode) {
             event.getData(MOCK_CHOSEN_FILE_KEY)
         } else {
-            val chooser = FileChooserFactory.getInstance().createFileChooser(CargoProjectChooserDescriptor, project, null)
-            return chooser.choose(project).singleOrNull()
+            val chooser =
+                FileChooserFactory.getInstance().createFileChooser(CargoProjectChooserDescriptor, project, null)
+            val bspChooser =
+                FileChooserFactory.getInstance().createFileChooser(RustBspWorkspaceProjectChooserDescriptor, project, null)
+            return chooser.choose(project).singleOrNull() ?: bspChooser.choose(project).singleOrNull()
         }
     }
 
@@ -76,7 +81,7 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
                 // so disable the action in dumb mode
                 if (DumbService.isDumb(project)) return false
                 val file = e.getData(PlatformDataKeys.VIRTUAL_FILE)
-                val cargoToml = file?.findCargoToml() ?: return false
+                val cargoToml = file?.findCargoToml() ?: file?.findBspWorkspace() ?: return false
 
                 canBeAttached(project, cargoToml)
             }
@@ -85,6 +90,10 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
 
     private fun VirtualFile.findCargoToml(): VirtualFile? {
         return if (isDirectory) findChild(CargoConstants.MANIFEST_FILE) else takeIf { it.isCargoToml }
+    }
+
+    private fun VirtualFile.findBspWorkspace(): VirtualFile? {
+        return if (isDirectory) findChild(BspConstants.BSP_WORKSPACE) else takeIf { it.isBspWorkspace }
     }
 
     companion object {
@@ -126,3 +135,19 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
 }
 
 val VirtualFile.isCargoToml: Boolean get() = name == CargoConstants.MANIFEST_FILE
+
+object RustBspWorkspaceProjectChooserDescriptor : FileChooserDescriptor(true, true, false, false, false, false) {
+
+        init {
+            // The filter is not used for directories
+            withFileFilter { it.isBspWorkspace }
+            @Suppress("DialogTitleCapitalization")
+            withTitle("Select .bsp directory")
+        }
+
+        override fun isFileSelectable(file: VirtualFile?): Boolean {
+            return super.isFileSelectable(file) && file != null && (!file.isDirectory || file.findChild(BspConstants.BSP_WORKSPACE) != null)
+        }
+}
+
+val VirtualFile.isBspWorkspace: Boolean get() = name == BspConstants.BSP_WORKSPACE
