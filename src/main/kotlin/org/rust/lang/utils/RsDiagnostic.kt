@@ -791,9 +791,9 @@ sealed class RsDiagnostic(
         }
     }
 
-    class DuplicateTypeParameterError(
+    class DuplicateGenericParameterError(
         element: PsiElement,
-        private val fieldName: String
+        private val genericParamName: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
@@ -802,7 +802,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            return "The name `$fieldName` is already used for a type parameter in this type parameter list"
+            return "The name `$genericParamName` is already used for a generic parameter in this item's generic parameters"
         }
     }
 

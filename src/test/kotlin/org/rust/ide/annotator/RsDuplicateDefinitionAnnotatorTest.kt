@@ -74,25 +74,66 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         fn f1<T1, T2>() {}
         fn f2<T1, const T2: i32>() {}
         fn f3<const T1: i32, const T2: i32>() {}
-        fn f4<<error descr="The name `T1` is already used for a type parameter in this type parameter list [E0403]">T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32>() {}
+        fn f4<
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>,
+            T3,
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const T5: i32,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>: i32
+        >() {}
 
         struct S1<T1, T2> { t1: T1, t2: T2 }
         struct S2<T1, const T2: i32> { t1: T1 }
         struct S3<const T1: i32, const T2: i32> {}
-        struct S4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> { t: T1, p: T2 }
+        struct S4<
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>,
+            T3,
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const T5: i32,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>: i32
+        > { t: T1, p: T2 }
 
         impl<T1, T2> S1<T1, T2> {}
-        impl<<error>T1</error>, T2, T3, <error>T1</error>> S4<T1, T2, T3, T1, 0, 0, 0, 0> {}
+        impl<
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            T2,
+            T3,
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>
+        > S4<T1, T2, T3, T1, 0, 0, 0, 0> {}
 
         enum E1<T1, T2> { L(T1), R(T2) }
         enum E2<T1, const T2: i32> { L(T1) }
         enum E3<const T1: i32, const T2: i32> {}
-        enum E4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> { L(T1), M(T2), R(T3) }
+        enum E4<
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>,
+            T3,
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const T5: i32,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>: i32
+        > { L(T1), M(T2), R(T3) }
 
         trait Tr1<T1, T2> {}
         trait Tr2<T1, const T2: i32> {}
         trait Tr3<const T1: i32, const T2: i32> {}
-        trait Tr4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> {}
+        trait Tr4<
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>,
+            T3,
+            <error descr="The name `T1` is already used for a generic parameter in this item's generic parameters [E0403]">T1</error>,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const T5: i32,
+            const <error descr="The name `T4` is already used for a generic parameter in this item's generic parameters [E0403]">T4</error>: i32,
+            const <error descr="The name `T2` is already used for a generic parameter in this item's generic parameters [E0403]">T2</error>: i32
+        > {}
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
