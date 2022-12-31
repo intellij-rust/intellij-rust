@@ -698,21 +698,6 @@ sealed class RsDiagnostic(
         }
     }
 
-    class DuplicateEnumVariantError(
-        element: PsiElement,
-        private val fieldName: String
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0428,
-            errorText()
-        )
-
-        private fun errorText(): String {
-            return "Enum variant `$fieldName` is already declared"
-        }
-    }
-
     class ReservedLifetimeNameError(
         element: PsiElement,
         private val lifetimeName: String
@@ -862,16 +847,15 @@ sealed class RsDiagnostic(
             errorCode: RsErrorCode,
         ) : this(element, itemNamespace.itemName, itemName, scope.formatScope(), errorCode)
 
-        override fun prepare() = PreparedAnnotation(ERROR, errorCode, errorText())
-
-        private fun errorText(): String = when {
-            element.ancestorOrSelf<RsUseSpeck>() != null ->
-                "A second item with name `$itemName` imported. Try to use an alias."
-            errorCode == E0259 ->
-                "A second extern crate with name `$itemName` imported"
-            else ->
-                "A $itemType named `$itemName` has already been defined in this $scopeType"
-        }
+        // TODO: provide quick fixes:
+        //  - add type alias for `use` and `extern crate` items
+        //  - navigate to/show other items
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            errorCode,
+            "The name `$itemName` is defined multiple times",
+            "`$itemName` must be defined only once in the $itemType namespace of this $scopeType"
+        )
 
         companion object {
             private fun PsiElement.formatScope(): String =
@@ -879,6 +863,7 @@ sealed class RsDiagnostic(
                     is RsBlock -> "block"
                     is RsMod, is RsForeignModItem -> "module"
                     is RsTraitItem -> "trait"
+                    is RsEnumBody -> "enum"
                     else -> "scope"
                 }
         }

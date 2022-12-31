@@ -174,13 +174,13 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             enum UniqueEnum {}
             mod unique_mod {}
 
-            const  <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: u32 = 20;
-            static <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>: i64 = -1.3;
-            fn     <error descr="A value named `Dup` has already been defined in this block [E0428]">Dup</error>() {}
-            struct <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
-            trait  <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
-            enum   <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
-            mod    <error descr="A type named `Dup` has already been defined in this block [E0428]">Dup</error> {}
+            const  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: u32 = 20;
+            static <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>() {}
+            struct <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            trait  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            enum   <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            mod    <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
         }
     """)
 
@@ -192,9 +192,9 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
     fun `test name duplication in enum E0428`() = checkErrors("""
         enum Directions {
             NORTH,
-            <error descr="Enum variant `SOUTH` is already declared [E0428]">SOUTH</error> { distance: f64 },
+            <error descr="The name `SOUTH` is defined multiple times [E0428]">SOUTH</error> { distance: f64 },
             WEST,
-            <error descr="Enum variant `SOUTH` is already declared [E0428]">SOUTH</error> { distance: f64 },
+            <error descr="The name `SOUTH` is defined multiple times [E0428]">SOUTH</error> { distance: f64 },
             EAST
         }
     """)
@@ -204,11 +204,11 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             static mut UNIQUE: u16;
             fn unique();
 
-            static mut <error descr="A value named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
-            static mut <error descr="A value named `DUP` has already been defined in this module [E0428]">DUP</error>: u32;
+            static mut <error descr="The name `DUP` is defined multiple times [E0428]">DUP</error>: u32;
+            static mut <error descr="The name `DUP` is defined multiple times [E0428]">DUP</error>: u32;
 
-            fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
-            fn <error descr="A value named `dup` has already been defined in this module [E0428]">dup</error>();
+            fn <error descr="The name `dup` is defined multiple times [E0428]">dup</error>();
+            fn <error descr="The name `dup` is defined multiple times [E0428]">dup</error>();
         }
     """)
 
@@ -221,13 +221,13 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         enum UniqueEnum {}
         mod unique_mod {}
 
-        const  <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
-        static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
-        fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-        struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-        trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-        enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-        mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+        const  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: u32 = 20;
+        static <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: i64 = -1.3;
+        fn     <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>() {}
+        struct <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+        trait  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+        enum   <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+        mod    <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
     """)
 
     fun `test name duplication in module E0428`() = checkErrors("""
@@ -240,13 +240,13 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             enum UniqueEnum {}
             mod unique_mod {}
 
-            const  <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: u32 = 20;
-            static <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>: i64 = -1.3;
-            fn     <error descr="A value named `Dup` has already been defined in this module [E0428]">Dup</error>() {}
-            struct <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-            trait  <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-            enum   <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
-            mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
+            const  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: u32 = 20;
+            static <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>: i64 = -1.3;
+            fn     <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error>() {}
+            struct <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            trait  <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            enum   <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
+            mod    <error descr="The name `Dup` is defined multiple times [E0428]">Dup</error> {}
         }
     """)
 
@@ -256,14 +256,14 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             const NO_DUP_C: u8;
             fn no_dup_f();
 
-            type <error descr="A type named `DUP_T` has already been defined in this trait [E0428]">DUP_T</error>;
-            type <error descr="A type named `DUP_T` has already been defined in this trait [E0428]">DUP_T</error>;
+            type <error descr="The name `DUP_T` is defined multiple times [E0428]">DUP_T</error>;
+            type <error descr="The name `DUP_T` is defined multiple times [E0428]">DUP_T</error>;
 
-            const <error descr="A value named `DUP_C` has already been defined in this trait [E0428]">DUP_C</error>: u32;
-            const <error descr="A value named `DUP_C` has already been defined in this trait [E0428]">DUP_C</error>: u32;
+            const <error descr="The name `DUP_C` is defined multiple times [E0428]">DUP_C</error>: u32;
+            const <error descr="The name `DUP_C` is defined multiple times [E0428]">DUP_C</error>: u32;
 
-            fn <error descr="A value named `dup` has already been defined in this trait [E0428]">dup</error>(&self);
-            fn <error descr="A value named `dup` has already been defined in this trait [E0428]">dup</error>(&self);
+            fn <error descr="The name `dup` is defined multiple times [E0428]">dup</error>(&self);
+            fn <error descr="The name `dup` is defined multiple times [E0428]">dup</error>(&self);
         }
     """)
 
@@ -278,11 +278,11 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             fn   NO_F_DUP() {}
 
             // Consts and functions are in the same namespace (values)
-            fn <error descr="A value named `DUP_V` has already been defined in this module [E0428]">DUP_V</error>() {}
+            fn <error descr="The name `DUP_V` is defined multiple times [E0428]">DUP_V</error>() {}
             const <error>DUP_V</error>: u8 = 1;
 
             // Enums and traits are in the same namespace (types)
-            trait <error descr="A type named `DUP_T` has already been defined in this module [E0428]">DUP_T</error> {}
+            trait <error descr="The name `DUP_T` is defined multiple times [E0428]">DUP_T</error> {}
             enum <error>DUP_T</error> {}
 
             mod <error>foo</error>;
@@ -326,8 +326,8 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             #[cfg(not(bar))] mod foo {}
             #[cfg(bar)]      mod foo {}
 
-            #[cfg(intellij_rust)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
-            fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+            #[cfg(intellij_rust)] fn <error descr="The name `hello_world` is defined multiple times [E0428]">hello_world</error>() {}
+            fn <error descr="The name `hello_world` is defined multiple times [E0428]">hello_world</error>() {}
 
             #[cfg(bar)] fn hello_rust() {}
             fn hello_rust() {}
@@ -359,17 +359,17 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
     """)
 
     fun `test duplicates with import E0252`() = checkErrors("""
-        use bar::{<error descr="A second item with name `test1` imported. Try to use an alias. [E0255]">test1</error>};
-        fn <error descr="A value named `test1` has already been defined in this module [E0255]">test1</error>(){}
+        use bar::{<error descr="The name `test1` is defined multiple times [E0255]">test1</error>};
+        fn <error descr="The name `test1` is defined multiple times [E0255]">test1</error>(){}
 
-        use baz::<error descr="A second item with name `test2` imported. Try to use an alias. [E0255]">test2</error>;
-        fn <error descr="A value named `test2` has already been defined in this module [E0255]">test2</error>(){}
+        use baz::<error descr="The name `test2` is defined multiple times [E0255]">test2</error>;
+        fn <error descr="The name `test2` is defined multiple times [E0255]">test2</error>(){}
 
-        use bar::A as <error descr="A second item with name `Arc` imported. Try to use an alias. [E0255]">Arc</error>;
-        struct <error descr="A type named `Arc` has already been defined in this module [E0255]">Arc</error>{}
+        use bar::A as <error descr="The name `Arc` is defined multiple times [E0255]">Arc</error>;
+        struct <error descr="The name `Arc` is defined multiple times [E0255]">Arc</error>{}
 
-        use bar::<error descr="A second item with name `test3` imported. Try to use an alias. [E0252]">test3</error>;
-        use baz::<error descr="A second item with name `test3` imported. Try to use an alias. [E0252]">test3</error>;
+        use bar::<error descr="The name `test3` is defined multiple times [E0252]">test3</error>;
+        use baz::<error descr="The name `test3` is defined multiple times [E0252]">test3</error>;
 
         mod bar {
             pub struct A {}
@@ -444,16 +444,16 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             pub fn foo2() {}
         }
 
-        use inner::<error descr="A second item with name `foo1` imported. Try to use an alias. [E0255]">foo1</error>;
-        fn <error descr="A value named `foo1` has already been defined in this module [E0255]">foo1</error>() {}
+        use inner::<error descr="The name `foo1` is defined multiple times [E0255]">foo1</error>;
+        fn <error descr="The name `foo1` is defined multiple times [E0255]">foo1</error>() {}
 
         use inner::foo2;
         struct foo2 {}
     """)
 
     fun `test duplicates item vs extern crate E0260`() = checkErrors("""
-        <error descr="A type named `foo1` has already been defined in this module [E0260]">extern crate std as foo1;</error>
-        struct <error descr="A type named `foo1` has already been defined in this module [E0260]">foo1</error> {}
+        <error descr="The name `foo1` is defined multiple times [E0260]">extern crate std as foo1;</error>
+        struct <error descr="The name `foo1` is defined multiple times [E0260]">foo1</error> {}
 
         extern crate std as foo2;
         fn foo2() {}
@@ -464,8 +464,8 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         extern crate core as core_alias;
         mod core {}
 
-        <error descr="A type named `alloc` has already been defined in this module [E0260]">extern crate alloc;</error>
-        mod <error descr="A type named `alloc` has already been defined in this module [E0260]">alloc</error> {}
+        <error descr="The name `alloc` is defined multiple times [E0260]">extern crate alloc;</error>
+        mod <error descr="The name `alloc` is defined multiple times [E0260]">alloc</error> {}
     """)
 
     fun `test duplicates import vs extern crate E0254`() = checkErrors("""
@@ -474,16 +474,16 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
             pub fn foo2() {}
         }
 
-        <error descr="A type named `foo1` has already been defined in this module [E0254]">extern crate std as foo1;</error>
-        use inner::<error descr="A second item with name `foo1` imported. Try to use an alias. [E0254]">foo1</error>;
+        <error descr="The name `foo1` is defined multiple times [E0254]">extern crate std as foo1;</error>
+        use inner::<error descr="The name `foo1` is defined multiple times [E0254]">foo1</error>;
 
         extern crate std as foo2;
         use inner::foo2;
     """)
 
     fun `test duplicates extern crate vs extern crate E0259`() = checkErrors("""
-        <error descr="A second extern crate with name `std` imported [E0259]">extern crate std;</error>
-        <error descr="A second extern crate with name `std` imported [E0259]">extern crate core as std;</error>
+        <error descr="The name `std` is defined multiple times [E0259]">extern crate std;</error>
+        <error descr="The name `std` is defined multiple times [E0259]">extern crate core as std;</error>
     """)
 
     fun `test duplicate self import in use group E0430`() = checkErrors("""
