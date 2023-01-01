@@ -38,7 +38,6 @@ import org.rust.lang.core.CompilerFeature.Companion.CONST_FN_TRAIT_BOUND
 import org.rust.lang.core.CompilerFeature.Companion.CONST_GENERICS_DEFAULTS
 import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
 import org.rust.lang.core.CompilerFeature.Companion.CRATE_IN_PATHS
-import org.rust.lang.core.CompilerFeature.Companion.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature.Companion.DECL_MACRO
 import org.rust.lang.core.CompilerFeature.Companion.EXCLUSIVE_RANGE_PATTERN
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
@@ -51,7 +50,6 @@ import org.rust.lang.core.CompilerFeature.Companion.IF_WHILE_OR_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.INHERENT_ASSOCIATED_TYPES
 import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST
 import org.rust.lang.core.CompilerFeature.Companion.INLINE_CONST_PAT
-import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
 import org.rust.lang.core.CompilerFeature.Companion.IRREFUTABLE_LET_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.LABEL_BREAK_VALUE
 import org.rust.lang.core.CompilerFeature.Companion.LET_CHAINS
@@ -800,12 +798,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         ) {
             RsDiagnostic.UnnecessaryVisibilityQualifierError(vis).addToHolder(holder)
         }
-        checkCrateVisibilityModifier(holder, vis)
-    }
-
-    private fun checkCrateVisibilityModifier(holder: RsAnnotationHolder, vis: RsVis) {
-        val crateModifier = vis.crate ?: return
-        CRATE_VISIBILITY_MODIFIER.check(holder, crateModifier, "`crate` visibility modifier")
     }
 
     private fun checkVisRestriction(holder: RsAnnotationHolder, visRestriction: RsVisRestriction) {
@@ -856,29 +848,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.IllegalLifetimeName(lifetime).addToHolder(holder)
         }
 
-        if (lifetime.isPredefined || !hasResolve(lifetime)) return
-
-        val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
-        val declarationParts = listOfNotNull(
-            (owner as? RsImplItem)?.traitRef,
-            (owner as? RsImplItem)?.typeReference,
-            (owner as? RsImplItem)?.whereClause,
-
-            (owner as? RsFunction)?.typeParameterList,
-            (owner as? RsFunction)?.valueParameterList,
-            (owner as? RsFunction)?.whereClause
-        )
-        val inDeclaration = lifetime.ancestors.takeWhile { it != owner }.any { it in declarationParts }
-
-        when {
-            inDeclaration && owner.lifetimeParameters.isEmpty() -> {
-                val fixes = listOfNotNull(CreateLifetimeParameterFromUsageFix.tryCreate(lifetime)).toTypedArray()
-                IN_BAND_LIFETIMES.check(holder, lifetime, "in-band lifetimes", *fixes)
-            }
-            inDeclaration && IN_BAND_LIFETIMES.availability(lifetime) == AVAILABLE ->
-                RsDiagnostic.InBandAndExplicitLifetimesError(lifetime).addToHolder(holder)
-            else ->
-                RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
+        if (!lifetime.isPredefined && hasResolve(lifetime)) {
+            RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
         }
     }
 

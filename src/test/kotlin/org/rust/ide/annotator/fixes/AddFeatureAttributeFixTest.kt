@@ -13,34 +13,6 @@ import org.rust.ide.annotator.RsErrorAnnotator
 
 class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
-    @MockRustcVersion("1.27.1")
-    fun `test add crate_visibility_modifier feature is unavailable`() = checkFixIsUnavailable(
-        "Add `crate_visibility_modifier` feature", """
-        <error>crate/*caret*/</error> struct Foo;
-    """)
-
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test add crate_visibility_modifier feature`() = checkFixByText("Add `crate_visibility_modifier` feature", """
-        <error>crate/*caret*/</error> struct Foo;
-    """, """
-        #![feature(crate_visibility_modifier)]
-
-        crate/*caret*/ struct Foo;
-    """, preview = null)
-
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test add crate_visibility_modifier feature after all feature attributes`() =
-        checkFixByText("Add `crate_visibility_modifier` feature", """
-            #![feature(i128_type)]
-
-            <error>crate/*caret*/</error> type Foo = i128;
-        """, """
-            #![feature(i128_type)]
-            #![feature(crate_visibility_modifier)]
-
-            crate/*caret*/ type Foo = i128;
-        """, preview = null)
-
     @MockEdition(Edition.EDITION_2015)
     @MockRustcVersion("1.28.0")
     fun `test add crate_in_paths feature is unavailable`() = checkFixIsUnavailable("Add `crate_in_paths` feature", """
@@ -55,5 +27,23 @@ class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         #![feature(crate_in_paths)]
 
         use crate/*caret*/::foo::Foo;
+    """, preview = null)
+
+    @MockRustcVersion("1.56.0-nightly")
+    fun `test add feature attr after all feature attributes`() = checkFixByText("Add `let_chains` feature", """
+        #![feature(if_let_guard)]
+
+        fn main() {
+            let x = Some(1);
+            if <error>let Some(_) = x/*caret*/</error> && <error>let Some(_) = x</error> {};
+        }
+    """, """
+        #![feature(if_let_guard)]
+        #![feature(let_chains)]
+
+        fn main() {
+            let x = Some(1);
+            if let Some(_) = x/*caret*/ && let Some(_) = x {};
+        }
     """, preview = null)
 }

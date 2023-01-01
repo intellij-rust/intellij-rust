@@ -499,15 +499,36 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo<'a, 'b>(x: &'a u32, f: &'b Fn(&'b u8) -> &'b str) -> &'a u32 { x }
         const FOO: for<'a> fn(&'a u32) -> &'a u32 = foo_func;
         struct Struct<'a> { s: &'a str }
+        struct Trait<'a, T: 'a> {}
         enum En<'a, 'b> { A(&'a u32), B(&'b bool) }
         type Str<'d> = &'d str;
 
-        fn foo_err<'a>(x: &<error descr="Use of undeclared lifetime name `'b` [E0261]">'b</error> str) {}
+        struct StructErr(&<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str);
+        trait TraitErr<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
+        enum EnErr<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
+
+        fn foo_err1(x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str) {}
+        fn foo_err2<'a>(x: &<error descr="Use of undeclared lifetime name `'b` [E0261]">'b</error> str) {}
+        fn foo_err3<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>>(x: &<error descr="Use of undeclared lifetime name `'b` [E0261]">'b</error> str)
+            where <error descr="Use of undeclared lifetime name `'c` [E0261]">'c</error>: <error descr="Use of undeclared lifetime name `'d` [E0261]">'d</error> {}
         fn bar() {
+            let x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str = unimplemented!();
             'foo: loop {
                 let _: &<error descr="Use of undeclared lifetime name `'foo` [E0261]">'foo</error> str;
             }
         }
+    """)
+
+    fun `test undeclared lifetime E0261 in impl 1`() = checkErrors("""
+        trait T<'a> {}
+        struct S<'a>(&'a str);
+        impl T<<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> for S<<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
+    """)
+
+    fun `test undeclared lifetime E0261 in impl 2`() = checkErrors("""
+        trait T<'a> {}
+        struct S<'a>(&'a str);
+        impl <'b> T<<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> for S<<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
     """)
 
     fun `test not applied to static lifetimes E0261`() = checkErrors("""
@@ -534,72 +555,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<<error>'_</error>> Str2<'_> {}
         enum En2<<error>'_</error>> { A(&'_ str) }
         trait Tr2<<error>'_</error>> {}
-    """)
-
-    @MockRustcVersion("1.23.0")
-    fun `test in-band lifetimes feature E0658 in fn 1`() = checkErrors("""
-        fn foo(x: &<error descr="in-band lifetimes is experimental [E0658]">'a</error> str) {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in fn 2`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        fn foo<T: 'a>(x: &'b str) where 'c: 'd {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in fn 3`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        fn foo<'b>(x: &<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error> str) {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in let`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        fn foo() {
-            let x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str = unimplemented!();
-        }
-    """)
-
-    @MockRustcVersion("1.23.0")
-    fun `test in-band lifetimes feature E0658 in impl 1`() = checkErrors("""
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl T<<error descr="in-band lifetimes is experimental [E0658]">'a</error>> for S<<error descr="in-band lifetimes is experimental [E0658]">'a</error>> {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in impl 2`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl T<'a> for S<'b> where 'c: 'd {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in impl 3`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl <'b> T<<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error>> for S<<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error>> {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in struct`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        struct S(&<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str);
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in trait`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        trait S<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 in enum`() = checkErrors("""
-        #![feature(in_band_lifetimes)]
-        enum E<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
     """)
 
     fun `test no E0407 for method defined with a macro`() = checkErrors("""
@@ -1134,18 +1089,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             use test_package::<error descr="Function `bar` is private [E0603]">bar</error>;
     """, checkWarn = false)
 
-    fun `test item with crate visibility is visible in the same crate E0603`() = checkErrors("""
-        #![feature(crate_visibility_modifier)]
-        mod foo {
-            crate fn spam() {}
-            pub(crate) fn eggs() {}
-        }
-        mod bar {
-            use foo::spam;
-            use foo::eggs;
-        }
-    """)
-
     fun `test restricted visibility E0603`() = checkErrors("""
         mod foo {
             pub mod bar {
@@ -1430,56 +1373,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl Bar for S {
             type Foo = S;
         }
-    """)
-
-    @MockRustcVersion("1.27.1")
-    fun `test crate visibility feature E0658`() = checkErrors("""
-        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
-    """)
-
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 2`() = checkErrors("""
-        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
-    """)
-
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 3`() = checkErrors("""
-        #![feature(crate_visibility_modifier)]
-
-        crate struct Foo;
-    """)
-
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 4`() = checkErrors("""
-        crate struct Foo;
-
-        mod foo {
-            #![feature(crate_visibility_modifier)]
-        }
-    """)
-
-    @MockAdditionalCfgOptions("intellij_rust")
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 under cfg_attr 1`() = checkErrors("""
-        #![cfg_attr(intellij_rust, feature(crate_visibility_modifier))]
-
-        crate struct Foo;
-    """)
-
-    @MockAdditionalCfgOptions("intellij_rust")
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 under cfg_attr 2`() = checkErrors("""
-        #![cfg_attr(not(intellij_rust), feature(crate_visibility_modifier))]
-
-        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
-    """)
-
-    @MockAdditionalCfgOptions("intellij_rust")
-    @MockRustcVersion("1.29.0-nightly")
-    fun `test crate visibility feature E0658 under nested cfg_attr`() = checkErrors("""
-        #![cfg_attr(intellij_rust, cfg_attr(intellij_rust, feature(crate_visibility_modifier)))]
-
-        crate struct Foo;
     """)
 
     fun `test parenthesized lifetime bounds`() = checkErrors("""
