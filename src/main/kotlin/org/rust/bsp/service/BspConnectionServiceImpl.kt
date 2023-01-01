@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 
 class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
-    private var log = logger<BspConnectionServiceImpl>()
 
     private var bspServer: BspServer? = null
     private var bspClient: BspClient? = null
@@ -45,18 +44,16 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         try {
             val server = getBspServer()
             val initializeBuildResult =
-                queryForInitialize(server).catchSyncErrors { log.error("Error while initializing BSP server", it) }
-                    .orTimeout(10000, TimeUnit.SECONDS).get()
-            log.info("BSP server initialized: $initializeBuildResult")
+                queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }
+                    .orTimeout(10, TimeUnit.SECONDS).get()
+            println("BSP server initialized: $initializeBuildResult")
 
             val projectDetails = calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities) {
-                log.info("BSP server capabilities: $it")
+                println("BSP server capabilities: $it")
             }
 
-            log.info("BSP project details: $projectDetails")
             println("BSP project details: $projectDetails")
         } catch (e: Exception) {
-            log.error("Error while initializing BSP server", e)
             println("Error while initializing BSP server: ${e.message}")
         }
     }
@@ -78,7 +75,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val projectBaseDir = project.basePath
         val params = InitializeBuildParams(
             "IntelliJ-Rust",
-            "0.0.1",
+            "0.4.0",
             "2.0.0",
             projectBaseDir.toString(),
             BuildClientCapabilities(listOf("java"))
@@ -119,7 +116,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         this.bspClient = bspClient
 
         return Proxy.newProxyInstance(javaClass.classLoader, arrayOf(BspServer::class.java)) { _, method, args ->
-            log.info("Calling method: ${method.name} with args: ${args?.joinToString()}")
             println("Calling method: ${method.name} with args: ${args?.joinToString()}")
             method.invoke(launcher.remoteProxy, *args.orEmpty())
         } as BspServer
@@ -129,7 +125,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         try {
             Gson().fromJson(VfsUtil.loadText(file), BspConnectionDetails::class.java)
         } catch (e: Exception) {
-            log.info("Parsing file '$file' to BspConnectionDetails failed!", e)
             println("Parsing file '$file' to BspConnectionDetails failed! ${e.message}")
             null
         }
