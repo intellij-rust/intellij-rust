@@ -29,7 +29,6 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
-import org.rust.bsp.BspClient
 import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
@@ -210,7 +209,7 @@ class Cargo(
         println("Connecting to BSP server")
         val bspService = owner.service<BspConnectionService>()
 
-        bspService.doStaff()
+        bspService.doStuff()
 
         return CargoMetadata.Project(listOf(), CargoMetadata.Resolve(listOf()), 1, listOf(), projectDirectory.toString())
     }

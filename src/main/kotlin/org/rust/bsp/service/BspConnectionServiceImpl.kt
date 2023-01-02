@@ -38,7 +38,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return bspClient!!
     }
 
-    override fun doStaff() {
+    override fun doStuff() {
         try {
             val server = getBspServer()
             val initializeBuildResult =
