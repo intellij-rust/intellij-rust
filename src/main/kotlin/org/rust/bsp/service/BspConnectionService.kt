@@ -14,5 +14,7 @@ interface BspConnectionService {
 
     fun getBspClient(): BspClient
 
+    fun disconnect()
+
     fun doStuff()
 }

@@ -21,12 +21,14 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 
 class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     private var bspServer: BspServer? = null
     private var bspClient: BspClient? = null
+    private var disconnectActions: MutableList<() -> Unit> = mutableListOf()
 
     override fun getBspServer(): BspServer {
         createBspServerIfNull()
@@ -85,6 +87,35 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return params
     }
 
+    override fun disconnect() {
+        val exceptions = disconnectActions.mapNotNull { executeDisconnectActionAndReturnThrowableIfFailed(it) }
+        disconnectActions.clear()
+        throwExceptionWithSuppressedIfOccurred(exceptions)
+
+        bspServer = null
+        bspClient = null
+    }
+
+    private fun executeDisconnectActionAndReturnThrowableIfFailed(disconnectAction: () -> Unit): Throwable? =
+        try {
+            disconnectAction()
+            null
+        } catch (e: Exception) {
+            e
+        }
+
+    private fun throwExceptionWithSuppressedIfOccurred(exceptions: List<Throwable>) {
+        val firstException = exceptions.firstOrNull()
+
+        if (firstException != null) {
+            exceptions
+                .drop(1)
+                .forEach { firstException.addSuppressed(it) }
+
+            throw firstException
+        }
+    }
+
     private fun createLauncher(bspIn: InputStream, bspOut: OutputStream, client: BuildClient): Launcher<BspServer> =
         Launcher.Builder<BspServer>()
             .setRemoteInterface(BspServer::class.java)
@@ -107,9 +138,24 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     private fun createBspServer(bspConnectionDetails: BspConnectionDetails): BspServer {
         val process = createAndStartProcess(bspConnectionDetails)
+
+        disconnectActions.add { bspServer?.buildShutdown() }
+        disconnectActions.add { bspServer?.onBuildExit() }
+
+        disconnectActions.add { process.waitFor(3, TimeUnit.SECONDS) }
+        disconnectActions.add { process.destroy() }
+
         val bspClient = createBspClient()
-        val launcher = createLauncher(process.inputStream, process.outputStream, bspClient)
-        launcher.startListening()
+
+        val bspIn = process.inputStream
+        disconnectActions.add { bspIn.close() }
+
+        val bspOut = process.outputStream
+        disconnectActions.add { bspOut.close() }
+
+        val launcher = createLauncher(bspIn, bspOut, bspClient)
+        val listening = launcher.startListening()
+        disconnectActions.add { listening.cancel(true) }
 
         this.bspClient = bspClient
 

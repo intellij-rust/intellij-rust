@@ -5,4 +5,8 @@
         <projectService serviceInterface="org.rust.bsp.service.BspConnectionService"
                             serviceImplementation="org.rust.bsp.service.BspConnectionServiceImpl"/>
     </extensions>
+    <applicationListeners>
+        <listener class="org.rust.bsp.ProjectClosingListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
 </idea-plugin>
