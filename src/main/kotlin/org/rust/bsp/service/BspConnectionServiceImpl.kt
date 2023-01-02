@@ -8,7 +8,6 @@ package org.rust.bsp.service
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,7 +21,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 
 class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
@@ -44,8 +42,8 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         try {
             val server = getBspServer()
             val initializeBuildResult =
-                queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }
-                    .orTimeout(10, TimeUnit.SECONDS).get()
+                queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
+            server.onBuildInitialized()
             println("BSP server initialized: $initializeBuildResult")
 
             val projectDetails = calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities) {
@@ -80,7 +78,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
             projectBaseDir.toString(),
             BuildClientCapabilities(listOf("java"))
         )
-        println("InitializeBuildParams: $params")
         val dataJson = JsonObject()
         dataJson.addProperty("clientClassesRootDir", "$projectBaseDir/out")
         params.data = dataJson
@@ -112,6 +109,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val process = createAndStartProcess(bspConnectionDetails)
         val bspClient = createBspClient()
         val launcher = createLauncher(process.inputStream, process.outputStream, bspClient)
+        launcher.startListening()
 
         this.bspClient = bspClient
 
