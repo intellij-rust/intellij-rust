@@ -17,6 +17,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Proxy
@@ -27,6 +28,7 @@ import kotlin.io.path.Path
 class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     private var bspServer: BspServer? = null
+    private var rustBspMockServer: RustBuildServer = RustBuildServer()
     private var bspClient: BspClient? = null
     private var disconnectActions: MutableList<() -> Unit> = mutableListOf()
 
@@ -53,13 +55,24 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
             server.onBuildInitialized()
             println("BSP server initialized: $initializeBuildResult")
 
-            val projectDetails = calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities) {
+            val projectDetails = calculateProjectDetailsWithCapabilities(server, rustBspMockServer, initializeBuildResult.capabilities) {
                 println("BSP server capabilities: $it")
             }
 
             println("BSP project details: $projectDetails")
         } catch (e: Exception) {
             println("Error while initializing BSP server: ${e.message}")
+        }
+    }
+
+    override fun getProjectData(): CargoMetadata.Project {
+        val server = getBspServer()
+        val initializeBuildResult =
+            queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
+        server.onBuildInitialized()
+
+        return calculateProjectDetailsWithCapabilities(server, rustBspMockServer, initializeBuildResult.capabilities) {
+            println("BSP server capabilities: $it")
         }
     }
 
@@ -185,7 +198,32 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         VirtualFileManager.getInstance().findFileByNioPath(Path(this))
 }
 
-interface BspServer : BuildServer, JavaBuildServer
+interface BspServer : BuildServer
+
+
+//TODO - that should be implemented in build-server-protocol
+class RustBuildServer {
+
+    fun projectPackages(): CompletableFuture<List<CargoMetadata.Package>> {
+        return CompletableFuture.completedFuture(listOf())
+    }
+
+    fun projectDependencies(): CompletableFuture<List<CargoMetadata.ResolveNode>> {
+        return CompletableFuture.completedFuture(listOf())
+    }
+
+    fun version(): CompletableFuture<Int> {
+        return CompletableFuture.completedFuture(1)
+    }
+
+    fun workspaceMembers(): CompletableFuture<List<String>> {
+        return CompletableFuture.completedFuture(listOf())
+    }
+
+    fun workspaceRoot(): CompletableFuture<String> {
+        return CompletableFuture.completedFuture("")
+    }
+}
 
 fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
     val env = environment()
@@ -198,76 +236,38 @@ fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
 
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
+    rustBspMockServer: RustBuildServer,
     buildServerCapabilities: BuildServerCapabilities,
     errorCallback: (Throwable) -> Unit
-): ProjectDetails {
-    val workspaceBuildTargetsResult = queryForBuildTargets(server).get()
+): CargoMetadata.Project {
+    val projectPackages = queryForPackages(rustBspMockServer).get()
 
-    val allTargetsIds = calculateAllTargetsIds(workspaceBuildTargetsResult)
+    val resolve = queryForResolve(rustBspMockServer).get()
+    val version = queryForVersion(rustBspMockServer).get()
+    val workspaceMembers = queryForMembers(rustBspMockServer).get()
+    val workspaceRoot = queryForRoot(rustBspMockServer).get()
 
-    val sourcesFuture = queryForSourcesResult(server, allTargetsIds).catchSyncErrors(errorCallback)
-    val resourcesFuture =
-        queryForTargetResources(server, buildServerCapabilities, allTargetsIds)?.catchSyncErrors(errorCallback)
-    val dependencySourcesFuture =
-        queryForDependencySources(server, buildServerCapabilities, allTargetsIds)?.catchSyncErrors(errorCallback)
-    val javacOptionsFuture = queryForJavacOptions(server, allTargetsIds).catchSyncErrors(errorCallback)
-
-    return ProjectDetails(
-        targetsId = allTargetsIds,
-        targets = workspaceBuildTargetsResult.targets.toSet(),
-        sources = sourcesFuture.get().items,
-        resources = resourcesFuture?.get()?.items ?: emptyList(),
-        dependenciesSources = dependencySourcesFuture?.get()?.items ?: emptyList(),
-        // SBT seems not to support the javacOptions endpoint and seems just to hang when called,
-        // so it's just safer to add timeout here. This should not be called at all for SBT.
-        javacOptions = javacOptionsFuture.get()?.items ?: emptyList()
-    )
+    return CargoMetadata.Project(projectPackages, resolve, version, workspaceMembers, workspaceRoot)
 }
 
-
-private fun queryForBuildTargets(server: BspServer): CompletableFuture<WorkspaceBuildTargetsResult> =
-    server.workspaceBuildTargets()
-
-private fun calculateAllTargetsIds(workspaceBuildTargetsResult: WorkspaceBuildTargetsResult): List<BuildTargetIdentifier> =
-    workspaceBuildTargetsResult.targets.map { it.id }
-
-private fun queryForSourcesResult(
-    server: BspServer,
-    allTargetsIds: List<BuildTargetIdentifier>
-): CompletableFuture<SourcesResult> {
-    val sourcesParams = SourcesParams(allTargetsIds)
-
-    return server.buildTargetSources(sourcesParams)
+fun queryForPackages(server: RustBuildServer): CompletableFuture<List<CargoMetadata.Package>> {
+    return server.projectPackages()
 }
 
-private fun queryForTargetResources(
-    server: BspServer,
-    capabilities: BuildServerCapabilities,
-    allTargetsIds: List<BuildTargetIdentifier>
-): CompletableFuture<ResourcesResult>? {
-    val resourcesParams = ResourcesParams(allTargetsIds)
-
-    return if (capabilities.resourcesProvider) server.buildTargetResources(resourcesParams)
-    else null
+fun queryForResolve(server: RustBuildServer): CompletableFuture<CargoMetadata.Resolve> {
+    return server.projectDependencies().thenApply { CargoMetadata.Resolve(it) }
 }
 
-private fun queryForDependencySources(
-    server: BspServer,
-    capabilities: BuildServerCapabilities,
-    allTargetsIds: List<BuildTargetIdentifier>
-): CompletableFuture<DependencySourcesResult>? {
-    val dependencySourcesParams = DependencySourcesParams(allTargetsIds)
-
-    return if (capabilities.dependencySourcesProvider) server.buildTargetDependencySources(dependencySourcesParams)
-    else null
+fun queryForVersion(server: RustBuildServer): CompletableFuture<Int> {
+    return server.version()
 }
 
-private fun queryForJavacOptions(
-    server: BspServer,
-    allTargetsIds: List<BuildTargetIdentifier>
-): CompletableFuture<JavacOptionsResult> {
-    val javacOptionsParams = JavacOptionsParams(allTargetsIds)
-    return server.buildTargetJavacOptions(javacOptionsParams)
+fun queryForMembers(server: RustBuildServer): CompletableFuture<List<String>> {
+    return server.workspaceMembers()
+}
+
+fun queryForRoot(server: RustBuildServer): CompletableFuture<String> {
+    return server.workspaceRoot()
 }
 
 

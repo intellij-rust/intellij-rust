@@ -183,6 +183,11 @@ class Cargo(
 
         if (useBSP) {
             viaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener)
+//            return try {
+//                Ok(viaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener))
+//            } catch (e: JacksonException) {
+//                Err(RsDeserializationException(e))
+//            }
         }
 
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
@@ -206,12 +211,9 @@ class Cargo(
         toolchainOverride: String? = null,
         listener: ProcessListener? = null,
     ): CargoMetadata.Project {
-        println("Connecting to BSP server")
         val bspService = owner.service<BspConnectionService>()
 
-        bspService.doStuff()
-
-        return CargoMetadata.Project(listOf(), CargoMetadata.Resolve(listOf()), 1, listOf(), projectDirectory.toString())
+        return bspService.getProjectData()
     }
 
     fun vendorDependencies(
