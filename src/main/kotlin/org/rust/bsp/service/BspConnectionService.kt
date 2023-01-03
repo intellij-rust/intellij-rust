@@ -19,7 +19,5 @@ interface BspConnectionService {
 
     fun disconnect()
 
-    fun doStuff()
-
     fun getProjectData(): CargoMetadata.Project
 }

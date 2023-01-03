@@ -17,6 +17,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
+import org.rust.bsp.RustBuildServer
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
@@ -45,24 +46,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     override fun connect() {
         println("Starting BSP server")
         getBspServer()
-    }
-
-    override fun doStuff() {
-        try {
-            val server = getBspServer()
-            val initializeBuildResult =
-                queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
-            server.onBuildInitialized()
-            println("BSP server initialized: $initializeBuildResult")
-
-            val projectDetails = calculateProjectDetailsWithCapabilities(server, rustBspMockServer, initializeBuildResult.capabilities) {
-                println("BSP server capabilities: $it")
-            }
-
-            println("BSP project details: $projectDetails")
-        } catch (e: Exception) {
-            println("Error while initializing BSP server: ${e.message}")
-        }
     }
 
     override fun getProjectData(): CargoMetadata.Project {
@@ -198,32 +181,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         VirtualFileManager.getInstance().findFileByNioPath(Path(this))
 }
 
-interface BspServer : BuildServer
-
-
-//TODO - that should be implemented in build-server-protocol
-class RustBuildServer {
-
-    fun projectPackages(): CompletableFuture<List<CargoMetadata.Package>> {
-        return CompletableFuture.completedFuture(listOf())
-    }
-
-    fun projectDependencies(): CompletableFuture<List<CargoMetadata.ResolveNode>> {
-        return CompletableFuture.completedFuture(listOf())
-    }
-
-    fun version(): CompletableFuture<Int> {
-        return CompletableFuture.completedFuture(1)
-    }
-
-    fun workspaceMembers(): CompletableFuture<List<String>> {
-        return CompletableFuture.completedFuture(listOf())
-    }
-
-    fun workspaceRoot(): CompletableFuture<String> {
-        return CompletableFuture.completedFuture("")
-    }
-}
+interface BspServer : BuildServer //, RustBuildServer
 
 fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
     val env = environment()

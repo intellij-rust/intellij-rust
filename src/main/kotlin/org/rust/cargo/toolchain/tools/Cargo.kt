@@ -150,8 +150,9 @@ class Cargo(
         rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData = fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
-            .unwrapOrElse { return Err(it) }
+        val rawData =
+            fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
+                .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
             val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
@@ -182,12 +183,11 @@ class Cargo(
         }
 
         if (useBSP) {
-            viaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener)
-//            return try {
-//                Ok(viaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener))
-//            } catch (e: JacksonException) {
-//                Err(RsDeserializationException(e))
-//            }
+            return try {
+                Ok(fetchViaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener))
+            } catch (e: JacksonException) {
+                Err(RsDeserializationException(e))
+            }
         }
 
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
@@ -204,15 +204,14 @@ class Cargo(
         }
     }
 
-    private fun viaBSP(
-        owner: Project,
+    private fun fetchViaBSP(
+        project: Project,
         projectDirectory: Path,
         buildTarget: String?,
         toolchainOverride: String? = null,
         listener: ProcessListener? = null,
     ): CargoMetadata.Project {
-        val bspService = owner.service<BspConnectionService>()
-
+        val bspService = project.service<BspConnectionService>()
         return bspService.getProjectData()
     }
 
@@ -404,7 +403,8 @@ class Cargo(
         CargoCommandLine("init", path, args).execute(project, owner).unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
-        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
+        val manifest =
+            checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val fileName = if (createBinary) MAIN_RS_FILE else LIB_RS_FILE
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
         return Ok(GeneratedFilesHolder(manifest, sourceFiles))
@@ -430,7 +430,8 @@ class Cargo(
             .unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
-        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
+        val manifest =
+            checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val sourceFiles = listOf("main", "lib").mapNotNull { directory.findFileByRelativePath("src/${it}.rs") }
         return Ok(GeneratedFilesHolder(manifest, sourceFiles))
     }
@@ -463,6 +464,7 @@ class Cargo(
                 }
                 CargoCommandLine.forTarget(args.target, checkCommand, arguments, usePackageOption = false)
             }
+
             is CargoCheckArgs.FullWorkspace -> {
                 val arguments = buildList<String> {
                     add("--message-format=json")
@@ -485,7 +487,11 @@ class Cargo(
     fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine): GeneralCommandLine =
         toGeneralCommandLine(project, commandLine, colors = false)
 
-    private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
+    private fun toGeneralCommandLine(
+        project: Project,
+        commandLine: CargoCommandLine,
+        colors: Boolean
+    ): GeneralCommandLine =
         with(commandLine.patchArgs(project, colors)) {
             val parameters = buildList<String> {
                 when {
@@ -527,7 +533,10 @@ class Cargo(
         return toGeneralCommandLine(project, copy(emulateTerminal = false)).execute(owner, stdIn, listener = listener)
     }
 
-    fun installCargoGenerate(owner: Disposable, listener: ProcessListener): RsResult<Unit, RsProcessExecutionException.Start> {
+    fun installCargoGenerate(
+        owner: Disposable,
+        listener: ProcessListener
+    ): RsResult<Unit, RsProcessExecutionException.Start> {
         return createBaseCommandLine("install", "cargo-generate")
             .execute(owner, listener = listener)
             .ignoreExitCode()
@@ -573,7 +582,20 @@ class Cargo(
         const val WRAPPER_NAME: String = "xargo"
 
         private val FEATURES_ACCEPTING_COMMANDS: List<String> = listOf(
-            "bench", "build", "check", "doc", "fix", "run", "rustc", "rustdoc", "test", "metadata", "tree", "install", "package", "publish"
+            "bench",
+            "build",
+            "check",
+            "doc",
+            "fix",
+            "run",
+            "rustc",
+            "rustdoc",
+            "test",
+            "metadata",
+            "tree",
+            "install",
+            "package",
+            "publish"
         )
 
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
