@@ -194,6 +194,7 @@ class ModCollectorBase private constructor(
             visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
             namespaces = item.getNamespaces(crate),
+            isTrait = item is RsTraitItemStub,
             procMacroKind = procMacroKind,
         )
     }
@@ -445,6 +446,7 @@ data class SimpleItemLight(
     override val visibility: VisibilityLight,
     override val isDeeplyEnabledByCfg: Boolean,
     val namespaces: Set<Namespace>,
+    val isTrait: Boolean,
     /** `null` if not a proc macro */
     val procMacroKind: RsProcMacroKind?,
 ) : ItemLight {
@@ -456,6 +458,7 @@ data class SimpleItemLight(
         if (Namespace.Types in namespaces) flags += NAMESPACE_TYPES_MASK
         if (Namespace.Values in namespaces) flags += NAMESPACE_VALUES_MASK
         if (Namespace.Macros in namespaces) flags += NAMESPACE_MACROS_MASK
+        if (isTrait) flags += TRAIT_MASK
         if (isDeeplyEnabledByCfg) flags += IS_DEEPLY_ENABLED_BY_CFG_MASK
         data.writeByte(flags)
     }
@@ -464,6 +467,7 @@ data class SimpleItemLight(
         private val NAMESPACE_TYPES_MASK: Int = nextBitMask()
         private val NAMESPACE_VALUES_MASK: Int = nextBitMask()
         private val NAMESPACE_MACROS_MASK: Int = nextBitMask()
+        private val TRAIT_MASK: Int = nextBitMask()
         private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
     }
 }

@@ -364,7 +364,7 @@ class ModData(
         val traitItems = unnamedTraitImports
             .mapNotNull { (path, visibility) ->
                 if (!filterVisibility(visibility)) return@mapNotNull null
-                val trait = VisItem(path, visibility, isModOrEnum = false)
+                val trait = VisItem(path, visibility, isModOrEnum = false, isTrait = true)
                 "_" to PerNs.types(trait)
             }
         return usualItems + traitItems
@@ -544,6 +544,7 @@ data class VisItem(
     val path: ModPath,
     val visibility: Visibility,
     val isModOrEnum: Boolean = false,
+    val isTrait: Boolean = false,
     /**
      * Records whether this item was added to mod scope with named or glob import.
      * Needed to determine whether we can override it (usual imports overrides glob-imports).
