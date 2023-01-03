@@ -101,6 +101,10 @@
         <lang.implementationTextSelectioner language="Rust"
                                             implementationClass="org.rust.ide.hints.RsImplementationTextSelectioner"/>
 
+        <!-- Code Vision -->
+        <vcs.codeVisionLanguageContext language="Rust"
+                                       implementationClass="org.rust.ide.hints.codeVision.RsVcsCodeVisionContext"/>
+
         <!-- Filters -->
 
         <analyzeStacktraceFilter implementation="org.rust.cargo.runconfig.filters.RsBacktraceFilter"/>
@@ -1216,6 +1220,9 @@
                      defaultValue="true"
                      description="Enable new Cargo project model reloading"
                      restartRequired="true"/>
+        <registryKey key="org.rust.code.vision.author"
+                     defaultValue="false"
+                     description="Enable version control author Code Vision hints for Rust" />
 
         <!-- Move refactoring -->
 
