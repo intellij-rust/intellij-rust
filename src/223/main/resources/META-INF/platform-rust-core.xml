@@ -4,6 +4,8 @@
                      description="Enable Rust MSVC support in LLDB (Windows-only)"/>
         <projectService serviceInterface="org.rust.bsp.service.BspConnectionService"
                             serviceImplementation="org.rust.bsp.service.BspConnectionServiceImpl"/>
+        <postStartupActivity
+            implementation="org.rust.bsp.BspStartupActivity"/>
     </extensions>
     <applicationListeners>
         <listener class="org.rust.bsp.ProjectClosingListener"
