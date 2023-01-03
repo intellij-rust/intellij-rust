@@ -94,6 +94,27 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """)
 
+    fun `test struct referenced via Self`() = checkFixByTextWithoutHighlighting("Create field", """
+        struct Foo {}
+        impl Foo {
+            fn new() -> Foo {
+                Self {
+                    /*caret*/field: 0,
+                }
+            }
+        }
+    """, """
+        struct Foo {
+            field: i32,
+        }
+        impl Foo {
+            fn new() -> Foo {
+                Self {
+                    /*caret*/field: 0,
+                }
+            }
+        }
+    """)
 
     fun `test no block`() = checkFixByText("Create field", """
         struct S;

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.parentStructLiteral
+import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
@@ -71,7 +72,7 @@ class CreateStructFieldFromConstructorFix private constructor(
         }
 
         private fun RsStructLiteralField.resolveToStructItem(): RsStructItem? {
-            return parentStructLiteral.path.reference?.resolve() as? RsStructItem
+            return parentStructLiteral.path.reference?.deepResolve() as? RsStructItem
         }
 
         private fun canUse(ty: Ty): Boolean {
