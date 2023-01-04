@@ -13,8 +13,10 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
 import org.rust.lang.core.RsPsiPattern.includeMacroLiteral
 import org.rust.lang.core.RsPsiPattern.literal
@@ -158,35 +160,56 @@ private class RsLiteralWebReferenceProvider : PsiReferenceProvider() {
 
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
         val stringLiteral = (element as? RsLitExpr)?.kind as? RsLiteralKind.String ?: return PsiReference.EMPTY_ARRAY
-        // Url should contain `:` symbol.
-        // In combination with the fact that `textContains` doesn't allocate memory,
-        // it makes quite cheap check
-        if (!element.textContains(':')) return PsiReference.EMPTY_ARRAY
 
-        val valueRange = stringLiteral.offsets.value ?: return PsiReference.EMPTY_ARRAY
-        val rawValue = stringLiteral.rawValue ?: return PsiReference.EMPTY_ARRAY
-        val (content, indexFn) = if (stringLiteral.node.elementType in RS_RAW_LITERALS) {
-            rawValue to { i: Int -> i }
-        } else {
-            val (content, indices) = parseRustStringCharacters(rawValue)
-            content to { i: Int -> indices[i] }
-        }
-
-        val references = SmartList<PsiReference>()
-        var index = 0
-        for (word in content.split(SPACE_SPLITTER)) {
-            if (word.isNotEmpty() && GlobalPathReferenceProvider.isWebReferenceUrl(word)) {
-                val startOffset = valueRange.startOffset + indexFn(index)
-                val endOffset = valueRange.startOffset + indexFn(index + word.length)
-                references += WebReference(element, TextRange(startOffset, endOffset), word)
-            }
-            index += word.length + 1
-        }
-
-        return references.toArray(PsiReference.EMPTY_ARRAY)
+        return ifUrl(element, stringLiteral)
+            ?: ifRustGitHubIssue(element, stringLiteral)
+            ?: PsiReference.EMPTY_ARRAY
     }
 
     companion object {
         private val SPACE_SPLITTER: Regex = Regex("\\s")
+
+        private val RUST_GITHUB_ISSUE_ATTR = arrayOf("unstable", "rustc_const_unstable")
+
+        private fun ifUrl(element: RsLitExpr, stringLiteral: RsLiteralKind.String): Array<PsiReference>? {
+            // Url should contain `:` symbol.
+            // In combination with the fact that `textContains` doesn't allocate memory,
+            // it makes quite cheap check
+            if (!element.textContains(':')) return null
+
+            val valueRange = stringLiteral.offsets.value ?: return null
+            val rawValue = stringLiteral.rawValue ?: return null
+            val (content, indexFn) = if (stringLiteral.node.elementType in RS_RAW_LITERALS) {
+                rawValue to { i: Int -> i }
+            } else {
+                val (content, indices) = parseRustStringCharacters(rawValue)
+                content to { i: Int -> indices[i] }
+            }
+
+            val references = SmartList<PsiReference>()
+            var index = 0
+            for (word in content.split(SPACE_SPLITTER)) {
+                if (word.isNotEmpty() && GlobalPathReferenceProvider.isWebReferenceUrl(word)) {
+                    val startOffset = valueRange.startOffset + indexFn(index)
+                    val endOffset = valueRange.startOffset + indexFn(index + word.length)
+                    references += WebReference(element, TextRange(startOffset, endOffset), word)
+                }
+                index += word.length + 1
+            }
+
+            return references.toArray(PsiReference.EMPTY_ARRAY)
+        }
+
+        private fun ifRustGitHubIssue(element: RsLitExpr, stringLiteral: RsLiteralKind.String): Array<PsiReference>? {
+            if (element.containingCrate.origin != PackageOrigin.STDLIB) return null
+
+            val parent = element.parent as? RsMetaItem ?: return null
+
+            if (parent.name != "issue" || parent.parentOfType<RsOuterAttr>()?.metaItem?.name !in RUST_GITHUB_ISSUE_ATTR) return null
+
+            val issueNumber = stringLiteral.rawValue?.toLongOrNull() ?: return null
+
+            return arrayOf(WebReference(element, TextRange(1, element.textLength - 1), "https://github.com/rust-lang/rust/issues/${issueNumber}"))
+        }
     }
 }

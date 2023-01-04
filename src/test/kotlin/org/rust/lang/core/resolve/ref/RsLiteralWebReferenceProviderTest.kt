@@ -48,6 +48,14 @@ class RsLiteralWebReferenceProviderTest : RsTestBase() {
         }
     """, "http://localhost:8080", "https://github.com/foo/bar")
 
+    fun `test for invalid rust issue row`() = checkUrlReferences("""
+        #[unstable(feature = "foo", issue = "0")]
+        fn foo() { }
+
+        #[rustc_const_unstable(feature = "bar", issue = "0")]
+        fn bar() { }
+    """, null)
+
     private fun checkUrlReferences(@Language("Rust") code: String, vararg expectedUrls: String?) {
         InlineFile(code, "main.rs")
         val allCarets = myFixture.editor.caretModel.allCarets
