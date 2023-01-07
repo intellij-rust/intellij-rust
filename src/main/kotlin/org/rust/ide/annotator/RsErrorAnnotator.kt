@@ -1600,8 +1600,10 @@ private fun checkDuplicates(
     val identifier = element.nameIdentifier ?: element
     val message = when {
         element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
-        element is RsEnumVariant -> RsDiagnostic.DuplicateEnumVariantError(identifier, name)
+        element is RsEnumVariant -> RsDiagnostic.DuplicateDefinitionError(identifier, Namespace.Types, name, owner, E0428)
         element is RsLifetimeParameter -> RsDiagnostic.DuplicateLifetimeError(identifier, name)
+        element is RsTypeParameter -> RsDiagnostic.DuplicateGenericParameterError(identifier, name)
+        element is RsConstParameter -> RsDiagnostic.DuplicateGenericParameterError(identifier, name)
         element is RsPatBinding && owner is RsValueParameterList -> {
             val parent = owner.parent as? RsFunction
 
@@ -1610,7 +1612,6 @@ private fun checkDuplicates(
 
             RsDiagnostic.DuplicateBindingError(identifier, name)
         }
-        element is RsTypeParameter -> RsDiagnostic.DuplicateTypeParameterError(identifier, name)
         owner is RsImplItem -> RsDiagnostic.DuplicateAssociatedItemError(identifier, name)
         else -> {
             val otherDuplicates = duplicates.filter { it != element }
