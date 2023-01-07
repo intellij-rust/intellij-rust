@@ -574,6 +574,56 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         macro_/*caret*/
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no completion of method from transitive dependency`() = checkNoCompletionByFileTree("""
+    //- trans-lib/lib.rs
+        pub trait Trait {
+            fn method(&self) {}
+        }
+        impl<T> Trait for T {}
+    //- dep-lib/lib.rs
+    //- lib.rs
+        struct Foo {}
+        fn func(foo: &Foo) {
+            foo.me/*caret*/
+        }
+    """)
+
+    fun `test no completion of method from private trait`() = doTestNoCompletion("""
+        mod mod1 {
+            mod mod2 {
+                pub trait Trait {
+                    fn method(&self) {}
+                }
+                impl<T> Trait for T {}
+            }
+        }
+        struct Foo {}
+        fn func(foo: &Foo) {
+            foo.me/*caret*/
+        }
+    """)
+
+    fun `test complete method from local trait`() = doTestByText("""
+        struct Foo {}
+        fn func(foo: &Foo) {
+            trait Trait {
+                fn method(&self) {}
+            }
+            impl<T> Trait for T {}
+            foo.me/*caret*/
+        }
+    """, """
+        struct Foo {}
+        fn func(foo: &Foo) {
+            trait Trait {
+                fn method(&self) {}
+            }
+            impl<T> Trait for T {}
+            foo.method()/*caret*/
+        }
+    """)
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

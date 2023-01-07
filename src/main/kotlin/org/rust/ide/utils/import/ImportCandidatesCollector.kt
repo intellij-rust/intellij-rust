@@ -17,8 +17,7 @@ import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.TraitImplSource
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.resolve2.*
@@ -108,6 +107,29 @@ object ImportCandidatesCollector {
             source.requiredTraitInScope
         }
         return if (traits.filterInScope(scope).isNotEmpty()) null else traits
+    }
+
+    fun filterAccessibleTraits(context: RsElement, processor: RsResolveProcessor): RsResolveProcessor {
+        val traitsDataLazy = lazy(LazyThreadSafetyMode.NONE) {
+            val importContext = ImportContext.from(context, ImportContext.Type.OTHER) ?: return@lazy null
+            val modPaths = importContext.getAllModPaths()
+            val traitPaths = modPaths.flatMapTo(hashSetOf()) { importContext.getAllTraitsPathsInMod(it) }
+            traitPaths to importContext
+        }
+
+        fun filter(entry: ScopeEntry): Boolean {
+            if (entry !is MethodResolveVariant) return true
+
+            val source = entry.source
+            val trait = source.requiredTraitInScope ?: return true
+            // Optimized version of `getTraitImportCandidates(context, listOf(source)).isNotEmpty()`
+            val traitPath = trait.asModPath() ?: return true
+            val (traitPaths, importContext) = traitsDataLazy.value ?: return true
+            if (traitPath.parent == importContext.rootModData.path) return true  // don't filter out local traits
+            return traitPath in traitPaths
+        }
+
+        return processor.wrapWithFilter(::filter)
     }
 
     private fun getImportCandidates(context: ImportContext, target: RsQualifiedNamedElement): List<ImportCandidate> {
@@ -325,6 +347,14 @@ private fun ImportContext.getTraitsPathsInMod(modPath: ModUsePath, traits: Set<M
             perNs.types
                 .filter { checkVisibility(it, modPath.mod) && it.path in traits }
                 .map { ItemUsePath(modPath.path + name, modPath.crate, it, Namespace.Types, modPath.needExternCrate) }
+        }
+
+private fun ImportContext.getAllTraitsPathsInMod(modPath: ModUsePath): List<ModPath> =
+    modPath.mod.visibleItems.values
+        .flatMap { perNs ->
+            perNs.types
+                .filter { it.isTrait && checkVisibility(it, modPath.mod) }
+                .map { it.path }
         }
 
 
