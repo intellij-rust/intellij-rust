@@ -29,13 +29,19 @@ class QualifyPathFix(
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val path = startElement as? RsPath ?: return
-        val qualifiedPath = importInfo.usePath
-        val fullPath = "$qualifiedPath${path.typeArgumentList?.text.orEmpty()}"
-        val newPath = RsPsiFactory(project).tryCreatePath(fullPath) ?: return
+        qualify(path, importInfo)
+    }
 
-        if (!file.isIntentionPreviewElement) {
-            importInfo.insertExternCrateIfNeeded(path)
+    companion object {
+        fun qualify(path: RsPath, importInfo: ImportInfo) {
+            val qualifiedPath = importInfo.usePath
+            val fullPath = "$qualifiedPath${path.typeArgumentList?.text.orEmpty()}"
+            val newPath = RsPsiFactory(path.project).tryCreatePath(fullPath) ?: return
+
+            if (!path.isIntentionPreviewElement) {
+                importInfo.insertExternCrateIfNeeded(path)
+            }
+            path.replace(newPath)
         }
-        path.replace(newPath)
     }
 }
