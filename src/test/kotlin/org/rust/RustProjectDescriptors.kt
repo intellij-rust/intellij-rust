@@ -113,8 +113,13 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             targets = listOf(
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
-                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), DEFAULT_EDITION_FOR_TESTS, doctest = true, requiredFeatures = emptyList())
+                Target(source?.let { "$contentRoot/$it" } ?: "",
+                    targetName,
+                    TargetKind.Lib(libKind),
+                    DEFAULT_EDITION_FOR_TESTS,
+                    doctest = true,
+                    requiredFeatures = emptyList()
+                )
             ),
             source = source,
             origin = origin,
@@ -434,6 +439,16 @@ private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescrip
  * It's supposed to be used to check how the plugin works with dependencies that have the same name as stdlib packages
  */
 object WithStdlibAndStdlibLikeDependencyRustProjectDescriptor : WithRustup(WithStdlibLikeDependencyRustProjectDescriptor())
+
+/**
+ * The same as [org.rust.DefaultDescriptor] but it provides test package with [PackageOrigin.STDLIB] origin instead of [PackageOrigin.WORKSPACE]
+ */
+object StdlibLikeProjectDescriptor : RustProjectDescriptorBase() {
+
+    override fun testCargoPackage(contentRoot: String, name: String): Package {
+        return super.testCargoPackage(contentRoot, name).copy(origin = PackageOrigin.STDLIB)
+    }
+}
 
 private fun RsToolchainBase.getRustcInfo(): RustcInfo? {
     val rustc = rustc()
