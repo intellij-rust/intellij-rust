@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
 import org.rust.lang.core.RsPsiPattern.includeMacroLiteral
 import org.rust.lang.core.RsPsiPattern.literal
@@ -36,7 +37,8 @@ class RsLitExprReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
         registrar.registerReferenceProvider(includeMacroLiteral or pathAttrLiteral or pathValueLiteral, RsFileReferenceProvider())
         // LOWER_PRIORITY is used to have ability to override reference if needed
-        registrar.registerReferenceProvider(literal, RsLiteralWebReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY)
+        registrar.registerReferenceProvider(literal, RsLiteralGeneralUrlProvider(), PsiReferenceRegistrar.LOWER_PRIORITY)
+        registrar.registerReferenceProvider(literal, RsLiteralGitHubIssueProvider())
     }
 }
 
@@ -151,21 +153,34 @@ private fun getFunctionAndArguments(expr: RsLitExpr): Pair<RsFunction, RsValueAr
     }
 }
 
-private class RsLiteralWebReferenceProvider : PsiReferenceProvider() {
+private abstract class RsLiteralWebReferenceProviderBase() : PsiReferenceProvider() {
 
     // Web references do not point to any real PsiElement
     override fun acceptsTarget(target: PsiElement): Boolean = false
 
-    override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-        val stringLiteral = (element as? RsLitExpr)?.kind as? RsLiteralKind.String ?: return PsiReference.EMPTY_ARRAY
+    final override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+        val expr = element as? RsLitExpr ?: return PsiReference.EMPTY_ARRAY
+
+        return when (val literal = expr.kind) {
+            is RsLiteralKind.String -> getReferencesByStringLiteral(expr, literal)
+            else -> PsiReference.EMPTY_ARRAY
+        }
+    }
+
+    protected abstract fun getReferencesByStringLiteral(expr: RsLitExpr, literal: RsLiteralKind.String): Array<PsiReference>
+}
+
+private class RsLiteralGeneralUrlProvider : RsLiteralWebReferenceProviderBase() {
+
+    override fun getReferencesByStringLiteral(expr: RsLitExpr, literal: RsLiteralKind.String): Array<PsiReference> {
         // Url should contain `:` symbol.
         // In combination with the fact that `textContains` doesn't allocate memory,
         // it makes quite cheap check
-        if (!element.textContains(':')) return PsiReference.EMPTY_ARRAY
+        if (!expr.textContains(':')) return PsiReference.EMPTY_ARRAY
 
-        val valueRange = stringLiteral.offsets.value ?: return PsiReference.EMPTY_ARRAY
-        val rawValue = stringLiteral.rawValue ?: return PsiReference.EMPTY_ARRAY
-        val (content, indexFn) = if (stringLiteral.node.elementType in RS_RAW_LITERALS) {
+        val valueRange = literal.offsets.value ?: return PsiReference.EMPTY_ARRAY
+        val rawValue = literal.rawValue ?: return PsiReference.EMPTY_ARRAY
+        val (content, indexFn) = if (literal.node.elementType in RS_RAW_LITERALS) {
             rawValue to { i: Int -> i }
         } else {
             val (content, indices) = parseRustStringCharacters(rawValue)
@@ -178,7 +193,7 @@ private class RsLiteralWebReferenceProvider : PsiReferenceProvider() {
             if (word.isNotEmpty() && GlobalPathReferenceProvider.isWebReferenceUrl(word)) {
                 val startOffset = valueRange.startOffset + indexFn(index)
                 val endOffset = valueRange.startOffset + indexFn(index + word.length)
-                references += WebReference(element, TextRange(startOffset, endOffset), word)
+                references += WebReference(expr, TextRange(startOffset, endOffset), word)
             }
             index += word.length + 1
         }
@@ -188,5 +203,36 @@ private class RsLiteralWebReferenceProvider : PsiReferenceProvider() {
 
     companion object {
         private val SPACE_SPLITTER: Regex = Regex("\\s")
+    }
+}
+
+/**
+ * Current support:
+ *
+ * [rust-lang](https://github.com/rust-lang/rust)
+ * - [RsInnerAttr] / [RsOuterAttr] - `unstable` - `issue`
+ * - [RsInnerAttr]? / [RsOuterAttr] - `rustc_const_unstable` - `issue`
+ */
+private class RsLiteralGitHubIssueProvider : RsLiteralWebReferenceProviderBase() {
+
+    override fun getReferencesByStringLiteral(expr: RsLitExpr, literal: RsLiteralKind.String): Array<PsiReference> {
+        if (expr.containingCrate.origin != PackageOrigin.STDLIB) return PsiReference.EMPTY_ARRAY
+
+        val exprMetaItem = expr.parent as? RsMetaItem ?: return PsiReference.EMPTY_ARRAY
+
+        if (exprMetaItem.name != "issue") return PsiReference.EMPTY_ARRAY
+
+        val issueNumber = literal.value?.toLongOrNull() ?: return PsiReference.EMPTY_ARRAY
+        val metaItem = (exprMetaItem.parent as? RsMetaItemArgs)?.parent as? RsMetaItem ?: return PsiReference.EMPTY_ARRAY
+
+        return if (metaItem.isRootMetaItem() && metaItem.name in RUST_ISSUE_ATTR_NAMES) {
+            arrayOf(WebReference(expr, literal.offsets.value, "https://github.com/rust-lang/rust/issues/${issueNumber}"))
+        } else {
+            PsiReference.EMPTY_ARRAY
+        }
+    }
+
+    companion object {
+        private val RUST_ISSUE_ATTR_NAMES = setOf("unstable", "rustc_const_unstable")
     }
 }

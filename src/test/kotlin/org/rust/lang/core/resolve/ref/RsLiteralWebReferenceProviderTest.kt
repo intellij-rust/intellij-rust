@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.openapi.paths.WebReference
 import org.intellij.lang.annotations.Language
+import org.rust.StdlibLikeProjectDescriptor
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 
 class RsLiteralWebReferenceProviderTest : RsTestBase() {
@@ -48,6 +50,42 @@ class RsLiteralWebReferenceProviderTest : RsTestBase() {
         }
     """, "http://localhost:8080", "https://github.com/foo/bar")
 
+    fun `test for invalid rust github issue attr`() = checkUrlReferences("""
+        #![unstable(issue = "<caret>0")]
+
+        #[unstable(feature = "foo", issue = "<caret>0")]
+        fn foo() { }
+
+        #[rustc_const_unstable(feature = "bar", issue = "<caret>0")]
+        fn bar() { }
+    """, null, null, null)
+
+    @ProjectDescriptor(StdlibLikeProjectDescriptor::class)
+    fun `test rust github issue attr`() = checkUrlReferences("""
+        #![unstable(issue = "<info><caret>0</info>")]
+
+        #[unstable(issue = "<info><caret>0</info>")]
+        fn a() { }
+
+        #[unstable(issue = "<caret>")]
+        fn b() { }
+
+        #[foo(issue = "<caret>")]
+        fn c() { }
+
+        #[rustc_const_unstable(issue = "<info><caret>0</info>")]
+        fn d() { }
+
+        #[rustc_const_unstable(issue = "<caret>none")]
+        fn e() { }
+
+        #[rustc_const_unstable(number = "<caret>none")]
+        fn f() { }
+
+        #[cfg_attr(target_env = "", unstable(issue = "<info><caret>0</info>"))]
+        fn g() { }
+    """, RUST_GITHUB_ISSUE_URL, RUST_GITHUB_ISSUE_URL, null, null, RUST_GITHUB_ISSUE_URL, null, null, RUST_GITHUB_ISSUE_URL)
+
     private fun checkUrlReferences(@Language("Rust") code: String, vararg expectedUrls: String?) {
         InlineFile(code, "main.rs")
         val allCarets = myFixture.editor.caretModel.allCarets
@@ -66,5 +104,9 @@ class RsLiteralWebReferenceProviderTest : RsTestBase() {
         }
 
         assertEquals(expectedUrls.toList(), actualUrls)
+    }
+
+    companion object {
+        private const val RUST_GITHUB_ISSUE_URL = "https://github.com/rust-lang/rust/issues/0"
     }
 }
