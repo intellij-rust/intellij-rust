@@ -1,4 +1,3 @@
-import groovy.json.JsonSlurper
 import groovy.xml.XmlParser
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_11
@@ -708,51 +707,6 @@ task("updateCargoOptions") {
     }
 }
 
-task("updateLints") {
-    doLast {
-        val lints = JsonSlurper().parseText("python3 fetch_lints.py".execute("scripts", print = false)) as List<Map<String, *>>
-
-        fun Map<String, *>.isGroup(): Boolean = get("group") as Boolean
-        fun Map<String, *>.isRustcLint(): Boolean = get("rustc") as Boolean
-        fun Map<String, *>.getName(): String = get("name") as String
-
-        fun writeLints(path: String, lints: List<Map<String, *>>, variableName: String) {
-            val file = File(path)
-            val items = lints.sortedWith(compareBy({ !it.isGroup() }, { it.getName() })).joinToString(
-                separator = ",\n    "
-            ) {
-                val name = it.getName()
-                val isGroup = it.isGroup()
-                "Lint(\"$name\", $isGroup)"
-            }
-            file.bufferedWriter().use {
-                it.writeln("""
-/*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
-
-package org.rust.lang.core.completion.lint
-
-val $variableName: List<Lint> = listOf(
-    $items
-)
-""".trim())
-            }
-        }
-
-        writeLints(
-            "src/main/kotlin/org/rust/lang/core/completion/lint/RustcLints.kt",
-            lints.filter { it.isRustcLint() },
-            "RUSTC_LINTS"
-        )
-        writeLints(
-            "src/main/kotlin/org/rust/lang/core/completion/lint/ClippyLints.kt",
-            lints.filter { !it.isRustcLint() },
-            "CLIPPY_LINTS"
-        )
-    }
-}
 
 fun Writer.writeCargoOptions(baseUrl: String) {
 
