@@ -45,8 +45,11 @@ abstract class GenerateAccessorHandler : BaseGenerateHandler() {
         methods?.firstOrNull()?.navigate(true)
     }
 
-    override fun isFieldValid(member: StructMember, impl: RsImplItem?): Boolean {
+    override fun isFieldValid(member: StructMember, impls: Collection<RsImplItem>): Boolean {
         if (member.field.visibility == RsVisibility.Public) return false
-        return impl?.expandedMembers?.all { it.name != methodName(member) } ?: true
+
+        val methodName = methodName(member)
+
+        return impls.all { impl -> impl.expandedMembers.all { it.name != methodName } }
     }
 }

@@ -20,10 +20,10 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.rawType
 import org.rust.openapiext.checkWriteAccessNotAllowed
+import org.rust.openapiext.filterQuery
 
 abstract class BaseGenerateAction : CodeInsightAction() {
     abstract val handler: BaseGenerateHandler
@@ -38,7 +38,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         val struct: RsStructItem,
         val fields: List<StructMember>,
         val substitution: Substitution,
-        val implBlock: RsImplItem? = null
+        val implBlocks: Collection<RsImplItem> = emptyList()
     )
 
     override fun isValidFor(editor: Editor, file: PsiFile): Boolean = getContext(editor, file) != null
@@ -49,25 +49,28 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
 
     private fun getContext(editor: Editor, file: PsiFile): Context? {
         val element = file.findElementAt(editor.caretModel.offset) ?: return null
-        val struct = element.ancestorOrSelf<RsStructItem>()
-        val (structItem, impl) = if (struct != null) {
-            struct to null
-        } else {
+
+        val structItem = element.ancestorOrSelf<RsStructItem>()
+        val (struct, substitution) = if (structItem == null) {
             val impl = element.ancestorStrict<RsItemElement>() as? RsImplItem ?: return null
 
             if (!isImplBlockValid(impl)) return null
 
-            val structRef = (impl.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() as? RsStructItem
-                ?: return null
-            structRef to impl
-        }
+            val struct = (impl.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() as? RsStructItem ?: return null
+            val substitution = impl.typeReference?.rawType?.typeParameterValues ?: emptySubstitution
 
-        if (!isStructValid(structItem)) return null
-        val substitution = impl?.typeReference?.rawType?.typeParameterValues ?: emptySubstitution
-        val fields = StructMember.fromStruct(structItem, substitution).filter { isFieldValid(it, impl) }
+            struct to substitution
+        } else {
+            structItem to emptySubstitution
+        }
+        if (!isStructValid(struct)) return null
+
+        val impls = struct.searchForImplementations().filterQuery { isImplBlockValid(it) }.findAll()
+
+        val fields = StructMember.fromStruct(struct, substitution).filter { isFieldValid(it, impls) }
         if (fields.isEmpty() && !allowEmptyFields()) return null
 
-        return Context(structItem, fields, substitution, impl)
+        return Context(struct, fields, substitution, impls)
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -86,7 +89,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
             allowEmptySelection
         ) ?: return
         runWriteAction {
-            performRefactoring(context.struct, context.implBlock, chosenFields, context.substitution, editor)
+            performRefactoring(context.struct, context.implBlocks.firstOrNull(), chosenFields, context.substitution, editor)
         }
     }
 
@@ -109,7 +112,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
 
     protected open fun isImplBlockValid(impl: RsImplItem): Boolean = impl.traitRef == null
     protected open fun isStructValid(struct: RsStructItem): Boolean = true
-    protected open fun isFieldValid(member: StructMember, impl: RsImplItem?): Boolean = true
+    protected open fun isFieldValid(member: StructMember, impls: Collection<RsImplItem>): Boolean = true
     protected open fun allowEmptyFields(): Boolean = false
 
     protected abstract fun performRefactoring(

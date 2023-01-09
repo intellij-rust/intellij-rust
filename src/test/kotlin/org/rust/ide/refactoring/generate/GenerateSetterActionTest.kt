@@ -115,14 +115,14 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    fun `test filter fields with a getter`() = doTest("""
+    fun `test filter fields with a setter 1`() = doTest("""
         struct S {
             a: i32,
             b: i32,
         }
 
         impl S {
-            fn set_a(&self) {}
+            fn set_a(&self) { }
             /*caret*/
         }
     """, listOf(MemberSelection("b: i32")), """
@@ -132,11 +132,64 @@ class GenerateSetterActionTest : RsGenerateBaseTest() {
         }
 
         impl S {
-            fn set_a(&self) {}
+            fn set_a(&self) { }
 
             pub fn set_b(&mut self, b: i32) {
                 self.b = b;
             }
+        }
+    """)
+
+    fun `test filter fields with a setter 2`() = doTest("""
+        struct S/*caret*/ {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            fn set_a(&self) { }
+        }
+    """, listOf(MemberSelection("b: f32")), """
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            fn set_a(&self) { }
+            pub fn /*caret*/set_b(&mut self, b: f32) {
+                self.b = b;
+            }
+        }
+    """)
+
+    fun `test filter fields with a setter 3`() = doTest("""
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            /*caret*/
+        }
+
+        impl S {
+            fn set_a(&self) { }
+        }
+    """, listOf(MemberSelection("b: f32")), """
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            pub fn /*caret*/set_b(&mut self, b: f32) {
+                self.b = b;
+            }
+        }
+
+        impl S {
+            fn set_a(&self) { }
         }
     """)
 
