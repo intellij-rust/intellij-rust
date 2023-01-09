@@ -11,3 +11,7 @@ fun getMaximumRecursionLimit(): Int {
     val value = AdvancedSettings.getInt("org.rust.macros.maximum.recursion.limit")
     return if (value <= 0) Int.MAX_VALUE else value
 }
+
+fun getDynCallHighlightingEnabled(): Boolean {
+    return AdvancedSettings.getBoolean("org.rust.dyn.call.highlight")
+}

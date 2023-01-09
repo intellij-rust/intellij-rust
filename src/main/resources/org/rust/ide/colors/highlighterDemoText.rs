@@ -111,6 +111,9 @@ fn <FUNCTION>test</FUNCTION>() {
     <KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> {
         <UNSAFE_CODE>a_function</UNSAFE_CODE>(1);
     }
+
+    let <VARIABLE>trait_object</VARIABLE>: &<KEYWORD>dyn</KEYWORD> <TRAIT>ToString</TRAIT> = &0_u8;
+    let <VARIABLE>_</VARIABLE> = <VARIABLE>trait_object</VARIABLE>.<METHOD_CALL><DYN_CALL>to_string</DYN_CALL></METHOD_CALL>();
 }
 
 <CFG_DISABLED_CODE>#[cfg(feature = "disabled_feature")]

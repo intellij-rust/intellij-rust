@@ -53,6 +53,11 @@
             <option name="BACKGROUND" value="FFE8C6"/>
         </value>
     </option>
+    <option name="org.rust.DYN_CALL">
+        <value>
+            <option name="BACKGROUND" value="FFEEFF"/>
+        </value>
+    </option>
     <option name="org.rust.CFG_DISABLED_CODE">
         <value>
             <option name="FOREGROUND" value="526544"/>
