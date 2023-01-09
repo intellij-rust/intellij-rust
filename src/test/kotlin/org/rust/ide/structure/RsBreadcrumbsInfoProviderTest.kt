@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.miscExtensions
+package org.rust.ide.structure
 
 import com.intellij.testFramework.UsefulTestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider.Companion.ellipsis
+import org.rust.ide.structure.RsBreadcrumbsInfoProvider.Companion.ellipsis
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 

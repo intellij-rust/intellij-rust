@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.miscExtensions
+package org.rust.ide.structure
 
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
@@ -36,13 +36,23 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
         RsLambdaHandler
     )
 
-    private object RsNamedHandler : RsElementHandler<RsNamedElement> {
-        override fun accepts(e: PsiElement): Boolean =
-            e is RsModItem || e is RsStructOrEnumItemElement || e is RsTraitItem
-            || e is RsConstant || e is RsTypeAlias || e is RsNamedFieldDecl
-            || e is RsEnumVariant || e is RsModDeclItem || e is RsExternCrateItem
+    object RsNamedHandler : RsElementHandler<RsNamedElement> {
+        override fun accepts(e: PsiElement): Boolean = SUITABLE_CLASSES.any { it.isInstance(e) }
 
         override fun elementInfo(e: RsNamedElement): String = e.name.let { "$it" }
+
+        val SUITABLE_CLASSES: Array<Class<out RsElement>> = arrayOf(
+            RsStructOrEnumItemElement::class.java,
+            RsTraitItem::class.java,
+            RsModItem::class.java,
+            RsModDeclItem::class.java,
+            RsExternCrateItem::class.java,
+            RsConstant::class.java,
+            RsTypeAlias::class.java,
+            RsTraitAlias::class.java,
+            RsEnumVariant::class.java,
+            RsNamedFieldDecl::class.java,
+        )
     }
 
     private object RsImplHandler : RsElementHandler<RsImplItem> {

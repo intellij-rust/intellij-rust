@@ -32,8 +32,11 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase, expandMacros: Bool
 
     init {
         withSuitableClasses(
-            RsNamedElement::class.java,
-            RsImplItem::class.java
+            RsImplItem::class.java,
+            RsMacro::class.java,
+            RsMacro2::class.java,
+            RsFunction::class.java,
+            *RsBreadcrumbsInfoProvider.RsNamedHandler.SUITABLE_CLASSES,
         )
         withSorters(
             // Order of sorters matters: if both visibility and alpha sorters are active, we want
