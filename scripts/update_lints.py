@@ -1,16 +1,41 @@
+import argparse
 import json
-import os
 import re
+import subprocess
 from urllib import request
 
-import subprocess
+from common import env
+from updater import UpdaterBase
 
 """
 This script serves to download actual lints from rustc and clippy.
 You need to have `rustc` and `git` available in $PATH for it to work.
 """
 
-DIR = os.path.dirname(os.path.abspath(__name__))
+RUSTC_LINTS_PATH = "src/main/kotlin/org/rust/lang/core/completion/lint/RustcLints.kt"
+CLIPPY_LINTS_PATH = "src/main/kotlin/org/rust/lang/core/completion/lint/ClippyLints.kt"
+TEMPLATE_RUSTC = """/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.lang.core.completion.lint
+
+val RUSTC_LINTS: List<Lint> = listOf(
+{}
+)
+"""
+TEMPLATE_CLIPPY = """/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.lang.core.completion.lint
+
+val CLIPPY_LINTS: List<Lint> = listOf(
+{}
+)
+"""
 
 
 class LintParsingMode:
@@ -70,8 +95,35 @@ def get_clippy_lints():
     return merged_lints
 
 
-if __name__ == "__main__":
-    output = [{"name": l[0], "group": l[1], "rustc": True} for l in get_rustc_lints()] + \
-             [{"name": l[0], "group": l[1], "rustc": False} for l in get_clippy_lints()]
+def generate_text(lints_list: list, template: str):
+    lints_list.sort(key=lambda item: (not item[1], item[0]))
+    text = ",\n".join(f"    Lint(\"{item[0]}\", {str(item[1]).lower()})" for item in lints_list)
+    return template.format(text)
 
-    print(json.dumps(output))
+
+class LintsUpdater(UpdaterBase):
+
+    def _update_locally(self):
+        text_rustc = generate_text(get_rustc_lints(), TEMPLATE_RUSTC)
+        with open(RUSTC_LINTS_PATH, "w") as f:
+            f.write(text_rustc)
+
+        text_clippy = generate_text(get_clippy_lints(), TEMPLATE_CLIPPY)
+        with open(CLIPPY_LINTS_PATH, "w") as f:
+            f.write(text_clippy)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--token", type=str, required=True, help="github token")
+    args = parser.parse_args()
+
+    repo = env("GITHUB_REPOSITORY")
+
+    updater = LintsUpdater(repo, args.token, branch_name="lints-update", message="Update rustc and clippy lints",
+                           assignee="neonaot")
+    updater.update()
+
+
+if __name__ == '__main__':
+    main()
