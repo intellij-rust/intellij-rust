@@ -2,5 +2,11 @@
     <extensions defaultExtensionNs="com.intellij">
         <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="true" restartRequired="false"
                      description="Enable Rust MSVC support in LLDB (Windows-only)"/>
+        <registryKey key="org.rust.code.vision.usage"
+                     defaultValue="false"
+                     description="Enable reference usage Code Vision hints for Rust" />
+
+        <codeInsight.daemonBoundCodeVisionProvider
+            implementation="org.rust.ide.hints.codeVision.RsReferenceCodeVisionProvider"/>
     </extensions>
 </idea-plugin>

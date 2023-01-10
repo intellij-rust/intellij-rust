@@ -6,55 +6,145 @@
 package org.rust.ide.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionTestCase
-import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
+import org.rust.lang.core.macros.MacroExpansionScope
 
-@Suppress("UnstableApiUsage")
 class RsCodeVisionTestCase : CodeVisionTestCase() {
-    fun `test function`() = doTest("""
-        <# block [John Smith +2] #>
+    override val onlyCodeVisionHintsAllowed: Boolean = false
+
+    fun `test no usages`() = doTest("""
         fn foo() {}
     """)
 
+    fun `test function`() = doTest("""
+        <# block [1 usage] #>
+        fn foo() {}
+
+        fn bar() {
+            foo();
+        }
+    """)
+
+    fun `test function multiple usages`() = doTest("""
+        <# block [2 usages] #>
+        fn foo() {}
+
+        fn bar() {
+            foo();
+        }
+        fn baz() {
+            foo();
+        }
+    """)
+
     fun `test struct`() = doTest("""
-        <# block [John Smith +2] #>
+        <# block [2 usages] #>
         struct S;
+
+        fn bar(s: S) {
+            let a: S = s;
+        }
+    """)
+
+    fun `test struct field`() = doTest("""
+        <# block [1 usage] #>
+        struct S {
+        <# block [2 usages] #>
+            a: u32
+        }
+
+        fn bar(s: S) {
+            let a = s.a;
+            s.a = a;
+        }
     """)
 
     fun `test enum`() = doTest("""
-        <# block [John Smith +2] #>
-        enum E { V1 }
+        <# block [1 usage] #>
+        enum E1 {
+            V1,
+            V2
+        }
+
+        fn bar(e: E1) {}
     """)
 
-    fun `test impl`() = doTest("""
-        <# block [John Smith +2] #>
-        struct S;
+    fun `test enum variant`() = doTest("""
+        <# block [1 usage] #>
+        enum E1 {
+        <# block [1 usage] #>
+            V1,
+            V2
+        }
 
-        <# block [John Smith +2] #>
-        impl S {}
+        fn bar() {
+            let x = E1::V1;
+        }
     """)
 
     fun `test trait`() = doTest("""
-        <# block [John Smith +2] #>
-        trait Trait {}
+        <# block [1 usage] #>
+        trait T {}
+
+        fn bar(a: &dyn T) {}
+    """)
+
+    fun `test type alias`() = doTest("""
+        <# block [1 usage] #>
+        type T = u32;
+
+        fn bar(a: T) {}
+    """)
+
+    fun `test constant`() = doTest("""
+        <# block [1 usage] #>
+        const FOO: u32 = 0;
+
+        fn bar() {
+            let a = FOO;
+        }
+    """)
+
+    fun `test static`() = doTest("""
+        <# block [1 usage] #>
+        static FOO: u32 = 0;
+
+        fn bar() {
+            let a = FOO;
+        }
+    """)
+
+    /* TODO: fix
+    fun `test macro`() = doTest("""
+        <# block [1 usage] #>
+        macro_rules! foo{ {} => {} }
+
+        fn bar() {
+            let a = foo!();
+        }
+    """)*/
+
+    fun `test macro 2`() = doTest("""
+        <# block [1 usage] #>
+        macro foo() {}
+
+        fn bar() {
+            let a = foo!();
+        }
     """)
 
     fun `test mod`() = doTest("""
-        <# block [John Smith +2] #>
-        mod foo {}
-    """)
+        <# block [1 usage] #>
+        mod foo {
+        <# block [1 usage] #>
+            pub struct S;
+        }
 
-    fun `test macro`() = doTest("""
-        <# block [John Smith +2] #>
-        macro_rules! foo {}
-    """)
-
-    fun `test macro 2`() = doTest("""
-        <# block [John Smith +2] #>
-        macro foo() {}
+        fn bar(a: foo::S) {}
     """)
 
     private fun doTest(@Language("Rust") text: String) {
-        testProviders(text.trimIndent(), "main.rs", VcsCodeVisionProvider.id)
+        testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProvider.ID)
     }
 }
