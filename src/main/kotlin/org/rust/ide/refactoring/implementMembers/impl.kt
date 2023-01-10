@@ -49,11 +49,11 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 /**
  * Generates missing trait members in a non-interactive way.
  */
-fun generateMissingTraitMembers(impl: RsImplItem) {
+fun generateMissingTraitMembers(impl: RsImplItem, editor: Editor?) {
     val (implInfo, trait) = findMembersToImplement(impl) ?: return
 
     RsIntentionPreviewUtils.write {
-        insertNewTraitMembers(implInfo.missingImplementations, impl, trait, null)
+        insertNewTraitMembers(implInfo.missingImplementations, impl, trait, editor)
     }
 }
 

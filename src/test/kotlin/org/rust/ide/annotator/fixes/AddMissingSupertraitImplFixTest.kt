@@ -50,7 +50,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
         struct S;
 
         impl A for S {
-            type FOO = ();
+            type FOO = <selection>()</selection>;
             const BAR: u32 = 0;
 
             fn foo(&self) {
@@ -58,7 +58,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
             }
         }
 
-        impl B/*caret*/ for S {}
+        impl B for S {}
     """)
 
     fun `test multiple supertraits`() = checkFixByText("Implement missing supertrait(s)", """
@@ -194,11 +194,11 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         impl A<u32> for S {
             fn foo(&self) -> u32 {
-                todo!()
+                <selection>todo!()</selection>
             }
         }
 
-        impl C<u32>/*caret*/ for S {}
+        impl C<u32> for S {}
     """)
 
     fun `test trait partially implemented for specific type`() = checkFixByText("Implement missing supertrait(s)", """

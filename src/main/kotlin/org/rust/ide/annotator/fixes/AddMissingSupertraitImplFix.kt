@@ -65,7 +65,7 @@ class AddMissingSupertraitImplFix(implItem: RsImplItem) : LocalQuickFixAndIntent
         for ((superTrait, ref) in traits) {
             if (superTrait == trait) continue
             if (!implLookup.canSelect(TraitRef(type, superTrait))) {
-                implementTrait(impl, ref, typeRef, trait, substitutions)
+                implementTrait(impl, ref, typeRef, trait, substitutions, editor)
             }
         }
     }
@@ -76,7 +76,8 @@ private fun implementTrait(
     superTraitRef: RsTraitRef,
     typeReference: RsTypeReference,
     trait: BoundElement<RsTraitItem>,
-    substitutions: List<RsPsiSubstitution>
+    substitutions: List<RsPsiSubstitution>,
+    editor: Editor?,
 ) {
     val renderer = ImportingPsiRenderer(
         PsiRenderingOptions(),
@@ -102,7 +103,7 @@ private fun implementTrait(
     for (importCandidate in renderer.itemsToImport) {
         importCandidate.import(inserted)
     }
-    generateMissingTraitMembers(inserted)
+    generateMissingTraitMembers(inserted, editor)
 }
 
 private fun collectSuperTraits(
