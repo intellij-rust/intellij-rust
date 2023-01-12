@@ -51,8 +51,10 @@ class RustType(object):
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
 # str, mut str, const str*, mut str* (vanilla LLDB); &str, &mut str, *const str, *mut str (Rust-enabled LLDB)
 STD_STR_REGEX = re.compile(r"^[&*]?(const |mut )?str\*?$")
-STD_SLICE_REGEX = re.compile(r"^&(mut )?\[.*\]$")
-STD_MSVC_SLICE_REGEX = re.compile(r"^(mut )?slice\$<.+>$")
+# &[T], &mut [T], *const [T], *mut [T]
+STD_SLICE_REGEX = re.compile(r"^(&|&mut |\*const |\*mut )?\[.*]$")
+# slice$<T>, ptr_const$<slice$<T> >, ptr_mut$<slice$<T> >
+STD_MSVC_SLICE_REGEX = re.compile(r"^(slice\$<.+>)|((ptr_const|ptr_mut)\$<slice\$<.+> >)$")
 
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
 STD_OS_STR_REGEX = re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$")
