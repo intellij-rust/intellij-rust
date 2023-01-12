@@ -27,7 +27,10 @@ import org.rust.ide.utils.import.ImportContext
 import org.rust.ide.utils.import.ImportInfo
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.crate.CratePersistentId
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.inference
 import org.rust.openapiext.toPsiFile
@@ -166,22 +169,20 @@ private class ImportingProcessor(private val importOffset: Int, private val impo
     val qualifyCandidates: List<Pair<RsPath, ImportInfo>> = qualifyCandidatesInner
 
     override fun processPath(path: RsPath) {
-        val ctx = AutoImportFix.findApplicableContext(path)
-        handleImport(path, ctx)
+        handleImport(path) { AutoImportFix.findApplicableContext(path) }
     }
 
     override fun processMethodCall(methodCall: RsMethodCall) {
-        val ctx = AutoImportFix.findApplicableContext(methodCall)
-        handleImport(methodCall, ctx)
+        handleImport(methodCall) { AutoImportFix.findApplicableContext(methodCall) }
     }
 
     override fun processPatBinding(binding: RsPatBinding) {
-        val ctx = AutoImportFix.findApplicableContext(binding)
-        handleImport(binding, ctx)
+        handleImport(binding) { AutoImportFix.findApplicableContext(binding) }
     }
 
-    private fun handleImport(element: RsElement, ctx: AutoImportFix.Context?) {
+    private fun handleImport(element: RsElement, getCtx: () -> AutoImportFix.Context?) {
         val importMapCandidate = importMap.elementToFqn(element, importOffset) ?: return
+        val ctx = getCtx()
 
         // Try to import with the "Auto import" context
         val candidate = ctx.getCandidate(importMapCandidate)
@@ -270,32 +271,15 @@ private interface Processor {
 }
 
 private fun processElementsInRange(file: RsFile, range: TextRange, processor: Processor) {
-    val visitor = object : RsRecursiveVisitor() {
-        override fun visitPath(path: RsPath) {
-            super.visitPath(path)
-            processor.processPath(path)
-        }
-
-        override fun visitMethodCall(methodCall: RsMethodCall) {
-            super.visitMethodCall(methodCall)
-            processor.processMethodCall(methodCall)
-        }
-
-        override fun visitPatBinding(binding: RsPatBinding) {
-            super.visitPatBinding(binding)
-            processor.processPatBinding(binding)
-        }
-    }
-
-    val elements = gatherElements(file, range)
+    val elements = CollectHighlightsUtil.getElementsInRange(file, range.startOffset, range.endOffset)
     for (element in elements) {
-        element.accept(visitor)
+        when (element) {
+            is RsPath -> processor.processPath(element)
+            is RsMethodCall -> processor.processMethodCall(element)
+            is RsPatBinding -> processor.processPatBinding(element)
+        }
     }
 }
-
-private fun gatherElements(file: RsFile, range: TextRange): List<PsiElement> =
-    CollectHighlightsUtil.getElementsInRange(file, range.startOffset, range.endOffset)
-        .filter { elem -> elem !is PsiFile }
 
 /**
  * Converts an element to its relative end offset within some region.
