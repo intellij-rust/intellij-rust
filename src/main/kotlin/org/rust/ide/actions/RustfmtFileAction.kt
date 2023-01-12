@@ -6,13 +6,11 @@
 package org.rust.ide.actions
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -25,6 +23,8 @@ import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.*
 
 class RustfmtFileAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         super.update(e)
@@ -63,14 +63,11 @@ class RustfmtFileAction : DumbAwareAction() {
     private fun getContext(e: AnActionEvent): Triple<CargoProject, Rustfmt, Document>? {
         val project = e.project ?: return null
         val rustfmt = project.toolchain?.rustfmt() ?: return null
-        val editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE) ?: getSelectedEditor(project) ?: return null
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
         val document = editor.document
         val file = document.virtualFile ?: return null
         if (!(file.isInLocalFileSystem && file.isRustFile)) return null
         val cargoProject = project.cargoProjects.findProjectForFile(file) ?: return null
         return Triple(cargoProject, rustfmt, document)
     }
-
-    private fun getSelectedEditor(project: Project): Editor? =
-        FileEditorManager.getInstance(project).selectedTextEditor
 }

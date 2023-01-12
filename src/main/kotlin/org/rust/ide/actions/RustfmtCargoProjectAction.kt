@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtil
@@ -20,6 +21,8 @@ import org.rust.openapiext.saveAllDocumentsAsTheyAre
 import org.rust.stdext.unwrapOrElse
 
 class RustfmtCargoProjectAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         super.update(e)

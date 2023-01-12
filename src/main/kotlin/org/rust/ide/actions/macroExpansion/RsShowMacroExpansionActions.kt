@@ -7,6 +7,7 @@ package org.rust.ide.actions.macroExpansion
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -23,6 +24,8 @@ import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 
 abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boolean) : AnAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = getMacroUnderCaret(e.dataContext) != null
