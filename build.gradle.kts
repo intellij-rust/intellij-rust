@@ -77,6 +77,7 @@ allprojects {
         mavenCentral()
         maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        maven("https://jitpack.io")
     }
 
     idea {
@@ -195,7 +196,7 @@ allprojects {
 
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
-        implementation("ch.epfl.scala:bsp4j:2.1.0-M3")
+        implementation("com.github.zpp-This-is-fine:build-server-protocol:90ee7a591443df55530e45869cf049f0e6f23150")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
