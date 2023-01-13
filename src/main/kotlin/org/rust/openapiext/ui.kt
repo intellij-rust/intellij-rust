@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -117,3 +118,6 @@ fun <T : JComponent> Row.fullWidthCell(component: T): Cell<T> {
     return cell(component)
         .horizontalAlign(HorizontalAlign.FILL)
 }
+
+val JBTextField.trimmedText: String
+    get() = text.trim()
