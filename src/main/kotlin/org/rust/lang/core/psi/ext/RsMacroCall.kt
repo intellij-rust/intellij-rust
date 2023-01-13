@@ -8,7 +8,9 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
@@ -45,6 +47,17 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
         val isStructureModification = ancestors.any { it is RsMacroCall && it.macroName == "include" }
         return !isStructureModification // Note: RsMacroCall is a special case for RsPsiManagerImpl
     }
+
+    override fun isValidHost(): Boolean = macroArgument != null
+
+    override fun updateText(text: String): PsiLanguageInjectionHost {
+        val newMacroCall = RsPsiFactory(project, markGenerated = true).createFile(text).firstChild as? RsMacroCall
+            ?: error(text)
+        return replace(newMacroCall) as RsMacroCall
+    }
+
+    override fun createLiteralTextEscaper(): LiteralTextEscaper<RsMacroCall> =
+        SimpleMultiLineTextEscaper(this)
 }
 
 val RsMacroCall.macroName: String
