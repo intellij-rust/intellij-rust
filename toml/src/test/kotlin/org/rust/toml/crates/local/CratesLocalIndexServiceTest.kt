@@ -39,8 +39,9 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
                 .unwrap()
                 ?.versions
                 ?.find { it.version == "1.0.0" }
-                ?.features,
-            listOf("io-util", "process", "macros", "rt", "io-std", "sync", "fs", "rt-multi-thread", "default", "test-util", "time", "net", "signal", "full")
+                ?.features
+                ?.toSet(),
+            setOf("io-util", "process", "macros", "rt", "io-std", "sync", "fs", "rt-multi-thread", "default", "test-util", "time", "net", "signal", "full")
         )
     }
 
