@@ -44,6 +44,9 @@ val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
 
+val grammarKitFakePsiDepsProjectDir = "grammar-kit-fake-psi-deps"
+val grammarKitFakePsiDepsProject = ":$grammarKitFakePsiDepsProjectDir"
+
 plugins {
     idea
     kotlin("jvm") version "1.8.0"
@@ -56,7 +59,8 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
-        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin")
+        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") +
+            file("$grammarKitFakePsiDepsProjectDir/src/main/kotlin")
     }
 }
 
@@ -377,6 +381,8 @@ project(":plugin") {
     }
 }
 
+project(":$grammarKitFakePsiDepsProject")
+
 project(":") {
     sourceSets {
         main {
@@ -415,6 +421,7 @@ project(":") {
             pathToParser.set("org/rust/lang/core/parser/RustParser.java")
             pathToPsiRoot.set("org/rust/lang/core/psi")
             purgeOldFiles.set(true)
+            classpath(project(grammarKitFakePsiDepsProject).sourceSets.main.get().runtimeClasspath)
         }
         withType<KotlinCompile> {
             dependsOn(generateLexer, generateParser)

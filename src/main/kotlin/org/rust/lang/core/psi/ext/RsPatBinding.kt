@@ -5,10 +5,10 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
@@ -50,8 +50,8 @@ val RsPatBinding.topLevelPattern: RsPat
 
 val RsPatBinding.isReferenceToConstant: Boolean get() = reference.resolve()?.isConstantLike == true
 
-abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
-                                                      RsPatBinding {
+abstract class RsPatBindingImplMixin(type: IElementType) : RsNamedElementImpl(type),
+                                                           RsPatBinding {
 
     // XXX: RsPatBinding is both a name element and a reference element:
     //

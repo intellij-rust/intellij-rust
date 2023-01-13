@@ -5,14 +5,14 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsMacroBinding
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsPsiImplUtil.localOrMacroSearchScope
 
-abstract class RsMacroBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsMacroBinding {
+abstract class RsMacroBindingImplMixin(type: IElementType) : RsNamedElementImpl(type), RsMacroBinding {
 
     override fun getNameIdentifier(): PsiElement? = metaVarIdentifier
 
