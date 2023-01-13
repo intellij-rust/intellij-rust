@@ -323,9 +323,9 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
     }
 
     companion object {
-        const val EXPANDER_VERSION = 17
+        const val EXPANDER_VERSION = 18
         private val USELESS_PARENS_EXPRS = tokenSetOf(
-            LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
+            LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR, BLOCK_EXPR
         )
     }
 }
