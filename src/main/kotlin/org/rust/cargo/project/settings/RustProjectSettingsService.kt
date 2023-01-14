@@ -54,13 +54,6 @@ interface RustProjectSettingsService {
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }
-
-        // BACKCOMPAT: 2022.2. Drop it
-        @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-        @Deprecated("Use toolchain property")
-        fun setToolchain(toolchain: org.rust.cargo.toolchain.RsToolchain?) {
-            toolchainHomeDirectory = toolchain?.location?.systemIndependentPath
-        }
     }
 
     enum class MacroExpansionEngine {
@@ -104,11 +97,6 @@ interface RustProjectSettingsService {
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
     val doctestInjectionEnabled: Boolean
-
-    // BACKCOMPAT: 2022.2. Drop it
-    @Suppress("DEPRECATION")
-    @Deprecated("Use toolchain property")
-    fun getToolchain(): org.rust.cargo.toolchain.RsToolchain?
 
     /*
      * Show a dialog for toolchain configuration

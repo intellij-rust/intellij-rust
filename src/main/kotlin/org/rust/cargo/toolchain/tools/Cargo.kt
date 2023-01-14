@@ -44,10 +44,13 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.find
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoTargets
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.ORIGINAL_RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
@@ -75,10 +78,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
-
-// BACKCOMPAT: 2022.2. Added not to break binary compatibility with EduTools plugin
-@Suppress("DEPRECATION")
-fun RsToolchain.cargo(): Cargo = (this as RsToolchainBase).cargo()
 
 fun RsToolchainBase.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
     val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)

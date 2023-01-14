@@ -40,13 +40,11 @@ class RsCommandLineSetup(val request: TargetEnvironmentRequest) {
         request.projectPathOnTarget
     )
 
-    // BACKCOMPAT: 2022.2
-    @Suppress("DEPRECATION")
     fun requestUploadIntoTarget(uploadPathString: String): TargetValue<String> {
         val uploadPath = FileUtil.toSystemDependentName(uploadPathString).toPath()
         val isDir = uploadPath.isDirectory()
         val localRootPath = if (isDir) uploadPath else (uploadPath.parent ?: Paths.get("."))
-        val (uploadRoot, pathToRoot) = request.getUploadRootForLocalPath(localRootPath.toString())
+        val (uploadRoot, pathToRoot) = request.getUploadRootForLocalPath(localRootPath)
             ?: createUploadRoot(projectHomeOnTarget, localRootPath).let { uploadRoot ->
                 request.uploadVolumes += uploadRoot
                 uploadRoot to "."
