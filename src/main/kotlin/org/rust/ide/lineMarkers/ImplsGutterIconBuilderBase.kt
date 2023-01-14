@@ -6,6 +6,7 @@
 package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
@@ -22,13 +23,14 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
 
-abstract class ImplsGutterIconBuilderBase(private val elementName: String, icon: Icon) :
+class ImplsGutterIconBuilder(private val elementName: String, icon: Icon) :
     NavigationGutterIconBuilder<PsiElement>(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER) {
 
-    protected fun createGutterIconRendererInner(
+    override fun createGutterIconRenderer(
         pointers: NotNullLazyValue<List<SmartPsiElementPointer<*>>>,
         renderer: Computable<PsiElementListCellRenderer<*>>,
-        empty: Boolean
+        empty: Boolean,
+        navigationHandler: GutterIconNavigationHandler<PsiElement>?
     ): NavigationGutterIconRenderer {
         return ImplsNavigationGutterIconRenderer(
             popupTitle = myPopupTitle,

@@ -12,9 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.guessAndSetupRustProject
+import javax.swing.Icon
 
-abstract class CargoProjectOpenProcessorBase : ProjectOpenProcessor() {
+class CargoProjectOpenProcessor : ProjectOpenProcessor() {
+
+    override val icon: Icon get() = CargoIcons.ICON
+    override val name: String get() = "Cargo"
 
     override fun canOpenProject(file: VirtualFile): Boolean {
         return FileUtil.namesEqual(file.name, CargoConstants.MANIFEST_FILE) ||
