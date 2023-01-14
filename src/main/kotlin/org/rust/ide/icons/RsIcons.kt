@@ -62,10 +62,8 @@ object RsIcons {
     val MACRO = load("/icons/nodes/macro.svg")
     val MACRO2 = load("/icons/nodes/macro2.0.svg")
 
-    private val GLOBAL_BINDING = load("/icons/nodes/constant.svg")
-    val CONSTANT = GLOBAL_BINDING.addFinalMark()
-    // TODO: look like we need separate icons for statics and constants
-    val MUT_STATIC = GLOBAL_BINDING
+    val CONSTANT = load("/icons/nodes/constant.svg")
+    val MUT_STATIC = load("/icons/nodes/static.svg")
     val STATIC = MUT_STATIC.addFinalMark()
 
     val METHOD = load("/icons/nodes/method.svg")
@@ -75,7 +73,7 @@ object RsIcons {
 
     val ABSTRACT_METHOD = load("/icons/nodes/abstractMethod.svg")
     val ABSTRACT_ASSOC_FUNCTION = load("/icons/nodes/abstractFunction.svg").addStaticMark()
-    val ABSTRACT_ASSOC_CONSTANT = load("/icons/nodes/abstractConstant.svg").addStaticMark().addFinalMark()
+    val ABSTRACT_ASSOC_CONSTANT = load("/icons/nodes/abstractConstant.svg").addStaticMark()
     val ABSTRACT_ASSOC_TYPE_ALIAS = load("/icons/nodes/abstractTypeAlias.svg").addStaticMark()
 
     val ATTRIBUTE = AllIcons.Nodes.Annotationtype
