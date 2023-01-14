@@ -12,6 +12,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runReadAction
@@ -41,6 +42,8 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
 
 class ShareInPlaygroundAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) as? RsFile

@@ -5,6 +5,9 @@
 
 package org.rust.cargo.project.model
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.DumbAwareAction
 
-abstract class CargoProjectActionBase : DumbAwareAction()
+abstract class CargoProjectActionBase : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}

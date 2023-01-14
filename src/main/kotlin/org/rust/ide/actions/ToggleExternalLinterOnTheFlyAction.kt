@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import org.rust.cargo.project.settings.rustSettings
@@ -20,6 +21,8 @@ class ToggleExternalLinterOnTheFlyAction : ToggleAction() {
         val project = e.project ?: return
         project.rustSettings.modify { it.runExternalLinterOnTheFly = state }
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         super.update(e)

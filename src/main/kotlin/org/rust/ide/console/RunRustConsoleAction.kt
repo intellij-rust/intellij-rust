@@ -6,6 +6,7 @@
 package org.rust.ide.console
 
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.project.DumbAwareAction
@@ -13,6 +14,9 @@ import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.ide.notifications.showBalloonWithoutProject
 
 class RunRustConsoleAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project?.hasCargoProject == true
     }

@@ -5,6 +5,7 @@
 
 package org.rust.ide.spelling
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -32,6 +33,8 @@ class RsSpellCheckerGenerateDictionariesAction : AnAction() {
         }
         generator.generate()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = e.project?.cargoProjects?.hasAtLeastOneValidProject == true
