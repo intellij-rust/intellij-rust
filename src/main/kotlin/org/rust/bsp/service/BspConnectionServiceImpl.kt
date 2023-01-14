@@ -17,7 +17,6 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
-import org.rust.bsp.RustBuildServer
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
@@ -29,7 +28,6 @@ import kotlin.io.path.Path
 class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     private var bspServer: BspServer? = null
-    private var rustBspMockServer: RustBuildServer = RustBuildServer()
     private var bspClient: BspClient? = null
     private var disconnectActions: MutableList<() -> Unit> = mutableListOf()
 
@@ -54,7 +52,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
             queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
         server.onBuildInitialized()
 
-        return calculateProjectDetailsWithCapabilities(server, rustBspMockServer, initializeBuildResult.capabilities) {
+        return calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities) {
             println("BSP server capabilities: $it")
         }
     }
@@ -181,7 +179,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         VirtualFileManager.getInstance().findFileByNioPath(Path(this))
 }
 
-interface BspServer : BuildServer //, RustBuildServer
+interface BspServer : BuildServer, RustBuildServer
 
 fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
     val env = environment()
@@ -194,39 +192,34 @@ fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
 
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
-    rustBspMockServer: RustBuildServer,
     buildServerCapabilities: BuildServerCapabilities,
     errorCallback: (Throwable) -> Unit
 ): CargoMetadata.Project {
-    val projectPackages = queryForPackages(rustBspMockServer).get()
+    val projectMetadata = queryForMetadata(server, emptyList()).get()
 
-    val resolve = queryForResolve(rustBspMockServer).get()
-    val version = queryForVersion(rustBspMockServer).get()
-    val workspaceMembers = queryForMembers(rustBspMockServer).get()
-    val workspaceRoot = queryForRoot(rustBspMockServer).get()
+    val projectPackages = createPackageMetadata(projectMetadata)
+    val resolve = createResolveMetadata(projectMetadata)
+    val version = projectMetadata.version
+    val workspaceMembers = projectMetadata.workspaceMembers
+    val workspaceRoot = projectMetadata.workspaceRoot
 
     return CargoMetadata.Project(projectPackages, resolve, version, workspaceMembers, workspaceRoot)
 }
 
-fun queryForPackages(server: RustBuildServer): CompletableFuture<List<CargoMetadata.Package>> {
-    return server.projectPackages()
+fun createPackageMetadata(metadata: RustMetadataResult): List<CargoMetadata.Package>
+{
+    return metadata.packages.map{CargoMetadata.createPackageFromMetadata(it)}.toList()
 }
 
-fun queryForResolve(server: RustBuildServer): CompletableFuture<CargoMetadata.Resolve> {
-    return server.projectDependencies().thenApply { CargoMetadata.Resolve(it) }
+fun createResolveMetadata(metadata: RustMetadataResult): CargoMetadata.Resolve
+{
+    return CargoMetadata.createResolveFromMetadata(metadata.dependencies)
 }
 
-fun queryForVersion(server: RustBuildServer): CompletableFuture<Int> {
-    return server.version()
+fun queryForMetadata(server: BspServer, params: List<BuildTargetIdentifier>): CompletableFuture<RustMetadataResult> {
+    return server.rustMetadata(RustMetadataParams(params))
 }
 
-fun queryForMembers(server: RustBuildServer): CompletableFuture<List<String>> {
-    return server.workspaceMembers()
-}
-
-fun queryForRoot(server: RustBuildServer): CompletableFuture<String> {
-    return server.workspaceRoot()
-}
 
 
 private fun <T> CompletableFuture<T>.catchSyncErrors(errorCallback: (Throwable) -> Unit): CompletableFuture<T> =
