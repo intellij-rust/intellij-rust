@@ -5,8 +5,6 @@
 
 package org.rust.bsp
 
-class BspConstants {
-    companion object {
-        const val BSP_WORKSPACE = "WORKSPACE"
-    }
+object BspConstants {
+    const val BSP_WORKSPACE = "WORKSPACE"
 }

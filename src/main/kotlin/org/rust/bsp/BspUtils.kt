@@ -8,10 +8,7 @@ package org.rust.bsp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 
-class BspUtils {
-    companion object {
-        fun isBspProject(project: Project): Boolean {
-            return project.guessProjectDir()?.findChild(BspConstants.BSP_WORKSPACE) != null
-        }
-    }
+object BspUtils {
+    fun isBspProject(project: Project): Boolean =
+        project.guessProjectDir()?.findChild(BspConstants.BSP_WORKSPACE) != null
 }
