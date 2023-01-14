@@ -205,7 +205,8 @@ private class ModCollector(
             convertVisibility(item.visibility, item.isDeeplyEnabledByCfg)
         }
         val itemPath = modData.path.append(item.name)
-        return VisItem(itemPath, visibility, isModOrEnum)
+        val isTrait = item is SimpleItemLight && item.isTrait
+        return VisItem(itemPath, visibility, isModOrEnum, isTrait)
     }
 
     private fun tryCollectChildModule(item: ModOrEnumItemLight, stub: RsNamedStub, index: Int): ModData? {

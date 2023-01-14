@@ -167,21 +167,13 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         } else {
             ::processDotExprResolveVariants
         }
-        val processor = methodAndFieldCompletionProcessor(element, result, context)
+        var processor = methodAndFieldCompletionProcessor(element, result, context)
+        processor = deduplicateMethodCompletionVariants(processor)
+        processor = filterMethodCompletionVariantsByTraitBounds(lookup, receiverTy, processor)
+        processor = ImportCandidatesCollector.filterAccessibleTraits(receiver, processor)
+        processor = filterCompletionVariantsByVisibility(receiver, processor)
 
-        processResolveVariants(
-            lookup,
-            receiverTy,
-            element,
-            filterCompletionVariantsByVisibility(
-                receiver,
-                filterMethodCompletionVariantsByTraitBounds(
-                    lookup,
-                    receiverTy,
-                    deduplicateMethodCompletionVariants(processor)
-                )
-            )
-        )
+        processResolveVariants(lookup, receiverTy, element, processor)
     }
 
     private fun addCompletionsForOutOfScopeItems(
