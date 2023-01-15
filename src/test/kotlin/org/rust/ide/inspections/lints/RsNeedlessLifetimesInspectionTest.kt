@@ -194,6 +194,30 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         }
     """)
 
+    fun `test self 7 (&Self)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: &'a Self, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: &Self, _: &i32) -> &i32 { &0 }
+        }
+    """)
+
+    fun `test self 8 (Box)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: Box<&'a Self>, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: Box<&Self>, _: &i32) -> &i32 { &0 }
+        }
+    """)
+
     fun `test inside impl`() = doTest("""
         struct S<'a>(&'a str);
         <weak_warning>fn <caret>foo<'a>(x: &'a mut [u8]) -> S<'a></weak_warning> { unimplemented!() }
