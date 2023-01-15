@@ -144,7 +144,10 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecu
     override fun visitLifetime(lifetime: RsLifetime) = record(lifetime)
 
     override fun visitElement(element: RsElement) {
-        if (abort || element is RsItemElement /* ignore nested items */) return
+        if (abort) return
+        if (element is RsItemElement) return  // ignore nested items
+        if (element is RsFnPointerType) return  // ignore `fn(&i32)`
+        if (element is RsPath && element.valueParameterList != null) return  // ignore `Fn(&i32)`
         element.forEachChild { it.accept(this) }
     }
 
