@@ -67,6 +67,11 @@ fun GeneralCommandLine.startProcess(
     }
 
     val request = config.createEnvironmentRequest(project)
+    val languageRuntime: RsLanguageRuntimeConfiguration? = request.configuration?.languageRuntime
+    if (languageRuntime?.useProjectPath == true) {
+        request.projectPathOnTarget = config.projectRootOnTarget;
+    }
+
     val setup = RsCommandLineSetup(request)
     val targetCommandLine = toTargeted(setup, uploadExecutable)
     val progressIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
