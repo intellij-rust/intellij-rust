@@ -209,7 +209,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         for (candidate in candidates) {
             val item = candidate.item
-            val scopeEntry = SimpleScopeEntry(candidate.itemName, item)
+            val scopeEntry = SimpleScopeEntry(candidate.itemName, item, TYPES_N_VALUES_N_MACROS)
 
             if (item is RsEnumItem
                 && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
@@ -529,7 +529,7 @@ fun collectVariantsForEnumCompletion(
         val variantName = enumVariant.name ?: return@mapNotNull null
 
         return@mapNotNull createLookupElement(
-            scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, substitution),
+            scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, ENUM_VARIANT_NS, substitution),
             context = context,
             null,
             object : RsDefaultInsertHandler() {

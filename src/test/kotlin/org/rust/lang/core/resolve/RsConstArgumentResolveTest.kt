@@ -123,6 +123,29 @@ class RsConstArgumentResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
+    fun `test type namespace is shadowed 1`() = checkByCode("""
+        mod a {
+            pub struct S;
+        }
+        use a::*;
+        struct S {}
+             //X
+        trait Trait<T> {}
+        impl Trait<S> for S {}
+                 //^
+    """)
+
+    fun `test type namespace is shadowed 2`() = checkByCode("""
+        pub struct S;
+        fn main() {
+            struct S {}
+                 //X
+            trait Trait<T> {}
+            impl Trait<S> for S {}
+                     //^
+        }
+    """)
+
     // Method call arguments:
 
     fun `test disambiguate type argument in method call`() = checkByCode("""
