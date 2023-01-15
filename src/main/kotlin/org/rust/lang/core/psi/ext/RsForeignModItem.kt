@@ -21,5 +21,7 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsForeignModStub
 
     override val visibility: RsVisibility get() = RsVisibility.Private // visibility does not affect foreign mods
 
+    val abi: String = greenStub?.abi ?: "C"
+
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

@@ -85,9 +85,9 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 231
-
         // Bump this number if Stub structure changes
+        private const val STUB_VERSION = 232
+
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
@@ -1072,20 +1072,24 @@ class RsForeignModStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val flags: Int,
     override val procMacroInfo: RsProcMacroStubInfo?,
+    val abi: String?,
 ) : RsAttrProcMacroOwnerStubBase<RsForeignModItem>(parent, elementType) {
 
     object Type : RsStubElementType<RsForeignModStub, RsForeignModItem>("FOREIGN_MOD_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsForeignModStub(parentStub, this,
+            RsForeignModStub(
+                parentStub, this,
                 dataStream.readUnsignedByte(),
                 RsProcMacroStubInfo.deserialize(dataStream),
+                abi = dataStream.readNameString(),
             )
 
         override fun serialize(stub: RsForeignModStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeByte(stub.flags)
                 RsProcMacroStubInfo.serialize(stub.procMacroInfo, dataStream)
+                writeName(stub.abi)
             }
 
         override fun createPsi(stub: RsForeignModStub) =
@@ -1094,7 +1098,11 @@ class RsForeignModStub(
         override fun createStub(psi: RsForeignModItem, parentStub: StubElement<*>?): RsForeignModStub {
             val flags = RsAttributeOwnerStub.extractFlags(psi)
             val procMacroInfo = RsAttrProcMacroOwnerStub.extractTextAndOffset(flags, psi)
-            return RsForeignModStub(parentStub, this, flags, procMacroInfo)
+            return RsForeignModStub(
+                parentStub, this,
+                flags, procMacroInfo,
+                abi = psi.externAbi.litExpr?.stringValue,
+            )
         }
     }
 }
