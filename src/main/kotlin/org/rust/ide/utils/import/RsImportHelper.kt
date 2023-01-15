@@ -18,6 +18,8 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
+import org.rust.stdext.BREAK
+import org.rust.stdext.CONTINUE
 import org.rust.stdext.intersects
 
 object RsImportHelper {
@@ -181,7 +183,7 @@ object RsImportHelper {
             if (subjectsWithName[element] == entry.name) {
                 subjectsWithName.remove(element)
             }
-            subjectsWithName.isEmpty()
+            if (subjectsWithName.isEmpty()) BREAK else CONTINUE
         }
         val itemsInScope = hashMapOf<String, Set<Namespace>>()
         processWithShadowingAndUpdateScope(itemsInScope, TYPES_N_VALUES, processor) {

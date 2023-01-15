@@ -11,6 +11,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.stdext.BREAK
+import org.rust.stdext.CONTINUE
 
 /**
  * Note: don't forget to add an element type to [org.rust.lang.core.psi.RS_ITEMS]
@@ -22,7 +24,7 @@ fun <T : RsItemElement> Iterable<T>.filterInScope(scope: RsElement): List<T> {
     val set = toMutableSet()
     val processor = createProcessor {
         set.remove(it.element)
-        set.isEmpty()
+        if (set.isEmpty()) BREAK else CONTINUE
     }
     processNestedScopesUpwards(scope, TYPES, processor)
     return if (set.isEmpty()) toList() else toMutableList().apply { removeAll(set) }

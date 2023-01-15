@@ -20,6 +20,7 @@ import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.findPrelude
 import org.rust.lang.core.resolve2.processItemDeclarations
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.CONTINUE
 
 class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
 
@@ -46,7 +47,7 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
         val preludeItemsNames = mutableListOf<String>()
         val processor = createProcessor {
             preludeItemsNames += it.name
-            false
+            CONTINUE
         }
         processItemDeclarations(prelude, TYPES_N_VALUES_N_MACROS, processor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
         itemsNames += preludeItemsNames

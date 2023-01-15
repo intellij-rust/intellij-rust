@@ -27,6 +27,8 @@ import org.rust.lang.core.crate.impl.FakeInvalidCrate
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.*
+import org.rust.stdext.BREAK
+import org.rust.stdext.CONTINUE
 
 interface RsElement : PsiElement, UserDataHolderEx {
     /**
@@ -133,9 +135,9 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     val processor = createProcessor(name) { entry ->
         if (entry.name == name) {
             resolved = entry.element
-            true
+            BREAK
         } else {
-            false
+            CONTINUE
         }
     }
     processNestedScopesUpwards(this, ns, processor)
@@ -155,10 +157,10 @@ fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
 fun RsElement.getAllVisibleBindings(): Set<String> {
     val bindings = mutableSetOf<String>()
     val processor = createProcessor { entry ->
-        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
-        val name = element.name ?: return@createProcessor false
+        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor CONTINUE
+        val name = element.name ?: return@createProcessor CONTINUE
         bindings.add(name)
-        false
+        CONTINUE
     }
     processNestedScopesUpwards(this, VALUES, processor)
     return bindings

@@ -20,7 +20,7 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.hasTyInfer
 import org.rust.lang.core.types.ty.*
-import org.rust.stdext.intersects
+import org.rust.stdext.*
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -35,14 +35,10 @@ interface ScopeEntry {
     val subst: Substitution get() = emptySubstitution
 }
 
-typealias RsProcessor<T> = (T) -> Boolean
+typealias RsProcessor<T> = (T) -> ShouldStop
 
 interface RsResolveProcessorBase<in T : ScopeEntry> {
-    /**
-     * Return `true` to stop further processing,
-     * return `false` to continue search
-     */
-    fun process(entry: T): Boolean
+    fun process(entry: T): ShouldStop
 
     /**
      * Indicates that processor is interested only in [ScopeEntry]s with specified [names].
@@ -59,23 +55,23 @@ interface RsResolveProcessorBase<in T : ScopeEntry> {
 
 typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
 
-fun createProcessor(name: String? = null, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
+fun createProcessor(name: String? = null, processor: (ScopeEntry) -> ShouldStop): RsResolveProcessor =
     createProcessorGeneric(name, processor)
 
-fun createProcessor(names: Set<String>?, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
+fun createProcessor(names: Set<String>?, processor: (ScopeEntry) -> ShouldStop): RsResolveProcessor =
     createProcessorGeneric(names, processor)
 
 fun <T : ScopeEntry> createProcessorGeneric(
     name: String? = null,
-    processor: (T) -> Boolean
+    processor: (T) -> ShouldStop
 ): RsResolveProcessorBase<T> = createProcessorGeneric(name?.let { setOf(it) }, processor)
 
 fun <T : ScopeEntry> createProcessorGeneric(
     names: Set<String>? = null,
-    processor: (T) -> Boolean
+    processor: (T) -> ShouldStop
 ): RsResolveProcessorBase<T> {
     return object : RsResolveProcessorBase<T> {
-        override fun process(entry: T): Boolean = processor(entry)
+        override fun process(entry: T): ShouldStop = processor(entry)
         override val names: Set<String>? = names
         override fun toString(): String = "Processor(names=$names)"
     }
@@ -92,7 +88,7 @@ private class MappingProcessor<in T : ScopeEntry, in U : ScopeEntry>(
     private val mapper: (U) -> T,
 ) : RsResolveProcessorBase<U> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: U): Boolean {
+    override fun process(entry: U): ShouldStop {
         val mapped = mapper(entry)
         return originalProcessor.process(mapped)
     }
@@ -110,11 +106,11 @@ private class FilteringProcessor<in T : ScopeEntry>(
     private val filter: (T) -> Boolean,
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: T): Boolean {
+    override fun process(entry: T): ShouldStop {
         return if (filter(entry)) {
             originalProcessor.process(entry)
         } else {
-            false
+            CONTINUE
         }
     }
     override fun toString(): String = "FilteringProcessor($originalProcessor, filter = $filter)"
@@ -131,7 +127,7 @@ private class BeforeProcessingProcessor<in T : ScopeEntry>(
     private val handler: (T) -> Unit,
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: T): Boolean {
+    override fun process(entry: T): ShouldStop {
         handler(entry)
         return originalProcessor.process(entry)
     }
@@ -151,11 +147,15 @@ private class ShadowingProcessor<in T : ScopeEntry>(
     private val ns: Set<Namespace>,
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: T): Boolean {
+    override fun process(entry: T): ShouldStop {
         val prevNs = prevScope[entry.name]
         if (entry.name == "_" || prevNs == null) return originalProcessor.process(entry)
         val newNs = (entry.element as? RsNamedElement)?.namespaces
-        return (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor.process(entry)
+        return if (newNs == null || ns.intersects(newNs.minus(prevNs))) {
+            originalProcessor.process(entry)
+        } else {
+            CONTINUE
+        }
     }
     override fun toString(): String = "ShadowingProcessor($originalProcessor, ns = $ns)"
 }
@@ -175,12 +175,12 @@ private class ShadowingAndUpdateScopeProcessor<in T : ScopeEntry>(
     private val ns: Set<Namespace>,
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: T): Boolean {
+    override fun process(entry: T): ShouldStop {
         val prevNs = if (entry.name != "_") prevScope[entry.name] else null
         if (prevNs != null) {
             val newNs = (entry.element as? RsNamedElement)?.namespaces
             if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
-                return false
+                return CONTINUE
             }
         }
         if (originalProcessor.acceptsName(entry.name) && entry.name != "_") {
@@ -207,8 +207,8 @@ private class ShadowingAndImmediatelyUpdateScopeProcessor<in T : ScopeEntry>(
     private val ns: Set<Namespace>,
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
-    override fun process(entry: T): Boolean {
-        if (entry.name in prevScope) return false
+    override fun process(entry: T): ShouldStop {
+        if (entry.name in prevScope) return CONTINUE
         val result = originalProcessor.process(entry)
         if (originalProcessor.acceptsName(entry.name)) {
             prevScope[entry.name] = ns
@@ -231,7 +231,7 @@ fun collectPathResolveVariants(
         if (e.name == referenceName) {
             collectPathScopeEntry(ctx, result, e)
         }
-        false
+        CONTINUE
     }
     f(processor)
     return result
@@ -254,7 +254,7 @@ fun collectMultiplePathResolveVariants(
         if (list != null) {
             collectPathScopeEntry(ctx, list, e)
         }
-        false
+        CONTINUE
     }
     f(processor)
     return result
@@ -302,7 +302,7 @@ fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Un
                 result += element
             }
         }
-        false
+        CONTINUE
     }
     f(processor)
     return result
@@ -321,7 +321,7 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
                 result += e
             }
         }
-        false
+        CONTINUE
     }
     f(processor)
     return result
@@ -338,10 +338,10 @@ fun pickFirstResolveEntry(referenceName: String?, f: (RsResolveProcessor) -> Uni
             val element = e.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result = e
-                return@createProcessor true
+                return@createProcessor BREAK
             }
         }
-        false
+        CONTINUE
     }
     f(processor)
     return result
@@ -366,7 +366,7 @@ fun collectCompletionVariants(
             context = context
         ))
 
-        false
+        CONTINUE
     }
     f(processor)
 }
@@ -418,48 +418,47 @@ data class AssocItemScopeEntry(
 ) : AssocItemScopeEntryBase<RsAbstractable>
 
 
-fun RsResolveProcessor.process(name: String, e: RsElement): Boolean =
+fun RsResolveProcessor.process(name: String, e: RsElement): ShouldStop =
     process(SimpleScopeEntry(name, e))
 
 fun RsResolveProcessor.process(
     name: String,
     e: RsElement,
     visibilityFilter: VisibilityFilter
-): Boolean = process(ScopeEntryWithVisibility(name, e, visibilityFilter))
+): ShouldStop = process(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
-inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
-    if (!acceptsName(name)) return false
-    val element = e() ?: return false
+inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): ShouldStop {
+    if (!acceptsName(name)) return CONTINUE
+    val element = e() ?: return CONTINUE
     return process(name, element)
 }
 
-fun RsResolveProcessor.process(e: RsNamedElement): Boolean {
-    val name = e.name ?: return false
+fun RsResolveProcessor.process(e: RsNamedElement): ShouldStop {
+    val name = e.name ?: return CONTINUE
     return process(name, e)
 }
 
-fun RsResolveProcessor.process(e: BoundElement<RsNamedElement>): Boolean {
-    val name = e.element.name ?: return false
+fun RsResolveProcessor.process(e: BoundElement<RsNamedElement>): ShouldStop {
+    val name = e.element.name ?: return CONTINUE
     return process(SimpleScopeEntry(name, e.element, e.subst))
 }
 
-fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor.process(it) }
+fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): ShouldStop {
+    return elements.tryForEach(processor::process)
 }
 
-fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor.process(it) }
+fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): ShouldStop {
+    return elements.tryForEach(processor::process)
 }
 
 fun processAllWithSubst(
     elements: Collection<RsNamedElement>,
     subst: Substitution,
     processor: RsResolveProcessor
-): Boolean {
-    for (e in elements) {
-        if (processor.process(BoundElement(e, subst))) return true
+): ShouldStop {
+    return elements.tryForEach { e ->
+        processor.process(BoundElement(e, subst))
     }
-    return false
 }
 
 fun filterNotCfgDisabledItemsAndTestFunctions(processor: RsResolveProcessor): RsResolveProcessor {

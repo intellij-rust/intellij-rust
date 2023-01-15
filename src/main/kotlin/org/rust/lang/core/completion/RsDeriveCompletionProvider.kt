@@ -28,6 +28,7 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.with
+import org.rust.stdext.CONTINUE
 
 object RsDeriveCompletionProvider : RsCompletionProvider() {
 
@@ -80,7 +81,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
         val processor = createProcessor { e ->
             result.addElement(createLookupElement(e.name))
             processedElements.putValue(e.name, e.element)
-            false
+            CONTINUE
         }
         val filtered = filterDeriveProcMacros(processor)
         processProcMacroResolveVariants(path, filtered, isCompletion = true)

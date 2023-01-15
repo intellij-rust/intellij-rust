@@ -34,6 +34,7 @@ import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
+import org.rust.stdext.CONTINUE
 
 object RsCommonCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
@@ -254,7 +255,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     for (candidate in candidates) {
                         result.addElement(createLookupElementWithImportCandidate(e, context, candidate))
                     }
-                    false
+                    CONTINUE
                 })
                 processPathVariants(newPath, processor)
             }
@@ -428,7 +429,7 @@ private fun methodAndFieldCompletionProcessor(
                 context = context
         ))
         is MethodResolveVariant -> {
-            if (e.element.isTest) return@createProcessor false
+            if (e.element.isTest) return@createProcessor CONTINUE
 
             result.addElement(createLookupElement(
                 scopeEntry = e,
@@ -452,7 +453,7 @@ private fun methodAndFieldCompletionProcessor(
             ))
         }
     }
-    false
+    CONTINUE
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {

@@ -33,15 +33,15 @@ import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
-import org.rust.stdext.RsResult
+import org.rust.stdext.*
 
 fun processItemDeclarations(
     scope: RsItemsOwner,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
-): Boolean {
-    val info = getModInfo(scope) ?: return false
+): ShouldStop {
+    val info = getModInfo(scope) ?: return CONTINUE
     return processItemDeclarationsUsingModInfo(scopeIsMod = scope is RsMod, info, ns, processor, ipm)
 }
 
@@ -51,7 +51,7 @@ fun processItemDeclarationsUsingModInfo(
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
     ipm: ItemProcessingMode
-): Boolean {
+): ShouldStop {
     val (_, defMap, modData) = info
     for ((name, perNs) in modData.visibleItems.entriesWithNames(processor.names)) {
         // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
@@ -65,7 +65,7 @@ fun processItemDeclarationsUsingModInfo(
                 val visibilityFilter = visItem.visibility.createFilter()
                 for (element in visItem.toPsi(info, namespace)) {
                     if (!elements.add(element)) continue
-                    if (processor.process(name, element, visibilityFilter)) return true
+                    processor.process(name, element, visibilityFilter).mapBreak { return BREAK }
                 }
             }
         }
@@ -76,7 +76,7 @@ fun processItemDeclarationsUsingModInfo(
             val trait = VisItem(traitPath, traitVisibility)
             val visibilityFilter = traitVisibility.createFilter()
             for (traitPsi in trait.toPsi(info, Namespace.Types)) {
-                if (processor.process("_", traitPsi, visibilityFilter)) return true
+                processor.process("_", traitPsi, visibilityFilter).mapBreak { return BREAK }
             }
         }
     }
@@ -87,11 +87,11 @@ fun processItemDeclarationsUsingModInfo(
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
             val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
-            processor.process(name, externCrateRoot) && return true
+            processor.process(name, externCrateRoot).mapBreak { return BREAK }
         }
     }
 
-    return false
+    return CONTINUE
 }
 
 fun processMacros(
@@ -99,8 +99,8 @@ fun processMacros(
     processor: RsResolveProcessor,
     /** Needed to filter textual scoped macros if path is unqualified. */
     macroPath: RsPath,
-): Boolean {
-    val info = getModInfo(scope) ?: return false
+): ShouldStop {
+    val info = getModInfo(scope) ?: return CONTINUE
     return info.modData.processMacros(macroPath, processor, info)
 }
 
@@ -108,11 +108,11 @@ private fun ModData.processMacros(
     macroPath: RsPath,
     processor: RsResolveProcessor,
     info: RsModInfo,
-): Boolean {
+): ShouldStop {
     val isQualified = macroPath.qualifier != null
     val isAttrOrDerive = macroPath.parent is RsMetaItem
 
-    val stop = processScopedMacros(processor, info) { name ->
+    processScopedMacros(processor, info) { name ->
         val isLegacyMacroDeclaredInSameMod = !isQualified && legacyMacros[name].orEmpty().any {
             (!isAttrOrDerive || it is ProcMacroDefInfo) && it.path.parent == path
         }
@@ -121,8 +121,7 @@ private fun ModData.processMacros(
         // - scoped macros (imported by `use`)
         // - textual macros
         !isLegacyMacroDeclaredInSameMod
-    }
-    if (stop) return true
+    }.mapBreak { return BREAK }
 
     if (!isQualified) {
         val macroIndex = info.getMacroIndex(macroPath, info.crate)
@@ -135,31 +134,33 @@ private fun ModData.processMacros(
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             val macroContainingScope = visItem.containingMod.toScope(info).singleOrNull() ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingScope, info) ?: continue
-            if (processor.process(name, macro)) return true
+            processor.process(name, macro).mapBreak { return BREAK }
         }
 
         info.defMap.prelude?.let { prelude ->
-            if (prelude.processScopedMacros(processor, info)) return true
+            prelude.processScopedMacros(processor, info).mapBreak { return BREAK }
         }
     }
 
-    return false
+    return CONTINUE
 }
 
 private fun ModData.processScopedMacros(
     processor: RsResolveProcessor,
     info: RsModInfo,
     filter: (name: String) -> Boolean = { true },
-): Boolean {
-    for ((name, perNs) in visibleItems.entriesWithNames(processor.names)) {
-        for (visItem in perNs.macros) {
-            if (!filter(name)) continue
-            val macro = visItem.scopedMacroToPsi(info) ?: continue
-            val visibilityFilter = visItem.visibility.createFilter()
-            if (processor.process(name, macro, visibilityFilter)) return true
+): ShouldStop {
+    return visibleItems.entriesWithNames(processor.names).asSequence().tryForEach { (name, perNs) ->
+        perNs.macros.asSequence().tryForEach { visItem ->
+            if (filter(name)) {
+                val macro = visItem.scopedMacroToPsi(info)
+                if (macro != null) {
+                    val visibilityFilter = visItem.visibility.createFilter()
+                    processor.process(name, macro, visibilityFilter)
+                } else CONTINUE
+            } else CONTINUE
         }
     }
-    return false
 }
 
 private fun filterMacrosByIndex(macroInfos: List<MacroDefInfo>, macroIndex: MacroIndex?): MacroDefInfo? =
@@ -199,7 +200,7 @@ fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? {
 }
 
 /** See [resolveToMacroWithoutPsi] */
-fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(processor: RsResolveProcessor): Boolean? {
+fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(processor: RsResolveProcessor): ShouldStop? {
     val (def, info) = resolveToMacroInfo() ?: return null
     if (def !is DeclMacroDefInfo || !def.hasLocalInnerMacros) return null
     val project = info.project
