@@ -1170,6 +1170,84 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         (2 + 2)
     """)
 
+    fun `test path expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!(Vec::new);
+        }         //^
+    """, """
+        Vec::new
+    """)
+
+    fun `test parens expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!((1 + 2));
+        }         //^
+    """, """
+        (1 + 2)
+    """)
+
+    fun `test tuple expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!((1, 2));
+        }         //^
+    """, """
+        (1, 2)
+    """)
+
+    fun `test array expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!([1, 2]);
+        }         //^
+    """, """
+        [1, 2]
+    """)
+
+    fun `test unit expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!(());
+        }         //^
+    """, """
+        ()
+    """)
+
+    fun `test block expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!({ 1234 });
+        }         //^
+    """, """
+        { 1234 }
+    """)
+
     fun `test matches! macro`() = checkSingleMacro("""
         macro_rules! matches {
             ($ expression:expr, $( $ pattern:pat_param )|+ $( if $ guard: expr )? $(,)?) => {
