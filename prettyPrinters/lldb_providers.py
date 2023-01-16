@@ -1,7 +1,7 @@
 import sys
 
 from lldb import LLDB_INVALID_ADDRESS
-from lldb import SBValue, SBData, SBError
+from lldb import SBValue, SBData, SBDebugger, SBError
 from lldb import eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar, eBasicTypeChar
 
 #################################################################################################################
@@ -73,6 +73,40 @@ def get_template_params(type_name):
             params.append(type_name[start:i].strip())
             start = i + 1
     return params
+
+
+def get_max_string_summary_length(debugger):
+    # type: (SBDebugger) -> int
+    debugger_name = debugger.GetInstanceName()
+    max_len = SBDebugger.GetInternalVariableValue("target.max-string-summary-length", debugger_name)
+    return int(max_len.GetStringAtIndex(0))
+
+
+def read_raw_string(data_ptr, length):
+    # type: (SBValue, int) -> str
+    if length == 0:
+        return '""'
+
+    max_string_summary_length = get_max_string_summary_length(data_ptr.GetTarget().GetDebugger())
+    length_to_read = min(length, max_string_summary_length)
+
+    process = data_ptr.GetProcess()
+    start = data_ptr.GetValueAsUnsigned()
+    error = SBError()
+    data = process.ReadMemory(start, length_to_read, error)
+    data = data.decode(encoding='UTF-8') if PY3 else data
+
+    return '"%s"' % data
+
+
+def get_vec_data_ptr(valobj):
+    # type: (SBValue) -> SBValue
+    return unwrap_unique_or_non_null(valobj.GetChildMemberWithName("buf").GetChildMemberWithName("ptr"))
+
+
+def get_vec_length(valobj):
+    # type: (SBValue) -> int
+    return valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
 
 
 class ValueBuilder:
@@ -153,17 +187,12 @@ def SizeSummaryProvider(valobj, _dict):
     return 'size=' + str(valobj.GetNumChildren())
 
 
-def vec_to_string(vec):
-    # type: (SBValue) -> str
-    length = vec.GetNumChildren()
-    chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
-    return bytes(chars).decode(errors='replace') if PY3 else "".join(chr(char) for char in chars)
-
-
 def StdStringSummaryProvider(valobj, _dict):
     # type: (SBValue, dict) -> str
-    vec = valobj.GetChildAtIndex(0)
-    return '"%s"' % vec_to_string(vec)
+    vec_non_synth = valobj.GetChildAtIndex(0).GetNonSyntheticValue()
+    data_ptr = get_vec_data_ptr(vec_non_synth)
+    length = get_vec_length(vec_non_synth)
+    return read_raw_string(data_ptr, length)
 
 
 def StdOsStringSummaryProvider(valobj, _dict):
@@ -171,23 +200,17 @@ def StdOsStringSummaryProvider(valobj, _dict):
     buf = valobj.GetChildAtIndex(0).GetChildAtIndex(0)
     is_windows = "Wtf8Buf" in buf.type.name
     vec = buf.GetChildAtIndex(0) if is_windows else buf
-    return '"%s"' % vec_to_string(vec)
+    vec_non_synth = vec.GetNonSyntheticValue()
+    data_ptr = get_vec_data_ptr(vec_non_synth)
+    length = get_vec_length(vec_non_synth)
+    return read_raw_string(data_ptr, length)
 
 
 def StdStrSummaryProvider(valobj, _dict):
     # type: (SBValue, dict) -> str
-    length = valobj.GetChildMemberWithName("length").GetValueAsUnsigned()
-    if length == 0:
-        return '""'
-
     data_ptr = valobj.GetChildMemberWithName("data_ptr")
-
-    start = data_ptr.GetValueAsUnsigned()
-    error = SBError()
-    process = data_ptr.GetProcess()
-    data = process.ReadMemory(start, length, error)
-    data = data.decode(encoding='UTF-8') if PY3 else data
-    return '"%s"' % data
+    length = valobj.GetChildMemberWithName("length").GetValueAsUnsigned()
+    return read_raw_string(data_ptr, length)
 
 
 def StdFFIStrSummaryProvider(valobj, _dict, is_null_terminated=False):
@@ -198,15 +221,11 @@ def StdFFIStrSummaryProvider(valobj, _dict, is_null_terminated=False):
     if slice_ptr == LLDB_INVALID_ADDRESS:
         return ""
     char_ptr_type = valobj.GetTarget().GetBasicType(eBasicTypeChar).GetPointerType()
-    start = valobj.CreateValueFromAddress('start', slice_ptr, char_ptr_type).GetValueAsUnsigned()
+    data_ptr = valobj.CreateValueFromAddress('start', slice_ptr, char_ptr_type)
     length = process.ReadPointerFromMemory(slice_ptr + process.GetAddressByteSize(), error)
     if is_null_terminated:
         length = length - 1
-    if length == 0:
-        return '""'
-    data = process.ReadMemory(start, length, error)
-    data = data.decode(encoding='UTF-8') if PY3 else data
-    return '"%s"' % data
+    return read_raw_string(data_ptr, length)
 
 
 class StructSyntheticProvider:
@@ -362,12 +381,11 @@ class StdVecSyntheticProvider(ArrayLikeSyntheticProviderBase):
 
     def get_data_ptr(self):
         # type: () -> SBValue
-        buf = self.valobj.GetChildMemberWithName("buf")
-        return unwrap_unique_or_non_null(buf.GetChildMemberWithName("ptr"))
+        return get_vec_data_ptr(self.valobj)
 
     def get_length(self):
         # type: () -> int
-        return self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
+        return get_vec_length(self.valobj)
 
 
 class StdVecDequeSyntheticProvider:

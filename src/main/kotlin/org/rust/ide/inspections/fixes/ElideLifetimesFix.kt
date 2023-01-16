@@ -62,7 +62,7 @@ private class LifetimeRemover : RsVisitor() {
             val newSelfParameter = RsPsiFactory(selfParameter.project).createSelfReference(selfParameter.mutability.isMut)
             selfParameter.replace(newSelfParameter)
         }
-        selfParameter.typeReference?.let { visitTypeReference(it) }
+        selfParameter.typeReference?.accept(this)
     }
 
     override fun visitRefLikeType(refLike: RsRefLikeType) {

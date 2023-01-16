@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.CachedValueImpl
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.icons.addUnsafeMark
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
@@ -51,7 +52,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsImplItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int) = RsIcons.IMPL
+    override fun getIcon(flags: Int) = if (isUnsafe) RsIcons.IMPL.addUnsafeMark() else RsIcons.IMPL
 
     override val isPublic: Boolean get() = false // pub does not affect impls at all
 

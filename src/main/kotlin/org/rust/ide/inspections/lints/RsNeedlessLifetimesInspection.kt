@@ -85,7 +85,7 @@ private fun couldUseElision(fn: RsFunction): Boolean {
 
     return when {
         outputLifetimes.distinct().size > 1 -> false
-        inputLifetimes.size == 1 || fn.selfParameter?.isRef == true && areInputsDistinct -> {
+        inputLifetimes.size == 1 || fn.selfParameter?.isRefLike == true && areInputsDistinct -> {
             val input = inputLifetimes.first()
             val output = outputLifetimes.first()
             when {
@@ -144,7 +144,10 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecu
     override fun visitLifetime(lifetime: RsLifetime) = record(lifetime)
 
     override fun visitElement(element: RsElement) {
-        if (abort || element is RsItemElement /* ignore nested items */) return
+        if (abort) return
+        if (element is RsItemElement) return  // ignore nested items
+        if (element is RsFnPointerType) return  // ignore `fn(&i32)`
+        if (element is RsPath && element.valueParameterList != null) return  // ignore `Fn(&i32)`
         element.forEachChild { it.accept(this) }
     }
 
@@ -262,4 +265,20 @@ private fun LifetimeName.toReferenceLifetime(): ReferenceLifetime =
         is LifetimeName.Parameter -> Named(name)
         LifetimeName.Static -> Static
         LifetimeName.Implicit, LifetimeName.Underscore -> Unnamed
+    }
+
+/**
+ * Includes:
+ * - `&self` and `&mut self` (see [isRef])
+ * - `self: &Self` and `self: &mut Self`
+ * - `self: Box<&Self>`, `self: Rc<&Self>`, `self: Arc<&Self>`, `self: Pin<&Self>`
+ * - `self: Rc<Box<&Self>>` and other combinations
+ */
+val RsSelfParameter.isRefLike: Boolean
+    get() {
+        if (isRef) return true
+        // Ideally, we should check the presence of `&Self` possible wrapped in `Box`, `Arc`, etc,
+        // But anything else is anyway not allowed - https://doc.rust-lang.org/error_codes/E0307.html,
+        val typeReference = typeReference ?: return false
+        return typeReference.descendantsOfTypeOrSelf<RsRefLikeType>().any { it.and != null }
     }

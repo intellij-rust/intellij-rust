@@ -44,6 +44,18 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(x: &str) -> Box<&str> { unimplemented!() }
     """)
 
+    fun `test one input lifetime 4 (fn pointer)`() = doTest("""
+        /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
+    """, """
+        fn foo(s: &str, b: fn(&i32)) -> &i32 { unimplemented!() }
+    """)
+
+    fun `test one input lifetime 5 (Fn trait)`() = doTest("""
+        /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: impl Fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
+    """, """
+        fn foo(s: &str, b: impl Fn(&i32)) -> &i32 { unimplemented!() }
+    """)
+
     fun `test no input lifetimes`() = doTest("""
         fn foo() -> &str { unimplemented!() }
     """)
@@ -179,6 +191,30 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         struct S;
         impl S {
             fn foo<'b, 'c>(self, b: &'b str, c: &'c str) -> &str { unimplemented!() }
+        }
+    """)
+
+    fun `test self 7 (&Self)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: &'a Self, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: &Self, _: &i32) -> &i32 { &0 }
+        }
+    """)
+
+    fun `test self 8 (Box)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: Box<&'a Self>, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: Box<&Self>, _: &i32) -> &i32 { &0 }
         }
     """)
 
