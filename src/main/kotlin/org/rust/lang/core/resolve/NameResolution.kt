@@ -28,8 +28,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
-import org.rust.lang.core.CompilerFeature.Companion.IN_BAND_LIFETIMES
-import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.crateGraph
@@ -747,32 +745,6 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
             else -> continue@loop
         }
         if (processAll(lifetimeParameters, processor)) return true
-    }
-
-    val owner = lifetime.stubAncestorStrict<RsGenericDeclaration>() ?: return false
-    if (owner.lifetimeParameters.isEmpty() &&
-        IN_BAND_LIFETIMES.availability(lifetime) == FeatureAvailability.AVAILABLE) {
-        val lifetimes = mutableListOf<RsLifetime>()
-        val lifetimeNames = hashSetOf<String>()
-        val visitor = object : RsVisitor() {
-            override fun visitLifetime(lifetime: RsLifetime) {
-                val name = lifetime.referenceName
-                if (name.isNotEmpty() && lifetimeNames.add(name)) {
-                    lifetimes.add(lifetime)
-                }
-            }
-
-            override fun visitElement(element: RsElement) =
-                element.stubChildrenOfType<RsElement>().forEach { it.accept(this) }
-        }
-
-        (owner as? RsImplItem)?.traitRef?.accept(visitor)
-        (owner as? RsImplItem)?.typeReference?.accept(visitor)
-        (owner as? RsFunction)?.typeParameterList?.accept(visitor)
-        (owner as? RsFunction)?.valueParameterList?.accept(visitor)
-        (owner as? RsFunction)?.whereClause?.accept(visitor)
-
-        return processAll(lifetimes, processor)
     }
 
     return false
