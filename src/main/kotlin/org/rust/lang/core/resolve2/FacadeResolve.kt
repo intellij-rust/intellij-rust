@@ -14,7 +14,6 @@ import com.intellij.psi.StubBasedPsiElement
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
