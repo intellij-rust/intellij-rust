@@ -94,6 +94,9 @@ jobs:
               uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":resolveDependencies -Pkotlin.incremental=false"
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
             - name: Check with changes
               uses: gradle/gradle-build-action@v2
@@ -101,6 +104,9 @@ jobs:
                   RESULT_SUFFIX: _with_changes
               with:
                   arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest\""
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
             - name: Checkout base version
               run: git checkout ${{ needs.prepare.outputs.base-commit }}
@@ -111,6 +117,9 @@ jobs:
                   RESULT_SUFFIX: _without_changes
               with:
                   arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest\""
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
             - name: Checkout current version
               run: git checkout ${{ github.sha }}

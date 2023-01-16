@@ -139,6 +139,7 @@ jobs:
               uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:publishPlugin"
+                  cache-disabled: true
 
     save-commit:
         needs: [ get-channel, fetch-latest-changes, build ]

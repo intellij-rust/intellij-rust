@@ -82,6 +82,7 @@ jobs:
               uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:publishPlugin"
+                  cache-disabled: true
 
     save-commit:
         needs: [ build, fetch-latest-changes ]
