@@ -419,8 +419,8 @@ fun pathPsiSubst(
         }
     }
 
-    val typeSubst = hashMapOf<RsTypeParameter, Value<TypeValue, TypeDefault>>()
-    val constSubst = hashMapOf<RsConstParameter, Value<RsElement, RsExpr>>()
+    val typeSubst = linkedMapOf<RsTypeParameter, Value<TypeValue, TypeDefault>>()
+    val constSubst = linkedMapOf<RsConstParameter, Value<RsElement, RsExpr>>()
 
     for ((k, v) in typeOrConstSubst) {
         when (k) {

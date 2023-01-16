@@ -633,6 +633,33 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ <<unknown> as Trait<<unknown>>>::Item
     """)
 
+    fun `test default type argument refers to another type parameter 1`() = testType("""
+        struct Foo;
+        struct Bar<A = Foo, B = A>(A, B);
+        type T = Bar;
+               //^ Bar<Foo, Foo>
+    """)
+
+    fun `test default type argument refers to another type parameter 2`() = testType("""
+        struct Foo;
+        struct Bar<A = Foo, B = A>(A, B);
+        struct Baz;
+        type T = Bar<Baz>;
+               //^ Bar<Baz, Baz>
+    """)
+
+    fun `test default const argument refers to another const parameter 1`() = testType("""
+        struct Bar<const A: i32 = 1, const B: i32 = A>();
+        type T = Bar;
+               //^ Bar<1, 1>
+    """)
+
+    fun `test default const argument refers to another const parameter 2`() = testType("""
+        struct Bar<const A: i32 = 1, const B: i32 = A>();
+        type T = Bar<2>;
+               //^ Bar<2, 2>
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
