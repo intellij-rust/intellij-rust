@@ -138,8 +138,10 @@ private fun ModData.processMacros(
             if (processor.process(name, macro)) return true
         }
 
-        info.defMap.prelude?.let { prelude ->
-            if (prelude.processScopedMacros(processor, info)) return true
+        if (!isHanging) {
+            info.defMap.prelude?.let { prelude ->
+                if (prelude.processScopedMacros(processor, info)) return true
+            }
         }
     }
 
