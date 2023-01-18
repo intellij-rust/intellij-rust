@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.profiler.ProfilerToolWindowManager
+import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.clion.perf.PerfProfilerSettings
 import com.intellij.profiler.clion.perf.PerfUtils
 import com.intellij.profiler.statistics.ProfilerUsageTriggerCollector
@@ -88,7 +89,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = createPerfProfilerProcess(
+        val profilerProcess = PerfProfilerProcess(
             handler,
             false,
             outputFile,

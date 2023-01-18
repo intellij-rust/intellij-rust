@@ -66,6 +66,8 @@ val RsElement.containingCrate: Crate
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
+val RsElement.containingModOrSelf: RsMod get() = (this as? RsMod) ?: containingMod
+
 val PsiElement.edition: Edition?
     get() = contextOrSelf<RsElement>()?.containingCrate?.edition
 

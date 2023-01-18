@@ -5,11 +5,6 @@
 
 package org.rust.debugger
 
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ThrowableRunnable
 import org.rust.RsTestBase
@@ -23,18 +18,6 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         @Suppress("UnstableApiUsage")
         if (PlatformUtils.isIdeaUltimate()) {
-            if (ApplicationInfo.getInstance().build < BUILD_223) {
-                // Temporarily hack to avoid https://youtrack.jetbrains.com/issue/CPP-29341/
-                ApplicationManager.getApplication().extensionArea.registerExtensionPoint(
-                    PLUGIN_PATH_MAPPER_EP,
-                    "com.jetbrains.cidr.CidrPluginPathMapper",
-                    ExtensionPoint.Kind.INTERFACE,
-                    true
-                )
-                Disposer.register(testRootDisposable) {
-                    ApplicationManager.getApplication().extensionArea.unregisterExtensionPoint(PLUGIN_PATH_MAPPER_EP)
-                }
-            }
             super.runTestRunnable(testRunnable)
         }
     }
@@ -78,11 +61,5 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
         }
         checkFileExist(lldbStatus.frontendFile)
         checkFileExist(lldbStatus.frameworkFile)
-    }
-
-    companion object {
-        // BACKCOMPAT: 2022.2
-        private val BUILD_223 = BuildNumber.fromString("223")!!
-        private const val PLUGIN_PATH_MAPPER_EP = "cidr.util.pluginPathMapper"
     }
 }

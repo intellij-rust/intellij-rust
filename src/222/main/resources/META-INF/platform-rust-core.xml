@@ -1,6 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="false" restartRequired="false"
-                     description="Enable Rust MSVC support in LLDB (Windows-only)"/>
-    </extensions>
-</idea-plugin>

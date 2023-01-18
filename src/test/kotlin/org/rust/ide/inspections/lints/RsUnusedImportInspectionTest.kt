@@ -1080,4 +1080,17 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             }
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test custom column macro`() = checkByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! column { () => {} }
+    //- main.rs
+        /*caret*/
+        use test_package::column;
+        fn main() {
+            column!();
+        }
+    """)
 }

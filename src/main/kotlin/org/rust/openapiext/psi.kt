@@ -135,9 +135,10 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
     }
 
     private fun processMacro(element: RsPossibleMacroCall, path: RsElement?) {
-        val expansion = element.expansion ?: return
         val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
         if (path != null) visitor.visitElement(path)
+
+        val expansion = element.expansion ?: return
         for (expandedElement in expansion.elements) {
             visitor.visitElement(expandedElement)
         }

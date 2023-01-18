@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.implementMembers
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
@@ -52,7 +53,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 fun generateMissingTraitMembers(impl: RsImplItem, editor: Editor?) {
     val (implInfo, trait) = findMembersToImplement(impl) ?: return
 
-    RsIntentionPreviewUtils.write {
+    IntentionPreviewUtils.write<Throwable> {
         insertNewTraitMembers(implInfo.missingImplementations, impl, trait, editor)
     }
 }

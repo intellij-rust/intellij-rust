@@ -14,7 +14,6 @@ import com.intellij.psi.StubBasedPsiElement
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
@@ -138,8 +137,10 @@ private fun ModData.processMacros(
             if (processor.process(name, macro)) return true
         }
 
-        info.defMap.prelude?.let { prelude ->
-            if (prelude.processScopedMacros(processor, info)) return true
+        if (!isHanging) {
+            info.defMap.prelude?.let { prelude ->
+                if (prelude.processScopedMacros(processor, info)) return true
+            }
         }
     }
 

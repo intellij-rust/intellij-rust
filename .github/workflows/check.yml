@@ -79,7 +79,7 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
-                platform-version: [ 222, 223 ]
+                platform-version: [ 223 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
@@ -87,7 +87,7 @@ jobs:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
                       base-ide: idea
-                      platform-version: 222
+                      platform-version: 223
                       verify-plugin: true
                       # BACKCOMPAT: 2021 edition needs at least 1.56
                       default-edition-for-tests: 2018
@@ -167,9 +167,9 @@ jobs:
               if: matrix.rust-version == needs.get-rust-versions.outputs.old
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2022.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=222.3345.48" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.3" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2022.3" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=223.7571.139" >> $GITHUB_ENV
 
             - name: Set up test env variables
               run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV

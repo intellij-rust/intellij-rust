@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
@@ -332,6 +333,8 @@ fun PsiElement.isKeywordLike(): Boolean {
         else -> false
     }
 }
+
+val PsiElement.isIntentionPreviewElement: Boolean get() = IntentionPreviewUtils.isPreviewElement(this)
 
 /**
  * Consider we do some `resolve` in a quick-fix which is called in preview mode.

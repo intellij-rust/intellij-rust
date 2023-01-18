@@ -4,7 +4,6 @@
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/platform-rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
@@ -104,6 +103,8 @@
         <!-- Code Vision -->
         <vcs.codeVisionLanguageContext language="Rust"
                                        implementationClass="org.rust.ide.hints.codeVision.RsVcsCodeVisionContext"/>
+        <codeInsight.daemonBoundCodeVisionProvider
+            implementation="org.rust.ide.hints.codeVision.RsReferenceCodeVisionProvider"/>
 
         <!-- Filters -->
 
@@ -1220,9 +1221,14 @@
                      defaultValue="true"
                      description="Enable new Cargo project model reloading"
                      restartRequired="true"/>
+        <registryKey key="org.rust.debugger.lldb.rust.msvc" defaultValue="true" restartRequired="false"
+                     description="Enable Rust MSVC support in LLDB (Windows-only)"/>
         <registryKey key="org.rust.code.vision.author"
                      defaultValue="false"
                      description="Enable version control author Code Vision hints for Rust" />
+        <registryKey key="org.rust.code.vision.usage"
+                     defaultValue="false"
+                     description="Enable reference usage Code Vision hints for Rust" />
 
         <!-- Move refactoring -->
 
