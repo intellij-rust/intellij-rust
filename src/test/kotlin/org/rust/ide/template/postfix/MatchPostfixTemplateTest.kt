@@ -8,7 +8,7 @@ package org.rust.ide.template.postfix
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPostfixTemplateProvider())) {
+class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate::class) {
     fun `test simple`() = doTest("""
         enum Message {
             Quit,

@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class DbgPostfixTemplateTest : RsPostfixTemplateTest(DbgPostfixTemplate(RsPostfixTemplateProvider())) {
+class DbgPostfixTemplateTest : RsPostfixTemplateTest(DbgPostfixTemplate::class) {
 
     fun `test expr`() = doTest("""
         fn foo(slice: &[i32]) {

@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class ElsePostfixTemplateTest : RsPostfixTemplateTest(ElseExpressionPostfixTemplate()) {
+class ElsePostfixTemplateTest : RsPostfixTemplateTest(ElseExpressionPostfixTemplate::class) {
     fun `test not boolean expr 1`() = doTestNotApplicable("""
         fn main() {
             let a = 4;
