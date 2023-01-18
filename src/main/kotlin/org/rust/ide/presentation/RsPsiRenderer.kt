@@ -720,14 +720,13 @@ class ImportingPsiRenderer(
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
         val elementToName = mutableMapOf<RsElement, String>()
         processNestedScopesUpwards(context, TYPES_N_VALUES, createProcessor {
-            val element = it.element as? RsNamedElement ?: return@createProcessor false
+            val element = it.element as? RsNamedElement ?: return@createProcessor
             for (namespace in it.namespaces) {
                 nameToElement[it.name to namespace] = element
                 if (it.name != "_" && element !in elementToName) {
                     elementToName[element] = it.name
                 }
             }
-            false
         })
         nameToElement to elementToName
     }

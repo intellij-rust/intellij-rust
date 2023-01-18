@@ -321,17 +321,9 @@ fun findDependencyCrateByNamePath(context: RsElement, path: RsPath): RsFile? {
 }
 
 fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
-    var found: RsFile? = null
-    val processor = createProcessor(name) {
-        if (it.name == name) {
-            found = it.element as? RsFile
-            true
-        } else {
-            false
-        }
-    }
-    processExternCrateResolveVariants(context, false, processor)
-    return found
+    return pickFirstResolveVariant(name) {
+        processExternCrateResolveVariants(context, false, it)
+    } as? RsFile
 }
 
 fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
@@ -623,12 +615,12 @@ private fun processTypeQualifiedPathResolveVariants(
 ): Boolean {
     val lookup = ctx.implLookup
     val (normBaseTy, _) = lookup.ctx.normalizeAssociatedTypesIn(baseTy, 0)
-    val shadowingProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.names) { e ->
+    val shadowingProcessor = processor.wrapWithFilter<AssocItemScopeEntry> { e ->
         if (e.element is RsTypeAlias && baseTy is TyTypeParameter && e.source is TraitImplSource.ExplicitImpl) {
             NameResolutionTestmarks.SkipAssocTypeFromImpl.hit()
             false
         } else {
-            processor.process(e)
+            true
         }
     }
     val selfSubst = if (normBaseTy !is TyTraitObject) {
@@ -749,13 +741,12 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
 }
 
 fun processLocalVariables(place: RsElement, originalProcessor: (RsPatBinding) -> Unit) {
+    val processor = createProcessor { v ->
+        val el = v.element
+        if (el is RsPatBinding) originalProcessor(el)
+    }
     val hygieneFilter = makeHygieneFilter(place)
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
-        val processor = createProcessor { v ->
-            val el = v.element
-            if (el is RsPatBinding) originalProcessor(el)
-            false
-        }
         processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter, ItemProcessingMode.WITH_PRIVATE_IMPORTS, processor)
     }
 }
@@ -1334,14 +1325,20 @@ private fun processMethodDeclarationsWithDeref(
         val tyIsSuitableForMethodCall = ty != TyUnknown && ty !is TyInfer.TyVar
         val withAutoBorrow = (prevTy !is TyReference || prevTy.mutability == MUTABLE) && tyIsSuitableForMethodCall
         val withAutoBorrowMut = (prevTy !is TyReference || prevTy.mutability == IMMUTABLE) && tyIsSuitableForMethodCall
-        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.names) { (name, element, _, _, selfTy, source) ->
-            val autoBorrow = selfTy is TyReference && selfTy.referenced === ty
+        val methodProcessor = processor.wrapWithNonNullMapper<MethodResolveVariant, AssocItemScopeEntry> { e ->
+            val element = e.element as? RsFunction ?: return@wrapWithNonNullMapper null
+
             // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
             // it is an associated item and so if it is a function with self parameter - it is a method.
             // Also, this place is very hot and `hasSelfParameters` is cheaper than `isMethod`
-            element is RsFunction && element.hasSelfParameters
-                && (!autoBorrow || element.selfParameter?.isRef == false)
-                && processor.process(MethodResolveVariant(name, element, selfTy, i, source))
+            if (!element.hasSelfParameters) return@wrapWithNonNullMapper null
+
+            val autoBorrow = e.selfTy is TyReference && e.selfTy.referenced === ty
+            if (!autoBorrow || element.selfParameter?.isRef == false) {
+                MethodResolveVariant(e.name, element, e.selfTy, i, e.source)
+            } else {
+                null
+            }
         }
         processAssociatedItems(lookup, ty, VALUES, context, methodProcessor)
             || withAutoBorrow && processAssociatedItems(lookup, TyReference(ty, IMMUTABLE), VALUES, context, methodProcessor)
@@ -1446,8 +1443,8 @@ private fun processAssociatedItemsWithSelfSubst(
     selfSubst: Substitution,
     processor: RsResolveProcessorBase<AssocItemScopeEntry>
 ): Boolean {
-    return processAssociatedItems(lookup, type, ns, context, createProcessorGeneric(processor.names) {
-        processor.process(it.copy(subst = it.subst + selfSubst))
+    return processAssociatedItems(lookup, type, ns, context, processor.wrapWithMapper {
+        it.copy(subst = it.subst + selfSubst)
     })
 }
 
