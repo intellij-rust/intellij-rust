@@ -14,7 +14,6 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.junit.Assert.assertEquals
 
-// BACKCOMPAT: 2022.2. Move all these functions to `RsIntentionTestBase.kt`
 fun CodeInsightTestFixture.checkPreviewAndLaunchAction(intention: IntentionAction, preview: String?) {
     val actualPreview = getIntentionPreviewText(intention)
     check(actualPreview != null) {

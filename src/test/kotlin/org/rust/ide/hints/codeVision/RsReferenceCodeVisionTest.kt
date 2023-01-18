@@ -7,10 +7,8 @@ package org.rust.ide.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
-import org.rust.lang.core.macros.MacroExpansionScope
 
-class RsCodeVisionTestCase : CodeVisionTestCase() {
+class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     override val onlyCodeVisionHintsAllowed: Boolean = false
 
     fun `test no usages`() = doTest("""

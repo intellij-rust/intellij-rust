@@ -1,6 +1,5 @@
 import groovy.xml.XmlParser
 import org.apache.tools.ant.taskdefs.condition.Os.*
-import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -93,22 +92,18 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
-    val javaVersion = if (platformVersion < 223) VERSION_11 else VERSION_17
-
     configure<JavaPluginExtension> {
-        // BACKCOMPAT: 2022.2. Use VERSION_17
-        sourceCompatibility = VERSION_11
-        targetCompatibility = javaVersion
+        sourceCompatibility = VERSION_17
+        targetCompatibility = VERSION_17
     }
 
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = javaVersion.toString()
+                jvmTarget = VERSION_17.toString()
                 languageVersion = "1.7"
                 // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
-                // BACKCOMPAT: 2022.2. Use 1.7
-                apiVersion = "1.6"
+                apiVersion = "1.7"
                 freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }
@@ -377,10 +372,10 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2022.2. Update value to 223 and this comment
+        // BACKCOMPAT: 2022.3. Update value to 231 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "222")
+        environment("IDEA_BUILD_NUMBER", "223")
     }
 }
 
