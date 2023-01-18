@@ -49,9 +49,12 @@ jobs:
               uses: ./.github/actions/load-native-binaries
 
             - name: Build rust plugin
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:buildPlugin"
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
             - name: Save artifacts
               uses: actions/upload-artifact@v3
