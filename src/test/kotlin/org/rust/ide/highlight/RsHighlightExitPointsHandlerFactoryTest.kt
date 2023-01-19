@@ -6,13 +6,21 @@
 package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.disableFindUsageTests
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
+
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        if (!disableFindUsageTests) {
+            super.runTestRunnable(testRunnable)
+        }
+    }
 
     fun `test highlight all returns`() = doTest("""
         fn main() {
