@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.indexing.LightDirectoryIndex
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -72,7 +71,7 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
-
+import kotlin.io.path.exists
 
 @State(name = "CargoProjects", storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE),

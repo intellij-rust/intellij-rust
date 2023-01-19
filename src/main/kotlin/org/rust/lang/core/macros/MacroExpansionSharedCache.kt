@@ -32,6 +32,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.exists
 
 /**
  * A persistent (stored on disk, in the real file system) cache for macro expansion text and stubs.

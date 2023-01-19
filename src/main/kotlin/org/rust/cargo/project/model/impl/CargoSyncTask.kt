@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
 import org.rust.cargo.CargoConfig
@@ -56,6 +55,7 @@ import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
+import kotlin.io.path.exists
 
 class CargoSyncTask(
     project: Project,
