@@ -5,6 +5,13 @@
 
 package org.rust.ide.lineMarkers
 
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
+
 /**
  * Tests for Trait member (const, fn, type) Implementation Line Marker
  */
@@ -21,6 +28,36 @@ class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             const C2: u32 = 1;  // - Has implementations
         }
         struct Bar {} // - Has implementations
+        impl Foo for Bar {
+            fn foo(&self) { // - Implements method in `Foo`
+            }
+            fn bar(&self) { // - Overrides method in `Foo`
+            }
+            type T1 = (); // - Implements type in `Foo`
+            type T2 = (); // - Overrides type in `Foo`
+            const C1: u32 = 1; // - Implements constant in `Foo`
+            const C2: u32 = 1; // - Overrides constant in `Foo`
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test trait and impl under a proc macro attribute`() = doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait Foo {         // - Has implementations
+            fn foo(&self);  // - Has implementations
+            fn bar(&self) { // - Has implementations
+                self.foo();
+            }
+            type T1;        // - Has implementations
+            type T2 = ();   // - Has implementations
+            const C1: u32;  // - Has implementations
+            const C2: u32 = 1;  // - Has implementations
+        }
+        struct Bar {} // - Has implementations
+        #[attr_as_is]
         impl Foo for Bar {
             fn foo(&self) { // - Implements method in `Foo`
             }
