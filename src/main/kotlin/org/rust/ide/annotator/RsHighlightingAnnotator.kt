@@ -45,7 +45,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
     }
 
     private fun highlightLeafInMacroCallBody(element: PsiElement, holder: AnnotationHolder): RsColor? {
-        val expansionElements = element.findExpansionElements()
+        val expansionElements = element.findExpansionElements(holder.attrCache())
             ?.filterIsInstance<LeafPsiElement>()
             ?: return null
 
@@ -69,11 +69,11 @@ class RsHighlightingAnnotator : AnnotatorBase() {
     }
 
     private fun shouldHighlightElement(element: PsiElement, holder: AnnotationHolder): Boolean {
-        val crate = holder.currentCrate()
-        if (crate != null && !element.existsAfterExpansion(crate)) {
+        val crate = holder.currentCrate() ?: return true
+        if (!element.existsAfterExpansion(crate)) {
             return false
         }
-        if (crate != null && element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute(crate) }) {
+        if (element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute(crate) }) {
             return false
         }
         return true
