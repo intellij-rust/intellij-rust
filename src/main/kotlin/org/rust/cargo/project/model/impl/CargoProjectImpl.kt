@@ -186,8 +186,11 @@ open class CargoProjectsServiceImpl(
 
     private fun registerProjectAware(project: Project, disposable: Disposable) {
         // There is no sense to register `CargoExternalSystemProjectAware` for default project.
-        // Moreover, it may break searchable options building
-        if (project.isDefault) return
+        // Moreover, it may break searchable options building.
+        // Also, we don't need to register `CargoExternalSystemProjectAware` in light tests because:
+        // - we check it only in heavy tests
+        // - it heavily depends on service disposing which doesn't work in light tests
+        if (project.isDefault || isUnitTestMode && (project as? ProjectEx)?.isLight == true) return
 
         val cargoProjectAware = CargoExternalSystemProjectAware(project)
         val projectTracker = ExternalSystemProjectTracker.getInstance(project)
