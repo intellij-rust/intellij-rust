@@ -8,7 +8,7 @@ package org.rust.ide.template.postfix
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class DerefPostfixTemplateTest : RsPostfixTemplateTest(DerefPostfixTemplate(RsPostfixTemplateProvider())) {
+class DerefPostfixTemplateTest : RsPostfixTemplateTest(DerefPostfixTemplate::class) {
     fun `test simple`() = doTest("""
         fn main() {
             let v = &123;

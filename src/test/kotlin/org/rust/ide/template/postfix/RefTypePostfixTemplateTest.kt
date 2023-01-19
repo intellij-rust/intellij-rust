@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class RefTypePostfixTemplateTest : RsPostfixTemplateTest(RefTypePostfixTemplate(RsPostfixTemplateProvider())) {
+class RefTypePostfixTemplateTest : RsPostfixTemplateTest(RefTypePostfixTemplate::class) {
     fun `test type reference`() = doTest("""
         fn foo(a: str.ref/*caret*/) {}
     """, """

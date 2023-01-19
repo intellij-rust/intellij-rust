@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class WhileNotPostfixTemplateTest : RsPostfixTemplateTest(WhileNotExpressionPostfixTemplate()) {
+class WhileNotPostfixTemplateTest : RsPostfixTemplateTest(WhileNotExpressionPostfixTemplate::class) {
     fun `test not boolean expr 1`() = doTestNotApplicable("""
         fn main() {
             let a = 4;
