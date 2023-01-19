@@ -9,6 +9,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class CargoExecutableRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
@@ -42,6 +48,15 @@ class CargoExecutableRunLineMarkerContributorTest : RsLineMarkerProviderTestBase
         #![no_main]
 
         fn main() {}
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test main expanded from a attribute macro call`() = doTest("main.rs", """
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        fn main() {} // - Run 'Run test-package'
     """)
 
     private fun doTest(filePath: String, @Language("Rust") text: String) {

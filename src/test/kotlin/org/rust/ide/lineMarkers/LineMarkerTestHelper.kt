@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import java.awt.event.MouseEvent
 import javax.swing.JLabel
 
@@ -33,6 +34,7 @@ class LineMarkerTestHelper(private val fixture: CodeInsightTestFixture) {
     }
 
     private fun doTest() {
+        fixture.project.macroExpansionManagerIfCreated?.updateInUnitTestMode()
         fixture.doHighlighting()
         val expected = markersFrom(fixture.editor.document.text)
         val actual = markersFrom(fixture.editor, fixture.project)

@@ -5,8 +5,9 @@
 
 package org.rust.ide.lineMarkers
 
-import org.rust.MockAdditionalCfgOptions
-import org.rust.fileTree
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 
 /**
  * Tests for Bench Function Line Marker.
@@ -87,5 +88,15 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn has_icon() { assert(true) } // - Bench has_icon
         #[cfg_attr(not(intellij_rust), bench)]
         fn no_icon() { assert(true) }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test bench function under a proc macro attribute`() = doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        #[bench]
+        fn has_icon() { assert(true) } // - Bench has_icon
     """)
 }

@@ -8,7 +8,9 @@ package org.rust.ide.navigation.goto
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsGotoImplementationsTest : RsTestBase() {
     fun `test trait`() = doSingleTargetTest("""
@@ -104,6 +106,106 @@ class RsGotoImplementationsTest : RsTestBase() {
         "Trait for Bar<T> test_package",
         "Trait for Baz<T> where T: Clone test_package"
     )
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test trait under a proc macro attribute`() = doSingleTargetTest("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait T/*caret*/{
+            fn test(&self);
+        }
+        /// docs
+        impl T for (){
+            fn test(&self) {}
+        }
+    """, """
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait T{
+            fn test(&self);
+        }
+        /// docs
+        impl T for /*caret*/(){
+            fn test(&self) {}
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test impl under a proc macro attribute`() = doSingleTargetTest("""
+        use test_proc_macros::attr_as_is;
+        trait T/*caret*/{
+            fn test(&self);
+        }
+        /// docs
+        #[attr_as_is]
+        impl T for (){
+            fn test(&self) {}
+        }
+    """, """
+        use test_proc_macros::attr_as_is;
+        trait T{
+            fn test(&self);
+        }
+        /// docs
+        #[attr_as_is]
+        impl T for /*caret*/(){
+            fn test(&self) {}
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test member when trait is under a proc macro attribute`() = doSingleTargetTest("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait T{
+            fn test/*caret*/(&self);
+        }
+        impl T for (){
+            fn test(&self) {}
+        }
+    """, """
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait T{
+            fn test(&self);
+        }
+        impl T for (){
+            fn /*caret*/test(&self) {}
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test struct under a proc macro attribute`() = doSingleTargetTest("""
+        use test_proc_macros::attr_as_is;
+        trait T {
+            fn test(&self);
+        }
+        #[attr_as_is]
+        struct Foo/*caret*/;
+        /// docs
+        impl T for Foo {
+            fn test(&self) {}
+        }
+    """, """
+        use test_proc_macros::attr_as_is;
+        trait T {
+            fn test(&self);
+        }
+        #[attr_as_is]
+        struct Foo;
+        /// docs
+        impl T for /*caret*/Foo {
+            fn test(&self) {}
+        }
+    """)
 
     private fun doSingleTargetTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_GOTO_IMPLEMENTATION)
