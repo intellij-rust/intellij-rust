@@ -306,9 +306,11 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
-    override fun getIcon(flags: Int): Icon {
+    override fun getIcon(flags: Int): Icon = getIcon(flags, allowNameResolution = true)
+
+    override fun getIcon(flags: Int, allowNameResolution: Boolean): Icon {
         var hasVisibility = true
-        val baseIcon = when (val owner = owner) {
+        val baseIcon = when (val owner = if (allowNameResolution) owner else ownerBySyntaxOnly) {
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
                 when {
                     isTest -> RsIcons.FUNCTION.addTestMark()
