@@ -39,7 +39,6 @@ object RsIcons {
 
     val FINAL_MARK = AllIcons.Nodes.FinalMark
     val STATIC_MARK = AllIcons.Nodes.StaticMark
-    val UNSAFE_MARK = load("/icons/unsafeMark.svg")
     val TEST_MARK = AllIcons.Nodes.JunitTestMark
     val DOCS_MARK = load("/icons/docsrs.svg")
     val FEATURE_CHECKED_MARK = AllIcons.Diff.GutterCheckBoxSelected
@@ -64,9 +63,8 @@ object RsIcons {
     val MACRO2 = load("/icons/nodes/macro2.0.svg")
 
     val CONSTANT = load("/icons/nodes/constant.svg")
-    private val STATIC_BASE = load("/icons/nodes/static.svg")
-    val STATIC = STATIC_BASE.addFinalMark()
-    val MUT_STATIC = STATIC_BASE.addUnsafeMark()
+    val MUT_STATIC = load("/icons/nodes/static.svg")
+    val STATIC = MUT_STATIC.addFinalMark()
 
     val METHOD = load("/icons/nodes/method.svg")
     val ASSOC_FUNCTION = FUNCTION.addStaticMark()
@@ -118,8 +116,6 @@ object RsIcons {
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RsIcons.FINAL_MARK)
 
 fun Icon.addStaticMark(): Icon = LayeredIcon(this, RsIcons.STATIC_MARK)
-
-fun Icon.addUnsafeMark(): Icon = LayeredIcon(this, RsIcons.UNSAFE_MARK)
 
 fun Icon.addTestMark(): Icon = LayeredIcon(this, RsIcons.TEST_MARK)
 

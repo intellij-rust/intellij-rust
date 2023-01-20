@@ -12,7 +12,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.icons.addUnsafeMark
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
@@ -125,10 +124,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon {
-        val icon = if (isUnsafe) RsIcons.TRAIT.addUnsafeMark() else RsIcons.TRAIT
-        return iconWithVisibility(flags, icon)
-    }
+    override fun getIcon(flags: Int): Icon =
+        iconWithVisibility(flags, RsIcons.TRAIT)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
