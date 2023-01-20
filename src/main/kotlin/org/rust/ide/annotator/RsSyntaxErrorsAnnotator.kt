@@ -15,13 +15,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
+import com.intellij.psi.util.parentOfType
 import org.rust.ide.annotator.fixes.AddTypeFix
+import org.rust.ide.annotator.fixes.RemoveElementFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Mutability
+import org.rust.lang.core.types.infer.constGenerics
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
@@ -40,6 +43,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
                     is RsFunction -> checkFunction(holder, element)
                     is RsStructItem -> checkStructItem(holder, element)
                     is RsTypeAlias -> checkTypeAlias(holder, element)
+                    is RsImplItem -> checkImplItem(holder, element)
                     is RsConstant -> checkConstant(holder, element)
                     is RsModItem -> checkModItem(holder, element)
                     is RsModDeclItem -> checkModDeclItem(holder, element)
@@ -51,10 +55,27 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
+            is RsTypeParameter -> checkTypeParameter(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
             is RsLetExpr -> checkLetExpr(holder, element)
             is RsPatRange -> checkPatRange(holder, element)
         }
+    }
+}
+
+private fun checkTypeParameter(holder: AnnotationHolder, item: RsTypeParameter) {
+    if (item.bounds.count { it.hasQ } > 1) {
+        RsDiagnostic.MultipleRelaxedBoundsError(item).addToHolder(holder)
+    }
+}
+
+private fun checkImplItem(holder: AnnotationHolder, item: RsImplItem) {
+    val unsafe = item.unsafe
+    if (unsafe != null && item.traitRef == null) {
+        val typeReference = item.typeReference ?: return
+        RsDiagnostic.UnsafeInherentImplError(
+            typeReference, listOf(RemoveElementFix(unsafe))
+        ).addToHolder(holder)
     }
 }
 
@@ -93,6 +114,16 @@ private fun checkMacroCall(holder: AnnotationHolder, element: RsMacroCall) {
 }
 
 private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+    if (fn.isMain && fn.getGenericParameters().isNotEmpty()) {
+        val typeParameterList = fn.typeParameterList ?: fn
+        RsDiagnostic.MainWithGenericsError(
+            typeParameterList, listOf(
+            RemoveElementFix(
+                typeParameterList
+            )
+        )
+        ).addToHolder(holder)
+    }
     when (fn.owner) {
         is RsAbstractableOwner.Free -> {
             require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
