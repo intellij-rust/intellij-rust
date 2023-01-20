@@ -25,6 +25,7 @@ import org.rustSlowTests.cargo.runconfig.waitFinished
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 
+@Suppress("UnstableApiUsage")
 @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
 class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
 
@@ -36,7 +37,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        projectTracker.enableAutoImportInTests()
+        enableAutoImportInTests(projectTracker, testRootDisposable)
     }
 
     fun `test modifications`() {

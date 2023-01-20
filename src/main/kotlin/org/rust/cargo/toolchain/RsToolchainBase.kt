@@ -9,7 +9,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.wsl.WslPath
-import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
@@ -21,6 +20,7 @@ import org.rust.openapiext.withWorkDirectory
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 abstract class RsToolchainBase(val location: Path) {
     val presentableLocation: String get() = pathToExecutable(Cargo.NAME).toString()

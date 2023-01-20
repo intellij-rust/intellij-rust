@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.PathUtil
-import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.*
@@ -28,6 +27,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
+import kotlin.io.path.exists
 
 private val LOG: Logger = logger<CargoMetadata>()
 

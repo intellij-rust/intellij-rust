@@ -9,15 +9,24 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.RsTestBase
+import org.rust.ide.disableFindUsageTests
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.toPsiFile
 import org.rust.withTestDialog
 
 class RsFindUsagesTest : RsTestBase() {
+
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        if (!disableFindUsageTests) {
+            super.runTestRunnable(testRunnable)
+        }
+    }
+
     fun `test variable usages`() = doTestByText("""
         fn foo(x: i32) -> i32 {
              //^
