@@ -1482,7 +1482,8 @@ fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
                  "org.rust.lang.core.macros.RsExpandedElement"
                  "org.rust.lang.core.psi.ext.RsPossibleMacroCall"
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
-                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
+                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner"
+                 "com.intellij.psi.PsiLanguageInjectionHost" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
