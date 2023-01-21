@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.SmartList
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
@@ -584,15 +586,16 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
     if (context.containingFile is RsDebuggerExpressionCodeFragment) {
         return processor
     }
-    val mod = context.containingMod
+    val contextMod = context.containingMod
     return processor.wrapWithFilter {
         val element = it.element
-        if (element is RsVisible && !element.isVisibleFrom(mod)) return@wrapWithFilter false
+        if (element is RsVisible && !element.isVisibleFrom(contextMod)) return@wrapWithFilter false
         if (!it.isVisibleFrom(context)) return@wrapWithFilter false
 
-        val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
-            element.containingMod != mod
-        if (isHidden) return@wrapWithFilter false
+        if (element is RsOuterAttributeOwner) {
+            val isHidden = element.shouldHideElementInCompletion(contextMod)
+            if (isHidden) return@wrapWithFilter false
+        }
 
         true
     }
@@ -617,4 +620,43 @@ fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
         val function = e.element as? RsFunction ?: return@wrapWithFilter false
         if (!function.isCustomDeriveProcMacroDef) return@wrapWithFilter false
         true
+    }
+
+fun RsOuterAttributeOwner.shouldHideElementInCompletion(contextMod: RsMod): Boolean {
+    val elementContainingMod = containingMod
+    if (elementContainingMod == contextMod) return false
+
+    // Hide `#[doc(hidden)]` items
+    if (queryAttributes.isDocHidden) return true
+
+    val rustcChannel = contextMod.cargoProject?.rustcInfo?.version?.channel ?: return false
+    val showUnstableItems = rustcChannel != RustChannel.STABLE && rustcChannel != RustChannel.BETA
+    if (showUnstableItems) return false
+    if (containingCrate.origin != PackageOrigin.STDLIB) return false
+
+    // Hide unstable stdlib items
+    return stability != RsStability.Stable
+}
+
+private val RsOuterAttributeOwner.stability: RsStability
+    get() {
+        // Own stability
+        queryAttributes.stability?.let { return it }
+
+        if (this is RsAbstractable) {
+            val owner = owner
+            if (owner is RsAbstractableOwner.Impl) {
+                val ownerStability = owner.impl.queryAttributes.stability
+                if (ownerStability != RsStability.Stable) {
+                    return ownerStability ?: RsStability.Unstable
+                }
+                val superItem = superItem
+                if (superItem != null) {
+                    return superItem.queryAttributes.stability ?: RsStability.Unstable
+                }
+            }
+        }
+
+        // The absence of `#[stable]` attribute in stdlib means the item is unstable
+        return RsStability.Unstable
     }

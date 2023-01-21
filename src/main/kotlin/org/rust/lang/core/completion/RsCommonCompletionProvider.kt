@@ -207,8 +207,14 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val importContext = ImportContext.from(path, ImportContext.Type.COMPLETION) ?: return
         val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
+        val contextMod = path.containingMod
+
         for (candidate in candidates) {
             val item = candidate.item
+            if (item is RsOuterAttributeOwner) {
+                val isHidden = item.shouldHideElementInCompletion(contextMod)
+                if (isHidden) continue
+            }
             val scopeEntry = SimpleScopeEntry(candidate.itemName, item, TYPES_N_VALUES_N_MACROS)
 
             if (item is RsEnumItem
@@ -255,7 +261,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                         result.addElement(createLookupElementWithImportCandidate(e, context, candidate))
                     }
                 }
-                val processor = filterNotCfgDisabledItemsAndTestFunctions(collector)
+                val processor = filterCompletionVariantsByVisibility(
+                    path,
+                    filterNotCfgDisabledItemsAndTestFunctions(collector)
+                )
                 processPathVariants(newPath, processor)
             }
         }
@@ -529,9 +538,12 @@ fun collectVariantsForEnumCompletion(
     candidate: ImportCandidate? = null
 ): List<LookupElement> {
     val enumName = element.name ?: return emptyList()
+    val contextMod = context.context?.containingMod
 
     return element.enumBody?.childrenOfType<RsEnumVariant>().orEmpty().mapNotNull { enumVariant ->
         val variantName = enumVariant.name ?: return@mapNotNull null
+
+        if (contextMod != null && enumVariant.shouldHideElementInCompletion(contextMod)) return@mapNotNull null
 
         return@mapNotNull createLookupElement(
             scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, ENUM_VARIANT_NS, substitution),
