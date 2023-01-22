@@ -44,16 +44,30 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(x: &str) -> Box<&str> { unimplemented!() }
     """)
 
-    fun `test one input lifetime 4 (fn pointer)`() = doTest("""
+    fun `test one input lifetime (fn pointer with parameter lifetime)`() = doTest("""
         /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
     """, """
         fn foo(s: &str, b: fn(&i32)) -> &i32 { unimplemented!() }
     """)
 
-    fun `test one input lifetime 5 (Fn trait)`() = doTest("""
+    fun `test one input lifetime (Fn trait with parameter lifetime)`() = doTest("""
         /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: impl Fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
     """, """
         fn foo(s: &str, b: impl Fn(&i32)) -> &i32 { unimplemented!() }
+    """)
+
+    fun `test one input lifetime (fn pointer with path lifetime)`() = doTest("""
+        trait Trait {
+            type AssocType<'a>;
+            fn foo<'a>(_: &'a str, _: fn(Self::AssocType<'a>)) -> &'a i32 { unimplemented!() }
+        }
+    """)
+
+    fun `test one input lifetime (Fn trait with path lifetime)`() = doTest("""
+        trait Trait {
+            type AssocType<'a>;
+            fn foo<'a>(_: &'a str, _: impl Fn(Self::AssocType<'a>)) -> &'a i32 { unimplemented!() }
+        }
     """)
 
     fun `test no input lifetimes`() = doTest("""

@@ -146,9 +146,21 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecu
     override fun visitElement(element: RsElement) {
         if (abort) return
         if (element is RsItemElement) return  // ignore nested items
-        if (element is RsFnPointerType) return  // ignore `fn(&i32)`
-        if (element is RsPath && element.valueParameterList != null) return  // ignore `Fn(&i32)`
+        if (processFnPointerOrFnTrait(element)) return
         element.forEachChild { it.accept(this) }
+    }
+
+    private fun processFnPointerOrFnTrait(element: RsElement): Boolean {
+        val isFnPointer = element is RsFnPointerType  // `fn(...)`
+        val isFnTrait = element is RsPath && element.valueParameterList != null  // `Fn(...)`
+        if (!isFnPointer && !isFnTrait) return false
+
+        // Ignore parameter lifetimes `Fn(&'a i32)` but process path lifetimes `Fn(Self::AssocType<'a>)`
+        for (path in element.descendantsOfType<RsPath>()) {
+            collectAnonymousLifetimes(path)
+            path.typeArgumentList?.lifetimeList?.forEach(::record)
+        }
+        return true
     }
 
     private fun record(lifetime: RsLifetime?) {
