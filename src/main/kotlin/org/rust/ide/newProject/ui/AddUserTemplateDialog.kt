@@ -13,8 +13,10 @@ import org.rust.ide.newProject.state.RsUserTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
 import org.rust.openapiext.addTextChangeListener
 import org.rust.openapiext.fullWidthCell
+import org.rust.openapiext.trimmedText
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentEvent.EventType
 
 class AddUserTemplateDialog : DialogWrapper(null) {
     private val repoUrlField: JBTextField = JBTextField().apply {
@@ -43,25 +45,32 @@ class AddUserTemplateDialog : DialogWrapper(null) {
 
     override fun doOKAction() {
         // TODO: Find a better way to handle dialog form validation
-        if (nameField.text.isBlank()) return
-        if (RsUserTemplatesState.getInstance().templates.any { it.name == nameField.text }) return
+        val name = nameField.trimmedText
+        val repoUrl = repoUrlField.trimmedText
+
+        if (name.isBlank()) return
+        if (RsUserTemplatesState.getInstance().templates.any { it.name == name }) return
 
         RsUserTemplatesState.getInstance().templates.add(
-            RsUserTemplate(nameField.text, repoUrlField.text)
+            RsUserTemplate(name, repoUrl)
         )
 
         super.doOKAction()
     }
 
     private fun suggestName(event: DocumentEvent) {
-        if (nameField.text.isNotBlank()) return
-        if (event.length != repoUrlField.text.length) return
-        if (KNOWN_URL_PREFIXES.none { repoUrlField.text.startsWith(it) }) return
+        // Suggest name only if the whole URL was inserted
+        if (event.type == EventType.INSERT && event.length == event.document.length) {
+            if (nameField.text.isNotBlank()) return
 
-        nameField.text = repoUrlField.text
-            .removeSuffix("/")
-            .removeSuffix(".git")
-            .substringAfterLast("/")
+            val repoUrl = repoUrlField.trimmedText
+            if (KNOWN_URL_PREFIXES.none { repoUrl.startsWith(it) }) return
+
+            nameField.text = repoUrl
+                .removeSuffix("/")
+                .removeSuffix(".git")
+                .substringAfterLast("/")
+        }
     }
 
     companion object {
