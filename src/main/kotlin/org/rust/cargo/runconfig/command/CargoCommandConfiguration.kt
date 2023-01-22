@@ -44,13 +44,9 @@ import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.openapiext.isUnitTestMode
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-
-val CargoCommandConfiguration.hasRemoteTarget: Boolean
-    get() = defaultTargetName != null
 
 /**
  * This class describes a Run Configuration.
@@ -71,7 +67,6 @@ open class CargoCommandConfiguration(
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
-    var emulateTerminal: Boolean = emulateTerminalDefault
     var withSudo: Boolean = false
     var buildTarget: BuildTarget = BuildTarget.REMOTE
     var backtrace: BacktraceMode = BacktraceMode.SHORT
@@ -124,7 +119,6 @@ open class CargoCommandConfiguration(
         element.writeEnum("channel", channel)
         element.writeBool("requiredFeatures", requiredFeatures)
         element.writeBool("allFeatures", allFeatures)
-        element.writeBool("emulateTerminal", emulateTerminal)
         element.writeBool("withSudo", withSudo)
         element.writeEnum("buildTarget", buildTarget)
         element.writeEnum("backtrace", backtrace)
@@ -142,7 +136,6 @@ open class CargoCommandConfiguration(
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readBool("requiredFeatures")?.let { requiredFeatures = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
-        element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readBool("withSudo")?.let { withSudo = it }
         element.readEnum<BuildTarget>("buildTarget")?.let { buildTarget = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
@@ -251,13 +244,13 @@ open class CargoCommandConfiguration(
                 workingDirectory,
                 parsed.additionalArguments,
                 redirectInputFile,
+                emulateTerminal,
                 backtrace,
                 parsed.toolchain,
                 channel,
                 env,
                 requiredFeatures,
                 allFeatures,
-                emulateTerminal,
                 withSudo
             )
         }
@@ -352,9 +345,6 @@ open class CargoCommandConfiguration(
                 }
             }
         }
-
-        val emulateTerminalDefault: Boolean
-            get() = isFeatureEnabled(RsExperiments.EMULATE_TERMINAL) && !isUnitTestMode
     }
 }
 

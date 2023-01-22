@@ -2,10 +2,10 @@
   <configuration name="Run hello" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="run --package test-package --bin hello" />
     <option name="workingDirectory" value="file:///my-crate" />
+    <option name="emulateTerminal" value="true" />
     <option name="channel" value="NIGHTLY" />
     <option name="requiredFeatures" value="false" />
     <option name="allFeatures" value="true" />
-    <option name="emulateTerminal" value="true" />
     <option name="withSudo" value="true" />
     <option name="buildTarget" value="LOCAL" />
     <option name="backtrace" value="FULL" />
