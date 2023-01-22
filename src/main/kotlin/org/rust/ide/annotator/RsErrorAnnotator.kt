@@ -1077,7 +1077,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
                     GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
                 }
-                ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }
+                for (whereClause in ta.whereClauseList) {
+                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, "where clauses on associated types")
+                }
             }
             is RsAbstractableOwner.Impl -> {
                 if (owner.isInherent) {
@@ -1087,7 +1089,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
                     GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
                 }
-                ta.whereClause?.let { GENERIC_ASSOCIATED_TYPES.check(holder, it, "where clauses on associated types") }
+                for (whereClause in ta.whereClauseList) {
+                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, "where clauses on associated types")
+                }
             }
             is RsAbstractableOwner.Foreign -> {
                 EXTERN_TYPES.check(holder, ta, "extern types")

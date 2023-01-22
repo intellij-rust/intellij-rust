@@ -1264,7 +1264,7 @@ val RsGenericDeclaration.predicates: List<Predicate>
     }
 
 private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
-    val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
+    val whereBounds = wherePreds.asSequence()
         .flatMap {
             val selfTy = it.typeReference?.rawType ?: return@flatMap emptySequence<PsiPredicate>()
             it.typeParamBounds?.polyboundList.toPredicates(selfTy)

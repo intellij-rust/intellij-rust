@@ -502,6 +502,21 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre></div>
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test impl generic assoc type with where clause`() = doTest("""
+        trait Trait {
+            type AssocType<'a, 'b> where 'a: 'static  = () where 'b: 'static;
+        }
+        struct Foo;
+        impl Trait for Foo {
+            type AssocType<'a, 'b> where 'a: 'static  = () where 'b: 'static;
+                //^
+        }
+    """, """
+        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        type <b>AssocType</b>&lt;&#39;a, &#39;b&gt; = ()<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;&#39;a: &#39;static,<br>&nbsp;&nbsp;&nbsp;&nbsp;&#39;b: &#39;static,</pre></div>
+    """)
+
     fun `test trait assoc type`() = doTest("""
         trait MyTrait {
             /// Documented

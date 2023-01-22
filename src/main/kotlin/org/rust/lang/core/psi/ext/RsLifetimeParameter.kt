@@ -18,7 +18,7 @@ import org.rust.lang.core.stubs.RsLifetimeParameterStub
 val RsLifetimeParameter.bounds: List<RsLifetime>
     get() {
         val owner = parent?.parent as? RsGenericDeclaration
-        val whereBounds = owner?.whereClause?.wherePredList.orEmpty()
+        val whereBounds = owner?.wherePreds.orEmpty()
             .filter { it.lifetime?.reference?.resolve() == this }
             .flatMap { it.lifetimeParamBounds?.lifetimeList.orEmpty() }
         return lifetimeParamBounds?.lifetimeList.orEmpty() + whereBounds

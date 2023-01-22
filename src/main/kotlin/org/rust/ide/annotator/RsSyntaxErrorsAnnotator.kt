@@ -13,6 +13,8 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.text.SemVer
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
@@ -123,11 +125,17 @@ private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
 
 private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
     val title = "Type `${ta.identifier.text}`"
+
+    val eq = ta.eq
+    val whereClauseBeforeEq = ta.whereClauseList.firstOrNull()?.takeIf { eq != null && it.startOffset < eq.startOffset }
+    val whereClauseAfterEq = ta.whereClauseList.lastOrNull()?.takeIf { eq != null && it.startOffset > eq.startOffset }
+
     when (val owner = ta.owner) {
         is RsAbstractableOwner.Free -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
             deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
             require(ta.typeReference, holder, "$title should have a body`", ta)
+            deny(whereClauseAfterEq, holder, "$title cannot have `where` clause after the type")
         }
         is RsAbstractableOwner.Trait -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
@@ -138,6 +146,10 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
             }
             deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
             require(ta.typeReference, holder, "$title should have a body", ta)
+
+            val version = ta.cargoProject?.rustcInfo?.version?.semver ?: return
+            if (version < DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION) return
+            deny(whereClauseBeforeEq, holder, "$title cannot have `where` clause before the type", severity = HighlightSeverity.WEAK_WARNING)
         }
         RsAbstractableOwner.Foreign -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
@@ -148,6 +160,8 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         }
     }
 }
+
+private val DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION: SemVer = "1.61.0".parseSemVer()
 
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
     val name = const.nameLikeElement.text
@@ -415,10 +429,11 @@ private fun deny(
     el: PsiElement?,
     holder: AnnotationHolder,
     @InspectionMessage message: String,
-    vararg highlightElements: PsiElement?
+    vararg highlightElements: PsiElement?,
+    severity: HighlightSeverity = HighlightSeverity.ERROR
 ) {
     if (el == null) return
-    holder.newAnnotation(HighlightSeverity.ERROR, message)
+    holder.newAnnotation(severity, message)
         .range(highlightElements.combinedRange ?: el.textRange).create()
 }
 
