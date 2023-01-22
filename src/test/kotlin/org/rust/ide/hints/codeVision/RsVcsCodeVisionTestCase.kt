@@ -5,12 +5,11 @@
 
 package org.rust.ide.hints.codeVision
 
-import com.intellij.codeInsight.codeVision.CodeVisionTestCase
 import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import org.intellij.lang.annotations.Language
 
-@Suppress("UnstableApiUsage")
-class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
+
+class RsVcsCodeVisionTestCase : RsCodeVisionTestCaseBase() {
     fun `test function`() = doTest("""
         <# block [John Smith +2] #>
         fn foo() {}

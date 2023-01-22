@@ -21,7 +21,8 @@ class RsInPlaceVariableIntroducer(
     @Suppress("UnstableApiUsage") @Command title: String,
     private val additionalElementsToRename: List<PsiElement> = emptyList()
 ) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, emptyArray(), null) {
-    override fun collectAdditionalElementsToRename(stringUsages: MutableList<Pair<PsiElement, TextRange>>) {
+
+    override fun collectAdditionalElementsToRename(stringUsages: UsagesList) {
         for (element in additionalElementsToRename) {
             if (element.isValid) {
                 stringUsages.add(Pair(element, TextRange(0, element.textLength)))

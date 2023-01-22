@@ -5,8 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.BuildNumber
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.ide.annotator.ExplicitPreview
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -593,7 +596,11 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         pub mod foo {
             pub fn bar() {}
         }
-    """, stubOnly = false, preview = null)
+    """, stubOnly = false, preview = ExplicitPreview("""
+        pub mod foo {
+            pub fn bar() {}
+        }
+    """).takeIf { isMultiFilePreviewSupported })
 
     fun `test make mod decl public`() = checkFixByFileTree("Make `bar` public", """
     //- main.rs
@@ -655,5 +662,16 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn main() {
             test_package::foo::A/*caret*/;
         }
-    """, preview = null)
+    """, preview = ExplicitPreview("""
+        pub mod foo {
+            pub struct A;
+        }
+    """).takeIf { isMultiFilePreviewSupported })
+
+    companion object {
+        // BACKCOMPAT: 2022.3
+        private val BUILD_231 = BuildNumber.fromString("231")!!
+        // BACKCOMPAT: 2022.3
+        private val isMultiFilePreviewSupported: Boolean get() = ApplicationInfo.getInstance().build >= BUILD_231
+    }
 }

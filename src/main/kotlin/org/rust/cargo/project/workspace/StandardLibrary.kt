@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
@@ -36,6 +35,7 @@ import org.rust.stdext.toPath
 import org.rust.stdext.unwrapOrElse
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 data class StandardLibrary(
     val workspaceData: CargoWorkspaceData,

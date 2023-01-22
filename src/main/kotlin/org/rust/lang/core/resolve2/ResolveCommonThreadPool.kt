@@ -8,7 +8,7 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.testFramework.ThreadTracker
+import com.intellij.testFramework.common.ThreadLeakTracker
 import org.rust.openapiext.isUnitTestMode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
@@ -27,7 +27,7 @@ class ResolveCommonThreadPool : Disposable {
 
     init {
         if (isUnitTestMode) {
-            ThreadTracker.longRunningThreadCreated(this, THREAD_NAME_PREFIX)
+            ThreadLeakTracker.longRunningThreadCreated(this, THREAD_NAME_PREFIX)
         }
     }
 

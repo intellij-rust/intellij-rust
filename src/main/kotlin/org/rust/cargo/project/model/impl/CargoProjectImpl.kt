@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.indexing.LightDirectoryIndex
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -72,7 +71,7 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
-
+import kotlin.io.path.exists
 
 @State(name = "CargoProjects", storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE),
@@ -187,8 +186,11 @@ open class CargoProjectsServiceImpl(
 
     private fun registerProjectAware(project: Project, disposable: Disposable) {
         // There is no sense to register `CargoExternalSystemProjectAware` for default project.
-        // Moreover, it may break searchable options building
-        if (project.isDefault) return
+        // Moreover, it may break searchable options building.
+        // Also, we don't need to register `CargoExternalSystemProjectAware` in light tests because:
+        // - we check it only in heavy tests
+        // - it heavily depends on service disposing which doesn't work in light tests
+        if (project.isDefault || isUnitTestMode && (project as? ProjectEx)?.isLight == true) return
 
         val cargoProjectAware = CargoExternalSystemProjectAware(project)
         val projectTracker = ExternalSystemProjectTracker.getInstance(project)

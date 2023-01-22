@@ -7,7 +7,6 @@ package org.rust.lang.core.macros.proc
 
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.exists
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -29,6 +28,7 @@ import org.rust.stdext.toPath
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
+import kotlin.io.path.exists
 
 /**
  * A low-level test for proc macro expansion infrastructure

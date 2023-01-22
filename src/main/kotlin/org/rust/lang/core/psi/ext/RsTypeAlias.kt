@@ -32,8 +32,10 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     constructor(stub: RsTypeAliasStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon? {
-        val owner = owner
+    override fun getIcon(flags: Int): Icon = getIcon(flags, allowNameResolution = true)
+
+    override fun getIcon(flags: Int, allowNameResolution: Boolean): Icon {
+        val owner = if (allowNameResolution) owner else ownerBySyntaxOnly
         val baseIcon = when (owner) {
             RsAbstractableOwner.Free, RsAbstractableOwner.Foreign -> RsIcons.TYPE_ALIAS
             is RsAbstractableOwner.Trait -> if (isAbstract) RsIcons.ABSTRACT_ASSOC_TYPE_ALIAS else RsIcons.ASSOC_TYPE_ALIAS
