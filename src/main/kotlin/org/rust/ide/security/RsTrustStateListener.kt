@@ -6,6 +6,7 @@
 package org.rust.ide.security
 
 import com.intellij.ide.impl.TrustStateListener
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.cargoProjects
 
@@ -13,7 +14,13 @@ import org.rust.cargo.project.model.cargoProjects
 class RsTrustStateListener : TrustStateListener {
 
     override fun onProjectTrusted(project: Project) {
-        // Load project model that wasn't load before because project wasn't trusted
-        project.cargoProjects.refreshAllProjects()
+        // Since 2023.1, this callback can be called in the background thread which EDT waits for.
+        // In combination with fact that we call `invokeAndWaitIfNeeded` inside `refreshAllProjects`,
+        // it may lead to deadlock.
+        // Let's postpone invocation of `refreshAllProjects` to next event if this code is executed in background thread
+        runInEdt {
+            // Load project model that wasn't load before because project wasn't trusted
+            project.cargoProjects.refreshAllProjects()
+        }
     }
 }
