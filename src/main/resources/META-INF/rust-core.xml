@@ -203,6 +203,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsEdition2018KeywordsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.format.RsFormatMacroAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsAttrHighlightingAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingMutableAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>

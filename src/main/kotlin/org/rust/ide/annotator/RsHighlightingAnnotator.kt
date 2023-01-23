@@ -14,9 +14,12 @@ import com.intellij.psi.impl.cache.impl.IndexPatternUtil
 import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.PsiTodoSearchHelper
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.ide.todo.isTodoPattern
+import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -28,29 +31,58 @@ class RsHighlightingAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (holder.isBatchMode) return
-        val color = when (element) {
-            is LeafPsiElement -> highlightLeaf(element, holder)
-            is RsAttr -> RsColor.ATTRIBUTE
-            else -> null
-        } ?: return
+        if (element !is LeafPsiElement) return
+        val elementType = element.elementType
+        if (elementType !in HIGHLIGHTED_ELEMENTS) return
 
-        val crate = holder.currentCrate()
-        if (crate != null && !element.existsAfterExpansion(crate)) return
-        if (crate != null && element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute(crate) }) return
+        val color = highlightLeafInMacroCallBody(element, holder)
+            ?: highlightLeafOutsideOfMacroCallBody(element, elementType, holder)
+            ?: return
 
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
 
         holder.newSilentAnnotation(severity).textAttributes(color.textAttributesKey).create()
     }
 
-    private fun macroGroupColor(parent: RsElement): RsColor? {
-        return if (parent is RsMacroExpansionReferenceGroup || parent is RsMacroBindingGroup) RsColor.MACRO else null
+    private fun highlightLeafInMacroCallBody(element: PsiElement, holder: AnnotationHolder): RsColor? {
+        val expansionElements = element.findExpansionElements(holder.attrCache())
+            ?.filterIsInstance<LeafPsiElement>()
+            ?: return null
+
+        for (expansionElement in expansionElements) {
+            val color = highlightLeaf(expansionElement, expansionElement.elementType, holder) ?: continue
+            if (!shouldHighlightElement(expansionElement, holder)) continue
+
+            return color
+        }
+        return null
     }
 
-    private fun highlightLeaf(element: PsiElement, holder: AnnotationHolder): RsColor? {
+    private fun highlightLeafOutsideOfMacroCallBody(
+        element: PsiElement,
+        elementType: IElementType,
+        holder: AnnotationHolder
+    ): RsColor? {
+        val color = highlightLeaf(element, elementType, holder) ?: return null
+        if (!shouldHighlightElement(element, holder)) return null
+        return color
+    }
+
+    private fun shouldHighlightElement(element: PsiElement, holder: AnnotationHolder): Boolean {
+        val crate = holder.currentCrate() ?: return true
+        if (!element.existsAfterExpansion(crate)) {
+            return false
+        }
+        if (element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute(crate) }) {
+            return false
+        }
+        return true
+    }
+
+    private fun highlightLeaf(element: PsiElement, elementType: IElementType, holder: AnnotationHolder): RsColor? {
         val parent = element.parent as? RsElement ?: return null
 
-        return when (element.elementType) {
+        return when (elementType) {
             DOLLAR -> RsColor.MACRO
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
@@ -67,7 +99,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             }
             in RS_LITERALS -> if (parent is RsLitExpr) {
                 when (parent.parent) {
-                    is RsMetaItem, is RsMetaItemArgs -> RsHighlighter.map(element.elementType)
+                    is RsMetaItem, is RsMetaItemArgs -> RsHighlighter.map(elementType)
                     else -> null
                 }
             } else {
@@ -157,8 +189,19 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         }
     }
 
+    private fun macroGroupColor(parent: RsElement): RsColor? {
+        return if (parent is RsMacroExpansionReferenceGroup || parent is RsMacroBindingGroup) RsColor.MACRO else null
+    }
+
     companion object {
         private val IS_TODO_HIGHLIGHTING_ENABLED: Key<Boolean> = Key.create("IS_TODO_HIGHLIGHTING_ENABLED")
+        private val HIGHLIGHTED_ELEMENTS = TokenSet.orSet(
+            tokenSetOf(
+                DOLLAR, IDENTIFIER, QUOTE_IDENTIFIER, SELF, FLOAT_LITERAL, Q, COLON, MUL, PLUS, LPAREN, LBRACE,
+                RPAREN, RBRACE, EXCL
+            ),
+            RS_CONTEXTUAL_KEYWORDS, RS_LITERALS
+        )
     }
 }
 

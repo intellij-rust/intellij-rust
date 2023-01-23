@@ -9,10 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroArgument
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -255,24 +252,24 @@ fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
  * fn bar() {} // Maps each token with a corresponding token in the macro expansion
  * ```
  */
-fun PsiElement.findExpansionElements(): List<PsiElement>? {
-    val mappedElements = findExpansionElementsNonRecursive() ?: return null
+fun PsiElement.findExpansionElements(cache: AttrCache = AttrCache.NoCache): List<PsiElement>? {
+    val mappedElements = findExpansionElementsNonRecursive(cache) ?: return null
     return mappedElements.flatMap { mappedElement ->
-        mappedElement.findExpansionElements() ?: listOf(mappedElement)
+        mappedElement.findExpansionElements()?.takeIf { it.isNotEmpty() } ?: listOf(mappedElement)
     }
 }
 
 fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
-private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
-    val call = ancestors.toList().asReversed().asSequence().mapNotNull {
+private fun PsiElement.findExpansionElementsNonRecursive(cache: AttrCache): List<PsiElement>? {
+    val call = ancestors.toList().asReversed().firstNotNullOfOrNull {
         when (it) {
             is RsMacroArgument -> it.ancestorStrict<RsMacroCall>()
-            is RsAttrProcMacroOwner -> it.procMacroAttribute.attr
+            is RsAttrProcMacroOwner -> cache.cachedGetProcMacroAttribute(it)
             else -> null
         }
-    }.firstOrNull() ?: return null
+    } ?: return null
     val expansion = call.expansion ?: return null
     val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
     val expansionFile = expansion.file

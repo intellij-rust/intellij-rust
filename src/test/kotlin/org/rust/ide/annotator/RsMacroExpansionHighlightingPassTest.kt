@@ -88,6 +88,10 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         RsAnnotationTestFixture(
             this,
             myFixture,
-            annotatorClasses = listOf(RsHighlightingAnnotator::class, RsCfgDisabledCodeAnnotator::class)
+            annotatorClasses = listOf(
+                RsHighlightingAnnotator::class,
+                RsAttrHighlightingAnnotator::class,
+                RsCfgDisabledCodeAnnotator::class
+            )
         )
 }

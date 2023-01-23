@@ -70,7 +70,7 @@ class RsMacroExpansionHighlightingPass(
 
     private fun createAnnotators(): List<Annotator> = listOf(
         RsEdition2018KeywordsAnnotator(),
-        RsHighlightingAnnotator(),
+        RsAttrHighlightingAnnotator(),
         RsHighlightingMutableAnnotator(),
         RsCfgDisabledCodeAnnotator(),
         RsFormatMacroAnnotator(),
