@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.newProject.RsPackageNameValidator
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.trimmedText
 import javax.swing.JComponent
 
 data class CargoNewCrateSettings(val binary: Boolean, val crateName: String)
@@ -51,7 +52,7 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
     private val name = JBTextField(20)
 
     val binary get() = this.typeCombobox.selectedIndex == 0
-    val crateName get() = name.text.trim()
+    val crateName get() = name.trimmedText
 
     init {
         title = "New Cargo Crate"

@@ -4,8 +4,6 @@ import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.grammarkit.tasks.GenerateLexerTask
-import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
@@ -50,7 +48,7 @@ plugins {
     idea
     kotlin("jvm") version "1.8.0"
     id("org.jetbrains.intellij") version "1.12.0"
-    id("org.jetbrains.grammarkit") version "2021.2.2"
+    id("org.jetbrains.grammarkit") version "2022.3"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.5.0"
 }
@@ -404,34 +402,22 @@ project(":") {
         testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
     }
 
-    val generateRustLexer = task<GenerateLexerTask>("generateRustLexer") {
-        source.set("src/main/grammars/RustLexer.flex")
-        targetDir.set("src/gen/org/rust/lang/core/lexer")
-        targetClass.set("_RustLexer")
-        purgeOldFiles.set(true)
-    }
-
-    // Previously, we had `GenerateLexer` task that generate a lexer for rustdoc highlighting.
-    // Now we don't have this task, but previously generated lexer may have remained on the file system.
-    // We have to remove it in order to prevent a compilation failure
-    val deleteOldRustDocHighlightingLexer = task<Delete>("deleteOldRustDocHighlightingLexer") {
-        delete("src/gen/org/rust/lang/doc")
-    }
-
-    val generateRustParser = task<GenerateParserTask>("generateRustParser") {
-        source.set("src/main/grammars/RustParser.bnf")
-        targetRoot.set("src/gen")
-        pathToParser.set("org/rust/lang/core/parser/RustParser.java")
-        pathToPsiRoot.set("org/rust/lang/core/psi")
-        purgeOldFiles.set(true)
-    }
-
     tasks {
+        generateLexer {
+            source.set("src/main/grammars/RustLexer.flex")
+            targetDir.set("src/gen/org/rust/lang/core/lexer")
+            targetClass.set("_RustLexer")
+            purgeOldFiles.set(true)
+        }
+        generateParser {
+            source.set("src/main/grammars/RustParser.bnf")
+            targetRoot.set("src/gen")
+            pathToParser.set("org/rust/lang/core/parser/RustParser.java")
+            pathToPsiRoot.set("org/rust/lang/core/psi")
+            purgeOldFiles.set(true)
+        }
         withType<KotlinCompile> {
-            dependsOn(
-                generateRustLexer, deleteOldRustDocHighlightingLexer,
-                generateRustParser
-            )
+            dependsOn(generateLexer, generateParser)
         }
 
         // In tests `resources` directory is used instead of `sandbox`
