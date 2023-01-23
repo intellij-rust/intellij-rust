@@ -107,6 +107,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("pointer_structural_match", false),
     Lint("private_in_public", false),
     Lint("proc_macro_back_compat", false),
+    Lint("proc_macro_derive_resolution_fallback", false),
     Lint("pub_use_of_private_extern_crate", false),
     Lint("redundant_semicolons", false),
     Lint("renamed_and_removed_lints", false),
