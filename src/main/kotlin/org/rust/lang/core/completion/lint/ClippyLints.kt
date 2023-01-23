@@ -336,6 +336,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("multi_assignments", false),
     Lint("multiple_crate_versions", false),
     Lint("multiple_inherent_impl", false),
+    Lint("multiple_unsafe_ops_per_block", false),
     Lint("must_use_candidate", false),
     Lint("must_use_unit", false),
     Lint("mut_from_ref", false),
