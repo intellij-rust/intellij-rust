@@ -27,6 +27,7 @@ import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.existsAfterExpansion
@@ -68,13 +69,20 @@ class RsMacroExpansionHighlightingPass(
 ) : TextEditorHighlightingPass(file.project, document) {
     private val results = mutableListOf<HighlightInfo>()
 
-    private fun createAnnotators(): List<Annotator> = listOf(
-        RsEdition2018KeywordsAnnotator(),
-        RsAttrHighlightingAnnotator(),
-        RsHighlightingMutableAnnotator(),
-        RsCfgDisabledCodeAnnotator(),
-        RsFormatMacroAnnotator(),
-    )
+    private fun createAnnotators(): Pair<List<Annotator>, List<Annotator>> {
+        val annotatorsForDeclMacros = listOf(
+            RsEdition2018KeywordsAnnotator(),
+            RsAttrHighlightingAnnotator(),
+            RsHighlightingMutableAnnotator(),
+            RsCfgDisabledCodeAnnotator(),
+            RsFormatMacroAnnotator(),
+        )
+        val annotatorsForAttrMacros = annotatorsForDeclMacros + listOf(
+            RsErrorAnnotator(),
+            RsUnsafeExpressionAnnotator(),
+        )
+        return annotatorsForDeclMacros to annotatorsForAttrMacros
+    }
 
     @Suppress("UnstableApiUsage")
     override fun doCollectInformation(progress: ProgressIndicator) {
@@ -97,7 +105,7 @@ class RsMacroExpansionHighlightingPass(
         if (macros.isEmpty()) return
 
         val crate = (file as? RsFile)?.crate?.asNotFake
-        val annotators = createAnnotators()
+        val (annotatorsForDeclMacros, annotatorsForAttrMacros) = createAnnotators()
 
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
@@ -106,6 +114,7 @@ class RsMacroExpansionHighlightingPass(
 
             @Suppress("DEPRECATION")
             val holder = AnnotationHolderImpl(annotationSession, false)
+            val annotators = if (macro.isDeeplyAttrMacro) annotatorsForAttrMacros else annotatorsForDeclMacros
 
             for (element in macro.elementsForHighlighting) {
                 for (ann in annotators) {
@@ -114,9 +123,9 @@ class RsMacroExpansionHighlightingPass(
                 }
 
                 if (element is RsMacroCall) {
-                    macros += element.prepare() ?: continue
+                    macros += element.prepare(macro) ?: continue
                 } else if (element is RsAttrProcMacroOwner) {
-                    macros += element.procMacroAttribute.attr?.prepare() ?: continue
+                    macros += element.procMacroAttribute.attr?.prepare(macro) ?: continue
                 }
             }
 
@@ -148,14 +157,19 @@ class RsMacroExpansionHighlightingPass(
     }
 }
 
-private fun RsPossibleMacroCall.prepare(): PreparedMacroCall? {
+private fun RsPossibleMacroCall.prepare(ancestorMacro: PreparedMacroCall? = null): PreparedMacroCall? {
     if (this is RsMacroCall && macroArgument == null) return null // special macros should not be highlighted
     if (!existsAfterExpansion) return null
     val expansion = expansion ?: return null
-    return PreparedMacroCall(this, expansion)
+    val isDeeplyAttrMacro = (ancestorMacro == null || ancestorMacro.isDeeplyAttrMacro) && this is RsMetaItem
+    return PreparedMacroCall(this, expansion, isDeeplyAttrMacro)
 }
 
-private data class PreparedMacroCall(val macroCall: RsPossibleMacroCall, val expansion: MacroExpansion) {
+private data class PreparedMacroCall(
+    val macroCall: RsPossibleMacroCall,
+    val expansion: MacroExpansion,
+    val isDeeplyAttrMacro: Boolean,
+) {
     val elementsForHighlighting: List<PsiElement>
         get() {
             if (expansion.ranges.isEmpty()) return emptyList()
