@@ -6,18 +6,10 @@
 package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
-import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.disableFindUsageTests
 
 class RsHighlightAwaitHandlerFactoryTest : RsTestBase() {
-
-    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (!disableFindUsageTests) {
-            super.runTestRunnable(testRunnable)
-        }
-    }
 
     fun `test highlight await in async function when caret is on async`() = doTest("""
         async fn foo() {}

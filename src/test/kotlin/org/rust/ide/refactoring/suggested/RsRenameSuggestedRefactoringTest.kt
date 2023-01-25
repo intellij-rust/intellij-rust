@@ -6,16 +6,8 @@
 package org.rust.ide.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.util.ThrowableRunnable
-import org.rust.ide.disableFindUsageTests
 
 class RsRenameSuggestedRefactoringTest : RsSuggestedRefactoringTestBase() {
-
-    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (!disableFindUsageTests) {
-            super.runTestRunnable(testRunnable)
-        }
-    }
 
     fun `test rename local variable`() = doTestRename("""
         fn foo() {
