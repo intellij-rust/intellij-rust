@@ -5,8 +5,4 @@ print_stdout = true
 [lldb]
 python = "python"
 lldb_batchmode = "./lldb_batchmode.py"
-lldb_lookup = "lldb_lookup"
 native_rust = false
-
-[gdb]
-gdb_lookup = "gdb_lookup"

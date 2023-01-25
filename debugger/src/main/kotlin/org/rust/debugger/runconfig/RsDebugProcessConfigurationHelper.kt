@@ -28,8 +28,7 @@ import java.nio.file.InvalidPathException
 
 class RsDebugProcessConfigurationHelper(
     private val process: CidrDebugProcess,
-    cargoProject: CargoProject?,
-    private val isCrossLanguage: Boolean = false
+    cargoProject: CargoProject?
 ) {
     private val settings = RsDebuggerSettings.getInstance()
     private val project = process.project
@@ -127,18 +126,7 @@ class RsDebugProcessConfigurationHelper(
 
             LLDBRenderers.BUNDLED -> {
                 val path = prettyPrintersPath?.systemDependentAndEscaped() ?: return
-                executeInterpreterCommand(threadId, frameIndex, """command script import "$path/$LLDB_LOOKUP.py" """)
-
-                // In case of cross-language projects, lldb pretty-printers should be enabled
-                // only for specific std types (but should not be enabled for arbitrary struct/enums),
-                // because `type synthetic add ... -x ".*"` overrides C++ STL pretty-printers
-                val enabledTypes = if (isCrossLanguage) RUST_STD_TYPES else listOf(".*")
-                for (type in enabledTypes) {
-                    executeInterpreterCommand(threadId, frameIndex, """type synthetic add -l $LLDB_LOOKUP.synthetic_lookup -x "$type" --category Rust""")
-                    executeInterpreterCommand(threadId, frameIndex, """type summary add -F $LLDB_LOOKUP.summary_lookup  -e -x -h "$type" --category Rust""")
-                }
-
-                executeInterpreterCommand(threadId, frameIndex, """type category enable Rust""")
+                executeInterpreterCommand(threadId, frameIndex, """command script import "$path/lldb_formatters" """)
             }
 
             LLDBRenderers.NONE -> {
@@ -184,44 +172,5 @@ class RsDebugProcessConfigurationHelper(
 
     companion object {
         private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
-
-        /**
-         * Should be synchronized with `rust_types.py`
-         *
-         * `([a-z_]+::)+)` part is used instead of a specific path to make these regexes
-         * more immune to changes in Rust stdlib module structure. Note that `\w` metacharacter
-         * may be not supported by LLDB so it should not be used there
-         */
-        private val RUST_STD_TYPES: List<String> = listOf(
-            "^(alloc::([a-z_]+::)+)String$",
-            "^(&|&mut |\\*const |\\*mut )str$",
-            "^(str)|((ptr_const|ptr_mut)\\$<str>)$",
-            "^(str\\$)|((ref|ref_mut|ptr_const|ptr_mut)\\$<str\\$>)$",
-            "^(&|&mut |\\*const |\\*mut )?\\[.*\\]$",
-            "^(slice\\$<.+>)|((ptr_const|ptr_mut)\\$<slice\\$<.+> >)$",
-            "^(slice2\\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\\$<slice2\\$<.+> >)$",
-            "^(std::ffi::([a-z_]+::)+)OsString$",
-            "^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \\*)?$",
-            "^(std::([a-z_]+::)+)PathBuf$",
-            "^(&?std::([a-z_]+::)+)Path( \\*)?$",
-            "^((std|alloc)::ffi::([a-z_]+::)+)CString$",
-            "^(&?(std|core)::ffi::([a-z_]+::)+)CStr( \\*)?$",
-            "^(alloc::([a-z_]+::)+)Vec<.+>$",
-            "^(alloc::([a-z_]+::)+)VecDeque<.+>$",
-            "^(alloc::([a-z_]+::)+)BTreeSet<.+>$",
-            "^(alloc::([a-z_]+::)+)BTreeMap<.+>$",
-            "^(std::collections::([a-z_]+::)+)HashMap<.+>$",
-            "^(std::collections::([a-z_]+::)+)HashSet<.+>$",
-            "^alloc::rc::Rc<.+>$",
-            "^alloc::rc::Weak<.+>$",
-            "^alloc::(sync|arc)::Arc<.+>$",
-            "^alloc::(sync|arc)::Weak<.+>$",
-            "^(core::([a-z_]+::)+)Cell<.+>$",
-            "^(core::([a-z_]+::)+)Ref<.+>$",
-            "^(core::([a-z_]+::)+)RefMut<.+>$",
-            "^(core::([a-z_]+::)+)RefCell<.+>$",
-            "^core::num::([a-z_]+::)*NonZero.+$",
-            "^core::ops::range::Range(From|Inclusive|To|ToInclusive)?<.+>$"
-        )
     }
 }

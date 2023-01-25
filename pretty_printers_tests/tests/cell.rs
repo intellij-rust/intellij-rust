@@ -3,8 +3,8 @@
 // lldb-command:run
 
 // lldb-command:print cell
-// lldbr-check:[...]cell = { value = 42 }
-// lldbg-check:[...]$0 = { value = 42 }
+// lldbr-check:[...]cell = (value = 42)
+// lldbg-check:[...]$0 = (value = 42)
 // lldb-command:print ref_cell1
 // lldbr-check:[...]ref_cell1 = borrow=1 { value = 42 }
 // lldbg-check:[...]$1 = borrow=1 { value = 42 }

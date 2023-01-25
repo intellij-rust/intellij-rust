@@ -14,6 +14,8 @@
 // lldb-command:print slice_ptr_mut
 // lldbr-check:[...]slice_ptr_mut = size=2 { [0] = 1 [1] = 2 }
 // lldbg-check:[...]$3 = size=2 { [0] = 1 [1] = 2 }
+// lldb-command:frame variable --ptr-depth 1 slice_fixed_sized
+// lldb-check:[...]slice_fixed_sized = 0x[...] { [0] = 1 [1] = 2 }
 
 // === GDB TESTS ===================================================================================
 
@@ -33,6 +35,7 @@ fn main() {
     let slice_mut: &mut [i32] = &mut [1, 2];
     let slice_ptr_const: *const [i32] = slice as *const [i32];
     let slice_ptr_mut: *mut [i32] = slice_mut as *mut [i32];
+    let slice_fixed_sized: &[i32; 2] = &[1, 2];
 
     print!(""); // #break
 }

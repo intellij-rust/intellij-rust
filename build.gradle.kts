@@ -339,7 +339,7 @@ project(":plugin") {
             // Copy pretty printers
             from("$rootDir/prettyPrinters") {
                 into("${pluginName.get()}/prettyPrinters")
-                include("*.py")
+                include("**/*.py")
             }
         }
 
