@@ -611,13 +611,25 @@ project(":ml-completion") {
 }
 
 task("runPrettyPrintersTests") {
-    // https://github.com/intellij-rust/intellij-rust/issues/10009
-    if (platformVersion >= 231) return@task
     doLast {
+        val hostPlatform = DefaultNativePlatform.host()
+        val archName = when {
+            hostPlatform.architecture.isAmd64 -> "x64"
+            hostPlatform.architecture.isArm -> "aarch64"
+            else -> error("Unsupported architecture")
+        }
+
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
-            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
+            isFamily(FAMILY_UNIX) -> {
+                // BACKCOMPAT: 2022.3
+                if (platformVersion >= 231) {
+                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/$archName/lib/python3.8/site-packages"
+                } else {
+                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
+                }
+            }
             isFamily(FAMILY_WINDOWS) -> "" // `python36._pth` is used below instead
             else -> error("Unsupported OS")
         }
@@ -637,13 +649,7 @@ task("runPrettyPrintersTests") {
             "cmd /C set PYTHONIOENCODING=utf8 & $runCommand".execute("pretty_printers_tests")
         } else {
             // TODO: Remove after CLion snapshot builds provide these files with required permissions
-            if (isFamily(FAMILY_UNIX)) {
-                val lldbLinuxBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/bin")
-                lldbLinuxBinDir.resolve("lldb").setExecutable(true)
-                lldbLinuxBinDir.resolve("LLDBFrontend").setExecutable(true)
-                lldbLinuxBinDir.resolve("lldb-argdumper").setExecutable(true)
-                lldbLinuxBinDir.resolve("lldb-server").setExecutable(true)
-            } else if (isFamily(FAMILY_MAC)) {
+            if (isFamily(FAMILY_MAC)) {
                 val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
                 lldbMacBinDir.resolve("lldb").setExecutable(true)
                 lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
@@ -655,7 +661,14 @@ task("runPrettyPrintersTests") {
 
         val gdbBinary = when {
             isFamily(FAMILY_MAC) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/mac/bin/gdb"
-            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/bin/gdb"
+            isFamily(FAMILY_UNIX) -> {
+                // BACKCOMPAT: 2022.3
+                if (platformVersion >= 231) {
+                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/$archName/bin/gdb"
+                } else {
+                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/bin/gdb"
+                }
+            }
             isFamily(FAMILY_WINDOWS) -> {
                 println("GDB pretty-printers tests are not supported yet for Windows")
                 return@doLast
