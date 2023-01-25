@@ -25,7 +25,7 @@ jobs:
 
             - name: Make release branch
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
-              run: python scripts/make_release_branch.py
+              run: python scripts/make_release_branch.py --slack_webhook ${{ secrets.SLACK_WEBHOOK_URL }} --slack_ids ${{ secrets.SLACK_USERNAMES}}
 
             - name: Create new milestone
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
