@@ -35,8 +35,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironme
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot

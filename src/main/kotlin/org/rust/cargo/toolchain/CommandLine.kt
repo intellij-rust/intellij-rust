@@ -17,7 +17,7 @@ import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.emulateTerminalDefault
+import org.rust.cargo.runconfig.RsCommandConfiguration.Companion.emulateTerminalDefault
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
@@ -32,6 +32,7 @@ abstract class RsCommandLineBase {
     abstract val workingDirectory: Path
     abstract val redirectInputFrom: File?
     abstract val additionalArguments: List<String>
+    abstract val emulateTerminal: Boolean
 
     protected abstract val executableName: String
 
@@ -74,13 +75,13 @@ data class CargoCommandLine(
     override val workingDirectory: Path, // Note that working directory selects Cargo project as well
     override val additionalArguments: List<String> = emptyList(),
     override val redirectInputFrom: File? = null,
+    override val emulateTerminal: Boolean = emulateTerminalDefault,
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val toolchain: String? = null,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val requiredFeatures: Boolean = true,
     val allFeatures: Boolean = false,
-    val emulateTerminal: Boolean = emulateTerminalDefault,
     val withSudo: Boolean = false
 ) : RsCommandLineBase() {
 
@@ -91,7 +92,7 @@ data class CargoCommandLine(
         runManager.createCargoCommandRunConfiguration(this, name)
 
     /**
-     * Adds [arg] to [additionalArguments] as an positional argument, in other words, inserts [arg] right after
+     * Adds [arg] to [additionalArguments] as a positional argument, in other words, inserts [arg] right after
      * `--` argument in [additionalArguments].
      * */
     fun withPositionalArgument(arg: String): CargoCommandLine {
@@ -198,7 +199,8 @@ data class CargoCommandLine(
 data class WasmPackCommandLine(
     override val command: String,
     override val workingDirectory: Path,
-    override val additionalArguments: List<String> = emptyList()
+    override val additionalArguments: List<String> = emptyList(),
+    override val emulateTerminal: Boolean = emulateTerminalDefault
 ) : RsCommandLineBase() {
 
     override val executableName: String

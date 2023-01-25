@@ -26,6 +26,8 @@ class WasmPackCommandConfigurationEditor(project: Project)
             fullWidthCell(command)
         }
 
+        row { cell(emulateTerminal) }
+
         row(workingDirectory.label) {
             fullWidthCell(workingDirectory)
         }

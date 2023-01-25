@@ -7,7 +7,7 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.runners.ExecutionEnvironment
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.console.CargoConsoleBuilder
+import org.rust.cargo.runconfig.console.RsConsoleBuilder
 
 class CargoRunState(
     environment: ExecutionEnvironment,
@@ -15,7 +15,7 @@ class CargoRunState(
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CargoRunStateBase(environment, runConfiguration, config) {
     init {
-        consoleBuilder = CargoConsoleBuilder(project, runConfiguration)
+        consoleBuilder = RsConsoleBuilder(project, runConfiguration)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }
 }

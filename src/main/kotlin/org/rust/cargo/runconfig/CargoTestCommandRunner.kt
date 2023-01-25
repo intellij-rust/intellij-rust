@@ -23,7 +23,6 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguratio
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.isActivateToolWindowBeforeRun
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 
