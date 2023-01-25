@@ -6,11 +6,9 @@
 package org.rust.ide.search
 
 import com.intellij.usages.UsageViewSettings
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.disableFindUsageTests
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsUsageViewTreeTest : RsTestBase() {
@@ -32,12 +30,6 @@ class RsUsageViewTreeTest : RsTestBase() {
     override fun tearDown() {
         UsageViewSettings.instance.loadState(originalSettings)
         super.tearDown()
-    }
-
-    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (!disableFindUsageTests) {
-            super.runTestRunnable(testRunnable)
-        }
     }
 
     fun `test grouping function usages`() = doTestByText("""

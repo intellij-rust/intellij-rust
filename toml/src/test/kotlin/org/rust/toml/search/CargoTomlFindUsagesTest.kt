@@ -12,22 +12,14 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.util.ThrowableRunnable
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.ide.disableFindUsageTests
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.document
 import org.rust.openapiext.toPsiFile
 
 class CargoTomlFindUsagesTest : RsWithToolchainTestBase() {
-
-    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        if (!disableFindUsageTests) {
-            super.runTestRunnable(testRunnable)
-        }
-    }
 
     fun test() = doTest {
         toml("Cargo.toml", """
