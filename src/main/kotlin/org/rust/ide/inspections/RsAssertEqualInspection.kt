@@ -19,9 +19,9 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 
 class RsAssertEqualInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
 
-        override fun visitMacroCall(o: RsMacroCall) {
+        override fun visitMacroCall2(o: RsMacroCall) {
             if (o.macroName != "assert") return
             val assertMacroArg = o.assertMacroArgument ?: return
 

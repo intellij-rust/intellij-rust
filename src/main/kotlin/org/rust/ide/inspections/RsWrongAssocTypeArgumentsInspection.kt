@@ -20,7 +20,7 @@ import org.rust.lang.utils.addToHolder
  */
 class RsWrongAssocTypeArgumentsInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitTraitRef(trait: RsTraitRef) {
                 checkAssocTypes(holder, trait, trait.path)
             }

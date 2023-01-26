@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.RemoveParameterFix
 import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix
@@ -24,8 +25,9 @@ class RsLivenessInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedVariables
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(func: RsFunction) {
+        object : RsWithMacrosInspectionVisitor() {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(func: RsFunction) {
                 // Disable inside doc tests
                 if (func.isDoctestInjection) return
 

@@ -17,6 +17,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.RemoveImportFix
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.impl.DoctestCrate
@@ -37,8 +38,9 @@ class RsUnusedImportInspection : RsLintInspection() {
 
     override fun getShortName(): String = SHORT_NAME
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitUseItem(item: RsUseItem) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitUseItem2(item: RsUseItem) {
             if (!isApplicableForUseItem(item)) return
 
             // It's common to include more imports than needed in doctest sample code

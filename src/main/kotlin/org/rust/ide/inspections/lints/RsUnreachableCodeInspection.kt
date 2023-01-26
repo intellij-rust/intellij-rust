@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.stripWhitespace
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.rangeWithPrevSpace
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.controlFlowGraph
@@ -26,8 +26,9 @@ class RsUnreachableCodeInspection : RsLintInspection() {
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnreachableCode
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitFunction(func: RsFunction) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitFunction2(func: RsFunction) {
             if (func.isDoctestInjection) return
             val controlFlowGraph = func.controlFlowGraph ?: return
 

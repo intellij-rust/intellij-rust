@@ -14,8 +14,9 @@ import org.rust.lang.utils.addToHolder
 
 class RsTraitImplementationInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitImplItem(impl: RsImplItem) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitImplItem2(impl: RsImplItem) {
             val traitRef = impl.traitRef ?: return
             val trait = traitRef.resolveToTrait() ?: return
             val traitName = trait.name ?: return

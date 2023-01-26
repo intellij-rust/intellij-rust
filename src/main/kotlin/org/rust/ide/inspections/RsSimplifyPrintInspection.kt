@@ -22,9 +22,9 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
     @Suppress("DialogTitleCapitalization")
     override fun getDisplayName(): String = "println!(\"\") usage"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
 
-        override fun visitMacroCall(o: RsMacroCall) {
+        override fun visitMacroCall2(o: RsMacroCall) {
             val macroName = o.macroName
             val formatMacroArg = o.formatMacroArgument ?: return
             if (!(macroName.endsWith("println"))) return

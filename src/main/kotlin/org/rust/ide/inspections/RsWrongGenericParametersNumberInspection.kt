@@ -17,13 +17,15 @@ import org.rust.lang.utils.addToHolder
  * Inspection that detects the E0049 error.
  */
 class RsWrongGenericParametersNumberInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitFunction(function: RsFunction) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitFunction2(function: RsFunction) {
             checkParameters(holder, function, "type") { typeParameters }
             checkParameters(holder, function, "const") { constParameters }
         }
 
-        override fun visitTypeAlias(alias: RsTypeAlias) {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitTypeAlias2(alias: RsTypeAlias) {
             checkParameters(holder, alias, "type") { typeParameters }
             checkParameters(holder, alias, "const") { constParameters }
         }

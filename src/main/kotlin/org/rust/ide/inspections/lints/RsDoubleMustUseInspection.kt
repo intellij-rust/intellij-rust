@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.RsBundle
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.findFirstMetaItem
 import org.rust.lang.core.psi.ext.normReturnType
 import org.rust.lang.core.types.ty.TyAdt
@@ -29,10 +29,8 @@ private class FixRemoveMustUseAttr : LocalQuickFix {
 class RsDoubleMustUseInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.DoubleMustUse
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitFunction(o: RsFunction) {
-            super.visitFunction(o)
-
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
+        override fun visitFunction2(o: RsFunction) {
             val mustUseAttrName = "must_use"
             val attrFunc = o.findFirstMetaItem(mustUseAttrName)
             val type = o.normReturnType as? TyAdt

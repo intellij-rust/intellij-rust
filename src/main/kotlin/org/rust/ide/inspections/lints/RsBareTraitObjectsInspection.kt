@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.dyn
 import org.rust.lang.core.psi.ext.isAtLeastEdition2018
@@ -20,7 +21,7 @@ class RsBareTraitObjectsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.BareTraitObjects
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitTypeReference(typeReference: RsTypeReference) {
                 if (!typeReference.isAtLeastEdition2018) return
 

@@ -17,8 +17,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.lang.core.macros.findElementExpandedFrom
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.existsAfterExpansion
 import org.rust.openapiext.isUnitTestMode
 
@@ -72,7 +75,13 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
 
     fun registerProblem(element: PsiElement, @InspectionMessage descriptionTemplate: String, vararg fixes: LocalQuickFix) {
         if (element.existsAfterExpansion) {
-            holder.registerProblem(element, descriptionTemplate, *fixes)
+            if (element.containingFile == file) {
+                holder.registerProblem(element, descriptionTemplate, *fixes)
+            } else {
+                // The element is expanded from a macro
+                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
+                holder.registerProblem(sourceElement, descriptionTemplate, /* no quick-fixes for now */)
+            }
         }
     }
 
@@ -83,19 +92,59 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         vararg fixes: LocalQuickFix
     ) {
         if (element.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
-            holder.registerProblem(element, descriptionTemplate, highlightType, *fixes)
+            if (element.containingFile == file) {
+                holder.registerProblem(element, descriptionTemplate, highlightType, *fixes)
+            } else {
+                // The element is expanded from a macro
+                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
+                holder.registerProblem(sourceElement, descriptionTemplate, highlightType, /* no quick-fixes for now */)
+            }
         }
     }
 
-    fun registerProblem(problemDescriptor: ProblemDescriptor) {
-        if (problemDescriptor.psiElement.existsAfterExpansion && isProblemWithTypeAllowed(problemDescriptor.highlightType)) {
-            holder.registerProblem(problemDescriptor)
+    fun registerProblem(
+        startElement: PsiElement,
+        endElement: PsiElement,
+        descriptionTemplate: @InspectionMessage String,
+        highlightType: ProblemHighlightType,
+        vararg fixes: LocalQuickFix,
+    ) {
+        if (startElement.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
+            val descriptor = if (startElement.containingFile == file) {
+                holder.manager.createProblemDescriptor(
+                    startElement,
+                    endElement,
+                    descriptionTemplate,
+                    highlightType,
+                    holder.isOnTheFly,
+                    *fixes,
+                )
+            } else {
+                // The element is expanded from a macro
+                val sourceStartElement = startElement.findCorrespondingElementExpandedFrom() ?: return
+                val sourceEndElement = endElement.findCorrespondingElementExpandedFrom() ?: return
+                holder.manager.createProblemDescriptor(
+                    sourceStartElement,
+                    sourceEndElement,
+                    descriptionTemplate,
+                    highlightType,
+                    holder.isOnTheFly,
+                    /* no quick-fixes for now */
+                )
+            }
+            holder.registerProblem(descriptor)
         }
     }
 
     fun registerProblem(element: PsiElement, rangeInElement: TextRange, @InspectionMessage message: String, vararg fixes: LocalQuickFix) {
         if (element.existsAfterExpansion) {
-            holder.registerProblem(element, rangeInElement, message, *fixes)
+            if (element.containingFile == file) {
+                holder.registerProblem(element, rangeInElement, message, *fixes)
+            } else {
+                // The element is expanded from a macro
+                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
+                holder.registerProblem(sourceElement, rangeInElement, message, /* no quick-fixes for now */)
+            }
         }
     }
 
@@ -107,12 +156,25 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         vararg fixes: LocalQuickFix
     ) {
         if (element.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
-            holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
+            if (element.containingFile == file) {
+                holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
+            } else {
+                // The element is expanded from a macro
+                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
+                holder.registerProblem(sourceElement, message, highlightType, rangeInElement, /* no quick-fixes for now */)
+            }
         }
     }
 
     private fun isProblemWithTypeAllowed(highlightType: ProblemHighlightType): Boolean =
         highlightType != ProblemHighlightType.INFORMATION || holder.isOnTheFly
+
+    private fun PsiElement.findCorrespondingElementExpandedFrom(): PsiElement? {
+        val leaf = findElementExpandedFrom() ?: return null
+        val textLength = textLength
+        val elementType = elementType
+        return leaf.ancestors.find { it.textLength == textLength && it.elementType == elementType }
+    }
 }
 
 fun ProblemDescriptor.findExistingEditor(): Editor? {

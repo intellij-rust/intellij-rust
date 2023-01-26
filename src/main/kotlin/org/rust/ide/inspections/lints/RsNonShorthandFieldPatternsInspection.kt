@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsPatFieldFull
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsVisitor
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.RsVisitor
 class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.NonShorthandFieldPatterns
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitPatFieldFull(o: RsPatFieldFull) {
             val identifier = o.identifier?.text ?: return
             val binding = o.pat.text

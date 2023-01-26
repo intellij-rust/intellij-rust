@@ -26,8 +26,8 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Extra semicolon"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(o: RsFunction) = inspect(holder, o)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitFunction2(o: RsFunction) = inspect(holder, o)
         }
 }
 

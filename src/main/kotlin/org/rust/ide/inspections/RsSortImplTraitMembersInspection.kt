@@ -16,8 +16,9 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitImplItem(impl: RsImplItem) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitImplItem2(impl: RsImplItem) {
             val trait = impl.traitRef?.resolveToTrait() ?: return
             val typeRef = impl.typeReference ?: return
             if (sortedImplItems(impl.explicitMembers, trait.explicitMembers) == null) return

@@ -18,7 +18,7 @@ import org.rust.lang.utils.addToHolder
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitPathType(type: RsPathType) {
                 val path = type.path
 
@@ -44,7 +44,8 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
                 }
             }
 
-            override fun visitFunction(fn: RsFunction) {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(fn: RsFunction) {
                 // https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision
                 if (!fn.hasMissingLifetimes()) return
 
