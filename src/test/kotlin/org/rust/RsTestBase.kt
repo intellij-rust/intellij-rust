@@ -31,6 +31,9 @@ import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.util.parseSemVer
+import org.rust.ide.settings.ExcludedPath
+import org.rust.ide.settings.ExclusionType
+import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.document
 import org.rust.openapiext.saveAllDocuments
@@ -68,6 +71,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockCargoFeatures()
         setupExperimentalFeatures()
         setupInspections()
+        setupExcludedPaths()
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)
@@ -166,6 +170,19 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     private fun setupInspections() {
         for (inspection in findAnnotationInstance<WithEnabledInspections>()?.inspections.orEmpty()) {
             enableInspectionTool(project, inspection.createInstance(), testRootDisposable)
+        }
+    }
+
+    private fun setupExcludedPaths() {
+        val annotation = findAnnotationInstance<WithExcludedPath>() ?: return
+        val exclusionType = if (annotation.onlyMethods) ExclusionType.Methods else ExclusionType.ItemsAndMethods
+        val excludedPath = ExcludedPath(annotation.path, exclusionType)
+
+        val settings = RsCodeInsightSettings.getInstance()
+        val initialValue = settings.getExcludedPaths()
+        settings.setExcludedPaths(initialValue + arrayOf(excludedPath))
+        Disposer.register(testRootDisposable) {
+            settings.setExcludedPaths(initialValue)
         }
     }
 

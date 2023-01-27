@@ -47,6 +47,7 @@
         <!-- Code insight settings -->
 
         <applicationService serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
+        <projectService serviceImplementation="org.rust.ide.settings.RsProjectCodeInsightSettings"/>
         <editorActionHandler action="EditorEnter" implementationClass="org.rust.ide.actions.RsEnterHandler"/>
 
         <applicationService serviceImplementation="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"/>

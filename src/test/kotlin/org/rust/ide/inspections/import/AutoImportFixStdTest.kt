@@ -786,4 +786,23 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             Vec::new();
         }
     """)
+
+    fun `test don't import method of Borrow trait`() = checkAutoImportFixIsUnavailable("""
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        fn main() {
+            let rc = Rc::new(RefCell::new(0));
+            let option = Some(rc);
+            option.<error>borrow/*caret*/</error>()
+        }
+    """)
+
+    fun `test import Borrow trait`() = checkAutoImportFixByTextWithoutHighlighting("""
+        fn func(_: impl /*caret*/Borrow<i32>) {}
+    """, """
+        use std::borrow::Borrow;
+
+        fn func(_: impl Borrow<i32>) {}
+    """)
 }

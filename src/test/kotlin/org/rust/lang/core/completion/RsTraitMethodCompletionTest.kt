@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.WithExcludedPath
 import org.rust.ide.settings.RsCodeInsightSettings
 
 class RsTraitMethodCompletionTest : RsCompletionTestBase() {
@@ -241,6 +242,91 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             Bar.foo(/*caret*/)
         }
     """, importOutOfScopeItems = false)
+
+    @WithExcludedPath("crate::mod1::ExcludedTrait", onlyMethods = true)
+    fun `test don't complete excluded trait method 1`() = checkNoCompletion("""
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        fn main() {
+            ().metho/*caret*/
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::ExcludedTrait", onlyMethods = true)
+    fun `test don't complete excluded trait method 2`() = checkNoCompletion("""
+        mod mod1 {
+            mod inner {
+                pub trait ExcludedTrait {
+                    fn method(&self) {}
+                }
+                impl<T> ExcludedTrait for T {}
+            }
+            pub use inner::*;
+        }
+        fn main() {
+            ().metho/*caret*/
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::ExcludedTrait", onlyMethods = true)
+    fun `test complete excluded trait method with has different path`() = doTest("""
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        mod mod2 {
+            pub use crate::mod1::*;
+        }
+        fn main() {
+            ().metho/*caret*/
+        }
+    """, """
+        use crate::mod2::ExcludedTrait;
+
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        mod mod2 {
+            pub use crate::mod1::*;
+        }
+        fn main() {
+            ().method()/*caret*/
+        }
+    """)
+
+    @WithExcludedPath("crate::mod1::ExcludedTrait", onlyMethods = true)
+    fun `test complete excluded trait method if trait already imported`() = doTest("""
+        use crate::mod1::ExcludedTrait;
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        fn main() {
+            ().metho/*caret*/
+        }
+    """, """
+        use crate::mod1::ExcludedTrait;
+        mod mod1 {
+            pub trait ExcludedTrait {
+                fn method(&self) {}
+            }
+            impl<T> ExcludedTrait for T {}
+        }
+        fn main() {
+            ().method()/*caret*/
+        }
+    """)
 
     private fun doTest(
         @Language("Rust") before: String,
