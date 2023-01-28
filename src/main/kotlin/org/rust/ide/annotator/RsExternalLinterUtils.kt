@@ -281,7 +281,7 @@ private data class RsExternalLinterFilteredMessage(
     }
 }
 
-private fun String.escapeUrls(): String = replace(URL_REGEX) { url -> "<a href='${url.value}'>${url.value}</a>" }
+private fun String.escapeUrls(): String = this.replace("&gt;", ">").replace(URL_REGEX) { url -> "<a href='${url.value}'>${url.value}</a>" }
 
 fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)
