@@ -27,7 +27,7 @@ class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, 
         file.findElementAt(offset)?.ancestorStrict()
 
     override fun calculateParameterInfo(element: RsValueArgumentList): Array<RsArgumentsDescription>? {
-        return RsArgumentsDescription.findDescription(element)?.let { arrayOf(it) }
+        return RsArgumentsDescription.findDescriptionList(element)?.toTypedArray()
     }
 
     override fun updateParameterInfo(parameterOwner: RsValueArgumentList, context: UpdateParameterInfoContext) {
@@ -71,17 +71,8 @@ class RsArgumentsDescription(
     val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
 
     companion object {
-        /**
-         * Finds declaration of the func/method and creates description of its arguments
-         */
-        fun findDescription(args: RsValueArgumentList): RsArgumentsDescription? {
-            val call = args.parent
-            val callInfo = when (call) {
-                is RsCallExpr -> CallInfo.resolve(call)
-                is RsMethodCall -> CallInfo.resolve(call)
-                else -> null
-            } ?: return null
-            val params = buildList<String> {
+        private fun getParams(call: PsiElement, callInfo: CallInfo): RsArgumentsDescription {
+            val params = buildList {
                 if (callInfo.selfParameter != null && call is RsCallExpr) {
                     add(callInfo.selfParameter)
                 }
@@ -95,6 +86,19 @@ class RsArgumentsDescription(
                 })
             }
             return RsArgumentsDescription(params.toTypedArray())
+        }
+
+        /**
+         * Finds declarations of the func/method and creates description of its arguments
+         */
+        fun findDescriptionList(args: RsValueArgumentList): List<RsArgumentsDescription>? {
+            val call = args.parent
+            val callInfos = when (call) {
+                is RsCallExpr -> CallInfo.muiltResolve(call)
+                is RsMethodCall -> CallInfo.muiltResolve(call)
+                else -> null
+            } ?: return null
+            return callInfos.map { getParams(call, it) }
         }
     }
 }
