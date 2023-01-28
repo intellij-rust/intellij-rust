@@ -105,6 +105,26 @@ class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWr
 
     """)
 
+    fun `test E0106 missing lifetime in function`() = checkByText("""
+        fn func1() {}
+        fn func2(a: &i32) -> &i32 { unimplemented!() }
+        fn func3(a: &i32, b: &i32) {}
+        fn func4() -> fn(&i32) { |_| {} }
+        fn func5() -> impl Fn(&i32) { |_| {} }
+
+        fn func6() -> /*error descr="Missing lifetime specifier [E0106]"*/&/*error**/i32 { unimplemented!() }
+        fn func7(a: &i32, b: &i32) -> /*error descr="Missing lifetime specifier [E0106]"*/&/*error**/i32 { unimplemented!() }
+
+        struct Foo {}
+        impl Foo {
+            fn method1(&self, a: &i32, b: &i32) -> &i32 { &0 }
+            fn method2(self: &Self, a: &i32, b: &i32) -> &i32 { &0 }
+            fn method3(self: Box<&Self>, a: &i32, b: &i32) -> &i32 { &0 }
+
+            fn method4(self, a: &i32, b: &i32) -> /*error descr="Missing lifetime specifier [E0106]"*/&/*error**/i32 { &0 }
+        }
+    """)
+
     fun `test E0107 wrong number of lifetime parameters`() = checkByText("""
         struct Foo0;
         struct Foo1<'a>(&'a str);
