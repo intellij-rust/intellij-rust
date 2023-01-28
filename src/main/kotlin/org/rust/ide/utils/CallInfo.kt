@@ -9,6 +9,7 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyFunction
@@ -41,10 +42,36 @@ class CallInfo private constructor(
             }
         }
 
+        fun multiResolve(call: RsCallExpr): List<CallInfo>? {
+            val fns = (call.expr as? RsPathExpr)?.path?.reference?.multiResolve() ?: return null
+            return fns.map {
+                when (it) {
+                    is RsFunction -> buildFunctionParameters(it, it.type)
+                    else -> {
+                        return null
+                    }
+                }
+            }
+        }
+
         fun resolve(methodCall: RsMethodCall): CallInfo? {
             val function = (methodCall.reference.resolve() as? RsFunction) ?: return null
             val type = methodCall.inference?.getResolvedMethodType(methodCall) ?: return null
             return buildFunctionParameters(function, type)
+        }
+
+        fun multiResolve(methodCall: RsMethodCall): List<CallInfo>? {
+            val functions = (methodCall.reference.multiResolve() as? List<*>) ?: return null // List<RsFunction>
+            return functions.map {
+                when (it) {
+                    is RsFunction -> {
+                        buildFunctionParameters(it, it.type)
+                    }
+                    else -> {
+                        return null
+                    }
+                }
+            }
         }
 
         private fun buildFunctionLike(fn: RsElement, ty: TyFunction): CallInfo? {
@@ -57,11 +84,13 @@ class CallInfo private constructor(
                 element is RsEnumVariant -> element.positionalFields.map { null to it.typeReference }
                 element is RsStructItem && element.isTupleStruct ->
                     element.tupleFields?.tupleFieldDeclList?.map { null to it.typeReference }
+
                 element is RsPatBinding -> {
                     val decl = element.ancestorStrict<RsLetDecl>() ?: return null
                     val lambda = decl.expr as? RsLambdaExpr ?: return null
                     lambda.valueParameters.map { (it.patText ?: "_") to it.typeReference }
                 }
+
                 else -> null
             }
         }
