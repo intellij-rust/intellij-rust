@@ -13,14 +13,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.stubs.StubElement
 import gnu.trove.THashMap
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsItemsOwner
-import org.rust.lang.core.psi.ext.body
-import org.rust.lang.core.psi.ext.stubDescendantOfTypeOrStrict
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
@@ -57,7 +56,7 @@ class DefCollector(
     private val unresolvedImports: MutableList<Import> = context.imports
     private val resolvedImports: MutableList<Import> = mutableListOf()
 
-    private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
+    private val macroCallsToExpand: MutableList<MacroCallInfoBase> = context.macroCalls
 
     private val macroExpander = FunctionLikeMacroExpander.forCrate(context.crate)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
@@ -308,28 +307,54 @@ class DefCollector(
         val macrosToExpandInParallel = mutableListOf<ExpansionInput>()
         val changed = macroCallsToExpand.inPlaceRemoveIf { call ->
             ProgressManager.checkCanceled()
-            // TODO: Actually resolve macro instead of name check
-            if (call.path.last() == "include") {
-                expandIncludeMacroCall(call)
-                return@inPlaceRemoveIf true
+            if (tryExpandIncludeMacroCall(call)) return@inPlaceRemoveIf true
+            when (call) {
+                is MacroCallInfo -> prepareMacroCall(call, macrosToExpandInParallel)
+                is ProcMacroCallInfo -> prepareProcMacroCall(call, macrosToExpandInParallel)
             }
-
-            val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
-                ?: return@inPlaceRemoveIf false
-
-            if (call.body.kind != def.procMacroKind) return@inPlaceRemoveIf false
-            if (tryTreatAsIdentityMacro(call, def)) return@inPlaceRemoveIf true
-
-            macrosToExpandInParallel += ExpansionInput(call, def)
-            true
         }
         expandMacrosInParallel(macrosToExpandInParallel)
         return changed
     }
 
-    private fun tryTreatAsIdentityMacro(call: MacroCallInfo, def: MacroDefInfo): Boolean {
-        if (def !is ProcMacroDefInfo || !def.kind.treatAsBuiltinAttr || call.originalItem == null) return false
-        val (visItem, namespaces, procMacroKind) = call.originalItem
+    private fun prepareMacroCall(call: MacroCallInfo, macrosToExpand: MutableList<ExpansionInput>): Boolean {
+        val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
+            ?.takeIf { it.procMacroKind == call.body.kind } ?: return false
+        macrosToExpand += ExpansionInput(call, def)
+        return true
+    }
+
+    private fun prepareProcMacroCall(call: ProcMacroCallInfo, macrosToExpand: MutableList<ExpansionInput>): Boolean {
+        // If all attrs are identity, we expand nothing.
+        // Otherwise, we expand all attrs (even identity ones).
+        // We could expand only first non-identity macro,
+        // but than it will be harder to remove correct attribute in `lowerBody`,
+        // and also it has little sense to skip expansion of first attribute if we still need to expand next ones
+        var shouldExpand = false
+        for (attr in call.attrs) {
+            if (attr.resolved != null) continue
+            val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, attr.path, call.macroIndex)
+                ?.takeIf { it.procMacroKind == attr.procMacroKind } as? ProcMacroDefInfo ?: return false
+            attr.resolved = def
+            if (def.kind.treatAsBuiltinAttr) continue
+
+            shouldExpand = true
+            if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) break
+        }
+        if (shouldExpand) {
+            for ((deriveIndex, attr) in call.attrs.withIndex()) {
+                val preparedCall = call.intoMacroCallInfo(project, context.crate, attr, deriveIndex) ?: return true
+                macrosToExpand += ExpansionInput(preparedCall, attr.resolved!!)
+                if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) break
+            }
+        } else if (call.attrs.any { it.procMacroKind == RsProcMacroKind.ATTRIBUTE }) {
+            treatAsIdentityMacro(call)
+        }
+        return true
+    }
+
+    private fun treatAsIdentityMacro(call: ProcMacroCallInfo) {
+        val (visItem, namespaces, procMacroKind) = call.originalItem ?: return
 
         /** See also [ModCollector.collectSimpleItem] */
         val perNs = PerNs.from(visItem, namespaces)
@@ -337,7 +362,6 @@ class DefCollector(
         if (procMacroKind != null) {
             call.containingMod.procMacros[visItem.name] = procMacroKind
         }
-        return true
     }
 
     private fun expandMacrosInParallel(macros: List<ExpansionInput>) {
@@ -367,7 +391,7 @@ class DefCollector(
         batch.mapNotNull { (call, def) -> expandMacro(call, def) }
 
     private fun expandMacro(call: MacroCallInfo, def: MacroDefInfo): ExpansionOutput? {
-        val defData = RsMacroDataWithHash.fromDefInfo(def).ok() ?: return null
+        val defData = RsMacroDataWithHash.fromDefInfo(def, skipIdentity = false).ok() ?: return null
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val mixHash = defData.mixHash(callData) ?: return null
 
@@ -412,7 +436,7 @@ class DefCollector(
         /**
          * If expansion is null, we still need to record `mixHash` <-> `macroIndex` mapping,
          * in order to propagate proper error in [MacroExpansionServiceImplInner.getReasonWhyExpansionFileNotFound].
-        */
+         */
         recordExpansionFileName(call, mixHash)
         if (expandedFile == null || expansion == null) return
 
@@ -428,6 +452,15 @@ class DefCollector(
         val lightInfo = MacroCallLightInfo(call.containingMod, call.macroIndex, call.body.kind)
         defMap.macroCallToExpansionName[call.macroIndex] = expansionName
         defMap.expansionNameToMacroCall[expansionName] = lightInfo
+    }
+
+    private fun tryExpandIncludeMacroCall(call: MacroCallInfoBase): Boolean {
+        // TODO: Actually resolve macro instead of name check
+        if (call is MacroCallInfo && call.path.last() == "include") {
+            expandIncludeMacroCall(call)
+            return true
+        }
+        return false
     }
 
     private fun expandIncludeMacroCall(call: MacroCallInfo) {
@@ -560,8 +593,99 @@ class ProcMacroDefInfo(
     val kind: KnownProcMacroKind,
 ) : MacroDefInfo()
 
+sealed interface MacroCallInfoBase {
+    val containingMod: ModData
+}
+
+/**
+ * Used for all non-bang proc macro calls (including cases when there is single attribute on an item).
+ *
+ * In the example can be attr or derive macro call depending on resolve result of `attr1`.
+ * See [RS_HARDCODED_PROC_MACRO_ATTRIBUTES].
+ * ```
+ * #[attr1]
+ * #[derive(Derive1)]
+ * struct Foo {}
+ * ```
+ */
+class ProcMacroCallInfo(
+    override val containingMod: ModData,
+    val macroIndex: MacroIndex,
+    val attrs: Array<AttrInfo>,
+    private val body: String,
+    // Null `bodyHash` means that body contains `#[cfg_attr]`, hence the hash should be computed from the lowered body
+    private val bodyHash: HashCode?,
+    private val depth: Int,
+    private val dollarCrateMap: DollarCrateMap,
+
+    private val endOfAttrsOffset: Int,
+    private val fixupRustSyntaxErrors: Boolean,
+
+    /** Non-null if we can fall back that item - [RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem] */
+    val originalItem: Triple<VisItem, Set<Namespace>, RsProcMacroKind?>? = null,
+) : MacroCallInfoBase {
+
+    class AttrInfo(
+        val path: Array<String>,
+        // -1 for derive macros
+        val index: Int,
+    ) {
+        var resolved: ProcMacroDefInfo? = null
+        val procMacroKind: RsProcMacroKind
+            get() = if (index == -1) RsProcMacroKind.DERIVE else RsProcMacroKind.ATTRIBUTE
+
+        override fun toString(): String {
+            val path = path.joinToString("::")
+            return if (index == -1) "#[derive($path)]" else "#[$path]"
+        }
+    }
+
+    fun intoMacroCallInfo(project: Project, crate: Crate, attr: AttrInfo, deriveIndex: Int): MacroCallInfo? {
+        val (body, bodyHash) = lowerBody(project, crate, attr.index) ?: return null
+        val macroIndex = if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) {
+            macroIndex
+        } else {
+            macroIndex.append(deriveIndex)
+        }
+        return MacroCallInfo(
+            containingMod,
+            macroIndex,
+            attr.path,
+            body,
+            bodyHash,
+            containingFileId = null,  // will not be used
+            depth,
+            dollarCrateMap,
+        )
+    }
+
+    private fun lowerBody(project: Project, crate: Crate, attrIndex: Int): MacroCallBodyWithHash? {
+        val body = if (attrIndex != -1) {
+            doPrepareAttributeProcMacroCallBody(
+                project,
+                body,
+                endOfAttrsOffset,
+                crate,
+                attrIndex,
+                fixupRustSyntaxErrors,
+            )
+        } else {
+            doPrepareCustomDeriveMacroCallBody(
+                project,
+                body,
+                endOfAttrsOffset,
+                crate
+            )
+        } ?: return null
+        val hash = bodyHash ?: body.bodyHash
+        return MacroCallBodyWithHash(body, hash)
+    }
+
+    override fun toString(): String = "${containingMod.path}:  ${attrs.joinToString(" ")} $body"
+}
+
 class MacroCallInfo(
-    val containingMod: ModData,
+    override val containingMod: ModData,
     val macroIndex: MacroIndex,
     val path: Array<String>,
     val body: MacroCallBody,
@@ -572,14 +696,8 @@ class MacroCallInfo(
      * `srcOffset` - [CratePersistentId]
      * `dstOffset` - index of [MACRO_DOLLAR_CRATE_IDENTIFIER] in [body]
      */
-    val dollarCrateMap: DollarCrateMap = DollarCrateMap.EMPTY,
-
-    /**
-     * Non-null in the case of attribute procedural macro if we can fall back that item
-     * ([org.rust.lang.core.psi.RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem])
-     */
-    val originalItem: Triple<VisItem, Set<Namespace>, RsProcMacroKind?>? = null,
-) {
+    val dollarCrateMap: DollarCrateMap,
+) : MacroCallInfoBase {
     override fun toString(): String = "${containingMod.path}:  ${path.joinToString("::")}! { $body }"
 }
 

@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.resolve2
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
+import com.intellij.util.containers.map2Array
 import com.intellij.util.io.IOUtil
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroCallBody
@@ -57,31 +57,28 @@ class ModCollectorBase private constructor(
         }
     }
 
+    private class AttrInfo(val attr: RsMetaItemStub, val index: Int)
+
     private fun collectElement(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
-        var customDerives = emptyList<RsMetaItemStub>()
         if (element is RsAttrProcMacroOwnerStub) {
             // TODO store CustomAttributes in defMap, pass it to getProcMacroAttributeRaw
-            when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(element, element, crate, withDerives = true)) {
-                is ProcMacroAttribute.Attr -> {
-                    collectAttrProcMacroCall(element, attr, macroIndexInParent)
-                    return
+            val attrsAndDerives = ProcMacroAttribute.getAllPossibleProcMacroAttributes(element, element, crate)
+                .flatMap {
+                    when (it) {
+                        is ProcMacroAttribute.Attr -> listOf(AttrInfo(it.attr, it.index))
+                        is ProcMacroAttribute.Derive -> it.derives.mapTo(mutableListOf()) { derive ->
+                            AttrInfo(derive, -1)
+                        }
+                    }
                 }
-                is ProcMacroAttribute.Derive -> if (element.mayHaveCustomDerive) {
-                    customDerives = attr.derives.toList()
-                }
-                ProcMacroAttribute.None -> Unit
+
+            if (attrsAndDerives.isNotEmpty()) {
+                collectProcMacroCall(element, attrsAndDerives, macroIndexInParent)
+                if (attrsAndDerives.any { it.index != -1 }) return
             }
         }
 
         collectElementWithoutAttrMacros(element, macroIndexInParent)
-
-        customDerives.forEachIndexed { i, customDerive ->
-            collectCustomDeriveProcMacroCall(
-                element as RsAttrProcMacroOwnerStub,
-                customDerive,
-                MacroIndex(intArrayOf(macroIndexInParent, i))
-            )
-        }
     }
 
     private fun collectElementWithoutAttrMacros(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
@@ -217,61 +214,36 @@ class ModCollectorBase private constructor(
         visitor.collectMacroCall(callLight, call)
     }
 
-    private fun collectAttrProcMacroCall(
+    private fun collectProcMacroCall(
         item: RsAttrProcMacroOwnerStub,
-        attr: ProcMacroAttribute.Attr<RsMetaItemStub>,
+        attrsAndDerives: List<AttrInfo>,
         macroIndexInParent: Int
     ) {
         val isCallDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate)
         if (!isCallDeeplyEnabledByCfg) return
         val rawBody = item.stubbedText ?: return
-        val attrPath = attr.attr.path ?: return
-        val attrPathSegments = attrPath.getPathWithAdjustedDollarCrate() ?: return
+        val attrInfos = attrsAndDerives.map2Array {
+            val attrPath = it.attr.path ?: return
+            val attrPathSegments = attrPath.getPathWithAdjustedDollarCrate() ?: return
+            ProcMacroCallLight.AttrInfo(attrPathSegments, it.index, attrPath.startOffset)
+        }
+        val hasAttrMacro = attrInfos.any { it.index != -1 }
 
-        val originalItem = if (item is RsNamedStub && RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(item)) {
+        val originalItem = if (hasAttrMacro && item is RsNamedStub && RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(item)) {
             lowerSimpleItem(item)
         } else {
             null
         }
         val callLight = ProcMacroCallLight(
-            attrPathSegments,
+            attrInfos,
             rawBody,
             item.stubbedTextHash,
             item.endOfAttrsOffset,
-            attr.index,
-            MacroIndex(intArrayOf(macroIndexInParent)),
-            attrPathStartOffsetInExpansion = attrPath.startOffset,
+            macroIndexInParent,
             bodyStartOffsetInExpansion = item.startOffset,
             bodyEndOffsetInExpansion = item.startOffset + rawBody.length,
             originalItem,
-            fixupRustSyntaxErrors = item is RsFunctionStub
-        )
-        visitor.collectProcMacroCall(callLight)
-    }
-
-    private fun collectCustomDeriveProcMacroCall(
-        item: RsAttrProcMacroOwnerStub,
-        customDeriveAttr: RsMetaItemStub,
-        macroIndexInParent: MacroIndex
-    ) {
-        val isCallDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate)
-        if (!isCallDeeplyEnabledByCfg) return
-        val rawBody = item.stubbedText ?: return
-        val attrPath = customDeriveAttr.path ?: return
-        val attrPathSegments = attrPath.getPathWithAdjustedDollarCrate() ?: return
-
-        val callLight = ProcMacroCallLight(
-            attrPathSegments,
-            rawBody,
-            item.stubbedTextHash,
-            item.endOfAttrsOffset,
-            -1,
-            macroIndexInParent,
-            attrPathStartOffsetInExpansion = attrPath.startOffset,
-            bodyStartOffsetInExpansion = item.startOffset,
-            bodyEndOffsetInExpansion = item.startOffset + rawBody.length,
-            null,
-            fixupRustSyntaxErrors = false
+            fixupRustSyntaxErrors = hasAttrMacro && item is RsFunctionStub
         )
         visitor.collectProcMacroCall(callLight)
     }
@@ -570,20 +542,19 @@ class MacroCallLight(
 }
 
 class ProcMacroCallLight(
-    val attrPath: Array<String>,
+    val attrs: Array<AttrInfo>,
     val body: String,
+    // Null `bodyHash` means that body contains `#[cfg_attr]`, hence the hash should be computed from the lowered body
     val bodyHash: HashCode?,
-    private val endOfAttrsOffset: Int,
-    private val attrIndex: Int,
+    val endOfAttrsOffset: Int,
     /** See [MacroIndex] */
-    val macroIndexInParent: MacroIndex,
+    val macroIndexInParent: Int,
     /**
      * $crate::foo! { ... $crate ... }
      *                               ^ [bodyEndOffsetInExpansion]
      *              ^ [bodyStartOffsetInExpansion]
-     * ^ [attrPathStartOffsetInExpansion]
+     * ^ [ProcMacroCallLight.AttrInfo.pathStartOffsetInExpansion]
      */
-    val attrPathStartOffsetInExpansion: Int,
     val bodyStartOffsetInExpansion: Int,
     val bodyEndOffsetInExpansion: Int,
 
@@ -592,40 +563,20 @@ class ProcMacroCallLight(
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {
-        data.writePath(attrPath)
         if (bodyHash != null) {
             data.writeHashCodeNullable(bodyHash)
         } else {
-            // Null `bodyHash` means that body contains `#[cfg_attr]`, hence the hash should be computed
-            // from the lowered body (`lowerBody`)
             IOUtil.writeUTF(data, body)
         }
-        data.writeVarInt(endOfAttrsOffset)
-        data.writeVarInt(attrIndex)
-        macroIndexInParent.writeTo(data)
+        data.writeVarInt(macroIndexInParent)
     }
 
-    fun lowerBody(project: Project, crate: Crate): MacroCallBodyWithHash? {
-        val body = if (attrIndex != -1) {
-            doPrepareAttributeProcMacroCallBody(
-                project,
-                body,
-                endOfAttrsOffset,
-                crate,
-                attrIndex,
-                fixupRustSyntaxErrors,
-            )
-        } else {
-            doPrepareCustomDeriveMacroCallBody(
-                project,
-                body,
-                endOfAttrsOffset,
-                crate
-            )
-        } ?: return null
-        val hash = bodyHash ?: body.bodyHash
-        return MacroCallBodyWithHash(body, hash)
-    }
+    class AttrInfo(
+        val path: Array<String>,
+        // -1 for derive macros
+        val index: Int,
+        val pathStartOffsetInExpansion: Int,
+    )
 }
 
 data class MacroCallBodyWithHash(

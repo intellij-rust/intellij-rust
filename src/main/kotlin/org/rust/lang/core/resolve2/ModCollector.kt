@@ -15,14 +15,12 @@ import com.intellij.psi.PsiAnchor
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
+import com.intellij.util.containers.map2Array
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.MacroCallBody
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFileBase
-import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ENUM_VARIANT_NS
 import org.rust.lang.core.resolve.processModDeclResolveVariants
@@ -171,7 +169,7 @@ private class ModCollector(
         val perNs = PerNs.from(visItem, item.namespaces)
         onAddItem(modData, name, perNs, visItem.visibility)
 
-        /** See also [DefCollector.tryTreatAsIdentityMacro] */
+        /** See also [DefCollector.treatAsIdentityMacro] */
         if (item.procMacroKind != null) {
             modData.procMacros[name] = item.procMacroKind
         }
@@ -347,9 +345,11 @@ private class ModCollector(
 
     override fun collectProcMacroCall(call: ProcMacroCallLight) {
         require(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
-        val (body, bodyHash) = call.lowerBody(project, crate) ?: return
         val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
-        val path = dollarCrateHelper?.convertPath(call.attrPath, call.attrPathStartOffsetInExpansion) ?: call.attrPath
+        val attrs = call.attrs.map2Array {
+            val path = dollarCrateHelper?.convertPath(it.path, it.pathStartOffsetInExpansion) ?: it.path
+            ProcMacroCallInfo.AttrInfo(path, it.index)
+        }
         val dollarCrateMap = dollarCrateHelper?.getDollarCrateMap(
             call.bodyStartOffsetInExpansion,
             call.bodyEndOffsetInExpansion
@@ -358,15 +358,16 @@ private class ModCollector(
             val visItem = convertToVisItem(it, isModOrEnum = false, forceCfgDisabledVisibility = false)
             Triple(visItem, it.namespaces, it.procMacroKind)
         }
-        context.context.macroCalls += MacroCallInfo(
+        context.context.macroCalls += ProcMacroCallInfo(
             modData,
             macroIndex,
-            path,
-            body,
-            bodyHash,
-            containingFileId = null,  // will not be used
+            attrs,
+            call.body,
+            call.bodyHash,
             macroDepth,
             dollarCrateMap,
+            call.endOfAttrsOffset,
+            call.fixupRustSyntaxErrors,
             originalItem
         )
     }

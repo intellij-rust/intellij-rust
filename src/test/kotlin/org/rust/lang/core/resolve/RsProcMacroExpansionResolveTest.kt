@@ -430,6 +430,68 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
+    fun `test hardcoded attr and macro attr 1`() = checkByCode("""
+        #[test_proc_macros::attr_hardcoded_as_is]
+        #[test_proc_macros::attr_as_is]
+        fn foo() {}
+         //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test hardcoded attr and macro attr 2`() = checkByCode("""
+        #[test_proc_macros::attr_hardcoded_as_is]
+        #[test_proc_macros::attr_replace_with_attr(fn bar() {})]
+        fn foo() {}                                 //X
+        fn main() {
+            bar();
+        } //^
+    """)
+
+    fun `test hardcoded attr and macro attr 3`() = checkByCode("""
+        #[test_proc_macros::attr_hardcoded_as_is]
+        #[test_proc_macros::attr_replace_with_attr(fn bar() {})]
+        fn foo() {}
+        fn main() {
+            foo();
+        } //^ unresolved
+    """)
+
+    fun `test two hardcoded attrs`() = checkByCode("""
+        #[test_proc_macros::attr_hardcoded_as_is]
+        #[test_proc_macros::attr_hardcoded_as_is]
+        fn foo() {}
+         //X
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    fun `test hardcoded attr and macro derive`() = checkByCode("""
+        #[test_proc_macros::attr_hardcoded_as_is]
+        #[derive(test_proc_macros::DeriveStructFooDeclaration)]
+        struct Bar {}
+        impl Foo {
+            fn method(&self) {}
+        }    //X
+        fn main() {
+            Foo.method();
+        }     //^
+    """)
+
+    fun `test macro derive and hardcoded attr`() = checkByCode("""
+        #[derive(test_proc_macros::DeriveStructFooDeclaration)]
+        #[test_proc_macros::attr_hardcoded_as_is]
+        struct Bar {}
+        impl Foo {
+            fn method(&self) {}
+        }    //X
+        fn main() {
+            Foo.method();
+        }     //^
+    """)
+
     fun `test attr legacy macro 2`() = checkByCode("""
         use test_proc_macros::attr_hardcoded_not_a_macro;
 
