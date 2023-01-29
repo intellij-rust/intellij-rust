@@ -21,13 +21,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import icons.JavaScriptPsiIcons
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
+import javax.swing.Icon
 
 @Suppress("NAME_SHADOWING")
 class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
+
+    override fun getName(): String = RsBundle.message("gutter.rust.generated.typescript.declarations.name")
+    override fun getIcon(): Icon = JavaScriptPsiIcons.FileTypes.TypeScriptFile
+
     override fun getLineMarkerInfo(element: PsiElement): RelatedItemLineMarkerInfo<*>? {
         val element = element as? RsOuterAttributeOwner ?: return null
         if (element !is RsFunction && element !is RsEnumItem && element !is RsStructItem && element !is RsImplItem) {
@@ -74,9 +80,9 @@ class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
         return RelatedItemLineMarkerInfo(
             attr,
             attr.textRange,
-            JavaScriptPsiIcons.FileTypes.TypeScriptFile,
-            { "Go to generated declaration" },
-            DefaultGutterIconNavigationHandler(listOf(destination), "Generated Declarations"),
+            icon,
+            { RsBundle.message("gutter.rust.generated.typescript.declarations.tooltip") },
+            DefaultGutterIconNavigationHandler(listOf(destination), RsBundle.message("gutter.rust.generated.typescript.declarations.popup.title")),
             GutterIconRenderer.Alignment.RIGHT,
             { listOf(GotoRelatedItem(destination)) }
         )

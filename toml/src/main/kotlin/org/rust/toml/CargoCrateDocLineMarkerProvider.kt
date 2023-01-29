@@ -6,19 +6,25 @@
 package org.rust.toml
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.util.io.URLUtil
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.ide.docs.getExternalDocumentationBaseUrl
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
 import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
+import javax.swing.Icon
 
-class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
+class CargoCrateDocLineMarkerProvider : LineMarkerProviderDescriptor() {
+
+    override fun getName(): String = RsBundle.message("gutter.rust.open.documentation.toml.name")
+    override fun getIcon(): Icon = RsIcons.DOCS_MARK
+
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
@@ -67,7 +73,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
             RsIcons.DOCS_MARK,
             { _, _ -> BrowserUtil.browse("$baseUrl$name/${URLUtil.encodeURIComponent(urlVersion)}") },
             GutterIconRenderer.Alignment.LEFT
-        ) { "Open documentation for `$name@$urlVersion`" }
+        ) { RsBundle.message("gutter.rust.open.documentation.for", "$name@$urlVersion") }
     }
 }
 
