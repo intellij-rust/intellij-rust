@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.ext.wherePreds
 import org.rust.lang.core.types.rawType
 
 /**
@@ -22,7 +23,7 @@ abstract class RsFunctionSignatureConfig(val function: RsFunction) {
 
     protected val whereClausesText: String
         get() {
-            val wherePredList = function.whereClause?.wherePredList ?: return ""
+            val wherePredList = function.wherePreds
             if (wherePredList.isEmpty()) return ""
             val typeParams = typeParameters().map { it.declaredType }
             if (typeParams.isEmpty()) return ""

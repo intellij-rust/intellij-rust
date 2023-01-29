@@ -322,7 +322,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
             typeParameterList?.generateDocumentation(buffer)
             valueParameterList?.generateDocumentation(buffer)
             retType?.generateDocumentation(buffer)
-            listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+            listOf(buffer.toString()) + wherePreds.documentationText
         }
         is RsConstant -> {
             val buffer = StringBuilder()
@@ -341,7 +341,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
                 buffer.b { it += name }
                 (this as RsGenericDeclaration).typeParameterList?.generateDocumentation(buffer)
                 (this as? RsTypeAlias)?.typeReference?.generateDocumentation(buffer, " = ")
-                listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+                listOf(buffer.toString()) + wherePreds.documentationText
             } else emptyList()
         }
         is RsMacro -> listOf("macro <b>$name</b>")
@@ -370,7 +370,7 @@ private val RsImplItem.declarationText: List<String>
             buffer += " for "
         }
         typeRef.generateDocumentation(buffer)
-        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+        return listOf(buffer.toString()) + wherePreds.documentationText
     }
 
 private val RsTraitItem.declarationText: List<String>
@@ -378,7 +378,7 @@ private val RsTraitItem.declarationText: List<String>
         val name = presentableQualifiedName ?: return emptyList()
         val buffer = StringBuilder(name)
         typeParameterList?.generateDocumentation(buffer)
-        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+        return listOf(buffer.toString()) + wherePreds.documentationText
     }
 
 private val RsItemElement.declarationModifiers: List<String>
@@ -418,9 +418,10 @@ private val RsItemElement.declarationModifiers: List<String>
         return modifiers
     }
 
-private val RsWhereClause.documentationText: List<String>
+private val List<RsWherePred>.documentationText: List<String>
     get() {
-        return listOf("where") + wherePredList.mapNotNull {
+        if (isEmpty()) return emptyList()
+        return listOf("where") + this.mapNotNull {
             val buffer = StringBuilder()
             val lifetime = it.lifetime
             val typeReference = it.typeReference

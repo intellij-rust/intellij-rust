@@ -130,9 +130,10 @@ open class RsPsiRenderer(
         if (typeParameterList != null && renderGenericsAndWhere) {
             appendTypeParameterList(sb, typeParameterList)
         }
-        val whereClause = ta.whereClause
-        if (whereClause != null && renderGenericsAndWhere) {
-            appendWhereClause(sb, whereClause)
+        if (renderGenericsAndWhere) {
+            for (whereClause in ta.whereClauseList) {
+                appendWhereClause(sb, whereClause)
+            }
         }
         val typeParamBounds = ta.typeParamBounds
         if (typeParamBounds != null && renderBounds) {

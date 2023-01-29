@@ -1030,7 +1030,7 @@ private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
 
 private TraitType_upper ::= ('+' Polybound)+
 
-upper TypeAlias ::= TYPE_KW identifier TypeParameterList? TypeParamBounds? WhereClause? [ '=' TypeReference ] ';' {
+upper TypeAlias ::= TYPE_KW identifier TypeParameterList? TypeParamBounds? WhereClause? [ '=' TypeReference ] WhereClause? ';' {
   pin = 'identifier'
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"

@@ -114,7 +114,7 @@ private fun firstLine(params: List<RsGenericParameter>): HintLine {
  */
 private fun secondLine(params: List<RsGenericParameter>): HintLine? {
     val owner = params.getOrNull(0)?.parent?.parent as? RsGenericDeclaration
-    val wherePreds = owner?.whereClause?.wherePredList.orEmpty()
+    val wherePreds = owner?.wherePreds.orEmpty()
         // retain specific preds
         .filterNot {
             params.contains((it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve())

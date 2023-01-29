@@ -106,6 +106,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         pub type UInt = u32;
         type Maybe<T> = Option<T>;
         type SizedMaybe<T> where T: Sized = Option<T>;
+        type SizedMaybe2<T> = Option<T> <error descr="Type `SizedMaybe2` cannot have `where` clause after the type">where T: Sized</error>;
 
         <error descr="Type `DefBool` cannot have the `default` qualifier">default</error> type DefBool = bool;
         <error descr="Type `Unknown` should have a body`">type Unknown;</error>

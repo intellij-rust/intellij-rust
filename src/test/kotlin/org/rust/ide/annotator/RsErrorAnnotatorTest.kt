@@ -4393,6 +4393,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { type Item<error descr="generic associated types is experimental [E0658]"><'a></error> <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error> = S; }
     """)
 
+    @MockRustcVersion("1.60.0")
+    fun `test generic associated types E0658 (new where clause location)`() = checkErrors("""
+        struct S;
+        type ItemFree<'a> = S where 'a : 'static;
+        impl S { <error>type Item<error descr="generic associated types is experimental [E0658]"><'a></error> = S <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error>;</error> }
+        trait T { type Item<error descr="generic associated types is experimental [E0658]"><'a></error> <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error>; }
+        impl T for S { type Item<error descr="generic associated types is experimental [E0658]"><'a></error> = S <error descr="where clauses on associated types is experimental [E0658]">where 'a : 'static</error>; }
+    """)
+
     @MockRustcVersion("1.23.0-nightly")
     fun `test generic associated types E0658 2`() = checkErrors("""
         #![feature(generic_associated_types)]

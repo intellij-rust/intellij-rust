@@ -47,6 +47,13 @@ val RsGenericDeclaration.requiredGenericParameters: List<RsGenericParameter>
         }
     }
 
+val RsGenericDeclaration.wherePreds: List<RsWherePred>
+    get() = if (this is RsTypeAlias && owner is RsAbstractableOwner.Impl) {
+        whereClauseList.flatMap { it.wherePredList }
+    } else {
+        whereClause?.wherePredList.orEmpty()
+    }
+
 fun <T : RsGenericDeclaration> T.withSubst(vararg subst: Ty): BoundElement<T> {
     val typeParameterList = typeParameters
     val nonDefaultCount = typeParameterList.asSequence()
