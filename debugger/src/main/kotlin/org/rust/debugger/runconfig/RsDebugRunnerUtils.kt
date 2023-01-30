@@ -10,7 +10,8 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -80,13 +81,13 @@ object RsDebugRunnerUtils {
             is RsDebuggerToolchainService.LLDBStatus.Binaries -> return true
         }
 
-        val option = if (!RsDebuggerSettings.getInstance().downloadAutomatically) {
+        val downloadDebugger = if (!RsDebuggerSettings.getInstance().downloadAutomatically) {
             showDialog(project, message, action)
         } else {
-            Messages.OK
+            true
         }
 
-        if (option == Messages.OK) {
+        if (downloadDebugger) {
             val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project)
             if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
                 RsDebuggerSettings.getInstance().lldbPath = result.lldbDir.absolutePath
@@ -100,21 +101,19 @@ object RsDebugRunnerUtils {
         project: Project,
         @Suppress("UnstableApiUsage") @DialogMessage message: String,
         @Suppress("UnstableApiUsage") @Button action: String
-    ): Int {
-        return Messages.showDialog(
-            project,
-            message,
-            ERROR_MESSAGE_TITLE,
-            arrayOf(action),
-            Messages.OK,
-            Messages.getErrorIcon(),
-            object : DialogWrapper.DoNotAskOption.Adapter() {
-                override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-                    if (exitCode == Messages.OK) {
-                        RsDebuggerSettings.getInstance().downloadAutomatically = isSelected
-                    }
+    ): Boolean {
+        val doNotAsk = object : DoNotAskOption.Adapter() {
+            override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+                if (exitCode == Messages.OK) {
+                    RsDebuggerSettings.getInstance().downloadAutomatically = isSelected
                 }
             }
-        )
+        }
+
+        return MessageDialogBuilder.okCancel(ERROR_MESSAGE_TITLE, message)
+            .yesText(action)
+            .icon(Messages.getErrorIcon())
+            .doNotAsk(doNotAsk)
+            .ask(project)
     }
 }
