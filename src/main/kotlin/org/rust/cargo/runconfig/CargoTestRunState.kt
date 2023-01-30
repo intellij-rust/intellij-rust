@@ -19,11 +19,7 @@ import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.util.parseSemVer
 import org.rust.ide.notifications.showBalloon
-import java.time.LocalDate
 
 class CargoTestRunState(
     environment: ExecutionEnvironment,
@@ -42,7 +38,7 @@ class CargoTestRunState(
             }
             project.showBalloon(message, NotificationType.WARNING)
         }
-        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer), emulateTerminal = false, withSudo = false)
+        commandLine.copy(additionalArguments = patchArgs(commandLine), emulateTerminal = false, withSudo = false)
     }
 
     init {
@@ -61,7 +57,7 @@ class CargoTestRunState(
     companion object {
 
         @VisibleForTesting
-        fun patchArgs(commandLine: CargoCommandLine, rustcVer: RustcVersion?): List<String> {
+        fun patchArgs(commandLine: CargoCommandLine): List<String> {
             val (pre, post) = commandLine.splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
@@ -77,25 +73,9 @@ class CargoTestRunState(
             }
 
             addFormatJsonOption(post, "--format", "json")
-
-            if (checkShowOutputSupport(rustcVer)) {
-                post.add("--show-output")
-            }
+            post.add("--show-output")
 
             return if (post.isEmpty()) pre else pre + "--" + post
-        }
-
-        private fun checkShowOutputSupport(ver: RustcVersion?): Boolean {
-            if (ver == null) return false
-            // --show-output is supported since 1.39.0-nightly/dev with a build date later than 2019-08-27
-            val minRelease = "1.39.0".parseSemVer()
-            val commitDate = LocalDate.of(2019, 8, 27)
-            return when {
-                ver.semver > minRelease -> true
-                ver.semver < minRelease -> false
-                else ->
-                    ver.channel.index <= RustChannel.BETA.index || ver.commitDate?.isAfter(commitDate) ?: false
-            }
         }
     }
 }

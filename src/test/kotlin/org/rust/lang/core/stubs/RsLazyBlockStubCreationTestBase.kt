@@ -20,8 +20,6 @@ import com.intellij.psi.stubs.StubTree
 import com.intellij.util.LocalTimeCounter
 import junit.framework.TestCase
 import org.rust.RsTestBase
-import org.rust.RustProjectDescriptorBase
-import org.rust.cargo.util.parseSemVer
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
@@ -128,11 +126,7 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
             }
         }
 
-        val rustcVersion = (projectDescriptor as? RustProjectDescriptorBase)?.rustcInfo?.version?.semver
-        // We detect some unexpected proc macros in stdlib sources for Rust before 1.43.
-        // Ignore them for now
-        val ignoreProcMacroNumberCheck = rustcVersion != null && rustcVersion < RUST_1_43
-        if (stubbedProcMacros > 200 && !ignoreProcMacroNumberCheck) {
+        if (stubbedProcMacros > 200) {
             error("Found too large number of attr proc macros in stdlib: $stubbedProcMacros. " +
                 "This likely means that some new built-in attrs should be added to `RS_BUILTIN_ATTRIBUTES` list")
         }
@@ -177,9 +171,4 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
     }
 
     private val RsBlock.isParsed get() = (node as LazyParseableElement).isParsed
-
-    companion object {
-        // BACKCOMPAT: Rust 1.42
-        private val RUST_1_43 = "1.43.0".parseSemVer()
-    }
 }

@@ -7,8 +7,6 @@ package org.rustSlowTests.lang.resolve
 
 import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.toolchain.tools.rustc
-import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.psi.RsPath
 
 class CustomTargetCfgResolveTest : RsWithToolchainTestBase() {
@@ -112,50 +110,5 @@ class CustomTargetCfgResolveTest : RsWithToolchainTestBase() {
                 """)
             }
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
-    }
-
-    // BACKCOMPAT: Rust 1.51. Drop it
-    // Checks that our integration doesn't fail for Rust below 1.52
-    fun `test custom compiler target with rust below 1_52`() {
-        val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion() ?: return
-        if (rustcVersion.semver > "1.51.0".parseSemVer()) return
-        buildProject {
-            toml("Cargo.toml", """
-                [package]
-                name = "foo"
-                version = "0.1.0"
-                authors = []
-            """)
-            dir(".cargo") {
-                toml("config", """
-                    [build]
-                    target = "wasm32-unknown-unknown"
-                """)
-            }
-            dir("src") {
-                rust("main.rs", """
-                    #[cfg(not(target_arch = "wasm32"))]
-                    mod disabled;
-                    #[cfg(target_arch = "wasm32")]
-                    mod enabled;
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    pub use disabled::function_under_cfg;
-                    #[cfg(target_arch = "wasm32")]
-                    pub use enabled::function_under_cfg;
-
-                    fn main() {
-                        function_under_cfg();
-                            //^
-                    }
-                """)
-                rust("disabled.rs", """
-                    pub fn function_under_cfg() {}
-                """)
-                rust("enabled.rs", """
-                    pub fn function_under_cfg() {}
-                """)
-            }
-        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/disabled.rs")
     }
 }

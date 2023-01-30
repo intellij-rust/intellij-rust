@@ -89,8 +89,7 @@ jobs:
                       base-ide: idea
                       platform-version: 223
                       verify-plugin: true
-                      # BACKCOMPAT: 2021 edition needs at least 1.56
-                      default-edition-for-tests: 2018
+                      default-edition-for-tests: 2021
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
