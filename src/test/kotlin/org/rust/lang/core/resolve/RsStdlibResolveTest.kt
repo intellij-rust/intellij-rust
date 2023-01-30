@@ -263,6 +263,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }   //^ ...core/src/macros/mod.rs
     """)
 
+    // BACKCOMPAT: Rust 1.66. `asm` macro was moved to `core/src/arch.rs` file since Rust 1.67
     fun `test asm macro`() = stubOnlyResolve("""
     //- main.rs
         #![feature(asm)]
@@ -270,7 +271,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         use std::arch::asm; // required since 1.59
         fn main() {
             asm!("nop");
-        } //^ ...core/src/macros/mod.rs|...core/src/lib.rs
+        } //^ ...core/src/lib.rs|...core/src/arch.rs
     """)
 
     fun `test iterating a vec`() = stubOnlyResolve("""
