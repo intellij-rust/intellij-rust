@@ -18,8 +18,10 @@ import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
+import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
@@ -248,17 +250,43 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
         }
 }
 
+private fun isComplexPattern(pat: RsPat?): Boolean {
+    return when (pat) {
+        null, is RsPatWild -> false
+        is RsPatIdent -> {
+            val binding = pat.patBinding
+            binding.mutability == Mutability.MUTABLE || binding.kind is RsBindingModeKind.BindByReference || pat.at != null
+        }
+
+        is RsPatMacro -> {
+            val expansion = pat.macroCall.expansion
+            return expansion != null && expansion is MacroExpansion.Pat && isComplexPattern(expansion.pat)
+        }
+
+        else -> true
+    }
+}
+
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
     val fn = param.parent.parent as? RsFunction ?: return
+    val pat = param.pat
+    val isComplexPattern = isComplexPattern(pat)
     when (fn.owner) {
         is RsAbstractableOwner.Free,
-        is RsAbstractableOwner.Impl,
+        is RsAbstractableOwner.Impl -> {
+            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+        }
         is RsAbstractableOwner.Foreign -> {
-            require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            if (isComplexPattern) {
+                RsDiagnostic.PatternArgumentInForeignFunctionError(param).addToHolder(holder)
+            }
         }
         is RsAbstractableOwner.Trait -> {
-            denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
-            if (param.pat == null) {
+            if (isComplexPattern && fn.block == null) {
+                RsDiagnostic.PatternArgumentInFunctionWithoutBodyError(param).addToHolder(holder)
+            }
+            if (pat == null) {
                 val message = "Anonymous functions parameters are deprecated (RFC 1685)"
                 val annotation = holder.newAnnotation(HighlightSeverity.WARNING, message)
 
