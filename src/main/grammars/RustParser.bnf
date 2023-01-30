@@ -1190,7 +1190,7 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut])
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? <<setLambdaExprMode>> Expr <<resetFlags>> {
+LambdaExpr ::= OuterAttr* const? [asyncBlock | static] move? LambdaParameters RetType? <<setLambdaExprMode>> Expr <<resetFlags>> {
   implements = [ "org.rust.lang.core.psi.ext.RsFunctionOrLambda"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
