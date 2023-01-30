@@ -61,6 +61,7 @@ object RsIcons {
     val FUNCTION = load("/icons/nodes/function.svg")
     val MACRO = load("/icons/nodes/macro.svg")
     val MACRO2 = load("/icons/nodes/macro2.0.svg")
+    val PROC_MACRO = load("/icons/nodes/macroP.svg")
 
     val CONSTANT = load("/icons/nodes/constant.svg")
     val MUT_STATIC = load("/icons/nodes/static.svg")
