@@ -28,7 +28,7 @@ import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
  * fn main() {}
  * ```
  *
- * This function ([RsFunction]) is not an attribute procedural macro (i.e. it is [ProcMacroAttribute.None])
+ * This function ([RsFunction]) is not an attribute procedural macro
  * because `no_mangle` is a built-in attribute (see [RS_BUILTIN_ATTRIBUTES]).
  *
  * ```rust
@@ -36,7 +36,7 @@ import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
  * fn foo() {}
  * ```
  *
- * This function ([RsFunction]) is not an attribute procedural macro (i.e. it is [ProcMacroAttribute.None])
+ * This function ([RsFunction]) is not an attribute procedural macro
  * because `rustfmt` is a built-in tool (see [RS_BUILTIN_TOOL_ATTRIBUTES]).
  *
  * ```rust
@@ -53,7 +53,7 @@ import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
  * struct S;
  * ```
  *
- * We consider this function ([RsFunction]) as not a macro ([ProcMacroAttribute.None]) because `tokio::main`
+ * We consider this function ([RsFunction]) as not a macro because `tokio::main`
  * macro is hardcoded to be treated as a built-in attribute (see [RS_HARDCODED_PROC_MACRO_ATTRIBUTES])
  *
  * ```rust
@@ -77,15 +77,6 @@ import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
  */
 sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
     abstract val attr: T?
-
-    /**
-     * The item has no attribute procedural macros or custom derive attributes,
-     * but may have built-in derive attributes
-     */
-    object None : ProcMacroAttribute<Nothing>() {
-        override val attr: Nothing? get() = null
-        override fun toString(): String = "None"
-    }
 
     /** The item has no attribute procedural macros, but may have custom derive attributes */
     class Derive<T : RsMetaItemPsiOrStub>(val derives: Sequence<T>): ProcMacroAttribute<T>() {
@@ -119,12 +110,12 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             withDerives: Boolean = false,
             explicitCustomAttributes: CustomAttributes? = null,
             ignoreProcMacrosDisabled: Boolean = false
-        ): ProcMacroAttribute<T> {
-            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isAnyEnabled()) return None
+        ): ProcMacroAttribute<T>? {
+            if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isAnyEnabled()) return null
             if (stub != null) {
                 if (!stub.mayHaveCustomAttrs) {
                     return if (stub.mayHaveCustomDerive && RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
-                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return null
                         if (withDerives) {
                             val queryAttributes = owner.getQueryAttributes(explicitCrate, stub, outerAttrsOnly = true)
                             Derive(queryAttributes.customDeriveMetaItems)
@@ -132,17 +123,17 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                             Derive(emptySequence())
                         }
                     } else {
-                        None
+                        null
                     }
                 }
             }
 
-            val crate = explicitCrate ?: owner.containingCrate.asNotFake ?: return None
+            val crate = explicitCrate ?: owner.containingCrate.asNotFake ?: return null
 
             // Stdlib uses many unstable built-in attributes that change frequently, and We may not be able to update
             // the `RS_BUILTIN_ATTRIBUTES` list in time. Let's just assume that stdlib can't have proc macros
             if (crate.origin == PackageOrigin.STDLIB || crate.origin == PackageOrigin.STDLIB_DEPENDENCY) {
-                return None
+                return null
             }
 
             val customAttributes = explicitCustomAttributes ?: CustomAttributes.fromCrate(crate)
@@ -151,14 +142,14 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             queryAttributes.metaItems.forEachIndexed { index, meta ->
                 if (meta.name == "derive") {
                     return if (RsProcMacroPsiUtil.canOwnDeriveAttrs(owner)) {
-                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return None
+                        if (!ignoreProcMacrosDisabled && !ProcMacroApplicationService.isDeriveEnabled()) return null
                         if (withDerives) {
                             Derive(queryAttributes.customDeriveMetaItems)
                         } else {
                             Derive(emptySequence())
                         }
                     } else {
-                        None
+                        null
                     }
                 }
                 if (RsProcMacroPsiUtil.canBeProcMacroAttributeCallWithoutContextCheck(meta, customAttributes)
@@ -166,7 +157,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                     return Attr(meta, index)
                 }
             }
-            return None
+            return null
         }
 
         /**
@@ -180,14 +171,14 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             stub: RsAttributeOwnerStub? = owner.attributeStub,
             explicitCrate: Crate? = null,
             withDerives: Boolean = false,
-        ): ProcMacroAttribute<RsMetaItem> {
+        ): ProcMacroAttribute<RsMetaItem>? {
             return when (val attr = getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate, withDerives)) {
-                None -> None
+                null -> null
                 is Derive -> attr
                 is Attr -> {
                     val kind = attr.attr.resolveToProcMacroWithoutPsi(checkIsMacroAttr = false)?.kind
                     if (kind != null && kind.treatAsBuiltinAttr && RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(owner)) {
-                        None
+                        null
                     } else {
                         attr
                     }

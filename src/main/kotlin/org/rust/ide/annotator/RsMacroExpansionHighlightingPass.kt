@@ -91,7 +91,7 @@ class RsMacroExpansionHighlightingPass(
                 }
                 is RsAttrProcMacroOwner -> {
                     if (it.textRange?.intersects(restrictedRange) != true) return@processElements true
-                    macros += it.procMacroAttribute.attr?.prepareForExpansionHighlighting() ?: return@processElements true
+                    macros += it.procMacroAttribute?.attr?.prepareForExpansionHighlighting() ?: return@processElements true
                 }
             }
             true // Continue
@@ -120,7 +120,7 @@ class RsMacroExpansionHighlightingPass(
                 if (element is RsMacroCall) {
                     macros += element.prepareForExpansionHighlighting(macro) ?: continue
                 } else if (element is RsAttrProcMacroOwner) {
-                    macros += element.procMacroAttribute.attr?.prepareForExpansionHighlighting(macro) ?: continue
+                    macros += element.procMacroAttribute?.attr?.prepareForExpansionHighlighting(macro) ?: continue
                 }
             }
 

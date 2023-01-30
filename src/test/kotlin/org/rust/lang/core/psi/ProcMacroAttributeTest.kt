@@ -442,7 +442,7 @@ class ProcMacroAttributeTest : RsTestBase() {
         when (this) {
             is ProcMacroAttribute.Attr -> Attr(attr.path!!.text, index)
             is ProcMacroAttribute.Derive -> Derive
-            ProcMacroAttribute.None -> None
+            null -> None
         }
 
     private sealed class TestProcMacroAttribute {

@@ -79,7 +79,7 @@ val RsPossibleMacroCall.isMacroCall: Boolean
                 when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)) {
                     is ProcMacroAttribute.Attr -> attr.attr == this
                     is ProcMacroAttribute.Derive -> RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
-                    ProcMacroAttribute.None -> false
+                    null -> false
                 }
             }
         }
@@ -153,7 +153,7 @@ private fun doPrepareProcMacroCallBody(
             val body = doPrepareCustomDeriveMacroCallBody(project, text, endOfAttrsOffset, crate) ?: return null
             PreparedProcMacroCallBody.Derive(body)
         }
-        ProcMacroAttribute.None -> null
+        null -> null
     }
 }
 

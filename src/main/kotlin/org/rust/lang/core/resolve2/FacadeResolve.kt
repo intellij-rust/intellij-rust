@@ -277,7 +277,7 @@ fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroInde
         return when (attr) {
             is ProcMacroAttribute.Derive -> ownerIndex.append(attr.derives.indexOf(element))
             is ProcMacroAttribute.Attr -> ownerIndex
-            is ProcMacroAttribute.None -> return null
+            null -> return null
         }
     }
 

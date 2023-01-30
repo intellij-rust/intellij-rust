@@ -878,7 +878,7 @@ private class MacroExpansionServiceImplInner(
         return when (attr) {
             is ProcMacroAttribute.Attr -> attr.attr
             is ProcMacroAttribute.Derive -> attr.derives.elementAtOrNull(macroIndexInParent)
-            ProcMacroAttribute.None -> null
+            null -> null
         }
     }
 
