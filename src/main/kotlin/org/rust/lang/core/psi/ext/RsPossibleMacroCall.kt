@@ -76,11 +76,18 @@ val RsPossibleMacroCall.isMacroCall: Boolean
             is MacroCall -> true
             is MetaItem -> {
                 val owner = kind.meta.owner as? RsAttrProcMacroOwner ?: return false
-                when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)) {
-                    is ProcMacroAttribute.Attr -> attr.attr == this
-                    is ProcMacroAttribute.Derive -> RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
-                    null -> false
+                val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)
+                for (attr in attrs) {
+                    when (attr) {
+                        is ProcMacroAttribute.Attr -> if (attr.attr == this) {
+                            return true
+                        }
+                        is ProcMacroAttribute.Derive -> {
+                            return RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
+                        }
+                    }
                 }
+                false
             }
         }
     }
@@ -134,7 +141,10 @@ private fun doPrepareProcMacroCallBody(
     val text = owner.stubbedText ?: return null
     val endOfAttrsOffset = owner.endOfAttrsOffset
 
-    return when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate)) {
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    val attr = ProcMacroAttribute.getProcMacroAttribute(owner, stub, explicitCrate)
+
+    return when (attr) {
         is ProcMacroAttribute.Attr -> {
             val attrIndex = attr.index
             val crate = explicitCrate ?: owner.containingCrate

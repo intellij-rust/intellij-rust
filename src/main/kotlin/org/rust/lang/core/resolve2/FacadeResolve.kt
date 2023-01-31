@@ -269,16 +269,23 @@ fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroInde
     if (element is RsMetaItem) {
         val owner = element.owner as? RsAttrProcMacroOwner ?: return null
         val ownerIndex = getMacroIndex(owner, elementCrate) ?: return null
-        val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
+        val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
             owner,
             explicitCrate = crate,
             withDerives = true
         )
-        return when (attr) {
-            is ProcMacroAttribute.Derive -> ownerIndex.append(attr.derives.indexOf(element))
-            is ProcMacroAttribute.Attr -> ownerIndex
-            null -> return null
+        for (attr in attrs) {
+            when (attr) {
+                is ProcMacroAttribute.Derive -> {
+                    val indexIfDerive = attr.derives.indexOf(element)
+                    return if (indexIfDerive != -1) ownerIndex.append(indexIfDerive) else null
+                }
+                is ProcMacroAttribute.Attr -> if (attr.attr == element) {
+                    return ownerIndex
+                }
+            }
         }
+        return null
     }
 
     for ((current, parent) in element.ancestorPairs) {
