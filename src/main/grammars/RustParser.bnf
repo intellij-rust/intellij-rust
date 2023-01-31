@@ -151,6 +151,7 @@ private OuterAttr_first ::= '#'
 fake MetaItem ::= Path [ '=' LitExpr | MetaItemArgs ] | CompactTT {
   implements = [ "org.rust.lang.core.psi.ext.RsPossibleMacroCall"
                  "org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -194,7 +195,7 @@ fake Path ::= (Path '::' | '::' | TypeQual)? (identifier | self | super | 'Self'
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
                  "org.rust.lang.core.psi.ext.RsMethodOrPath"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
-
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -360,6 +361,7 @@ private Items ::= Item_with_recover*
 Lifetime ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -392,6 +394,7 @@ PathParameter ::= OuterAttr* TypeReference !'='
 SelfParameter ::= OuterAttr* [ '&' Lifetime? ] mut? self TypeAscription? {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -436,6 +439,7 @@ private LifetimesParams ::= <<list_element LifetimeParameter>>*
 LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -447,6 +451,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? DefaultTypeParameterTyp
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTypeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -458,6 +463,7 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParame
   implements = [ "org.rust.lang.core.psi.ext.RsGenericParameter"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsConstParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -534,6 +540,7 @@ upper Function ::= async? const? unsafe? ExternAbi?
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
                  "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -639,6 +646,7 @@ upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription? [ '=
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
                  "org.rust.lang.core.macros.RsExpandedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -649,6 +657,7 @@ upper UseItem ::= use UseSpeck ';' {
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsUseItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -696,6 +705,7 @@ upper ExternCrateItem ::= extern crate (identifier | self) Alias? ';' {
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsExternCrateItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsExternCrateItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -709,6 +719,7 @@ upper ModItem ::= unsafe? mod identifier '{' InnerAttr* Items '}' {
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsMod"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -721,6 +732,7 @@ upper ModDeclItem ::= unsafe? mod identifier ';' {
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsModDeclItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModDeclItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -731,6 +743,7 @@ upper ForeignModItem ::= unsafe? ExternAbi ForeignModBody {
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsForeignModStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -749,6 +762,7 @@ upper StructItem ::= (struct | union) identifier TypeParameterList?
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
                  "org.rust.lang.core.psi.ext.RsFieldsOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsStructItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsStructItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -762,6 +776,7 @@ upper EnumItem ::= enum identifier TypeParameterList? WhereClause? EnumBody {
   pin = "enum"
   name = ""
   implements = "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsEnumItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -782,6 +797,7 @@ EnumVariant ::= AttrsAndVis identifier VariantArgs? {
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsFieldsOwner"
                  "org.rust.lang.core.psi.ext.RsVisibilityOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsEnumVariantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumVariantStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -825,6 +841,7 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsNamedFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -833,6 +850,7 @@ private NamedFieldDecl_first ::= AttrsAndVis_first | identifier
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -853,6 +871,7 @@ upper TraitItem ::= unsafe? auto? trait identifier TypeParameterList? TypeParamB
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -865,6 +884,7 @@ upper ImplItem ::= unsafe? impl TypeParameterList? const? ( TraitImpl | Inherent
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -894,6 +914,7 @@ upper TraitAlias ::= trait identifier TypeParameterList? '=' TraitAliasBounds? W
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  /* "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" */ ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTraitAliasImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -920,6 +941,7 @@ TypeReference ::= ArrayType
                 | ForInType { // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
   implements = "org.rust.lang.core.macros.RsExpandedElement"
   stubClass = "com.intellij.psi.stubs.StubBase"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
   name = "type"
 }
@@ -1040,6 +1062,7 @@ upper TypeAlias ::= TYPE_KW identifier TypeParameterList? TypeParamBounds? Where
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTypeAliasImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTypeAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1087,6 +1110,7 @@ Expr ::= RetExpr
        | TryExpr
        | AtomExpr {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsExprMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
 }
@@ -1144,6 +1168,7 @@ fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' 
                 | '+' | '-' | '*' | '/' | '%'
                 | '||' | '&&' | '|' | '&' | '^' {
   implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsBinaryOpImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsBinaryOpStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1427,6 +1452,7 @@ BlockElementMacro ::= AttrsAndVis Macro {
 }
 
 MacroBody ::= <<any_braces (MacroCase ';'?)*>> {
+  extends = "org.rust.lang.core.psi.ext.RsLazyParseableElementImpl"
   elementTypeFactory = "org.rust.lang.core.psi.LazyElementsKt.factory"
   extraRoot = true
 }
@@ -1484,6 +1510,7 @@ fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
                  "org.rust.lang.core.psi.ext.RsAttrProcMacroOwner"
                  "org.rust.lang.core.psi.ext.RsModificationTrackerOwner"
                  "com.intellij.psi.PsiLanguageInjectionHost" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1510,6 +1537,7 @@ ExprLikeMacroCall ::= <<parseMacroCall 'MacroCallParsingMode.EXPR'>> {
 }
 
 MacroArgument ::= <<any_braces MacroArgumentTTImpl>> {
+  extends = "org.rust.lang.core.psi.ext.RsLazyParseableElementImpl"
   elementTypeFactory = "org.rust.lang.core.psi.LazyElementsKt.factory"
   extraRoot = true
 }
@@ -1633,6 +1661,7 @@ private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 Stmt ::= LetDecl | EmptyStmt | never ';' {
   name = "statement"
   implements = "org.rust.lang.core.macros.RsExpandedElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsStmtMixin"
   stubClass = "com.intellij.psi.stubs.StubBase"
 }

@@ -10,10 +10,12 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.CompositePsiElement
 import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.Query
 import com.intellij.util.containers.addIfNotNull
 import org.rust.cargo.project.model.CargoProject
@@ -110,11 +112,22 @@ fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
         ?.rootMod
 }
 
-abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
+abstract class RsElementImpl(type: IElementType) : CompositePsiElement(type), RsElement {
 
     override fun getNavigationElement(): PsiElement {
         return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
     }
+
+    override fun toString(): String = "${javaClass.simpleName}($elementType)"
+}
+
+abstract class RsLazyParseableElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
+
+    override fun getNavigationElement(): PsiElement {
+        return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
+    }
+
+    override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsElement {
