@@ -472,11 +472,7 @@ class StdHashMapSyntheticProvider:
     def update(self):
         # type: () -> None
         table = self.table()
-        # BACKCOMPAT: rust 1.51. Just drop `else` branch
-        if table.GetChildMemberWithName("table").IsValid():
-            inner_table = table.GetChildMemberWithName("table")
-        else:
-            inner_table = table
+        inner_table = table.GetChildMemberWithName("table")
 
         capacity = inner_table.GetChildMemberWithName("bucket_mask").GetValueAsUnsigned() + 1
         ctrl = inner_table.GetChildMemberWithName("ctrl").GetChildAtIndex(0)
@@ -516,9 +512,7 @@ class StdHashMapSyntheticProvider:
         if self.show_values:
             hashbrown_hashmap = self.valobj.GetChildMemberWithName("base")
         else:
-            # BACKCOMPAT: rust 1.47
-            # HashSet wraps either std HashMap or hashbrown::HashSet, which both
-            # wrap hashbrown::HashMap, so either way we "unwrap" twice.
+            # HashSet wraps `hashbrown::HashSet`, which wraps `hashbrown::HashMap`
             hashbrown_hashmap = self.valobj.GetChildAtIndex(0).GetChildAtIndex(0)
         return hashbrown_hashmap.GetChildMemberWithName("table")
 

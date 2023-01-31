@@ -357,10 +357,6 @@ def children_of_btree_map(map):
             internal_type = gdb.lookup_type(internal_type_name)
             return node.cast(internal_type.pointer())
 
-        # BACKCOMPAT: rust 1.49. Just drop this condition
-        if node_ptr.type.name.startswith("alloc::collections::btree::node::BoxedNode<"):
-            node_ptr = node_ptr["ptr"]
-
         node_ptr = unwrap_unique_or_non_null(node_ptr)
         leaf = node_ptr.dereference()
         keys = leaf["keys"]
@@ -432,11 +428,7 @@ class StdHashMapProvider:
         self.show_values = show_values
 
         table = self.table()
-        # BACKCOMPAT: rust 1.51. Just drop `else` branch
-        if table.type.fields()[0].name == "table":
-            inner_table = table["table"]
-        else:
-            inner_table = table
+        inner_table = table["table"]
 
         capacity = int(inner_table["bucket_mask"]) + 1
         ctrl = inner_table["ctrl"]["pointer"]
@@ -461,10 +453,6 @@ class StdHashMapProvider:
     def table(self):
         if self.show_values:
             hashbrown_hashmap = self.valobj["base"]
-        elif self.valobj.type.fields()[0].name == "map":
-            # BACKCOMPAT: rust 1.47
-            # HashSet wraps std::collections::HashMap, which wraps hashbrown::HashMap
-            hashbrown_hashmap = self.valobj["map"]["base"]
         else:
             # HashSet wraps hashbrown::HashSet, which wraps hashbrown::HashMap
             hashbrown_hashmap = self.valobj["base"]["map"]
