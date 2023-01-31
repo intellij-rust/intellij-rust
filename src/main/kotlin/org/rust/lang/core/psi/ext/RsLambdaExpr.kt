@@ -12,5 +12,8 @@ import org.rust.lang.core.psi.RsValueParameter
 val RsLambdaExpr.isAsync: Boolean
     get() = node.findChildByType(RsElementTypes.ASYNC) != null
 
+val RsLambdaExpr.isConst: Boolean
+    get() = node.findChildByType(RsElementTypes.CONST) != null
+
 val RsLambdaExpr.valueParameters: List<RsValueParameter>
     get() = valueParameterList.valueParameterList

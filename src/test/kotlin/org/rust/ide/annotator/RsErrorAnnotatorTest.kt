@@ -4523,6 +4523,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.68.0")
+    fun `test const closures E0658 1`() = checkErrors("""
+        fn main() {
+            let _ = <error descr="const closures is experimental [E0658]">const</error> || {};
+        }
+    """)
+
+    @MockRustcVersion("1.68.0-nightly")
+    fun `test const closures E0658 2`() = checkErrors("""
+        #![feature(const_closures)]
+        fn main() {
+            let _ = const || {};
+        }
+    """)
+
     @MockRustcVersion("1.60.0-nightly")
     fun `test feature attribute in nightly channel`() = checkErrors("""
         #![feature(never_type)]

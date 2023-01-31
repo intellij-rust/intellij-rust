@@ -44,9 +44,13 @@ fn test() -> u32 {
     |&x| x;
     |box x| x;
     |x: i32| -> i32 92;
+    const || {};
+    async || {};
     move |x: i32| {
         x
     };
+    const async move || {};
+    const static move || {};
 
     |x: &mut i32| x = 92;
 

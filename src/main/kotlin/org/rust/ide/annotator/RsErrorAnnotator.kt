@@ -34,6 +34,7 @@ import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
 import org.rust.lang.core.CompilerFeature.Companion.ASSOCIATED_TYPE_DEFAULTS
 import org.rust.lang.core.CompilerFeature.Companion.BOX_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.BOX_SYNTAX
+import org.rust.lang.core.CompilerFeature.Companion.CONST_CLOSURES
 import org.rust.lang.core.CompilerFeature.Companion.CONST_FN_TRAIT_BOUND
 import org.rust.lang.core.CompilerFeature.Companion.CONST_GENERICS_DEFAULTS
 import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
@@ -108,6 +109,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitLetElseBranch(o: RsLetElseBranch) = checkLetElseBranch(rsHolder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(rsHolder, o)
             override fun visitLabelDecl(o: RsLabelDecl) = checkLabelDecl(rsHolder, o)
+            override fun visitLambdaExpr(o: RsLambdaExpr) = checkLambdaExpr(rsHolder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(rsHolder, o)
             override fun visitMacro2(o: RsMacro2) = checkMacro2(rsHolder, o)
             override fun visitMatchArmGuard(o: RsMatchArmGuard) = checkMatchArmGuard(rsHolder, o)
@@ -1436,6 +1438,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (range.end == null) {
             RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)
         }
+    }
+
+    private fun checkLambdaExpr(holder: RsAnnotationHolder, expr: RsLambdaExpr) {
+        val const = expr.const ?: return
+        CONST_CLOSURES.check(holder, const, "const closures")
     }
 
     private fun checkBreakExpr(holder: RsAnnotationHolder, expr: RsBreakExpr) {
