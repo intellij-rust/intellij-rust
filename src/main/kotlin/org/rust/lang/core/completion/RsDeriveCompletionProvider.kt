@@ -69,7 +69,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
                 // and 'traitWithDependencies' contains only 'derivable' element
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
-                        .withIcon(RsIcons.MACRO)
+                        .withIcon(RsIcons.PROC_MACRO)
                     result.addElement(element.toRsLookupElement(RsLookupElementProperties(elementKind = ElementKind.DERIVE_GROUP)))
                 }
                 result.addElement(createLookupElement(derivable.name))
@@ -98,7 +98,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
     }
 
     private fun createLookupElement(name: String, candidate: ImportCandidate? = null): LookupElement {
-        val builder = LookupElementBuilder.create(name).withIcon(RsIcons.MACRO)
+        val builder = LookupElementBuilder.create(name).withIcon(RsIcons.PROC_MACRO)
         val properties = RsLookupElementProperties(elementKind = ElementKind.DERIVE)
         return if (candidate != null) {
             builder

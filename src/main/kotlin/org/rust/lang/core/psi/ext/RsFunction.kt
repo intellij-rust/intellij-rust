@@ -312,7 +312,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
                 when {
                     isTest -> RsIcons.FUNCTION.addTestMark()
-                    isProcMacroDef -> RsIcons.MACRO
+                    isProcMacroDef -> RsIcons.PROC_MACRO
                     else -> RsIcons.FUNCTION
                 }
 
