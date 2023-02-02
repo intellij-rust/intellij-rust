@@ -24,6 +24,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     var downloadAutomatically: Boolean = false
 
     var breakOnPanic: Boolean = true
+    var stepSettings: RsStepFilterSettings = RsStepFilterSettings(filterStdlib = false)
 
     var decorateMsvcTypeNames: Boolean = true
 
@@ -37,6 +38,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         val configurable = when (category) {
             DebuggerSettingsCategory.DATA_VIEWS -> createDataViewConfigurable()
             DebuggerSettingsCategory.GENERAL -> createGeneralSettingsConfigurable()
+            DebuggerSettingsCategory.STEPPING -> createSteppingConfigurable()
             else -> null
         }
         return listOfNotNull(configurable)
@@ -60,10 +62,19 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         )
     }
 
+    private fun createSteppingConfigurable(): Configurable {
+        return SimpleConfigurable.create(
+            STEPPING_ID,
+            RsDebuggerBundle.message("settings.rust.debugger.title"),
+            RsDebuggerSteppingSettingsConfigurableUi::class.java,
+            Companion::getInstance
+        )
+    }
+
     override fun isTargetedToProduct(configurable: Configurable): Boolean {
         if (configurable !is SearchableConfigurable) return false
         return when (configurable.id) {
-            GENERAL_SETTINGS_ID, DATA_VIEW_ID -> true
+            GENERAL_SETTINGS_ID, DATA_VIEW_ID, STEPPING_ID -> true
             else -> false
         }
     }
@@ -74,5 +85,6 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
         const val GENERAL_SETTINGS_ID: String = "Debugger.Rust.General"
         const val DATA_VIEW_ID: String = "Debugger.Rust.DataView"
+        const val STEPPING_ID: String = "Debugger.Rust.Stepping"
     }
 }
