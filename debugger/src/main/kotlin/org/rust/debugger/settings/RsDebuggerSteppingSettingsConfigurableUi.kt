@@ -7,7 +7,7 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.rust.debugger.RsDebuggerBundle
 import javax.swing.JComponent
 
@@ -31,7 +31,7 @@ class RsDebuggerSteppingSettingsConfigurableUi : ConfigurableUi<RsDebuggerSettin
 
     override fun getComponent(): JComponent {
         return panel {
-            row { filterStdlib() }
+            row { cell(filterStdlib) }
         }
     }
 }
