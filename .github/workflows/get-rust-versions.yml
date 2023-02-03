@@ -19,7 +19,7 @@ on:
 
 env:
     STABLE: "1.66.1"
-    NIGHTLY: "nightly-2022-11-05"
+    NIGHTLY: "nightly-2022-11-12"
     OLD: "1.56.0"
 
 jobs:

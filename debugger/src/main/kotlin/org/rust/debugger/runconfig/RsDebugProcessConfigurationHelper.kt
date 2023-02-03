@@ -196,9 +196,12 @@ class RsDebugProcessConfigurationHelper(
          */
         private val RUST_STD_TYPES: List<String> = listOf(
             "^(alloc::([a-z_]+::)+)String$",
-            "^[&*]?(const |mut )?str\\*?$",
+            "^(&|&mut |\\*const |\\*mut )str$",
+            "^(str)|((ptr_const|ptr_mut)\\$<str>)$",
+            "^(str\\$)|((ref|ref_mut|ptr_const|ptr_mut)\\$<str\\$>)$",
             "^(&|&mut |\\*const |\\*mut )?\\[.*\\]$",
             "^(slice\\$<.+>)|((ptr_const|ptr_mut)\\$<slice\\$<.+> >)$",
+            "^(slice2\\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\\$<slice2\\$<.+> >)$",
             "^(std::ffi::([a-z_]+::)+)OsString$",
             "^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \\*)?$",
             "^(std::([a-z_]+::)+)PathBuf$",
