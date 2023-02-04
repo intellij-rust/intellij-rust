@@ -31,16 +31,16 @@ object RsIcons {
 
     // File types
 
-    val RUST_FILE = load("/icons/rust-file.svg")
-    val MAIN_RS = load("/icons/main-rs.svg")
-    val MOD_RS = load("/icons/mod-rs.svg")
+    val RUST_FILE = load("/icons/rustFile.svg")
+    val MAIN_RS = load("/icons/rustMain.svg")
+    val MOD_RS = load("/icons/rustMod.svg")
 
     // Marks
 
     val FINAL_MARK = AllIcons.Nodes.FinalMark
     val STATIC_MARK = AllIcons.Nodes.StaticMark
     val TEST_MARK = AllIcons.Nodes.JunitTestMark
-    val DOCS_MARK = load("/icons/docsrs.svg")
+    val DOCS_MARK = load("/icons/rustDocs.svg")
     val FEATURE_CHECKED_MARK = AllIcons.Diff.GutterCheckBoxSelected
     val FEATURE_UNCHECKED_MARK = AllIcons.Diff.GutterCheckBox
     val FEATURE_CHECKED_MARK_GRAYED = FEATURE_CHECKED_MARK.grayed()
@@ -60,7 +60,7 @@ object RsIcons {
     val IMPL = load("/icons/nodes/impl.svg")
     val FUNCTION = load("/icons/nodes/function.svg")
     val MACRO = load("/icons/nodes/macro.svg")
-    val MACRO2 = load("/icons/nodes/macro2.0.svg")
+    val MACRO2 = load("/icons/nodes/macro2.svg")
     val PROC_MACRO = load("/icons/nodes/macroP.svg")
 
     val CONSTANT = load("/icons/nodes/constant.svg")
@@ -100,15 +100,15 @@ object RsIcons {
 
     // Repl
 
-    val REPL = load("/icons/repl.svg")
+    val REPL = load("/icons/rustRepl.svg")
 
-    val CARGO_GENERATE = load("/icons/cargo-generate.svg")
-    val WASM_PACK = load("/icons/wasm-pack.svg")
+    val CARGO_GENERATE = load("/icons/cargoGenerate.svg")
+    val WASM_PACK = load("/icons/wasmPack.svg")
 
     // Progress
 
     val GEAR = load("/icons/gear.svg")
-    val GEAR_OFF = load("/icons/gear-off.svg")
+    val GEAR_OFF = load("/icons/gearOff.svg")
     val GEAR_ANIMATED = AnimatedIcon(AnimatedIcon.Default.DELAY, GEAR, GEAR.rotated(15.0), GEAR.rotated(30.0), GEAR.rotated(45.0))
 
     private fun load(path: String): Icon = IconLoader.getIcon(path, RsIcons::class.java)
