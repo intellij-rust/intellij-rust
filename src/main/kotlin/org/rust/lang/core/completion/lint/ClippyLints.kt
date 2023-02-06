@@ -153,6 +153,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("extend_from_slice", false),
     Lint("extend_with_drain", false),
     Lint("extra_unused_lifetimes", false),
+    Lint("extra_unused_type_parameters", false),
     Lint("fallible_impl_from", false),
     Lint("field_reassign_with_default", false),
     Lint("filetype_is_file", false),
