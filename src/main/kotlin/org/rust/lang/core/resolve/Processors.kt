@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve2.RsModInfo
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeFolder
@@ -32,8 +31,13 @@ import org.rust.stdext.intersects
 interface ScopeEntry {
     val name: String
     val element: RsElement
+    val namespaces: Set<Namespace>
     val subst: Substitution get() = emptySubstitution
+    fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry
 }
+
+@Suppress("UNCHECKED_CAST")
+private fun <T: ScopeEntry> T.copyWithNs(namespaces: Set<Namespace>): T = doCopyWithNs(namespaces) as T
 
 typealias RsProcessor<T> = (T) -> Boolean
 
@@ -154,8 +158,8 @@ private class ShadowingProcessor<in T : ScopeEntry>(
     override fun process(entry: T): Boolean {
         val prevNs = prevScope[entry.name]
         if (entry.name == "_" || prevNs == null) return originalProcessor.process(entry)
-        val newNs = (entry.element as? RsNamedElement)?.namespaces
-        return (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor.process(entry)
+        val restNs = entry.namespaces.minus(prevNs)
+        return ns.intersects(restNs) && originalProcessor.process(entry.copyWithNs(restNs))
     }
     override fun toString(): String = "ShadowingProcessor($originalProcessor, ns = $ns)"
 }
@@ -176,20 +180,23 @@ private class ShadowingAndUpdateScopeProcessor<in T : ScopeEntry>(
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
     override fun process(entry: T): Boolean {
-        val prevNs = if (entry.name != "_") prevScope[entry.name] else null
-        if (prevNs != null) {
-            val newNs = (entry.element as? RsNamedElement)?.namespaces
-            if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
+        if (!originalProcessor.acceptsName(entry.name) || entry.name == "_") {
+            return originalProcessor.process(entry)
+        }
+        val prevNs = prevScope[entry.name]
+        val newNs = entry.namespaces
+        val entryWithIntersectedNs = if (prevNs != null) {
+            val restNs = newNs.minus(prevNs)
+            if (ns.intersects(restNs)) {
+                entry.copyWithNs(restNs)
+            } else {
                 return false
             }
+        } else {
+            entry
         }
-        if (originalProcessor.acceptsName(entry.name) && entry.name != "_") {
-            val newNs = (entry.element as? RsNamedElement)?.namespaces
-            if (newNs != null) {
-                currScope[entry.name] = prevNs?.let { it + newNs } ?: newNs
-            }
-        }
-        return originalProcessor.process(entry)
+        currScope[entry.name] = prevNs?.let { it + newNs } ?: newNs
+        return originalProcessor.process(entryWithIntersectedNs)
     }
     override fun toString(): String = "ShadowingAndUpdateScopeProcessor($originalProcessor, ns = $ns)"
 }
@@ -270,7 +277,14 @@ private fun collectPathScopeEntry(
         val visibilityStatus = e.getVisibilityStatusFrom(ctx.context, ctx.lazyContainingModInfo)
         if (visibilityStatus != VisibilityStatus.CfgDisabled) {
             val isVisible = visibilityStatus == VisibilityStatus.Visible
-            result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible)
+            // Canonicalize namespaces to consume less memory by the resolve cache
+            val namespaces = when (e.namespaces) {
+                TYPES -> TYPES
+                VALUES -> VALUES
+                TYPES_N_VALUES -> TYPES_N_VALUES
+                else -> e.namespaces
+            }
+            result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible, namespaces)
         }
     }
 }
@@ -374,16 +388,22 @@ fun collectCompletionVariants(
 data class SimpleScopeEntry(
     override val name: String,
     override val element: RsElement,
+    override val namespaces: Set<Namespace>,
     override val subst: Substitution = emptySubstitution
-) : ScopeEntry
+) : ScopeEntry {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 data class ScopeEntryWithVisibility(
     override val name: String,
     override val element: RsElement,
+    override val namespaces: Set<Namespace>,
     /** Given a [RsElement] (usually [RsPath]) checks if this item is visible in `containingMod` of that element */
     val visibilityFilter: VisibilityFilter,
     override val subst: Substitution = emptySubstitution,
-) : ScopeEntry
+) : ScopeEntry {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 typealias VisibilityFilter = (RsElement, Lazy<RsModInfo?>?) -> VisibilityStatus
 
@@ -412,39 +432,38 @@ interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
 data class AssocItemScopeEntry(
     override val name: String,
     override val element: RsAbstractable,
-    override val subst: Substitution = emptySubstitution,
+    override val namespaces: Set<Namespace>,
+    override val subst: Substitution,
     override val selfTy: Ty,
     override val source: TraitImplSource
-) : AssocItemScopeEntryBase<RsAbstractable>
+) : AssocItemScopeEntryBase<RsAbstractable> {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 
-fun RsResolveProcessor.process(name: String, e: RsElement): Boolean =
-    process(SimpleScopeEntry(name, e))
+fun RsResolveProcessor.process(name: String, namespaces: Set<Namespace>, e: RsElement): Boolean =
+    process(SimpleScopeEntry(name, e, namespaces))
 
 fun RsResolveProcessor.process(
     name: String,
     e: RsElement,
+    namespaces: Set<Namespace>,
     visibilityFilter: VisibilityFilter
-): Boolean = process(ScopeEntryWithVisibility(name, e, visibilityFilter))
+): Boolean = process(ScopeEntryWithVisibility(name, e, namespaces, visibilityFilter))
 
-inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
+inline fun RsResolveProcessor.lazy(name: String, namespaces: Set<Namespace>, e: () -> RsElement?): Boolean {
     if (!acceptsName(name)) return false
     val element = e() ?: return false
-    return process(name, element)
+    return process(name, namespaces, element)
 }
 
-fun RsResolveProcessor.process(e: RsNamedElement): Boolean {
+fun RsResolveProcessor.process(e: RsNamedElement, namespaces: Set<Namespace>): Boolean {
     val name = e.name ?: return false
-    return process(name, e)
+    return process(name, namespaces, e)
 }
 
-fun RsResolveProcessor.process(e: BoundElement<RsNamedElement>): Boolean {
-    val name = e.element.name ?: return false
-    return process(SimpleScopeEntry(name, e.element, e.subst))
-}
-
-fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor.process(it) }
+fun RsResolveProcessor.processAll(elements: List<RsNamedElement>, namespaces: Set<Namespace>): Boolean {
+    return elements.any { process(it, namespaces) }
 }
 
 fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): Boolean {
@@ -454,10 +473,12 @@ fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProce
 fun processAllWithSubst(
     elements: Collection<RsNamedElement>,
     subst: Substitution,
+    namespaces: Set<Namespace>,
     processor: RsResolveProcessor
 ): Boolean {
     for (e in elements) {
-        if (processor.process(BoundElement(e, subst))) return true
+        val name = e.name ?: continue
+        if (processor.process(SimpleScopeEntry(name, e, namespaces, subst))) return true
     }
     return false
 }

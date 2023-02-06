@@ -28,18 +28,18 @@ fun processItemOrEnumVariantDeclarations(
             val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
                 ?.path?.reference?.advancedDeepResolve() ?: return false
             if (item is RsEnumItem) {
-                if (processAllWithSubst(item.variants, subst, processor)) return true
+                if (processAllWithSubst(item.variants, subst, ENUM_VARIANT_NS, processor)) return true
             }
         }
         is RsImplItem -> {
             val (item, subst) = (scope.typeReference?.skipParens() as? RsPathType)
                 ?.path?.reference?.advancedDeepResolve() ?: return false
             if (item is RsEnumItem) {
-                if (processAllWithSubst(item.variants, subst, processor)) return true
+                if (processAllWithSubst(item.variants, subst, ENUM_VARIANT_NS, processor)) return true
             }
         }
         is RsEnumItem -> {
-            if (processAll(scope.variants, processor)) return true
+            if (processor.processAll(scope.variants, ENUM_VARIANT_NS)) return true
         }
         is RsMod -> {
             val ipm = if (withPrivateImports()) {
