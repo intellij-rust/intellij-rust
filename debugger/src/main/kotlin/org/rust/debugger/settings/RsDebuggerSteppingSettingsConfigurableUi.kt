@@ -14,19 +14,19 @@ import javax.swing.JComponent
 class RsDebuggerSteppingSettingsConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
     private val filterStdlib = JBCheckBox(
         RsDebuggerBundle.message("settings.rust.debugger.do.not.step.into.stdlib.checkbox"),
-        RsDebuggerSettings.getInstance().stepSettings.filterStdlib
+        RsDebuggerSettings.getInstance().skipStdlibInStepping
     )
 
     override fun isModified(settings: RsDebuggerSettings): Boolean {
-        return filterStdlib.isSelected != settings.stepSettings.filterStdlib
+        return filterStdlib.isSelected != settings.skipStdlibInStepping
     }
 
     override fun reset(settings: RsDebuggerSettings) {
-        filterStdlib.isSelected = settings.stepSettings.filterStdlib
+        filterStdlib.isSelected = settings.skipStdlibInStepping
     }
 
     override fun apply(settings: RsDebuggerSettings) {
-        settings.stepSettings = RsStepFilterSettings(filterStdlib.isSelected)
+        settings.skipStdlibInStepping = filterStdlib.isSelected
     }
 
     override fun getComponent(): JComponent {
