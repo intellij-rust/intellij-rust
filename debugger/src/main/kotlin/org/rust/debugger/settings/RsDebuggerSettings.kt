@@ -24,7 +24,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     var downloadAutomatically: Boolean = false
 
     var breakOnPanic: Boolean = true
-    var stepSettings: RsStepFilterSettings = RsStepFilterSettings(filterStdlib = false)
+    var skipStdlibInStepping: Boolean = false
 
     var decorateMsvcTypeNames: Boolean = true
 
