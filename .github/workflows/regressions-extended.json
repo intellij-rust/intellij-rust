@@ -28,6 +28,34 @@
         "projects": [{"name": "nalgebra", "repository": "dimforge/nalgebra"}]
     },
     {
+        "name": "regressions-bevy",
+        "projects": [{"name": "bevy", "repository": "bevyengine/bevy"}]
+    },
+    {
+        "name": "regressions-veloren",
+        "projects": [{"name": "veloren", "repository": "veloren/veloren"}]
+    },
+    {
+        "name": "regressions-deno",
+        "projects": [{"name": "deno", "repository": "denoland/deno"}]
+    },
+    {
+        "name": "regressions-swc",
+        "projects": [{"name": "swc", "repository": "swc-project/swc"}]
+    },
+    {
+        "name": "regressions-ruffle",
+        "projects": [{"name": "ruffle", "repository": "ruffle-rs/ruffle"}]
+    },
+    {
+        "name": "regressions-yew",
+        "projects": [{"name": "yew", "repository": "yewstack/yew"}]
+    },
+    {
+        "name": "regressions-arrow",
+        "projects": [{"name": "arrow", "repository": "apache/arrow-rs"}]
+    },
+    {
         "name": "regressions-stdlib",
         "projects": [{"name": "stdlib"}]
     }
