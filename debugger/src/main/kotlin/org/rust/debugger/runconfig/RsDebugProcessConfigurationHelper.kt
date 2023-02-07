@@ -77,10 +77,8 @@ class RsDebugProcessConfigurationHelper(
     }
 
     private fun DebuggerDriver.setSteppingFilters() {
-        val settings = settings.stepSettings
-
         val regexes = mutableListOf<String>()
-        if (settings.filterStdlib) {
+        if (settings.skipStdlibInStepping) {
             regexes.add("^(std|core|alloc)::.*")
         }
 
