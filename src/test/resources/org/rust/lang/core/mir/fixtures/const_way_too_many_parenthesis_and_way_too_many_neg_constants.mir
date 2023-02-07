@@ -1,0 +1,58 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: i32;                     // in scope 0 at src/main.rs:1:21: 1:44
+    let mut _2: i32;                     // in scope 0 at src/main.rs:1:23: 1:43
+    let mut _3: i32;                     // in scope 0 at src/main.rs:1:25: 1:42
+    let mut _4: i32;                     // in scope 0 at src/main.rs:1:27: 1:41
+    let mut _5: bool;                    // in scope 0 at src/main.rs:1:27: 1:41
+    let mut _6: bool;                    // in scope 0 at src/main.rs:1:25: 1:42
+    let mut _7: bool;                    // in scope 0 at src/main.rs:1:23: 1:43
+    let mut _8: bool;                    // in scope 0 at src/main.rs:1:21: 1:44
+    let mut _9: bool;                    // in scope 0 at src/main.rs:1:18: 1:46
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:1:21: 1:44
+        StorageLive(_2);                 // scope 0 at src/main.rs:1:23: 1:43
+        StorageLive(_3);                 // scope 0 at src/main.rs:1:25: 1:42
+        StorageLive(_4);                 // scope 0 at src/main.rs:1:27: 1:41
+        _5 = Eq(const -42_i32, const i32::MIN); // scope 0 at src/main.rs:1:27: 1:41
+        assert(!move _5, "attempt to negate `{}`, which would overflow", const -42_i32) -> [success: bb1, unwind: bb6]; // scope 0 at src/main.rs:1:27: 1:41
+    }
+
+    bb1: {
+        _4 = Neg(const -42_i32);         // scope 0 at src/main.rs:1:27: 1:41
+        _6 = Eq(_4, const i32::MIN);     // scope 0 at src/main.rs:1:25: 1:42
+        assert(!move _6, "attempt to negate `{}`, which would overflow", _4) -> [success: bb2, unwind: bb6]; // scope 0 at src/main.rs:1:25: 1:42
+    }
+
+    bb2: {
+        _3 = Neg(move _4);               // scope 0 at src/main.rs:1:25: 1:42
+        StorageDead(_4);                 // scope 0 at src/main.rs:1:41: 1:42
+        _7 = Eq(_3, const i32::MIN);     // scope 0 at src/main.rs:1:23: 1:43
+        assert(!move _7, "attempt to negate `{}`, which would overflow", _3) -> [success: bb3, unwind: bb6]; // scope 0 at src/main.rs:1:23: 1:43
+    }
+
+    bb3: {
+        _2 = Neg(move _3);               // scope 0 at src/main.rs:1:23: 1:43
+        StorageDead(_3);                 // scope 0 at src/main.rs:1:42: 1:43
+        _8 = Eq(_2, const i32::MIN);     // scope 0 at src/main.rs:1:21: 1:44
+        assert(!move _8, "attempt to negate `{}`, which would overflow", _2) -> [success: bb4, unwind: bb6]; // scope 0 at src/main.rs:1:21: 1:44
+    }
+
+    bb4: {
+        _1 = Neg(move _2);               // scope 0 at src/main.rs:1:21: 1:44
+        StorageDead(_2);                 // scope 0 at src/main.rs:1:43: 1:44
+        _9 = Eq(_1, const i32::MIN);     // scope 0 at src/main.rs:1:18: 1:46
+        assert(!move _9, "attempt to negate `{}`, which would overflow", _1) -> [success: bb5, unwind: bb6]; // scope 0 at src/main.rs:1:18: 1:46
+    }
+
+    bb5: {
+        _0 = Neg(move _1);               // scope 0 at src/main.rs:1:18: 1:46
+        StorageDead(_1);                 // scope 0 at src/main.rs:1:45: 1:46
+        return;                          // scope 0 at src/main.rs:1:1: 1:47
+    }
+
+    bb6 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:47
+    }
+}

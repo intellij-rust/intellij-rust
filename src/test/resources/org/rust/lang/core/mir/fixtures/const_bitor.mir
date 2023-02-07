@@ -1,0 +1,8 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+
+    bb0: {
+        _0 = BitOr(const 1_i32, const 4_i32); // scope 0 at src/main.rs:1:18: 1:23
+        return;                          // scope 0 at src/main.rs:1:1: 1:24
+    }
+}
