@@ -22,7 +22,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStructIntention.Context>() {
     override fun getFamilyName() = "Create tuple struct"
@@ -65,7 +64,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
         if (inserted.containingFile == ctx.call.containingFile && fields.isNotEmpty()) {
             val unknownTypes = inserted.descendantsOfType<RsInferType>()
             if (unknownTypes.isNotEmpty()) {
-                editor.buildAndRunTemplate(inserted, unknownTypes.map { it.createSmartPointer() })
+                editor.buildAndRunTemplate(inserted, unknownTypes)
             } else {
                 editor.caretModel.moveToOffset(fields[0].textOffset)
             }

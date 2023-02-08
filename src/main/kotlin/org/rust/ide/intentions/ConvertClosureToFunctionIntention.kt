@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
@@ -18,7 +17,6 @@ import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertClosureToFunctionIntention.Context>() {
 
@@ -80,11 +78,11 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
 
         // in case we auto-generated a function name, we encourage the user to change it by running a template on the replacement
         if (useDefaultName || placeholders.isNotEmpty()) {
-            val placeholderElements = mutableListOf<SmartPsiElementPointer<PsiElement>>()
+            val placeholderElements = mutableListOf<PsiElement>()
             if (useDefaultName) {
-                placeholderElements.add(replaced.identifier.createSmartPointer())
+                placeholderElements.add(replaced.identifier)
             }
-            placeholderElements += placeholders.map { it.createSmartPointer() }
+            placeholderElements += placeholders
             editor.buildAndRunTemplate(replaced, placeholderElements)
         } else {
             editor.caretModel.moveToOffset(replaced.endOffset)

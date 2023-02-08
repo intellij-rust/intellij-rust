@@ -12,25 +12,32 @@ import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeInsight.template.impl.VariableNode
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * A wrapper for [TemplateBuilder][com.intellij.codeInsight.template.TemplateBuilder]
  */
-@Suppress("UnstableApiUsage", "unused", "MemberVisibilityCanBePrivate", "SameParameterValue")
+@Suppress("UnstableApiUsage", "unused")
 class RsTemplateBuilder(
-    private val owner: PsiElement,
-    private val delegate: TemplateBuilderImpl,
+    private val hostPsiFile: PsiFile,
     private val editor: Editor,
     private val hostEditor: Editor,
 ) {
+    private val hostDocument: Document get() = hostEditor.document
+    private val elementsToReplace: MutableList<RsTemplateElement> = mutableListOf()
     private val variables: MutableMap<String, TemplateVariable> = mutableMapOf()
     private val usageToVar: MutableMap<String, String> = mutableMapOf()
     private var variableCounter: Int = 0
@@ -38,47 +45,65 @@ class RsTemplateBuilder(
     private var disableDaemonHighlighting: Boolean = false
     private val listeners: MutableList<TemplateEditingListener> = mutableListOf()
 
+    private fun replaceElement(
+        range: RangeMarker,
+        expression: Expression?,
+        variableName: String? = null,
+        alwaysStopAt: Boolean = true
+    ) {
+        elementsToReplace += RsTemplateElement(range, expression, variableName, alwaysStopAt)
+    }
+
+    private fun psiToRangeMarker(
+        element: PsiElement,
+        rangeWithinElement: TextRange = TextRange(0, element.textLength)
+    ): RangeMarker {
+        val range = InjectedLanguageManager.getInstance(element.project)
+            .injectedToHost(element, rangeWithinElement.shiftRight(element.startOffset))
+        return hostDocument.createRangeMarker(range)
+    }
+
     fun replaceElement(element: PsiElement, replacementText: String? = null): RsTemplateBuilder {
-        delegate.replaceElement(element, replacementText ?: element.text)
+        replaceElement(
+            psiToRangeMarker(element),
+            replacementText?.let { ConstantNode(it) }
+        )
         return this
     }
 
-    fun replaceElement(element: PsiElement, rangeWithinElement: TextRange, replacementText: String): RsTemplateBuilder {
-        delegate.replaceElement(element, rangeWithinElement, replacementText)
+    fun replaceElement(element: PsiElement, rangeWithinElement: TextRange, replacementText: String? = null): RsTemplateBuilder {
+        replaceElement(
+            psiToRangeMarker(element, rangeWithinElement),
+            replacementText?.let { ConstantNode(it) }
+        )
         return this
     }
 
 
     fun replaceElement(element: PsiElement, expression: Expression): RsTemplateBuilder {
-        delegate.replaceElement(element, expression)
+        replaceElement(psiToRangeMarker(element), expression)
         return this
     }
 
     fun replaceElement(element: PsiElement, rangeWithinElement: TextRange, expression: Expression): RsTemplateBuilder {
-        delegate.replaceElement(element, rangeWithinElement, expression)
+        replaceElement(psiToRangeMarker(element, rangeWithinElement), expression)
         return this
     }
 
 
-    fun replaceRange(rangeWithinElement: TextRange, replacementText: String): RsTemplateBuilder {
-        delegate.replaceRange(rangeWithinElement, replacementText)
-        return this
-    }
-
-    fun replaceRange(rangeWithinElement: TextRange, expression: Expression): RsTemplateBuilder {
-        delegate.replaceRange(rangeWithinElement, expression)
-        return this
-    }
-
-
-    private fun replaceElement(element: PsiElement, variable: TemplateVariable, replacementText: String, alwaysStopAt: Boolean): RsTemplateBuilder {
-        delegate.replaceElement(element, variable.name, ConstantNode(replacementText), alwaysStopAt)
+    private fun replaceElement(element: PsiElement, variable: TemplateVariable, replacementText: String?): RsTemplateBuilder {
+        replaceElement(
+            psiToRangeMarker(element),
+            replacementText?.let { ConstantNode(it) },
+            variable.name,
+            alwaysStopAt = true
+        )
         return this
     }
 
     fun introduceVariable(element: PsiElement, replacementText: String? = null): TemplateVariable {
         val variable = newVariable()
-        replaceElement(element, variable, replacementText ?: element.text, true)
+        replaceElement(element, variable, replacementText)
         return variable
     }
 
@@ -117,20 +142,60 @@ class RsTemplateBuilder(
         return withListener(TemplateResultListener(listener))
     }
 
-    fun withFinishResultListener(listener: () -> Unit): RsTemplateBuilder {
+    private fun withFinishResultListener(onFinish: () -> Unit): RsTemplateBuilder {
         return withResultListener {
             if (it == TemplateResultListener.TemplateResult.Finished) {
-                listener()
+                onFinish()
             }
         }
     }
 
     fun runInline() {
-        val project = owner.project
+        val project = hostPsiFile.project
+
+        PsiDocumentManager.getInstance(hostPsiFile.project).apply {
+            doPostponedOperationsAndUnblockDocument(editor.document)
+            commitDocument(editor.document)
+            if (editor != hostEditor) {
+                doPostponedOperationsAndUnblockDocument(hostEditor.document)
+                commitDocument(hostEditor.document)
+            }
+        }
+
+        if (elementsToReplace.isEmpty()) {
+            return
+        }
+
+        var commonTextRange: TextRange = elementsToReplace.first().range.textRange
+
+        val elements = elementsToReplace.map {
+            val range = it.range.textRange
+            it.range.dispose()
+            commonTextRange = commonTextRange.union(range)
+            RsUnwrappedTemplateElement(range, it.expression, it.variableName, it.alwaysStopAt)
+        }
+
+        val hostOwner = hostPsiFile.findElementAt(commonTextRange.startOffset)
+            ?.ancestors
+            ?.find { it.textRange.contains(commonTextRange) }
+            ?: return
+
+        val delegate = TemplateBuilderFactory.getInstance().createTemplateBuilder(hostOwner) as TemplateBuilderImpl
+
+        for (element in elements) {
+            val expression = element.expression
+                ?: ConstantNode(element.range.subSequence(hostDocument.immutableCharSequence).toString())
+            val relRange = element.range.shiftLeft(hostOwner.startOffset)
+            if (element.variableName != null) {
+                delegate.replaceElement(hostOwner, relRange, element.variableName, expression, element.alwaysStopAt)
+            } else {
+                delegate.replaceElement(hostOwner, relRange, expression)
+            }
+        }
 
         // From TemplateBuilderImpl.run()
         val template = delegate.buildInlineTemplate()
-        editor.caretModel.moveToOffset(owner.startOffset)
+        hostEditor.caretModel.moveToOffset(hostOwner.startOffset)
         val templateState = TemplateManager.getInstance(project).runTemplate(hostEditor, template)
 
         val isAlreadyFinished = templateState.isFinished // Can be true in unit tests
@@ -153,6 +218,11 @@ class RsTemplateBuilder(
         }
     }
 
+    fun runInline(onFinish: () -> Unit) {
+        withFinishResultListener(onFinish)
+        runInline()
+    }
+
     private fun setupUsageHighlighting(templateState: TemplateState, template: Template) {
         val varToUsages = mutableMapOf<String, MutableSet<Int>>()
         for (i in 0 until templateState.segmentsCount) {
@@ -166,22 +236,37 @@ class RsTemplateBuilder(
         }
 
         if (varToUsages.isNotEmpty()) {
-            val h = RsTemplateHighlighting(hostEditor, HighlightManager.getInstance(owner.project), varToUsages)
+            val h = RsTemplateHighlighting(hostEditor, HighlightManager.getInstance(hostPsiFile.project), varToUsages)
             h.highlightVariablesAt(templateState, template, 0)
             templateState.addTemplateStateListener(h)
             Disposer.register(templateState, h)
         }
     }
 
+    private class RsTemplateElement(
+        val range: RangeMarker,
+        val expression: Expression?,
+        val variableName: String?,
+        val alwaysStopAt: Boolean,
+    )
+
+    private class RsUnwrappedTemplateElement(
+        val range: TextRange,
+        val expression: Expression?,
+        val variableName: String?,
+        val alwaysStopAt: Boolean,
+    )
+
     inner class TemplateVariable(val name: String) {
         private var dependentVarCounter: Int = 0
 
         fun replaceElementWithVariable(element: PsiElement) {
-            delegate.replaceElement(element, newSubsequentVariable(), VariableNode(name, null), false)
-        }
-
-        fun replaceElementWithVariable(element: PsiElement, rangeWithinElement: TextRange) {
-            delegate.replaceElement(element, rangeWithinElement, newSubsequentVariable(), VariableNode(name, null), false)
+            replaceElement(
+                psiToRangeMarker(element),
+                VariableNode(name, null),
+                variableName = newSubsequentVariable(),
+                alwaysStopAt = false
+            )
         }
 
         private fun newSubsequentVariable(): String {

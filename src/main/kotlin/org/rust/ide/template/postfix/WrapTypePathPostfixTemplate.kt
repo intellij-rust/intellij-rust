@@ -26,23 +26,22 @@ class WrapTypePathPostfixTemplate(provider: RsPostfixTemplateProvider)
 
         val factory = RsPsiFactory(typeRef.project)
         val path = factory.tryCreatePath("Wrapper<${typeRef.text}>", RustParserUtil.PathParsingMode.TYPE) ?: return
-        val newTypeRef = factory.tryCreateType(path.text) ?: return
-        val inserted = typeRef.replace(newTypeRef) as? RsPathType ?: return
-        val ptr = inserted.createSmartPointer()
+        val insertedType = typeRef.replace(factory.tryCreateType(path.text) ?: return) as? RsPathType ?: return
+        val insertedTypePtr = insertedType.createSmartPointer()
 
-        val template = editor.newTemplateBuilder(inserted) ?: return
-        val name = ptr.element?.path?.referenceNameElement ?: return
-        template.replaceElement(name, MacroCallNode(CompleteMacro()))
-        template.withResultListener {
+        val tpl = editor.newTemplateBuilder(insertedType)
+        val name = insertedTypePtr.element?.path?.referenceNameElement ?: return
+        tpl.replaceElement(name, MacroCallNode(CompleteMacro()))
+        tpl.withResultListener {
             // For some reason, the result is set to BrokenOff sometimes, even on successful template confirmation
             if (it != TemplateResultListener.TemplateResult.Canceled) {
                 // Move caret after the inserted wrapper type
-                val end = ptr.element?.path?.typeArgumentList?.gt
+                val end = insertedTypePtr.element?.path?.typeArgumentList?.gt
                 if (end != null) {
                     editor.caretModel.moveToOffset(end.startOffset + 1)
                 }
             }
         }
-        template.runInline()
+        tpl.runInline()
     }
 }

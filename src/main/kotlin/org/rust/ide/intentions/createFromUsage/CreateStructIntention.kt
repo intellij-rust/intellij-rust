@@ -56,24 +56,23 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
         val fields = inserted.blockFields?.namedFieldDeclList.orEmpty().map { it.createSmartPointer() }
         if (inserted.containingFile == function.containingFile && fields.isNotEmpty()) {
             val unknownTypes = inserted.descendantsOfType<RsInferType>()
-                .map { it.createSmartPointer() }
-            val builder = editor.newTemplateBuilder(inserted.containingFile) ?: return
+            val tpl = editor.newTemplateBuilder(inserted.containingFile)
 
             // Replace unknown types
             unknownTypes.forEach {
-                builder.replaceElement(it.element ?: return@forEach)
+                tpl.replaceElement(it)
             }
 
             // Replace field names
             for (field in fields) {
                 val element = field.element?.identifier ?: continue
-                val variable = builder.introduceVariable(element)
+                val variable = tpl.introduceVariable(element)
                 val fieldLiteralIdentifier = ctx.literalElement.structLiteralBody.structLiteralFieldList.find {
                     it.identifier?.text == element.text
                 }?.identifier ?: continue
                 variable.replaceElementWithVariable(fieldLiteralIdentifier)
             }
-            builder.runInline()
+            tpl.runInline()
         } else {
             inserted.navigate(true)
         }

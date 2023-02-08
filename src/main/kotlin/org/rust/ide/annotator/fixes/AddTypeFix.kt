@@ -14,7 +14,6 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
-import org.rust.openapiext.createSmartPointer
 
 /**
  * Adds type ascription after the given element.
@@ -41,6 +40,6 @@ class AddTypeFix(anchor: PsiElement, ty: Ty) : LocalQuickFixAndIntentionActionOn
         val type = factory.createType(typeText)
         val insertedType = parent.addAfter(type, anchor)
 
-        editor?.buildAndRunTemplate(parent, listOf(insertedType.createSmartPointer()))
+        editor?.buildAndRunTemplate(parent, listOf(insertedType))
     }
 }

@@ -18,7 +18,6 @@ import org.rust.lang.core.psi.ext.getLocalVariableVisibleBindings
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class InitializeWithDefaultValueFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getText() = "Initialize with a default value"
@@ -37,7 +36,7 @@ class InitializeWithDefaultValueFix(element: RsElement) : LocalQuickFixAndIntent
             declaration.addBefore(psiFactory.createEq(), semicolon)
         }
         val addedInitExpr = declaration.addBefore(initExpr, semicolon)
-        editor?.buildAndRunTemplate(declaration, listOf(addedInitExpr.createSmartPointer()))
+        editor?.buildAndRunTemplate(declaration, listOf(addedInitExpr))
     }
 
     companion object {

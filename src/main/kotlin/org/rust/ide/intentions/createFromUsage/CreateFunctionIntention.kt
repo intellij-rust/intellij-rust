@@ -23,7 +23,6 @@ import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {
     override fun getFamilyName() = "Create function"
@@ -153,7 +152,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             }
 
             toBeReplaced += listOfNotNull(inserted.block?.syntaxTailStmt)
-            editor.buildAndRunTemplate(inserted, toBeReplaced.map { it.createSmartPointer() })
+            editor.buildAndRunTemplate(inserted, toBeReplaced)
         } else {
             // template builder cannot be used for a different file
             inserted.navigate(true)

@@ -8,7 +8,6 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.rust.ide.utils.template.newTemplateBuilder
@@ -74,9 +73,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
 
         val newArgType = argType.replace(psiFactory.createType(typeParameterName)).createSmartPointer()
 
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
-        val tpl = editor.newTemplateBuilder(fnSignature) ?: return
+        val tpl = editor.newTemplateBuilder(fnSignature)
         tpl.introduceVariable(typeParameter.identifier, typeParameterName).apply {
             replaceElementWithVariable(newArgType.element ?: return)
         }

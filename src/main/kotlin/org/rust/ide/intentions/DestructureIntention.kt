@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
     override fun getText(): String = "Use destructuring declaration"
@@ -127,17 +128,19 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
          * Then shows a live template and initiates the editing process.
          */
         private fun renameNewBindings(context: RsElement, editor: Editor, toBeRenamed: List<RsPatBinding>) {
+            val toBeRenamedPtrs = toBeRenamed.map { it.createSmartPointer() }
             val project = context.project
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-            val builder = editor.newTemplateBuilder(context.containingFile) ?: return
-            for (binding in toBeRenamed) {
-                val variable = builder.introduceVariable(binding)
+            val tpl = editor.newTemplateBuilder(context.containingFile)
+            for (bindingPtr in toBeRenamedPtrs) {
+                val binding = bindingPtr.element ?: continue
+                val variable = tpl.introduceVariable(binding)
                 ReferencesSearch.search(binding, binding.getSearchScope()).forEach {
                     variable.replaceElementWithVariable(it.element)
                 }
             }
-            builder.runInline()
+            tpl.runInline()
         }
     }
 }
