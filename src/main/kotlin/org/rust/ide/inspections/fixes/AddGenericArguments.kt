@@ -20,7 +20,6 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeArgumentList
 import org.rust.lang.core.psi.ext.*
-import org.rust.openapiext.createSmartPointer
 
 class AddGenericArguments(
     @SafeFieldForPreview
@@ -39,7 +38,7 @@ class AddGenericArguments(
     ) {
         val element = startElement as? RsMethodOrPath ?: return
         val inserted = insertGenericArgumentsIfNeeded(element) ?: return
-        editor?.buildAndRunTemplate(element, inserted.map { it.createSmartPointer() })
+        editor?.buildAndRunTemplate(element, inserted.map { it })
     }
 
     private val argumentsName: String

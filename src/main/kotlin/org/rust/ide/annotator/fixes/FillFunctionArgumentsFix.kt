@@ -26,7 +26,6 @@ import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
 
 class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     override fun getText(): String = "Fill missing arguments"
@@ -88,7 +87,7 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
         val insertedArguments = arguments.replace(newArgumentList) as RsValueArgumentList
         val toBeChanged = newArgumentIndices.map { insertedArguments.exprList[it] }
 
-        editor?.buildAndRunTemplate(insertedArguments, toBeChanged.map { it.createSmartPointer() })
+        editor?.buildAndRunTemplate(insertedArguments, toBeChanged)
     }
 }
 

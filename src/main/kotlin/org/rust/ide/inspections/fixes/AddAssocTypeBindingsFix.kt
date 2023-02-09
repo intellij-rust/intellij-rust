@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.openapiext.createSmartPointer
 
 class AddAssocTypeBindingsFix(
     element: PsiElement,
@@ -51,6 +50,6 @@ class AddAssocTypeBindingsFix(
         val missingTypes = missingTypes.map { factory.createAssocTypeBinding(it, defaultType) }
         val addedArguments = arguments.addElements(missingTypes, lastArgument, factory)
 
-        editor?.buildAndRunTemplate(element, addedArguments.mapNotNull { it.typeReference?.createSmartPointer() })
+        editor?.buildAndRunTemplate(element, addedArguments.mapNotNull { it.typeReference })
     }
 }

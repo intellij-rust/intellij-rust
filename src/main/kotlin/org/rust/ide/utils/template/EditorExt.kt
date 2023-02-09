@@ -5,40 +5,38 @@
 
 package org.rust.ide.utils.template
 
-import com.intellij.codeInsight.CodeInsightUtilCore
-import com.intellij.codeInsight.template.TemplateBuilderFactory
-import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.codeInsight.template.TemplateEditingListener
+import com.intellij.codeInsight.template.TemplateResultListener
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import org.rust.lang.core.psi.ext.isIntentionPreviewElement
 import org.rust.openapiext.checkWriteAccessAllowed
 
 fun Editor.buildAndRunTemplate(
     owner: PsiElement,
-    elementsToReplace: List<SmartPsiElementPointer<out PsiElement>>,
-    listener: TemplateEditingListener? = null,
+    elementsToReplace: Iterable<PsiElement>,
+    onFinish: (() -> Unit)? = null,
 ) {
     if (!owner.isIntentionPreviewElement) {
         checkWriteAccessAllowed()
     }
-    val tbl = newTemplateBuilder(owner) ?: return
-    for (elementPointer in elementsToReplace) {
-        val element = elementPointer.element ?: continue
-        tbl.replaceElement(element)
+    val tpl = newTemplateBuilder(owner)
+    for (element in elementsToReplace) {
+        tpl.replaceElement(element)
     }
-    if (listener != null) {
-        tbl.withListener(listener)
+    if (onFinish != null) {
+        tpl.withListener(TemplateResultListener {
+            if (it == TemplateResultListener.TemplateResult.Finished) {
+                onFinish()
+            }
+        })
     }
-    tbl.runInline()
+    tpl.runInline()
 }
 
-fun Editor.newTemplateBuilder(owner: PsiElement): RsTemplateBuilder? {
-    val restoredOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(owner) ?: return null
-    val templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(restoredOwner)
-        as TemplateBuilderImpl
-    val rootEditor = InjectedLanguageEditorUtil.getTopLevelEditor(this)
-    return RsTemplateBuilder(restoredOwner, templateBuilder, this, rootEditor)
+fun Editor.newTemplateBuilder(context: PsiElement): RsTemplateBuilder {
+    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(this)
+    val hostPsiFile = InjectedLanguageManager.getInstance(context.project).getTopLevelFile(context.containingFile)
+    return RsTemplateBuilder(hostPsiFile, this, hostEditor)
 }

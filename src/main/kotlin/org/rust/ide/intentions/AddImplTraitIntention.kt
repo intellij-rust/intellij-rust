@@ -46,19 +46,17 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
         val traitName = inserted.traitRef?.path ?: return
 
         val implPtr = inserted.createSmartPointer()
-        val traitNamePtr = traitName.createSmartPointer()
-        val tpl = editor.newTemplateBuilder(inserted) ?: return
-        tpl.replaceElement(traitNamePtr.element ?: return, MacroCallNode(CompleteMacro()))
-        tpl.withFinishResultListener {
-            val implCurrent = implPtr.element
-            if (implCurrent != null) {
-                runWriteAction {
-                    afterTraitNameEntered(implCurrent, editor)
+        editor.newTemplateBuilder(inserted)
+            .replaceElement(traitName, MacroCallNode(CompleteMacro()))
+            .withDisabledDaemonHighlighting()
+            .runInline {
+                val implCurrent = implPtr.element
+                if (implCurrent != null) {
+                    runWriteAction {
+                        afterTraitNameEntered(implCurrent, editor)
+                    }
                 }
             }
-        }
-        tpl.withDisabledDaemonHighlighting()
-        tpl.runInline()
     }
 
     private fun afterTraitNameEntered(impl: RsImplItem, editor: Editor) {
@@ -94,17 +92,17 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             val typeToUsage = insertedGenericArguments.associateWith { ty ->
                 ty.path.referenceName?.let { pathTypes[it] } ?: emptyList()
             }
-            val tmp = editor.newTemplateBuilder(impl) ?: return
+            val tpl = editor.newTemplateBuilder(impl)
             for ((type, usages) in typeToUsage) {
-                tmp.introduceVariable(type).apply {
+                tpl.introduceVariable(type).apply {
                     for (usage in usages) {
                         replaceElementWithVariable(usage)
                     }
                 }
             }
-            tmp.withExpressionsHighlighting()
-            tmp.withDisabledDaemonHighlighting()
-            tmp.runInline()
+            tpl.withExpressionsHighlighting()
+            tpl.withDisabledDaemonHighlighting()
+            tpl.runInline()
         }
     }
 

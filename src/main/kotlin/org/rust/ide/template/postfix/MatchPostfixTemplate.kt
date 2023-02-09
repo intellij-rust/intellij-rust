@@ -5,7 +5,6 @@
 
 package org.rust.ide.template.postfix
 
-import com.intellij.codeInsight.template.TemplateResultListener
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
@@ -62,16 +61,10 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
             moveCaretToMatchArmBlock(editor, blockExpr)
         } else {
             val blockExprPointer = blockExpr.createSmartPointer()
-            editor.buildAndRunTemplate(
-                matchBody,
-                toBeReplaced.map { it.createSmartPointer() },
-                TemplateResultListener {
-                    if (it == TemplateResultListener.TemplateResult.Finished) {
-                        val restoredBlockExpr = blockExprPointer.element ?: return@TemplateResultListener
-                        moveCaretToMatchArmBlock(editor, restoredBlockExpr)
-                    }
-                }
-            )
+            editor.buildAndRunTemplate(matchBody, toBeReplaced) {
+                val restoredBlockExpr = blockExprPointer.element ?: return@buildAndRunTemplate
+                moveCaretToMatchArmBlock(editor, restoredBlockExpr)
+            }
         }
     }
 
