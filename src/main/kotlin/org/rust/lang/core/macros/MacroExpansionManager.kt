@@ -1031,6 +1031,9 @@ private fun expandMacroToMemoryFile(call: RsPossibleMacroCall, storeRangeMap: Bo
         .unwrapOrElse { return CachedValueProvider.Result(Err(it.toExpansionError()), modificationTrackers) }
     val crate = call.containingCrate
     if (crate is FakeCrate) return CachedValueProvider.Result(Err(GetMacroExpansionError.Unresolved), modificationTrackers)
+    if (!call.isEnabledByCfg(crate)) {
+        return CachedValueProvider.Result(Err(GetMacroExpansionError.CfgDisabled), modificationTrackers)
+    }
     val result = FunctionLikeMacroExpander.forCrate(crate).expandMacro(
         def,
         call,
