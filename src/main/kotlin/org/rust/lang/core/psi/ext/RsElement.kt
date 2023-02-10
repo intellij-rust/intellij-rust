@@ -144,17 +144,9 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 }
 
 fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
-    var resolved: PsiElement? = null
-    val processor = createProcessor(name) { entry ->
-        if (entry.name == name) {
-            resolved = entry.element
-            true
-        } else {
-            false
-        }
+    return pickFirstResolveVariant(name) {
+        processNestedScopesUpwards(this, ns, it)
     }
-    processNestedScopesUpwards(this, ns, processor)
-    return resolved
 }
 
 fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
@@ -168,15 +160,9 @@ fun RsElement.getLocalVariableVisibleBindings(): Map<String, RsPatBinding> {
 }
 
 fun RsElement.getAllVisibleBindings(): Set<String> {
-    val bindings = mutableSetOf<String>()
-    val processor = createProcessor { entry ->
-        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
-        val name = element.name ?: return@createProcessor false
-        bindings.add(name)
-        false
+    return collectNames {
+        processNestedScopesUpwards(this, VALUES, it)
     }
-    processNestedScopesUpwards(this, VALUES, processor)
-    return bindings
 }
 
 /**

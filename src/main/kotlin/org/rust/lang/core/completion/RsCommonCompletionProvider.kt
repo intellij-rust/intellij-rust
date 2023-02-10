@@ -167,7 +167,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         } else {
             ::processDotExprResolveVariants
         }
-        var processor = methodAndFieldCompletionProcessor(element, result, context)
+        var processor: RsResolveProcessor = MethodsAndFieldsCompletionProcessor(element, result, context)
         processor = deduplicateMethodCompletionVariants(processor)
         processor = filterMethodCompletionVariantsByTraitBounds(lookup, receiverTy, processor)
         processor = ImportCandidatesCollector.filterAccessibleTraits(receiver, processor)
@@ -250,12 +250,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             )
 
             if (newPath != null) {
-                val processor = filterNotCfgDisabledItemsAndTestFunctions(createProcessor { e ->
+                val collector = createProcessor { e ->
                     for (candidate in candidates) {
                         result.addElement(createLookupElementWithImportCandidate(e, context, candidate))
                     }
-                    false
-                })
+                }
+                val processor = filterNotCfgDisabledItemsAndTestFunctions(collector)
                 processPathVariants(newPath, processor)
             }
         }
@@ -417,42 +417,47 @@ private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): 
     }
 }
 
-private fun methodAndFieldCompletionProcessor(
-    methodOrField: RsMethodOrField,
-    result: CompletionResultSet,
-    context: RsCompletionContext
-): RsResolveProcessor = createProcessor { e ->
-    when (e) {
-        is FieldResolveVariant -> result.addElement(createLookupElement(
-                scopeEntry = e,
+private class MethodsAndFieldsCompletionProcessor(
+    private val methodOrField: RsMethodOrField,
+    private val result: CompletionResultSet,
+    private val context: RsCompletionContext
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String>?
+        get() = null
+
+    override fun process(entry: ScopeEntry): Boolean {
+        when (entry) {
+            is FieldResolveVariant -> result.addElement(createLookupElement(
+                scopeEntry = entry,
                 context = context
-        ))
-        is MethodResolveVariant -> {
-            if (e.element.isTest) return@createProcessor false
+            ))
+            is MethodResolveVariant -> {
+                if (entry.element.isTest) return false
 
-            result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context,
-                insertHandler = object : RsDefaultInsertHandler() {
-                    override fun handleInsert(
-                        element: RsElement,
-                        scopeName: String,
-                        context: InsertionContext,
-                        item: LookupElement
-                    ) {
-                        val traitImportCandidate = findTraitImportCandidate(methodOrField, e)
-                        super.handleInsert(element, scopeName, context, item)
+                result.addElement(createLookupElement(
+                    scopeEntry = entry,
+                    context = context,
+                    insertHandler = object : RsDefaultInsertHandler() {
+                        override fun handleInsert(
+                            element: RsElement,
+                            scopeName: String,
+                            context: InsertionContext,
+                            item: LookupElement
+                        ) {
+                            val traitImportCandidate = findTraitImportCandidate(methodOrField, entry)
+                            super.handleInsert(element, scopeName, context, item)
 
-                        if (traitImportCandidate != null) {
-                            context.commitDocument()
-                            context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                            if (traitImportCandidate != null) {
+                                context.commitDocument()
+                                context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                            }
                         }
                     }
-                }
-            ))
+                ))
+            }
         }
+        return false
     }
-    false
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {

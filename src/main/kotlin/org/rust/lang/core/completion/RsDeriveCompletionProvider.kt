@@ -80,7 +80,6 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
         val processor = createProcessor { e ->
             result.addElement(createLookupElement(e.name))
             processedElements.putValue(e.name, e.element)
-            false
         }
         val filtered = filterDeriveProcMacros(processor)
         processProcMacroResolveVariants(path, filtered, isCompletion = true)
