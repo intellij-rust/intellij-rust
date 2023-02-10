@@ -61,16 +61,16 @@ class ModCollectorBase private constructor(
 
     private fun collectElement(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
         if (element is RsAttrProcMacroOwnerStub) {
-            // TODO store CustomAttributes in defMap, pass it to getProcMacroAttributeRaw
-            val attrsAndDerives = ProcMacroAttribute.getAllPossibleProcMacroAttributes(element, element, crate)
+            // TODO store CustomAttributes in defMap, pass it to getProcMacroAttributeWithoutResolve
+            val attrsAndDerives = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(element, element, crate, withDerives = true)
                 .flatMap {
                     when (it) {
-                        is ProcMacroAttribute.Attr -> listOf(AttrInfo(it.attr, it.index))
-                        is ProcMacroAttribute.Derive -> it.derives.mapTo(mutableListOf()) { derive ->
+                        is ProcMacroAttribute.Attr -> sequenceOf(AttrInfo(it.attr, it.index))
+                        is ProcMacroAttribute.Derive -> it.derives.map { derive ->
                             AttrInfo(derive, -1)
                         }
                     }
-                }
+                }.toList()
 
             if (attrsAndDerives.isNotEmpty()) {
                 collectProcMacroCall(element, attrsAndDerives, macroIndexInParent)

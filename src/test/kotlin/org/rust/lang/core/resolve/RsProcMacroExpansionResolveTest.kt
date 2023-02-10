@@ -84,6 +84,21 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
+    fun `test custom derive with unresolved custom derive`() = checkByCode("""
+        use test_proc_macros::DeriveImplForFoo;
+
+        #[derive(Unresolved, DeriveImplForFoo)] // impl Foo { fn foo(&self) -> Bar {} }
+        struct Foo;
+        struct Bar;
+        impl Bar {
+            fn bar(&self) {}
+        }     //X
+
+        fn main() {
+            Foo.foo().bar()
+        }           //^
+    """)
+
     fun `test custom derive dollar crate`() = checkByCode("""
         use test_proc_macros::DeriveImplForFoo;
 
@@ -490,6 +505,15 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             Foo.method();
         }     //^
+    """)
+
+    fun `test hardcoded attr and macro attr inside a function body`() = checkByCode("""
+        fn main() {
+            #[test_proc_macros::attr_hardcoded_as_is]
+            #[test_proc_macros::attr_replace_with_attr(fn bar() {})]
+            fn foo() {}                                 //X
+            bar();
+        } //^
     """)
 
     fun `test attr legacy macro 2`() = checkByCode("""

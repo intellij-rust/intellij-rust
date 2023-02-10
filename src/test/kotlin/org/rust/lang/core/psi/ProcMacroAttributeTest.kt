@@ -371,6 +371,30 @@ class ProcMacroAttributeTest : RsTestBase() {
         mod m {}
     """, Attr("attr_hardcoded_not_a_macro", 0))
 
+    fun `test 2 hardcoded identity macros`() = doTest("""
+        use test_proc_macros::attr_hardcoded_not_a_macro;
+
+        #[attr_hardcoded_not_a_macro]
+        #[attr_hardcoded_not_a_macro]
+        struct S;
+    """, None)
+
+    fun `test hardcoded identity macro and then a non-hardcoded attr macro`() = doTest("""
+        use test_proc_macros::*;
+
+        #[attr_hardcoded_not_a_macro]
+        #[attr_as_is]
+        struct S;
+    """, Attr("attr_hardcoded_not_a_macro", 0))
+
+    fun `test hardcoded identity macro and then a non-hardcoded derive macro`() = doTest("""
+        use test_proc_macros::*;
+
+        #[attr_hardcoded_not_a_macro]
+        #[derive(DeriveImplForFoo)]
+        struct S;
+    """, Attr("attr_hardcoded_not_a_macro", 0))
+
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
     fun `test not a macro if proc macro expansion is disabled`() {
         setExperimentalFeatureEnabled(PROC_MACROS, false, testRootDisposable)

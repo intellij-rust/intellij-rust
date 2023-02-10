@@ -330,27 +330,50 @@ class DefCollector(
         // We could expand only first non-identity macro,
         // but than it will be harder to remove correct attribute in `lowerBody`,
         // and also it has little sense to skip expansion of first attribute if we still need to expand next ones
-        var shouldExpand = false
+        var hasAttrMacro = false
+        var hasNonIdentityAttrMacroToExpand = false
         for (attr in call.attrs) {
             if (attr.resolved != null) continue
             val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, attr.path, call.macroIndex)
-                ?.takeIf { it.procMacroKind == attr.procMacroKind } as? ProcMacroDefInfo ?: return false
-            attr.resolved = def
-            if (def.kind.treatAsBuiltinAttr) continue
-
-            shouldExpand = true
-            if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) break
-        }
-        if (shouldExpand) {
-            for ((deriveIndex, attr) in call.attrs.withIndex()) {
-                val preparedCall = call.intoMacroCallInfo(project, context.crate, attr, deriveIndex) ?: return true
-                macrosToExpand += ExpansionInput(preparedCall, attr.resolved!!)
-                if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) break
+                ?.takeIf { it.procMacroKind == attr.procMacroKind } as? ProcMacroDefInfo
+            @Suppress("FoldInitializerAndIfToElvis")
+            if (def == null) {
+                if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) {
+                    return false
+                } else {
+                    continue
+                }
             }
-        } else if (call.attrs.any { it.procMacroKind == RsProcMacroKind.ATTRIBUTE }) {
-            treatAsIdentityMacro(call)
+            attr.resolved = def
+            if (attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) {
+                hasAttrMacro = true
+            }
+
+            if (!def.kind.treatAsBuiltinAttr && attr.procMacroKind == RsProcMacroKind.ATTRIBUTE) {
+                hasNonIdentityAttrMacroToExpand = true
+                break
+            }
         }
-        return true
+        val derives = call.attrs.filter { it.procMacroKind == RsProcMacroKind.DERIVE }
+        if (hasNonIdentityAttrMacroToExpand || hasAttrMacro && derives.isNotEmpty()) {
+            val attr = call.attrs.first()
+            val preparedCall = call.intoMacroCallInfo(project, context.crate, attr, 0) ?: return true
+            macrosToExpand += ExpansionInput(preparedCall, attr.resolved!!)
+            return true
+        } else {
+            if (!call.expandedAsIdentity && call.attrs.any { it.procMacroKind == RsProcMacroKind.ATTRIBUTE }) {
+                call.expandedAsIdentity = true
+                treatAsIdentityMacro(call)
+            }
+            for (attr in derives) {
+                if (attr.expanded) continue
+                val resolved = attr.resolved ?: continue
+                val preparedCall = call.intoMacroCallInfo(project, context.crate, attr, attr.deriveIndex) ?: continue
+                macrosToExpand += ExpansionInput(preparedCall, resolved)
+                attr.expanded = true
+            }
+            return derives.all { it.expanded }
+        }
     }
 
     private fun treatAsIdentityMacro(call: ProcMacroCallInfo) {
@@ -391,7 +414,7 @@ class DefCollector(
         batch.mapNotNull { (call, def) -> expandMacro(call, def) }
 
     private fun expandMacro(call: MacroCallInfo, def: MacroDefInfo): ExpansionOutput? {
-        val defData = RsMacroDataWithHash.fromDefInfo(def, skipIdentity = false).ok() ?: return null
+        val defData = RsMacroDataWithHash.fromDefInfo(def).ok() ?: return null
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val mixHash = defData.mixHash(callData) ?: return null
 
@@ -624,13 +647,17 @@ class ProcMacroCallInfo(
     /** Non-null if we can fall back that item - [RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem] */
     val originalItem: Triple<VisItem, Set<Namespace>, RsProcMacroKind?>? = null,
 ) : MacroCallInfoBase {
+    var expandedAsIdentity: Boolean = false
 
     class AttrInfo(
         val path: Array<String>,
         // -1 for derive macros
         val index: Int,
+        // -1 for attr macro
+        val deriveIndex: Int,
     ) {
         var resolved: ProcMacroDefInfo? = null
+        var expanded: Boolean = false
         val procMacroKind: RsProcMacroKind
             get() = if (index == -1) RsProcMacroKind.DERIVE else RsProcMacroKind.ATTRIBUTE
 

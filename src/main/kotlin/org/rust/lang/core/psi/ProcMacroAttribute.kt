@@ -187,9 +187,20 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             stub: RsAttributeOwnerStub? = owner.attributeStub,
             explicitCrate: Crate? = null,
             withDerives: Boolean = false,
+            ignoreProcMacrosDisabled: Boolean = false,
         ): ProcMacroAttribute<RsMetaItem>? {
+            val attrs = getProcMacroAttributeWithoutResolve(
+                owner,
+                stub,
+                explicitCrate,
+                withDerives,
+                ignoreProcMacrosDisabled = ignoreProcMacrosDisabled
+            )
+            if (!RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(owner)) {
+                return attrs.firstOrNull()
+            }
             var firstSeenAttrMacro: ProcMacroAttribute<RsMetaItem>? = null
-            for (attr in getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate, withDerives)) {
+            for (attr in attrs) {
                 when (attr) {
                     is Derive -> return firstSeenAttrMacro ?: attr
                     is Attr -> {
@@ -197,7 +208,7 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                             firstSeenAttrMacro = attr
                         }
                         val kind = attr.attr.resolveToProcMacroWithoutPsi(checkIsMacroAttr = false)?.kind
-                        if (kind == null || !kind.treatAsBuiltinAttr || !RsProcMacroPsiUtil.canFallBackAttrMacroToOriginalItem(owner)) {
+                        if (kind == null || !kind.treatAsBuiltinAttr) {
                             return firstSeenAttrMacro
                         }
                     }

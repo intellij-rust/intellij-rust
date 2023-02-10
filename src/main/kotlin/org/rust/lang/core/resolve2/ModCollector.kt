@@ -346,9 +346,11 @@ private class ModCollector(
     override fun collectProcMacroCall(call: ProcMacroCallLight) {
         require(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
         val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
+        var deriveIndexCounter = -1
         val attrs = call.attrs.map2Array {
             val path = dollarCrateHelper?.convertPath(it.path, it.pathStartOffsetInExpansion) ?: it.path
-            ProcMacroCallInfo.AttrInfo(path, it.index)
+            val deriveIndex = if (it.index == -1) ++deriveIndexCounter else -1
+            ProcMacroCallInfo.AttrInfo(path, it.index, deriveIndex)
         }
         val dollarCrateMap = dollarCrateHelper?.getDollarCrateMap(
             call.bodyStartOffsetInExpansion,

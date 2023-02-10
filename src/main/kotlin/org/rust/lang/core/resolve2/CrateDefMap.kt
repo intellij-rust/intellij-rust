@@ -218,7 +218,7 @@ class FileInfo(
  *   to determine modules to which propagate
  */
 @JvmInline
-value class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+value class MacroIndex(val indices: IntArray) : Comparable<MacroIndex> {
 
     val parent: MacroIndex get() = MacroIndex(indices.copyOfRange(0, indices.size - 1))
     val last: Int get() = indices.last()

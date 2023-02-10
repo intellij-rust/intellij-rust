@@ -52,7 +52,7 @@ class RsMacroDataWithHash<out T : RsMacroData>(
             }
         }
 
-        fun fromDefInfo(def: MacroDefInfo, skipIdentity: Boolean = true): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> {
+        fun fromDefInfo(def: MacroDefInfo, errorIfIdentity: Boolean = false): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> {
             return when (def) {
                 is DeclMacroDefInfo -> Ok(
                     if (def.hasRustcBuiltinMacro) {
@@ -72,7 +72,7 @@ class RsMacroDataWithHash<out T : RsMacroData>(
                     val name = def.path.name
                     val procMacroArtifact = def.procMacroArtifact
                         ?: return Err(ResolveMacroWithoutPsiError.NoProcMacroArtifact)
-                    if (skipIdentity && def.kind.treatAsBuiltinAttr) {
+                    if (errorIfIdentity && def.kind.treatAsBuiltinAttr) {
                         return Err(ResolveMacroWithoutPsiError.HardcodedProcMacroAttribute)
                     }
                     val hash = HashCode.mix(procMacroArtifact.hash, HashCode.compute(name))

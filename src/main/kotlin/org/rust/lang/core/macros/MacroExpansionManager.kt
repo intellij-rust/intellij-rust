@@ -909,7 +909,7 @@ private class MacroExpansionServiceImplInner(
             return GetMacroExpansionError.CfgDisabled
         }
 
-        val resolveResult = call.resolveToMacroWithoutPsiWithErr()
+        val resolveResult = call.resolveToMacroWithoutPsiWithErr(errorIfIdentity = true)
 
         val isProcMacro = resolveResult is Ok && resolveResult.ok.data is RsProcMacroData
             || resolveResult is Err && resolveResult.err is ResolveMacroWithoutPsiError.NoProcMacroArtifact

@@ -141,6 +141,8 @@ pub fn attr_declare_struct_with_name(attr: TokenStream, _item: TokenStream) -> T
 pub fn attr_hardcoded_not_a_macro(_attr: TokenStream, item: TokenStream) -> TokenStream {
    panic!("Must not be called")
 }
+
+/// The macro is hardcoded to be an "identity" macro in `HardcodedProcMacroProperties.kt`
 #[proc_macro_attribute]
 pub fn attr_hardcoded_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
    item

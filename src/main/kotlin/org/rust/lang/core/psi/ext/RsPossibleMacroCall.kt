@@ -76,18 +76,24 @@ val RsPossibleMacroCall.isMacroCall: Boolean
             is MacroCall -> true
             is MetaItem -> {
                 val owner = kind.meta.owner as? RsAttrProcMacroOwner ?: return false
-                val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)
-                for (attr in attrs) {
-                    when (attr) {
-                        is ProcMacroAttribute.Attr -> if (attr.attr == this) {
-                            return true
+                when (val attr = ProcMacroAttribute.getProcMacroAttribute(owner, ignoreProcMacrosDisabled = true)) {
+                    is ProcMacroAttribute.Attr -> attr.attr == this
+                    is ProcMacroAttribute.Derive -> RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
+                    null -> {
+                        val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)
+                        for (attr1 in attrs) {
+                            when (attr1) {
+                                is ProcMacroAttribute.Attr -> if (attr1.attr == this) {
+                                    return true
+                                }
+                                is ProcMacroAttribute.Derive -> {
+                                    return RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
+                                }
+                            }
                         }
-                        is ProcMacroAttribute.Derive -> {
-                            return RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
-                        }
+                        false
                     }
                 }
-                false
             }
         }
     }
@@ -412,7 +418,9 @@ val MacroCallBody.bodyHash: HashCode
 
 fun RsPossibleMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash<*>? = resolveToMacroWithoutPsiWithErr().ok()
 
-fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> = when (val kind = kind) {
+fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(
+    errorIfIdentity: Boolean = false,
+): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> = when (val kind = kind) {
     is MacroCall -> kind.call.resolveToMacroWithoutPsi()
     is MetaItem -> kind.meta.resolveToProcMacroWithoutPsi().toResult().mapErr { ResolveMacroWithoutPsiError.Unresolved }
         .andThen {
@@ -421,7 +429,7 @@ fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(): RsResult<RsMacroDataW
             val defKind = it.procMacroKind
             if (defKind == callKind) Ok(it) else Err(ResolveMacroWithoutPsiError.UnmatchedProcMacroKind(callKind, defKind))
         }
-        .andThen { RsMacroDataWithHash.fromDefInfo(it) }
+        .andThen { RsMacroDataWithHash.fromDefInfo(it, errorIfIdentity) }
 }
 
 val RsPossibleMacroCall.expansion: MacroExpansion?
