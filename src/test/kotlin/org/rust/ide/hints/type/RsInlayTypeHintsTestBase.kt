@@ -30,7 +30,7 @@ abstract class RsInlayTypeHintsTestBase(
     }
 
     protected fun checkByText(@Language("Rust") code: String) {
-        InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
+        InlineFile(code.trimIndent().replace(HINT_COMMENT_PATTERN, "<$1/>"))
         checkInlays()
     }
 
