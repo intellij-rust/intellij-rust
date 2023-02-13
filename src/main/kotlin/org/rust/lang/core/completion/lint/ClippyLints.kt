@@ -509,6 +509,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("suboptimal_flops", false),
     Lint("suspicious_arithmetic_impl", false),
     Lint("suspicious_assignment_formatting", false),
+    Lint("suspicious_command_arg_space", false),
     Lint("suspicious_else_formatting", false),
     Lint("suspicious_map", false),
     Lint("suspicious_op_assign_impl", false),
