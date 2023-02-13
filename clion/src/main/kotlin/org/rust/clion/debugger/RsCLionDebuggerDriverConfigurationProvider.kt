@@ -16,7 +16,11 @@ import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 import org.rust.debugger.isNewGdbSetupEnabled
 
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
-    override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
+    override fun getDebuggerDriverConfiguration(
+        project: Project,
+        isElevated: Boolean,
+        emulateTerminal: Boolean
+    ): DebuggerDriverConfiguration? {
         // Delegate to `RsDefaultDebuggerDriverConfigurationProvider`
         if (isNewGdbSetupEnabled) return null
 
@@ -24,11 +28,11 @@ class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfiguration
         val isLLDBRustMSVCSupportEnabled = Registry.`is`("org.rust.debugger.lldb.rust.msvc", false)
 
         return if (toolchain.toolSet.isMSVC && isLLDBRustMSVCSupportEnabled) {
-            object : CLionLLDBDriverConfiguration(project, CPPEnvironment(toolchain), isElevated) {
+            object : CLionLLDBDriverConfiguration(project, CPPEnvironment(toolchain), isElevated, emulateTerminal) {
                 override fun useRustTypeSystem(): Boolean = true
             }
         } else {
-            createDriverConfiguration(project, CPPEnvironment(toolchain), isElevated)
+            createDriverConfiguration(project, CPPEnvironment(toolchain), isElevated, emulateTerminal)
         }
     }
 }
