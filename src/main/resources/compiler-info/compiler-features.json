@@ -163,6 +163,7 @@
   {"name":"lang_items","state":"active","since":"1.0.0"},
   {"name":"multiple_supertrait_upcastable","state":"active","since":"1.69.0"},
   {"name":"omit_gdb_pretty_printer_section","state":"active","since":"1.5.0"},
+  {"name":"packed_bundled_libs","state":"active","since":"1.67.0"},
   {"name":"prelude_import","state":"active","since":"1.2.0"},
   {"name":"profiler_runtime","state":"active","since":"1.18.0"},
   {"name":"rustc_attrs","state":"active","since":"1.0.0"},
