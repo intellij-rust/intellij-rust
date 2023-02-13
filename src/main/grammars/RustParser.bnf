@@ -1108,7 +1108,8 @@ Expr ::= RetExpr
        | CastExpr
        | UnaryExpr
        | TryExpr
-       | AtomExpr {
+       | AtomExpr
+       | UnderscoreExpr {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsExprMixin"
@@ -1117,7 +1118,7 @@ Expr ::= RetExpr
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
   | '-' | '*' | '!' | '&' | static | move | AnyLitToken_first | while | if | for | continue | break  | loop | match | unsafe
-  | yield | "async" | "try"
+  | yield | "async" | "try" | '_'
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<exprMode 'StructLiteralsMode.OFF' 'StmtMode.OFF' Expr>> {
@@ -1334,6 +1335,11 @@ RetExpr ::= OuterAttr* return AnyExpr? {
 }
 
 UnitExpr ::= OuterAttr* '(' ')' {
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+UnderscoreExpr ::= OuterAttr* '_' {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }

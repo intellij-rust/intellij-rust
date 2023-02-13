@@ -342,6 +342,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "UNARY_EXPR" -> RsUnaryExprStub.Type
     "UNIT_EXPR" -> RsExprStubType("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStubType("WHILE_EXPR", ::RsWhileExprImpl)
+    "UNDERSCORE_EXPR" -> RsExprStubType("UNDERSCORE_EXPR", ::RsUnderscoreExprImpl)
 
     "VIS" -> RsVisStub.Type
     "VIS_RESTRICTION" -> RsPlaceholderStub.Type("VIS_RESTRICTION", ::RsVisRestrictionImpl)
