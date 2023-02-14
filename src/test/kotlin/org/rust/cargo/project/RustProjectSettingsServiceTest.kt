@@ -12,6 +12,7 @@ import org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl
 import org.rust.cargo.project.settings.impl.XML_FORMAT_VERSION
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsLocalToolchain
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
@@ -30,6 +31,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="explicitPathToStdlib" value="/stdlib" />
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
+              <option name="externalLinterChannel" value="beta" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
               <option name="toolchainHomeDirectory" value="/" />
@@ -49,6 +51,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals("/stdlib", service.explicitPathToStdlib)
         assertEquals(true, service.runExternalLinterOnTheFly)
         assertEquals("--no-default-features", service.externalLinterArguments)
+        assertEquals(RustChannel.BETA, service.externalLinterChannel)
         assertEquals(false, service.compileAllTargets)
         assertEquals(true, service.useOffline)
         assertEquals(MacroExpansionEngine.DISABLED, service.macroExpansionEngine)
@@ -98,6 +101,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="explicitPathToStdlib" value="/stdlib" />
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
+              <option name="externalLinterChannel" value="beta" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
               <option name="runRustfmtOnSave" value="true" /> <!-- Old field -->
@@ -119,6 +123,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="explicitPathToStdlib" value="/stdlib" />
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
+              <option name="externalLinterChannel" value="beta" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
               <option name="toolchainHomeDirectory" value="/" />

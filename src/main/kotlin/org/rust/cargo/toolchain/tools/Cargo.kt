@@ -446,7 +446,7 @@ class Cargo(
                     }
                     addAll(ParametersListUtil.parse(args.extraArguments))
                 }
-                CargoCommandLine.forTarget(args.target, checkCommand, arguments, usePackageOption = false)
+                CargoCommandLine.forTarget(args.target, checkCommand, arguments, usePackageOption = false, channel = args.channel)
             }
             is CargoCheckArgs.FullWorkspace -> {
                 val arguments = buildList<String> {
@@ -457,7 +457,7 @@ class Cargo(
                     }
                     addAll(ParametersListUtil.parse(args.extraArguments))
                 }
-                CargoCommandLine(checkCommand, args.cargoProjectDirectory, arguments)
+                CargoCommandLine(checkCommand, args.cargoProjectDirectory, arguments, channel = args.channel)
             }
         }
 
@@ -700,14 +700,16 @@ sealed class CargoCheckArgs {
         override val linter: ExternalLinter,
         override val cargoProjectDirectory: Path,
         val target: CargoWorkspace.Target,
-        override val extraArguments: String
+        override val extraArguments: String,
+        val channel: RustChannel
     ) : CargoCheckArgs()
 
     data class FullWorkspace(
         override val linter: ExternalLinter,
         override val cargoProjectDirectory: Path,
         val allTargets: Boolean,
-        override val extraArguments: String
+        override val extraArguments: String,
+        val channel: RustChannel
     ) : CargoCheckArgs()
 
     companion object {
@@ -717,7 +719,8 @@ sealed class CargoCheckArgs {
                 settings.externalLinter,
                 target.pkg.workspace.contentRoot,
                 target,
-                settings.externalLinterArguments
+                settings.externalLinterArguments,
+                settings.externalLinterChannel
             )
         }
 
@@ -727,7 +730,8 @@ sealed class CargoCheckArgs {
                 settings.externalLinter,
                 cargoProject.workingDirectory,
                 settings.compileAllTargets,
-                settings.externalLinterArguments
+                settings.externalLinterArguments,
+                settings.externalLinterChannel
             )
         }
     }

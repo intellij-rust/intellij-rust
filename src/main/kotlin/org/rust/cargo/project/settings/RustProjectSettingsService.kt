@@ -15,6 +15,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Paths
 import kotlin.reflect.KProperty1
@@ -40,6 +41,8 @@ interface RustProjectSettingsService {
         var runExternalLinterOnTheFly: Boolean = false,
         @AffectsHighlighting
         var externalLinterArguments: String = "",
+        @AffectsHighlighting
+        var externalLinterChannel: RustChannel = RustChannel.DEFAULT,
         @AffectsHighlighting
         var compileAllTargets: Boolean = true,
         var useOffline: Boolean = false,
@@ -93,6 +96,7 @@ interface RustProjectSettingsService {
     val externalLinter: ExternalLinter
     val runExternalLinterOnTheFly: Boolean
     val externalLinterArguments: String
+    val externalLinterChannel: RustChannel
     val compileAllTargets: Boolean
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine

@@ -24,6 +24,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.*
 import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.showSettingsDialog
 
 private const val serviceName: String = "RustProjectSettings"
@@ -56,6 +57,7 @@ class RustProjectSettingsServiceImpl(
     override val externalLinter: ExternalLinter get() = _state.externalLinter
     override val runExternalLinterOnTheFly: Boolean get() = _state.runExternalLinterOnTheFly
     override val externalLinterArguments: String get() = _state.externalLinterArguments
+    override val externalLinterChannel: RustChannel get() = _state.externalLinterChannel
     override val compileAllTargets: Boolean get() = _state.compileAllTargets
     override val useOffline: Boolean get() = _state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine

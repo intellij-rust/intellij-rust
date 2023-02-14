@@ -117,7 +117,8 @@ data class CargoCommandLine(
             command: String,
             additionalArguments: List<String> = emptyList(),
             usePackageOption: Boolean = true,
-            isDoctest: Boolean = false
+            isDoctest: Boolean = false,
+            channel: RustChannel = RustChannel.DEFAULT
         ): CargoCommandLine {
             val pkgs = targets.map { it.pkg }
             // Make sure the selection does not span more than one package.
@@ -158,15 +159,16 @@ data class CargoCommandLine(
                 addAll(additionalArguments)
             }
 
-            return CargoCommandLine(command, workingDirectory, commandLineArguments)
+            return CargoCommandLine(command, workingDirectory, commandLineArguments, channel = channel)
         }
 
         fun forTarget(
             target: CargoWorkspace.Target,
             command: String,
             additionalArguments: List<String> = emptyList(),
-            usePackageOption: Boolean = true
-        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments, usePackageOption)
+            usePackageOption: Boolean = true,
+            channel: RustChannel = RustChannel.DEFAULT
+        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments, usePackageOption, channel = channel)
 
         fun forProject(
             cargoProject: CargoProject,
