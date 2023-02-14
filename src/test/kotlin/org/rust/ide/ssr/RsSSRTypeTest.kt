@@ -7,11 +7,48 @@ package org.rust.ide.ssr
 
 class RsSSRTypeTest : RsSSRTestBase() {
     fun `test Path`() = doTest("""
-        /*warning*/struct S1(a::b::c::d);/*warning**/
-        /*warning*/struct S2(c::d);/*warning**/
-        struct S3(d);
-    """, """struct '_(c::d);""")
+        mod foo { pub struct Foo; }
+        mod bar { pub struct Foo; }
+        /*warning*/struct S1(Foo);/*warning**/
+        /*warning*/struct S2(foo::Foo);/*warning**/
+        /*warning*/struct S4(bar::Foo);/*warning**/
+        struct S5(Bar);
+    """, """struct '_(Foo);""")
 
+//    fun `test Path fully qualified`() = doTest("""
+//        mod foo { pub struct Foo; }
+//        mod bar { pub struct Foo; }
+//        use foo::Foo;
+//        /*warning*/struct S1(Foo);/*warning**/
+//        /*warning*/struct S2(foo::Foo);/*warning**/
+//        /*warning*/struct S3(crate::foo::Foo);/*warning**/
+//        struct S4(bar::Foo);
+//        struct S5(Bar);
+//        mod baz {
+//            use crate::bar::Foo;
+//            struct S6(Foo);
+//        }
+//    """, """struct '_(crate::foo::Foo);""")
+
+//    fun `test Path fully qualified text filter`() = doTest("""
+//        mod foo { pub struct Foo; }
+//        mod bar { pub struct Foo; }
+//        mod baz { pub struct Foo; }
+//        use foo::Foo;
+//        struct S1(Foo);
+//        struct S2(foo::Foo);
+//        struct S3(crate::foo::Foo);
+//        /*warning*/struct S4(bar::Foo);/*warning**/
+//        struct S5(Bar);
+//        mod test1 {
+//            use crate::bar::Foo;
+//            /*warning*/struct S6(Foo);/*warning**/
+//        }
+//        mod test2 {
+//            use crate::baz::Foo;
+//            /*warning*/struct S7(Foo);/*warning**/
+//        }
+//    """, """struct '_(crate::'_:[regex(b..)]::Foo);""")
 
     fun `test Path RefLikeType`() = doTest("""
         /*warning*/struct S1(&A);/*warning**/
@@ -69,8 +106,8 @@ class RsSSRTypeTest : RsSSRTestBase() {
 
     fun `test Path RsTypeParameterList`() = doTest("""
         /*warning*/struct S1<T: T1 + T2 + 'static, U: Into<T3>>(u8);/*warning**/
-        struct S2<T: T1 + T2 + 'a, U: Into<T3>>(u8);
-        struct S3<U: Into<T3>, T: T1 + T2 + 'static>(u8);
+        /*warning*/struct S2<U: Into<T3>, T: T1 + T2 + 'static>(u8);/*warning**/
+        struct S3<'a, T: T1 + T2 + 'a, U: Into<T3>>(u8);
         struct S4<T: T1 + T2, U: Into<T3>>(u8);
         struct S5<T: T1 + 'static, U: Into<T3>>(u8);
         struct S6<T: T1 + T2 + 'static>(u8);
@@ -95,4 +132,14 @@ class RsSSRTypeTest : RsSSRTestBase() {
         struct S4<X, const Y: usize>([A; Y]);
         struct S5<X, const Y: usize>([X; A]);
     """, """struct '_<X, const Y: usize>([X; Y])""")
+
+//    fun `test Path RsUseItem`() = doTest("""
+//        mod mod1 {
+//            mod inner {
+//                pub struct Foo;
+//                /*warning*/const C: Foo = Foo;/*warning**/
+//            }
+//            pub use inner::Foo as Bar;
+//        }
+//    """, """const '_ : crate::mod1::Bar;""")
 }

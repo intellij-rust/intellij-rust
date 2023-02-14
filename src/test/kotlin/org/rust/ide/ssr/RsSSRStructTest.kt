@@ -10,6 +10,7 @@ class RsSSRStructTest : RsSSRTestBase() {
         struct S;
         /*warning*/struct SS;/*warning**/
         /*warning*/struct SSS;/*warning**/
+        union UU;
     """, "struct '_:[regex( \\w{2,3} )]")
 
     fun `test struct block fields`() = doTest("""
@@ -74,4 +75,14 @@ class RsSSRStructTest : RsSSRTestBase() {
         struct S2<T>(u32);
         struct S3(u32);
     """, """struct '_<'_:[regex( \w{2,3} )]>(u32)""")
+
+
+    fun `test union`() = doTest("""
+        /*warning*/union U1 { pub a: u32, pub b: i32 }/*warning**/
+        struct S1 { pub a: u32, pub b: i32 }
+    """, """
+    union '_ {
+        '_\: u32,
+        '_\: i32,
+    }""")
 }
