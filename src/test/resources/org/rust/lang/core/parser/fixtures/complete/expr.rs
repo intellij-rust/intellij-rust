@@ -72,6 +72,9 @@ fn test() -> u32 {
     let _ = 1: u32 + TEN;
     let _ = 1 as (i32);
 
+    _ = 1;
+    (_, _) = (1, 2);
+
     || { 0; yield 0; };
 
     foo(bar, true, "", 1, 1.1);
