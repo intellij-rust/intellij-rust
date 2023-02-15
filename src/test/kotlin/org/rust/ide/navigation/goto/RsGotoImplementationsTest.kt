@@ -5,12 +5,18 @@
 
 package org.rust.ide.navigation.goto
 
+import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.macros.MacroExpansionScope
+import java.util.*
+import java.util.concurrent.Callable
 
 class RsGotoImplementationsTest : RsTestBase() {
     fun `test trait`() = doSingleTargetTest("""
@@ -212,8 +218,22 @@ class RsGotoImplementationsTest : RsTestBase() {
 
     private fun doMultipleTargetsTest(@Language("Rust") before: String, vararg expected: String) {
         InlineFile(before).withCaret()
-        val data = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
-        val actual = data.targets.map { data.getComparingObject(it) }
+        val actual = doGoToImplementation()
         assertEquals(expected.toList(), actual)
+    }
+
+    private fun doGoToImplementation(): List<String> {
+        val data = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
+
+        val future = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+            @Suppress("UnstableApiUsage")
+            runReadAction {
+                data.targets
+                    .map { GotoTargetHandler.computePresentation(it, data.hasDifferentNames()) }
+                    // Copied from `com.intellij.codeInsight.navigation.GotoTargetHandler.GotoData.getComparingObject`
+                    .map { listOfNotNull(it.presentableText, it.containerText, it.locationText).joinToString(" ") }
+            }
+        })
+        return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
     }
 }
