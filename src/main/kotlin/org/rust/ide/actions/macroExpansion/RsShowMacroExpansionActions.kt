@@ -6,7 +6,6 @@
 package org.rust.ide.actions.macroExpansion
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,6 +19,7 @@ import org.rust.lang.core.psi.ext.ancestorMacroCall
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
 import org.rust.openapiext.project
+import org.rust.openapiext.showErrorHint
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 
@@ -63,10 +63,7 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
 
     companion object {
         fun showMacroExpansionError(editor: Editor, error: GetMacroExpansionError) {
-            HintManager.getInstance().showErrorHint(
-                editor,
-                "Failed to expand the macro: ${error.toUserViewableMessage()}"
-            )
+            editor.showErrorHint("Failed to expand the macro: ${error.toUserViewableMessage()}")
         }
     }
 }

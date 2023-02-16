@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DOTDOT
 import org.rust.lang.core.psi.ext.RsElement
@@ -34,6 +35,7 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
         ) {
             return null
         }
+        if (!PsiModificationUtil.canReplace(list)) return null
         return list
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DOTDOT
 import org.rust.lang.core.psi.ext.RsElement
@@ -26,6 +27,7 @@ abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
         val list = element.listContext ?: return null
         val elements = getElements(list)
         if (elements.size < 2 || elements.dropLast(1).all { hasLineBreakAfter(list, it) }) return null
+        if (!PsiModificationUtil.canReplace(list)) return null
         return list
     }
 

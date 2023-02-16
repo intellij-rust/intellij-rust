@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import org.rust.ide.inspections.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
+import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -26,27 +27,32 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
     override fun getText() = "Implement trait"
     override fun getFamilyName() = text
 
-    class Context(val type: RsStructOrEnumItemElement, val name: String)
+    class Context(
+        val type: RsStructOrEnumItemElement,
+        val typeName: String,
+        val placeForImpl: PsiInsertionPlace,
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val struct = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
-        val name = struct.name ?: return null
-        return Context(struct, name)
+        val typeName = struct.name ?: return null
+        val placeForImpl = PsiInsertionPlace.forItemInTheScopeOf(struct) ?: return null
+        return Context(struct, typeName, placeForImpl)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val impl = RsPsiFactory(project).createTraitImplItem(
-            ctx.name,
+        val newImpl = RsPsiFactory(project).createTraitImplItem(
+            ctx.typeName,
             "T",
             ctx.type.typeParameterList,
             ctx.type.whereClause
         )
 
-        val inserted = ctx.type.parent.addAfter(impl, ctx.type) as RsImplItem
-        val traitName = inserted.traitRef?.path ?: return
+        val insertedImpl = ctx.placeForImpl.insert(newImpl)
+        val traitName = insertedImpl.traitRef?.path ?: return
 
-        val implPtr = inserted.createSmartPointer()
-        editor.newTemplateBuilder(inserted)
+        val implPtr = insertedImpl.createSmartPointer()
+        editor.newTemplateBuilder(insertedImpl)
             .replaceElement(traitName, MacroCallNode(CompleteMacro()))
             .withDisabledDaemonHighlighting()
             .runInline {

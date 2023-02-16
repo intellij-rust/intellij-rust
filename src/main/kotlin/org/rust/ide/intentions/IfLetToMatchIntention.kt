@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
@@ -143,6 +144,8 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
                 context.elseBody = elseBody.block
             }
         }
+
+        if (!PsiModificationUtil.canReplace(context.ifStmt)) return null
 
         return context
     }

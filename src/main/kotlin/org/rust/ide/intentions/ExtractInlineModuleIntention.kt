@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.ext.getOrCreateModuleFile
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.openapiext.Testmark
 
-//TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
@@ -26,6 +26,7 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
         val mod = element.ancestorOrSelf<RsModItem>() ?: return null
         if (element != mod.mod && element != mod.identifier && mod.vis?.isAncestorOf(element) != true) return null
+        if (!PsiModificationUtil.canReplace(mod)) return null
         return mod
     }
 

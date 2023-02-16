@@ -11,6 +11,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Nest imports 1 depth
@@ -73,7 +74,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
             ctx.root.addAfter(RsPsiFactory(project).createComma(), inserted)
         }
 
-        editor.caretModel.moveToOffset(inserted!!.startOffset + ctx.cursorOffset)
+        editor.moveCaretToOffset(inserted, inserted.startOffset + ctx.cursorOffset)
     }
 
     private fun makeGroupedPath(basePath: String, useSpecks: List<RsUseSpeck>): String {

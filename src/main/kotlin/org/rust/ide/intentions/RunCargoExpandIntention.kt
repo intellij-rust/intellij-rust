@@ -21,8 +21,6 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
     override fun getText(): String = "Show the result of macro expansion (cargo expand)"
     override fun getFamilyName(): String = text
 
-    override fun startInWriteAction(): Boolean = false
-
     data class Context(
         val cargoProject: CargoProject,
         val cargoTarget: CargoWorkspace.Target,
@@ -36,6 +34,8 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
         val crateRelativePath = mod.crateRelativePath ?: return null
         return Context(cargoProject, cargoTarget, crateRelativePath)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (cargoProject, cargoTarget, crateRelativePath) = ctx

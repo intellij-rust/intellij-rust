@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -17,9 +18,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonWhitespaceSibling
 import org.rust.lang.core.psi.ext.getPrevNonWhitespaceSibling
 
-@Suppress("UnnecessaryVariable")
 class ReplaceLineCommentWithBlockCommentIntention : RsElementBaseIntentionAction<PsiComment>() {
-
     override fun getText(): String = familyName
     override fun getFamilyName(): String = "Replace with block comment"
 
@@ -29,9 +28,11 @@ class ReplaceLineCommentWithBlockCommentIntention : RsElementBaseIntentionAction
             ?: return null
 
         return generateSequence(comment) { it.prevComment }.last()
+            .takeIf { PsiModificationUtil.canReplace(it) }
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: PsiComment) {
+        @Suppress("UnnecessaryVariable")
         val firstLineComment = ctx
         val indent = (firstLineComment.prevSibling as? PsiWhiteSpace)
             ?.text

@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAncestorOf
 
 class AddImportForPatternIntention : RsElementBaseIntentionAction<Context>() {
-
     override fun getText(): String = "Import"
     override fun getFamilyName(): String = "Add import for path in pattern"
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.endOffset
@@ -43,6 +44,7 @@ class JoinWildcardsIntention : RsElementBaseIntentionAction<List<RsPatWild>>() {
                     val patWildSeqRange = TextRange(patWildSeq.first().startOffset, patWildSeq.last().endOffset)
                     if (element.startOffset in patWildSeqRange) {
                         text = if (patWildSeq.size == 1) "Replace `_` with `..`" else familyName
+                        if (!PsiModificationUtil.canReplaceAll(patWildSeq)) return null
                         return patWildSeq
                     }
                 }

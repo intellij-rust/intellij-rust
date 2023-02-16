@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsBinaryExpr
-import org.rust.lang.core.psi.RsDotExpr
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
+import org.rust.ide.utils.PsiModificationUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,9 +37,12 @@ class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroCall>() {
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? {
         val macroCall = element.ancestorStrict<RsMacroCall>() ?: return null
-        if (macroCall.macroName != "dbg") {
-            return null
-        }
+        if (macroCall.parent !is RsExpr) return null
+        if (macroCall.macroName != "dbg") return null
+        val resolvedMacro = macroCall.path.reference?.resolve()
+        if (resolvedMacro != null && resolvedMacro.containingCrate.origin != STDLIB) return null
+        if (!PsiModificationUtil.canReplace(macroCall)) return null
+
         return macroCall
     }
 
@@ -54,6 +57,6 @@ class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroCall>() {
             ctx.replaceWithExpr(expr)
         }
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        editor.caretModel.moveToOffset(min(newExpr.startOffset + cursorOffsetToExpr, newExpr.endOffset))
+        editor.moveCaretToOffset(newExpr, min(newExpr.startOffset + cursorOffsetToExpr, newExpr.endOffset))
     }
 }

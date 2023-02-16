@@ -9,19 +9,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFunctionToClosureIntention.Context>() {
-
     override fun getText(): String = "Convert function to closure"
     override fun getFamilyName(): String = text
 
+    data class Context(val targetFunction: RsFunction)
+
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val possibleTarget = element.ancestorStrict<RsFunction>() ?: return null
+        val possibleTarget = element.contextStrict<RsFunction>() ?: return null
 
         val availabilityRange = TextRange(
             possibleTarget.fn.startOffset,
@@ -30,8 +33,9 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
         if (element.startOffset !in availabilityRange) return null
 
         // if we found one, we need to check if it's a child of another function, which would mean it's an local function
-        if (possibleTarget.ancestorStrict<RsFunction>() == null) return null
+        if (possibleTarget.contextStrict<RsFunction>() == null) return null
         if (possibleTarget.typeParameterList != null) return null
+        if (!PsiModificationUtil.canReplace(possibleTarget)) return null
 
         return Context(possibleTarget)
     }
@@ -51,11 +55,8 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
 
         val replaced = function.replace(declaration) as RsLetDecl
         replaced.semicolon?.endOffset?.let {
-            editor?.caretModel?.moveToOffset(it)
+            editor?.moveCaretToOffset(replaced, it)
         }
     }
 
-    data class Context(
-        val targetFunction: RsFunction,
-    )
 }

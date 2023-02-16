@@ -100,7 +100,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
         }
     """)
 
-    fun `test reformat`() = doAvailableTest("""
+    fun `test reformat of the if block does not happens`() = doAvailableTest("""
         fn main() {
             if true {
 
@@ -108,7 +108,9 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
         }
     """, """
         fn main() {
-            if true {} else {/*caret*/}
+            if true {
+
+            } else {/*caret*/}
         }
     """)
 }

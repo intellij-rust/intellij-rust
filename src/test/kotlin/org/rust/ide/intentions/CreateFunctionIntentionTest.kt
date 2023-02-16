@@ -62,6 +62,17 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    fun `test create method unavailable if multi-resolved`() = doUnavailableTest("""
+        struct S;
+        impl S {
+            fn foo(&self) {}
+            fn foo(&self) {}
+        }
+        fn main() {
+            S.foo/*caret*/();
+        }
+    """)
+
     fun `test unavailable on trait associated function`() = doUnavailableTest("""
         trait Trait {}
 
@@ -955,16 +966,13 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         struct S;
 
         impl S {
-            async fn bar(&self, p0: i32, p1: i32) {
-                todo!()
-            }
-        }
-
-        impl S {
             fn foo(&self) {
                 async fn foo_a(s: &S) {
                     s.bar(1, 2).await;
                 }
+            }
+            async fn bar(&self, p0: i32, p1: i32) {
+                todo!()
             }
         }
     """)

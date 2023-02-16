@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<RsWhereClause>() {
 
@@ -48,10 +49,9 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
             }
 
         val newElement = RsPsiFactory(project).createTypeParameterList(generics)
-        val offset = typeParameterList.startOffset + newElement.textLength
-        typeParameterList.replace(newElement)
+        val insertedParameterList = typeParameterList.replace(newElement)
         ctx.delete()
-        editor.caretModel.moveToOffset(offset)
+        editor.moveCaretToOffset(insertedParameterList, insertedParameterList.endOffset)
     }
 
     private fun typeParameterText(param: RsTypeParameter): String = buildString {

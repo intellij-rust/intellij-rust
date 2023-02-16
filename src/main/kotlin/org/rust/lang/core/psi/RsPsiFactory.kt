@@ -228,8 +228,8 @@ class RsPsiFactory(
         ?: error("Failed to create method param from text: `$text`")
     }
 
-    fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
+    fun createReferenceType(innerTypeText: String, mutability: Mutability): RsRefLikeType =
+        createType("&${if (mutability.isMut) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         tryCreateModDeclItem(modName) ?: error("Failed to create mod decl with name: `$modName`")
@@ -302,7 +302,7 @@ class RsPsiFactory(
             }?.joinToString(", ", "<", ">")
             .orEmpty()
 
-        return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
+        return createFromText("impl$typeParameterListText $text $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an trait impl with text: `$text`")
     }
 

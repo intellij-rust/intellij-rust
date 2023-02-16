@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.RsVisibilityOwner
 
 class MakePubCrateIntention : ChangeVisibilityIntention() {
-    override val visibility: String = "pub(crate)"
+    override val visibility: String get() = "pub(crate)"
 
     override fun isApplicable(element: RsVisibilityOwner): Boolean {
         val visibility = element.visibility

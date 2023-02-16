@@ -14,11 +14,13 @@ import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
 import org.rust.lang.core.types.ty.Ty
+import org.rust.openapiext.moveCaretToOffset
 import kotlin.math.max
 
 class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
     override fun getText() = "Generate documentation stub"
     override fun getFamilyName() = text
+
     data class Context(
         val func: RsElement,
         val params: List<RsValueParameter>,
@@ -63,7 +65,7 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
             document.insertString(insertionOffset, stub)
             docManager.commitDocument(document)
         }
-        editor.caretModel.moveToOffset(targetFunc.startOffset + buffer.length - indentOffset - 1)
+        editor.moveCaretToOffset(targetFunc, targetFunc.startOffset + buffer.length - indentOffset - 1)
     }
 }
 

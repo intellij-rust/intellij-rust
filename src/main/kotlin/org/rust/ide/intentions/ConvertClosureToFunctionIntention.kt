@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -17,11 +18,16 @@ import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.openapiext.moveCaretToOffset
 
 class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertClosureToFunctionIntention.Context>() {
-
     override fun getText(): String = "Convert closure to function"
     override fun getFamilyName(): String = text
+
+    data class Context(
+        val letDecl: RsLetDecl,
+        val lambda: RsLambdaExpr,
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         // We try to find a let declaration
@@ -35,6 +41,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
             lambdaExpr.retType?.endOffset ?: lambdaExpr.valueParameterList.endOffset
         )
         if (element.startOffset !in availabilityRange) return null
+        if (!PsiModificationUtil.canReplace(possibleTarget)) return null
 
         return Context(possibleTarget, lambdaExpr)
     }
@@ -85,7 +92,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
             placeholderElements += placeholders
             editor.buildAndRunTemplate(replaced, placeholderElements)
         } else {
-            editor.caretModel.moveToOffset(replaced.endOffset)
+            editor.moveCaretToOffset(replaced, replaced.endOffset)
         }
     }
 
@@ -96,8 +103,4 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         return wildcardPats + wildcardPaths
     }
 
-    data class Context(
-        val letDecl: RsLetDecl,
-        val lambda: RsLambdaExpr,
-    )
 }

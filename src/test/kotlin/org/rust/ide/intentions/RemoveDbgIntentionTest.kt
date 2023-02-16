@@ -136,4 +136,17 @@ class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention::class) {
             let a = 1 + 3/*caret*/;
         }
     """)
+
+    fun `test not available for custom dbg! macro`() = doUnavailableTest("""
+        macro_rules! dbg {
+            ($ e:expr) => { $ e };
+        }
+        fn test() {
+            let a = 1 + dbg!(3/*caret*/);
+        }
+    """)
+
+    fun `test not available if not expression`() = doUnavailableTest("""
+        dbg!(3/*caret*/);
+    """)
 }

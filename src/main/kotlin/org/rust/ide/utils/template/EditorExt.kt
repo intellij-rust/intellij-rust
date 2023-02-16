@@ -8,6 +8,7 @@ package org.rust.ide.utils.template
 import com.intellij.codeInsight.template.TemplateResultListener
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import org.rust.lang.core.psi.ext.isIntentionPreviewElement
@@ -39,4 +40,9 @@ fun Editor.newTemplateBuilder(context: PsiElement): RsTemplateBuilder {
     val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(this)
     val hostPsiFile = InjectedLanguageManager.getInstance(context.project).getTopLevelFile(context.containingFile)
     return RsTemplateBuilder(hostPsiFile, this, hostEditor)
+}
+
+fun Editor.canRunTemplateFor(element: PsiElement): Boolean {
+    val containingFile = element.containingFile
+    return PsiDocumentManager.getInstance(containingFile.project).getPsiFile(document) == containingFile
 }

@@ -10,21 +10,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.elementType
 
-@Suppress("UnnecessaryVariable")
 class ReplaceBlockCommentWithLineCommentIntention : RsElementBaseIntentionAction<PsiComment>() {
-
     override fun getText(): String = familyName
     override fun getFamilyName(): String = "Replace with end of line comment"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): PsiComment? =
-        element.ancestorOrSelf<PsiComment>()?.takeIf { it.elementType == BLOCK_COMMENT }
+        element.ancestorOrSelf<PsiComment>()
+            ?.takeIf { it.elementType == BLOCK_COMMENT }
+            ?.takeIf { PsiModificationUtil.canReplace(it) }
 
     override fun invoke(project: Project, editor: Editor, ctx: PsiComment) {
+        @Suppress("UnnecessaryVariable")
         val blockComment = ctx
         val factory = RsPsiFactory(project)
 

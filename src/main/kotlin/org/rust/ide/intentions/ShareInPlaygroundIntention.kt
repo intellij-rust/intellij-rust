@@ -15,9 +15,6 @@ import org.rust.ide.actions.ShareInPlaygroundAction.Context
 import org.rust.lang.core.psi.RsFile
 
 class ShareInPlaygroundIntention : RsElementBaseIntentionAction<Context>(), LowPriorityAction {
-
-    override fun startInWriteAction(): Boolean = false
-
     override fun getText(): String = familyName
     override fun getFamilyName(): String = RsBundle.message("action.Rust.ShareInPlayground.text")
 
@@ -26,6 +23,8 @@ class ShareInPlaygroundIntention : RsElementBaseIntentionAction<Context>(), LowP
         val selectedText = editor.selectionModel.selectedText ?: return null
         return Context(file, selectedText, true)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         ShareInPlaygroundAction.performAction(project, ctx)
