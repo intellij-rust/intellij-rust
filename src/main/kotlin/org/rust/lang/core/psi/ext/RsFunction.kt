@@ -311,8 +311,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         val baseIcon = when (val owner = if (allowNameResolution) owner else ownerBySyntaxOnly) {
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
                 when {
-                    isTest -> RsIcons.FUNCTION.addTestMark()
-                    isProcMacroDef -> RsIcons.PROC_MACRO
+                    allowNameResolution && isTest -> RsIcons.FUNCTION.addTestMark()
+                    allowNameResolution && isProcMacroDef -> RsIcons.PROC_MACRO
                     else -> RsIcons.FUNCTION
                 }
 
