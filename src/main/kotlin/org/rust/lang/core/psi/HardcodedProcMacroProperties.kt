@@ -16,7 +16,9 @@ import org.rust.openapiext.isUnitTestMode
 private val RS_HARDCODED_PROC_MACRO_ATTRIBUTES: Map<String, Map<String, KnownProcMacroKind>> = mapOf(
     "tokio_macros" to mapOf(
         "main" to KnownProcMacroKind.ASYNC_MAIN,
+        "main_rt" to KnownProcMacroKind.ASYNC_MAIN,
         "test" to KnownProcMacroKind.ASYNC_TEST,
+        "test_rt" to KnownProcMacroKind.ASYNC_TEST,
     ),
     "async_attributes" to mapOf(
         "main" to KnownProcMacroKind.ASYNC_MAIN,
