@@ -70,7 +70,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
     val project: Project get() = holder.project
     val isOnTheFly: Boolean get() = holder.isOnTheFly
 
-    fun registerProblem(element: PsiElement, @InspectionMessage descriptionTemplate: String, vararg fixes: LocalQuickFix?) {
+    fun registerProblem(element: PsiElement, @InspectionMessage descriptionTemplate: String, vararg fixes: LocalQuickFix) {
         if (element.existsAfterExpansion) {
             holder.registerProblem(element, descriptionTemplate, *fixes)
         }
@@ -93,7 +93,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         }
     }
 
-    fun registerProblem(element: PsiElement, rangeInElement: TextRange, @InspectionMessage message: String, vararg fixes: LocalQuickFix?) {
+    fun registerProblem(element: PsiElement, rangeInElement: TextRange, @InspectionMessage message: String, vararg fixes: LocalQuickFix) {
         if (element.existsAfterExpansion) {
             holder.registerProblem(element, rangeInElement, message, *fixes)
         }
@@ -104,7 +104,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         @InspectionMessage message: String,
         highlightType: ProblemHighlightType,
         rangeInElement: TextRange,
-        vararg fixes: LocalQuickFix?
+        vararg fixes: LocalQuickFix
     ) {
         if (element.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
             holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
