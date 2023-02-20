@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import org.rust.ide.statistics.RsCodeVisionUsageCollector.Companion.logAuthorClicked
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
@@ -19,8 +20,6 @@ import java.awt.event.MouseEvent
 
 @Suppress("UnstableApiUsage")
 class RsVcsCodeVisionContext : VcsCodeVisionLanguageContext {
-    override fun handleClick(mouseEvent: MouseEvent, editor: Editor, element: PsiElement) {}
-
     override fun isAccepted(element: PsiElement): Boolean {
         if (!isUnitTestMode && !Registry.`is`("org.rust.code.vision.author", false)) return false
 
@@ -32,5 +31,8 @@ class RsVcsCodeVisionContext : VcsCodeVisionLanguageContext {
             is RsModItem -> true
             else -> false
         }
+    }
+    override fun handleClick(mouseEvent: MouseEvent, editor: Editor, element: PsiElement) {
+        logAuthorClicked(element)
     }
 }

@@ -13,18 +13,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import org.rust.RsBundle
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsEnumVariant
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsModItem
-import org.rust.lang.core.psi.RsNamedFieldDecl
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.searchReferences
 import org.rust.openapiext.isUnitTestMode
 
-class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
+abstract class RsReferenceCodeVisionProviderBase : ReferencesCodeVisionProvider() {
     override fun acceptsFile(file: PsiFile): Boolean = file is RsFile
 
     override fun acceptsElement(element: PsiElement): Boolean {
