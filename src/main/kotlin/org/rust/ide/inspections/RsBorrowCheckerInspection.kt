@@ -19,7 +19,7 @@ import org.rust.lang.core.types.type
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return
                 val receiver = o.receiver
@@ -36,7 +36,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 }
             }
 
-            override fun visitFunction(func: RsFunction) {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(func: RsFunction) {
                 val borrowCheckResult = func.borrowCheckResult ?: return
 
                 // TODO: Remove this check when type inference is implemented for `asm!` macro calls

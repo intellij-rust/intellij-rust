@@ -16,7 +16,8 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.util.containers.addIfNotNull
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -75,7 +76,7 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
 
 private data class CrateGraph(
     val topSortedCrates: List<Crate>,
-    val idToCrate: TIntObjectHashMap<Crate>
+    val idToCrate: Int2ObjectMap<Crate>
 )
 
 private val LOG: Logger = logger<CrateGraphServiceImpl>()
@@ -359,7 +360,7 @@ private class CrateGraphBuilder {
 
         topSortedCrates.assertTopSorted()
 
-        val idToCrate = TIntObjectHashMap<Crate>()
+        val idToCrate = Int2ObjectOpenHashMap<Crate>()
         for (crate in topSortedCrates) {
             crate.checkInvariants()
 

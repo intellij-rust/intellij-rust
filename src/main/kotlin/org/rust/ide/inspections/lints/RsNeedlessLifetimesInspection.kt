@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.ide.inspections.lints.ReferenceLifetime.*
 import org.rust.lang.core.psi.*
@@ -27,8 +28,9 @@ class RsNeedlessLifetimesInspection : RsLintInspection() {
 
     override fun getLint(element: PsiElement): RsLint = RsLint.NeedlessLifetimes
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitFunction(fn: RsFunction) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitFunction2(fn: RsFunction) {
             if (couldUseElision(fn)) {
                 registerProblem(holder, fn)
             }
@@ -180,7 +182,7 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsRecu
     }
 }
 
-private class BodyLifetimeChecker : RsVisitor() {
+private class BodyLifetimeChecker : RsWithMacrosInspectionVisitor() {
     var lifetimesUsedInBody: Boolean = false
         private set
 

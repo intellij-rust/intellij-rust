@@ -19,7 +19,7 @@ import org.rust.lang.utils.evaluation.evaluate
 /** See also [RsRedundantElseInspection]. */
 class RsConstantConditionIfInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitIfExpr(ifExpr: RsIfExpr) {
                 val condition = ifExpr.condition ?: return
                 if (condition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return

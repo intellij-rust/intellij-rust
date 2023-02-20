@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsVisitor
 
 
 class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitStructLiteralField(o: RsStructLiteralField) {
             val init = o.expr ?: return
             if (!(init is RsPathExpr && init.text == o.identifier?.text)) return

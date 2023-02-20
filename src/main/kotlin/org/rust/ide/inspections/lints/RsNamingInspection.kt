@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -175,7 +176,7 @@ fun String.toSnakeCase(upper: Boolean): String {
 
 class RsArgumentNamingInspection : RsSnakeCaseNamingInspection("Argument") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitPatBinding(el: RsPatBinding) {
                 if (el.parent?.parent is RsValueParameter) {
                     inspect(el.identifier, holder)
@@ -186,10 +187,10 @@ class RsArgumentNamingInspection : RsSnakeCaseNamingInspection("Argument") {
 
 class RsConstNamingInspection : RsUpperCaseNamingInspection("Constant") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitConstant(el: RsConstant) {
-                if (el.kind == RsConstantKind.CONST) {
-                    inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitConstant2(o: RsConstant) {
+                if (o.kind == RsConstantKind.CONST) {
+                    inspect(o.identifier, holder)
                 }
             }
         }
@@ -197,10 +198,10 @@ class RsConstNamingInspection : RsUpperCaseNamingInspection("Constant") {
 
 class RsStaticConstNamingInspection : RsUpperCaseNamingInspection("Static constant") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitConstant(el: RsConstant) {
-                if (el.kind != RsConstantKind.CONST && el.owner is RsAbstractableOwner.Free) {
-                    inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitConstant2(o: RsConstant) {
+                if (o.kind != RsConstantKind.CONST && o.owner is RsAbstractableOwner.Free) {
+                    inspect(o.identifier, holder)
                 }
             }
         }
@@ -208,24 +209,24 @@ class RsStaticConstNamingInspection : RsUpperCaseNamingInspection("Static consta
 
 class RsEnumNamingInspection : RsCamelCaseNamingInspection("Type", "Enum") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitEnumItem(el: RsEnumItem) = inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitEnumItem2(o: RsEnumItem) = inspect(o.identifier, holder)
         }
 }
 
 class RsEnumVariantNamingInspection : RsCamelCaseNamingInspection("Enum variant") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitEnumVariant(el: RsEnumVariant) = inspect(el.identifier, holder)
         }
 }
 
 class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(el: RsFunction) {
-                if (el.owner is RsAbstractableOwner.Free) {
-                    inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitFunction2(o: RsFunction) {
+                if (o.owner is RsAbstractableOwner.Free) {
+                    inspect(o.identifier, holder)
                 }
             }
         }
@@ -240,9 +241,9 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
 
 class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(el: RsFunction) = when (el.owner) {
-                is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitFunction2(o: RsFunction) = when (o.owner) {
+                is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> inspect(o.identifier, holder)
                 else -> Unit
             }
         }
@@ -250,53 +251,53 @@ class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
 
 class RsLifetimeNamingInspection : RsSnakeCaseNamingInspection("Lifetime") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitLifetimeParameter(el: RsLifetimeParameter) = inspect(el.quoteIdentifier, holder)
         }
 }
 
 class RsMacroNamingInspection : RsSnakeCaseNamingInspection("Macro") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitMacro(el: RsMacro) = inspect(el.nameIdentifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitMacro2(o: RsMacro) = inspect(o.nameIdentifier, holder)
         }
 }
 
 class RsModuleNamingInspection : RsSnakeCaseNamingInspection("Module") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitModDeclItem(el: RsModDeclItem) = inspect(el.identifier, holder)
-            override fun visitModItem(el: RsModItem) = inspect(el.identifier, holder)
+            override fun visitModItem2(o: RsModItem) = inspect(o.identifier, holder)
         }
 }
 
 class RsStructNamingInspection : RsCamelCaseNamingInspection("Type", "Struct") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitStructItem(el: RsStructItem) = inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitStructItem2(o: RsStructItem) = inspect(o.identifier, holder)
         }
 }
 
 class RsFieldNamingInspection : RsSnakeCaseNamingInspection("Field") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitNamedFieldDecl(el: RsNamedFieldDecl) = inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = inspect(o.identifier, holder)
         }
 }
 
 class RsTraitNamingInspection : RsCamelCaseNamingInspection("Trait") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitTraitItem(el: RsTraitItem) = inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitTraitItem2(o: RsTraitItem) = inspect(o.identifier, holder)
         }
 }
 
 class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type alias") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsAbstractableOwner.Free) {
-                    inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitTypeAlias2(o: RsTypeAlias) {
+                if (o.owner is RsAbstractableOwner.Free) {
+                    inspect(o.identifier, holder)
                 }
             }
         }
@@ -304,10 +305,10 @@ class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type al
 
 class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associated type") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsAbstractableOwner.Trait) {
-                    inspect(el.identifier, holder)
+        object : RsWithMacrosInspectionVisitor() {
+            override fun visitTypeAlias2(o: RsTypeAlias) {
+                if (o.owner is RsAbstractableOwner.Trait) {
+                    inspect(o.identifier, holder)
                 }
             }
         }
@@ -316,14 +317,14 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
 
 class RsTypeParameterNamingInspection : RsCamelCaseNamingInspection("Type parameter") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitTypeParameter(el: RsTypeParameter) = inspect(el.identifier, holder)
         }
 }
 
 class RsVariableNamingInspection : RsSnakeCaseNamingInspection("Variable") {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitPatBinding(el: RsPatBinding) {
                 if (el.isReferenceToConstant) return
 

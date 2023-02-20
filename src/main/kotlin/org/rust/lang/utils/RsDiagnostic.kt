@@ -1753,15 +1753,13 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
 
 fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {
     val prepared = prepare()
-    val descriptor = holder.manager.createProblemDescriptor(
+    holder.registerProblem(
         element,
         endElement ?: element,
         prepared.fullDescription,
         prepared.severity.toProblemHighlightType(),
-        holder.isOnTheFly,
         *prepared.fixes.toTypedArray()
     )
-    holder.registerProblem(descriptor)
 }
 
 private val PreparedAnnotation.fullDescription: String

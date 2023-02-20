@@ -19,7 +19,7 @@ import org.rust.openapiext.createSmartPointer
  */
 class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(methodCall: RsMethodCall) = checkTypeArguments(holder, methodCall)
             override fun visitPath(path: RsPath) {
                 if (!isPathValid(path)) return

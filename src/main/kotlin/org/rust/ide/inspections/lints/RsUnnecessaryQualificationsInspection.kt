@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
@@ -18,7 +19,7 @@ import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 class RsUnnecessaryQualificationsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedQualifications
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitPath(path: RsPath) {
             val shouldCheckPath = path.parentOfType<RsUseItem>() == null
                 && path.parentOfType<RsVisRestriction>() == null

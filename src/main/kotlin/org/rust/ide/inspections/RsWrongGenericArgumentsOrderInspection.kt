@@ -16,7 +16,7 @@ import org.rust.lang.utils.addToHolder
  */
 class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(methodCall: RsMethodCall) = checkGenericArguments(holder, methodCall)
             override fun visitPath(path: RsPath) {
                 if (!isPathValid(path)) return

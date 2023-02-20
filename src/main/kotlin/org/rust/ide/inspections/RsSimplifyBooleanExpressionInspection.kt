@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.RsVisitor
 class RsSimplifyBooleanExpressionInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Simplify boolean expression"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
 
         override fun visitExpr(expr: RsExpr) {
             if (expr.isPure() == true && BooleanExprSimplifier.canBeSimplified(expr)) {

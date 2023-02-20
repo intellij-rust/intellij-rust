@@ -16,8 +16,9 @@ class RsDuplicatedTraitMethodBindingInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Duplicated trait method parameter binding"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(function: RsFunction) {
+        object : RsWithMacrosInspectionVisitor() {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(function: RsFunction) {
                 if (function.owner !is RsAbstractableOwner.Trait) return
                 if (!function.isAbstract) return
 

@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.expandedStmtsAndTailExpr
@@ -99,7 +100,7 @@ private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
 class RsUnusedMustUseInspection : RsLintInspection() {
     override fun getLint(element: PsiElement) = RsLint.UnusedMustUse
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitExprStmt(o: RsExprStmt) {
             super.visitExprStmt(o)
             val parent = o.parent
