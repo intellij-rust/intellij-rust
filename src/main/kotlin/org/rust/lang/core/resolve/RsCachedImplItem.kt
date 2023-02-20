@@ -10,7 +10,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.SmartList
 import com.intellij.util.recursionSafeLazy
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
@@ -53,7 +53,7 @@ class RsCachedImplItem(
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */
     val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazy(PUBLICATION) {
-        val membersMap = THashMap<String, MutableList<RsAbstractable>>()
+        val membersMap = Object2ObjectOpenHashMap<String, MutableList<RsAbstractable>>()
         for (member in impl.members?.expandedMembers.orEmpty()) {
             val name = member.name ?: continue
             membersMap.getOrPut(name) { SmartList() }.add(member)
