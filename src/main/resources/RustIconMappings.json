@@ -7,9 +7,11 @@
             "rustRepl.svg": "icons/rustRepl.svg",
             "toolWindow.svg": "icons/toolWindow.svg",
 
-            "rustFile.svg": "icons/rustFile.svg",
-            "rustMain.svg": "icons/rustMain.svg",
-            "rustMod.svg": "icons/rustMod.svg",
+            "rustFile.svg": [
+                "icons/rustFile.svg",
+                "icons/rustMain.svg",
+                "icons/rustMod.svg"
+            ],
 
             "cargo.svg": "icons/cargo.svg",
             "cargoGenerate.svg": "icons/cargoGenerate.svg",
