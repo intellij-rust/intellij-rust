@@ -20,7 +20,7 @@ class RsDeriveTraitReferenceImpl(
 ) : RsReferenceCached<RsPath>(element),
     RsPathReference {
 
-    override fun resolveInner(): List<RsElement> {
+    override fun multiResolveUncached(): List<RsElement> {
         // We resolve standard derive proc macros, such as Derive or Display,
         // to their corresponding traits,
         // because resolving them to macros makes little sense to users (these macros are empty)
@@ -32,8 +32,8 @@ class RsDeriveTraitReferenceImpl(
         return element.resolveToProcMacro()
     }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        (element is RsTraitItem || element is RsFunction) && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        (element is RsTraitItem || element is RsFunction) && super.isReferenceToInner(element)
 }
 
 private fun RsPath.resolveToDerivedTrait(): List<RsTraitItem> {

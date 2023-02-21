@@ -7,10 +7,9 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
-import org.rust.CheckTestmarkHit
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 
 class RsGotoDeclarationTest : RsTestBase() {
@@ -197,6 +196,18 @@ class RsGotoDeclarationTest : RsTestBase() {
         }
         fn main() {
             let a: <S as Trait>::/*caret_before*/Item;
+        }
+    """)
+
+    @ExpandMacros(MacroExpansionScope.WORKSPACE)
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attr proc macro`() = doTest("""
+        use test_proc_macros::attr_add_to_fn_beginning;
+
+        #[attr_add_to_fn_beginning(fn /*caret_after*/foo() {})]
+        fn main() {
+            let _ = /*caret_before*/foo();
         }
     """)
 

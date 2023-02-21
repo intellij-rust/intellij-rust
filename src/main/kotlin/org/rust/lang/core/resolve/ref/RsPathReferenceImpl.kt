@@ -34,7 +34,7 @@ class RsPathReferenceImpl(
 ) : RsReferenceBase<RsPath>(element),
     RsPathReference {
 
-    override fun isReferenceTo(target: PsiElement): Boolean {
+    override fun isReferenceToInner(target: PsiElement): Boolean {
         if (target is RsFieldDecl) return false
 
         val path = this.element
@@ -44,7 +44,7 @@ class RsPathReferenceImpl(
             val owner = target.owner
 
             if (target is RsTypeAlias && owner.isImplOrTrait && path.parent is RsAssocTypeBinding) {
-                return super.isReferenceTo(target)
+                return super.isReferenceToInner(target)
             }
 
             if (owner.isImplOrTrait && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
@@ -77,7 +77,7 @@ class RsPathReferenceImpl(
                 }
             }
         }
-        val resolved = resolve()
+        val resolved = resolveInner()
         return target.manager.areElementsEquivalent(resolved, target)
     }
 
@@ -99,12 +99,12 @@ class RsPathReferenceImpl(
         )
     }
 
-    override fun resolve(): RsElement? = rawMultiResolve().singleOrNull()?.element
+    override fun resolveInner(): RsElement? = rawMultiResolve().singleOrNull()?.element
 
-    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+    override fun multiResolveInner(incompleteCode: Boolean): Array<out ResolveResult> =
         rawMultiResolve().toTypedArray()
 
-    override fun multiResolve(): List<RsElement> =
+    override fun multiResolveInner(): List<RsElement> =
         rawMultiResolve().map { it.element }
 
     override fun multiResolveIfVisible(): List<RsElement> =

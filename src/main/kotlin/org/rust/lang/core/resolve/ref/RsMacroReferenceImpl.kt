@@ -16,9 +16,9 @@ class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacr
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
 
-    override fun resolveInner(): List<RsElement>
+    override fun multiResolveUncached(): List<RsElement>
         = collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsMacroBinding && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsMacroBinding && super.isReferenceToInner(element)
 }

@@ -22,18 +22,18 @@ class RsMethodCallReferenceImpl(
     element: RsMethodCall
 ) : RsReferenceBase<RsMethodCall>(element) {
 
-    override fun multiResolve(): List<RsElement> =
+    override fun multiResolveInner(): List<RsElement> =
         element.inference?.getResolvedMethod(element)?.map { it.element } ?: emptyList()
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsFunction && element.isMethod && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsFunction && element.isMethod && super.isReferenceToInner(element)
 }
 
 class RsFieldLookupReferenceImpl(
     element: RsFieldLookup
 ) : RsReferenceBase<RsFieldLookup>(element) {
 
-    override fun multiResolve(): List<RsElement> =
+    override fun multiResolveInner(): List<RsElement> =
         element.inference?.getResolvedField(element) ?: emptyList()
 
     override fun handleElementRename(newName: String): PsiElement {
@@ -42,8 +42,8 @@ class RsFieldLookupReferenceImpl(
         return element
     }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsFieldDecl && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsFieldDecl && super.isReferenceToInner(element)
 }
 
 fun resolveMethodCallReferenceWithReceiverType(

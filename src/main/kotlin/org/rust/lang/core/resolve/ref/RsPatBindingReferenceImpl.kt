@@ -19,12 +19,12 @@ class RsPatBindingReferenceImpl(
     element: RsPatBinding
 ) : RsReferenceCached<RsPatBinding>(element) {
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processPatBindingResolveVariants(element, false, it) }
 
-    override fun isReferenceTo(element: PsiElement): Boolean {
+    override fun isReferenceToInner(element: PsiElement): Boolean {
         if (element !is RsElement || !element.isConstantLike && element !is RsNamedFieldDecl) return false
-        val target = resolve()
+        val target = resolveInner()
         return element.manager.areElementsEquivalent(target, element)
     }
 

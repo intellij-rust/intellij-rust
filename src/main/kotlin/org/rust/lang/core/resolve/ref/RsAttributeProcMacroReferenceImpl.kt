@@ -17,11 +17,11 @@ class RsAttributeProcMacroReferenceImpl(
 ) : RsReferenceCached<RsPath>(element),
     RsPathReference {
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) {
             processProcMacroResolveVariants(element, it, isCompletion = false)
         }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsFunction && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsFunction && super.isReferenceToInner(element)
 }

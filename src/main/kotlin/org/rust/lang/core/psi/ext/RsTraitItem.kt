@@ -95,7 +95,7 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
         .transforming {
             if (it is RsMacroBodyReferenceDelegateImpl) {
-                it.delegates
+                it.expandedDelegates
             } else {
                 listOf(it)
             }

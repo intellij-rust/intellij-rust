@@ -18,7 +18,7 @@ import org.rust.lang.core.types.type
 class RsIndexExprReferenceImpl(element: RsIndexExpr) : RsReferenceCached<RsIndexExpr>(element), MultiRangeReference {
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
-    override fun resolveInner(): List<RsElement> {
+    override fun multiResolveUncached(): List<RsElement> {
         val parent = element.parent
 
         // Assume that IndexMut will be used if the indexed expression is on the left side of some assignment

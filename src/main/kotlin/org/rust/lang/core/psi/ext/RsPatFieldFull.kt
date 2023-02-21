@@ -25,7 +25,7 @@ abstract class RsPatFieldFullImplMixin(type: IElementType) : RsElementImpl(type)
         get() = identifier ?: integerLiteral!!
 
     override fun getReference(): RsReference = object : RsReferenceCached<RsPatFieldFull>(this@RsPatFieldFullImplMixin) {
-        override fun resolveInner(): List<RsElement> =
+        override fun multiResolveUncached(): List<RsElement> =
             collectResolveVariants(element.referenceName) { processStructPatternFieldResolveVariants(element, it) }
 
         override val cacheDependency: ResolveCacheDependency

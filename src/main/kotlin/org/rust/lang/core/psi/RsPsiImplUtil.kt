@@ -123,8 +123,14 @@ object RsPsiImplUtil {
      * [org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl]. We use the macro
      * call as a search scope in this case
      */
-    fun localOrMacroSearchScope(scope: PsiElement): LocalSearchScope =
-        LocalSearchScope(scope.findMacroCallExpandedFrom() ?: scope)
+    fun localOrMacroSearchScope(scope: PsiElement): LocalSearchScope {
+        val macroCall = when (val kind = scope.findMacroCallExpandedFrom()?.kind) {
+            is RsPossibleMacroCallKind.MacroCall -> kind.call
+            is RsPossibleMacroCallKind.MetaItem -> kind.meta.owner
+            null -> null
+        }
+        return LocalSearchScope(macroCall ?: scope)
+    }
 }
 
 // TODO support local modules, e.g. `fn foo() { #[path = "baz.rs"] mod bar; }`

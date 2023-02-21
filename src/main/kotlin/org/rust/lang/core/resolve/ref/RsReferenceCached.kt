@@ -14,12 +14,12 @@ abstract class RsReferenceCached<T : RsReferenceElement>(
     element: T
 ) : RsReferenceBase<T>(element) {
 
-    protected abstract fun resolveInner(): List<RsElement>
+    protected abstract fun multiResolveUncached(): List<RsElement>
 
-    final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+    final override fun multiResolveInner(incompleteCode: Boolean): Array<out ResolveResult> =
         cachedMultiResolve().toTypedArray()
 
-    final override fun multiResolve(): List<RsElement> =
+    final override fun multiResolveInner(): List<RsElement> =
         cachedMultiResolve().mapNotNull { it.element as? RsElement }
 
     private fun cachedMultiResolve(): List<PsiElementResolveResult> {
@@ -31,7 +31,7 @@ abstract class RsReferenceCached<T : RsReferenceElement>(
 
     private object Resolver : (RsReferenceElement) -> List<PsiElementResolveResult> {
         override fun invoke(ref: RsReferenceElement): List<PsiElementResolveResult> {
-            return (ref.reference as RsReferenceCached<*>).resolveInner().map { PsiElementResolveResult(it) }
+            return (ref.reference as RsReferenceCached<*>).multiResolveUncached().map { PsiElementResolveResult(it) }
         }
     }
 }

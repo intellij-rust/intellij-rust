@@ -18,9 +18,9 @@ class RsLabelReferenceImpl(
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it) }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsLabelDecl && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        element is RsLabelDecl && super.isReferenceToInner(element)
 }

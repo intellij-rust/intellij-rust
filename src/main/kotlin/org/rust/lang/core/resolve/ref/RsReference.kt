@@ -15,6 +15,9 @@ interface RsReference : PsiPolyVariantReference {
     override fun resolve(): RsElement?
 
     fun multiResolve(): List<RsElement>
+
+    /** @return non-null value if the reference is inside a macro call body */
+    val expandedDelegates: List<RsReference>?
 }
 
 

@@ -27,6 +27,11 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
     override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? {
         if (ref !is RsReference) return null
 
+        val expandedDelegates = ref.expandedDelegates
+        if (expandedDelegates != null) {
+            return expandedDelegates.firstNotNullOfOrNull { getElementByReference(it, flags) }
+        }
+
         // prefer pattern binding to its target if element name is accepted
         if (ref is RsPatBindingReferenceImpl && BitUtil.isSet(flags, TargetElementUtil.ELEMENT_NAME_ACCEPTED)) {
             return ref.element

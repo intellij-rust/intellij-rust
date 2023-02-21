@@ -18,9 +18,9 @@ class RsLifetimeReferenceImpl(
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLifetimeResolveVariants(element, it) }
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        (element is RsLifetimeParameter || element is RsLifetime) && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        (element is RsLifetimeParameter || element is RsLifetime) && super.isReferenceToInner(element)
 }

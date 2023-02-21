@@ -37,17 +37,17 @@ class RsMacroPathReferenceImpl(
 ) : RsReferenceBase<RsPath>(element),
     RsPathReference {
 
-    override fun isReferenceTo(element: PsiElement): Boolean =
-        (element is RsMacroDefinitionBase || element is RsFunction /* proc macro */) && super.isReferenceTo(element)
+    override fun isReferenceToInner(element: PsiElement): Boolean =
+        (element is RsMacroDefinitionBase || element is RsFunction /* proc macro */) && super.isReferenceToInner(element)
 
-    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
-        return resolve()?.let { arrayOf(PsiElementResolveResult(it)) } ?: ResolveResult.EMPTY_ARRAY
+    override fun multiResolveInner(incompleteCode: Boolean): Array<out ResolveResult> {
+        return resolveInner()?.let { arrayOf(PsiElementResolveResult(it)) } ?: ResolveResult.EMPTY_ARRAY
     }
 
-    override fun multiResolve(): List<RsNamedElement> =
-        listOfNotNull(resolve())
+    override fun multiResolveInner(): List<RsNamedElement> =
+        listOfNotNull(resolveInner())
 
-    override fun resolve(): RsNamedElement? {
+    override fun resolveInner(): RsNamedElement? {
         return RsResolveCache.getInstance(element.project)
             .resolveWithCaching(element, LOCAL_AND_RUST_STRUCTURE, Resolver)
     }

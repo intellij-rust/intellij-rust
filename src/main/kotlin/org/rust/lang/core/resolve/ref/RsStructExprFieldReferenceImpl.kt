@@ -22,7 +22,7 @@ class RsStructLiteralFieldReferenceImpl(
 
     override fun getVariants(): Array<out LookupElement> = LookupElement.EMPTY_ARRAY
 
-    override fun resolveInner(): List<RsElement> =
+    override fun multiResolveUncached(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processStructLiteralFieldResolveVariants(element, false, it) }
 
     override fun handleElementRename(newName: String): PsiElement {
