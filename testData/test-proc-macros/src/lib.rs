@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use proc_macro::{Delimiter, Group, Ident, Span, TokenStream, TokenTree};
+use proc_macro::{Delimiter, Group, Ident, Punct, Span, TokenStream, TokenTree};
 
 #[proc_macro]
 pub fn function_like_as_is(input: TokenStream) -> TokenStream {
@@ -176,4 +176,26 @@ pub fn attr_add_to_fn_beginning(attr: TokenStream, item: TokenStream) -> TokenSt
             TokenTree::Punct(..) | TokenTree::Literal(..) => tt,
         }
     }).collect()
+}
+
+#[proc_macro_attribute]
+pub fn attr_as_is_discard_punct_spans(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    discard_punct_spans_stream(item)
+}
+
+fn discard_punct_spans_stream(ts: TokenStream) -> TokenStream {
+    ts.into_iter().map(discard_punct_spans_tree).collect()
+}
+
+fn  discard_punct_spans_tree(tt: TokenTree) -> TokenTree {
+    match tt {
+        TokenTree::Group(g) => {
+            let dg = Group::new(g.delimiter(), discard_punct_spans_stream(g.stream()));
+            TokenTree::Group(dg)
+        }
+        TokenTree::Punct(p) => {
+            TokenTree::Punct(Punct::new(p.as_char(), p.spacing()))
+        }
+        TokenTree::Ident(..) | TokenTree::Literal(..) => tt,
+    }
 }

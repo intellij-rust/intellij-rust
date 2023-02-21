@@ -8,8 +8,8 @@ package org.rust.lang.core.macros
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
-import org.rust.RsTestBase
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.ext.*
 
@@ -184,6 +184,25 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
                     //^
     """, SELECT_NAME)
 
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test macro body is fully mapped attr_as_is`() = checkFullyMapped("""
+        #[test_proc_macros::attr_as_is]
+        /*<selection>*/fn foo() {
+            let a: ((f64,), f64) = {((1.,), 2.2)};
+        }/*</selection>*/
+    """)
+
+    /** A test for [org.rust.lang.core.macros.tt.SubtreeIdRecovery] */
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test macro body is fully mapped attr_as_is_discard_punct_spans`() = checkFullyMapped("""
+        #[test_proc_macros::attr_as_is_discard_punct_spans]
+        /*<selection>*/fn foo() {
+            let a: ((f64,), f64) = {((1.,), 2.2)};
+        }/*</selection>*/
+    """)
+
     private fun checkOffset(@Language("Rust") code: String, refiner: (RsElement) -> PsiElement = { it }) {
         InlineFile(code).withCaret()
         val ref = findElementInEditor<RsReferenceElement>("^")
@@ -211,6 +230,26 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
         check(elementInExpansion.isExpandedFromMacro) { "Must resolve to macro expansion" }
         val elementInCallBody = elementInExpansion.findElementExpandedFrom()
         assertNull(elementInCallBody)
+    }
+
+    private fun checkFullyMapped(@Language("Rust") code: String) {
+        val preparedCode = code.trimIndent()
+            .replace("/*<selection>*/", "<selection><caret>")
+            .replace("/*</selection>*/", "</selection>")
+        InlineFile(preparedCode)
+        val macroCall = myFixture.file
+            .descendantsOfType<RsAttrProcMacroOwner>()
+            .mapNotNull { it.procMacroAttribute.attr }
+            .single()
+        val expansion = macroCall.expansionResult.unwrap()
+        val ranges = expansion.ranges.ranges
+        if (ranges.size != 1) {
+            fail("Expected `1` mappable range, found `${ranges.size}` ranges")
+        }
+
+        val mappedSourceRange = ranges.first().srcRange.shiftRight(macroCall.bodyTextRange!!.startOffset)
+        myFixture.editor.selectionModel.setSelection(mappedSourceRange.startOffset, mappedSourceRange.endOffset)
+        myFixture.checkResult(preparedCode)
     }
 
     companion object {
