@@ -219,26 +219,26 @@ fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
  * **macro call** body and this macro is successfully expanded, returns
  * a leaf element inside the macro expansion that is expanded from [this] element. Returns a
  * list of elements because an element inside a macro call body can be placed in a macro expansion
- * multiple times. Returns null if [this] element is not inside a macro call body, or the macro
- * expansion failed. Works for both declarative and procedural macros.
+ * multiple times. Returns `null` if [this] element is not inside a macro call body.
+ * Works for both declarative and procedural macros.
  *
  * # Examples
  *
- * Returns an empty list if [this] element is not placed to an expansion:
+ * Returns an *empty list* if the macro expansion failed or [this] element is not placed to an expansion:
  *
  * ```rust
  * macro_rules foo { (bar) => { fn baz(){} } }
  * foo!(bar); // This `bar` is matched with the `bar` in the pattern and is not placed to the expansion
  * ```
  *
- * Returns a single-element list if [this] element is placed into the expansion only once:
+ * Returns a *single-element list* if [this] element is placed into the expansion only once:
  *
  * ```rust
  * macro_rules foo { ($i:ident) => { fn $i(){} } }
  * foo!(bar); // This `bar` is placed to the expansion as a function name
  * ```
  *
- * Returns a list of multiple elements if [this] element is placed into the expansion multiple times:
+ * Returns a *list of multiple elements* if [this] element is placed into the expansion multiple times:
  *
  * ```rust
  * macro_rules foo { ($i:ident) => { fn $i(){} struct $i{} } }
@@ -270,8 +270,13 @@ private fun PsiElement.findExpansionElementsNonRecursive(cache: AttrCache): List
             else -> null
         }
     } ?: return null
-    val expansion = call.expansion ?: return null
-    val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
+
+    if (call is RsMetaItem && call.path?.isAncestorOf(this) == true) {
+        return null
+    }
+
+    val expansion = call.expansion ?: return emptyList()
+    val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return emptyList()
     val expansionFile = expansion.file
     return mappedOffsets.mapNotNull { mappedOffset ->
         expansionFile.findElementAt(mappedOffset)
