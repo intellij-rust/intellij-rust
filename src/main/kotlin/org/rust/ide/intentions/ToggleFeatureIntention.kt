@@ -19,9 +19,9 @@ import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.*
 
 class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntention.Context>(), HighPriorityAction {
-    data class Context(val featureName: String, val element: RsElement)
-
     override fun getFamilyName() = RsBundle.message("intention.Rust.ToggleFeatureIntention.family.name")
+
+    data class Context(val featureName: String, val element: RsElement)
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val featureMetaItem = element.ancestorOrSelf<RsMetaItem>()
@@ -40,6 +40,8 @@ class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntenti
 
         return Context(featureName, context)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val element = ctx.element

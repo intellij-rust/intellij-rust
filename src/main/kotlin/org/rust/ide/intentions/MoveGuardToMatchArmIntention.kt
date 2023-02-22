@@ -8,14 +8,12 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsIfExpr
-import org.rust.lang.core.psi.RsLetExpr
-import org.rust.lang.core.psi.RsMatchArmGuard
-import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.ide.utils.PsiModificationUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantOfTypeOrSelf
 import org.rust.lang.core.psi.ext.parentMatchArm
+import org.rust.openapiext.moveCaretToOffset
 
 class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMatchArmIntention.Context>() {
     override fun getText(): String = "Move guard inside the match arm"
@@ -32,16 +30,17 @@ class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMat
         if (guard.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return null // TODO: support `if let guard` syntax
         val guardExpr = guard.expr ?: return null
         val armBody = guard.parentMatchArm.expr ?: return null
+        if (!PsiModificationUtil.canReplaceAll(guard, armBody)) return null
         return Context(guard, guardExpr, armBody)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (guard, guardExpr, oldBody) = ctx
+        val (guard, guardExpr, oldArmBody) = ctx
         val caretOffsetInGuard = editor.caretModel.offset - guard.textOffset
         val psiFactory = RsPsiFactory(project)
-        var newBody = psiFactory.createIfExpression(guardExpr, oldBody)
-        newBody = oldBody.replace(newBody) as RsIfExpr
+        var newArmBody = psiFactory.createIfExpression(guardExpr, oldArmBody)
+        newArmBody = oldArmBody.replace(newArmBody) as RsIfExpr
         guard.delete()
-        editor.caretModel.moveToOffset(newBody.textOffset + caretOffsetInGuard)
+        editor.moveCaretToOffset(newArmBody, newArmBody.textOffset + caretOffsetInGuard)
     }
 }

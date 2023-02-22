@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
@@ -32,9 +33,9 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
 
         val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
         if (nonVoidArm.matchArmGuard != null || nonVoidArm.outerAttrList.isNotEmpty()) return null
-        val pat = nonVoidArm.pat
+        if (!PsiModificationUtil.canReplace(matchExpr)) return null
 
-        return Context(matchExpr, matchTarget, nonVoidArm, pat)
+        return Context(matchExpr, matchTarget, nonVoidArm, nonVoidArm.pat)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.moveCaretToOffset
 import org.rust.openapiext.runWriteCommandAction
 
 class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringArgumentIntention.Context>() {
@@ -114,8 +115,8 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         )
 
         project.runWriteCommandAction(text) {
-            macroCall.replace(newMacroCall) as RsMacroCall
-            editor.caretModel.moveToOffset(editor.caretModel.offset + newPlaceholder.length)
+            val inserted = macroCall.replace(newMacroCall) as RsMacroCall
+            editor.moveCaretToOffset(inserted, editor.caretModel.offset + newPlaceholder.length)
         }
     }
 

@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring.implementMembers
 
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -24,18 +23,13 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.openapiext.checkReadAccessAllowed
-import org.rust.openapiext.checkWriteAccessAllowed
-import org.rust.openapiext.checkWriteAccessNotAllowed
-import org.rust.openapiext.selectElement
+import org.rust.openapiext.*
 import kotlin.math.max
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     checkWriteAccessNotAllowed()
     val (implInfo, trait) = findMembersToImplement(impl) ?: run {
-        if (editor != null) {
-            HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
-        }
+        editor?.showErrorHint("No members to implement have been found")
         return
     }
 

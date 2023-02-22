@@ -15,10 +15,16 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.createSmartPointer
+import org.rust.openapiext.showErrorHint
 
 class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTypeParamIntention.Context>() {
     override fun getText(): String = "Convert `impl Trait` to type parameter"
     override fun getFamilyName(): String = text
+
+    data class Context(
+        val argType: RsTraitType,
+        val fnSignature: RsFunction
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val traitType = element.ancestorStrict<RsTraitType>() ?: return null
@@ -36,10 +42,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         if (argType.descendantsOfType<RsTraitType>().any { it.impl != null }) {
             OuterImplTestMark.hit()
             if (fnSignature.isIntentionPreviewElement) return
-            HintManager.getInstance().showErrorHint(
-                editor,
-                "Please convert innermost `impl Trait` first",
-                HintManager.UNDER)
+            editor.showErrorHint("Please convert innermost `impl Trait` first", HintManager.UNDER)
             return
         }
 
@@ -80,11 +83,6 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         tpl.withExpressionsHighlighting()
         tpl.runInline()
     }
-
-    data class Context(
-        val argType: RsTraitType,
-        val fnSignature: RsFunction
-    )
 
     companion object {
         object OuterImplTestMark : Testmark()

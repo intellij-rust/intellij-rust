@@ -281,6 +281,9 @@ fun PsiElement?.getNextNonWhitespaceSibling(): PsiElement? =
 fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
 
+fun PsiElement.isContextOf(child: PsiElement): Boolean =
+    child.contexts.contains(this)
+
 val PsiElement.startOffset: Int
     get() = textRange.startOffset
 

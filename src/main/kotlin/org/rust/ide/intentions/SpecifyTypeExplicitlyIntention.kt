@@ -9,13 +9,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.import.RsImportHelper
-import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.psi.ext.startOffset
@@ -30,8 +29,13 @@ import org.rust.lang.core.types.type
 
 class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeExplicitlyIntention.Context>() {
     override fun getFamilyName() = "Specify type explicitly"
-
     override fun getText() = "Specify type explicitly"
+
+    data class Context(
+        val type: Ty,
+        val letDecl: RsLetDecl,
+        val place: PsiInsertionPlace,
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null
@@ -52,7 +56,9 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
             patType
         }
 
-        return Context(type, letDecl)
+        val place = PsiInsertionPlace.after(pat) ?: return null
+
+        return Context(type, letDecl, place)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
@@ -61,15 +67,9 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         val (toImport, toQualify) = RsImportHelper.getTypeReferencesInfoFromTys(letDecl, ctx.type)
 
         val createdType = factory.createType(ctx.type.renderInsertionSafe(letDecl, useQualifiedName = toQualify))
-        val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
-        letDecl.addAfter(createdType, colon)
+
+        ctx.place.insertMultiple(factory.createColon(), createdType)
 
         RsImportHelper.importElements(letDecl, toImport)
     }
-
-
-    data class Context(
-        val type: Ty,
-        val letDecl: RsLetDecl
-    )
 }

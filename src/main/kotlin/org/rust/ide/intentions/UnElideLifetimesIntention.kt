@@ -18,6 +18,8 @@ import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.doc.psi.ext.isInDocComment
+import org.rust.openapiext.moveCaretToOffset
+import org.rust.openapiext.setSelection
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>() {
     override fun getText() = "Un-elide lifetimes"
@@ -67,8 +69,8 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>(
                 override fun visitLifetime(o: RsLifetime) {
                     if (o.quoteIdentifier.text == unknownLifetime) {
                         val start = o.startOffset + 1
-                        editor.caretModel.moveToOffset(start)
-                        editor.selectionModel.setSelection(start, o.endOffset)
+                        editor.moveCaretToOffset(o, start)
+                        editor.setSelection(o, start, o.endOffset)
                     }
                 }
             })

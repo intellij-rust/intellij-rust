@@ -10,22 +10,69 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.template.buildAndRunTemplate
+import org.rust.ide.utils.template.canRunTemplateFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.expectedType
+import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {
     override fun getFamilyName() = "Create function"
+
+    sealed interface Context {
+        val name: String
+        val callElement: RsElement
+        val place: FunctionInsertionPlace
+        val arguments: RsValueArgumentList
+        val returnType: ReturnType
+        val visibility: String
+        val isAsync: Boolean get() = callElement.isAtLeastEdition2018
+
+        open class Function(
+            override val callElement: RsCallExpr,
+            override val name: String,
+            override val place: FunctionInsertionPlace,
+            private val module: RsMod,
+        ) : Context {
+            override val arguments: RsValueArgumentList get() = callElement.valueArgumentList
+            override val returnType: ReturnType get() = ReturnType.create(callElement)
+            override val visibility: String get() = getVisibility(module, callElement.containingMod)
+            override val isAsync: Boolean get() = super.isAsync
+                && (callElement.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
+        }
+
+        class Method(
+            override val callElement: RsMethodCall,
+            override val name: String,
+            override val place: FunctionInsertionPlace,
+            private val item: RsStructOrEnumItemElement,
+        ) : Context {
+            override val arguments: RsValueArgumentList get() = callElement.valueArgumentList
+            override val returnType: ReturnType get() = ReturnType.create(callElement.parentDotExpr)
+            override val visibility: String
+                get() {
+                    val parentImpl = callElement.contextStrict<RsImplItem>()
+                    return when {
+                        // creating a method inside the same impl
+                        (parentImpl?.typeReference?.rawType as? TyAdt)?.item == item && parentImpl.traitRef == null -> ""
+                        callElement.containingCrate != item.containingCrate -> "pub "
+                        else -> "pub(crate)"
+                    }
+                }
+            override val isAsync: Boolean = super.isAsync
+                && (callElement.parentDotExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
+        }
+    }
 
     class ReturnType(val type: Ty, val needsTemplate: Boolean) {
         companion object {
@@ -39,63 +86,29 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                     is RsDotExpr -> parent.fieldLookup?.identifier?.text != "await"
                     else -> true
                 }
-                if (needsTemplate) {
-                    return ReturnType(expected, true)
+                return if (needsTemplate) {
+                    ReturnType(expected, true)
+                } else {
+                    ReturnType(expected.takeIf { it !is TyUnknown } ?: TyUnit.INSTANCE, false)
                 }
-                return ReturnType(expected.takeIf { it !is TyUnknown } ?: TyUnit.INSTANCE, false)
             }
         }
     }
 
-    sealed class Context(val name: String, val callElement: RsElement) {
-        abstract val visibility: String
-        open val isAsync: Boolean = callElement.isAtLeastEdition2018
-        abstract val arguments: RsValueArgumentList
-        abstract val returnType: ReturnType
-
-        open class Function(callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
-            override val visibility: String = getVisibility(module, callExpr.containingMod)
-            override val isAsync: Boolean = super.isAsync
-                && (callExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
-            override val arguments: RsValueArgumentList = callExpr.valueArgumentList
-            override val returnType: ReturnType = ReturnType.create(callExpr)
-        }
-
-        class AssociatedFunction(
-            callExpr: RsCallExpr,
-            name: String,
-            module: RsMod,
-            val item: RsStructOrEnumItemElement?,
-            val existingImpl: RsImplItem?,
-        ) : Function(callExpr, name, module)
-
-        class Method(
-            val methodCall: RsMethodCall,
-            name: String,
+    sealed interface FunctionInsertionPlace {
+        class In(val place: PsiInsertionPlace): FunctionInsertionPlace
+        class InNewImplIn(
+            val placeForImpl: PsiInsertionPlace,
+            val itemName: String,
             val item: RsStructOrEnumItemElement
-        ) : Context(name, methodCall) {
-            override val visibility: String
-                get() {
-                    val parentImpl = methodCall.parentOfType<RsImplItem>()
-                    return when {
-                        // creating a method inside the same impl
-                        (parentImpl?.typeReference?.rawType as? TyAdt)?.item == item && parentImpl.traitRef == null -> ""
-                        methodCall.containingCrate != item.containingCrate -> "pub "
-                        else -> "pub(crate)"
-                    }
-                }
-            override val isAsync: Boolean = super.isAsync
-                && (methodCall.parentDotExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
-            override val arguments: RsValueArgumentList = methodCall.valueArgumentList
-            override val returnType: ReturnType = ReturnType.create(methodCall.parentDotExpr)
-        }
+        ): FunctionInsertionPlace
     }
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val path = element.parentOfType<RsPath>()
-        val functionCall = path?.parentOfType<RsCallExpr>()
+        val path = element.contextStrict<RsPath>()
+        val functionCall = path?.contextStrict<RsCallExpr>()
         if (functionCall != null) {
-            if (!functionCall.expr.isAncestorOf(path)) return null
+            if (!functionCall.expr.isContextOf(path)) return null
             if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
             val target = getTargetItemForFunctionCall(path) ?: return null
@@ -103,46 +116,66 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
 
             return when (target) {
                 is RsMod -> {
+                    val place = FunctionInsertionPlace.In(
+                        PsiInsertionPlace.forItemInModAfter(target, functionCall) ?: return null
+                    )
                     text = "Create function `$name`"
-                    Context.Function(functionCall, name, target)
+                    Context.Function(functionCall, name, place, target)
                 }
 
                 is RsStructOrEnumItemElement -> {
+                    val place = FunctionInsertionPlace.InNewImplIn(
+                        PsiInsertionPlace.forItemAfter(target) ?: return null,
+                        target.name ?: return null,
+                        target
+                    )
                     text = "Create associated function `${target.name}::$name`"
-                    Context.AssociatedFunction(functionCall, name, target.containingMod, target, existingImpl = null)
+                    Context.Function(functionCall, name, place, target.containingMod)
                 }
 
                 is RsImplItem -> {
+                    val place = FunctionInsertionPlace.In(PsiInsertionPlace.forTraitOrImplMember(target) ?: return null)
                     text = "Create associated function `Self::$name`"
-                    Context.AssociatedFunction(functionCall, name, target.containingMod, item = null, target)
+                    Context.Function(functionCall, name, place, target.containingMod)
                 }
 
                 else -> null
             }
         }
-        val methodCall = element.parentOfType<RsMethodCall>()
+        val methodCall = element.contextStrict<RsMethodCall>()
         if (methodCall != null) {
-            if (methodCall.reference.resolve() != null) return null
+            if (methodCall.reference.multiResolve().isNotEmpty()) return null
             if (element != methodCall.identifier) return null
 
             val name = methodCall.identifier.text
             val type = methodCall.parentDotExpr.expr.type.stripReferences() as? TyAdt ?: return null
             if (type.item.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
 
+            val ancestorImpl = methodCall.contextStrict<RsImplItem>()
+            val place = if (ancestorImpl != null && ancestorImpl.traitRef == null && (ancestorImpl.typeReference?.normType as? TyAdt)?.item == type.item) {
+                FunctionInsertionPlace.In(PsiInsertionPlace.forTraitOrImplMember(ancestorImpl) ?: return null)
+            } else {
+                FunctionInsertionPlace.InNewImplIn(
+                    PsiInsertionPlace.forItemAfter(type.item) ?: return null,
+                    type.item.name ?: return null,
+                    type.item
+                )
+            }
+
             text = "Create method `$name`"
-            return Context.Method(methodCall, name, type.item)
+            return Context.Method(methodCall, name, place, type.item)
         }
         return null
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val function = buildCallable(project, ctx) ?: return
-        val inserted = insertCallable(ctx, function) ?: return
+        val function = buildCallable(project, ctx)
+        val inserted = insertCallable(ctx, function)
 
         val types = ctx.arguments.exprList.map { it.type } + ctx.returnType.type
         RsImportHelper.importTypeReferencesFromTys(inserted, types)
 
-        if (inserted.containingFile == ctx.callElement.containingFile) {
+        if (editor.canRunTemplateFor(inserted)) {
             val toBeReplaced = inserted.rawValueParameters
                 .flatMap { listOfNotNull(it.pat, it.typeReference) }
                 .toMutableList()
@@ -159,7 +192,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         }
     }
 
-    private fun buildCallable(project: Project, ctx: Context): RsFunction? {
+    private fun buildCallable(project: Project, ctx: Context): RsFunction {
         val functionName = ctx.name
 
         val factory = RsPsiFactory(project)
@@ -178,7 +211,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         } else ""
         val paramsText = parameters.joinToString(", ")
 
-        return factory.tryCreateFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    todo!()\n}")
+        return factory.createFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    todo!()\n}")
     }
 
     private data class CallableConfig(
@@ -200,87 +233,27 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             .filterByTypes(arguments.exprList.map { it.type }.plus(returnType))
 
         val filteredConstraints = if (ctx is Context.Method) {
-            val params = callExpr.parentOfType<RsImplItem>()?.typeParameters.orEmpty()
+            val params = callExpr.contextStrict<RsImplItem>()?.typeParameters.orEmpty()
             genericConstraints.withoutTypes(params)
         } else genericConstraints
 
         return CallableConfig(parameters, ctx.returnType.type, filteredConstraints)
     }
 
-    private fun insertCallable(ctx: Context, function: RsFunction): RsFunction? {
-        val sourceFunction = ctx.callElement.parentOfType<RsFunction>() ?: return null
-
-        return when (ctx) {
-            is Context.AssociatedFunction -> insertAssociatedFunction(ctx.item, ctx.existingImpl, function)
-            is Context.Function -> insertFunction(ctx.module, sourceFunction, function)
-            is Context.Method -> insertMethod(ctx.item, sourceFunction, function)
-        }
-    }
-
-    private fun insertAssociatedFunction(
-        item: RsStructOrEnumItemElement?,
-        existingImpl: RsImplItem?,
-        function: RsFunction
-    ): RsFunction? {
-        val psiFactory = RsPsiFactory(function.project)
-
-        val impl = existingImpl
-            ?: run {
-                val name = item?.name ?: return null
-                val newImpl = psiFactory.createInherentImplItem(name, item.typeParameterList, item.whereClause)
-                item.parent.addAfter(newImpl, item) as RsImplItem
+    private fun insertCallable(ctx: Context, function: RsFunction): RsFunction {
+        return when (val place = ctx.place) {
+            is FunctionInsertionPlace.In -> {
+                place.place.insert(function)
             }
-
-        return impl.members?.let {
-            it.addBefore(function, it.rbrace) as RsFunction
-        }
-    }
-
-    private fun insertFunction(
-        targetModule: RsMod,
-        sourceFunction: RsFunction,
-        function: RsFunction
-    ): RsFunction {
-        if (targetModule == sourceFunction.containingMod) {
-            val impl: RsTraitOrImpl? = when (val owner = sourceFunction.owner) {
-                is RsAbstractableOwner.Trait -> owner.trait
-                is RsAbstractableOwner.Impl -> owner.impl
-                else -> null
-            }
-
-            val target: RsItemElement = impl ?: sourceFunction
-            return target.parent.addAfter(function, target) as RsFunction
-        }
-
-        return addToModule(targetModule, function)
-    }
-
-    private fun insertMethod(
-        item: RsStructOrEnumItemElement,
-        sourceFunction: RsFunction,
-        function: RsFunction
-    ): RsFunction? {
-        val impl = getOrCreateImpl(item, sourceFunction)
-        return impl.members?.let {
-            it.addBefore(function, it.rbrace) as RsFunction
-        }
-    }
-
-    private fun getOrCreateImpl(item: RsStructOrEnumItemElement, sourceFunction: RsFunction): RsImplItem {
-        val owner = sourceFunction.owner
-        if (owner is RsAbstractableOwner.Impl) {
-            val impl = owner.impl
-            if (impl.traitRef == null && (impl.typeReference?.rawType as? TyAdt)?.item == item) {
-                return impl
+            is FunctionInsertionPlace.InNewImplIn -> {
+                val psiFactory = RsPsiFactory(function.project)
+                val newImpl = psiFactory.createInherentImplItem(place.itemName, place.item.typeParameterList, place.item.whereClause)
+                val insertedImpl = place.placeForImpl.insert(newImpl)
+                insertedImpl.members!!.let {
+                    it.addBefore(function, it.rbrace) as RsFunction
+                }
             }
         }
-
-        val newImpl = RsPsiFactory(item.project).createInherentImplItem(
-            item.name ?: "?",
-            item.typeParameterList,
-            item.whereClause
-        )
-        return item.parent.addAfter(newImpl, item) as RsImplItem
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =

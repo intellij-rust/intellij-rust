@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isStarImport
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Adds curly braces to singleton imports, changing from this
@@ -80,6 +81,6 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         ctx.useSpeck.add(newColonColon)
         ctx.useSpeck.add(newGroup)
 
-        editor.caretModel.moveToOffset(ctx.semicolon.startOffset - 1)
+        editor.moveCaretToOffset(ctx.semicolon, ctx.semicolon.startOffset - 1)
     }
 }

@@ -42,7 +42,9 @@ class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExp
     """)
 }
 
-object RsShowMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {
+object RsShowMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
+    override val expandRecursively: Boolean get() = true
+
     override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
         // do not show anything
     }

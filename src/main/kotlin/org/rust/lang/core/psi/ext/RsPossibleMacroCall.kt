@@ -426,7 +426,7 @@ val RsPossibleMacroCall.expansionResult: RsResult<MacroExpansion, GetMacroExpans
                 it.macroBody == this.macroBody
             } ?: this
             val result = project.macroExpansionManager.getExpansionFor(originalOrSelf)
-            checkExpansionResult(this, result.value)
+            checkExpansionResult(originalOrSelf, result.value)
             result
         }
     }

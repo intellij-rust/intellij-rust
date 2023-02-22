@@ -38,15 +38,15 @@ private class SubtreeTextBuilder(
     private val ranges = SmartList<MappedTextRange>()
 
     fun toText(): Pair<CharSequence, RangeMap> {
-        subtree.appendSubtree()
+        subtree.appendSubtree(isRootSubtree = true)
         return sb to RangeMap(ranges)
     }
 
-    private fun TokenTree.Subtree.appendSubtree() {
+    private fun TokenTree.Subtree.appendSubtree(isRootSubtree: Boolean = false) {
         delimiter?.let { appendDelimiterPart(it, DelimiterBracePart.OPEN) }
         for ((tokenTree, nextTokenTree) in tokenTrees.asSequence().withNext()) {
             when (tokenTree) {
-                is TokenTree.Leaf -> tokenTree.appendLeaf(nextTokenTree, delimiter != null)
+                is TokenTree.Leaf -> tokenTree.appendLeaf(nextTokenTree, isRootSubtree || delimiter != null)
                 is TokenTree.Subtree -> tokenTree.appendSubtree()
             }
         }

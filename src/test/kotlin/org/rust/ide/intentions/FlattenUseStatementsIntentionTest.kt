@@ -11,7 +11,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             /*caret*/HashMap as HM,
             HashSet as HS
         };
-
     """, """
         use /*caret*/std::collections::HashMap as HM;
         use std::collections::HashSet as HS;
@@ -48,7 +47,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             /*caret*/error,
             io
         };
-
     """, """
         use /*caret*/std::error;
         use std::io;
@@ -59,7 +57,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             error,
             /*caret*/io
         };
-
     """, """
         use /*caret*/std::error;
         use std::io;
@@ -71,7 +68,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             io::Write,
             path::PathBuf
         };
-
     """, """
         use /*caret*/std::error::Error;
         use std::io::Write;
@@ -286,7 +282,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             /*caret*/b1::c,
             b2::c
         };
-
     """, """
         use /*caret*/::a1::b1::c;
         use ::a1::b2::c;
@@ -303,7 +298,6 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
             foo,
             bar
         };
-
     """, """
         use foo;
         use foo::foo;
