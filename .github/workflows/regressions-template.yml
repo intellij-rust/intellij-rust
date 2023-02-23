@@ -84,8 +84,8 @@ jobs:
                   components: rust-src
                   default: true
 
-            - name: Install amethyst dependencies
-              run: sudo apt-get install -y libasound2-dev
+            - name: Install bevy dependencies
+              run: sudo apt-get install -y libasound2-dev libudev-dev
 
             - name: Checkout projects
               run: python scripts/fetch_projects.py --projects $'${{ toJSON(matrix.batch.projects) }}'

@@ -4,7 +4,7 @@
         "projects": [
             {"name": "cargo", "repository": "rust-lang/cargo"},
             {"name": "tokio", "repository": "tokio-rs/tokio"},
-            {"name": "amethyst", "repository": "amethyst/amethyst"}
+            {"name": "bevy", "repository": "bevyengine/bevy"}
         ]
     },
     {
