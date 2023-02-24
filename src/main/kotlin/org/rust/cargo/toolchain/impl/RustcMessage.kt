@@ -142,7 +142,6 @@ enum class Applicability {
 }
 
 sealed class CompilerMessage {
-    @Suppress("PropertyName")
     abstract val package_id: PackageId
 
     abstract fun convertPaths(converter: PathConverter): CompilerMessage

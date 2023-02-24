@@ -513,8 +513,6 @@ class RsUseSpeckStub(
 
         override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
             RsUseSpeckStub(parentStub, this, psi.isStarImport, psi.hasColonColon)
-
-        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
     }
 
     companion object : BitFlagsBuilder(BYTE) {

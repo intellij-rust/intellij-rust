@@ -82,6 +82,7 @@ class ImportContext private constructor(
     }
 }
 
+@Suppress("RedundantLambdaArrow")
 private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (val context = context) {
     is RsTypeReference -> { e ->
         when (e) {

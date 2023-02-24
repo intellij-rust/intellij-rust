@@ -33,7 +33,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
 
         val crateNames = CratesLocalIndexService.getInstance().getAllCrateNames().unwrapOrElse { return }
 
-        val elements = crateNames.mapNotNull { crateName ->
+        val elements = crateNames.map { crateName ->
             PrioritizedLookupElement.withPriority(
                 LookupElementBuilder
                     .create(crateName)

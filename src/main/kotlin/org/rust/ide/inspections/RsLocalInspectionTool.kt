@@ -80,7 +80,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
             } else {
                 // The element is expanded from a macro
                 val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, descriptionTemplate, /* no quick-fixes for now */)
+                holder.registerProblem(sourceElement, descriptionTemplate /* no quick-fixes for now */)
             }
         }
     }
@@ -97,7 +97,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
             } else {
                 // The element is expanded from a macro
                 val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, descriptionTemplate, highlightType, /* no quick-fixes for now */)
+                holder.registerProblem(sourceElement, descriptionTemplate, highlightType /* no quick-fixes for now */)
             }
         }
     }
@@ -143,7 +143,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
             } else {
                 // The element is expanded from a macro
                 val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, rangeInElement, message, /* no quick-fixes for now */)
+                holder.registerProblem(sourceElement, rangeInElement, message /* no quick-fixes for now */)
             }
         }
     }
@@ -161,7 +161,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
             } else {
                 // The element is expanded from a macro
                 val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, message, highlightType, rangeInElement, /* no quick-fixes for now */)
+                holder.registerProblem(sourceElement, message, highlightType, rangeInElement /* no quick-fixes for now */)
             }
         }
     }

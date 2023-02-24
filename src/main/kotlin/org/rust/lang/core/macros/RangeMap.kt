@@ -106,6 +106,7 @@ val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
 val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
 
 val MappedTextRange.srcRange: TextRange get() = TextRange(srcOffset, srcOffset + length)
+@Suppress("unused")
 val MappedTextRange.dstRange: TextRange get() = TextRange(dstOffset, dstOffset + length)
 
 fun MappedTextRange.srcShiftLeft(delta: Int) = copy(srcOffset = srcOffset - delta)

@@ -472,7 +472,7 @@ class Cargo(
 
     private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
         with(commandLine.patchArgs(project, colors)) {
-            val parameters = buildList<String> {
+            val parameters = buildList {
                 when {
                     channel != RustChannel.DEFAULT -> add("+$channel")
                     toolchain != null -> add("+$toolchain")

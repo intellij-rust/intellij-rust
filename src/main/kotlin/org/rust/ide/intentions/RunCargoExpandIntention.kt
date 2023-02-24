@@ -42,7 +42,7 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
         if (checkNeedInstallCargoExpand(cargoProject.project)) return
 
         val theme = if (isUnderDarkTheme) "Dracula" else "GitHub"
-        val additionalArguments = buildList<String> {
+        val additionalArguments = buildList {
             add("--color=always")
             add("--theme=$theme")
             add("--tests")

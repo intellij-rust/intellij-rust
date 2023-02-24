@@ -125,7 +125,7 @@ private fun createQuickFixes(
     if (context == null) return emptyList()
 
     val fixes = mutableListOf<LocalQuickFix>()
-    if (candidates != null && candidates.isNotEmpty()) {
+    if (!candidates.isNullOrEmpty()) {
         fixes.add(AutoImportFix(element, context))
 
         if (element is RsPath && context.type == AutoImportFix.Type.GENERAL_PATH && candidates.size == 1) {

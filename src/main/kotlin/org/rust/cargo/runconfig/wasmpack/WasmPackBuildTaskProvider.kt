@@ -40,7 +40,7 @@ class WasmPackBuildTaskProvider : RsBuildTaskProvider<WasmPackBuildTaskProvider.
         val (preArgs, postArgs) = splitOnDoubleDash(configurationArgs)
         val configurationCommand = configurationArgs.firstOrNull() ?: return false
 
-        val parameters = buildList<String> {
+        val parameters = buildList {
             add("build")
             addAll(postArgs)
 

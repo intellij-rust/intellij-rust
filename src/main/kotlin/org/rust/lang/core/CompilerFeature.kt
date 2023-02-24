@@ -41,6 +41,7 @@ class CompilerFeature(
     val since: SemVer?
 ) {
 
+    @Suppress("unused")
     @JsonCreator
     constructor(
         name: String,

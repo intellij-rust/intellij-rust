@@ -149,7 +149,7 @@ data class CargoCommandLine(
                 pkg.rootDirectory
             }
 
-            val commandLineArguments = buildList<String> {
+            val commandLineArguments = buildList {
                 if (usePackageOption) {
                     add("--package")
                     add(pkg.name)

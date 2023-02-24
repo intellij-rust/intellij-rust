@@ -1,0 +1,40 @@
+name: code quality
+on:
+    pull_request:
+
+jobs:
+    qodana:
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Set up JDK 17
+              uses: actions/setup-java@v3
+              with:
+                  distribution: corretto
+                  java-version: 17
+
+            - name: Download
+              uses: gradle/gradle-build-action@v2
+              with:
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
+
+            - name: Generate sources
+              uses: gradle/gradle-build-action@v2
+              with:
+                  arguments: ":generateLexer :generateParser debugger:generateGrammarSource -Pkotlin.incremental=false --no-daemon"
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
+
+            - name: Qodana
+              uses: JetBrains/qodana-action@v2022.3.0
+              with:
+                  use-caches: false

@@ -8,6 +8,7 @@ package org.rust.lang.core.psi
 /**
  * Describes `#[stable]` or `#[unstable]` attribute in the Rust Stdlib
  */
+@Suppress("KDocUnresolvedReference")
 enum class RsStability {
     Stable, Unstable
 }

@@ -81,7 +81,7 @@ class RsArgumentsDescription(
                 is RsMethodCall -> CallInfo.resolve(call)
                 else -> null
             } ?: return null
-            val params = buildList<String> {
+            val params = buildList {
                 if (callInfo.selfParameter != null && call is RsCallExpr) {
                     add(callInfo.selfParameter)
                 }

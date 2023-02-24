@@ -558,7 +558,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class CastAsBoolError(val castExpr: RsCastExpr) : RsDiagnostic(castExpr) {
+    class CastAsBoolError(private val castExpr: RsCastExpr) : RsDiagnostic(castExpr) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0054,
@@ -567,7 +567,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class ConstItemReferToStaticError(element: RsElement, val constContext: RsConstContextKind) : RsDiagnostic(element) {
+    class ConstItemReferToStaticError(element: RsElement, private val constContext: RsConstContextKind) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0013,

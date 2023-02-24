@@ -179,7 +179,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
             fixInfos: List<Annotation.QuickFixInfo>?,
             quickFixMappingCache: IdentityHashMap<IntentionAction, LocalQuickFix>
         ): Array<LocalQuickFix> {
-            if (fixInfos == null || fixInfos.isEmpty()) return LocalQuickFix.EMPTY_ARRAY
+            if (fixInfos.isNullOrEmpty()) return LocalQuickFix.EMPTY_ARRAY
             return fixInfos.map { fixInfo ->
                 val intentionAction = fixInfo.quickFix
                 if (intentionAction is LocalQuickFix) {

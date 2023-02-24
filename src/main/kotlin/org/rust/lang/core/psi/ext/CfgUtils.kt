@@ -83,6 +83,7 @@ fun PsiElement.getCodeStatus(crate: Crate?): RsCodeStatus {
 /**
  * `#[cfg(test)]` or `#[test]`
  */
+@Suppress("KDocUnresolvedReference")
 val PsiElement.isUnderCfgTest: Boolean
     get() = ancestorOrSelf<RsElement>()?.isUnderCfgTest == true
 
