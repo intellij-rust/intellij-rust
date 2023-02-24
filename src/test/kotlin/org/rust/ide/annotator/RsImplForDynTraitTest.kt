@@ -39,7 +39,7 @@ class RsImplForDynTraitTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Baz {}
         trait Zab {}
 
-        impl dyn Foo + Bar + Baz + Zab {}
+        impl dyn Foo + Bar + Baz + /*error descr="Only auto traits can be used as additional traits in a trait object [E0225]"*/Zab/*error**/ {}
     """)
 
     fun `test E0785 no error when impl trait for dyn auto trait`() = checkErrors("""
