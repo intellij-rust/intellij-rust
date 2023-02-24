@@ -59,6 +59,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
             is RsLetExpr -> checkLetExpr(holder, element)
             is RsPatRange -> checkPatRange(holder, element)
+            is RsTraitType -> checkTraitType(holder, element)
         }
     }
 }
@@ -472,6 +473,13 @@ private fun checkPatRange(holder: AnnotationHolder, element: RsPatRange) {
             start == null -> deny(element.dotdotdot, holder, "Range-to patterns with `...` are not allowed")
         }
     }
+}
+
+private fun checkTraitType(holder: AnnotationHolder, element: RsTraitType) {
+    if (element.impl != null) return
+    if (element.polyboundList.any { it.bound.lifetime == null }) return
+
+    RsDiagnostic.AtLeastOneTraitForObjectTypeError(element).addToHolder(holder)
 }
 
 private enum class TypeKind {
