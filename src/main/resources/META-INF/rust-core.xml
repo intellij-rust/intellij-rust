@@ -1251,6 +1251,10 @@
 
         <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
 
+        <actionOnSaveInfoProvider id="checkFileProvider"
+                                  implementation="org.rust.ide.actions.RsCheckFileOnSaveInfoProvider"/>
+        <actionOnSave id="copyrightOnSaveAction" implementation="org.rust.ide.actions.RsCheckFileOnSaveAction"/>
+
         <!--  Experimental features -->
         <experimentalFeature id="org.rust.wsl" percentOfUsers="100">
             <description>Enables WSL toolchains</description>
@@ -1466,6 +1470,10 @@
 
         <action id="Cargo.RunExternalLinter"
                 class="org.rust.ide.actions.RsRunExternalLinterAction"
+                icon="/icons/externalLinter.svg"/>
+
+        <action id="Cargo.RunExternalLinterOnFile"
+                class="org.rust.ide.actions.RsRunExternalLinterOnFileAction"
                 icon="/icons/externalLinter.svg"/>
 
         <action id="Cargo.ToggleExternalLinterOnTheFlyAction"

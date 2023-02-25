@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
@@ -122,14 +124,13 @@ object RsExternalLinterUtils {
         return future.get()
     }
 
-    private fun check(
+    fun check(
         toolchain: RsToolchainBase,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
         args: CargoCheckArgs
     ): RsExternalLinterResult? {
-        ProgressManager.checkCanceled()
         val started = Instant.now()
         val output = toolchain
             .cargoOrWrapper(workingDirectory)
@@ -139,7 +140,6 @@ object RsExternalLinterUtils {
                 return null
             }
         val finish = Instant.now()
-        ProgressManager.checkCanceled()
         if (output.isCancelled) return null
         return RsExternalLinterResult(output.stdoutLines, Duration.between(started, finish).toMillis())
     }
@@ -202,6 +202,44 @@ fun AnnotationHolder.createAnnotationsForFile(
 
         annotationBuilder.create()
     }
+}
+
+fun createHighlightInfo(
+    file: RsFile,
+    annotationResult: RsExternalLinterResult,
+    minApplicability: Applicability
+): List<HighlightInfo> {
+    val cargoPackageOrigin = file.containingCargoPackage?.origin
+    if (cargoPackageOrigin != PackageOrigin.WORKSPACE) return emptyList()
+
+    val doc = file.viewProvider.document
+        ?: error("Can't find document for $file in external linter")
+
+    val filteredMessages = annotationResult.messages
+        .mapNotNull { (topMessage) -> filterMessage(file, doc, topMessage) }
+        // Cargo can duplicate some error messages when `--all-targets` attribute is used
+        .distinct()
+
+    val result = mutableListOf<HighlightInfo>()
+    for (message in filteredMessages) {
+        val infoBuilder = HighlightInfo
+            .newHighlightInfo(HighlightInfoType.ERROR)
+            .range(message.textRange)
+            .description(message.message)
+            .unescapedToolTip(message.htmlTooltip)
+            .severity(message.severity)
+
+//        QuickFixAction.registerQuickFixActions(
+//            infoBuilder,
+//            null,
+//            listOf(message.quickFixes.singleOrNull { it.applicability <= minApplicability })
+//        )
+
+        val info = infoBuilder.create() ?: continue
+        result.add(info)
+    }
+
+    return result
 }
 
 class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Long) {
