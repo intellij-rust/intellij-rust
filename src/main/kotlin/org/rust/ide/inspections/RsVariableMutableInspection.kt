@@ -19,7 +19,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "No mutable required"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitPatBinding(o: RsPatBinding) {
                 if (!o.mutability.isMut) return
                 val block = o.ancestorStrict<RsBlock>() ?: o.ancestorStrict<RsFunction>() ?: return

@@ -19,7 +19,7 @@ class RsDoubleNegInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Double negation"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitUnaryExpr(expr: RsUnaryExpr) {
                 if (expr.isNegation && expr.expr.isNegation) {
                     holder.registerProblem(expr, "--x could be misinterpreted as a pre-decrement, but effectively is a no-op")

@@ -43,8 +43,8 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
 }
 
 fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
-    @Suppress("UnstableApiUsage")
-    val root = uncRootPath
+    @Suppress("UnstableApiUsage", "UsePropertyAccessSyntax")
+    val root = getUNCRootPath()
     val environment = compute("Getting environment variables...") { environment }
     if (environment != null) {
         val home = environment["HOME"]

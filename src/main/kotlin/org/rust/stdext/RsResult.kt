@@ -47,6 +47,7 @@ inline fun <T, E, U> RsResult<T, E>.andThen(action: (T) -> RsResult<U, E>): RsRe
     is RsResult.Err -> RsResult.Err(err)
 }
 
+@Suppress("unused")
 inline fun <T, E, F> RsResult<T, E>.orElse(op: (E) -> RsResult<T, F>): RsResult<T, F> = when (this) {
     is RsResult.Ok -> RsResult.Ok(ok)
     is RsResult.Err -> op(err)

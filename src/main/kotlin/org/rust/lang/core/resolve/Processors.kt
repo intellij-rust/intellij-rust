@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.SmartList
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.collectVariantsForEnumCompletion
 import org.rust.lang.core.completion.createLookupElement
@@ -14,7 +16,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve2.RsModInfo
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeFolder
@@ -32,8 +33,13 @@ import org.rust.stdext.intersects
 interface ScopeEntry {
     val name: String
     val element: RsElement
+    val namespaces: Set<Namespace>
     val subst: Substitution get() = emptySubstitution
+    fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry
 }
+
+@Suppress("UNCHECKED_CAST")
+private fun <T: ScopeEntry> T.copyWithNs(namespaces: Set<Namespace>): T = doCopyWithNs(namespaces) as T
 
 typealias RsProcessor<T> = (T) -> Boolean
 
@@ -59,25 +65,20 @@ interface RsResolveProcessorBase<in T : ScopeEntry> {
 
 typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
 
-fun createProcessor(name: String? = null, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
-    createProcessorGeneric(name, processor)
+fun createStoppableProcessor(processor: (ScopeEntry) -> Boolean): RsResolveProcessor {
+    return object : RsResolveProcessorBase<ScopeEntry> {
+        override fun process(entry: ScopeEntry): Boolean = processor(entry)
+        override val names: Set<String>? get() = null
+    }
+}
 
-fun createProcessor(names: Set<String>?, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
-    createProcessorGeneric(names, processor)
-
-fun <T : ScopeEntry> createProcessorGeneric(
-    name: String? = null,
-    processor: (T) -> Boolean
-): RsResolveProcessorBase<T> = createProcessorGeneric(name?.let { setOf(it) }, processor)
-
-fun <T : ScopeEntry> createProcessorGeneric(
-    names: Set<String>? = null,
-    processor: (T) -> Boolean
-): RsResolveProcessorBase<T> {
-    return object : RsResolveProcessorBase<T> {
-        override fun process(entry: T): Boolean = processor(entry)
-        override val names: Set<String>? = names
-        override fun toString(): String = "Processor(names=$names)"
+fun createProcessor(processor: (ScopeEntry) -> Unit): RsResolveProcessor {
+    return object : RsResolveProcessorBase<ScopeEntry> {
+        override fun process(entry: ScopeEntry): Boolean {
+            processor(entry)
+            return false
+        }
+        override val names: Set<String>? get() = null
     }
 }
 
@@ -95,6 +96,28 @@ private class MappingProcessor<in T : ScopeEntry, in U : ScopeEntry>(
     override fun process(entry: U): Boolean {
         val mapped = mapper(entry)
         return originalProcessor.process(mapped)
+    }
+    override fun toString(): String = "MappingProcessor($originalProcessor, mapper = $mapper)"
+}
+
+fun <T : ScopeEntry, U : ScopeEntry> RsResolveProcessorBase<T>.wrapWithNonNullMapper(
+    mapper: (U) -> T?
+): RsResolveProcessorBase<U> {
+    return NonNullMappingProcessor(this, mapper)
+}
+
+private class NonNullMappingProcessor<in T : ScopeEntry, in U : ScopeEntry>(
+    private val originalProcessor: RsResolveProcessorBase<T>,
+    private val mapper: (U) -> T?,
+) : RsResolveProcessorBase<U> {
+    override val names: Set<String>? = originalProcessor.names
+    override fun process(entry: U): Boolean {
+        val mapped = mapper(entry)
+        return if (mapped == null) {
+            false
+        } else {
+            originalProcessor.process(mapped)
+        }
     }
     override fun toString(): String = "MappingProcessor($originalProcessor, mapper = $mapper)"
 }
@@ -154,8 +177,8 @@ private class ShadowingProcessor<in T : ScopeEntry>(
     override fun process(entry: T): Boolean {
         val prevNs = prevScope[entry.name]
         if (entry.name == "_" || prevNs == null) return originalProcessor.process(entry)
-        val newNs = (entry.element as? RsNamedElement)?.namespaces
-        return (newNs == null || ns.intersects(newNs.minus(prevNs))) && originalProcessor.process(entry)
+        val restNs = entry.namespaces.minus(prevNs)
+        return ns.intersects(restNs) && originalProcessor.process(entry.copyWithNs(restNs))
     }
     override fun toString(): String = "ShadowingProcessor($originalProcessor, ns = $ns)"
 }
@@ -176,20 +199,23 @@ private class ShadowingAndUpdateScopeProcessor<in T : ScopeEntry>(
 ) : RsResolveProcessorBase<T> {
     override val names: Set<String>? = originalProcessor.names
     override fun process(entry: T): Boolean {
-        val prevNs = if (entry.name != "_") prevScope[entry.name] else null
-        if (prevNs != null) {
-            val newNs = (entry.element as? RsNamedElement)?.namespaces
-            if (newNs != null && !ns.intersects(newNs.minus(prevNs))) {
+        if (!originalProcessor.acceptsName(entry.name) || entry.name == "_") {
+            return originalProcessor.process(entry)
+        }
+        val prevNs = prevScope[entry.name]
+        val newNs = entry.namespaces
+        val entryWithIntersectedNs = if (prevNs != null) {
+            val restNs = newNs.minus(prevNs)
+            if (ns.intersects(restNs)) {
+                entry.copyWithNs(restNs)
+            } else {
                 return false
             }
+        } else {
+            entry
         }
-        if (originalProcessor.acceptsName(entry.name) && entry.name != "_") {
-            val newNs = (entry.element as? RsNamedElement)?.namespaces
-            if (newNs != null) {
-                currScope[entry.name] = prevNs?.let { it + newNs } ?: newNs
-            }
-        }
-        return originalProcessor.process(entry)
+        currScope[entry.name] = prevNs?.let { it + newNs } ?: newNs
+        return originalProcessor.process(entryWithIntersectedNs)
     }
     override fun toString(): String = "ShadowingAndUpdateScopeProcessor($originalProcessor, ns = $ns)"
 }
@@ -226,15 +252,24 @@ fun collectPathResolveVariants(
     f: (RsResolveProcessor) -> Unit
 ): List<RsPathResolveResult<RsElement>> {
     val referenceName = path.referenceName ?: return emptyList()
-    val result = SmartList<RsPathResolveResult<RsElement>>()
-    val processor = createProcessor(referenceName) { e ->
-        if (e.name == referenceName) {
-            collectPathScopeEntry(ctx, result, e)
-        }
-        false
-    }
+    val processor = SinglePathResolveVariantsCollector(ctx, referenceName)
     f(processor)
-    return result
+    return processor.result
+}
+
+private class SinglePathResolveVariantsCollector(
+    private val ctx: PathResolutionContext,
+    private val referenceName: String,
+    val result: MutableList<RsPathResolveResult<RsElement>> = SmartList(),
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String> = setOf(referenceName)
+
+    override fun process(entry: ScopeEntry): Boolean {
+        if (entry.name == referenceName) {
+            collectPathScopeEntry(ctx, result, entry)
+        }
+        return false
+    }
 }
 
 fun collectMultiplePathResolveVariants(
@@ -249,15 +284,24 @@ fun collectMultiplePathResolveVariants(
         val list = resultByName.getOrPut(name) { SmartList() }
         result[path] = list
     }
-    val processor = createProcessor(resultByName.keys) { e ->
-        val list = resultByName[e.name]
-        if (list != null) {
-            collectPathScopeEntry(ctx, list, e)
-        }
-        false
-    }
+    val processor = MultiplePathsResolveVariantsCollector(ctx, resultByName)
     f(processor)
     return result
+}
+
+private class MultiplePathsResolveVariantsCollector(
+    private val ctx: PathResolutionContext,
+    private val resultByName: MutableMap<String, SmartList<RsPathResolveResult<RsElement>>>,
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String> = resultByName.keys
+
+    override fun process(entry: ScopeEntry): Boolean {
+        val list = resultByName[entry.name]
+        if (list != null) {
+            collectPathScopeEntry(ctx, list, entry)
+        }
+        return false
+    }
 }
 
 private fun collectPathScopeEntry(
@@ -270,7 +314,14 @@ private fun collectPathScopeEntry(
         val visibilityStatus = e.getVisibilityStatusFrom(ctx.context, ctx.lazyContainingModInfo)
         if (visibilityStatus != VisibilityStatus.CfgDisabled) {
             val isVisible = visibilityStatus == VisibilityStatus.Visible
-            result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible)
+            // Canonicalize namespaces to consume less memory by the resolve cache
+            val namespaces = when (e.namespaces) {
+                TYPES -> TYPES
+                VALUES -> VALUES
+                TYPES_N_VALUES -> TYPES_N_VALUES
+                else -> e.namespaces
+            }
+            result += RsPathResolveResult(element, e.subst.foldTyInferWithTyPlaceholder(), isVisible, namespaces)
         }
     }
 }
@@ -294,18 +345,26 @@ private fun Substitution.foldTyInferWithTyPlaceholder(): Substitution =
 
 fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Unit): List<RsElement> {
     if (referenceName == null) return emptyList()
-    val result = SmartList<RsElement>()
-    val processor = createProcessor(referenceName) { e ->
-        if (e.name == referenceName) {
-            val element = e.element
+    val processor = ResolveVariantsCollector(referenceName)
+    f(processor)
+    return processor.result
+}
+
+private class ResolveVariantsCollector(
+    private val referenceName: String,
+    val result: MutableList<RsElement> = SmartList(),
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String> = setOf(referenceName)
+
+    override fun process(entry: ScopeEntry): Boolean {
+        if (entry.name == referenceName) {
+            val element = entry.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
                 result += element
             }
         }
-        false
+        return false
     }
-    f(processor)
-    return result
 }
 
 fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
@@ -313,18 +372,26 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
     f: (RsResolveProcessorBase<T>) -> Unit
 ): List<T> {
     if (referenceName == null) return emptyList()
-    val result = mutableListOf<T>()
-    val processor = createProcessorGeneric<T>(referenceName) { e ->
-        if (e.name == referenceName) {
-            val element = e.element
+    val processor = ResolveVariantsAsScopeEntriesCollector<T>(referenceName)
+    f(processor)
+    return processor.result
+}
+
+private class ResolveVariantsAsScopeEntriesCollector<T: ScopeEntry>(
+    private val referenceName: String,
+    val result: MutableList<T> = mutableListOf(),
+) : RsResolveProcessorBase<T> {
+    override val names: Set<String> = setOf(referenceName)
+
+    override fun process(entry: T): Boolean {
+        if (entry.name == referenceName) {
+            val element = entry.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
-                result += e
+                result += entry
             }
         }
-        false
+        return false
     }
-    f(processor)
-    return result
 }
 
 fun pickFirstResolveVariant(referenceName: String?, f: (RsResolveProcessor) -> Unit): RsElement? =
@@ -332,19 +399,27 @@ fun pickFirstResolveVariant(referenceName: String?, f: (RsResolveProcessor) -> U
 
 fun pickFirstResolveEntry(referenceName: String?, f: (RsResolveProcessor) -> Unit): ScopeEntry? {
     if (referenceName == null) return null
-    var result: ScopeEntry? = null
-    val processor = createProcessor(referenceName) { e ->
-        if (e.name == referenceName) {
-            val element = e.element
+    val processor = PickFirstScopeEntryCollector(referenceName)
+    f(processor)
+    return processor.result
+}
+
+private class PickFirstScopeEntryCollector(
+    private val referenceName: String,
+    var result: ScopeEntry? = null,
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String> = setOf(referenceName)
+
+    override fun process(entry: ScopeEntry): Boolean {
+        if (entry.name == referenceName) {
+            val element = entry.element
             if (element !is RsDocAndAttributeOwner || element.existsAfterExpansionSelf) {
-                result = e
-                return@createProcessor true
+                result = entry
+                return true
             }
         }
-        false
+        return false
     }
-    f(processor)
-    return result
 }
 
 fun collectCompletionVariants(
@@ -352,38 +427,71 @@ fun collectCompletionVariants(
     context: RsCompletionContext,
     f: (RsResolveProcessor) -> Unit
 ) {
-    val processor = createProcessor { e ->
-        val element = e.element
+    val processor = CompletionVariantsCollector(result, context)
+    f(processor)
+}
+
+private class CompletionVariantsCollector(
+    private val result: CompletionResultSet,
+    private val context: RsCompletionContext,
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String>? get() = null
+
+    override fun process(entry: ScopeEntry): Boolean {
+        val element = entry.element
 
         if (element is RsEnumItem
             && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
-            val variants = collectVariantsForEnumCompletion(element, context, e.subst)
+            val variants = collectVariantsForEnumCompletion(element, context, entry.subst)
             result.addAllElements(variants)
         }
 
         result.addElement(createLookupElement(
-            scopeEntry = e,
+            scopeEntry = entry,
             context = context
         ))
-
-        false
+        return false
     }
+}
+
+fun collectNames(f: (RsResolveProcessor) -> Unit): Set<String> {
+    val processor = NamesCollector()
     f(processor)
+    return processor.result
+}
+
+private class NamesCollector(
+    val result: MutableSet<String> = mutableSetOf(),
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String>? get() = null
+
+    override fun process(entry: ScopeEntry): Boolean {
+        if (entry.name != "_") {
+            result += entry.name
+        }
+        return false
+    }
 }
 
 data class SimpleScopeEntry(
     override val name: String,
     override val element: RsElement,
+    override val namespaces: Set<Namespace>,
     override val subst: Substitution = emptySubstitution
-) : ScopeEntry
+) : ScopeEntry {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 data class ScopeEntryWithVisibility(
     override val name: String,
     override val element: RsElement,
+    override val namespaces: Set<Namespace>,
     /** Given a [RsElement] (usually [RsPath]) checks if this item is visible in `containingMod` of that element */
     val visibilityFilter: VisibilityFilter,
     override val subst: Substitution = emptySubstitution,
-) : ScopeEntry
+) : ScopeEntry {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 typealias VisibilityFilter = (RsElement, Lazy<RsModInfo?>?) -> VisibilityStatus
 
@@ -412,39 +520,38 @@ interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
 data class AssocItemScopeEntry(
     override val name: String,
     override val element: RsAbstractable,
-    override val subst: Substitution = emptySubstitution,
+    override val namespaces: Set<Namespace>,
+    override val subst: Substitution,
     override val selfTy: Ty,
     override val source: TraitImplSource
-) : AssocItemScopeEntryBase<RsAbstractable>
+) : AssocItemScopeEntryBase<RsAbstractable> {
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = copy(namespaces = namespaces)
+}
 
 
-fun RsResolveProcessor.process(name: String, e: RsElement): Boolean =
-    process(SimpleScopeEntry(name, e))
+fun RsResolveProcessor.process(name: String, namespaces: Set<Namespace>, e: RsElement): Boolean =
+    process(SimpleScopeEntry(name, e, namespaces))
 
 fun RsResolveProcessor.process(
     name: String,
     e: RsElement,
+    namespaces: Set<Namespace>,
     visibilityFilter: VisibilityFilter
-): Boolean = process(ScopeEntryWithVisibility(name, e, visibilityFilter))
+): Boolean = process(ScopeEntryWithVisibility(name, e, namespaces, visibilityFilter))
 
-inline fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
+inline fun RsResolveProcessor.lazy(name: String, namespaces: Set<Namespace>, e: () -> RsElement?): Boolean {
     if (!acceptsName(name)) return false
     val element = e() ?: return false
-    return process(name, element)
+    return process(name, namespaces, element)
 }
 
-fun RsResolveProcessor.process(e: RsNamedElement): Boolean {
+fun RsResolveProcessor.process(e: RsNamedElement, namespaces: Set<Namespace>): Boolean {
     val name = e.name ?: return false
-    return process(name, e)
+    return process(name, namespaces, e)
 }
 
-fun RsResolveProcessor.process(e: BoundElement<RsNamedElement>): Boolean {
-    val name = e.element.name ?: return false
-    return process(SimpleScopeEntry(name, e.element, e.subst))
-}
-
-fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    return elements.any { processor.process(it) }
+fun RsResolveProcessor.processAll(elements: List<RsNamedElement>, namespaces: Set<Namespace>): Boolean {
+    return elements.any { process(it, namespaces) }
 }
 
 fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): Boolean {
@@ -454,10 +561,12 @@ fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProce
 fun processAllWithSubst(
     elements: Collection<RsNamedElement>,
     subst: Substitution,
+    namespaces: Set<Namespace>,
     processor: RsResolveProcessor
 ): Boolean {
     for (e in elements) {
-        if (processor.process(BoundElement(e, subst))) return true
+        val name = e.name ?: continue
+        if (processor.process(SimpleScopeEntry(name, e, namespaces, subst))) return true
     }
     return false
 }
@@ -477,15 +586,16 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
     if (context.containingFile is RsDebuggerExpressionCodeFragment) {
         return processor
     }
-    val mod = context.containingMod
+    val contextMod = context.containingMod
     return processor.wrapWithFilter {
         val element = it.element
-        if (element is RsVisible && !element.isVisibleFrom(mod)) return@wrapWithFilter false
+        if (element is RsVisible && !element.isVisibleFrom(contextMod)) return@wrapWithFilter false
         if (!it.isVisibleFrom(context)) return@wrapWithFilter false
 
-        val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
-            element.containingMod != mod
-        if (isHidden) return@wrapWithFilter false
+        if (element is RsOuterAttributeOwner) {
+            val isHidden = element.shouldHideElementInCompletion(contextMod)
+            if (isHidden) return@wrapWithFilter false
+        }
 
         true
     }
@@ -510,4 +620,43 @@ fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
         val function = e.element as? RsFunction ?: return@wrapWithFilter false
         if (!function.isCustomDeriveProcMacroDef) return@wrapWithFilter false
         true
+    }
+
+fun RsOuterAttributeOwner.shouldHideElementInCompletion(contextMod: RsMod): Boolean {
+    val elementContainingMod = containingMod
+    if (elementContainingMod == contextMod) return false
+
+    // Hide `#[doc(hidden)]` items
+    if (queryAttributes.isDocHidden) return true
+
+    val rustcChannel = contextMod.cargoProject?.rustcInfo?.version?.channel ?: return false
+    val showUnstableItems = rustcChannel != RustChannel.STABLE && rustcChannel != RustChannel.BETA
+    if (showUnstableItems) return false
+    if (containingCrate.origin != PackageOrigin.STDLIB) return false
+
+    // Hide unstable stdlib items
+    return stability != RsStability.Stable
+}
+
+private val RsOuterAttributeOwner.stability: RsStability
+    get() {
+        // Own stability
+        queryAttributes.stability?.let { return it }
+
+        if (this is RsAbstractable) {
+            val owner = owner
+            if (owner is RsAbstractableOwner.Impl) {
+                val ownerStability = owner.impl.queryAttributes.stability
+                if (ownerStability != RsStability.Stable) {
+                    return ownerStability ?: RsStability.Unstable
+                }
+                val superItem = superItem
+                if (superItem != null) {
+                    return superItem.queryAttributes.stability ?: RsStability.Unstable
+                }
+            }
+        }
+
+        // The absence of `#[stable]` attribute in stdlib means the item is unstable
+        return RsStability.Unstable
     }

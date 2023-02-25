@@ -167,7 +167,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         } else {
             ::processDotExprResolveVariants
         }
-        var processor = methodAndFieldCompletionProcessor(element, result, context)
+        var processor: RsResolveProcessor = MethodsAndFieldsCompletionProcessor(element, result, context)
         processor = deduplicateMethodCompletionVariants(processor)
         processor = filterMethodCompletionVariantsByTraitBounds(lookup, receiverTy, processor)
         processor = ImportCandidatesCollector.filterAccessibleTraits(receiver, processor)
@@ -207,9 +207,15 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val importContext = ImportContext.from(path, ImportContext.Type.COMPLETION) ?: return
         val candidates = ImportCandidatesCollector.getCompletionCandidates(importContext, result.prefixMatcher, processedPathElements)
 
+        val contextMod = path.containingMod
+
         for (candidate in candidates) {
             val item = candidate.item
-            val scopeEntry = SimpleScopeEntry(candidate.itemName, item)
+            if (item is RsOuterAttributeOwner) {
+                val isHidden = item.shouldHideElementInCompletion(contextMod)
+                if (isHidden) continue
+            }
+            val scopeEntry = SimpleScopeEntry(candidate.itemName, item, TYPES_N_VALUES_N_MACROS)
 
             if (item is RsEnumItem
                 && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (item.declaredType as? TyAdt)?.item) {
@@ -250,12 +256,15 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             )
 
             if (newPath != null) {
-                val processor = filterNotCfgDisabledItemsAndTestFunctions(createProcessor { e ->
+                val collector = createProcessor { e ->
                     for (candidate in candidates) {
                         result.addElement(createLookupElementWithImportCandidate(e, context, candidate))
                     }
-                    false
-                })
+                }
+                val processor = filterCompletionVariantsByVisibility(
+                    path,
+                    filterNotCfgDisabledItemsAndTestFunctions(collector)
+                )
                 processPathVariants(newPath, processor)
             }
         }
@@ -417,42 +426,47 @@ private fun deduplicateMethodCompletionVariants(processor: RsResolveProcessor): 
     }
 }
 
-private fun methodAndFieldCompletionProcessor(
-    methodOrField: RsMethodOrField,
-    result: CompletionResultSet,
-    context: RsCompletionContext
-): RsResolveProcessor = createProcessor { e ->
-    when (e) {
-        is FieldResolveVariant -> result.addElement(createLookupElement(
-                scopeEntry = e,
+private class MethodsAndFieldsCompletionProcessor(
+    private val methodOrField: RsMethodOrField,
+    private val result: CompletionResultSet,
+    private val context: RsCompletionContext
+) : RsResolveProcessorBase<ScopeEntry> {
+    override val names: Set<String>?
+        get() = null
+
+    override fun process(entry: ScopeEntry): Boolean {
+        when (entry) {
+            is FieldResolveVariant -> result.addElement(createLookupElement(
+                scopeEntry = entry,
                 context = context
-        ))
-        is MethodResolveVariant -> {
-            if (e.element.isTest) return@createProcessor false
+            ))
+            is MethodResolveVariant -> {
+                if (entry.element.isTest) return false
 
-            result.addElement(createLookupElement(
-                scopeEntry = e,
-                context = context,
-                insertHandler = object : RsDefaultInsertHandler() {
-                    override fun handleInsert(
-                        element: RsElement,
-                        scopeName: String,
-                        context: InsertionContext,
-                        item: LookupElement
-                    ) {
-                        val traitImportCandidate = findTraitImportCandidate(methodOrField, e)
-                        super.handleInsert(element, scopeName, context, item)
+                result.addElement(createLookupElement(
+                    scopeEntry = entry,
+                    context = context,
+                    insertHandler = object : RsDefaultInsertHandler() {
+                        override fun handleInsert(
+                            element: RsElement,
+                            scopeName: String,
+                            context: InsertionContext,
+                            item: LookupElement
+                        ) {
+                            val traitImportCandidate = findTraitImportCandidate(methodOrField, entry)
+                            super.handleInsert(element, scopeName, context, item)
 
-                        if (traitImportCandidate != null) {
-                            context.commitDocument()
-                            context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                            if (traitImportCandidate != null) {
+                                context.commitDocument()
+                                context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                            }
                         }
                     }
-                }
-            ))
+                ))
+            }
         }
+        return false
     }
-    false
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
@@ -524,12 +538,15 @@ fun collectVariantsForEnumCompletion(
     candidate: ImportCandidate? = null
 ): List<LookupElement> {
     val enumName = element.name ?: return emptyList()
+    val contextMod = context.context?.containingMod
 
     return element.enumBody?.childrenOfType<RsEnumVariant>().orEmpty().mapNotNull { enumVariant ->
         val variantName = enumVariant.name ?: return@mapNotNull null
 
+        if (contextMod != null && enumVariant.shouldHideElementInCompletion(contextMod)) return@mapNotNull null
+
         return@mapNotNull createLookupElement(
-            scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, substitution),
+            scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, ENUM_VARIANT_NS, substitution),
             context = context,
             null,
             object : RsDefaultInsertHandler() {
@@ -546,7 +563,7 @@ fun collectVariantsForEnumCompletion(
 
                     if (candidate != null && RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
                         context.commitDocument()
-                        context.getElementOfType<RsElement>()?.let { it -> candidate.import(it) }
+                        context.getElementOfType<RsElement>()?.let { candidate.import(it) }
                     }
                 }
             }

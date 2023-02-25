@@ -21,7 +21,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.cargo.util.parseSemVer
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon
@@ -40,9 +39,6 @@ class RsDebugProcessConfigurationHelper(
 
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
 
-    // BACKCOMPAT: Rust 1.45. Drop this property
-    private val rustcVersion = cargoProject?.rustcInfo?.version?.semver
-
     private val prettyPrintersPath: String? = toolchain?.toRemotePath(PP_PATH)
 
     private val sysroot: String? by lazy {
@@ -59,6 +55,7 @@ class RsDebugProcessConfigurationHelper(
                 if (settings.breakOnPanic) {
                     driver.setBreakOnPanic()
                 }
+                driver.setSteppingFilters()
             } catch (e: DebuggerCommandException) {
                 process.printlnToConsole(e.message)
                 LOG.warn(e)
@@ -76,6 +73,22 @@ class RsDebugProcessConfigurationHelper(
         }
         for (command in commands) {
             executeInterpreterCommand(threadId, frameIndex, command)
+        }
+    }
+
+    private fun DebuggerDriver.setSteppingFilters() {
+        val regexes = mutableListOf<String>()
+        if (settings.skipStdlibInStepping) {
+            regexes.add("^(std|core|alloc)::.*")
+        }
+
+        val command = when (this) {
+            is LLDBDriver -> "settings set target.process.thread.step-avoid-regexp"
+            is GDBDriver -> "skip -rfu"
+            else -> return
+        }
+        for (regex in regexes) {
+            executeInterpreterCommand(threadId, frameIndex, "$command $regex")
         }
     }
 
@@ -106,19 +119,10 @@ class RsDebugProcessConfigurationHelper(
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val basePath = "$sysroot/lib/rustlib/etc"
-
-                // BACKCOMPAT: Rust 1.45. Drop the first branch
-                if (rustcVersion != null && rustcVersion < RUST_1_46) {
-                    val lldbRustFormattersPath = "$basePath/lldb_rust_formatters.py".systemDependentAndEscaped()
-                    executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbRustFormattersPath" """)
-                    executeInterpreterCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
-                    executeInterpreterCommand(threadId, frameIndex, """type category enable Rust""")
-                } else {
-                    val lldbLookupPath = "$basePath/$LLDB_LOOKUP.py".systemDependentAndEscaped()
-                    val lldbCommandsPath = "$basePath/lldb_commands".systemDependentAndEscaped()
-                    executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbLookupPath" """)
-                    executeInterpreterCommand(threadId, frameIndex, """command source "$lldbCommandsPath" """)
-                }
+                val lldbLookupPath = "$basePath/$LLDB_LOOKUP.py".systemDependentAndEscaped()
+                val lldbCommandsPath = "$basePath/lldb_commands".systemDependentAndEscaped()
+                executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbLookupPath" """)
+                executeInterpreterCommand(threadId, frameIndex, """command source "$lldbCommandsPath" """)
             }
 
             LLDBRenderers.BUNDLED -> {
@@ -154,14 +158,6 @@ class RsDebugProcessConfigurationHelper(
             GDBRenderers.NONE -> return
         }
 
-        // BACKCOMPAT: Rust 1.45. Remove `GDB_LOOKUP` local variable
-        @Suppress("LocalVariableName")
-        val GDB_LOOKUP = if (rustcVersion != null && rustcVersion < RUST_1_46) {
-            "gdb_rust_pretty_printing"
-        } else {
-            GDB_LOOKUP
-        }
-
         // Avoid multiline Python scripts due to https://youtrack.jetbrains.com/issue/CPP-9090
         val command = """python """ +
             """sys.path.insert(0, "$path"); """ +
@@ -189,9 +185,6 @@ class RsDebugProcessConfigurationHelper(
     companion object {
         private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
 
-        // BACKCOMPAT: Rust 1.45. Drop this property
-        private val RUST_1_46 = "1.46.0".parseSemVer()
-
         /**
          * Should be synchronized with `rust_types.py`
          *
@@ -201,9 +194,12 @@ class RsDebugProcessConfigurationHelper(
          */
         private val RUST_STD_TYPES: List<String> = listOf(
             "^(alloc::([a-z_]+::)+)String$",
-            "^[&*]?(const |mut )?str\\*?$",
-            "^&(mut )?\\[.*\\]$",
-            "^(mut )?slice\\$<.+>$",
+            "^(&|&mut |\\*const |\\*mut )str$",
+            "^(str)|((ptr_const|ptr_mut)\\$<str>)$",
+            "^(str\\$)|((ref|ref_mut|ptr_const|ptr_mut)\\$<str\\$>)$",
+            "^(&|&mut |\\*const |\\*mut )?\\[.*\\]$",
+            "^(slice\\$<.+>)|((ptr_const|ptr_mut)\\$<slice\\$<.+> >)$",
+            "^(slice2\\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\\$<slice2\\$<.+> >)$",
             "^(std::ffi::([a-z_]+::)+)OsString$",
             "^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \\*)?$",
             "^(std::([a-z_]+::)+)PathBuf$",

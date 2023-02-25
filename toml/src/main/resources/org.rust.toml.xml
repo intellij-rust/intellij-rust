@@ -24,6 +24,7 @@
         <usageTypeProvider implementation="org.rust.toml.search.CargoTomlUsageTypeProvider"/>
         <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
 
+        <!--suppress PluginXmlExtensionRegistration -->
         <localInspection groupName="Rust"
                          displayName="Missing features"
                          enabledByDefault="true" level="WARNING"
@@ -62,11 +63,13 @@
         <intentionAction>
             <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
             <category>Rust/Cargo.toml</category>
+            <language>TOML</language>
         </intentionAction>
 
         <intentionAction>
             <className>org.rust.toml.intentions.SimplifyDependencySpecificationIntention</className>
             <category>Rust/Cargo.toml</category>
+            <language>TOML</language>
         </intentionAction>
 
         <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"

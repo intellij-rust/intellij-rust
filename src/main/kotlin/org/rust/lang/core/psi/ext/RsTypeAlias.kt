@@ -16,6 +16,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.RsWhereClause
 import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.resolve.RsCachedTypeAlias
 import org.rust.lang.core.stubs.RsTypeAliasStub
@@ -49,6 +50,9 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
+
+    override val whereClause: RsWhereClause?
+        get() = whereClauseList.firstOrNull()
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 

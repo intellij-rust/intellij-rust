@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.expandedTailExpr
 import org.rust.lang.core.resolve.ItemProcessingMode
 import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
-import org.rust.lang.core.resolve.createProcessor
+import org.rust.lang.core.resolve.collectNames
 import org.rust.lang.core.resolve.findPrelude
 import org.rust.lang.core.resolve2.processItemDeclarations
 import org.rust.openapiext.toPsiFile
@@ -43,12 +43,9 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
     private fun addItemsNamesFromPrelude(codeFragment: RsReplCodeFragment) {
         val prelude = findPrelude(codeFragment) ?: return
 
-        val preludeItemsNames = mutableListOf<String>()
-        val processor = createProcessor {
-            preludeItemsNames += it.name
-            false
+        val preludeItemsNames = collectNames {
+            processItemDeclarations(prelude, TYPES_N_VALUES_N_MACROS, it, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
         }
-        processItemDeclarations(prelude, TYPES_N_VALUES_N_MACROS, processor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
         itemsNames += preludeItemsNames
         hasAddedNamesFromPrelude = true
     }

@@ -13,11 +13,17 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfTypes
+import com.intellij.util.text.SemVer
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.fixes.AddTypeFix
+import org.rust.ide.annotator.fixes.RemoveElementFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
+import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
@@ -29,6 +35,7 @@ import java.lang.Integer.max
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
+            is RsBreakExpr -> checkBreakExpr(holder, element)
             is RsExternAbi -> checkExternAbi(holder, element)
             is RsItemElement -> {
                 checkItem(holder, element)
@@ -36,6 +43,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
                     is RsFunction -> checkFunction(holder, element)
                     is RsStructItem -> checkStructItem(holder, element)
                     is RsTypeAlias -> checkTypeAlias(holder, element)
+                    is RsImplItem -> checkImplItem(holder, element)
                     is RsConstant -> checkConstant(holder, element)
                     is RsModItem -> checkModItem(holder, element)
                     is RsModDeclItem -> checkModDeclItem(holder, element)
@@ -47,10 +55,44 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
+            is RsTypeParameter -> checkTypeParameter(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
             is RsLetExpr -> checkLetExpr(holder, element)
             is RsPatRange -> checkPatRange(holder, element)
         }
+    }
+}
+
+private fun checkTypeParameter(holder: AnnotationHolder, item: RsTypeParameter) {
+    if (item.bounds.count { it.hasQ } > 1) {
+        RsDiagnostic.MultipleRelaxedBoundsError(item).addToHolder(holder)
+    }
+}
+
+private fun checkImplItem(holder: AnnotationHolder, item: RsImplItem) {
+    val unsafe = item.unsafe
+    if (unsafe != null && item.traitRef == null) {
+        val typeReference = item.typeReference ?: return
+        RsDiagnostic.UnsafeInherentImplError(
+            typeReference, listOf(RemoveElementFix(unsafe))
+        ).addToHolder(holder)
+    }
+}
+
+private fun checkBreakExpr(holder: AnnotationHolder, item: RsBreakExpr) {
+    item.expr ?: return
+    val label = item.label
+    val loop = if (label != null) {
+        // Do return, because an error code E0426 was raised if the definition of the label was not found
+        val labelBlock = label.reference.resolve() ?: return
+        labelBlock.parent
+    } else {
+        // Use RsItemElement::class as a separator
+        item.parentOfTypes(RsForExpr::class, RsWhileExpr::class, RsLoopExpr::class, RsItemElement::class)
+    }
+    when (loop) {
+        is RsForExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "for").addToHolder(holder)
+        is RsWhileExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "while").addToHolder(holder)
     }
 }
 
@@ -89,6 +131,16 @@ private fun checkMacroCall(holder: AnnotationHolder, element: RsMacroCall) {
 }
 
 private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+    if (fn.isMain && fn.getGenericParameters().isNotEmpty()) {
+        val typeParameterList = fn.typeParameterList ?: fn
+        RsDiagnostic.MainWithGenericsError(
+            typeParameterList, listOf(
+            RemoveElementFix(
+                typeParameterList
+            )
+        )
+        ).addToHolder(holder)
+    }
     when (fn.owner) {
         is RsAbstractableOwner.Free -> {
             require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
@@ -123,11 +175,17 @@ private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
 
 private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
     val title = "Type `${ta.identifier.text}`"
+
+    val eq = ta.eq
+    val whereClauseBeforeEq = ta.whereClauseList.firstOrNull()?.takeIf { eq != null && it.startOffset < eq.startOffset }
+    val whereClauseAfterEq = ta.whereClauseList.lastOrNull()?.takeIf { eq != null && it.startOffset > eq.startOffset }
+
     when (val owner = ta.owner) {
         is RsAbstractableOwner.Free -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
             deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
             require(ta.typeReference, holder, "$title should have a body`", ta)
+            deny(whereClauseAfterEq, holder, "$title cannot have `where` clause after the type")
         }
         is RsAbstractableOwner.Trait -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
@@ -138,6 +196,10 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
             }
             deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
             require(ta.typeReference, holder, "$title should have a body", ta)
+
+            val version = ta.cargoProject?.rustcInfo?.version?.semver ?: return
+            if (version < DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION) return
+            deny(whereClauseBeforeEq, holder, "$title cannot have `where` clause before the type", severity = HighlightSeverity.WEAK_WARNING)
         }
         RsAbstractableOwner.Foreign -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
@@ -148,6 +210,8 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         }
     }
 }
+
+private val DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION: SemVer = "1.61.0".parseSemVer()
 
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
     val name = const.nameLikeElement.text
@@ -234,17 +298,43 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
         }
 }
 
+private fun isComplexPattern(pat: RsPat?): Boolean {
+    return when (pat) {
+        null, is RsPatWild -> false
+        is RsPatIdent -> {
+            val binding = pat.patBinding
+            binding.mutability == Mutability.MUTABLE || binding.kind is RsBindingModeKind.BindByReference || pat.at != null
+        }
+
+        is RsPatMacro -> {
+            val expansion = pat.macroCall.expansion
+            return expansion != null && expansion is MacroExpansion.Pat && isComplexPattern(expansion.pat)
+        }
+
+        else -> true
+    }
+}
+
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
     val fn = param.parent.parent as? RsFunction ?: return
+    val pat = param.pat
+    val isComplexPattern = isComplexPattern(pat)
     when (fn.owner) {
         is RsAbstractableOwner.Free,
-        is RsAbstractableOwner.Impl,
+        is RsAbstractableOwner.Impl -> {
+            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+        }
         is RsAbstractableOwner.Foreign -> {
-            require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            if (isComplexPattern) {
+                RsDiagnostic.PatternArgumentInForeignFunctionError(param).addToHolder(holder)
+            }
         }
         is RsAbstractableOwner.Trait -> {
-            denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
-            if (param.pat == null) {
+            if (isComplexPattern && fn.block == null) {
+                RsDiagnostic.PatternArgumentInFunctionWithoutBodyError(param).addToHolder(holder)
+            }
+            if (pat == null) {
                 val message = "Anonymous functions parameters are deprecated (RFC 1685)"
                 val annotation = holder.newAnnotation(HighlightSeverity.WARNING, message)
 
@@ -415,21 +505,11 @@ private fun deny(
     el: PsiElement?,
     holder: AnnotationHolder,
     @InspectionMessage message: String,
-    vararg highlightElements: PsiElement?
+    vararg highlightElements: PsiElement?,
+    severity: HighlightSeverity = HighlightSeverity.ERROR
 ) {
     if (el == null) return
-    holder.newAnnotation(HighlightSeverity.ERROR, message)
-        .range(highlightElements.combinedRange ?: el.textRange).create()
-}
-
-private inline fun <reified T : RsElement> denyType(
-    el: PsiElement?,
-    holder: AnnotationHolder,
-    @InspectionMessage message: String,
-    vararg highlightElements: PsiElement?
-) {
-    if (el !is T) return
-    holder.newAnnotation(HighlightSeverity.ERROR, message)
+    holder.newAnnotation(severity, message)
         .range(highlightElements.combinedRange ?: el.textRange).create()
 }
 

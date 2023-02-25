@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithElse
+import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithoutElse
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyNever
@@ -54,30 +56,29 @@ import org.rust.lang.utils.negate
 class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context>() {
     sealed interface Context {
         val ifCondition: RsExpr
+
+        data class ContextWithElse(
+            val ifExpr: RsIfExpr,
+            override val ifCondition: RsExpr,
+            val thenBlock: RsBlock,
+            val elseBlock: RsBlock?,
+        ) : Context
+
+        class ContextWithoutElse(
+            val ifExpr: RsIfExpr,
+            override val ifCondition: RsExpr,
+            /**
+             * - [ifExpr] if it is tail expr
+             * - `ifExpr.parent` if stmt
+             */
+            val ifStmt: RsElement,
+            val thenBlock: RsBlock,
+            val thenBlockStmts: List<PsiElement>,
+
+            val block: RsBlock,
+            val nextStmts: List<PsiElement>,
+        ) : Context
     }
-
-    data class ContextWithElse(
-        val ifExpr: RsIfExpr,
-        override val ifCondition: RsExpr,
-        val thenBlock: RsBlock,
-        val elseBlock: RsBlock?,
-    ) : Context
-
-    class ContextWithoutElse(
-        val ifExpr: RsIfExpr,
-        override val ifCondition: RsExpr,
-        /**
-         * - [ifExpr] if it is tail expr
-         * - `ifExpr.parent` if stmt
-         */
-        val ifStmt: RsElement,
-        val thenBlock: RsBlock,
-        val thenBlockStmts: List<PsiElement>,
-
-        val block: RsBlock,
-        val nextStmts: List<PsiElement>,
-    ) : Context
-
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return null

@@ -25,7 +25,7 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Missing else"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitExprStmt(expr: RsExprStmt) {
                 val firstIf = expr.extractIf() ?: return
                 val nextIf = expr.rightSiblings

@@ -957,4 +957,35 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             format_args!("{a}", a = 5);
         }
     """)
+
+    fun `test do not offer to remove parameter in trait method`() = checkFixIsUnavailable("Remove parameter `a`", """
+        trait Trait {
+            fn func(/*warning*/a/*caret*//*warning**/: i32) {}
+        }
+    """)
+
+    fun `test do not offer to remove parameter in trait impl method`() = checkFixIsUnavailable("Remove parameter `a`", """
+        struct Struct {}
+        trait Trait {
+            fn func(/*warning*/a/*warning**/: i32) {}
+        }
+        impl Trait for Struct {
+            fn func(/*warning*/a/*caret*//*warning**/: i32) {}
+        }
+    """)
+
+    fun `test do not offer to remove parameter in bang proc macro`() = checkFixIsUnavailable("Remove parameter `input`", """
+        #[proc_macro]
+        pub fn macro_function(/*warning*/input/*caret*//*warning**/: TokenStream) -> TokenStream {}
+    """)
+
+    fun `test do not offer to remove parameter in attr proc macro`() = checkFixIsUnavailable("Remove parameter `attr`", """
+        #[proc_macro_attribute]
+        pub fn macro_attribute(/*warning*/attr/*caret*//*warning**/: TokenStream, item: TokenStream) -> TokenStream { item }
+    """)
+
+    fun `test do not offer to remove parameter in derive proc macro`() = checkFixIsUnavailable("Remove parameter `item`", """
+        #[proc_macro_derive(Derive)]
+        pub fn macro_derive(/*warning*/item/*caret*//*warning**/: TokenStream) -> TokenStream {}
+    """)
 }

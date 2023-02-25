@@ -23,6 +23,8 @@ import org.rust.lang.core.psi.ext.RsMethodOrField
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.resolve.SimpleScopeEntry
+import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.resolve.TYPES_N_VALUES
 
 class RsLookupElementTest : RsTestBase() {
     fun `test fn`() = check("""
@@ -157,7 +159,7 @@ class RsLookupElementTest : RsTestBase() {
     fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
         val lookup = createLookupElement(
-            SimpleScopeEntry("foo", myFixture.file as RsFile),
+            SimpleScopeEntry("foo", myFixture.file as RsFile, TYPES),
             RsCompletionContext()
         )
         val presentation = LookupElementPresentation()
@@ -331,7 +333,7 @@ class RsLookupElementTest : RsTestBase() {
 
         val element = findElementInEditor<T>()
         val lookup = createLookupElement(
-            SimpleScopeEntry(element.name!!, element as RsElement),
+            SimpleScopeEntry(element.name!!, element as RsElement, TYPES_N_VALUES),
             RsCompletionContext()
         )
 

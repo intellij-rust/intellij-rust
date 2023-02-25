@@ -2,10 +2,10 @@
   <configuration name="Tests in 'tests'" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="test --package test-package --test foo &quot;&quot;" />
     <option name="workingDirectory" value="file:///my-crate" />
+    <option name="emulateTerminal" value="false" />
     <option name="channel" value="DEFAULT" />
     <option name="requiredFeatures" value="true" />
     <option name="allFeatures" value="false" />
-    <option name="emulateTerminal" value="false" />
     <option name="withSudo" value="false" />
     <option name="buildTarget" value="REMOTE" />
     <option name="backtrace" value="SHORT" />

@@ -113,5 +113,10 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
             use std::os::windows/*caret*/
         """)
     }
-}
 
+    fun `test don't complete borrow method`() = checkNotContainsCompletion("borrow", """
+        fn main() {
+            0.borro/*caret*/
+        }
+    """)
+}

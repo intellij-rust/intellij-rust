@@ -71,6 +71,11 @@ interface DotExprResolveVariant : ScopeEntry {
     val selfTy: Ty
     /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
     val derefCount: Int
+
+    override val namespaces: Set<Namespace>
+        get() = VALUES // Namespace does not matter in the case of dot expression
+
+    override fun doCopyWithNs(namespaces: Set<Namespace>): ScopeEntry = this
 }
 
 data class FieldResolveVariant(

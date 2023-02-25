@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
@@ -22,8 +23,9 @@ class RsSelfConventionInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.WrongSelfConvention
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(m: RsFunction) {
+        object : RsWithMacrosInspectionVisitor() {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(m: RsFunction) {
                 val traitOrImpl = when (val owner = m.owner) {
                     is RsAbstractableOwner.Trait -> owner.trait
                     is RsAbstractableOwner.Impl -> owner.impl.takeIf { owner.isInherent }

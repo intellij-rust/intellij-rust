@@ -24,7 +24,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
 import org.rust.cargo.runconfig.RsProcessHandler
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
+import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.openapiext.computeWithCancelableProgress
 
 private val LOG: Logger = Logger.getInstance("org.rust.cargo.runconfig.target.Utils")

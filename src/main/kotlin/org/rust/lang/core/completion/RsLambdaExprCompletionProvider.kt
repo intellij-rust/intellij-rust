@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.rust.ide.refactoring.suggestedNames
@@ -20,10 +19,7 @@ import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.OR
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getNextNonWhitespaceSibling
-import org.rust.lang.core.psi.ext.leftSiblings
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.implLookup
@@ -73,32 +69,31 @@ object RsLambdaExprCompletionProvider : RsCompletionProvider() {
 
 private fun handleInsert(ctx: InsertionContext) {
     val lambda = ctx.getElementOfType<RsLambdaExpr>() ?: return
-    val pats = lambda.descendantsOfType<RsPatIdent>().toList()
+    val pats = lambda.descendantsOfType<RsPatIdent>()
 
     val lambdaPtr = lambda.createSmartPointer()
 
-    val template = ctx.editor.newTemplateBuilder(lambda) ?: return
+    val tpl = ctx.editor.newTemplateBuilder(lambda)
     for (pat in pats) {
-        template.replaceElement(pat)
+        tpl.replaceElement(pat)
     }
 
     val expr = lambda.expr
     if (expr != null) {
-        template.replaceElement(expr)
+        tpl.replaceElement(expr)
     }
-    template.withFinishResultListener {
+    tpl.runInline {
         val element = lambdaPtr.element
         if (element != null) {
-            val blockExpr = element.expr as? RsBlockExpr ?: return@withFinishResultListener
+            val blockExpr = element.expr as? RsBlockExpr ?: return@runInline
             if (blockExpr.block.lbrace.getNextNonWhitespaceSibling() != blockExpr.block.rbrace) {
-                return@withFinishResultListener
+                return@runInline
             }
 
             val offset = blockExpr.block.lbrace.startOffset
             ctx.editor.caretModel.moveToOffset(offset + 1)
         }
     }
-    template.runInline()
 }
 
 private fun suggestedParams(paramTypes: List<Ty>, contextExpr: RsExpr): String {

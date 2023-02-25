@@ -26,9 +26,9 @@ import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.openapiext.showSettingsDialog
 
-private const val serviceName: String = "RustProjectSettings"
+private const val SERVICE_NAME: String = "RustProjectSettings"
 
-@com.intellij.openapi.components.State(name = serviceName, storages = [
+@com.intellij.openapi.components.State(name = SERVICE_NAME, storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE),
     Storage("misc.xml", deprecated = true)
 ])
@@ -62,7 +62,7 @@ class RustProjectSettingsServiceImpl(
     override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
 
     override fun getState(): Element {
-        val element = Element(serviceName)
+        val element = Element(SERVICE_NAME)
         serializeObjectInto(_state, element)
         return element
     }

@@ -8,12 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.syntaxTailStmt
+import org.rust.openapiext.moveCaretToOffset
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Add braces to lambda expression"
@@ -22,7 +24,10 @@ class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
         val lambdaExpr = element.ancestorStrict<RsLambdaExpr>() ?: return null
         val body = lambdaExpr.expr ?: return null
-        return if (body !is RsBlockExpr) body else null
+        if (body is RsBlockExpr) return null
+        if (!PsiModificationUtil.canReplace(body)) return null
+
+        return body
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
@@ -31,7 +36,8 @@ class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
         val bodyStr = "\n${ctx.text}\n"
         val blockExpr = RsPsiFactory(project).createBlockExpr(bodyStr)
 
-        val offset = ((ctx.replace(blockExpr)) as RsBlockExpr).block.syntaxTailStmt?.textOffset ?: return
-        editor.caretModel.moveToOffset(offset + relativeCaretPosition)
+        val insertedBlock = (ctx.replace(blockExpr)) as RsBlockExpr
+        val offset = insertedBlock.block.syntaxTailStmt?.textOffset ?: return
+        editor.moveCaretToOffset(insertedBlock, offset + relativeCaretPosition)
     }
 }

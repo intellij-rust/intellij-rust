@@ -26,7 +26,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Unresolved reference"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
 
             override fun visitPath(path: RsPath) {
                 val (isPathUnresolved, context) = processPath(path) ?: return
@@ -44,7 +44,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 }
             }
 
-            override fun visitExternCrateItem(externCrate: RsExternCrateItem) {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitExternCrateItem2(externCrate: RsExternCrateItem) {
                 if (externCrate.reference.multiResolve().isEmpty() &&
                     externCrate.containingCrate.origin == PackageOrigin.WORKSPACE) {
                     RsDiagnostic.CrateNotFoundError(externCrate.referenceNameElement, externCrate.referenceName)
@@ -124,7 +125,7 @@ private fun createQuickFixes(
     if (context == null) return emptyList()
 
     val fixes = mutableListOf<LocalQuickFix>()
-    if (candidates != null && candidates.isNotEmpty()) {
+    if (!candidates.isNullOrEmpty()) {
         fixes.add(AutoImportFix(element, context))
 
         if (element is RsPath && context.type == AutoImportFix.Type.GENERAL_PATH && candidates.size == 1) {

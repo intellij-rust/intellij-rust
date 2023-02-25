@@ -23,7 +23,7 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Redundant else"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
 
             override fun visitElseBranch(expr: RsElseBranch) {
                 if (expr.isRedundant) registerProblem(expr, expr.`else`.textRangeInParent)

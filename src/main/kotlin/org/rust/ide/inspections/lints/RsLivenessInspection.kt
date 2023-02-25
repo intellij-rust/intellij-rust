@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.RemoveParameterFix
 import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix
@@ -24,8 +25,9 @@ class RsLivenessInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedVariables
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
-            override fun visitFunction(func: RsFunction) {
+        object : RsWithMacrosInspectionVisitor() {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(func: RsFunction) {
                 // Disable inside doc tests
                 if (func.isDoctestInjection) return
 
@@ -49,7 +51,7 @@ class RsLivenessInspection : RsLintInspection() {
                 for (deadDeclaration in liveness.deadDeclarations) {
                     val name = deadDeclaration.binding.name ?: continue
                     if (name.startsWith("_")) continue
-                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind)
+                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind, func)
                 }
             }
         }
@@ -58,7 +60,8 @@ class RsLivenessInspection : RsLintInspection() {
         holder: RsProblemsHolder,
         binding: RsPatBinding,
         name: String,
-        kind: DeclarationKind
+        kind: DeclarationKind,
+        function: RsFunction,
     ) {
         if (!binding.isPhysical) return
 
@@ -80,7 +83,13 @@ class RsLivenessInspection : RsLintInspection() {
         val fixes = mutableListOf<LocalQuickFix>(RenameFix(binding, "_$name"))
         if (isSimplePat) {
             when (kind) {
-                Parameter -> fixes.add(RemoveParameterFix(binding, name))
+                Parameter -> {
+                    val owner = function.owner
+                    val isTraitOrTraitImpl = owner.isTraitImpl || owner is RsAbstractableOwner.Trait
+                    if (!isTraitOrTraitImpl && !function.isProcMacroDef) {
+                        fixes.add(RemoveParameterFix(binding, name))
+                    }
+                }
                 Variable -> {
                     if (binding.topLevelPattern.parent is RsLetDecl) {
                         fixes.add(RemoveVariableFix(binding, name))

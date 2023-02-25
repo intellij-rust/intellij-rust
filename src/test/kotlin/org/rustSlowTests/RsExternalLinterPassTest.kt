@@ -196,7 +196,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         Help: for further information visit <a href='https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used'>https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used</a>
     """, externalLinter = ExternalLinter.CLIPPY)
 
-    @MinRustcVersion("1.66.0-nightly")
+    @MinRustcVersion("1.67.0")
     fun `test handle hyperlinks in errors 2`() = checkTooltip("""
         #![deny(clippy::unwrap_used)]
         fn main() {
@@ -204,7 +204,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
             x.unwrap()
         }
     """, """
-        used `unwrap()` on `an Option` value
+        used `unwrap()` on an `Option` value
         Help: if you don't want to handle the `None` case gracefully, consider using `expect()` to provide a better panic message
         Help: for further information visit <a href='https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used'>https://rust-lang.github.io/rust-clippy/master/index.html#unwrap_used</a>
         Note: the lint level is defined here

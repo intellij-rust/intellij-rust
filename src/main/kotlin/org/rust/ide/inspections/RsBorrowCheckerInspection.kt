@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.ide.inspections.fixes.DeriveCopyFix
 import org.rust.ide.inspections.fixes.InitializeWithDefaultValueFix
@@ -18,7 +19,7 @@ import org.rust.lang.core.types.type
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return
                 val receiver = o.receiver
@@ -35,7 +36,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 }
             }
 
-            override fun visitFunction(func: RsFunction) {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(func: RsFunction) {
                 val borrowCheckResult = func.borrowCheckResult ?: return
 
                 // TODO: Remove this check when type inference is implemented for `asm!` macro calls
@@ -57,14 +59,14 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         if (expr.isPhysical && nameExpr.isPhysical) {
             val fix = AddMutableFix.createIfCompatible(nameExpr)
-            holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", fix)
+            holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *notNullElements(fix))
         }
     }
 
     private fun registerUseOfMovedValueProblem(holder: RsProblemsHolder, use: RsElement) {
         if (use.isPhysical) {
             val fix = DeriveCopyFix.createIfCompatible(use)
-            holder.registerProblem(use, "Use of moved value", fix)
+            holder.registerProblem(use, "Use of moved value", *notNullElements(fix))
         }
     }
 
@@ -77,7 +79,7 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     private fun registerUseOfUninitializedVariableProblem(holder: RsProblemsHolder, use: RsElement) {
         if (use.isPhysical) {
             val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
-            holder.registerProblem(use, "Use of possibly uninitialized variable", fix)
+            holder.registerProblem(use, "Use of possibly uninitialized variable", *notNullElements(fix))
         }
     }
 
@@ -89,4 +91,9 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
         return false
     }
+}
+
+// BACKCOMPAT: 2022.3. Replace with LocalQuickFix.notNullElements
+private fun notNullElements(fix: LocalQuickFix?): Array<LocalQuickFix> {
+    return if (fix == null) LocalQuickFix.EMPTY_ARRAY else arrayOf(fix)
 }

@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
-import org.rust.openapiext.createSmartPointer
 
 fun addMissingFieldsToStructLiteral(
     factory: RsPsiFactory,
@@ -32,7 +31,7 @@ fun addMissingFieldsToStructLiteral(
         fieldsToAdd,
         structLiteral.getLocalVariableVisibleBindings()
     )
-    editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr?.createSmartPointer() })
+    editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr })
 }
 
 fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
@@ -74,7 +73,7 @@ fun expandTupleStructFields(factory: RsPsiFactory, editor: Editor?, patTuple: Rs
     val missingFieldsAmount = declaration.fields.size - bodyFields.size
     addFieldsToPat(factory, patTuple, createTupleStructMissingFields(factory, missingFieldsAmount), hasTrailingComma)
     patTuple.patRest?.delete()
-    editor?.buildAndRunTemplate(patTuple, patTuple.childrenOfType<RsPatBinding>().map { it.createSmartPointer() })
+    editor?.buildAndRunTemplate(patTuple, patTuple.childrenOfType<RsPatBinding>())
 }
 
 private fun createTupleStructMissingFields(factory: RsPsiFactory, amount: Int): List<RsPatBinding> {

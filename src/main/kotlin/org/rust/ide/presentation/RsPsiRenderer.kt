@@ -130,9 +130,10 @@ open class RsPsiRenderer(
         if (typeParameterList != null && renderGenericsAndWhere) {
             appendTypeParameterList(sb, typeParameterList)
         }
-        val whereClause = ta.whereClause
-        if (whereClause != null && renderGenericsAndWhere) {
-            appendWhereClause(sb, whereClause)
+        if (renderGenericsAndWhere) {
+            for (whereClause in ta.whereClauseList) {
+                appendWhereClause(sb, whereClause)
+            }
         }
         val typeParamBounds = ta.typeParamBounds
         if (typeParamBounds != null && renderBounds) {
@@ -719,14 +720,13 @@ class ImportingPsiRenderer(
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
         val elementToName = mutableMapOf<RsElement, String>()
         processNestedScopesUpwards(context, TYPES_N_VALUES, createProcessor {
-            val element = it.element as? RsNamedElement ?: return@createProcessor false
-            for (namespace in element.namespaces) {
+            val element = it.element as? RsNamedElement ?: return@createProcessor
+            for (namespace in it.namespaces) {
                 nameToElement[it.name to namespace] = element
                 if (it.name != "_" && element !in elementToName) {
                     elementToName[element] = it.name
                 }
             }
-            false
         })
         nameToElement to elementToName
     }

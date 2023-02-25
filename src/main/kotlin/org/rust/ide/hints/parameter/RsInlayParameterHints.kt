@@ -30,7 +30,7 @@ object RsInlayParameterHints {
         if (!elem.existsAfterExpansion) return emptyList()
         if (callInfo == null) return emptyList()
 
-        val hints = buildList<String> {
+        val hints = buildList {
             if (callInfo.selfParameter != null && elem is RsCallExpr) {
                 add(callInfo.selfParameter)
             }

@@ -166,6 +166,7 @@ private object BlockMayHaveStubsHeuristic {
 
     // TODO remove `USE`
     private val ITEM_DEF_KWS = tokenSetOf(STATIC, ENUM, IMPL, MACRO_KW, MOD, STRUCT, UNION, TRAIT, TYPE_KW, USE)
+    private val UNEXPECTED_NEXT_CONST_TOKENS = tokenSetOf(LBRACE, MOVE, OR)
 
     fun computeAndCache(node: ASTNode): Boolean {
         assertIsBlock(node)
@@ -198,9 +199,9 @@ private object BlockMayHaveStubsHeuristic {
         while (true) {
             val token = b.tokenType ?: break
             val looksLikeStubElement = token in ITEM_DEF_KWS
-                // `const` but not `*const`, `raw const` or `const {}`
-                || token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
-                    && b.lookAhead(1) != LBRACE
+                // `const` but not `*const`, `raw const`, const lambdas or `const {}`
+                || (token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
+                    && !UNEXPECTED_NEXT_CONST_TOKENS.contains(b.lookAhead(1)))
                 // `#!`
                 || token == EXCL && prevToken == SHA
                 // `macro_rules!`
@@ -342,6 +343,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "UNARY_EXPR" -> RsUnaryExprStub.Type
     "UNIT_EXPR" -> RsExprStubType("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStubType("WHILE_EXPR", ::RsWhileExprImpl)
+    "UNDERSCORE_EXPR" -> RsExprStubType("UNDERSCORE_EXPR", ::RsUnderscoreExprImpl)
 
     "VIS" -> RsVisStub.Type
     "VIS_RESTRICTION" -> RsPlaceholderStub.Type("VIS_RESTRICTION", ::RsVisRestrictionImpl)
@@ -511,8 +513,6 @@ class RsUseSpeckStub(
 
         override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
             RsUseSpeckStub(parentStub, this, psi.isStarImport, psi.hasColonColon)
-
-        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
     }
 
     companion object : BitFlagsBuilder(BYTE) {

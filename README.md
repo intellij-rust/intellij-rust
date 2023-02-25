@@ -30,17 +30,17 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 
 |                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] | [IntelliJ IDEA] Ultimate, [GoLand] | [PyCharm] Professional | [WebStorm], [PhpStorm], other commercial IDEs |
 |------------------------|----------------------------------------------|---------|------------------------------------|------------------------|-----------------------------------------------|
-| Language support       | +                                            | +       | +                                  | +                      | +                                             |
-| Cargo support          | +                                            | +       | +                                  | +                      | +                                             |
-| Code coverage          | +                                            | +       | +                                  | +                      | +                                             |
+| [Language support]     | +                                            | +       | +                                  | +                      | +                                             |
+| [Cargo support]        | +                                            | +       | +                                  | +                      | +                                             |
+| [Code coverage]        | +                                            | +       | +                                  | +                      | +                                             |
 | [Detecting duplicates] | -                                            | +       | +                                  | +                      | +                                             |
-| Debugger               | -                                            | +       | +**                                | +**                    | -                                             |
-| Run targets            | -                                            | +       | +                                  | -                      | -                                             |
-| Profiler               | -                                            | +       | -                                  | -                      | -                                             |
-| Valgrind Memcheck      | -                                            | +       | -                                  | -                      | -                                             |
+| [Debugger]             | -                                            | +       | +**                                | +**                    | -                                             |
+| [Run targets]          | -                                            | +       | +                                  | -                      | -                                             |
+| [Profiler]             | -                                            | +       | -                                  | -                      | -                                             |
+| [Valgrind Memcheck]    | -                                            | +       | -                                  | -                      | -                                             |
 
 
-\* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
+\* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu], [IntelliJ IDEA Edu], and third-party IntelliJ-based IDEs.
 
 \** Requires the
 [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin. 
@@ -91,5 +91,13 @@ understand the high-level structure of the codebase. If you are not sure where t
 [GoLand]: https://www.jetbrains.com/go/
 [WebStorm]: https://www.jetbrains.com/webstorm/
 [PhpStorm]: https://www.jetbrains.com/phpstorm/
-[PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education
+[PyCharm Edu]: https://www.jetbrains.com/pycharm-edu/
+[IntelliJ IDEA Edu]: https://www.jetbrains.com/idea-edu/
 [Detecting duplicates]: https://www.jetbrains.com/help/idea/analyzing-duplicates.html
+[Language support]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-syntax-highlighting.html
+[Cargo support]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-new-cargo-projects.html
+[Code coverage]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-code-coverage.html
+[Debugger]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-debugging.html
+[Run targets]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-run-targets.html
+[Profiler]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-profiler.html
+[Valgrind Memcheck]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-valgrind.html

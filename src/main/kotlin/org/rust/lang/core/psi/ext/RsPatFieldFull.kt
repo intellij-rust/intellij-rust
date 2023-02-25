@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsPatFieldFull
 import org.rust.lang.core.psi.RsPatStruct
 import org.rust.lang.core.resolve.collectResolveVariants
@@ -20,7 +20,7 @@ val RsPatFieldFull.parentStructPattern: RsPatStruct
     get() = ancestorStrict()!!
 
 
-abstract class RsPatFieldFullImplMixin(node: ASTNode) : RsElementImpl(node), RsPatFieldFull {
+abstract class RsPatFieldFullImplMixin(type: IElementType) : RsElementImpl(type), RsPatFieldFull {
     override val referenceNameElement: PsiElement
         get() = identifier ?: integerLiteral!!
 

@@ -5,9 +5,9 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.core.psi.RsPathType
-import org.rust.lang.core.psi.RsRefLikeType
-import org.rust.lang.core.psi.RsVisitor
+import com.intellij.psi.util.descendants
+import org.rust.ide.inspections.lints.hasMissingLifetimes
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.lifetimeArguments
 import org.rust.lang.core.psi.ext.lifetimeParameters
@@ -18,7 +18,7 @@ import org.rust.lang.utils.addToHolder
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitPathType(type: RsPathType) {
                 val path = type.path
 
@@ -43,6 +43,28 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
                     RsDiagnostic.MissingLifetimeSpecifier(type.and ?: type).addToHolder(holder)
                 }
             }
-        }
 
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitFunction2(fn: RsFunction) {
+                // https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision
+                if (!fn.hasMissingLifetimes()) return
+
+                val retType = fn.retType ?: return
+
+                // Skipping `Fn(...) -> ...` and `fn(...) -> ...`
+                val descendants = retType.descendants {
+                    when (it) {
+                        is RsFnPointerType -> false
+                        is RsPath -> it.valueParameterList == null
+                        else -> true
+                    }
+                }
+                for (type in descendants) {
+                    if (type !is RsRefLikeType) continue
+                    val and = type.and ?: continue
+                    if (type.lifetime != null) continue
+                    RsDiagnostic.MissingLifetimeSpecifier(and).addToHolder(holder)
+                }
+            }
+        }
 }

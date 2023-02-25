@@ -5,8 +5,6 @@
 
 package org.rust.stdext
 
-import java.util.concurrent.ConcurrentMap
-
 /**
  * A very simple interface for caching
  */
@@ -18,13 +16,6 @@ interface Cache<in K : Any, V : Any> {
             fromMutableMap(mutableMapOf())
 
         private fun <K : Any, V : Any> fromMutableMap(map: MutableMap<K, V>): Cache<K, V> {
-            return object : Cache<K, V> {
-                override fun getOrPut(key: K, defaultValue: () -> V): V =
-                    map.getOrPut(key, defaultValue)
-            }
-        }
-
-        fun <K : Any, V : Any> fromConcurrentMap(map: ConcurrentMap<K, V>): Cache<K, V> {
             return object : Cache<K, V> {
                 override fun getOrPut(key: K, defaultValue: () -> V): V =
                     map.getOrPut(key, defaultValue)

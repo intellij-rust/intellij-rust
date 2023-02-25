@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.utils.skipParenExprDown
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.endOffsetInParent
@@ -22,7 +23,7 @@ class RsWhileTrueLoopInspection : RsLintInspection() {
     override fun getDisplayName(): String = "While true loop"
     override fun getLint(element: PsiElement): RsLint = RsLint.WhileTrue
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitWhileExpr(o: RsWhileExpr) {
             val condition = o.condition ?: return
             val expr = condition.skipParenExprDown() as? RsLitExpr ?: return

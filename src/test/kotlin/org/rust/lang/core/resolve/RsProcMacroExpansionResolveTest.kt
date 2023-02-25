@@ -650,6 +650,73 @@ class RsProcMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Struct2;
     """)
 
+    fun `test method defined with an attr macro 1`() = checkByCode("""
+        use test_proc_macros::attr_as_is;
+
+        struct Foo;
+        struct Bar;
+        impl Foo {
+            #[attr_as_is]
+            fn foo(&self) -> Bar { todo!() }
+        }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test method defined with an attr macro 2`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        struct Foo;
+        struct Bar;
+        impl Foo {
+            #[attr_replace_with_attr(fn foo(&self) -> Bar { todo!() })]
+            fn baz() {}
+        }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test method defined with an attr macro 3`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+
+        struct Foo;
+        struct Bar;
+        impl Foo {
+            #[attr_replace_with_attr(fn foo(&self) -> Bar { todo!() })]
+            foobar!();
+        }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test method defined with an fn-like macro expanded from an attr macro`() = checkByCode("""
+        use test_proc_macros::attr_replace_with_attr;
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+
+        struct Foo;
+        struct Bar;
+        impl Foo {
+            #[attr_replace_with_attr(foo!(foo, Bar);)]
+            fn baz() {}
+        }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
     override val followMacroExpansions: Boolean
         get() = true
 }

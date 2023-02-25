@@ -13,10 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsEmptyStmt
 import org.rust.lang.core.psi.RsStmt
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.endOffsetInParent
 
@@ -36,7 +36,7 @@ private class FixRedundantSemicolons(start: PsiElement, end: PsiElement = start)
 class RsRedundantSemicolonsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.RedundantSemicolons
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitBlock(block: RsBlock) {
             super.visitBlock(block)
 

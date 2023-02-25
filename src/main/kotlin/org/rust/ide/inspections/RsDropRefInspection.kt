@@ -22,7 +22,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "Drop reference"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitCallExpr(expr: RsCallExpr) = inspectExpr(expr, holder)
         }
 

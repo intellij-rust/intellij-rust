@@ -189,7 +189,7 @@ private fun <T: RsElement>reformat(element: T): T? {
 }
 
 private fun runTemplate(element: RsElement, editor: Editor) {
-    editor.buildAndRunTemplate(element.parent, listOf(element.createSmartPointer()))
+    editor.buildAndRunTemplate(element.parent, listOf(element))
 }
 
 private fun removePrefix(text: String, keyword: PsiElement?): String {

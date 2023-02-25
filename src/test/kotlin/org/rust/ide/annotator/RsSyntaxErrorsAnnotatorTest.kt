@@ -60,7 +60,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
 
             <error descr="Associated function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
             <error descr="Associated function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
-            fn tup_param(<error descr="Associated function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn tup_param(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y): (u8, u8)</error>, a: bool);
             fn var_foo(a: bool, <error descr="Associated function `var_foo` cannot be variadic">...</error>);
         }
     """)
@@ -76,7 +76,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
 
             <error descr="Method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
             <error descr="Method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
-            fn tup_param(&self, <error descr="Method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn tup_param(&self, <error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y): (u8, u8)</error>, a: bool);
             fn var_foo(&self, a: bool, <error descr="Method `var_foo` cannot be variadic">...</error>);
         }
     """)
@@ -106,6 +106,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         pub type UInt = u32;
         type Maybe<T> = Option<T>;
         type SizedMaybe<T> where T: Sized = Option<T>;
+        type SizedMaybe2<T> = Option<T> <error descr="Type `SizedMaybe2` cannot have `where` clause after the type">where T: Sized</error>;
 
         <error descr="Type `DefBool` cannot have the `default` qualifier">default</error> type DefBool = bool;
         <error descr="Type `Unknown` should have a body`">type Unknown;</error>

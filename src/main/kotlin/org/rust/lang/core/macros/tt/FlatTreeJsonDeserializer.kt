@@ -8,16 +8,16 @@ package org.rust.lang.core.macros.tt
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.databind.DeserializationContext
-import gnu.trove.TIntArrayList
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.rust.util.RsJacksonDeserializer
 
 object FlatTreeJsonDeserializer : RsJacksonDeserializer<FlatTree>(FlatTree::class.java) {
     override fun deserialize(parser: JsonParser, context: DeserializationContext): FlatTree {
-        val subtree = TIntArrayList()
-        val literal = TIntArrayList()
-        val punct = TIntArrayList()
-        val ident = TIntArrayList()
-        val tokenTree = TIntArrayList()
+        val subtree = IntArrayList()
+        val literal = IntArrayList()
+        val punct = IntArrayList()
+        val ident = IntArrayList()
+        val tokenTree = IntArrayList()
         val text = mutableListOf<String>()
 
         context.readObjectFields { key1 ->
@@ -34,7 +34,7 @@ object FlatTreeJsonDeserializer : RsJacksonDeserializer<FlatTree>(FlatTree::clas
         return FlatTree(subtree, literal, punct, ident, tokenTree, text)
     }
 
-    private fun DeserializationContext.readIntArray(out: TIntArrayList) {
+    private fun DeserializationContext.readIntArray(out: IntArrayList) {
         expectToken(JsonToken.START_ARRAY)
         while (parser.nextToken() != JsonToken.END_ARRAY) {
             out.add(readLong().toInt())

@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.components.CheckBox
 import com.intellij.util.text.nullize
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.RsCommandConfiguration
@@ -18,12 +19,16 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.util.RsCommandLineEditor
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JCheckBox
 
 abstract class RsCommandConfigurationEditor<T : RsCommandConfiguration>(
     protected val project: Project
 ) : SettingsEditor<T>() {
 
     abstract val command: RsCommandLineEditor
+
+    protected val emulateTerminal: JCheckBox =
+        CheckBox("Emulate terminal in output console", RsCommandConfiguration.emulateTerminalDefault)
 
     protected fun currentWorkspace(): CargoWorkspace? =
         CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
@@ -37,11 +42,13 @@ abstract class RsCommandConfigurationEditor<T : RsCommandConfiguration>(
     override fun resetEditorFrom(configuration: T) {
         command.text = configuration.command
         workingDirectory.component.text = configuration.workingDirectory?.toString().orEmpty()
+        emulateTerminal.isSelected = configuration.emulateTerminal
     }
 
     override fun applyEditorTo(configuration: T) {
         configuration.command = command.text
         configuration.workingDirectory = currentWorkingDirectory
+        configuration.emulateTerminal = emulateTerminal.isSelected
     }
 }
 

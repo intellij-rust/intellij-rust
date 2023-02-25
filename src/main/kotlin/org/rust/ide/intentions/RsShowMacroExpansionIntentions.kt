@@ -23,8 +23,18 @@ import org.rust.lang.core.psi.ext.kind
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 
-abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
-    RsElementBaseIntentionAction<RsPossibleMacroCall>() {
+class RsShowRecursiveMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
+    override val expandRecursively: Boolean get() = true
+    override fun getText() = "Show recursive macro expansion"
+}
+
+class RsShowSingleStepMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
+    override val expandRecursively: Boolean get() = false
+    override fun getText() = "Show single step macro expansion"
+}
+
+abstract class RsShowMacroExpansionIntentionBase : RsElementBaseIntentionAction<RsPossibleMacroCall>() {
+    protected abstract val expandRecursively: Boolean
 
     override fun getFamilyName() = text
 
@@ -39,15 +49,15 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
         return macroCall
     }
 
+    /** Progress window cannot be shown in the write action, so it have to be disabled. **/
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor, ctx: RsPossibleMacroCall) {
         when (val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)) {
             is Ok -> showExpansion(project, editor, expansionDetails.ok)
             is Err -> showError(editor, expansionDetails.err)
         }
     }
-
-    /** Progress window cannot be shown in the write action, so it have to be disabled. **/
-    override fun startInWriteAction(): Boolean = false
 
     /**
      * This method is required for testing to avoid actually creating popup and editor.
@@ -61,12 +71,4 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
     private fun showError(editor: Editor, error: GetMacroExpansionError) {
         RsShowMacroExpansionActionBase.showMacroExpansionError(editor, error)
     }
-}
-
-class RsShowRecursiveMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {
-    override fun getText() = "Show recursive macro expansion"
-}
-
-class RsShowSingleStepMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = false) {
-    override fun getText() = "Show single step macro expansion"
 }

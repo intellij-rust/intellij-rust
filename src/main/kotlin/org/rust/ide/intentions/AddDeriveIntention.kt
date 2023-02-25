@@ -8,14 +8,13 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.firstKeyword
+import org.rust.openapiext.moveCaretToOffset
 
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
@@ -35,8 +34,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val deriveAttr = findOrCreateDeriveAttr(project, ctx.item, ctx.itemStart)
-        val reformattedDeriveAttr = reformat(project, ctx.item, deriveAttr)
-        moveCaret(editor, reformattedDeriveAttr)
+        moveCaret(editor, deriveAttr)
 
     }
 
@@ -50,17 +48,10 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
         return item.addBefore(attr, keyword) as RsOuterAttr
     }
 
-    private fun reformat(project: Project, item: RsStructOrEnumItemElement, deriveAttr: RsOuterAttr): RsOuterAttr {
-        val marker = Object()
-        PsiTreeUtil.mark(deriveAttr, marker)
-        val reformattedItem = CodeStyleManager.getInstance(project).reformat(item)
-        return PsiTreeUtil.releaseMark(reformattedItem, marker) as RsOuterAttr
-    }
-
     private fun moveCaret(editor: Editor, deriveAttr: RsOuterAttr) {
         val offset = deriveAttr.metaItem.metaItemArgs?.rparen?.textOffset ?:
             deriveAttr.rbrack.textOffset
-        editor.caretModel.moveToOffset(offset)
+        editor.moveCaretToOffset(deriveAttr, offset)
     }
 }
 

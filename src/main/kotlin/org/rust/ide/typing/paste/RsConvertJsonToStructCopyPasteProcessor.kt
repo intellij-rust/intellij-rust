@@ -370,7 +370,7 @@ private fun replacePlaceholders(
             RsBundle.message("copy.paste.convert.json.to.struct.dialog.title")
         ) {
             if (!file.isValid) return@runWriteCommandAction
-            val template = editor.newTemplateBuilder(file) ?: return@runWriteCommandAction
+            val tpl = editor.newTemplateBuilder(file)
 
             // Gather usages of structs in fields
             val structNames = nameMap.values.toSet()
@@ -384,7 +384,7 @@ private fun replacePlaceholders(
             for (item in items) {
                 val identifier = item.identifier
                 if (identifier != null) {
-                    val variable = template.introduceVariable(identifier)
+                    val variable = tpl.introduceVariable(identifier)
                     for (usage in nameUsages[identifier.text].orEmpty()) {
                         variable.replaceElementWithVariable(usage)
                     }
@@ -394,11 +394,11 @@ private fun replacePlaceholders(
                 item.accept(underscoreVisitor)
 
                 for (wildcard in underscoreVisitor.types) {
-                    template.replaceElement(wildcard)
+                    tpl.replaceElement(wildcard)
                 }
             }
 
-            template.runInline()
+            tpl.runInline()
         }
     }
 }

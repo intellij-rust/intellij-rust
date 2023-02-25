@@ -209,7 +209,7 @@ class RsExtractFunctionConfig private constructor(
                 }
                 val returnExprText = returnValue?.exprText.orEmpty()
 
-                val bodyContent = buildList<String> {
+                val bodyContent = buildList {
                     addAll(unselectedParamsTexts)
                     add(elementsText)
                     if (returnExprText.isNotEmpty()) {

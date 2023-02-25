@@ -428,6 +428,17 @@ class QueryAttributes<out T: RsMetaItemPsiOrStub>(
     }
 }
 
+val QueryAttributes<RsMetaItem>.stability: RsStability?
+    get() {
+        for (meta in metaItems) {
+            when (meta.name) {
+                "stable" -> return RsStability.Stable
+                "unstable" -> return RsStability.Unstable
+            }
+        }
+        return null
+    }
+
 /**
  * Checks if there are any #[cfg()] attributes that disable this element
  *

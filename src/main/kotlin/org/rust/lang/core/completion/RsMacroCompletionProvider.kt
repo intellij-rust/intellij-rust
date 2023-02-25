@@ -37,7 +37,7 @@ import org.rust.lang.core.withPrevSiblingSkipping
 object RsMacroCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
         parameters: CompletionParameters,
-        _context: ProcessingContext,
+        context: ProcessingContext,
         result: CompletionResultSet
     ) {
         val position = parameters.position

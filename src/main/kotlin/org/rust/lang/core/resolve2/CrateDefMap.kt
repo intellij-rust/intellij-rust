@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.rust.cargo.project.settings.getMaximumRecursionLimit
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.crate.CratePersistentId
@@ -83,7 +84,7 @@ class CrateDefMap(
 
     val globImportGraph: GlobImportGraph = GlobImportGraph()
 
-    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = THashMap()
+    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = Object2ObjectOpenHashMap()
     val macroCallToExpansionName: MutableMap<MacroIndex, String> = THashMap(object : TObjectHashingStrategy<MacroIndex> {
         override fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = MacroIndex.equals(index1, index2)
         override fun computeHashCode(index: MacroIndex): Int = MacroIndex.hashCode(index)
@@ -316,13 +317,13 @@ class ModData(
     val legacyMacros: SmartListMap<String, MacroDefInfo> = SmartListMap()
 
     /** Explicitly declared macros 2.0 (`pub macro $name ...`) */
-    val macros2: MutableMap<String, DeclMacro2DefInfo> = THashMap()
+    val macros2: MutableMap<String, DeclMacro2DefInfo> = Object2ObjectOpenHashMap()
 
     /** Explicitly declared proc macros */
     val procMacros: MutableMap<String, RsProcMacroKind> = hashMapOf()
 
     /** Traits imported via `use Trait as _;` */
-    val unnamedTraitImports: MutableMap<ModPath, Visibility> = THashMap()
+    val unnamedTraitImports: MutableMap<ModPath, Visibility> = Object2ObjectOpenHashMap()
 
     /**
      * Make sense only for files ([isRsFile] == true).

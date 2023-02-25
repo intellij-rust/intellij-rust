@@ -33,6 +33,8 @@ import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
+import org.rust.stdext.enumSetOf
+import java.util.*
 
 fun processItemDeclarations(
     scope: RsItemsOwner,
@@ -52,10 +54,8 @@ fun processItemDeclarationsUsingModInfo(
     ipm: ItemProcessingMode
 ): Boolean {
     val (_, defMap, modData) = info
+    val elements = hashMapOf<RsNamedElement, Pair<EnumSet<Namespace>, VisibilityFilter>>()
     for ((name, perNs) in modData.visibleItems.entriesWithNames(processor.names)) {
-        // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
-        // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
-        val elements = hashSetOf<RsNamedElement>()
         for ((visItems, namespace) in perNs.getVisItemsByNamespace()) {
             if (namespace !in ns) continue
             for (visItem in visItems) {
@@ -63,11 +63,17 @@ fun processItemDeclarationsUsingModInfo(
                 if (namespace == Namespace.Types && visItem.visibility.isInvisible && name in defMap.externPrelude) continue
                 val visibilityFilter = visItem.visibility.createFilter()
                 for (element in visItem.toPsi(info, namespace)) {
-                    if (!elements.add(element)) continue
-                    if (processor.process(name, element, visibilityFilter)) return true
+                    elements.getOrPut(element) { enumSetOf<Namespace>() to visibilityFilter }
+                        .first
+                        .add(namespace)
                 }
             }
         }
+        for ((element, namespaceAndFilter) in elements) {
+            val (namespaces, visibilityFilter) = namespaceAndFilter
+            if (processor.process(name, element, namespaces, visibilityFilter)) return true
+        }
+        elements.clear()
     }
 
     if (processor.names == null && Namespace.Types in ns) {
@@ -75,7 +81,7 @@ fun processItemDeclarationsUsingModInfo(
             val trait = VisItem(traitPath, traitVisibility)
             val visibilityFilter = traitVisibility.createFilter()
             for (traitPsi in trait.toPsi(info, Namespace.Types)) {
-                if (processor.process("_", traitPsi, visibilityFilter)) return true
+                if (processor.process("_", traitPsi, TYPES, visibilityFilter)) return true
             }
         }
     }
@@ -86,7 +92,7 @@ fun processItemDeclarationsUsingModInfo(
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
             val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
-            processor.process(name, externCrateRoot) && return true
+            processor.process(name, TYPES, externCrateRoot) && return true
         }
     }
 
@@ -134,7 +140,7 @@ private fun ModData.processMacros(
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             val macroContainingScope = visItem.containingMod.toScope(info).singleOrNull() ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingScope, info) ?: continue
-            if (processor.process(name, macro)) return true
+            if (processor.process(name, MACROS, macro)) return true
         }
 
         if (!isHanging) {
@@ -157,7 +163,7 @@ private fun ModData.processScopedMacros(
             if (!filter(name)) continue
             val macro = visItem.scopedMacroToPsi(info) ?: continue
             val visibilityFilter = visItem.visibility.createFilter()
-            if (processor.process(name, macro, visibilityFilter)) return true
+            if (processor.process(name, macro, MACROS, visibilityFilter)) return true
         }
     }
     return false

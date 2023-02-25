@@ -15,10 +15,11 @@ import org.rust.cargo.toolchain.RustChannel
 
 val Project.rustfmtSettings: RustfmtProjectSettingsService get() = service()
 
-private const val serviceName: String = "RustfmtProjectSettings"
+private const val SERVICE_NAME: String = "RustfmtProjectSettings"
 
-@State(name = serviceName, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = SERVICE_NAME, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class RustfmtProjectSettingsService(
+    @Suppress("unused")
     private val project: Project
 ) : SimplePersistentStateComponent<RustfmtState>(RustfmtState()) {
 

@@ -11,7 +11,10 @@ import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.types.Substitution
 import org.rust.openapiext.checkWriteAccessAllowed
 
@@ -43,7 +46,7 @@ class GenerateSetterHandler : GenerateAccessorHandler() {
             val fnBody = "self.$fieldName = $fieldName;"
 
             val accessor = RsPsiFactory(project).createTraitMethodMember("$fnSignature {\n$fnBody\n}")
-            impl.members?.addBefore(accessor, impl.members?.rbrace) as RsFunction
+            impl.members?.addBefore(accessor, impl.members?.rbrace) as? RsFunction
         }
     }
 

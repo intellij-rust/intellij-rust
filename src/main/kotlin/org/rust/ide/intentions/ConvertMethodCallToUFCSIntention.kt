@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -23,6 +24,12 @@ class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMet
     override fun getText() = "Convert to UFCS"
     override fun getFamilyName() = text
 
+    data class Context(
+        val methodCall: RsMethodCall,
+        val function: RsFunction,
+        val methodVariants: List<MethodResolveVariant>
+    )
+
     override fun findApplicableContext(
         project: Project,
         editor: Editor,
@@ -32,6 +39,7 @@ class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMet
         val function = methodCall.reference.resolve() as? RsFunction ?: return null
         val methodVariants = methodCall.inference?.getResolvedMethod(methodCall).orEmpty()
         if (methodVariants.isEmpty()) return null
+        if (!PsiModificationUtil.canReplace(methodCall.parentDotExpr)) return null
         return Context(methodCall, function, methodVariants)
     }
 
@@ -58,12 +66,6 @@ class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMet
         val importCtx = AutoImportFix.findApplicableContext(path)
         importCtx?.candidates?.firstOrNull()?.import(inserted)
     }
-
-    data class Context(
-        val methodCall: RsMethodCall,
-        val function: RsFunction,
-        val methodVariants: List<MethodResolveVariant>
-    )
 }
 
 private fun getOwnerName(methodVariants: List<MethodResolveVariant>): String {

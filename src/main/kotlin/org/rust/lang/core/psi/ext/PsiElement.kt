@@ -143,10 +143,7 @@ inline fun <reified T : PsiElement> PsiElement.descendantOfType(predicate: (T) -
     return descendantsOfType<T>().firstOrNull(predicate)
 }
 
-inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(predicate: (T) -> Boolean): Boolean {
-    return descendantOfType(predicate) != null
-}
-
+@Suppress("unused")
 inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeStrict(): Collection<T> =
     getStubDescendantsOfType(this, true, T::class.java)
 
@@ -280,6 +277,9 @@ fun PsiElement?.getNextNonWhitespaceSibling(): PsiElement? =
 
 fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
+
+fun PsiElement.isContextOf(child: PsiElement): Boolean =
+    child.contexts.contains(this)
 
 val PsiElement.startOffset: Int
     get() = textRange.startOffset

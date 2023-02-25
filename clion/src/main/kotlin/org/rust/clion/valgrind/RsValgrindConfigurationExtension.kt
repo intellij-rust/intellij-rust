@@ -229,7 +229,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
 
         val STORE_DATA_IN_RUN_CONFIGURATION = Key.create<Boolean>("valgrind.store_data_in_run_configuration")
 
-        private val TAG_RE: Regex = "<(exe|obj|dir)>(.+)</\\1>".toRegex();
+        private val TAG_RE: Regex = "<(exe|obj|dir)>(.+)</\\1>".toRegex()
 
         fun isEnabledFor(configuration: CargoCommandConfiguration): Boolean {
             val toolchain = configuration.clean().ok?.toolchain

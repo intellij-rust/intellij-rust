@@ -44,9 +44,12 @@ val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
 
+val grammarKitFakePsiDepsProjectDir = "grammar-kit-fake-psi-deps"
+val grammarKitFakePsiDepsProject = ":$grammarKitFakePsiDepsProjectDir"
+
 plugins {
     idea
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.8.10"
     id("org.jetbrains.intellij") version "1.12.0"
     id("org.jetbrains.grammarkit") version "2022.3"
     id("net.saliman.properties") version "1.5.2"
@@ -56,7 +59,8 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
-        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin")
+        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") +
+            file("$grammarKitFakePsiDepsProjectDir/src/main/kotlin")
     }
 }
 
@@ -99,7 +103,7 @@ allprojects {
         withType<KotlinCompile> {
             kotlinOptions {
                 jvmTarget = VERSION_17.toString()
-                languageVersion = "1.7"
+                languageVersion = "1.8"
                 // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
                 apiVersion = "1.7"
                 freeCompilerArgs = listOf("-Xjvm-default=all")
@@ -377,6 +381,8 @@ project(":plugin") {
     }
 }
 
+project(":$grammarKitFakePsiDepsProject")
+
 project(":") {
     sourceSets {
         main {
@@ -391,12 +397,12 @@ project(":") {
     }
 
     dependencies {
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.1") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
         }
-        api("io.github.z4kn4fein:semver:1.4.1") {
+        api("io.github.z4kn4fein:semver:1.4.2") {
             excludeKotlinDeps()
         }
         testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
@@ -415,6 +421,7 @@ project(":") {
             pathToParser.set("org/rust/lang/core/parser/RustParser.java")
             pathToPsiRoot.set("org/rust/lang/core/psi")
             purgeOldFiles.set(true)
+            classpath(project(grammarKitFakePsiDepsProject).sourceSets.main.get().runtimeClasspath)
         }
         withType<KotlinCompile> {
             dependsOn(generateLexer, generateParser)
@@ -489,8 +496,8 @@ project(":debugger") {
 
     dependencies {
         implementation(project(":"))
-        antlr("org.antlr:antlr4:4.11.1")
-        implementation("org.antlr:antlr4-runtime:4.11.1")
+        antlr("org.antlr:antlr4:4.12.0")
+        implementation("org.antlr:antlr4-runtime:4.12.0")
         testImplementation(project(":", "testOutput"))
     }
     tasks {

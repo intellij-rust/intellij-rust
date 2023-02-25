@@ -12,6 +12,7 @@ import com.intellij.psi.util.parentOfType
 import org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasProcessor
 import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
 import org.rust.ide.refactoring.inlineTypeAlias.tryGetTypeAliasSubstitutionUsingParent
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsTypeAlias
@@ -35,10 +36,11 @@ class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteType
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>() ?: return null
         val target = path.reference?.advancedResolveTypeAliasToImpl() ?: return null
-
         val typeAlias = target.element as? RsTypeAlias ?: return null
-
         val typeRef = typeAlias.typeReference ?: return null
+
+        if (!PsiModificationUtil.canReplace(path)) return null
+
         return Context(path, typeAlias, typeRef, target.subst)
     }
 

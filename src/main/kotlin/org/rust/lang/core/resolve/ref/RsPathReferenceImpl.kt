@@ -395,8 +395,7 @@ private fun filterResolveResults(
             1 -> result
             else -> {
                 val types = result.filter {
-                    val element = it.element as? RsNamedElement ?: return@filter false
-                    Namespace.Types in element.namespaces
+                    Namespace.Types in it.namespaces
                 }
                 types.ifEmpty { result }
             }

@@ -37,9 +37,6 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
             ?: return null
 
         fun isAppropriate(file: VirtualFile): Boolean {
-            // Needed for `amethyst`
-            if (file.name == ".sentry_dsn.txt") return true
-
             val relativePath = file.path.substring(projectDir.path.length + 1)
             // 1. Ignore excluded files
             if (exclude.any { relativePath.startsWith(it) }) return false
@@ -93,7 +90,7 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         val CARGO = RealProjectInfo("cargo", "cargo", "https://github.com/rust-lang/cargo")
         val MYSQL_ASYNC = RealProjectInfo("mysql_async", "mysql_async", "https://github.com/blackbeam/mysql_async")
         val TOKIO = RealProjectInfo("tokio", "tokio", "https://github.com/tokio-rs/tokio")
-        val AMETHYST = RealProjectInfo("amethyst", "amethyst", "https://github.com/amethyst/amethyst")
+        val BEVY = RealProjectInfo("bevy", "bevy", "https://github.com/bevyengine/bevy")
         val CLAP = RealProjectInfo("clap", "clap", "https://github.com/clap-rs/clap")
         val DIESEL = RealProjectInfo("diesel", "diesel", "https://github.com/diesel-rs/diesel")
         val RUST_ANALYZER = RealProjectInfo("rust-analyzer", "rust-analyzer", "https://github.com/rust-analyzer/rust-analyzer")

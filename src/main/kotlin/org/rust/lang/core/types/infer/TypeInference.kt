@@ -1047,7 +1047,7 @@ class RsInferenceContext(
         return TyWithObligations(ty.value, obligations)
     }
 
-    private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
+    private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(ty: T): Boolean = ty.visitWith(object : TypeVisitor {
         override fun visitTy(ty: Ty): Boolean {
             val resolvedTy = shallowResolve(ty)
             return when {
@@ -1264,7 +1264,7 @@ val RsGenericDeclaration.predicates: List<Predicate>
     }
 
 private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
-    val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
+    val whereBounds = wherePreds.asSequence()
         .flatMap {
             val selfTy = it.typeReference?.rawType ?: return@flatMap emptySequence<PsiPredicate>()
             it.typeParamBounds?.polyboundList.toPredicates(selfTy)
@@ -1358,7 +1358,7 @@ sealed class ResolvedPath {
     ) : ResolvedPath()
 
     companion object {
-        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath? {
+        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath {
             return if (entry is AssocItemScopeEntry) {
                 AssocItem(entry.element, entry.source)
             } else {
@@ -1407,6 +1407,8 @@ data class MethodPick(
 
     sealed class AutorefOrPtrAdjustment {
         data class Autoref(val mutability: Mutability, val unsize: Boolean) : AutorefOrPtrAdjustment()
+
+        @Suppress("unused")
         object ToConstPtr : AutorefOrPtrAdjustment()
     }
 

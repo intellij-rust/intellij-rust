@@ -26,7 +26,7 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Suspicious assignment"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 if (expr.operator.text != "=") return
                 val unaryExpr = findUnaryExpr(expr.right)

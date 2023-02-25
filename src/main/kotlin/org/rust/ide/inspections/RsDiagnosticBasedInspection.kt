@@ -11,9 +11,9 @@ import org.rust.lang.core.types.selfInferenceResult
 import org.rust.lang.utils.addToHolder
 
 abstract class RsDiagnosticBasedInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitFunction(o: RsFunction) = collectDiagnostics(holder, o)
-        override fun visitConstant(o: RsConstant) = collectDiagnostics(holder, o)
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        override fun visitFunction2(o: RsFunction) = collectDiagnostics(holder, o)
+        override fun visitConstant2(o: RsConstant) = collectDiagnostics(holder, o)
         override fun visitConstParameter(o: RsConstParameter) = collectDiagnostics(holder, o)
         override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
         override fun visitPath(o: RsPath) = collectDiagnostics(holder, o)

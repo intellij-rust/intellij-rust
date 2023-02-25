@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsPsiFactory
@@ -16,7 +17,6 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.operator
 
 class FlipBinaryExpressionIntention : RsElementBaseIntentionAction<RsBinaryExpr>() {
-
     override fun getText(): String = "Flip binary expression"
     override fun getFamilyName(): String = text
 
@@ -24,6 +24,7 @@ class FlipBinaryExpressionIntention : RsElementBaseIntentionAction<RsBinaryExpr>
         val binaryExpr = element.ancestorStrict<RsBinaryExpr>() ?: return null
         if (element.parent != binaryExpr.binaryOp) return null
         if (binaryExpr.right == null) return null
+        if (!PsiModificationUtil.canReplace(binaryExpr)) return null
         val op = binaryExpr.operator
         val opText = op.text
         text = when (op.elementType) {

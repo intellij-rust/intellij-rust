@@ -12,7 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.injected.isInsideInjection
 import org.rust.lang.core.crate.Crate
@@ -131,13 +131,14 @@ sealed class TraitImplSource {
 
     companion object {
         @JvmStatic
-        private fun lazyTraitMembers(trait: RsTraitItem): Lazy<THashMap<String, MutableList<RsAbstractable>>> =
+        private fun lazyTraitMembers(trait: RsTraitItem): Lazy<Map<String, MutableList<RsAbstractable>>> =
             lazy(PUBLICATION) { collectTraitMembers(trait) }
 
         @JvmStatic
-        private fun collectTraitMembers(trait: RsTraitItem): THashMap<String, MutableList<RsAbstractable>> {
-            val membersMap = THashMap<String, MutableList<RsAbstractable>>()
-            for (member in trait.members?.expandedMembers.orEmpty()) {
+        private fun collectTraitMembers(trait: RsTraitItem): Map<String, MutableList<RsAbstractable>> {
+            val members = trait.members?.expandedMembers ?: return emptyMap()
+            val membersMap = Object2ObjectOpenHashMap<String, MutableList<RsAbstractable>>(members.size)
+            for (member in members) {
                 val name = member.name ?: continue
                 membersMap.getOrPut(name) { SmartList() }.add(member)
             }
@@ -1306,17 +1307,6 @@ class ImplLookup(
     fun isEq(ty: Ty): Boolean = ty.isTraitImplemented(items.Eq)
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
     fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
-    fun isAnyFn(ty: Ty): Boolean = isFn(ty) || isFnOnce(ty) || isFnMut(ty)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFn(ty: Ty): Boolean = ty.isTraitImplemented(items.Fn)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnOnce(ty: Ty): Boolean = ty.isTraitImplemented(items.FnOnce)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnMut(ty: Ty): Boolean = ty.isTraitImplemented(items.FnMut)
-
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
         if (trait == null) return false

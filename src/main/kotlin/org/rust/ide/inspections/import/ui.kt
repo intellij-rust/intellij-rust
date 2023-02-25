@@ -81,7 +81,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
                 @Suppress("UNCHECKED_CAST")
                 val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
                 val psiRenderer = RsImportCandidateCellRenderer()
-                return ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+                return ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
                     @Suppress("MissingAccessibleContext")
                     val panel = JPanel(BorderLayout())
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)

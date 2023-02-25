@@ -14,13 +14,14 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.terminal.TerminalExecutionConsole
+import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
+import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_FRAMEWORK_NAME
 
-open class CargoConsoleBuilder(
+open class RsConsoleBuilder(
     project: Project,
-    val config: CargoCommandConfiguration
+    val config: RsCommandConfiguration
 ) : TextConsoleBuilderImpl(project, ExecutionSearchScopes.executionScope(project, config)) {
     override fun createConsole(): ConsoleView =
         if (config.emulateTerminal && !config.hasRemoteTarget) {

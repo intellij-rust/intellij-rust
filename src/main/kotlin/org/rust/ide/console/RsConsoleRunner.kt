@@ -265,11 +265,18 @@ class RsConsoleRunner(project: Project) :
         val panel = JPanel(BorderLayout())
         panel.add(actionToolbar.component, BorderLayout.WEST)
 
-        val errorViewPanel = NewErrorTreeViewPanel(project, null, false, false, null)
+        @Suppress("BooleanLiteralArgument")
+        val errorViewPanel = NewErrorTreeViewPanel(
+            project,
+            null,
+            /* createExitAction = */ false,
+            /* createToolbar = */ false,
+            /* rerunAction = */ null
+        )
 
         val messages = mutableListOf("Can't start evcxr.")
         val message = e.message
-        if (message != null && message.isNotBlank()) {
+        if (!message.isNullOrBlank()) {
             messages += message.lines()
         }
 

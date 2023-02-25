@@ -5,10 +5,10 @@
 
 package org.rust.ide.console
 
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.ProcessHandler
+import org.rust.openapiext.showErrorHint
 
 class RsConsoleExecuteActionHandler(
     processHandler: ProcessHandler,
@@ -24,12 +24,12 @@ class RsConsoleExecuteActionHandler(
 
     override fun runExecuteAction(console: LanguageConsoleView) {
         if (!isEnabled) {
-            HintManager.getInstance().showErrorHint(console.consoleEditor, consoleIsNotEnabledMessage)
+            console.consoleEditor.showErrorHint(consoleIsNotEnabledMessage)
             return
         }
 
         if (!canExecuteNow()) {
-            HintManager.getInstance().showErrorHint(console.consoleEditor, prevCommandRunningMessage)
+            console.consoleEditor.showErrorHint(prevCommandRunningMessage)
             return
         }
 

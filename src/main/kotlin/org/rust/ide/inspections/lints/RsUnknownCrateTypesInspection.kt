@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import com.intellij.psi.PsiElement
 import org.rust.ide.annotator.fixes.NameSuggestionFix
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -18,7 +19,7 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnknownCrateTypes
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitLitExpr(element: RsLitExpr) {
                 if (!RsPsiPattern.insideCrateTypeAttrValue.accepts(element)) return
 

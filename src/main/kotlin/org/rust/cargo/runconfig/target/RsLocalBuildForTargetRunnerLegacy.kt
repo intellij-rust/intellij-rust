@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
+import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to build"

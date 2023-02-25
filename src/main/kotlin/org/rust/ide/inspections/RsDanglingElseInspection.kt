@@ -27,7 +27,7 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Dangling else"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
                 val elseEl = expr.`else`
                 val breakEl = elseEl.rightSiblings

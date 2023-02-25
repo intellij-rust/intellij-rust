@@ -228,8 +228,8 @@ class RsPsiFactory(
         ?: error("Failed to create method param from text: `$text`")
     }
 
-    fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
+    fun createReferenceType(innerTypeText: String, mutability: Mutability): RsRefLikeType =
+        createType("&${if (mutability.isMut) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         tryCreateModDeclItem(modName) ?: error("Failed to create mod decl with name: `$modName`")
@@ -302,7 +302,7 @@ class RsPsiFactory(
             }?.joinToString(", ", "<", ">")
             .orEmpty()
 
-        return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
+        return createFromText("impl$typeParameterListText $text $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an trait impl with text: `$text`")
     }
 
@@ -432,7 +432,7 @@ class RsPsiFactory(
     fun createFunction(text: String): RsFunction =
         tryCreateFunction(text) ?: error("Failed to create function element: $text")
 
-    fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
+    private fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
 
     fun createLambda(text: String): RsLambdaExpr =
         tryCreateLambda(text) ?: error("Failed to create lambda element: $text")
@@ -442,10 +442,6 @@ class RsPsiFactory(
     fun createRetType(ty: String): RsRetType =
         createFromText("fn foo() -> $ty {}")
             ?: error("Failed to create function return type: $ty")
-
-    fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
-        createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
-            ?: error("Failed to create RsImplItem element")
 
     fun createSimpleValueParameterList(name: String, type: RsTypeReference): RsValueParameterList {
         return createFromText<RsFunction>("fn main($name: ${type.text}){}")

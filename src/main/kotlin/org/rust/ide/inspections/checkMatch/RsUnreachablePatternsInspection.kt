@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.ide.inspections.lints.RsLint
 import org.rust.ide.inspections.lints.RsLintInspection
@@ -16,7 +17,6 @@ import org.rust.ide.utils.checkMatch.*
 import org.rust.lang.core.psi.RsElementTypes.OR
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsMatchExpr
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.TyUnknown
@@ -27,7 +27,7 @@ class RsUnreachablePatternsInspection : RsLintInspection() {
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnreachablePattern
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitMatchExpr(matchExpr: RsMatchExpr) {
             val exprType = matchExpr.expr?.type ?: return
             if (exprType.containsTyOfClass(TyUnknown::class.java)) return
