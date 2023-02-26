@@ -20,14 +20,24 @@ class TokenMap(val map: List<TokenMetadata>) {
 }
 
 sealed class TokenMetadata {
-    data class Token(val startOffset: Int, val rightTrivia: CharSequence, val origin: TokenTree.Leaf): TokenMetadata()
-    data class Delimiter(val open: DelimiterPart, val close: DelimiterPart?): TokenMetadata() {
+    data class Token(
+        val startOffset: Int,
+        val rightTrivia: CharSequence,
+        val origin: TokenTree.Leaf
+    ): TokenMetadata()
+
+    data class Delimiter(
+        val open: DelimiterPart,
+        val close: DelimiterPart?,
+        val originKind: MacroBraces
+    ): TokenMetadata() {
         data class DelimiterPart(val startOffset: Int, val rightTrivia: CharSequence)
     }
 }
 
 fun MappedSubtree.toMappedText(): Pair<CharSequence, RangeMap> {
-    return SubtreeTextBuilder(subtree, tokenMap).toText()
+    val recoveredSubtree = SubtreeIdRecovery(subtree, tokenMap).recover()
+    return SubtreeTextBuilder(recoveredSubtree, tokenMap).toText()
 }
 
 private class SubtreeTextBuilder(
@@ -103,5 +113,67 @@ private class SubtreeTextBuilder(
     ) {
         OPEN(TokenMetadata.Delimiter::open, MacroBraces::openText),
         CLOSE(TokenMetadata.Delimiter::close, MacroBraces::closeText)
+    }
+}
+
+/**
+ * Real procedural macros tend to discard spans (token ids) from [TokenTree.Leaf.Punct] tokens
+ * and subtree [Delimiter]s. This routine tries to recover them using a simple heuristic:
+ * if a token without a mapping (with id == -1) follows a token *with* a mapping, then it most likely
+ * should be mapped with the next token in the source. The only thing should be checked is that
+ * its type and text is equal to the token in the source.
+ */
+private class SubtreeIdRecovery(
+    private val subtree: TokenTree.Subtree,
+    private val tokenMap: TokenMap
+) {
+    private var previousLeafId: Int = -1
+
+    fun recover(): TokenTree.Subtree {
+        return subtree.processSubtree()
+    }
+
+    private fun TokenTree.Subtree.processSubtree(): TokenTree.Subtree {
+        val adjustedDelimiter = delimiter?.let { processDelimiter(it) }
+        if (adjustedDelimiter != null) {
+            previousLeafId = adjustedDelimiter.id
+        }
+        val adjustedTokenTrees = tokenTrees.map { tokenTree ->
+            when (tokenTree) {
+                is TokenTree.Leaf -> {
+                    val newLeaf = if (tokenTree is TokenTree.Leaf.Punct) processLeaf(tokenTree) else tokenTree
+                    previousLeafId = newLeaf.id
+                    newLeaf
+                }
+                is TokenTree.Subtree -> tokenTree.processSubtree()
+            }
+        }
+        return TokenTree.Subtree(adjustedDelimiter, adjustedTokenTrees)
+    }
+
+    private fun processLeaf(leaf: TokenTree.Leaf.Punct): TokenTree.Leaf {
+        if (leaf.id != -1 || previousLeafId == -1) {
+            return leaf
+        }
+
+        val recoveredId = previousLeafId + 1
+        val recoveredMeta = tokenMap.get(recoveredId) as? TokenMetadata.Token ?: return leaf
+        val newLeaf = leaf.copy(id = recoveredId)
+        if (newLeaf != recoveredMeta.origin) {
+            return leaf
+        }
+        return newLeaf
+    }
+
+    private fun processDelimiter(delimiter: Delimiter): Delimiter {
+        if (delimiter.id != -1 || previousLeafId == -1) {
+            return delimiter
+        }
+        val recoveredId = previousLeafId + 1
+        val recoveredMeta = tokenMap.get(recoveredId) as? TokenMetadata.Delimiter ?: return delimiter
+        if (delimiter.kind != recoveredMeta.originKind) {
+            return delimiter
+        }
+        return delimiter.copy(id = recoveredId)
     }
 }

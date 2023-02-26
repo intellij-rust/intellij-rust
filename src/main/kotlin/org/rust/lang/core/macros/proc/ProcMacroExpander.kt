@@ -209,7 +209,7 @@ class ProcMacroExpander private constructor(
         psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 7
+        const val EXPANDER_VERSION: Int = 8
 
         fun forCrate(crate: Crate): ProcMacroExpander {
             val project = crate.project
