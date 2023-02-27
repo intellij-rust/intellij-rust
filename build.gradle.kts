@@ -662,34 +662,26 @@ task("runPrettyPrintersTests") {
                     "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
                 }
             }
-            isFamily(FAMILY_WINDOWS) -> "" // `python36._pth` is used below instead
+            isFamily(FAMILY_WINDOWS) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/win/$archName/lib/site-packages"
             else -> error("Unsupported OS")
         }
         val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
         if (isFamily(FAMILY_WINDOWS)) {
-            val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\x64"
-            // Add path to bundled `lldb` Python module to `._pth` file (which overrides `sys.path`)
-            // TODO: Drop when this is implemented on CLion side
-            "cmd /C echo ../lib/site-packages>> bin/python36._pth".execute(lldbBundlePath)
+            val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\$archName"
             // Create symlink to allow `lldb` Python module perform `import _lldb` inside
             // TODO: Drop when this is implemented on CLion side
             "cmd /C mklink $lldbBundlePath\\lib\\site-packages\\lldb\\_lldb.pyd $lldbBundlePath\\bin\\liblldb.dll".execute()
 
             // Add path to bundled Python 3 to `Settings_windows.toml` (it is not added statically since it requires $projectDir)
             "cmd /C echo python = \"${lldbBundlePath.replace("\\", "/")}/bin/python.exe\">> Settings_windows.toml".execute("pretty_printers_tests")
-            // Use UTF-8 to properly decode test output in `lldb_batchmode.py`
-            "cmd /C set PYTHONIOENCODING=utf8 & $runCommand".execute("pretty_printers_tests")
-        } else {
+        } else if (isFamily(FAMILY_MAC)) {
             // TODO: Remove after CLion snapshot builds provide these files with required permissions
-            if (isFamily(FAMILY_MAC)) {
-                val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
-                lldbMacBinDir.resolve("lldb").setExecutable(true)
-                lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
-                lldbMacBinDir.resolve("LLDB.framework").resolve("LLDB").setExecutable(true)
-            }
-
-            runCommand.execute("pretty_printers_tests")
+            val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
+            lldbMacBinDir.resolve("lldb").setExecutable(true)
+            lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
+            lldbMacBinDir.resolve("LLDB.framework").resolve("LLDB").setExecutable(true)
         }
+        runCommand.execute("pretty_printers_tests")
 
         val gdbBinary = when {
             isFamily(FAMILY_MAC) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/mac/bin/gdb"

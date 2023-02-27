@@ -198,6 +198,8 @@ impl<'test> LLDBTestRunner<'test> {
             .arg(test_executable)
             .arg(debugger_script)
             .env("PYTHONPATH", &self.config.lldb_python)
+            // Use UTF-8 to properly decode test output in `lldb_batchmode.py` on Windows
+            .env("PYTHONIOENCODING", "utf8")
             .output()
             .unwrap();
 
