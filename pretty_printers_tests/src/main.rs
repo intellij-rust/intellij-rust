@@ -1,11 +1,7 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate test_runner;
-extern crate toml;
-
 use std::fs;
 use std::fs::read_dir;
 use std::path::Path;
+use serde::Deserialize;
 
 use test_runner::{Config, TestResult};
 use test_runner::create_test_runner;

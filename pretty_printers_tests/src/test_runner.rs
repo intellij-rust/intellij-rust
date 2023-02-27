@@ -1,7 +1,4 @@
 // Inspired by https://github.com/rust-lang/rust/blob/master/src/tools/compiletest/src/runtest.rs
-extern crate rustc_version_runtime;
-extern crate semver;
-extern crate toml;
 
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
@@ -13,7 +10,7 @@ use std::process::Command;
 use std::process::ExitStatus;
 use std::process::Output;
 
-use semver::{SemVerError, Version};
+use rustc_version_runtime::Version;
 
 static ENABLE_RUST: &'static str = "type category enable Rust";
 static BINARY: &'static str = "testbinary";
@@ -355,10 +352,10 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
     DebuggerCommands::Run { commands, check_lines, breakpoint_lines }
 }
 
-fn parse_rustc_version(line: &str, prefix: &str) -> Result<Option<Version>, SemVerError> {
+fn parse_rustc_version(line: &str, prefix: &str) -> Result<Option<Version>, String> {
     if line.starts_with(prefix) {
         let min_version_str = &line[prefix.len()..].trim_start();
-        let version = Version::parse(min_version_str)?;
+        let version = Version::parse(min_version_str).map_err(|e| e.to_string())?;
         Ok(Some(version))
     } else {
         Ok(None)
