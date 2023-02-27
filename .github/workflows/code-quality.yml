@@ -35,6 +35,6 @@ jobs:
                       caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
             - name: Qodana
-              uses: JetBrains/qodana-action@v2022.3.0
+              uses: JetBrains/qodana-action@v2022.3.4
               with:
                   use-caches: false
