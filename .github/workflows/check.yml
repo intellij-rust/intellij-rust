@@ -67,6 +67,98 @@ jobs:
             rust-version:  ${{ needs.get-rust-versions.outputs.stable }}
             cache: true
 
+    check-pretty-printers:
+        needs: [ calculate-git-info, get-rust-versions ]
+        strategy:
+            # `fromJSON` is used here to convert string output to boolean
+            fail-fast: ${{ fromJSON(needs.calculate-git-info.outputs.is_bors_branch) }}
+            matrix:
+                # TODO: check on macos as well
+                os: [ ubuntu-latest, windows-latest ]
+                # `fromJSON` is used here to convert string output to sequence.
+                # `matrix` is a string with list of stable and nightly versions.
+                # Make sequence from two outputs with version is not possible here.
+                # TODO: check on more rustc versions
+                rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
+                platform-version: [ 223, 231 ]
+                include:
+                    - os: ubuntu-latest
+                      rust-version: ${{ needs.get-rust-versions.outputs.old }}
+                      platform-version: 223
+                    - os: windows-latest
+                      rust-version: ${{ needs.get-rust-versions.outputs.old }}
+                      platform-version: 223
+
+        runs-on: ${{ matrix.os }}
+        env:
+            ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+            ORG_GRADLE_PROJECT_compileNativeCode: false
+            RUST_BACKTRACE: 1
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: ${{ matrix.rust-version }}
+                  default: true
+
+            - name: Set up additional env variables
+              if: matrix.rust-version == needs.get-rust-versions.outputs.old
+                # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+              run: |
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.3" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2022.3" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=223.7571.139" >> $GITHUB_ENV
+
+            - name: Retrieve CLion version
+              id: clion-version
+              shell: bash
+              run: echo "version=$(python scripts/retrieve_clion_version.py --path gradle-${{ matrix.platform-version }}.properties)" >> $GITHUB_OUTPUT
+
+            - name: Cache debuggers
+              id: cache-debuggers
+              uses: actions/cache@v3
+              with:
+                  # Cache only GDB for Linux because we run gdb pretty-printer tests only on Linux for now
+                  path: |
+                      deps/clion-${{ steps.clion-version.outputs.version }}/bin/lldb
+                      deps/clion-${{ steps.clion-version.outputs.version }}/bin/gdb/linux
+                  key: debuggers-${{ steps.clion-version.outputs.version }}
+                  enableCrossOsArchive: true
+
+            - name: Set up JDK 17
+              if: ${{ !steps.cache-debuggers.outputs.cache-hit }}
+              uses: actions/setup-java@v3
+              with:
+                  distribution: corretto
+                  java-version: 17
+
+            - name: Download debuggers
+              if: ${{ !steps.cache-debuggers.outputs.cache-hit }}
+              uses: gradle/gradle-build-action@v2
+              with:
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
+                  gradle-home-cache-excludes: |
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
+                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
+
+            - name: Cache pretty printer test binaries
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      pretty_printers_tests/target
+                  key: pretty_printers_tests-${{ runner.os }}-${{ matrix.rust-version }}-${{ hashFiles('pretty_printers_tests/src/**', 'pretty_printers_tests/examples/**', 'pretty_printers_tests/Cargo.toml', 'pretty_printers_tests/Cargo.lock') }}
+
+            - name: Check bundled Rust formatters
+              run: python3 scripts/run_pretty_printer_tests.py --clion_version ${{ steps.clion-version.outputs.version }}
+
     check-plugin:
         needs: [ calculate-git-info, build-native-code, get-rust-versions ]
         strategy:
@@ -75,7 +167,7 @@ jobs:
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
                 # `fromJSON` is used here to convert string output to sequence.
-                # `matrix-version` is a string with list of stable + nightly versions.
+                # `matrix` is a string with list of stable and nightly versions.
                 # Make sequence from two outputs with version is not possible here.
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
@@ -229,16 +321,8 @@ jobs:
                       caches/modules-2/files-2.1/com.jetbrains.intellij.idea
                       caches/modules-2/files-2.1/com.jetbrains.intellij.clion
 
-            - name: Check bundled Rust formatters
-              uses: gradle/gradle-build-action@v2
-              with:
-                  arguments: "runPrettyPrintersTests --no-daemon"
-                  gradle-home-cache-excludes: |
-                      caches/modules-2/files-2.1/com.jetbrains.intellij.idea
-                      caches/modules-2/files-2.1/com.jetbrains.intellij.clion
-
     check:
-        needs: [ check-license, check-plugin ]
+        needs: [ check-license, check-plugin, check-pretty-printers ]
         runs-on: ubuntu-latest
         steps:
             - name: Finish check
