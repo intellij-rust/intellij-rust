@@ -2,5 +2,4 @@ pretty_printers_path = "./../prettyPrinters/"
 print_stdout = true
 
 [lldb]
-python = "python3"
 lldb_batchmode = "./lldb_batchmode.py"

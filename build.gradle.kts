@@ -651,29 +651,30 @@ task("runPrettyPrintersTests") {
             else -> error("Unsupported architecture")
         }
 
-        val lldbPath = when {
+        val (lldbPath, python) = when {
             // TODO: Use `lldb` Python module from CLion distribution
-            isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
+            isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python" to "python"
             isFamily(FAMILY_UNIX) -> {
                 // BACKCOMPAT: 2022.3
-                if (platformVersion >= 231) {
+                val lldbPath = if (platformVersion >= 231) {
                     "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/$archName/lib/python3.8/site-packages"
                 } else {
                     "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
                 }
+                lldbPath to "python3"
             }
-            isFamily(FAMILY_WINDOWS) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/win/$archName/lib/site-packages"
+            isFamily(FAMILY_WINDOWS) -> {
+                val lldbBundlePath = "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/win/$archName"
+                "$lldbBundlePath/lib/site-packages" to "$lldbBundlePath/bin/python.exe"
+            }
             else -> error("Unsupported OS")
         }
-        val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
+        val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $python $lldbPath"
         if (isFamily(FAMILY_WINDOWS)) {
             val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\$archName"
             // Create symlink to allow `lldb` Python module perform `import _lldb` inside
             // TODO: Drop when this is implemented on CLion side
             "cmd /C mklink $lldbBundlePath\\lib\\site-packages\\lldb\\_lldb.pyd $lldbBundlePath\\bin\\liblldb.dll".execute()
-
-            // Add path to bundled Python 3 to `Settings_windows.toml` (it is not added statically since it requires $projectDir)
-            "cmd /C echo python = \"${lldbBundlePath.replace("\\", "/")}/bin/python.exe\">> Settings_windows.toml".execute("pretty_printers_tests")
         } else if (isFamily(FAMILY_MAC)) {
             // TODO: Remove after CLion snapshot builds provide these files with required permissions
             val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")

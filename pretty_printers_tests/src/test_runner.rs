@@ -16,9 +16,6 @@ use serde::Deserialize;
 static ENABLE_RUST: &'static str = "type category enable Rust";
 
 #[derive(Clone)]
-pub enum Debugger { LLDB, GDB }
-
-#[derive(Clone)]
 pub struct LLDBConfig {
     pub pretty_printers_path: String,
     pub print_stdout: bool,
