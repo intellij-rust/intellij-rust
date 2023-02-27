@@ -1,9 +1,8 @@
 use std::fs;
-use std::fs::read_dir;
-use std::path::Path;
+
 use serde::Deserialize;
 
-use test_runner::{Config, TestResult};
+use test_runner::{compile_tests, Config, TestResult};
 use test_runner::create_test_runner;
 use test_runner::Debugger;
 use test_runner::GDBConfig;
@@ -21,7 +20,6 @@ panic!("Unsupported platform");
 
 #[derive(Deserialize)]
 struct Settings {
-    test_dir: String,
     pretty_printers_path: String,
     print_stdout: bool,
     lldb: Option<LLDBSettings>,
@@ -58,7 +56,6 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
         Debugger::LLDB => {
             let lldb_settings = settings.lldb.expect(&format!("No LLDB settings in {}", SETTINGS));
             Config::LLDB(LLDBConfig {
-                test_dir: settings.test_dir.clone(),
                 pretty_printers_path: settings.pretty_printers_path,
                 print_stdout: settings.print_stdout,
                 lldb_python: path,
@@ -69,7 +66,6 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
 
         Debugger::GDB => {
             Config::GDB(GDBConfig {
-                test_dir: settings.test_dir.clone(),
                 pretty_printers_path: settings.pretty_printers_path,
                 print_stdout: settings.print_stdout,
                 gdb: path,
@@ -77,32 +73,28 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
         }
     };
 
-    let src_dir = Path::new(&settings.test_dir);
-    let src_paths: Vec<_> = read_dir(src_dir)
-        .unwrap_or_else(|_| panic!("Tests not found!"))
-        .map(|file| file.unwrap().path())
-        .map(|path| fs::canonicalize(path))
-        .map(|canonical_path| canonical_path.unwrap().as_os_str().to_owned())
-        .collect();
-
     let mut status = Ok(());
+    let tests = compile_tests().unwrap_or_else(|e| {
+        println!("{}", e);
+        status = Err(());
+        vec![]
+    });
 
-    for path in src_paths {
-        let path = Path::new(&path);
-        let test_runner: Box<dyn TestRunner> = create_test_runner(&config, path);
+    for test in tests {
+        let test_name = &test.name;
+        let test_runner: Box<dyn TestRunner> = create_test_runner(&config, &test);
         let result = test_runner.run();
-        let path_string = path.file_name().unwrap().to_str().unwrap();
 
         match result {
             TestResult::Ok => {
-                println!("{}: passed", path_string);
+                println!("{}: passed", test_name);
             },
             TestResult::Skipped(reason) => {
-                println!("{}: skipped", path_string);
+                println!("{}: skipped", test_name);
                 println!("{}", reason);
             },
             TestResult::Err(reason) => {
-                println!("{}: failed", path_string);
+                println!("{}: failed", test_name);
                 println!("{}", reason);
                 status = Err(());
             },

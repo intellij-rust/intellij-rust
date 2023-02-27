@@ -1,4 +1,3 @@
-test_dir = "./tests"
 pretty_printers_path = "./../prettyPrinters/"
 print_stdout = true
 
