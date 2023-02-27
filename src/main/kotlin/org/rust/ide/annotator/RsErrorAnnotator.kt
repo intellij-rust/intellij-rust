@@ -900,6 +900,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplForNonAdtError(holder, impl)
         checkConstTraitImpl(holder, impl)
         checkInherentImplSameCrate(holder, impl)
+        checkImplDynAutoTrait(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait() ?: return
         checkForbiddenImpl(holder, traitRef, trait)
@@ -1046,12 +1047,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val typeReference = impl.typeReference ?: return
         val element = when (val type = typeReference.rawType) {
             is TyAdt -> type.item
-            is TyTraitObject -> type.baseTrait ?: return
+            is TyTraitObject -> {
+                if (!type.hasNonAutoTrait) return
+                type.baseTrait ?: return
+            }
             else -> return
         }
         if (impl.containingCrate != element.containingCrate) {
             RsDiagnostic.InherentImplDifferentCrateError(typeReference).addToHolder(holder)
         }
+    }
+
+    private fun checkImplDynAutoTrait(holder: RsAnnotationHolder, impl: RsImplItem) {
+        if (impl.traitRef != null) return
+        val typeRef = impl.typeReference ?: return
+        val normType = typeRef.normType
+        if (normType !is TyTraitObject) return
+        if (normType.hasNonAutoTrait) return
+
+        RsDiagnostic.CannotImplForDynAutoTraitError(typeRef).addToHolder(holder)
     }
 
     // E0117: Only traits defined in the current crate can be implemented for arbitrary types

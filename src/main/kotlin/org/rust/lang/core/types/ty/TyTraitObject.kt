@@ -61,6 +61,8 @@ class TyTraitObject(
             return traits.singleOrNull() ?: traits.singleOrNull { !it.isAuto }
         }
 
+    val hasNonAutoTrait: Boolean = traits.any { !it.element.isAuto }
+
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
         javaClass != other?.javaClass -> false
