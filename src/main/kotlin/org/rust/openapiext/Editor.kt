@@ -9,23 +9,35 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.ide.intentions.util.macros.RsIntentionInsideMacroExpansionEditor
 
-@Suppress("UNUSED_PARAMETER")
 fun Editor.moveCaretToOffset(context: PsiElement, absoluteOffsetInFile: Int) {
-    caretModel.moveToOffset(absoluteOffsetInFile)
+    val targetEditor = if (this is RsIntentionInsideMacroExpansionEditor && originalFile == context.containingFile) {
+        originalEditor
+    } else {
+        this
+    }
+    targetEditor.caretModel.moveToOffset(absoluteOffsetInFile)
 }
 
-@Suppress("UNUSED_PARAMETER")
 fun Editor.setSelection(context: PsiElement, startOffset: Int, endOffset: Int) {
-    selectionModel.setSelection(startOffset, endOffset)
+    val targetEditor = if (this is RsIntentionInsideMacroExpansionEditor && originalFile == context.containingFile) {
+        originalEditor
+    } else {
+        this
+    }
+    targetEditor.selectionModel.setSelection(startOffset, endOffset)
 }
 
 @Suppress("UnstableApiUsage")
 fun Editor.showErrorHint(@NlsContexts.HintText text: String, @HintManager.PositionFlags position: Short) {
-    HintManager.getInstance().showErrorHint(this, text, position)
+    val editor = IntentionInMacroUtil.unwrapEditor(this)
+    HintManager.getInstance().showErrorHint(editor, text, position)
 }
 
 @Suppress("UnstableApiUsage")
 fun Editor.showErrorHint(@NlsContexts.HintText text: String) {
-    HintManager.getInstance().showErrorHint(this, text)
+    val editor = IntentionInMacroUtil.unwrapEditor(this)
+    HintManager.getInstance().showErrorHint(editor, text)
 }

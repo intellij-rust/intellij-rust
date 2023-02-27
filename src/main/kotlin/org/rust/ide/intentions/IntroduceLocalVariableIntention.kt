@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.refactoring.introduceVariable.extractExpression
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
@@ -20,6 +21,8 @@ import org.rust.lang.core.types.type
 class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText(): String = "Introduce local variable"
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
         val expr = element.ancestors

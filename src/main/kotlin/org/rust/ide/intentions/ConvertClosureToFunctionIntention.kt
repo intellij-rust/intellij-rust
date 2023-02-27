@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.template.buildAndRunTemplate
@@ -23,6 +24,8 @@ import org.rust.openapiext.moveCaretToOffset
 class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertClosureToFunctionIntention.Context>() {
     override fun getText(): String = "Convert closure to function"
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val letDecl: RsLetDecl,
@@ -102,5 +105,4 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val wildcardPaths = parameters.descendantsOfType<RsPath>().filter { it.path?.text == "_" }
         return wildcardPats + wildcardPaths
     }
-
 }

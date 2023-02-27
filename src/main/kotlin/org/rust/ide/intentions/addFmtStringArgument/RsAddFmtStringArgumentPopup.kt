@@ -23,6 +23,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsCodeFragment
 import org.rust.openapiext.document
@@ -88,11 +89,13 @@ object RsAddFmtStringArgumentPopup {
             }
         })
 
-        val position = QuickEditAction.getBalloonPosition(editor)
-        var point = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
+        val realEditor = IntentionInMacroUtil.unwrapEditor(editor)
+
+        val position = QuickEditAction.getBalloonPosition(realEditor)
+        var point = JBPopupFactory.getInstance().guessBestPopupLocation(realEditor)
         if (position == Balloon.Position.above) {
             val p = point.point
-            point = RelativePoint(point.component, Point(p.x, p.y - editor.lineHeight))
+            point = RelativePoint(point.component, Point(p.x, p.y - realEditor.lineHeight))
         }
         balloon.show(point, position)
         editorTextField.requestFocus()

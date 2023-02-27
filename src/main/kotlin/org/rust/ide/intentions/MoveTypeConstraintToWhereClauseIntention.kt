@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.moveCaretToOffset
@@ -15,6 +16,8 @@ import org.rust.openapiext.moveCaretToOffset
 class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<RsTypeParameterList>() {
     override fun getText() = "Move type constraint to where clause"
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsTypeParameterList? {
         val genericParams = element.contextStrict<RsTypeParameterList>() ?: return null

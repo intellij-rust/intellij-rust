@@ -72,7 +72,7 @@ class DollarCrateHelper(
                 }
             }
             defHasLocalInnerMacros -> {
-                val pathOffsetInCall = ranges.mapOffsetFromExpansionToCallBody(offsetInExpansion)
+                val pathOffsetInCall = ranges.mapOffsetFromExpansionToCallBody(offsetInExpansion, false)
                 val isExpandedFromDef = pathOffsetInCall == null
                 if (!isExpandedFromDef) return path
                 arrayOf(MACRO_DOLLAR_CRATE_IDENTIFIER, defCrate.toString()) + path
@@ -109,7 +109,7 @@ private fun findCrateIdForEachDollarCrate(
     val ranges = expansion.ranges  // between `call.body` and `expandedText`
     return expansion.dollarCrateOccurrences.asSequence()
         .mapNotNull { indexInExpandedText ->
-            val indexInCallBody = ranges.mapOffsetFromExpansionToCallBody(indexInExpandedText)
+            val indexInCallBody = ranges.mapOffsetFromExpansionToCallBody(indexInExpandedText, false)
             val crateId: CratePersistentId = if (indexInCallBody != null) {
                 if (call.body is MacroCallBody.FunctionLike) {
                     testAssert {

@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.skipParenExprDown
 import org.rust.ide.utils.skipParenExprUp
@@ -17,6 +18,8 @@ import org.rust.lang.core.psi.ext.*
 class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>() {
     override fun getText(): String = "Split into 2 if's"
     override fun getFamilyName(): String = "Split if"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val binaryOp: RsBinaryOp,

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -17,6 +18,8 @@ import org.rust.lang.core.psi.ext.startOffset
 
 class JoinWildcardsIntention : RsElementBaseIntentionAction<List<RsPatWild>>() {
     override fun getFamilyName(): String = "Replace successive `_` with `..`"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): List<RsPatWild>? {
         var patUnderCaret = element.ancestorStrict<RsPat>() ?: return null

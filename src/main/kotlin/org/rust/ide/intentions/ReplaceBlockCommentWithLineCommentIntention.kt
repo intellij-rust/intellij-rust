@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.RsPsiFactory
@@ -19,6 +20,9 @@ import org.rust.lang.core.psi.ext.elementType
 class ReplaceBlockCommentWithLineCommentIntention : RsElementBaseIntentionAction<PsiComment>() {
     override fun getText(): String = familyName
     override fun getFamilyName(): String = "Replace with end of line comment"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): PsiComment? =
         element.ancestorOrSelf<PsiComment>()

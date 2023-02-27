@@ -21,6 +21,7 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.prevLeaf
 import com.intellij.util.SmartList
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.document
@@ -334,7 +335,11 @@ fun PsiElement.isKeywordLike(): Boolean {
     }
 }
 
-val PsiElement.isIntentionPreviewElement: Boolean get() = IntentionPreviewUtils.isPreviewElement(this)
+val PsiElement.isIntentionPreviewElement: Boolean
+    get() {
+        val source = findMacroCallExpandedFrom() ?: this
+        return IntentionPreviewUtils.isPreviewElement(source)
+    }
 
 /**
  * Consider we do some `resolve` in a quick-fix which is called in preview mode.

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.*
@@ -25,6 +26,8 @@ abstract class ListIntentionBase<TList : RsElement, TElement : RsElement>(
     }
 
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     protected val PsiElement.listContext: TList?
         get() = PsiTreeUtil.getParentOfType(this, listClass, true)

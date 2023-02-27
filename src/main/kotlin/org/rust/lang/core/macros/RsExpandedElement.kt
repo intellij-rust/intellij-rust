@@ -58,6 +58,10 @@ fun RsFile.setRsFileContext(context: RsElement, isInMemoryMacroExpansion: Boolea
     }
 }
 
+fun RsFile.setForcedReducedRangeMap(ranges: RangeMap) {
+    putUserData(RS_FORCED_REDUCED_RANGE_MAP, ranges)
+}
+
 /**
  * The [RsMacroCall] that directly expanded to this element or
  * null if this element is not directly produced by a macro.
@@ -113,7 +117,13 @@ val PsiElement.isExpandedFromIncludeMacro: Boolean
         return containingFile.isIncludedByIncludeMacro
     }
 
-private data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
+val PsiElement.macroCallExpandedFromSequence: Sequence<RsPossibleMacroCall>
+    get() {
+        val first = findMacroCallExpandedFromNonRecursive() ?: return emptySequence()
+        return generateSequence(first) { it.findMacroCallExpandedFromNonRecursive() }
+    }
+
+data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
 
 /**
  * If [this] is inside a **macro expansion**, returns a leaf element inside a macro call from which
@@ -177,7 +187,13 @@ private fun PsiElement.findElementExpandedFromUnchecked(): PsiElement? {
         ?.takeIf { it.startOffset == offset }
 }
 
-private fun findMacroCallAndOffsetExpandedFromUnchecked(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
+fun findMacroCallAndOffsetExpandedFromUnchecked(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
+    val ranges = anchor.containingFile.getUserData(RS_FORCED_REDUCED_RANGE_MAP)
+    if (ranges != null) {
+        val mappedOffset = ranges.mapOffsetFromExpansionToCallBody(startOffset) ?: return null
+        val call = anchor.findMacroCallExpandedFrom() ?: return null
+        return MacroCallAndOffset(call, mappedOffset.fromBodyRelativeOffset(call) ?: return null)
+    }
     val mappedElement = findMacroCallAndOffsetExpandedFromNonRecursive(anchor, startOffset) ?: return null
     return findMacroCallAndOffsetExpandedFromUnchecked(mappedElement.call, mappedElement.absoluteOffset) ?: mappedElement
 }
@@ -263,7 +279,8 @@ fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
 private fun PsiElement.findExpansionElementsNonRecursive(cache: AttrCache): List<PsiElement>? {
-    val call = ancestors.toList().asReversed().firstNotNullOfOrNull {
+    val ancestors = ancestors.toList()
+    val call = ancestors.asReversed().firstNotNullOfOrNull {
         when (it) {
             is RsMacroArgument -> it.ancestorStrict<RsMacroCall>()
             is RsAttrProcMacroOwner -> cache.cachedGetProcMacroAttribute(it)
@@ -271,8 +288,12 @@ private fun PsiElement.findExpansionElementsNonRecursive(cache: AttrCache): List
         }
     } ?: return null
 
-    if (call is RsMetaItem && call.path?.isAncestorOf(this) == true) {
-        return null
+    if (call is RsMetaItem) {
+        val path = call.path
+        val isAttributeOnMacro = ancestors.any {
+            it == path || it is RsMetaItem && it.isRootMetaItem() && it.name == "cfg"
+        }
+        if (isAttributeOnMacro) return null
     }
 
     val expansion = call.expansion ?: return emptyList()
@@ -353,6 +374,18 @@ private fun mapRangeFromExpansionToCallBody(
     }
 }
 
+fun mapRangeFromExpansionToCallBodyStrict(anchor: PsiElement, range: TextRange): TextRange? {
+    val ranges = anchor.containingFile.getUserData(RS_FORCED_REDUCED_RANGE_MAP)
+    if (ranges != null) {
+        return ranges.mapTextRangeFromExpansionToCallBody(range)
+            .singleOrNull()
+            ?.srcRange
+            ?.takeIf { it.length == range.length }
+    }
+    val call = anchor.findMacroCallExpandedFromNonRecursive() ?: return null
+    return call.mapRangeFromExpansionToCallBodyStrict(range)
+}
+
 /**
  * If receiver element is inside a macro expansion, returns the element inside the macro call
  * we should navigate to (or the macro call itself if there isn't such element inside a macro call).
@@ -365,3 +398,4 @@ fun PsiElement.findNavigationTargetIfMacroExpansion(): PsiElement? {
 }
 
 private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_CONTEXT")
+private val RS_FORCED_REDUCED_RANGE_MAP = Key.create<RangeMap>("org.rust.lang.core.psi.RS_FORCED_REDUCED_RANGE_MAP")

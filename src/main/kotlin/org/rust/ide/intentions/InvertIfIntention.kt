@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithElse
 import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithoutElse
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyNever
@@ -54,6 +55,11 @@ import org.rust.lang.utils.negate
  * ```
  */
 class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context>() {
+    override fun getFamilyName(): String = text
+    override fun getText() = "Invert if condition"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
     sealed interface Context {
         val ifCondition: RsExpr
 
@@ -177,10 +183,6 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
 
     private fun getSuitableCondition(ifExpr: RsIfExpr): RsCondition? =
         ifExpr.condition?.takeIf { it.expr?.descendantOfTypeOrSelf<RsLetExpr>() == null }
-
-    override fun getFamilyName(): String = text
-
-    override fun getText() = "Invert if condition"
 }
 
 /**

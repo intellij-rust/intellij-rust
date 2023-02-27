@@ -6,7 +6,11 @@
 package org.rust.ide.utils
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.lang.core.macros.findMacroCallAndOffsetExpandedFromUnchecked
+import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.isExpandedFromMacro
+import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.*
 
@@ -64,12 +68,20 @@ sealed interface PsiInsertionPlace {
             if (isEditableAt(anchor, anchor.endOffset)) {
                 return After(anchor)
             }
+            val nextSibling = anchor.getNextNonCommentSibling()
+            if (nextSibling != null && isEditableAt(nextSibling, nextSibling.startOffset)) {
+                return Before(nextSibling)
+            }
             return null
         }
 
         fun before(anchor: PsiElement): PsiInsertionPlace? {
             if (isEditableAt(anchor, anchor.startOffset)) {
                 return Before(anchor)
+            }
+            val prevSibling = anchor.getPrevNonCommentSibling()
+            if (prevSibling != null && isEditableAt(prevSibling, prevSibling.endOffset)) {
+                return After(prevSibling)
             }
             return null
         }
@@ -124,14 +136,28 @@ sealed interface PsiInsertionPlace {
             val topLevelItem = context.contexts.firstOrNull {
                 it is RsItemElement && (it !is RsAbstractable || it.owner is RsAbstractableOwner.Free)
             } ?: return null
-            return before(topLevelItem)
+
+            val containingMod = context.containingMod
+            return before(if (containingMod.containingFile == topLevelItem.containingFile) {
+                topLevelItem
+            } else {
+                // Here, the `context` element is inside a macro expansion
+                topLevelItem.climbUpThroughMacrosWhile { it.startOffset == 0 }
+            })
         }
 
         fun forItemAfter(context: RsElement): PsiInsertionPlace? {
             val nearestItem = context.contexts.firstOrNull {
                 it is RsItemElement && (it !is RsAbstractable || it.owner is RsAbstractableOwner.Free)
             } ?: return null
-            return after(nearestItem)
+
+            val containingMod = context.containingMod
+            return after(if (containingMod.containingFile == nearestItem.containingFile) {
+                nearestItem
+            } else {
+                // Here, the `context` element is inside a macro expansion
+                nearestItem.climbUpThroughMacrosWhile { it.endOffset == it.containingFile.endOffset }
+            })
         }
 
         /**
@@ -140,7 +166,24 @@ sealed interface PsiInsertionPlace {
         fun forItemInTheScopeOf(context: RsElement): PsiInsertionPlace? {
             val currentScope = context.contexts.firstOrNull { it.context is RsItemsOwner }
                 ?: return null
-            return after(currentScope)
+
+            val containingMod = context.containingMod
+            return after(if (containingMod.containingFile == currentScope.containingFile) {
+                currentScope
+            } else {
+                // Here, the `context` element is inside a macro expansion
+                currentScope.climbUpThroughMacrosWhile { it.endOffset == it.containingFile.endOffset }
+            })
+        }
+
+        private fun PsiElement.climbUpThroughMacrosWhile(condition: (PsiElement) -> Boolean): PsiElement {
+            var element = this
+            while (condition(element)) {
+                element = element.findMacroCallExpandedFromNonRecursive()
+                    ?.let { if (it is RsMetaItem) it.owner else it }
+                    ?: break
+            }
+            return element
         }
 
         fun forTraitOrImplMember(traitOrImpl: RsTraitOrImpl): PsiInsertionPlace? {
@@ -153,11 +196,15 @@ sealed interface PsiInsertionPlace {
             }
         }
 
-        @Suppress("UNUSED_PARAMETER")
         private fun isEditableAt(element: PsiElement, absoluteOffsetInFile: Int): Boolean {
-            if (element.isExpandedFromMacro) return false
+            if (!element.isExpandedFromMacro) return PsiModificationUtil.isWriteableRegardlessMacros(element)
+            if (!IntentionInMacroUtil.isMutableExpansionFile(element.containingFile)) return false
 
-            return PsiModificationUtil.isWriteableRegardlessMacros(element)
+            val (call, _) = findMacroCallAndOffsetExpandedFromUnchecked(element, absoluteOffsetInFile) ?: return false
+
+            if (call.isExpandedFromMacro) return false
+
+            return PsiModificationUtil.isWriteableRegardlessMacros(call)
         }
     }
 }

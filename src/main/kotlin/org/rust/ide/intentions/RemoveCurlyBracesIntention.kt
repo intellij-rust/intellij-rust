@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
@@ -31,6 +32,8 @@ import org.rust.lang.core.psi.ext.*
 class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val path: RsPath,

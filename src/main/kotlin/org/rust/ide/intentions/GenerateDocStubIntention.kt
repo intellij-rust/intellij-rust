@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.CharArrayUtil
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
@@ -20,6 +21,8 @@ import kotlin.math.max
 class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
     override fun getText() = "Generate documentation stub"
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val func: RsElement,

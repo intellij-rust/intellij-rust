@@ -13,12 +13,14 @@ import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 import org.rust.ide.actions.macroExpansion.RsShowMacroExpansionActionBase
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
+import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
-import org.rust.lang.core.psi.ext.ancestorMacroCall
-import org.rust.lang.core.psi.ext.isAncestorOf
+import org.rust.lang.core.psi.ext.contextMacroCall
+import org.rust.lang.core.psi.ext.isContextOf
 import org.rust.lang.core.psi.ext.kind
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
@@ -38,11 +40,16 @@ abstract class RsShowMacroExpansionIntentionBase : RsElementBaseIntentionAction<
 
     override fun getFamilyName() = text
 
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsPossibleMacroCall? {
-        val macroCall = element.ancestorMacroCall ?: return null
+        val possiblyExpandedElement = element.findExpansionElementOrSelf()
+        val macroCall = possiblyExpandedElement.contextMacroCall ?: return null
 
         val isValidContext = when (val kind = macroCall.kind) {
-            is MacroCall -> kind.call.path.isAncestorOf(element) || element == kind.call.excl
+            is MacroCall -> kind.call.path.isContextOf(possiblyExpandedElement)
+                || possiblyExpandedElement == kind.call.excl
             is MetaItem -> true
         }
         if (!isValidContext) return null

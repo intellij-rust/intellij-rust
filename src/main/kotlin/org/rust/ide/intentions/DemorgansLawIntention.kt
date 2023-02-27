@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.LogicOp.AND
@@ -25,6 +26,8 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
             else -> ""
         }
     }
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val binaryExpr: RsBinaryExpr,
