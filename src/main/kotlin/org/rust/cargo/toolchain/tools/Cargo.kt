@@ -28,7 +28,9 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
+import org.bouncycastle.asn1.iana.IANAObjectIdentifiers.directory
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.BspConstants
 import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
@@ -71,9 +73,11 @@ import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.buildList
 import org.rust.stdext.unwrapOrElse
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+
 
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
 
@@ -154,7 +158,10 @@ class Cargo(
             fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
                 .unwrapOrElse { return Err(it) }
 
-        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+        //TODO: replace fetchBuildScriptsInfo with something more bsp specific
+        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
+
+        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) && !useBSP) {
             val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
             fetchBuildScriptsInfo(owner, projectDirectory, rustcVersion, listener)
         } else {
@@ -182,6 +189,7 @@ class Cargo(
             additionalArgs.add(buildTarget)
         }
 
+        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
         if (useBSP) {
             return try {
                 Ok(fetchViaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener))

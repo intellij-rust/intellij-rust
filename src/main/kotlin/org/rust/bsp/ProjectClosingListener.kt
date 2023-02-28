@@ -11,9 +11,6 @@ import org.rust.bsp.service.BspConnectionService
 class ProjectClosingListener: ProjectManagerListener {
 
     override fun projectClosing(project: Project) {
-        if (project.isNewProject()) {
-            return
-        }
         runModalTask("Disconnecting...", project = project, cancellable = false) {
             try {
                 val connection = project.service<BspConnectionService>()
