@@ -410,13 +410,13 @@ project(":") {
 
     tasks {
         generateLexer {
-            source.set("src/main/grammars/RustLexer.flex")
+            sourceFile.set(file("src/main/grammars/RustLexer.flex"))
             targetDir.set("src/gen/org/rust/lang/core/lexer")
             targetClass.set("_RustLexer")
             purgeOldFiles.set(true)
         }
         generateParser {
-            source.set("src/main/grammars/RustParser.bnf")
+            sourceFile.set(file("src/main/grammars/RustParser.bnf"))
             targetRoot.set("src/gen")
             pathToParser.set("org/rust/lang/core/parser/RustParser.java")
             pathToPsiRoot.set("org/rust/lang/core/psi")
