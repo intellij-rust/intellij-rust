@@ -24,7 +24,9 @@ class RsProjectConfigurable(
     project: Project
 ) : RsConfigurableBase(project, RsBundle.message("settings.rust.toolchain.name")), Configurable.NoScroll {
     private val projectDir = project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
-    private val rustProjectSettings = RustProjectSettingsPanel(projectDir)
+    // TODO: move creation of the panel inside `createPanel`
+    //  and use `onIsModified`, `onApply` and `onReset` methods
+    private val rustProjectSettings by lazy { RustProjectSettingsPanel(projectDir) }
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
