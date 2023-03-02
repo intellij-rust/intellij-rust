@@ -130,6 +130,35 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         }
     """)
 
+    fun `test mismatch member in trait impl E0323, E0324, E0325`() = checkErrors("""
+        trait T {
+            fn method1();
+            fn method2();
+            fn method3();
+
+            type Type1;
+            type Type2;
+            type Type3;
+
+            const CONST1: i32;
+            const CONST2: i32;
+            const CONST3: i32;
+        }
+        /*error descr="Not all trait items implemented, missing: `method2`, `method3`, `Type1`, `Type3`, `CONST1`, `CONST2` [E0046]"*/impl T for ()/*error**/ {
+            fn method1() {}
+            fn /*error descr="item `Type1` is an associated method, which doesn't match its trait `T` [E0324]"*/Type1/*error**/() {}
+            fn /*error descr="item `CONST1` is an associated method, which doesn't match its trait `T` [E0324]"*/CONST1/*error**/() {}
+
+            type Type2 = i32;
+            type /*error descr="item `method2` is an associated type, which doesn't match its trait `T` [E0325]"*/method2/*error**/ = i32;
+            type /*error descr="item `CONST2` is an associated type, which doesn't match its trait `T` [E0325]"*/CONST2/*error**/ = i32;
+
+            const CONST3: i32 = 0;
+            const /*error descr="item `method3` is an associated const, which doesn't match its trait `T` [E0323]"*/method3/*error**/: i32 = 0;
+            const /*error descr="item `Type3` is an associated const, which doesn't match its trait `T` [E0323]"*/Type3/*error**/: i32 = 0;
+        }
+    """)
+
     @ExpandMacros
     fun `test ignore expanded methods`() = checkErrors("""
         macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
@@ -153,6 +182,17 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         }
         <error descr="Not all trait items implemented, missing: `C` [E0046]">impl A for ()</error> {
             type C = ();
+        }
+    """)
+
+    fun `test const and type with same name`() = checkErrors("""
+        trait T {
+            const FOO: i32;
+            type FOO;
+        }
+        impl T for () {
+            const FOO: i32 = 0;
+            type FOO = i32;
         }
     """)
 
