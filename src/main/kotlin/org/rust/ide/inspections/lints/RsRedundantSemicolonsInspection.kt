@@ -66,4 +66,6 @@ class RsRedundantSemicolonsInspection : RsLintInspection() {
             tryRegisterProblemAndClearSeq(seq)
         }
     }
+
+    override val isSyntaxOnly: Boolean get() = true
 }

@@ -34,6 +34,8 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
             }
         }
 
+    override val isSyntaxOnly: Boolean get() = true
+
     companion object {
         val KNOWN_CRATE_TYPES = listOf("bin", "lib", "dylib", "staticlib", "cdylib", "rlib", "proc-macro")
     }

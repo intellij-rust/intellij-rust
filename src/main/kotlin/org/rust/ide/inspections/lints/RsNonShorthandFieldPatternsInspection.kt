@@ -33,6 +33,8 @@ class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
         }
     }
 
+    override val isSyntaxOnly: Boolean get() = true
+
     private class UseShorthandFieldPatternFix(private val identifier: String) : LocalQuickFix {
         override fun getFamilyName(): String = "Use shorthand field pattern: `$identifier`"
 
