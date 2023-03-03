@@ -1,14 +1,13 @@
 import argparse
+import json
 import re
 from urllib import request
-import json
 
 from common import env
 from updater import UpdaterBase
 
 WORKFLOW_PATH = ".github/workflows/check.yml"
-# args: evcxr_repl --locked --version 0.13.0
-REPL_WORKFLOW_RE = re.compile(r'(?<=REPL_VERSION: )(\d+\.\d+\.\d+)')
+EVCXR_REPL_WORKFLOW_RE = re.compile(r'(?<=EVCXR_REPL_VERSION: )(\d+\.\d+\.\d+)')
 
 
 class ReplUpdater(UpdaterBase):
@@ -21,13 +20,13 @@ class ReplUpdater(UpdaterBase):
         with open(WORKFLOW_PATH) as f:
             workflow_text = f.read()
 
-        result = re.search(REPL_WORKFLOW_RE, workflow_text)
+        result = re.search(EVCXR_REPL_WORKFLOW_RE, workflow_text)
         if result is None:
-            raise ValueError("Failed to find the current version of repl")
+            raise ValueError("Failed to find the current version of evcxr_repl")
 
-        new_workflow_text = re.sub(REPL_WORKFLOW_RE, new_version, workflow_text)
+        new_workflow_text = re.sub(EVCXR_REPL_WORKFLOW_RE, new_version, workflow_text)
         if new_workflow_text == workflow_text:
-            print("The latest nightly repl version is already used")
+            print("The latest nightly evcxr_repl version is already used")
             return
 
         with open(WORKFLOW_PATH, "w") as f:
@@ -41,7 +40,8 @@ def main():
 
     repo = env("GITHUB_REPOSITORY")
 
-    updater = ReplUpdater(repo, args.token, branch_name="repl", message=":arrow_up: repl", assignee="dima74")
+    updater = ReplUpdater(repo, args.token, branch_name="evcxr_repl", message=":arrow_up: evcxr_repl", assignee="dima74")
+
     updater.update()
 
 

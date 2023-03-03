@@ -59,3 +59,17 @@ jobs:
 
             - name: Update lints
               run: python scripts/update_lints.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+
+    update-evcxr-repl:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+            - name: Prepare for updates
+              uses: ./.github/actions/preparations-for-updates
+
+            - name: Update evcxr_repl
+              run: python scripts/update_repl.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
