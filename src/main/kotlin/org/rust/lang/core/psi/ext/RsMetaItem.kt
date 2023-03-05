@@ -89,3 +89,23 @@ abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>,
 
     override val value: String? get() = litExpr?.stringValue
 }
+
+/** AttributeTemplate type from builtin meta attributes **/
+enum class AttributeTemplateType {
+    Word,
+    List,
+    NameValueStr,
+}
+
+val RsMetaItem.templateType: AttributeTemplateType
+    get() {
+        return if (metaItemArgs?.litExprList?.isNotEmpty() == true ||
+            metaItemArgs?.metaItemList?.isNotEmpty() == true
+        ) {
+            AttributeTemplateType.List
+        } else if (eq != null) {
+            AttributeTemplateType.NameValueStr
+        } else {
+            AttributeTemplateType.Word
+        }
+    }
