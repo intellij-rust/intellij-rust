@@ -28,7 +28,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
-import org.bouncycastle.asn1.iana.IANAObjectIdentifiers.directory
 import org.jetbrains.annotations.TestOnly
 import org.rust.bsp.BspConstants
 import org.rust.bsp.service.BspConnectionService
