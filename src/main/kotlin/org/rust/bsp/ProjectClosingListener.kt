@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import org.rust.bsp.service.BspConnectionService
 
 class ProjectClosingListener: ProjectManagerListener {

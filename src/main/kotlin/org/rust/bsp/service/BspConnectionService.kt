@@ -7,6 +7,7 @@ package org.rust.bsp.service
 
 import com.intellij.openapi.components.Service
 import org.rust.bsp.BspClient
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.toolchain.impl.CargoMetadata
 
 @Service
@@ -19,5 +20,5 @@ interface BspConnectionService {
 
     fun disconnect()
 
-    fun getProjectData(): CargoMetadata.Project
+    fun getProjectData(): CargoWorkspaceData
 }

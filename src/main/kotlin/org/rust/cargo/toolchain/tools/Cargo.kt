@@ -159,7 +159,17 @@ class Cargo(
                 .unwrapOrElse { return Err(it) }
 
         //TODO: replace fetchBuildScriptsInfo with something more bsp specific
+
         val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
+        fetchViaBSP(owner, projectDirectory, buildTarget)
+        if (useBSP) {
+            return try {
+                //TODO make returned status depend on bsp outcome
+                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory, buildTarget), OK))
+            } catch (e: JacksonException) {
+                Err(RsDeserializationException(e))
+            }
+        }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) && !useBSP) {
             val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
@@ -180,22 +190,12 @@ class Cargo(
         projectDirectory: Path,
         buildTarget: String?,
         toolchainOverride: String? = null,
-        listener: ProcessListener? = null,
-        useBSP: Boolean = true
+        listener: ProcessListener? = null
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         if (buildTarget != null) {
             additionalArgs.add("--filter-platform")
             additionalArgs.add(buildTarget)
-        }
-
-        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
-        if (useBSP) {
-            return try {
-                Ok(fetchViaBSP(owner, projectDirectory, buildTarget, toolchainOverride, listener))
-            } catch (e: JacksonException) {
-                Err(RsDeserializationException(e))
-            }
         }
 
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
@@ -218,7 +218,7 @@ class Cargo(
         buildTarget: String?,
         toolchainOverride: String? = null,
         listener: ProcessListener? = null,
-    ): CargoMetadata.Project {
+    ): CargoWorkspaceData {
         val bspService = project.service<BspConnectionService>()
         return bspService.getProjectData()
     }

@@ -17,6 +17,9 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
+import org.rust.bsp.BspConstants
+import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
@@ -46,7 +49,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         getBspServer()
     }
 
-    override fun getProjectData(): CargoMetadata.Project {
+    override fun getProjectData(): CargoWorkspaceData {
         val server = getBspServer()
         val initializeBuildResult =
             queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
@@ -194,33 +197,54 @@ fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
     buildServerCapabilities: BuildServerCapabilities,
     errorCallback: (Throwable) -> Unit
-): CargoMetadata.Project {
-    val projectMetadata = queryForMetadata(server, emptyList()).get()
+): CargoWorkspaceData {
+    val projectBazelTargets = queryForBazelTargets(server).get()
+    val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI}
+    projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
+    val projectBazelSources = queryForBazelSources(server, SourcesParams(projectBazelTargets.targets.map { it.id })).get()
+//    val projectWorkspaceData = queryForWorkspaceData(server).get()
+    val projectWorkspaceData = RustWorkspaceResult(emptyList(), emptyList(), emptyList(), emptyList())
 
-    val projectPackages = createPackageMetadata(projectMetadata)
-    val resolve = createResolveMetadata(projectMetadata)
-    val version = projectMetadata.version
-    val workspaceMembers = projectMetadata.workspaceMembers
-    val workspaceRoot = projectMetadata.workspaceRoot
+    val projectPackages = createPackage(projectWorkspaceData, projectBazelTargets, projectBazelSources)
+    val dependencies = createDependencies(projectWorkspaceData, projectBazelTargets, projectBazelSources)
+    val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets, projectBazelSources)
+    val workspaceRoot = getWorkspaceRoot(projectWorkspaceData, projectBazelTargets, projectBazelSources)
 
-    return CargoMetadata.Project(projectPackages, resolve, version, workspaceMembers, workspaceRoot)
+    return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot)
 }
 
-fun createPackageMetadata(metadata: RustMetadataResult): List<CargoMetadata.Package>
+fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): List<CargoWorkspaceData.Package>
 {
-    return metadata.packages.map{CargoMetadata.createPackageFromMetadata(it)}.toList()
+    return emptyList()
 }
 
-fun createResolveMetadata(metadata: RustMetadataResult): CargoMetadata.Resolve
+fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
 {
-    return CargoMetadata.createResolveFromMetadata(metadata.dependencies)
+    return mapOf()
 }
 
-fun queryForMetadata(server: BspServer, params: List<BuildTargetIdentifier>): CompletableFuture<RustMetadataResult> {
-    return server.rustMetadata(RustMetadataParams(params))
+fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): Map<PackageId, List<CargoMetadata.RawDependency>>
+{
+    return mapOf()
+}
+
+fun getWorkspaceRoot(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): String
+{
+    return ""
 }
 
 
+fun queryForWorkspaceData(server: BspServer): CompletableFuture<RustWorkspaceResult> {
+    return server.rustWorkspace()
+}
+
+fun queryForBazelTargets(server: BspServer): CompletableFuture<WorkspaceBuildTargetsResult> {
+    return server.workspaceBuildTargets()
+}
+
+fun queryForBazelSources(server: BspServer, ids:SourcesParams): CompletableFuture<SourcesResult> {
+    return server.buildTargetSources(ids)
+}
 
 private fun <T> CompletableFuture<T>.catchSyncErrors(errorCallback: (Throwable) -> Unit): CompletableFuture<T> =
     this.whenComplete { _, exception ->
