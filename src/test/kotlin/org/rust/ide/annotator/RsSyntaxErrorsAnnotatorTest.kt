@@ -480,4 +480,14 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         }
     """)
 
+    fun `test underscore expressions`() = checkErrors("""
+        fn main() {
+            let x = 0;
+            _ = x;
+            x = <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>;
+            (_, _) = (x, x);
+            (x, x) = (<error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>, <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>);
+            (<error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> + <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>, <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> - <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>) = (x, x);
+        }
+    """)
 }
