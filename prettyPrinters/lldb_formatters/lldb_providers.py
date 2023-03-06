@@ -84,7 +84,7 @@ def get_max_string_summary_length(debugger):
 
 def read_raw_string(data_ptr, length):
     # type: (SBValue, int) -> str
-    if length == 0:
+    if data_ptr is None or length == 0:
         return '""'
 
     max_string_summary_length = get_max_string_summary_length(data_ptr.GetTarget().GetDebugger())
@@ -109,6 +109,19 @@ def get_vec_length(valobj):
     return valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
 
 
+def extract_data_and_len_from_ffi_string(valobj):
+    # type: (SBValue) -> tuple[Optional[SBValue], int]
+    process = valobj.GetProcess()
+    error = SBError()
+    slice_ptr = valobj.GetLoadAddress()
+    if slice_ptr == LLDB_INVALID_ADDRESS:
+        return None, 0
+    char_ptr_type = valobj.GetTarget().GetBasicType(eBasicTypeChar).GetPointerType()
+    data_ptr = valobj.CreateValueFromAddress('start', slice_ptr, char_ptr_type)
+    length = process.ReadPointerFromMemory(slice_ptr + process.GetAddressByteSize(), error)
+    return data_ptr, length
+
+
 class ValueBuilder:
     def __init__(self, valobj):
         # type: (SBValue) -> None
@@ -128,58 +141,6 @@ class ValueBuilder:
         type = self.valobj.GetTarget().GetBasicType(eBasicTypeUnsignedLong)
         data = SBData.CreateDataFromUInt64Array(self.endianness, self.pointer_size, [value])
         return self.valobj.CreateValueFromData(name, data, type)
-
-
-class DefaultSyntheticProvider:
-    def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> None
-        self.valobj = valobj
-
-    def num_children(self):
-        # type: () -> int
-        return self.valobj.GetNumChildren()
-
-    def get_child_index(self, name):
-        # type: (str) -> int
-        return self.valobj.GetIndexOfChildWithName(name)
-
-    def get_child_at_index(self, index):
-        # type: (int) -> SBValue
-        return self.valobj.GetChildAtIndex(index)
-
-    def update(self):
-        # type: () -> None
-        pass
-
-    def has_children(self):
-        # type: () -> bool
-        return self.valobj.MightHaveChildren()
-
-
-class EmptySyntheticProvider:
-    def __init__(self, valobj, _dict):
-        # type: (SBValue, dict) -> None
-        self.valobj = valobj
-
-    def num_children(self):
-        # type: () -> int
-        return 0
-
-    def get_child_index(self, _name):
-        # type: (str) -> Optional[int]
-        return None
-
-    def get_child_at_index(self, _index):
-        # type: (int) -> Optional[SBValue]
-        return None
-
-    def update(self):
-        # type: () -> None
-        pass
-
-    def has_children(self):
-        # type: () -> bool
-        return False
 
 
 def SizeSummaryProvider(valobj, _dict):
@@ -206,6 +167,10 @@ def StdOsStringSummaryProvider(valobj, _dict):
     return read_raw_string(data_ptr, length)
 
 
+def StdPathBufSummaryProvider(valobj, _dict):
+    return StdOsStringSummaryProvider(valobj.GetChildAtIndex(0), _dict)
+
+
 def StdStrSummaryProvider(valobj, _dict):
     # type: (SBValue, dict) -> str
     data_ptr = valobj.GetChildMemberWithName("data_ptr")
@@ -213,107 +178,16 @@ def StdStrSummaryProvider(valobj, _dict):
     return read_raw_string(data_ptr, length)
 
 
-def StdFFIStrSummaryProvider(valobj, _dict, is_null_terminated=False):
-    # type: (SBValue, dict, bool) -> str
-    process = valobj.GetProcess()
-    error = SBError()
-    slice_ptr = valobj.GetLoadAddress()
-    if slice_ptr == LLDB_INVALID_ADDRESS:
-        return ""
-    char_ptr_type = valobj.GetTarget().GetBasicType(eBasicTypeChar).GetPointerType()
-    data_ptr = valobj.CreateValueFromAddress('start', slice_ptr, char_ptr_type)
-    length = process.ReadPointerFromMemory(slice_ptr + process.GetAddressByteSize(), error)
-    if is_null_terminated:
-        length = length - 1
+def StdOsStrPathSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    data_ptr, length = extract_data_and_len_from_ffi_string(valobj)
     return read_raw_string(data_ptr, length)
 
 
-class StructSyntheticProvider:
-    """Pretty-printer for structs and struct enum variants"""
-
-    def __init__(self, valobj, _dict, is_variant=False):
-        # type: (SBValue, dict, bool) -> None
-        self.valobj = valobj
-        self.is_variant = is_variant
-        self.type = valobj.GetType()
-        self.fields = {}
-
-        if is_variant:
-            self.fields_count = self.type.GetNumberOfFields() - 1
-            real_fields = self.type.fields[1:]
-        else:
-            self.fields_count = self.type.GetNumberOfFields()
-            real_fields = self.type.fields
-
-        for number, field in enumerate(real_fields):
-            self.fields[field.name] = number
-
-    def num_children(self):
-        # type: () -> int
-        return self.fields_count
-
-    def get_child_index(self, name):
-        # type: (str) -> int
-        return self.fields.get(name, -1)
-
-    def get_child_at_index(self, index):
-        # type: (int) -> SBValue
-        if self.is_variant:
-            field = self.type.GetFieldAtIndex(index + 1)
-        else:
-            field = self.type.GetFieldAtIndex(index)
-        return self.valobj.GetChildMemberWithName(field.name)
-
-    def update(self):
-        # type: () -> None
-        pass
-
-    def has_children(self):
-        # type: () -> bool
-        return True
-
-
-class TupleSyntheticProvider:
-    """Pretty-printer for tuples and tuple enum variants"""
-
-    def __init__(self, valobj, _dict, is_variant=False):
-        # type: (SBValue, dict, bool) -> None
-        self.valobj = valobj
-        self.is_variant = is_variant
-        self.type = valobj.GetType()
-
-        if is_variant:
-            self.size = self.type.GetNumberOfFields() - 1
-        else:
-            self.size = self.type.GetNumberOfFields()
-
-    def num_children(self):
-        # type: () -> int
-        return self.size
-
-    def get_child_index(self, name):
-        # type: (str) -> int
-        if name.isdigit():
-            return int(name)
-        else:
-            return -1
-
-    def get_child_at_index(self, index):
-        # type: (int) -> SBValue
-        if self.is_variant:
-            field = self.type.GetFieldAtIndex(index + 1)
-        else:
-            field = self.type.GetFieldAtIndex(index)
-        element = self.valobj.GetChildMemberWithName(field.name)
-        return self.valobj.CreateValueFromData(str(index), element.GetData(), element.GetType())
-
-    def update(self):
-        # type: () -> None
-        pass
-
-    def has_children(self):
-        # type: () -> bool
-        return True
+def StdCStringSummaryProvider(valobj, _dict):
+    # type: (SBValue, dict) -> str
+    data_ptr, length = extract_data_and_len_from_ffi_string(valobj)
+    return read_raw_string(data_ptr, length - 1)
 
 
 class ArrayLikeSyntheticProviderBase:
@@ -521,6 +395,11 @@ class StdHashMapSyntheticProvider:
         return True
 
 
+class StdHashSetSyntheticProvider(StdHashMapSyntheticProvider):
+    def __init__(self, valobj, _dict):
+        super().__init__(valobj, _dict, show_values=False)
+
+
 def StdRcSummaryProvider(valobj, _dict):
     # type: (SBValue, dict) -> str
     strong = valobj.GetChildMemberWithName("strong").GetValueAsUnsigned()
@@ -586,6 +465,11 @@ class StdRcSyntheticProvider:
     def has_children(self):
         # type: () -> bool
         return True
+
+
+class StdArcSyntheticProvider(StdRcSyntheticProvider):
+    def __init__(self, valobj, _dict):
+        super().__init__(valobj, _dict, is_atomic=True)
 
 
 class StdCellSyntheticProvider:
@@ -682,6 +566,11 @@ class StdRefSyntheticProvider:
     def has_children(self):
         # type: () -> bool
         return True
+
+
+class StdRefCellSyntheticProvider(StdRefSyntheticProvider):
+    def __init__(self, valobj, _dict):
+        super().__init__(valobj, _dict, is_cell=True)
 
 
 def StdNonZeroNumberSummaryProvider(valobj, _dict):

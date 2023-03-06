@@ -28,7 +28,6 @@ pub struct LLDBConfig {
     pub print_stdout: bool,
     pub lldb_python: String,
     pub lldb_batchmode: String,
-    pub lldb_lookup: String,
     pub python: String,
     pub native_rust: bool,
 }
@@ -39,7 +38,6 @@ pub struct GDBConfig {
     pub pretty_printers_path: String,
     pub print_stdout: bool,
     pub gdb: String,
-    pub gdb_lookup: String,
 }
 
 #[derive(Clone)]
@@ -150,8 +148,8 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
         script_str.push_str(&format!("directory {}\n", self.config.pretty_printers_path));
 
         script_str.push_str(&format!("python sys.path.insert(0, \"{}\")\n", self.config.pretty_printers_path));
-        script_str.push_str(&format!("python import {}\n", self.config.gdb_lookup));
-        script_str.push_str(&format!("python {}.register_printers(gdb)\n", self.config.gdb_lookup));
+        script_str.push_str("python import gdb_formatters.gdb_lookup\n");
+        script_str.push_str("python gdb_formatters.gdb_lookup.register_printers(gdb)\n");
 
         // Load the target executable
         script_str.push_str(&format!("file {}\n", exe_file.to_str().unwrap()));
@@ -244,9 +242,7 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
         // We don't want to hang when calling `quit` while the process is still running
         let mut script_str = String::from("settings set auto-confirm true\n");
 
-        script_str.push_str(&format!("command script import {}{}.py\n", &self.config.pretty_printers_path, &self.config.lldb_lookup));
-        script_str.push_str(&format!("type synthetic add -l {}.synthetic_lookup -x '.*' --category Rust\n", &self.config.lldb_lookup));
-        script_str.push_str(&format!("type summary add -F {}.summary_lookup -e -x -h '.*' --category Rust\n", &self.config.lldb_lookup));
+        script_str.push_str(&format!("command script import {}/lldb_formatters\n", &self.config.pretty_printers_path));
         script_str.push_str(&format!("{}\n", ENABLE_RUST));
 
         // Set breakpoints on every line that contains the string "#break"

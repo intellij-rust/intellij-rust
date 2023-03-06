@@ -483,6 +483,34 @@ sealed class RsDiagnostic(
         }
     }
 
+    class MismatchMemberInTraitImplError(
+        element: PsiElement,
+        private val member: RsAbstractable,
+        private val traitName: String,
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            errorCode(),
+            errorText(),
+        )
+
+        private fun errorCode(): RsErrorCode =
+            when (member) {
+                is RsTypeAlias -> E0325
+                is RsConstant -> E0323
+                else -> E0324
+            }
+
+        private fun errorText(): String {
+            val itemType = when (member) {
+                is RsTypeAlias -> "type"
+                is RsConstant -> "const"
+                else -> "method"
+            }
+            return "item `${member.name}` is an associated $itemType, which doesn't match its trait `$traitName`"
+        }
+    }
+
     class ImplBothCopyAndDropError(
         element: PsiElement
     ) : RsDiagnostic(element) {
@@ -1686,7 +1714,7 @@ enum class RsErrorCode {
     E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0044, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0130, E0131, E0132, E0133, E0184, E0185, E0186, E0191, E0197, E0198, E0199,
     E0200, E0201, E0203, E0220, E0224, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
-    E0308, E0322, E0328, E0364, E0365, E0379, E0384,
+    E0308, E0322, E0323, E0324, E0325, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0437, E0438, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0571, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0642, E0658, E0666, E0667, E0695,

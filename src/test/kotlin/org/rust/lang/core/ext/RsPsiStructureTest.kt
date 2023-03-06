@@ -62,7 +62,6 @@ class RsPsiStructureTest : RsTestBase() {
         impl T for S {
             fn another_required_fn() { }
             type same_name = ();
-            fn spam() {}
         }
     """) { impl ->
         val trait = impl.traitRef!!.resolveToTrait()!!
@@ -73,15 +72,6 @@ class RsPsiStructureTest : RsTestBase() {
 
         check(implInfo.missingImplementations.map { it.name } == listOf(
             "required_fn", "RequiredType", "same_name"
-        ))
-
-        check(implInfo.nonExistentInTrait.map { it.name } == listOf(
-            "spam"
-        ))
-
-        check(implInfo.implementationToDeclaration.map { (it.first.name to it.second.name) } == listOf(
-            "another_required_fn" to "another_required_fn",
-            "same_name" to "same_name"
         ))
     }
 

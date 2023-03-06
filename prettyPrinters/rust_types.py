@@ -15,138 +15,101 @@ class RustType(object):
     COMPRESSED_ENUM = "CompressedEnum"
     REGULAR_UNION = "RegularUnion"
 
-    STD_STRING = "StdString"
-    STD_OS_STRING = "StdOsString"
-    STD_PATH_BUF = "StdPathBuf"
-    STD_STR = "StdStr"
-    STD_MSVC_STR = "StdMsvcStr"
-    STD_MSVC_STR_DOLLAR = "StdMsvcStrDollar"
-    STD_SLICE = "StdSlice"
-    STD_MSVC_SLICE = "StdMsvcSlice"
-    STD_MSVC_SLICE2 = "StdMsvcSlice2"
-    STD_OS_STR = "StdOsStr"
-    STD_PATH = "StdPath"
-    STD_CSTRING = "StdCString"
-    STD_CSTR = "StdCStr"
-    STD_VEC = "StdVec"
-    STD_VEC_DEQUE = "StdVecDeque"
-    STD_BTREE_SET = "StdBTreeSet"
-    STD_BTREE_MAP = "StdBTreeMap"
-    STD_HASH_MAP = "StdHashMap"
-    STD_HASH_SET = "StdHashSet"
-    STD_RC = "StdRc"
-    STD_RC_WEAK = "StdRcWeak"
-    STD_ARC = "StdArc"
-    STD_ARC_WEAK = "StdArcWeak"
-    STD_CELL = "StdCell"
-    STD_REF = "StdRef"
-    STD_REF_MUT = "StdRefMut"
-    STD_REF_CELL = "StdRefCell"
-    STD_NONZERO_NUMBER = "StdNonZeroNumber"
-    STD_RANGE = "StdRange"
-    STD_RANGE_FROM = "StdRangeFrom"
-    STD_RANGE_INCLUSIVE = "StdRangeInclusive"
-    STD_RANGE_TO = "StdRangeTo"
-    STD_RANGE_TO_INCLUSIVE = "StdRangeToInclusive"
+    STRING = "String"
+    OS_STRING = "OsString"
+    PATH_BUF = "PathBuf"
+    STR = "Str"
+    MSVC_STR = "StdMsvcStr"
+    MSVC_STR_DOLLAR = "StdMsvcStrDollar"
+    SLICE = "Slice"
+    MSVC_SLICE = "MsvcSlice"
+    MSVC_SLICE2 = "StdMsvcSlice2"
+    OS_STR = "OsStr"
+    PATH = "Path"
+    CSTRING = "CString"
+    CSTR = "CStr"
+    VEC = "Vec"
+    VEC_DEQUE = "VecDeque"
+    BTREE_SET = "BTreeSet"
+    BTREE_MAP = "BTreeMap"
+    HASH_MAP = "HashMap"
+    HASH_SET = "HashSet"
+    RC = "Rc"
+    RC_WEAK = "RcWeak"
+    ARC = "Arc"
+    ARC_WEAK = "ArcWeak"
+    CELL = "Cell"
+    REF = "Ref"
+    REF_MUT = "RefMut"
+    REF_CELL = "RefCell"
+    NONZERO_NUMBER = "NonZeroNumber"
+    RANGE = "Range"
+    RANGE_FROM = "RangeFrom"
+    RANGE_INCLUSIVE = "RangeInclusive"
+    RANGE_TO = "RangeTo"
+    RANGE_TO_INCLUSIVE = "RangeToInclusive"
 
-    ANY_STR = [STD_STR, STD_MSVC_STR, STD_MSVC_STR_DOLLAR]
-    ANY_SLICE = [STD_SLICE, STD_MSVC_SLICE, STD_MSVC_SLICE2]
-
-
-#################################################################################################################
-# Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
-################################################################################################################
-
-STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
-
-# &str, &mut str, *const str, *mut str
-STD_STR_REGEX = re.compile(r"^(&|&mut |\*const |\*mut )str$")
-
-# BACKCOMPAT: Rust 1.66
-# str, ptr_const$<str>, ptr_mut$<str>
-STD_MSVC_STR_REGEX = re.compile(r"^(str)|((ptr_const|ptr_mut)\$<str>)$")
-
-# Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
-# str$, ref$<str$>, ref_mut$<str$>, ptr_const$<str$>, ptr_mut$<str$>
-STD_MSVC_STR_DOLLAR_REGEX = re.compile(r"^(str\$)|((ref|ref_mut|ptr_const|ptr_mut)\$<str\$>)$")
-
-# &[T], &mut [T], *const [T], *mut [T]
-STD_SLICE_REGEX = re.compile(r"^(&|&mut |\*const |\*mut )?\[.*]$")
-
-# BACKCOMPAT: Rust 1.66
-# slice$<T>, ptr_const$<slice$<T> >, ptr_mut$<slice$<T> >
-STD_MSVC_SLICE_REGEX = re.compile(r"^(slice\$<.+>)|((ptr_const|ptr_mut)\$<slice\$<.+> >)$")
-
-# Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
-# slice2$<T>, ref$<slice2$<T> >, ref_mut$<slice2$<T> >, ptr_const$<slice2$<T> >, ptr_mut$<slice2$<T> >
-STD_MSVC_SLICE2_REGEX = re.compile(r"^(slice2\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\$\<slice2\$<.+> \>?)$")
-
-STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
-STD_OS_STR_REGEX = re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$")
-STD_PATH_BUF_REGEX = re.compile(r"^(std::([a-z_]+::)+)PathBuf$")
-STD_PATH_REGEX = re.compile(r"^(&?std::([a-z_]+::)+)Path( \*)?$")
-STD_CSTRING_REGEX = re.compile(r"^((std|alloc)::ffi::([a-z_]+::)+)CString$")
-STD_CSTR_REGEX = re.compile(r"^(&?(std|core)::ffi::([a-z_]+::)+)CStr( \*)?$")
-STD_VEC_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)Vec<.+>$")
-STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)VecDeque<.+>$")
-STD_BTREE_SET_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)BTreeSet<.+>$")
-STD_BTREE_MAP_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)BTreeMap<.+>$")
-STD_HASH_MAP_REGEX = re.compile(r"^(std::collections::([a-z_]+::)+)HashMap<.+>$")
-STD_HASH_SET_REGEX = re.compile(r"^(std::collections::([a-z_]+::)+)HashSet<.+>$")
-STD_RC_REGEX = re.compile(r"^alloc::rc::Rc<.+>$")
-STD_RC_WEAK_REGEX = re.compile(r"^alloc::rc::Weak<.+>$")
-STD_ARC_REGEX = re.compile(r"^alloc::(sync|arc)::Arc<.+>$")
-STD_ARC_WEAK_REGEX = re.compile(r"^alloc::(sync|arc)::Weak<.+>$")
-STD_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)Cell<.+>$")
-STD_REF_REGEX = re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$")
-STD_REF_MUT_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$")
-STD_REF_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefCell<.+>$")
-STD_NONZERO_NUMBER_REGEX = re.compile(r"^core::num::([a-z_]+::)*NonZero.+$")
-STD_RANGE_REGEX = re.compile(r"^core::ops::range::Range<.+>$")
-STD_RANGE_FROM_REGEX = re.compile(r"^core::ops::range::RangeFrom<.+>$")
-STD_RANGE_INCLUSIVE_REGEX = re.compile(r"^core::ops::range::RangeInclusive<.+>$")
-STD_RANGE_TO_REGEX = re.compile(r"^core::ops::range::RangeTo<.+>$")
-STD_RANGE_TO_INCLUSIVE_REGEX = re.compile(r"^core::ops::range::RangeToInclusive<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
 ENCODED_ENUM_PREFIX = "RUST$ENCODED$ENUM$"
 ENUM_DISR_FIELD_NAME = "<<variant>>"
 
-STD_TYPE_TO_REGEX = {
-    RustType.STD_STRING: STD_STRING_REGEX,
-    RustType.STD_OS_STRING: STD_OS_STRING_REGEX,
-    RustType.STD_PATH_BUF: STD_PATH_BUF_REGEX,
-    RustType.STD_PATH: STD_PATH_REGEX,
-    RustType.STD_STR: STD_STR_REGEX,
-    RustType.STD_MSVC_STR: STD_MSVC_STR_REGEX,
-    RustType.STD_MSVC_STR_DOLLAR: STD_MSVC_STR_DOLLAR_REGEX,
-    RustType.STD_SLICE: STD_SLICE_REGEX,
-    RustType.STD_MSVC_SLICE: STD_MSVC_SLICE_REGEX,
-    RustType.STD_MSVC_SLICE2: STD_MSVC_SLICE2_REGEX,
-    RustType.STD_OS_STR: STD_OS_STR_REGEX,
-    RustType.STD_CSTRING: STD_CSTRING_REGEX,
-    RustType.STD_CSTR: STD_CSTR_REGEX,
-    RustType.STD_VEC: STD_VEC_REGEX,
-    RustType.STD_VEC_DEQUE: STD_VEC_DEQUE_REGEX,
-    RustType.STD_HASH_MAP: STD_HASH_MAP_REGEX,
-    RustType.STD_HASH_SET: STD_HASH_SET_REGEX,
-    RustType.STD_BTREE_SET: STD_BTREE_SET_REGEX,
-    RustType.STD_BTREE_MAP: STD_BTREE_MAP_REGEX,
-    RustType.STD_RC: STD_RC_REGEX,
-    RustType.STD_RC_WEAK: STD_RC_WEAK_REGEX,
-    RustType.STD_ARC: STD_ARC_REGEX,
-    RustType.STD_ARC_WEAK: STD_ARC_WEAK_REGEX,
-    RustType.STD_REF: STD_REF_REGEX,
-    RustType.STD_REF_MUT: STD_REF_MUT_REGEX,
-    RustType.STD_REF_CELL: STD_REF_CELL_REGEX,
-    RustType.STD_CELL: STD_CELL_REGEX,
-    RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX,
-    RustType.STD_RANGE: STD_RANGE_REGEX,
-    RustType.STD_RANGE_FROM: STD_RANGE_FROM_REGEX,
-    RustType.STD_RANGE_INCLUSIVE: STD_RANGE_INCLUSIVE_REGEX,
-    RustType.STD_RANGE_TO: STD_RANGE_TO_REGEX,
-    RustType.STD_RANGE_TO_INCLUSIVE: STD_RANGE_TO_INCLUSIVE_REGEX,
+TYPE_TO_REGEX = {
+    # &str, &mut str, *const str, *mut str
+    RustType.STR: re.compile(r"^(&|&mut |\*const |\*mut )str$"),
+
+    # BACKCOMPAT: Rust 1.66
+    # str, ptr_const$<str>, ptr_mut$<str>
+    RustType.MSVC_STR: re.compile(r"^(str)|((ptr_const|ptr_mut)\$<str>)$"),
+
+    # Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
+    # str$, ref$<str$>, ref_mut$<str$>, ptr_const$<str$>, ptr_mut$<str$>
+    RustType.MSVC_STR_DOLLAR: re.compile(r"^(str\$)|((ref|ref_mut|ptr_const|ptr_mut)\$<str\$>)$"),
+
+    # &[T], &mut [T], *const [T], *mut [T], but not fixed-sized like &[T;size] because they have native representations
+    RustType.SLICE: re.compile(r"^(&|&mut |\*const |\*mut )?\[[^;]+]$"),
+
+    # BACKCOMPAT: Rust 1.66
+    # slice$<T>, ptr_const$<slice$<T> >, ptr_mut$<slice$<T> >
+    RustType.MSVC_SLICE: re.compile(r"^(slice\$<.+>)|((ptr_const|ptr_mut)\$<slice\$<.+> >)$"),
+
+    # Since Rust 1.67 https://github.com/rust-lang/rust/pull/103691
+    # slice2$<T>, ref$<slice2$<T> >, ref_mut$<slice2$<T> >, ptr_const$<slice2$<T> >, ptr_mut$<slice2$<T> >
+    RustType.MSVC_SLICE2: re.compile(r"^(slice2\$<.+>)|((ref|ref_mut|ptr_const|ptr_mut)\$<slice2\$<.+> >?)$"),
+
+    RustType.STRING: re.compile(r"^(alloc::([a-z_]+::)+)String$"),
+    RustType.OS_STRING: re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$"),
+    RustType.OS_STR: re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$"),
+    RustType.PATH_BUF: re.compile(r"^(std::([a-z_]+::)+)PathBuf$"),
+    RustType.PATH: re.compile(r"^(&?std::([a-z_]+::)+)Path( \*)?$"),
+    RustType.CSTRING: re.compile(r"^((std|alloc)::ffi::([a-z_]+::)+)CString$"),
+    RustType.CSTR: re.compile(r"^(&?(std|core)::ffi::([a-z_]+::)+)CStr( \*)?$"),
+
+    RustType.VEC: re.compile(r"^(alloc::([a-z_]+::)+)Vec<.+>$"),
+    RustType.VEC_DEQUE: re.compile(r"^(alloc::([a-z_]+::)+)VecDeque<.+>$"),
+    RustType.HASH_MAP: re.compile(r"^(std::collections::([a-z_]+::)+)HashMap<.+>$"),
+    RustType.HASH_SET: re.compile(r"^(std::collections::([a-z_]+::)+)HashSet<.+>$"),
+    RustType.BTREE_MAP: re.compile(r"^(alloc::([a-z_]+::)+)BTreeMap<.+>$"),
+    RustType.BTREE_SET: re.compile(r"^(alloc::([a-z_]+::)+)BTreeSet<.+>$"),
+
+    RustType.RC: re.compile(r"^alloc::rc::Rc<.+>$"),
+    RustType.RC_WEAK: re.compile(r"^alloc::rc::Weak<.+>$"),
+    RustType.ARC: re.compile(r"^alloc::(sync|arc)::Arc<.+>$"),
+    RustType.ARC_WEAK: re.compile(r"^alloc::(sync|arc)::Weak<.+>$"),
+
+    RustType.CELL: re.compile(r"^(core::([a-z_]+::)+)Cell<.+>$"),
+    RustType.REF: re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$"),
+    RustType.REF_MUT: re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$"),
+    RustType.REF_CELL: re.compile(r"^(core::([a-z_]+::)+)RefCell<.+>$"),
+
+    RustType.NONZERO_NUMBER: re.compile(r"^core::num::([a-z_]+::)*NonZero.+$"),
+
+    RustType.RANGE: re.compile(r"^core::ops::range::Range<.+>$"),
+    RustType.RANGE_FROM: re.compile(r"^core::ops::range::RangeFrom<.+>$"),
+    RustType.RANGE_INCLUSIVE: re.compile(r"^core::ops::range::RangeInclusive<.+>$"),
+    RustType.RANGE_TO: re.compile(r"^core::ops::range::RangeTo<.+>$"),
+    RustType.RANGE_TO_INCLUSIVE: re.compile(r"^core::ops::range::RangeToInclusive<.+>$"),
 }
 
 
@@ -159,7 +122,7 @@ def classify_struct(name, fields):
     if len(fields) == 0:
         return RustType.EMPTY
 
-    for ty, regex in STD_TYPE_TO_REGEX.items():
+    for ty, regex in TYPE_TO_REGEX.items():
         if regex.match(name):
             return ty
 
@@ -187,12 +150,3 @@ def classify_union(fields):
         return RustType.COMPRESSED_ENUM
     else:
         return RustType.REGULAR_UNION
-
-
-def classify_pointer(name):
-    if STD_OS_STR_REGEX.match(name):
-        return RustType.STD_OS_STR
-    if STD_PATH_REGEX.match(name):
-        return RustType.STD_PATH
-    if STD_CSTR_REGEX.match(name):
-        return RustType.STD_CSTR

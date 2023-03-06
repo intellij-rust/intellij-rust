@@ -155,22 +155,14 @@ class TraitImplementationInfo private constructor(
 ) {
     val declared = traitMembers.abstractable().filter { it.existsAfterExpansionSelf }
     private val implemented = implMembers.abstractable()
-    private val declaredByName = declared.associateBy { it.name!! }
-    private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
+    val declaredByNameAndType = declared.associateBy { it.name!! to it.elementType }
+    val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
 
     val missingImplementations: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
 
     val alreadyImplemented: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType in implementedByNameAndType }
-
-    val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
-
-    val implementationToDeclaration: List<Pair<RsAbstractable, RsAbstractable>> =
-        implemented.mapNotNull { imp ->
-            val dec = declaredByName[imp.name]
-            if (dec != null) imp to dec else null
-        }
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
         expandedMembers.filter { it.name != null }

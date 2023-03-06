@@ -50,7 +50,7 @@ val grammarKitFakePsiDepsProject = ":$grammarKitFakePsiDepsProjectDir"
 plugins {
     idea
     kotlin("jvm") version "1.8.10"
-    id("org.jetbrains.intellij") version "1.12.0"
+    id("org.jetbrains.intellij") version "1.13.1"
     id("org.jetbrains.grammarkit") version "2022.3.1"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.5.2"
@@ -339,7 +339,7 @@ project(":plugin") {
             // Copy pretty printers
             from("$rootDir/prettyPrinters") {
                 into("${pluginName.get()}/prettyPrinters")
-                include("*.py")
+                include("**/*.py")
             }
         }
 

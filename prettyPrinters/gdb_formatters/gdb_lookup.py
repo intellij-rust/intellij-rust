@@ -1,7 +1,7 @@
 from gdb import Type
 from gdb import TYPE_CODE_STRUCT, TYPE_CODE_UNION, TYPE_CODE_INT
 
-from gdb_providers import *
+from gdb_formatters.gdb_providers import *
 from rust_types import *
 
 
@@ -61,53 +61,53 @@ def lookup(valobj):
         elif is_new_enum(valobj.type):
             return NewEnumProvider(valobj)
 
-    if rust_type == RustType.STD_STRING:
+    if rust_type == RustType.STRING:
         return StdStringProvider(valobj)
-    if rust_type == RustType.STD_OS_STRING:
+    if rust_type == RustType.OS_STRING:
         return StdOsStringProvider(valobj)
-    if rust_type == RustType.STD_STR:
+    if rust_type == RustType.STR:
         return StdStrProvider(valobj)
-    if rust_type == RustType.STD_SLICE:
+    if rust_type == RustType.SLICE:
         return StdSliceProvider(valobj)
 
-    if rust_type == RustType.STD_VEC:
+    if rust_type == RustType.VEC:
         return StdVecProvider(valobj)
-    if rust_type == RustType.STD_VEC_DEQUE:
+    if rust_type == RustType.VEC_DEQUE:
         return StdVecDequeProvider(valobj)
-    if rust_type == RustType.STD_BTREE_SET:
+    if rust_type == RustType.BTREE_SET:
         return StdBTreeSetProvider(valobj)
-    if rust_type == RustType.STD_BTREE_MAP:
+    if rust_type == RustType.BTREE_MAP:
         return StdBTreeMapProvider(valobj)
-    if rust_type == RustType.STD_HASH_MAP:
+    if rust_type == RustType.HASH_MAP:
         return StdHashMapProvider(valobj)
-    if rust_type == RustType.STD_HASH_SET:
+    if rust_type == RustType.HASH_SET:
         return StdHashMapProvider(valobj, show_values=False)
-    if rust_type == RustType.STD_RC or rust_type == RustType.STD_RC_WEAK:
+    if rust_type == RustType.RC or rust_type == RustType.RC_WEAK:
         return StdRcProvider(valobj)
-    if rust_type == RustType.STD_ARC or rust_type == RustType.STD_ARC_WEAK:
+    if rust_type == RustType.ARC or rust_type == RustType.ARC_WEAK:
         return StdRcProvider(valobj, is_atomic=True)
 
-    if rust_type == RustType.STD_CELL:
+    if rust_type == RustType.CELL:
         return StdCellProvider(valobj)
-    if rust_type == RustType.STD_REF:
+    if rust_type == RustType.REF:
         return StdRefProvider(valobj)
-    if rust_type == RustType.STD_REF_MUT:
+    if rust_type == RustType.REF_MUT:
         return StdRefProvider(valobj)
-    if rust_type == RustType.STD_REF_CELL:
+    if rust_type == RustType.REF_CELL:
         return StdRefCellProvider(valobj)
 
-    if rust_type == RustType.STD_NONZERO_NUMBER:
+    if rust_type == RustType.NONZERO_NUMBER:
         return StdNonZeroNumberProvider(valobj)
 
-    if rust_type == RustType.STD_RANGE:
+    if rust_type == RustType.RANGE:
         return StdRangeProvider(valobj)
-    if rust_type == RustType.STD_RANGE_FROM:
+    if rust_type == RustType.RANGE_FROM:
         return StdRangeFromProvider(valobj)
-    if rust_type == RustType.STD_RANGE_INCLUSIVE:
+    if rust_type == RustType.RANGE_INCLUSIVE:
         return StdRangeInclusiveProvider(valobj)
-    if rust_type == RustType.STD_RANGE_TO:
+    if rust_type == RustType.RANGE_TO:
         return StdRangeToProvider(valobj)
-    if rust_type == RustType.STD_RANGE_TO_INCLUSIVE:
+    if rust_type == RustType.RANGE_TO_INCLUSIVE:
         return StdRangeToInclusiveProvider(valobj)
 
     return None

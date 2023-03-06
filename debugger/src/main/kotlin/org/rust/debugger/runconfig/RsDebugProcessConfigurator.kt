@@ -27,6 +27,6 @@ class RsDebugProcessConfigurator : CidrDebugProcessConfigurator {
                 return
             }
         }
-        RsDebugProcessConfigurationHelper(process, cargoProject, isCrossLanguage = true).configure()
+        RsDebugProcessConfigurationHelper(process, cargoProject).configure()
     }
 }

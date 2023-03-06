@@ -29,20 +29,13 @@ struct Settings {
     pretty_printers_path: String,
     print_stdout: bool,
     lldb: Option<LLDBSettings>,
-    gdb: Option<GDBSettings>,
 }
 
 #[derive(Deserialize)]
 struct LLDBSettings {
     python: String,
     lldb_batchmode: String,
-    lldb_lookup: String,
     native_rust: bool
-}
-
-#[derive(Deserialize)]
-struct GDBSettings {
-    gdb_lookup: String
 }
 
 /// Expects "lldb" or "gdb as the first argument
@@ -75,20 +68,17 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
                 print_stdout: settings.print_stdout,
                 lldb_python: path,
                 lldb_batchmode: lldb_settings.lldb_batchmode,
-                lldb_lookup: lldb_settings.lldb_lookup,
                 python: lldb_settings.python,
                 native_rust: lldb_settings.native_rust,
             })
         },
 
         Debugger::GDB => {
-            let gdb_settings = settings.gdb.expect(&format!("No GDB settings in {}", SETTINGS));
             Config::GDB(GDBConfig {
                 test_dir: settings.test_dir.clone(),
                 pretty_printers_path: settings.pretty_printers_path,
                 print_stdout: settings.print_stdout,
                 gdb: path,
-                gdb_lookup: gdb_settings.gdb_lookup,
             })
         }
     };
