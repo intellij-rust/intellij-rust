@@ -23,8 +23,6 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected abstract fun getLint(element: PsiElement): RsLint?
 
-    override val isSyntaxOnly: Boolean = true
-
     protected fun RsProblemsHolder.registerLintProblem(
         element: PsiElement,
         @InspectionMessage descriptionTemplate: String,

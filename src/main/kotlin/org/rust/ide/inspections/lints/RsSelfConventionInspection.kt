@@ -56,6 +56,8 @@ class RsSelfConventionInspection : RsLintInspection() {
             }
         }
 
+    override val isSyntaxOnly: Boolean get() = true
+
     private companion object {
         val SELF_CONVENTIONS = listOf(
             SelfConvention("as_", listOf(SelfSignature.BY_REF, SelfSignature.BY_MUT_REF)),
