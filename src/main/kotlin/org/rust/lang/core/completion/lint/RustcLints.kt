@@ -77,6 +77,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("lossy_provenance_casts", false),
     Lint("macro_expanded_macro_exports_accessed_by_absolute_paths", false),
     Lint("macro_use_extern_crate", false),
+    Lint("map_unit_fn", false),
     Lint("meta_variable_misuse", false),
     Lint("missing_abi", false),
     Lint("missing_copy_implementations", false),
