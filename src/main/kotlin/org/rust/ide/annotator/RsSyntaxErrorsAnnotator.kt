@@ -60,6 +60,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsLetExpr -> checkLetExpr(holder, element)
             is RsPatRange -> checkPatRange(holder, element)
             is RsTraitType -> checkTraitType(holder, element)
+            is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
         }
     }
 }
@@ -480,6 +481,19 @@ private fun checkTraitType(holder: AnnotationHolder, element: RsTraitType) {
     if (element.polyboundList.any { it.bound.lifetime == null }) return
 
     RsDiagnostic.AtLeastOneTraitForObjectTypeError(element).addToHolder(holder)
+}
+
+private fun checkUnderscoreExpr(holder: AnnotationHolder, element: RsUnderscoreExpr) {
+    val isAllowed = run {
+        val binaryExpr = element.ancestorStrict<RsBinaryExpr>() ?: return@run false
+        if (binaryExpr.operatorType !is AssignmentOp) return@run false
+        if (!binaryExpr.left.isAncestorOf(element)) return@run false
+        true
+    }
+
+    if (!isAllowed) {
+        deny(element, holder, "In expressions, `_` can only be used on the left-hand side of an assignment")
+    }
 }
 
 private enum class TypeKind {
