@@ -2,20 +2,25 @@
 
 // lldb-command:run
 
-// lldb-command:print slice
-// lldbr-check:[...]slice = size=2 { [0] = 1 [1] = 2 }
-// lldbg-check:[...]$0 = size=2 { [0] = 1 [1] = 2 }
-// lldb-command:print slice_mut
-// lldbr-check:[...]slice_mut = size=2 { [0] = 1 [1] = 2 }
-// lldbg-check:[...]$1 = size=2 { [0] = 1 [1] = 2 }
-// lldb-command:print slice_ptr_const
-// lldbr-check:[...]slice_ptr_const = size=2 { [0] = 1 [1] = 2 }
-// lldbg-check:[...]$2 = size=2 { [0] = 1 [1] = 2 }
-// lldb-command:print slice_ptr_mut
-// lldbr-check:[...]slice_ptr_mut = size=2 { [0] = 1 [1] = 2 }
-// lldbg-check:[...]$3 = size=2 { [0] = 1 [1] = 2 }
+// lldb-command:frame variable slice
+// lldb-unix-check:(&[i32]) slice = size=2 { [0] = 1 [1] = 2 }
+// lldb-windows-check:[...] slice = size=2 { [0] = 1 [1] = 2 }
+
+// lldb-command:frame variable slice_mut
+// lldb-unix-check:(&mut [i32]) slice_mut = size=2 { [0] = 1 [1] = 2 }
+// lldb-windows-check:[...] slice_mut = size=2 { [0] = 1 [1] = 2 }
+
+// lldb-command:frame variable slice_ptr_const
+// lldb-unix-check:(*const [i32]) slice_ptr_const = size=2 { [0] = 1 [1] = 2 }
+// lldb-windows-check:[...] slice_ptr_const = size=2 { [0] = 1 [1] = 2 }
+
+// lldb-command:frame variable slice_ptr_mut
+// lldb-unix-check:(*mut [i32]) slice_ptr_mut = size=2 { [0] = 1 [1] = 2 }
+// lldb-windows-check:[...] slice_ptr_mut = size=2 { [0] = 1 [1] = 2 }
+
 // lldb-command:frame variable --ptr-depth 1 slice_fixed_sized
-// lldb-check:[...]slice_fixed_sized = 0x[...] { [0] = 1 [1] = 2 }
+// lldb-unix-check:(&[i32; 2]) slice_fixed_sized = 0x[...] { [0] = 1 [1] = 2 }
+// lldb-windows-check:[...] slice_fixed_sized = 0x[...] { [0] = 1 [1] = 2 }
 
 // === GDB TESTS ===================================================================================
 

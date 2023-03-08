@@ -5,4 +5,3 @@ print_stdout = true
 [lldb]
 python = "python3"
 lldb_batchmode = "./lldb_batchmode.py"
-native_rust = true

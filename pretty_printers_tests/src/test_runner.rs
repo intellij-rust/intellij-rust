@@ -29,7 +29,6 @@ pub struct LLDBConfig {
     pub lldb_python: String,
     pub lldb_batchmode: String,
     pub python: String,
-    pub native_rust: bool,
 }
 
 #[derive(Clone)]
@@ -211,15 +210,15 @@ impl<'test> LLDBTestRunner<'test> {
 
 impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
     fn run(&self) -> TestResult {
-        // If `native_rust = true` in the `Settings_%os%.toml` configuration file,
-        // the test runner will execute all commands that start with `lldb` or `lldbr`.
-        // Otherwise, the test runner will execute commands that start with `lldb` or `lldbg`.
-        let prefixes = if self.config.native_rust {
-            static PREFIXES: &'static [&'static str] = &["lldb", "lldbr"];
+        // Test runner can run commands depending on the target's platform
+        let prefixes = if cfg!(unix) {
+            static PREFIXES: &'static [&'static str] = &["lldb", "lldb-unix"];
+            PREFIXES
+        } else if cfg!(windows) {
+            static PREFIXES: &'static [&'static str] = &["lldb", "lldb-windows"];
             PREFIXES
         } else {
-            static PREFIXES: &'static [&'static str] = &["lldb", "lldbg"];
-            PREFIXES
+            panic!("Unsupported platform");
         };
 
         // Parse debugger commands etc from test files

@@ -2,18 +2,17 @@
 
 // lldb-command:run
 
-// lldb-command:print cell
-// lldbr-check:[...]cell = (value = 42)
-// lldbg-check:[...]$0 = (value = 42)
-// lldb-command:print ref_cell1
-// lldbr-check:[...]ref_cell1 = borrow=1 { value = 42 }
-// lldbg-check:[...]$1 = borrow=1 { value = 42 }
-// lldb-command:print ref1
-// lldbr-check:[...]ref1 = borrow=1 { [...] = 42 }
-// lldbg-check:[...]$2 = borrow=1 { [...] = 42 }
-// lldb-command:print ref_mut2
-// lldbr-check:[...]ref_mut2 = borrow_mut=1 { [...] = 42 }
-// lldbg-check:[...]$3 = borrow_mut=1 { [...] = 42 }
+// lldb-command:frame variable cell
+// lldb-check:(core::cell::Cell<i32>) cell = (value = 42)
+
+// lldb-command:frame variable ref_cell1
+// lldb-check:(core::cell::RefCell<i32>) ref_cell1 = borrow=1 { value = 42 }
+
+// lldb-command:frame variable ref1
+// lldb-check:(core::cell::Ref<i32>) ref1 = borrow=1 { [...] = 42 }
+
+// lldb-command:frame variable ref_mut2
+// lldb-check:(core::cell::RefMut<i32>) ref_mut2 = borrow_mut=1 { [...] = 42 }
 
 // === GDB TESTS ==================================================================================
 

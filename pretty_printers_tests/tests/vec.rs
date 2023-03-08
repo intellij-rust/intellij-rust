@@ -2,12 +2,11 @@
 
 // lldb-command:run
 
-// lldb-command:print v
-// lldbr-check:[...]v = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
-// lldbg-check:[...]$0 = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
-// lldb-command:print empty_v
-// lldbr-check:[...]empty_v = size=0
-// lldbg-check:[...]$1 = size=0
+// lldb-command:frame variable v
+// lldb-check:(alloc::vec::Vec<alloc::vec::Vec<i32,[...]>,[...]>) v = size=2 { [0] = size=2 { [0] = 1 [1] = 2 } [1] = size=1 { [0] = 3 } }
+
+// lldb-command:frame variable empty_v
+// lldb-check:(alloc::vec::Vec<i32,[...]>) empty_v = size=0
 
 // === GDB TESTS ===================================================================================
 
