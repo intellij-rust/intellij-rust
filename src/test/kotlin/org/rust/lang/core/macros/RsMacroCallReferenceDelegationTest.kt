@@ -6,11 +6,9 @@
 package org.rust.lang.core.macros
 
 import org.rust.CheckTestmarkHit
-import org.rust.ExpandMacros
 import org.rust.lang.core.resolve.RsResolveTestBase
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl.Testmarks
 
-@ExpandMacros
 class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
     @CheckTestmarkHit(Testmarks.Touched::class)
     fun `test item context`() = checkByCode("""

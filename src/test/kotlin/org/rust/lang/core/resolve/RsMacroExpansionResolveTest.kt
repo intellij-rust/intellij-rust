@@ -5,12 +5,10 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.stdext.BothEditions
 
-@ExpandMacros
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
     override val followMacroExpansions: Boolean get() = true
 

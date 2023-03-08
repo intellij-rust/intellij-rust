@@ -11,7 +11,6 @@ import org.rust.*
 import org.rust.cargo.icons.CargoIcons
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsFileType
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -147,7 +146,6 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn no_icon() { assert(true) }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test test function under a proc macro attribute`() = doTestByText("""

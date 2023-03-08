@@ -5,13 +5,10 @@
 
 package org.rust.ide.template.postfix
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-@ExpandMacros(MacroExpansionScope.ALL, "std")
 class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate::class) {
     fun `test string`() = doTest("""
        fn main() {

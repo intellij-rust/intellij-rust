@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring.move
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithEnabledInspections
 import org.rust.WithStdlibRustProjectDescriptor
@@ -349,7 +348,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2/*target*/ {}
     """)
 
-    @ExpandMacros
     fun `test no exception when source file has reference to expanded item`() = doTestNoConflicts("""
     //- lib.rs
         mod mod1 {

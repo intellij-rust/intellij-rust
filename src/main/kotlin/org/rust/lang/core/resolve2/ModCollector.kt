@@ -34,6 +34,7 @@ import org.rust.openapiext.fileId
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
+import java.nio.file.InvalidPathException
 
 class ModCollectorContext(
     val defMap: CrateDefMap,
@@ -479,7 +480,11 @@ private class ModCollector(
         // but result is null, when e.g. file is too big (thus will be [PsiFile] and not [RsFile])
         if (virtualFiles.isEmpty() && !context.isHangingMode) {
             for (fileName in fileNames) {
-                val path = parentDirectory.pathAsPath.resolve(fileName)
+                val path = try {
+                    parentDirectory.pathAsPath.resolve(fileName)
+                } catch (ignored: InvalidPathException) {
+                    continue
+                }
                 defMap.missedFiles.add(path)
             }
         }

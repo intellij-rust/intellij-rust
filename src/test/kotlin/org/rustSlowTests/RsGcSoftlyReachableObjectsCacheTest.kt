@@ -6,7 +6,6 @@
 package org.rustSlowTests
 
 import com.intellij.util.ref.GCUtil
-import org.rust.ExpandMacros
 import org.rust.RsTestBase
 import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
@@ -58,7 +57,6 @@ class RsGcSoftlyReachableObjectsCacheTest : RsTestBase() {
     }
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/9468
-    @ExpandMacros
     fun `test only one in-memory macro expansion per macro call may exist in the memory at a time`() {
         InlineFile("""
             macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }

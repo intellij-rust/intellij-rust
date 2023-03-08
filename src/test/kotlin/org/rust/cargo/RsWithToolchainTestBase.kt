@@ -109,7 +109,6 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         Disposer.dispose(earlyTestRootDisposable)
         rustupFixture.tearDown()
         super.tearDown()
-        checkMacroExpansionFileSystemAfterTest()
     }
 
     protected open fun createRustupFixture(): RustupTestFixture = RustupTestFixture(project)

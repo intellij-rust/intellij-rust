@@ -5,12 +5,10 @@
 
 package org.rust.lang.core.macros.decl
 
-import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
 import org.rust.lang.core.macros.RsMacroExpansionErrorTestBase
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
-@ExpandMacros
 class RsMacroErrorTest : RsMacroExpansionErrorTestBase() {
     // https://github.com/intellij-rust/intellij-rust/pull/2583
     fun `test empty group definition`() = checkError<GetMacroExpansionError.ExpansionError>("""

@@ -13,7 +13,6 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.ext.*
 
-@ExpandMacros
 class RsMacroExpansionRangeMappingTest : RsTestBase() {
     fun `test struct name`() = checkOffset("""
         macro_rules! foo {

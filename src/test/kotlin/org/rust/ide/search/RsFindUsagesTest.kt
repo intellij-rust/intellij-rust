@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
@@ -293,7 +292,6 @@ class RsFindUsagesTest : RsTestBase() {
         fn func(_: super::Foo) {} // - type reference
     """)
 
-    @ExpandMacros
     fun `test usage in included file`() = doTestByFileTree("""
     //- main.rs
         mod foo;

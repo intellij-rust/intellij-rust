@@ -5,13 +5,11 @@
 
 package org.rust.ide.inspections.typecheck
 
-import org.rust.ExpandMacros
 import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
@@ -245,7 +243,6 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
 
     /** Issue [2713](https://github.com/intellij-rust/intellij-rust/issues/2713) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test issue 2713`() = checkByText("""
         fn main() { u64::from(0u8); }
     """)

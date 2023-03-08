@@ -17,16 +17,7 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
         super.annotationFixture.registerSeverities(RsColor.values().map(RsColor::testSeverity))
     }
 
-    private val implDisplayI32 = """
-        use std::fmt;
-        impl fmt::Display for i32 {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { unimplemented!() }
-        }
-    """
-
     fun `test missing argument`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!("<error descr="Invalid reference to positional argument 0 (no arguments were given)">{}</error>");
             println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>}</FORMAT_PARAMETER><FORMAT_PARAMETER>{<error descr="Invalid reference to positional argument 1 (there is 1 argument)">1</error>}</FORMAT_PARAMETER>", 1);
@@ -40,8 +31,6 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
     fun `test missing explicit arguments 1`() = checkErrors("""
         #![feature(format_args_capture)]
 
-        $implDisplayI32
-
         println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>foo</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>");
         println!("Hello <FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>foo${'$'}</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1);
     """)
@@ -49,8 +38,6 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
     // TODO: the plugin should highlight unknown argument even if `format_args_capture` is available
     @MinRustcVersion("1.58.0-nightly")
     fun `test missing explicit arguments 2`() = checkErrors("""
-        $implDisplayI32
-
         println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>foo</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>");
         println!("Hello <FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>foo${'$'}</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1);
     """)
@@ -74,8 +61,6 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
     """)
 
     fun `test missing parameter`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!("", <error descr="Argument never used">1.2</error>);
             println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1, <error descr="Argument never used">1.2</error>);
@@ -90,8 +75,6 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
     """)
 
     fun `test argument matches parameter`() = checkErrors("""
-        $implDisplayI32
-
         struct Debug;
         impl std::fmt::Debug for Debug {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { unimplemented!() }
@@ -146,8 +129,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }     """)
 
     fun `test invalid syntax 2`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             format!("<FORMAT_PARAMETER>{
            <error descr="Invalid format string: } expected.
@@ -369,8 +350,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test format trait is implemented behind reference`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             let s = S;
             println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", &1);
@@ -378,8 +357,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test match format parameters`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             let a = 5;
             println!("Hello <FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>1${'$'}</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>!", 1, a);
@@ -392,8 +369,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test check format parameters type`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!("Hello <FORMAT_PARAMETER>{:<FORMAT_SPECIFIER>1${'$'}</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>!", 1, <error descr="Width specifier must be of type `usize`">"asd"</error>);
             println!("Hello <FORMAT_PARAMETER>{:.<FORMAT_SPECIFIER>1${'$'}</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>!", 1, <error descr="Precision specifier must be of type `usize`">2.0</error>);
@@ -402,8 +377,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test check precision asterisk`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!("<FORMAT_PARAMETER>{:.<FORMAT_SPECIFIER>*</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1, 2);
             println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>:.<FORMAT_SPECIFIER>*</FORMAT_SPECIFIER>}</FORMAT_PARAMETER>", 1);
@@ -414,8 +387,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test check precision after dot omitted`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!("<FORMAT_PARAMETER>{:.}</FORMAT_PARAMETER>", 1);
             println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>:.}</FORMAT_PARAMETER>", 1);
@@ -471,8 +442,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test raw format string`() = checkErrors("""
-        $implDisplayI32
-
         fn main() {
             println!(r"\<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>!", 1);
             println!(r"\u<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>!", 1);
@@ -581,7 +550,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """)
 
-    @ExpandMacros
     fun `test custom macro`() = checkErrors("""
         macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
         fn main() {
@@ -594,8 +562,6 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test no highlighting in cfg-disabled code`() = checkErrors("""
-        $implDisplayI32
-
         #[cfg(not(intellij_rust))]
         fn foo() {
             println!("{}");

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo
 import org.rust.*
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.stdext.BothEditions
 
@@ -644,7 +643,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                          //^ ...alloc/src/rc.rs
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test AtomicUsize`() = stubOnlyResolve("""
     //- main.rs
         use std::sync::atomic::AtomicUsize;
@@ -720,7 +718,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                         //^ ...core/src/macros/mod.rs
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module unix`() {
         if (!SystemInfo.isUnix && project.toolchain !is RsWslToolchain) return
@@ -731,7 +728,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module windows`() {
         if (!SystemInfo.isWindows || project.toolchain is RsWslToolchain) return

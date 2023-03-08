@@ -8,7 +8,6 @@ package org.rust.ide.hints.type
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.openapiext.escaped
 
 
@@ -83,7 +82,6 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "i32, S")
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attr proc macro`() = doTest("""
@@ -95,7 +93,6 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "i32")
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attr proc macro 2`() = doTest("""

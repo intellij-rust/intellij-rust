@@ -1348,7 +1348,6 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """)
 
-    @ExpandMacros
     @CheckTestmarkHit(MacroExpansionManager.Testmarks.TooDeepExpansion::class)
     fun `test infinitely recursive macro call`() = testCFG("""
         macro_rules! infinite_macro {

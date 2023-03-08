@@ -11,10 +11,8 @@ import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.FN_LIKE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.lang.core.macros.MacroExpansionScope
 
 @MinRustcVersion("1.46.0")
-@ExpandMacros(MacroExpansionScope.WORKSPACE)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 class RsProcMacroExpansionResolveTest : RsResolveTestBase() {

@@ -15,6 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.TestProject
 import org.rust.createAndOpenFileWithCaretMarker
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.MacroExpansionManager
 import kotlin.reflect.KClass
 
 open class RsAnnotationTestFixture<C>(
@@ -121,8 +122,10 @@ open class RsAnnotationTestFixture<C>(
     private fun configureByFileTree(text: String, stubOnly: Boolean) {
         val testProject = configureByFileTree(text)
         if (stubOnly) {
-            (codeInsightFixture as CodeInsightTestFixtureImpl)
-                .setVirtualFileFilter { !it.path.endsWith(testProject.fileWithCaret) }
+            (codeInsightFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter {
+                !it.path.endsWith(testProject.fileWithCaret)
+                    && !MacroExpansionManager.isExpansionFile(it)
+            }
         }
     }
 

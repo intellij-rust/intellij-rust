@@ -5,7 +5,10 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.*
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsCfgAttrResolveTest : RsResolveTestBase() {
@@ -237,7 +240,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test macro expansion with cfg`() = checkByCode("""
         struct S { x: i32 }
@@ -372,7 +374,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }   //^
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test impl expanded from macro with cfg`() = checkByCode("""
         macro_rules! same {
@@ -393,7 +394,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }   //^
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg inside macros`() = checkByCode("""
         macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
@@ -415,7 +415,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }  //^
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg on macros inside macros`() = checkByCode("""
         macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
@@ -434,7 +433,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }  //^
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test super mod with mod declaration with cfg`() = stubOnlyResolve("""
@@ -451,7 +449,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         fn bar() {}
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test macro definition with cfg`() = checkByCode("""
         #[cfg(intellij_rust)]
@@ -464,7 +461,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test macro in inline mod with cfg`() = checkByCode("""
         #[macro_use]
@@ -481,7 +477,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test macro in extracted mod with cfg`() = stubOnlyResolve("""
     //- foo.rs
@@ -499,7 +494,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ foo.rs
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro with cfg`() = stubOnlyResolve("""
@@ -521,7 +515,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ foo.rs
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro in mod with cfg`() = stubOnlyResolve("""
@@ -543,7 +536,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ foo.rs
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test macro from another crate with cfg`() = stubOnlyResolve("""
@@ -559,7 +551,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ unresolved
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro with cfg on 'extern crate' 1`() = stubOnlyResolve("""
@@ -580,7 +571,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ lib.rs
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro with cfg on 'extern crate' 2`() = stubOnlyResolve("""
@@ -600,7 +590,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ lib.rs
      """)
 
-    @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro with cfg on use item`() = stubOnlyResolve("""
@@ -647,7 +636,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }  //^ foo.rs
      """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-disabled macro call expanded to inline mod`() = stubOnlyResolve("""
     //- main.rs
@@ -670,7 +658,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
     // Goal of these two tests is to check that there are no exceptions during building CrateDefMap.
     // Actual resolve result is not important, because proper multiresolve is not yet supported in new resolve.
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test import inside expanded shadowed mod 1`() = stubOnlyResolve("""
     //- lib.rs
@@ -695,7 +682,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test import inside expanded shadowed mod 2`() = stubOnlyResolve("""
     //- lib.rs
@@ -720,7 +706,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     // From https://github.com/rust-lang/rust/blob/e0ef0fc392963438af5f0343bf7caa46fb9c3ec3/library/alloc/src/lib.rs#L164-L169
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test import to shadowed mod`() = checkByCode("""
         #[cfg(intellij_rust)]
@@ -736,7 +721,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     // We check that there are no exceptions during building CrateDefMap (actual resolve result is not important)
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test import to mod shadowed by expanded mod`() = checkByCode("""
         #[cfg(not(intellij_rust))]
@@ -959,7 +943,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         pub fn func() {}
     """)
 
-    @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg-disabled mod does not affect cfg-enabled mod`() = stubOnlyResolve("""
     //- main.rs
