@@ -363,16 +363,18 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
     private fun walkLet(declaration: RsLetDecl) {
         val init = declaration.expr
-        val pat = declaration.pat ?: return
-        if (init != null) {
-            walkExpr(init)
-            val initCmt = mc.processExpr(init)
-            walkIrrefutablePat(initCmt, pat)
-        } else {
-            for (binding in pat.descendantsOfType<RsPatBinding>()) {
-                delegate.declarationWithoutInit(binding)
+        declaration.pat?.let {
+            if (init != null) {
+                walkExpr(init)
+                val initCmt = mc.processExpr(init)
+                walkIrrefutablePat(initCmt, it)
+            } else {
+                for (binding in it.descendantsOfType<RsPatBinding>()) {
+                    delegate.declarationWithoutInit(binding)
+                }
             }
         }
+        declaration.letElseBranch?.block?.let { walkBlock(it) }
     }
 
     private fun walkLetExpr(letExpr: RsLetExpr) {
