@@ -311,6 +311,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """)
 
+    fun `test let else`() = testCFG("""
+        fn foo() {
+            let Some(s) = x else { return; };
+        }
+    """, """
+        digraph {
+            "0: Entry" -> "3: x";
+            "3: x" -> "4: s";
+            "4: s" -> "5: s";
+            "5: s" -> "6: Some(s)";
+            "3: x" -> "7: return";
+            "7: return" -> "1: Exit";
+            "8: Unreachable" -> "9: return;";
+            "9: return;" -> "10: BLOCK";
+            "6: Some(s)" -> "11: let Some(s) = x else { return; };";
+            "10: BLOCK" -> "11: let Some(s) = x else { return; };";
+            "11: let Some(s) = x else { return; };" -> "12: BLOCK";
+            "12: BLOCK" -> "1: Exit";
+            "1: Exit" -> "2: Termination";
+        }
+    """)
+
     fun `test loop`() = testCFG("""
         fn main() {
             loop {
