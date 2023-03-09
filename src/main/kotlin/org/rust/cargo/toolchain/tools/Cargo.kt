@@ -160,7 +160,6 @@ class Cargo(
         //TODO: replace fetchBuildScriptsInfo with something more bsp specific
 
         val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
-        fetchViaBSP(owner, projectDirectory, buildTarget)
         if (useBSP) {
             return try {
                 //TODO make returned status depend on bsp outcome
@@ -170,8 +169,8 @@ class Cargo(
             }
         }
 
-        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS) && !useBSP) {
-            val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
+        val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
+                val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
             fetchBuildScriptsInfo(owner, projectDirectory, rustcVersion, listener)
         } else {
             BuildMessages.DEFAULT

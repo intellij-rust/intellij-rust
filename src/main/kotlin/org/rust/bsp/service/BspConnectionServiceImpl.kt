@@ -6,6 +6,7 @@
 package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.*
+import com.google.common.hash.HashCode
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
@@ -18,8 +19,11 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
 import org.rust.bsp.BspConstants
+import org.rust.cargo.CfgOptions
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
@@ -201,36 +205,115 @@ fun calculateProjectDetailsWithCapabilities(
     val projectBazelTargets = queryForBazelTargets(server).get()
     val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI}
     projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
-    val projectBazelSources = queryForBazelSources(server, SourcesParams(projectBazelTargets.targets.map { it.id })).get()
-//    val projectWorkspaceData = queryForWorkspaceData(server).get()
-    val projectWorkspaceData = RustWorkspaceResult(emptyList(), emptyList(), emptyList(), emptyList())
+    val projectWorkspaceData = queryForWorkspaceData(server).get()
 
-    val projectPackages = createPackage(projectWorkspaceData, projectBazelTargets, projectBazelSources)
-    val dependencies = createDependencies(projectWorkspaceData, projectBazelTargets, projectBazelSources)
-    val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets, projectBazelSources)
-    val workspaceRoot = getWorkspaceRoot(projectWorkspaceData, projectBazelTargets, projectBazelSources)
+    val projectPackages = createPackage(projectWorkspaceData, projectBazelTargets)
+    val dependencies = createDependencies(projectWorkspaceData)
+    val rawPackages = createRawDependencies(projectWorkspaceData)
+    val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
     return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot)
 }
 
-fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): List<CargoWorkspaceData.Package>
+private fun createCfgOptions(cfgOptions: RustCfgOptions): CfgOptions
 {
-    return emptyList()
+    val name = cfgOptions.nameOptions.toSet()
+    val keyValueOptions = cfgOptions.keyValueOptions.associate { Pair(it.key, it.value.toSet()) }
+    return CfgOptions(keyValueOptions, name)
+}
+private fun resolveEdition(edition: String): CargoWorkspace.Edition
+{
+    return when (edition)
+    {
+        "2015" -> CargoWorkspace.Edition.EDITION_2015
+        "2018" -> CargoWorkspace.Edition.EDITION_2018
+        "2021" -> CargoWorkspace.Edition.EDITION_2021
+        else -> CargoWorkspace.Edition.EDITION_2021
+    }
 }
 
-fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
+private fun resolveTargetKind(targetKind: String): CargoWorkspace.TargetKind
 {
-    return mapOf()
+    return when (targetKind)
+    {
+        "application" -> CargoWorkspace.TargetKind.Bin
+        "test" -> CargoWorkspace.TargetKind.Test
+        "library" -> CargoWorkspace.TargetKind.Lib()
+        else -> CargoWorkspace.TargetKind.Unknown
+    }
 }
 
-fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): Map<PackageId, List<CargoMetadata.RawDependency>>
+private fun resolveOrigin(targetKind: String): PackageOrigin
 {
-    return mapOf()
+    return when (targetKind)
+    {
+        "stdlib" -> PackageOrigin.STDLIB
+        "workspace" -> PackageOrigin.WORKSPACE
+        "dep" -> PackageOrigin.DEPENDENCY
+        "stdlib-dep" -> PackageOrigin.STDLIB_DEPENDENCY
+        else -> PackageOrigin.WORKSPACE
+    }
 }
 
-fun getWorkspaceRoot(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult, projectBazelSources: SourcesResult): String
+fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package>
 {
-    return ""
+    val idToWorkspace = projectWorkspaceData.packages.associateBy { it.id.uri }
+    val packages = emptyList<CargoWorkspaceData.Package>().toMutableList()
+    for (project in projectBazelTargets.targets) {
+        val id = project.id.uri
+        val workspace = idToWorkspace[id]!!
+        var targets = idToWorkspace[id]?.targets?.map { CargoWorkspaceData.Target(it.crateRootUrl, it.name, resolveTargetKind(it.kind), resolveEdition(it.edition), it.isDoctest, it.requiredFeatures) }
+        if (targets.isNullOrEmpty())
+            targets = emptyList()
+        val origin = resolveOrigin(workspace.origin)
+        val edition = resolveEdition(workspace.edition)
+        val features = workspace.features.associate { Pair(it.name, it.deps) }
+        val enabledFeatures = workspace.enabledFeatures.toSet()
+        val cfgOptions = createCfgOptions(workspace.cfgOptions)
+        val env = workspace.env.associate { Pair(it.name, it.value) }
+        val procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
+        packages.add(CargoWorkspaceData.Package(id, project.baseDirectory, project.displayName, workspace.version, targets, workspace.source, origin, edition, features, enabledFeatures, cfgOptions, env, workspace.outDirUrl, procMacroArtifact))
+    }
+    return packages
+}
+
+private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
+{
+    return when (dependencyType)
+    {
+        "build" -> CargoWorkspace.DepKind.Build
+        "development" -> CargoWorkspace.DepKind.Development
+        "normal" -> CargoWorkspace.DepKind.Normal
+        "stdlib" -> CargoWorkspace.DepKind.Stdlib
+        else -> CargoWorkspace.DepKind.Unclassified
+    }
+}
+
+fun createDependencies(projectWorkspaceData: RustWorkspaceResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
+{
+    val dependencies = projectWorkspaceData.packageToDepMapper.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.source, it.target, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
+    val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
+    for (pair in dependencies) {
+        if (pair.first !in dependencyMap) {
+            dependencyMap[pair.first] = emptySet<CargoWorkspaceData.Dependency>().toMutableSet()
+        }
+        dependencyMap[pair.first]?.add(pair.second)
+    }
+    return dependencyMap
+}
+
+fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>>
+{
+    val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.id, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
+    val dependenciesMapper = dependencies.associate { it }
+    val rawMap = emptyMap<PackageId, MutableList<CargoMetadata.RawDependency>>().toMutableMap()
+    for (pair in projectWorkspaceData.packageToRawMapper) {
+        if (pair.packageId !in rawMap) {
+            rawMap[pair.packageId] = emptyList<CargoMetadata.RawDependency>().toMutableList()
+        }
+        dependenciesMapper[pair.rawId]?.let { rawMap[pair.packageId]?.add(it) }
+    }
+    return rawMap
 }
 
 
@@ -240,10 +323,6 @@ fun queryForWorkspaceData(server: BspServer): CompletableFuture<RustWorkspaceRes
 
 fun queryForBazelTargets(server: BspServer): CompletableFuture<WorkspaceBuildTargetsResult> {
     return server.workspaceBuildTargets()
-}
-
-fun queryForBazelSources(server: BspServer, ids:SourcesParams): CompletableFuture<SourcesResult> {
-    return server.buildTargetSources(ids)
 }
 
 private fun <T> CompletableFuture<T>.catchSyncErrors(errorCallback: (Throwable) -> Unit): CompletableFuture<T> =
