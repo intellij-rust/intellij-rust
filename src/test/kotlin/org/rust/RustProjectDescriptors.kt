@@ -35,6 +35,8 @@ import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.HashCode
 import org.rust.stdext.unwrapOrThrow
@@ -73,8 +75,8 @@ object WithProcMacroAndDependencyRustProjectDescriptor : WithProcMacros(WithDepe
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
     open val skipTestReason: String? = null
-
     open val rustcInfo: RustcInfo? = null
+    open val macroExpansionCachingKey: String? = null
 
     final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
         super.configureModule(module, model, contentEntry)
@@ -83,6 +85,11 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         val projectDir = contentEntry.file!!
         val ws = testCargoProject(module, projectDir.url)
         module.project.testCargoProjects.createTestProject(projectDir, ws, rustcInfo)
+
+        val disposable = module.project.macroExpansionManager
+            .setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, macroExpansionCachingKey.orEmpty())
+        @Suppress("IncorrectParentDisposable") // It's fine for a unit test
+        Disposer.register(module, disposable)
     }
 
     open fun setUp(fixture: CodeInsightTestFixture) {}
@@ -190,6 +197,9 @@ open class WithRustup(
     override val rustcInfo: RustcInfo? by lazy {
         toolchain?.getRustcInfo()
     }
+
+    override val macroExpansionCachingKey: String?
+        get() = if (fetchActualStdlibMetadata) "actual_std" else "std"
 
     private var hardcodedStdlibIsInitialized: Boolean = false
     private var hardcodedStdlib: StandardLibrary? = null

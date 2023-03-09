@@ -2638,7 +2638,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         pub fn foo() {}
     """)
 
-    @ExpandMacros
     fun `test import struct from macro`() = checkAutoImportFixByText("""
         mod foo {
             macro_rules! foo {

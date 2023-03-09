@@ -8,7 +8,6 @@ package org.rust.ide.annotator
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
 import org.rust.lang.core.psi.RsExpressionCodeFragment
 
@@ -3081,7 +3080,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     @MockRustcVersion("1.56.0-nightly")
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test non-structural match type as const generic parameter E0741`() = checkErrors("""

@@ -9,7 +9,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope.WORKSPACE
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.openapiext.toPsiDirectory
@@ -698,7 +697,6 @@ class RenameTest : RsTestBase() {
         macro_rules! foo { ($ b:item) => { $ b }; }
     """)
 
-    @ExpandMacros(WORKSPACE)
     fun `test rename function expanded from declarative macro`() = doTest("bar", """
         macro_rules! foo { ($ i:item) => { $ i }; }
         foo! {
@@ -717,7 +715,6 @@ class RenameTest : RsTestBase() {
         }
     """)
 
-    @ExpandMacros(WORKSPACE)
     fun `test rename lifetime in function expanded from declarative macro`() = doTest("'b", """
         macro_rules! foo { ($ i:item) => { $ i }; }
         foo! {
@@ -755,7 +752,6 @@ class RenameTest : RsTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test rename function expanded from attr proc macro`() = doTest("bar", """
@@ -779,7 +775,6 @@ class RenameTest : RsTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test rename struct expanded from attr proc macro (the name in the attr)`() = doTest("Bar", """

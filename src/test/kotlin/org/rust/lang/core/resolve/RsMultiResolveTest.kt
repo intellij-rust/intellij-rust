@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
 class RsMultiResolveTest : RsResolveTestBase() {
@@ -139,7 +138,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
     """)
 
     // From https://github.com/Alexhuszagh/rust-lexical/blob/1ec9d7660e70ab731eecb3390bdf95e767548dcc/lexical-core/src/util/slice_index.rs#L82
-    @ExpandMacros
     fun `test import item vs local item (inside expanded mod)`() = doTest("""
         mod m {
             pub fn foo() {}

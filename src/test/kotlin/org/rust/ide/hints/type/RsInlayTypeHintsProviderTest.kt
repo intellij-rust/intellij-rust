@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.hints.parameter.RsInlayParameterHintsProvider
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
 
 class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsProvider::class) {
@@ -508,7 +507,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator into_iter`() = checkByText("""
         fn main() {
             let xs<hint text="[:  i32]"/> = vec![1, 2, 3]
@@ -519,7 +517,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator iter`() = checkByText("""
         fn main() {
             let xs<hint text="[:  [& i32]]"/> = vec![1, 2, 3]
@@ -529,7 +526,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test inside attribute macro call body`() = checkByText("""
@@ -645,7 +641,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attribute macro inside function-like macro`() = checkByText("""
@@ -658,7 +653,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test function-like macro inside attribute macro`() = checkByText("""

@@ -5,10 +5,8 @@
 
 package org.rust.ide.refactoring.generate
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class GenerateGetterActionTest : RsGenerateBaseTest() {
     override val generateId: String = "Rust.GenerateGetter"
@@ -221,7 +219,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test tuple copy`() = doTest("""
         struct S {
             a: (u32, u32)
@@ -414,7 +411,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test type alias 2`() = doTest("""
         type Alias = (u32, u32);
         struct S {

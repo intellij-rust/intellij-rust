@@ -10,7 +10,6 @@ import org.rust.*
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsExtractFunctionTest : RsTestBase() {
     fun `test extract a function without parameters and a return value`() = doTest("""
@@ -824,7 +823,6 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test extract a function with passing primitive`() = doTest("""
         fn foo() {
             let i = 1;
@@ -1776,7 +1774,6 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test extract println! argument expression`() = doTest("""
         fn main() {
             println!("{}", <selection>1 + 2</selection>);
@@ -1792,7 +1789,6 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test extract vec! argument expression`() = doTest("""
         fn main() {
             vec![<selection>1 + 2</selection>];

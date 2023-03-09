@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
 
 class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection::class) {
@@ -159,7 +158,6 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         }
     """)
 
-    @ExpandMacros
     fun `test ignore expanded methods`() = checkErrors("""
         macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
         trait T {

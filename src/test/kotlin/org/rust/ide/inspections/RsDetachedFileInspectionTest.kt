@@ -32,7 +32,6 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         /*caret*/
     """)
 
-    @ExpandMacros
     fun `test included file via macro`() = checkByFileTree("""
         //- lib.rs
             macro_rules! generate_include {

@@ -942,4 +942,11 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             fn bar(&self) {}
         }
     """)
+
+    fun `test illegal mod decl path`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "fo<>\0.rs"]
+        mod foo;
+            //^ unresolved
+    """)
 }

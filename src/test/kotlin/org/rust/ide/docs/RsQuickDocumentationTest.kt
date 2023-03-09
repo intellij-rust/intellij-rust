@@ -7,7 +7,6 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -1279,7 +1278,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         originalElement to originalElement.textOffset
     }
 
-    @ExpandMacros
     fun `test documentation provided via macro definition 1`() = doTest("""
         macro_rules! foobar {
             ($ name:ident) => {
@@ -1302,7 +1300,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Say hello!</p></div>
     """)
 
-    @ExpandMacros
     fun `test documentation provided via macro definition 2`() = doTest("""
         pub struct Bar {
             pub bar: i32
@@ -1332,7 +1329,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Say hello</p></div>
     """)
 
-    @ExpandMacros
     fun `test documentation provided via macro call`() = doTest("""
         macro_rules! foo {
             ($ i:item) => { $ i }

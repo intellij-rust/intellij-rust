@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.type
 
-import org.rust.*
-import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.MinRustcVersion
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndStdlibLikeDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
@@ -541,7 +543,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test slice iter`() = stubOnlyTypeInfer("""
     //- main.rs
         struct S<T>(T);
@@ -554,7 +555,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test slice iter_mut`() = stubOnlyTypeInfer("""
     //- main.rs
         struct S<T>(T);
@@ -567,7 +567,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iter take`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -604,7 +603,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator cloned`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -650,7 +648,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test arithmetic op with unconstrained integer`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -660,7 +657,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test all arithmetic ops with all numeric types`() {
         TyInteger.NAMES.permutations(ArithmeticOp.values())
             .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0", numeric) }
@@ -670,7 +666,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0.0", numeric) }
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test all arithmetic assignment ops with all numeric types`() {
         TyInteger.NAMES.permutations(ArithmeticAssignmentOp.values())
             .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0", "()") }
@@ -681,7 +676,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0.0", "()") }
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test all cmp ops with all numeric types`() {
         val ops: List<OverloadableBinaryOperator> = EqualityOp.values() + ComparisonOp.values()
         TyInteger.NAMES.permutations(ops)
@@ -723,7 +717,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         """)
     }
 
-    @ExpandMacros
     fun `test write macro`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::fmt::Write;
@@ -735,7 +728,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros
     fun `test write macro &mut`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::fmt::Write;
@@ -748,7 +740,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     /** Issue [#2514](https://github.com/intellij-rust/intellij-rust/issues/2514) */
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test issue 2514`() = stubOnlyTypeInfer("""
     //- main.rs
         struct Foo {
@@ -789,7 +780,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ Box<S> | Box<S, Global>
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterate 'for' complex pattern in complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -799,7 +789,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterate 'while let' complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -809,7 +798,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test 'if let' complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -819,7 +807,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test 'try expr' on a complex type = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

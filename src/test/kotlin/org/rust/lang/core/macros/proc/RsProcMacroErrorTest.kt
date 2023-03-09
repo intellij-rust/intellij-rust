@@ -11,7 +11,6 @@ import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.FN_LIKE_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.RsMacroExpansionErrorTestBase
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
@@ -21,7 +20,6 @@ import org.rust.lang.core.macros.errors.GetMacroExpansionError
  * @see RsProcMacroExpanderTest
  */
 @MinRustcVersion("1.46.0")
-@ExpandMacros(MacroExpansionScope.WORKSPACE)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {

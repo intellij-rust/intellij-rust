@@ -30,6 +30,7 @@ import org.rust.lang.core.resolve2.util.createDollarCrateHelper
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.getWithRethrow
+import java.nio.file.InvalidPathException
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import kotlin.math.ceil
@@ -503,8 +504,14 @@ class DefCollector(
                 propagateLegacyMacros = true
             )
         } else if (!context.isHangingMode) {
-            val filePath = parentDirectory.pathAsPath.resolve(includePath)
-            defMap.missedFiles.add(filePath)
+            val filePath = try {
+                parentDirectory.pathAsPath.resolve(includePath)
+            } catch (ignored: InvalidPathException) {
+                null
+            }
+            if (filePath != null) {
+                defMap.missedFiles.add(filePath)
+            }
         }
         if (includingFile != null) {
             recordChildFileInUnusualLocation(call.containingMod, includingFile.fileId)

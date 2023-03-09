@@ -5,12 +5,10 @@
 
 package org.rust.ide.lineMarkers
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithExperimentalFeatures
 import org.rust.WithProcMacroRustProjectDescriptor
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 
 /**
  * Tests for Trait member (const, fn, type) Implementation Line Marker
@@ -40,7 +38,6 @@ class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test trait and impl under a proc macro attribute`() = doTestByText("""

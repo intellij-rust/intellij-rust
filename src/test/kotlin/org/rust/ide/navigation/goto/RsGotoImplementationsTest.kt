@@ -14,7 +14,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 import java.util.*
 import java.util.concurrent.Callable
 
@@ -113,7 +112,6 @@ class RsGotoImplementationsTest : RsTestBase() {
         "Trait for Baz<T> where T: Clone test_package"
     )
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test trait under a proc macro attribute`() = doSingleTargetTest("""
@@ -138,7 +136,6 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test impl under a proc macro attribute`() = doSingleTargetTest("""
@@ -163,7 +160,6 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test member when trait is under a proc macro attribute`() = doSingleTargetTest("""
@@ -186,7 +182,6 @@ class RsGotoImplementationsTest : RsTestBase() {
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test struct under a proc macro attribute`() = doSingleTargetTest("""

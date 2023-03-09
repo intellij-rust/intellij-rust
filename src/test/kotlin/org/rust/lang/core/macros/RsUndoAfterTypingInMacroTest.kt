@@ -7,10 +7,8 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.psi.PsiDocumentManager
-import org.rust.ExpandMacros
 import org.rust.RsTestBase
 
-@ExpandMacros(MacroExpansionScope.WORKSPACE)
 class RsUndoAfterTypingInMacroTest : RsTestBase() {
     fun `test typing in a macro can be undone with single undo action invocation`() {
         val code = """

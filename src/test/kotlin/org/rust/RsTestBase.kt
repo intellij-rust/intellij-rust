@@ -72,9 +72,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupExperimentalFeatures()
         setupInspections()
         setupExcludedPaths()
-        findAnnotationInstance<ExpandMacros>()?.let {
-            val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
-            Disposer.register(testRootDisposable, disposable)
+        if (findAnnotationInstance<WithDisabledMacroExpansion>() != null) {
+            val mgr = project.macroExpansionManager
+            mgr.setMacroExpansionEnabled(false)
+            Disposer.register(testRootDisposable) {
+                mgr.setMacroExpansionEnabled(true)
+            }
         }
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         tempDirRoot = myFixture.findFileInTempDir(".")
@@ -85,7 +88,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         val oldTempDirRootUrl = tempDirRootUrl
         val newTempDirRootUrl = tempDirRoot?.url
         super.tearDown()
-        checkMacroExpansionFileSystemAfterTest()
         // Check that temp root directory was not renamed during the test
         if (oldTempDirRootUrl != null && oldTempDirRootUrl != newTempDirRootUrl) {
             if (newTempDirRootUrl != null) {

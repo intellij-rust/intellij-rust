@@ -720,10 +720,10 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
 
-    fun `test import item from proc_macro`() = checkAutoImportFixByFileTree("""
+    fun `test import item from proc_macro`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
     //- dep-proc-macro/lib.rs
         fn foo(_: <error descr="Unresolved reference: `TokenStream`">TokenStream/*caret*/</error>) {}
-    """, """
+    """, listOf("proc_macro::TokenStream", "proc_macro::bridge::server::TokenStream"), "proc_macro::TokenStream", """
     //- dep-proc-macro/lib.rs
         use proc_macro::TokenStream;
 
