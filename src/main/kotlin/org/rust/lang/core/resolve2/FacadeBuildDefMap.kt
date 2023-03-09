@@ -58,7 +58,7 @@ class CollectorContext(
     val imports: MutableList<Import> = mutableListOf()
 
     /** All macro calls */
-    val macroCalls: MutableList<MacroCallInfo> = mutableListOf()
+    val macroCalls: MutableList<MacroCallInfoBase> = mutableListOf()
 }
 
 private fun buildDefMapContainingExplicitItems(

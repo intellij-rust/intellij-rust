@@ -1559,7 +1559,7 @@ private fun collectNestedMacroCallsAndImpls(
         when (val attr = possibleMacroCall.procMacroAttributeWithDerives) {
             is ProcMacroAttribute.Attr -> macroCalls += attr.attr
             is ProcMacroAttribute.Derive -> macroCalls += attr.derives
-            ProcMacroAttribute.None -> when (possibleMacroCall) {
+            null -> when (possibleMacroCall) {
                 is RsMacroCall -> macroCalls += possibleMacroCall
                 is RsImplItem -> impls?.add(possibleMacroCall)
             }

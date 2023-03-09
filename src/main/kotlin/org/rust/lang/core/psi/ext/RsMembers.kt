@@ -28,7 +28,7 @@ val RsMembers.expandedMembers: List<RsAbstractable>
             val macroCall = when (val attr = memberOrMacroCall.procMacroAttribute) {
                 is ProcMacroAttribute.Attr -> attr.attr
                 is ProcMacroAttribute.Derive -> null
-                ProcMacroAttribute.None -> when (memberOrMacroCall) {
+                null -> when (memberOrMacroCall) {
                     is RsMacroCall -> memberOrMacroCall
                     is RsAbstractable -> {
                         members += memberOrMacroCall

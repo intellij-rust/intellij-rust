@@ -142,6 +142,12 @@ pub fn attr_hardcoded_not_a_macro(_attr: TokenStream, item: TokenStream) -> Toke
    panic!("Must not be called")
 }
 
+/// The macro is hardcoded to be an "identity" macro in `HardcodedProcMacroProperties.kt`
+#[proc_macro_attribute]
+pub fn attr_hardcoded_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream {
+   item
+}
+
 /// Such a macro call
 /// ```ignore
 /// #[attr_add_to_fn_beginning(let a = 0;)]

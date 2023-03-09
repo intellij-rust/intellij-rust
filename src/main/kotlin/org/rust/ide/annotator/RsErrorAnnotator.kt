@@ -1895,10 +1895,8 @@ private fun checkRecursiveAsyncFunction(holder: RsAnnotationHolder, fn: RsFuncti
 }
 
 private fun RsFunction.hasAsyncRecursionProcMacro(): Boolean {
-    val attr = ProcMacroAttribute
-        .getProcMacroAttributeWithoutResolve(this, ignoreProcMacrosDisabled = true)
-        as? ProcMacroAttribute.Attr ?: return false
-    return attr.attr.path?.referenceName == "async_recursion"
+    return ProcMacroAttribute.getProcMacroAttributeWithoutResolve(this, ignoreProcMacrosDisabled = true)
+        .any { it is ProcMacroAttribute.Attr && it.attr.path?.referenceName == "async_recursion" }
 }
 
 private fun RsAttr.isBuiltinWithName(target: String): Boolean {

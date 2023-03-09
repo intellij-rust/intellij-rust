@@ -834,7 +834,7 @@ private class MacroExpansionServiceImplInner(
             owner as? RsMacroCall
         } else {
             if (owner !is RsAttrProcMacroOwner) return null
-            owner.findAttrOrDeriveMacroCall(macroIndex.last, crate)
+            owner.findAttrOrDeriveMacroCall(macroIndex.last, kind == DERIVE, crate)
         }
     }
 
@@ -868,18 +868,25 @@ private class MacroExpansionServiceImplInner(
 
     private fun RsAttrProcMacroOwner.findAttrOrDeriveMacroCall(
         macroIndexInParent: Int,
+        isDerive: Boolean,
         crate: Crate,
     ): RsPossibleMacroCall? {
-        val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
+        val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
             this,
             explicitCrate = crate,
             withDerives = true
         )
-        return when (attr) {
-            is ProcMacroAttribute.Attr -> attr.attr
-            is ProcMacroAttribute.Derive -> attr.derives.elementAtOrNull(macroIndexInParent)
-            ProcMacroAttribute.None -> null
+        for (attr in attrs) {
+            when (attr) {
+                is ProcMacroAttribute.Attr -> if (!isDerive) {
+                    return attr.attr
+                }
+                is ProcMacroAttribute.Derive -> if (isDerive) {
+                    return attr.derives.elementAtOrNull(macroIndexInParent)
+                }
+            }
         }
+        return null
     }
 
     private fun getExpansionFile(defMap: CrateDefMap, callIndex: MacroIndex): RsFile? {
@@ -902,7 +909,7 @@ private class MacroExpansionServiceImplInner(
             return GetMacroExpansionError.CfgDisabled
         }
 
-        val resolveResult = call.resolveToMacroWithoutPsiWithErr()
+        val resolveResult = call.resolveToMacroWithoutPsiWithErr(errorIfIdentity = true)
 
         val isProcMacro = resolveResult is Ok && resolveResult.ok.data is RsProcMacroData
             || resolveResult is Err && resolveResult.err is ResolveMacroWithoutPsiError.NoProcMacroArtifact

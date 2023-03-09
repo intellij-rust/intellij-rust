@@ -155,7 +155,7 @@ abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
     private fun visitMacroExpansion(item: RsAttrProcMacroOwner) {
         if (processingMacros) return
 
-        val preparedMacro = item.procMacroAttribute.attr?.prepareForExpansionHighlighting() ?: return
+        val preparedMacro = item.procMacroAttribute?.attr?.prepareForExpansionHighlighting() ?: return
         val macros = mutableListOf(preparedMacro)
 
         processingMacros = true
@@ -165,7 +165,7 @@ abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
             for (element in macro.elementsForHighlighting) {
                 element.accept(this)
                 if (element is RsAttrProcMacroOwner) {
-                    macros += element.procMacroAttribute.attr?.prepareForExpansionHighlighting(macro) ?: continue
+                    macros += element.procMacroAttribute?.attr?.prepareForExpansionHighlighting(macro) ?: continue
                 }
             }
         }

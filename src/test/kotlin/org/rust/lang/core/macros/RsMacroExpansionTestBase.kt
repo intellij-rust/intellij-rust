@@ -37,7 +37,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     }
 
     protected fun checkAllMacroExpansionsInFile(file: PsiFile, expectedExpansions: Array<out Pair<String, Testmark?>>) {
-        val calls = file.descendantsOfType<RsMacroCall>()
+        val calls = file.descendantsOfType<RsPossibleMacroCall>().filter { it.isMacroCall }
         check(calls.size == expectedExpansions.size) {
             "Number of macros calls is not equals to number of expected expansions: " +
                 "${calls.size} != ${expectedExpansions.size}"
@@ -75,7 +75,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     }
 
     private fun checkMacroExpansion(
-        macroCall: RsMacroCall,
+        macroCall: RsPossibleMacroCall,
         expectedExpansion: String,
         errorMessage: String,
         mark: Testmark? = null
@@ -100,18 +100,17 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     }
 
     open fun expandMacroOrFail(call: RsPossibleMacroCall): MacroExpansion {
-        require(call is RsMacroCall)
-        call.resolveToMacroWithoutPsi()
-        val def = call.resolveToMacroWithoutPsi().ok()?.data as? RsDeclMacroData
-            ?: error("Failed to resolve macro `${call.path.text}`")
+        val def = call.resolveToMacroWithoutPsiWithErr()
+            .unwrapOrElse { error("Failed to resolve macro `${call.path?.text}`: $it") }
+            .data
         return expandMacroAsTextWithErr(call, def).unwrapOrElse { err ->
             val description = err.formatError(call)
-            error("Failed to expand macro `${call.path.text}`: $description")
+            error("Failed to expand macro `${call.path?.text}`: $description")
         }
     }
 
     private fun expandMacroAsTextWithErr(
-        call: RsMacroCall,
+        call: RsPossibleMacroCall,
         def: RsMacroData
     ): RsResult<MacroExpansion, MacroExpansionAndParsingError<MacroExpansionError>> {
         val crate = call.containingCrate
@@ -132,15 +131,15 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun MacroExpansionAndParsingError<MacroExpansionError>.formatError(call: RsMacroCall): String = when (this) {
+    private fun MacroExpansionAndParsingError<MacroExpansionError>.formatError(call: RsPossibleMacroCall): String = when (this) {
         is MacroExpansionAndParsingError.ExpansionError -> error.formatError(call)
         is MacroExpansionAndParsingError.ParsingError -> "can't parse expansion text `$expansionText` as $context"
         MacroExpansionAndParsingError.MacroCallSyntaxError -> "there is a syntax error in the macro call"
     }
 
-    private fun MacroExpansionError.formatError(call: RsMacroCall): String = when (this) {
+    private fun MacroExpansionError.formatError(call: RsPossibleMacroCall): String = when (this) {
         BuiltinMacroExpansionError -> toString()
-        is DeclMacroExpansionError -> formatDeclMacroError(call)
+        is DeclMacroExpansionError -> formatDeclMacroError(call as RsMacroCall)
         is ProcMacroExpansionError -> toString()
     }
 

@@ -63,7 +63,7 @@ fun getHardcodeProcMacroProperties(packageName: String, macroName: String): Know
         return kind
     }
 
-    if (isUnitTestMode && packageName == "test_proc_macros" && macroName == "attr_hardcoded_not_a_macro") {
+    if (isUnitTestMode && packageName == "test_proc_macros" && macroName in listOf("attr_hardcoded_not_a_macro", "attr_hardcoded_as_is")) {
         return KnownProcMacroKind.IDENTITY
     }
 

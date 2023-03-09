@@ -239,7 +239,7 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
         InlineFile(preparedCode)
         val macroCall = myFixture.file
             .descendantsOfType<RsAttrProcMacroOwner>()
-            .mapNotNull { it.procMacroAttribute.attr }
+            .mapNotNull { it.procMacroAttribute?.attr }
             .single()
         val expansion = macroCall.expansionResult.unwrap()
         val ranges = expansion.ranges.ranges

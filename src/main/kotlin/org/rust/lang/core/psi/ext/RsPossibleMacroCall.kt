@@ -76,10 +76,23 @@ val RsPossibleMacroCall.isMacroCall: Boolean
             is MacroCall -> true
             is MetaItem -> {
                 val owner = kind.meta.owner as? RsAttrProcMacroOwner ?: return false
-                when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)) {
+                when (val attr = ProcMacroAttribute.getProcMacroAttribute(owner, ignoreProcMacrosDisabled = true)) {
                     is ProcMacroAttribute.Attr -> attr.attr == this
                     is ProcMacroAttribute.Derive -> RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
-                    ProcMacroAttribute.None -> false
+                    null -> {
+                        val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, ignoreProcMacrosDisabled = true)
+                        for (attr1 in attrs) {
+                            when (attr1) {
+                                is ProcMacroAttribute.Attr -> if (attr1.attr == this) {
+                                    return true
+                                }
+                                is ProcMacroAttribute.Derive -> {
+                                    return RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)
+                                }
+                            }
+                        }
+                        false
+                    }
                 }
             }
         }
@@ -134,7 +147,10 @@ private fun doPrepareProcMacroCallBody(
     val text = owner.stubbedText ?: return null
     val endOfAttrsOffset = owner.endOfAttrsOffset
 
-    return when (val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(owner, stub, explicitCrate)) {
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    val attr = ProcMacroAttribute.getProcMacroAttribute(owner, stub, explicitCrate)
+
+    return when (attr) {
         is ProcMacroAttribute.Attr -> {
             val attrIndex = attr.index
             val crate = explicitCrate ?: owner.containingCrate
@@ -153,7 +169,7 @@ private fun doPrepareProcMacroCallBody(
             val body = doPrepareCustomDeriveMacroCallBody(project, text, endOfAttrsOffset, crate) ?: return null
             PreparedProcMacroCallBody.Derive(body)
         }
-        ProcMacroAttribute.None -> null
+        null -> null
     }
 }
 
@@ -402,7 +418,9 @@ val MacroCallBody.bodyHash: HashCode
 
 fun RsPossibleMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash<*>? = resolveToMacroWithoutPsiWithErr().ok()
 
-fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> = when (val kind = kind) {
+fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(
+    errorIfIdentity: Boolean = false,
+): RsResult<RsMacroDataWithHash<*>, ResolveMacroWithoutPsiError> = when (val kind = kind) {
     is MacroCall -> kind.call.resolveToMacroWithoutPsi()
     is MetaItem -> kind.meta.resolveToProcMacroWithoutPsi().toResult().mapErr { ResolveMacroWithoutPsiError.Unresolved }
         .andThen {
@@ -411,7 +429,7 @@ fun RsPossibleMacroCall.resolveToMacroWithoutPsiWithErr(): RsResult<RsMacroDataW
             val defKind = it.procMacroKind
             if (defKind == callKind) Ok(it) else Err(ResolveMacroWithoutPsiError.UnmatchedProcMacroKind(callKind, defKind))
         }
-        .andThen { RsMacroDataWithHash.fromDefInfo(it) }
+        .andThen { RsMacroDataWithHash.fromDefInfo(it, errorIfIdentity) }
 }
 
 val RsPossibleMacroCall.expansion: MacroExpansion?
