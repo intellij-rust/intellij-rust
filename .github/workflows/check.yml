@@ -19,6 +19,11 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
+env:
+    OLD_IDEA_VERSION: IU-2022.3
+    OLD_CLION_VERSION: CL-2022.3
+    OLD_NATIVE_DEBUG_PLUGIN_VERSION: 223.7571.139
+
 jobs:
     get-rust-versions:
         uses: ./.github/workflows/get-rust-versions.yml
@@ -109,9 +114,9 @@ jobs:
               if: matrix.rust-version == needs.get-rust-versions.outputs.old
                 # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.3" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2022.3" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=223.7571.139" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=${{ env.OLD_IDEA_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=${{ env.OLD_CLION_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=${{ env.OLD_NATIVE_DEBUG_PLUGIN_VERSION }}" >> $GITHUB_ENV
 
             - name: Retrieve CLion version
               id: clion-version
@@ -258,9 +263,9 @@ jobs:
               if: matrix.rust-version == needs.get-rust-versions.outputs.old
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2022.3" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2022.3" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=223.7571.139" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=${{ env.OLD_IDEA_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=${{ env.OLD_CLION_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=${{ env.OLD_NATIVE_DEBUG_PLUGIN_VERSION }}" >> $GITHUB_ENV
 
             - name: Set up test env variables
               run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
