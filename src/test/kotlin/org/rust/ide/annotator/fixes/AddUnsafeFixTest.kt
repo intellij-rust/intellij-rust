@@ -5,7 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.*
+import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotationTestFixture
+import org.rust.ide.annotator.RsErrorAnnotator
+import org.rust.ide.annotator.RsUnsafeExpressionAnnotator
 
 class AddUnsafeFixTest : RsAnnotationTestBase() {
 

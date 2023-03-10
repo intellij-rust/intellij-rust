@@ -12,14 +12,14 @@ import org.rust.ide.inspections.lints.RsSelfConventionInspection
  */
 class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
 
-    fun testWithoutSuppression() = checkByText("""
+    fun `test without suppression`() = checkByText("""
         struct S;
         impl S {
             fn is_foo(<warning>s<caret>elf</warning>) { }
         }
     """)
 
-    fun testSuppression() = checkByText("""
+    fun `test suppression`() = checkByText("""
         struct S;
         impl S {
             //noinspection RsSelfConvention

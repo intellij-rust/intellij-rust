@@ -10,7 +10,7 @@ package org.rust.ide.inspections
  */
 class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantInspection::class) {
 
-    fun testConstants() = checkByText("""
+    fun `test constants`() = checkByText("""
         fn main() {
             let pi = 3.1;
             let pi = 3.14;

@@ -5,7 +5,10 @@
 
 package org.rust.ide.inspections
 
-import org.rust.*
+import org.rust.MockAdditionalCfgOptions
+import org.rust.MockRustcVersion
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 
 class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctionNotFoundInspection::class) {
 

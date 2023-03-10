@@ -14,21 +14,21 @@ import org.rust.WithStdlibRustProjectDescriptor
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class) {
 
-    fun testDropRefSimple() = checkByText("""
+    fun `test drop ref simple`() = checkByText("""
         fn main() {
             let val1 = Box::new(10);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&val1)</warning>;
         }
     """)
 
-    fun testDropRefFullPath() = checkByText("""
+    fun `test drop ref full path`() = checkByText("""
         fn main() {
             let val1 = Box::new(20);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">std::mem::drop(&val1)</warning>;
         }
     """)
 
-    fun testDropRefAliased() = checkByText("""
+    fun `test drop ref aliased`() = checkByText("""
         use std::mem::drop as free;
         fn main() {
             let val1 = Box::new(30);
@@ -36,7 +36,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropRefRefType() = checkByText("""
+    fun `test drop ref ref type`() = checkByText("""
         fn foo() {}
         fn main() {
             let val = &foo();
@@ -44,7 +44,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropRefShadowed() = checkByText("""
+    fun `test drop ref shadowed`() = checkByText("""
         fn drop(val: &Box<u32>) {}
         fn main() {
             let val = Box::new(84);
@@ -52,7 +52,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropManuallyDrop() = checkByText("""
+    fun `test drop manually drop`() = checkByText("""
         use std::mem::ManuallyDrop;
         fn main() {
             let mut drop = ManuallyDrop::new("nodrop");
@@ -62,7 +62,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropRefMethodCall() = checkByText("""
+    fun `test drop ref method call`() = checkByText("""
         struct Foo;
         impl Foo {
             pub fn drop(&self, val: &Foo) {}
@@ -73,7 +73,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropRefFix() = checkFixByText("Remove &", """
+    fun `test drop ref fix`() = checkFixByText("Remove &", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&va<caret>l1)</warning>;
@@ -85,7 +85,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testDropRefFix2() = checkFixByText("Remove &", """
+    fun `test drop ref fix 2`() = checkFixByText("Remove &", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&   va<caret>l1)</warning>;
@@ -97,7 +97,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testRefMutDropFix() = checkFixByText("Remove &mut", """
+    fun `test ref mut drop fix`() = checkFixByText("Remove &mut", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&mut<caret> val1)</warning>;
@@ -109,7 +109,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class
         }
     """)
 
-    fun testRefMutDropFix2() = checkFixByText("Remove &mut", """
+    fun `test ref mut drop fix 2`() = checkFixByText("Remove &mut", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&  mut<caret>  val1)</warning>;
