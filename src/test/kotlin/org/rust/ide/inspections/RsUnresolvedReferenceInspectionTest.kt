@@ -10,7 +10,6 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 

@@ -40,7 +40,7 @@ class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntentio
     """)
 
     fun `test has some line breaks 2`() = doAvailableTest("""
-        enum E { 
+        enum E {
             A, B, C/*caret*/
         }
     """, """
@@ -52,15 +52,15 @@ class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntentio
     """)
 
     fun `test has comment`() = doUnavailableTest("""
-        enum E { 
-            /*caret*/A, /* comment */ 
+        enum E {
+            /*caret*/A, /* comment */
             B,
             C
         }
     """)
 
     fun `test has comment 2`() = doAvailableTest("""
-        enum E { 
+        enum E {
             /*caret*/A, /*
                 comment
             */B,
