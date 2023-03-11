@@ -8,7 +8,10 @@ package org.rust.ide.hints.type
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.RsLanguage
 
 class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMethodTypeHintsProvider::class) {
@@ -95,7 +98,7 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
     fun `test do not show hints for a single method call`() = doTest("""
         struct S;
         impl S {
-            fn foo(): u32 { 0 }
+            fn foo() -> u32 { 0 }
         }
 
         fn main() {
@@ -148,6 +151,22 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
             ;
         }
     """, showSameConsecutiveTypes = false)
+
+    @WithExperimentalFeatures(PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test inside attribute macro call body`() = doTest("""
+        $types
+
+        fn main() {
+            let foo = A;
+            foo
+                .clone()/*hint text="[:  A]"*/
+                .clone().clone()/*hint text="[:  A]"*/
+                .change()/*hint text="[:  B]"*/
+                .clone().clone()/*hint text="[:  B]"*/
+                .clone();
+        }
+    """)
 
     @Suppress("UnstableApiUsage")
     private fun doTest(@Language("Rust") code: String, showSameConsecutiveTypes: Boolean = true) {

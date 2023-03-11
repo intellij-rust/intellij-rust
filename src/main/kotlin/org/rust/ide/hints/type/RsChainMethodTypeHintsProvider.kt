@@ -21,14 +21,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.RsBundle
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.childOfType
-import org.rust.lang.core.psi.ext.endOffset
-import org.rust.lang.core.psi.ext.existsAfterExpansion
-import org.rust.lang.core.psi.ext.parentDotExpr
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
@@ -89,15 +87,26 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 if (DumbService.isDumb(project)) return true
                 if (element !is RsMethodCall) return true
                 if (!element.isLastInChain) return true
-                if (!element.existsAfterExpansion(crate)) return true
+                val isAttrProcMacro = when (element.getCodeStatus(crate)) {
+                    RsCodeStatus.CFG_DISABLED -> return true
+                    RsCodeStatus.ATTR_PROC_MACRO_CALL -> true
+                    else -> false
+                }
 
                 val (lookup, iterator) = lookupAndIteratorTrait
 
                 val chain = collectChain(element)
+                val chainExpanded = if (isAttrProcMacro) {
+                    collectExpandedChain(element)
+                        ?.takeIf { it.size == chain.size } ?: return true
+                } else {
+                    chain
+                }
                 var lastType: Ty? = null
-                for (call in chain.dropLast(1)) {
-                    val type = normalizeType(call.type, lookup, iterator)
-                    if (type != TyUnknown && call.isLastOnLine) {
+                for ((call, callExpanded) in (chain zip chainExpanded).dropLast(1)) {
+                    if (!call.isLastOnLine) continue
+                    val type = normalizeType(callExpanded.type, lookup, iterator)
+                    if (type != TyUnknown) {
                         if (settings.showSameConsecutiveTypes || !type.isEquivalentTo(lastType)) {
                             presentTypeForMethodCall(call, type)
                         }
@@ -177,4 +186,11 @@ private fun collectChain(call: RsMethodCall): List<RsMethodCall> {
         current = current.parentDotExpr.expr.childOfType() ?: break
     }
     return chain.reversed()
+}
+
+private fun collectExpandedChain(call: RsMethodCall): List<RsMethodCall>? {
+    val leaf = call.identifier
+    val leafExpanded = leaf.findExpansionElements()?.singleOrNull() ?: return null
+    val callExpanded = leafExpanded.parent as? RsMethodCall ?: return null
+    return collectChain(callExpanded)
 }
