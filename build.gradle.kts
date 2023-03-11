@@ -44,8 +44,9 @@ val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
 
-val grammarKitFakePsiDepsProjectDir = "grammar-kit-fake-psi-deps"
-val grammarKitFakePsiDepsProject = ":$grammarKitFakePsiDepsProjectDir"
+val grammarKitFakePsiDeps = "grammar-kit-fake-psi-deps"
+
+val basePluginArchiveName = "intellij-rust"
 
 plugins {
     idea
@@ -60,7 +61,7 @@ idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
         excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") +
-            file("$grammarKitFakePsiDepsProjectDir/src/main/kotlin")
+            file("$grammarKitFakePsiDeps/src/main/kotlin")
     }
 }
 
@@ -235,6 +236,9 @@ val Project.dependencyCachePath
         return cachePath.absolutePath
     }
 
+val pluginProjects: List<Project>
+    get() = rootProject.allprojects.filter { it.name != grammarKitFakePsiDeps }
+
 val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
 val majorVersion = "0.4"
@@ -283,7 +287,7 @@ project(":plugin") {
     // We need to put all plugin manifest files into single jar to make new plugin model work
     val mergePluginJarTask = task<Jar>("mergePluginJars") {
         duplicatesStrategy = DuplicatesStrategy.FAIL
-        archiveBaseName.set("intellij-rust")
+        archiveBaseName.set(basePluginArchiveName)
 
         exclude("META-INF/MANIFEST.MF")
         exclude("**/classpath.index")
@@ -310,11 +314,32 @@ project(":plugin") {
         }
     }
 
+    // Add plugin sources to the plugin ZIP.
+    // gradle-intellij-plugin will use it as a plugin sources if the plugin is used as a dependency
+    val createSourceJar = task<Jar>("createSourceJar") {
+        dependsOn(":generateLexer")
+        dependsOn(":generateParser")
+        dependsOn(":debugger:generateGrammarSource")
+
+        for (prj in pluginProjects) {
+            from(prj.kotlin.sourceSets.main.get().kotlin) {
+                include("**/*.java")
+                include("**/*.kt")
+            }
+        }
+
+        destinationDirectory.set(layout.buildDirectory.dir("libs"))
+        archiveBaseName.set(basePluginArchiveName)
+        archiveClassifier.set("src")
+    }
+
     tasks {
         buildPlugin {
+            dependsOn(createSourceJar)
+            from(createSourceJar) { into("lib/src") }
             // Set proper name for final plugin zip.
             // Otherwise, base name is the same as gradle module name
-            archiveBaseName.set("intellij-rust")
+            archiveBaseName.set(basePluginArchiveName)
         }
         runIde { enabled = true }
         prepareSandbox {
@@ -381,7 +406,7 @@ project(":plugin") {
     }
 }
 
-project(":$grammarKitFakePsiDepsProject")
+project(":$grammarKitFakePsiDeps")
 
 project(":") {
     sourceSets {
@@ -421,7 +446,7 @@ project(":") {
             pathToParser.set("org/rust/lang/core/parser/RustParser.java")
             pathToPsiRoot.set("org/rust/lang/core/psi")
             purgeOldFiles.set(true)
-            classpath(project(grammarKitFakePsiDepsProject).sourceSets.main.get().runtimeClasspath)
+            classpath(project(":$grammarKitFakePsiDeps").sourceSets.main.get().runtimeClasspath)
         }
         withType<KotlinCompile> {
             dependsOn(generateLexer, generateParser)
