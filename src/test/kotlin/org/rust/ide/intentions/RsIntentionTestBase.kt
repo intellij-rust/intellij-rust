@@ -13,20 +13,44 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
-import org.rust.fileTreeFromText
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.rust.*
 import org.rust.ide.checkNoPreview
 import org.rust.ide.checkPreviewAndLaunchAction
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+/**
+ * A base test class for intention action tests.
+ *
+ * By default, each test declared in a subclass of this class will run several times - one per each
+ * [TestWrapping] value returned from [RsIntentionTestBase.data] method. This allows to test intention
+ * actions under different circumstances, e.g. inside a procedural macro call. Use [SkipTestWrapping]
+ * annotation to skip test run with a specific (or all) [TestWrapping] (s).
+ */
+@RunWith(RsJUnit4ParameterizedTestRunner::class)
+@Parameterized.UseParametersRunnerFactory(RsJUnit4ParameterizedTestRunner.RsRunnerForParameters.Factory::class)
 abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
+
+    @field:Parameterized.Parameter(0)
+    override lateinit var testWrapping: TestWrapping
+
+    companion object {
+        @Parameterized.Parameters(name = "{index}: {0}")
+        @JvmStatic fun data(): Iterable<TestWrapping> = listOf(
+            TestWrapping.NONE,
+            TestWrapping.ATTR_MACRO_AS_IS,
+        )
+    }
 
     protected val intention: IntentionAction
         get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
 
     protected open val previewExpected: Boolean get() = intention.startInWriteAction()
 
+    @SkipTestWrapping
     fun `test intention has documentation`() {
         if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return
 
@@ -49,6 +73,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     ) {
         InlineFile(before.trimIndent(), fileName).withCaret()
         launchAction(preview)
+        this.testWrappingUnwrapper?.unwrap()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -72,6 +97,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         assertNotNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
         myFixture.type(toType)
         assertNull(TemplateManagerImpl.getTemplateState(myFixture.editor))
+        this.testWrappingUnwrapper?.unwrap()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
@@ -82,6 +108,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     ) {
         fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
         launchAction()
+        this.testWrappingUnwrapper?.unwrap()
         myFixture.checkResult(replaceCaretMarker(openedFileAfter.trimIndent()))
     }
 
@@ -91,6 +118,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     ) {
         fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
         launchAction()
+        testWrappingUnwrapper?.unwrap()
         fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
@@ -99,7 +127,8 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         // Check preview only for intentions from Rust plugin
         if (intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) {
             if (previewExpected) {
-                myFixture.checkPreviewAndLaunchAction(intention, preview)
+                val isWrappingActive = testWrappingUnwrapper != null
+                myFixture.checkPreviewAndLaunchAction(intention, preview, isWrappingActive)
             } else {
                 myFixture.checkNoPreview(intention)
                 myFixture.launchAction(intention)

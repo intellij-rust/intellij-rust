@@ -7,6 +7,7 @@ package org.rust.ide.intentions
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockCargoFeatures
+import org.rust.SkipTestWrapping
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -17,6 +18,7 @@ class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::c
 
     override val previewExpected: Boolean get() = false
 
+    @SkipTestWrapping // TODO fix `PsiElement.findExpansionElementsNonRecursive` for `cfg_attr` condition
     @MockCargoFeatures("foo")
     fun `test availability range`() = checkAvailableInSelectionOnly("""
         #[cfg(<selection>feature = "foo"</selection>)]
