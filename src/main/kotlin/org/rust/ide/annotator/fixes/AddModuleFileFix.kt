@@ -77,7 +77,7 @@ class AddModuleFileFix(
     }
 
     companion object {
-        fun createFixes(modDecl: RsModDeclItem, expandModuleFirst: Boolean) = listOf(
+        fun createFixes(modDecl: RsModDeclItem, expandModuleFirst: Boolean): List<AddModuleFileFix> = listOf(
             AddModuleFileFix(modDecl, expandModuleFirst, Location.File),
             AddModuleFileFix(modDecl, expandModuleFirst, Location.Directory)
         )

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.SuppressIntentionActionFromFix
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -178,6 +179,31 @@ abstract class AnnotationTestFixtureBase(
         checkAfter = this::checkByText,
         preview = preview,
     )
+
+    fun checkFixAvailableInSelectionOnly(
+        fixName: String,
+        before: String,
+        checkWarn: Boolean = true,
+        checkInfo: Boolean = false,
+        checkWeakWarn: Boolean = false,
+    ) {
+        configureByText(before.replace("<selection>", "<selection><caret>"))
+        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
+        val selections = codeInsightFixture.editor.selectionModel.let { model ->
+            model.blockSelectionStarts.zip(model.blockSelectionEnds)
+                .map { TextRange(it.first, it.second + 1) }
+        }
+        for (pos in codeInsightFixture.file.text.indices) {
+            codeInsightFixture.editor.caretModel.moveToOffset(pos)
+            val expectAvailable = selections.any { it.contains(pos) }
+            val isAvailable = codeInsightFixture.filterAvailableIntentions(fixName).size == 1
+            check(isAvailable == expectAvailable) {
+                "Expect ${if (expectAvailable) "available" else "unavailable"}, " +
+                    "actually ${if (isAvailable) "available" else "unavailable"} " +
+                    "at `${StringBuilder(codeInsightFixture.file.text).insert(pos, "/*caret*/")}`"
+            }
+        }
+    }
 
     protected open fun <T> check(
         content: T,

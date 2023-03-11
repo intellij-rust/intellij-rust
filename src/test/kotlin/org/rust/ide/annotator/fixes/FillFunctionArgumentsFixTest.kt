@@ -9,11 +9,27 @@ import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
 class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
+    fun `test availability range one parameter no arguments`() = checkFixAvailableInSelectionOnly("Fill missing arguments", """
+        fn foo(a: u32) {}
+
+        fn main() {
+            foo<selection>(<error>)</error></selection>;
+        }
+    """)
+
+    fun `test availability range multiple parameters single argument`() = checkFixAvailableInSelectionOnly("Fill missing arguments", """
+        fn foo(a: u32, b: u32, c: &str) {}
+
+        fn main() {
+            foo<selection>(1<error>)</error></selection>;
+        }
+    """)
+
     fun `test simple call`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32) {}
 
         fn main() {
-            foo<error>(<error>/*caret*/)</error></error>;
+            foo(<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32) {}
@@ -27,7 +43,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         fn foo(a: u32, b: u32, c: &str) {}
 
         fn main() {
-            foo<error>(1<error>/*caret*/)</error></error>;
+            foo(1<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: u32, c: &str) {}
@@ -43,7 +59,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(self, a: u32) {}
         }
         fn foo() {
-            S::foo<error>(<error>/*caret*/)</error></error>;
+            S::foo(<error>/*caret*/)</error>;
         }
     """, """
         struct S;
@@ -61,7 +77,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(&self, a: u32) {}
         }
         fn foo() {
-            S::foo<error>(<error>/*caret*/)</error></error>;
+            S::foo(<error>/*caret*/)</error>;
         }
     """, """
         struct S;
@@ -79,7 +95,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(&mut self, a: u32) {}
         }
         fn foo() {
-            S::foo<error>(<error>/*caret*/)</error></error>;
+            S::foo(<error>/*caret*/)</error>;
         }
     """, """
         struct S;
@@ -96,7 +112,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(&mut self, a: u32) {}
         }
         fn foo<T: Trait>() {
-            T::foo<error>(<error>/*caret*/)</error></error>;
+            T::foo(<error>/*caret*/)</error>;
         }
     """, """
         trait Trait {
@@ -113,7 +129,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(&self, a: u32, b: u32) {}
         }
         fn foo(s: S) {
-            s.foo<error>(1<error>/*caret*/)</error></error>;
+            s.foo(1<error>/*caret*/)</error>;
         }
     """, """
         struct S;
@@ -128,7 +144,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test tuple struct`() = checkFixByText("Fill missing arguments", """
         struct S(u32, u32);
         fn foo() {
-            S<error>(<error>/*caret*/)</error></error>;
+            S(<error>/*caret*/)</error>;
         }
     """, """
         struct S(u32, u32);
@@ -140,7 +156,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test closure known parameter`() = checkFixByText("Fill missing arguments", """
         fn main() {
             let closure = |x: i32| (x);
-            closure<error>(<error>/*caret*/)</error></error>;
+            closure(<error>/*caret*/)</error>;
         }
     """, """
         fn main() {
@@ -152,7 +168,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test closure unknown parameter`() = checkFixByText("Fill missing arguments", """
         fn main() {
             let closure = |x| (x);
-            closure<error>(<error>/*caret*/)</error></error>;
+            closure(<error>/*caret*/)</error>;
         }
     """, """
         fn main() {
@@ -164,7 +180,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test generic parameter turbofish`() = checkFixByText("Fill missing arguments", """
         fn foo<T>(a: T) {}
         fn main() {
-            foo::<bool><error>(<error>/*caret*/)</error></error>;
+            foo::<bool>(<error>/*caret*/)</error>;
         }
     """, """
         fn foo<T>(a: T) {}
@@ -180,7 +196,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             fn foo(&self, a: R) {}
         }
         fn foo(s: S<u32>) {
-            s.foo<error>(<error>/*caret*/)</error></error>;
+            s.foo(<error>/*caret*/)</error>;
         }
     """, """
         struct S<T>(T);
@@ -196,7 +212,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test trailing comma`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: u32) {}
         fn main() {
-            foo<error>(0,<error>/*caret*/)</error></error>;
+            foo(0,<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: u32) {}
@@ -208,7 +224,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test empty argument in the middle`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: u32) {}
         fn main() {
-            foo<error>(0,<error>,</error> 2<error>/*caret*/)</error></error>;
+            foo(0,<error>,</error> 2<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: u32) {}
@@ -220,7 +236,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test empty arguments in the middle`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
-            foo<error>(0,<error>,</error>,2<error>/*caret*/)</error></error>;
+            foo(0,<error>,</error>,2<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
@@ -232,7 +248,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test empty arguments at the beginning`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
-            foo<error>(<error>,</error>,true<error>/*caret*/)</error></error>;
+            foo(<error>,</error>,true<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
@@ -244,7 +260,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test empty arguments at the end 1`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
-            foo<error>(1,<error>,</error>,<error>/*caret*/)</error></error>;
+            foo(1,<error>,</error>,<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
@@ -256,7 +272,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test empty arguments at the end 2`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
-            foo<error>(1,<error>,</error><error>/*caret*/)</error></error>;
+            foo(1,<error>,</error><error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
@@ -268,7 +284,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test interleaved empty arguments`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
-            foo<error>(<error>,</error>"",<error>,</error> 2<error>/*caret*/)</error></error>;
+            foo(<error>,</error>"",<error>,</error> 2<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
@@ -280,7 +296,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
     fun `test too many empty arguments`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: u32) {}
         fn main() {
-            foo<error>(1,<error>,</error>,,,/*caret*/<error>)</error></error>;
+            foo(1,<error>,</error>,,,/*caret*/<error>)</error>;
         }
     """, """
         fn foo(a: u32, b: u32) {}

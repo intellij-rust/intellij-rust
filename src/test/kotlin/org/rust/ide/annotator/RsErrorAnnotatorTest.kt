@@ -233,11 +233,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let closure_2 = |x, y| (x, y);
 
             closure_0();
-            closure_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">(<error>42</error>)</error>;
-            closure_1<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">(<error>)</error></error>;
+            closure_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">42</error>);
+            closure_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">)</error>;
             closure_1(42);
-            closure_2<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">(<error>)</error></error>;
-            closure_2<error descr="This function takes 2 parameters but 1 parameter was supplied [E0057]">(42<error>)</error></error>;
+            closure_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">)</error>;
+            closure_2(42<error descr="This function takes 2 parameters but 1 parameter was supplied [E0057]">)</error>;
             closure_2(42, 43);
         }
     """)
@@ -249,11 +249,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
 
         unsafe fn test() {
-            variadic_1<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">(<error>)</error></error>;
+            variadic_1(<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">)</error>;
             variadic_1(42);
             variadic_1(42, 43);
-            variadic_2<error descr="This function takes at least 2 parameters but 0 parameters were supplied [E0060]">(<error>)</error></error>;
-            variadic_2<error descr="This function takes at least 2 parameters but 1 parameter was supplied [E0060]">(42<error>)</error></error>;
+            variadic_2(<error descr="This function takes at least 2 parameters but 0 parameters were supplied [E0060]">)</error>;
+            variadic_2(42<error descr="This function takes at least 2 parameters but 1 parameter was supplied [E0060]">)</error>;
             variadic_2(42, 43);
         }
     """)
@@ -273,12 +273,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             par_0_cfg();
             par_1_cfg(1);
 
-            par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            par_1<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">(<error>)</error></error>;
-            par_1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(true, <error>false</error>)</error>;
-            par_3<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">(5, 1.0<error>)</error></error>;
-            par_0_cfg<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            par_1_cfg<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">(<error>)</error></error>;
+            par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            par_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
+            par_1(true, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
+            par_3(5, 1.0<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">)</error>;
+            par_0_cfg(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            par_1_cfg(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
         }
     """)
 
@@ -293,8 +293,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             Foo::par_0();
             Foo::par_2(12, 7.1);
 
-            Foo::par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            Foo::par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, <error>"three"</error>)</error>;
+            Foo::par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            Foo::par_2(5, 1.0, <error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">"three"</error>);
         }
     """)
 
@@ -310,9 +310,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             foo.par_0();
             foo.par_2(12, 7.1);
 
-            foo.par_0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            foo.par_2<error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">(5, 1.0, <error>"three"</error>)</error>;
-            foo.par_2<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">(<error>)</error></error>;
+            foo.par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            foo.par_2(5, 1.0, <error descr="This function takes 2 parameters but 3 parameters were supplied [E0061]">"three"</error>);
+            foo.par_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0061]">)</error>;
         }
     """)
 
@@ -323,8 +323,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let _ = Foo0();
             let _ = Foo1(1);
 
-            let _ = Foo0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            let _ = Foo1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, <error>false</error>)</error>;
+            let _ = Foo0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            let _ = Foo1(10, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
         }
     """)
 
@@ -337,8 +337,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let _ = Foo::VAR0();
             let _ = Foo::VAR1(1);
 
-            let _ = Foo::VAR0<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>4</error>)</error>;
-            let _ = Foo::VAR1<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(10, <error>false</error>)</error>;
+            let _ = Foo::VAR0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            let _ = Foo::VAR1(10, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
         }
     """)
 
@@ -352,7 +352,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         fn main() {
             let foo = Foo;
-            foo.bar<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>10</error>)</error>;
+            foo.bar(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">10</error>);
             foo.bar();
         }
     """)
@@ -710,7 +710,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             fn main() {
                 unsafe { foo(1, 2, 3); }
-                bar<error>(<error>92</error>)</error>;
+                bar(<error>92</error>);
                 let _ = S {};
             }  //^
 
@@ -1237,7 +1237,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         struct S;
 
-        <error>impl <error descr="the trait bound `S: A` is not satisfied [E0277]">B</error> for S</error> {}
+        impl <error descr="the trait bound `S: A` is not satisfied [E0277]">B</error> for S {}
     """)
 
     fun `test supertrait is not implemented E0277 multiple traits`() = checkErrors("""
@@ -1248,7 +1248,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         struct S;
 
-        <error>impl <error descr="the trait bound `S: A` is not satisfied [E0277]"><error descr="the trait bound `S: B` is not satisfied [E0277]">C</error></error> for S</error> {}
+        impl <error descr="the trait bound `S: A` is not satisfied [E0277]"><error descr="the trait bound `S: B` is not satisfied [E0277]">C</error></error> for S {}
     """)
 
     fun `test supertrait is not implemented E0277 generic supertrait`() = checkErrors("""
@@ -1257,11 +1257,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait C<T>: A<T> {}
 
         struct S1;
-        <error>impl <error descr="the trait bound `S1: A<u32>` is not satisfied [E0277]">B</error> for S1</error> {}
+        impl <error descr="the trait bound `S1: A<u32>` is not satisfied [E0277]">B</error> for S1 {}
 
         struct S2;
         impl A<bool> for S2 {}
-        <error>impl <error descr="the trait bound `S2: A<u32>` is not satisfied [E0277]">B</error> for S2</error> {}
+        impl <error descr="the trait bound `S2: A<u32>` is not satisfied [E0277]">B</error> for S2 {}
 
         struct S3;
         impl A<bool> for S3 {}
@@ -1269,11 +1269,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl B for S3 {}
 
         struct S4;
-        <error>impl<T> <error descr="the trait bound `S4: A<T>` is not satisfied [E0277]">C<T></error> for S4</error> {}
+        impl<T> <error descr="the trait bound `S4: A<T>` is not satisfied [E0277]">C<T></error> for S4 {}
 
         struct S5;
         impl A<u32> for S5 {}
-        <error>impl<T> <error descr="the trait bound `S5: A<T>` is not satisfied [E0277]">C<T></error> for S5</error> {}
+        impl<T> <error descr="the trait bound `S5: A<T>` is not satisfied [E0277]">C<T></error> for S5 {}
 
         struct S6;
         impl<T> A<T> for S6 {}
@@ -1285,7 +1285,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         struct S8;
         impl A<bool> for S8 {}
-        <error>impl <error descr="the trait bound `S8: A<u32>` is not satisfied [E0277]">C<u32></error> for S8</error> {}
+        impl <error descr="the trait bound `S8: A<u32>` is not satisfied [E0277]">C<u32></error> for S8 {}
 
         struct S9;
         impl A<u32> for S9 {}
