@@ -215,13 +215,17 @@ fun calculateProjectDetailsWithCapabilities(
     return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot)
 }
 
-private fun createCfgOptions(cfgOptions: RustCfgOptions): CfgOptions
+private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions?
 {
-    val name = cfgOptions.nameOptions.toSet()
-    val keyValueOptions = cfgOptions.keyValueOptions.associate { Pair(it.key, it.value.toSet()) }
+    if (cfgOptions == null)
+        return null;
+    val name = cfgOptions.nameOptions?.toSet()
+    val keyValueOptions = cfgOptions.keyValueOptions?.associate { Pair(it.key, it.value.toSet()) }
+    if (name == null || keyValueOptions == null)
+        return null;
     return CfgOptions(keyValueOptions, name)
 }
-private fun resolveEdition(edition: String): CargoWorkspace.Edition
+private fun resolveEdition(edition: String?): CargoWorkspace.Edition
 {
     return when (edition)
     {
@@ -232,7 +236,7 @@ private fun resolveEdition(edition: String): CargoWorkspace.Edition
     }
 }
 
-private fun resolveTargetKind(targetKind: String): CargoWorkspace.TargetKind
+private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind
 {
     return when (targetKind)
     {
@@ -243,7 +247,7 @@ private fun resolveTargetKind(targetKind: String): CargoWorkspace.TargetKind
     }
 }
 
-private fun resolveOrigin(targetKind: String): PackageOrigin
+private fun resolveOrigin(targetKind: String?): PackageOrigin
 {
     return when (targetKind)
     {
@@ -273,7 +277,9 @@ fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets
         val enabledFeatures = workspace.enabledFeatures.toSet()
         val cfgOptions = createCfgOptions(workspace.cfgOptions)
         val env = workspace.env.associate { Pair(it.name, it.value) }
-        val procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
+        var procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null;
+        if (workspace.procMacroArtifact != null)
+            procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
         packages.add(CargoWorkspaceData.Package(id, project.baseDirectory, project.displayName, workspace.version, targets, workspace.source, origin, edition, features, enabledFeatures, cfgOptions, env, workspace.outDirUrl, procMacroArtifact))
     }
     return packages

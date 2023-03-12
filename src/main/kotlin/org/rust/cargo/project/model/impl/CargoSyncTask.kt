@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
+import org.rust.bsp.BspConstants
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.ProcessProgressListener
@@ -53,6 +54,7 @@ import org.rust.openapiext.TaskResult
 import org.rust.stdext.RsResult
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.unwrapOrElse
+import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -393,10 +395,11 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             cacheIf = { !projectDirectory.resolve(".cargo").exists() }
         ) { cargo.getCfgOption(childContext.project, projectDirectory) }
 
+        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
         val cfgOptions = when (cfgOptionsResult) {
             is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {
-                if (rustcVersion == null || rustcVersion > RUST_1_51) {
+                if ((rustcVersion == null || rustcVersion > RUST_1_51)&& !useBSP) {
                     val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n" +
                         cfgOptionsResult.err.message.orEmpty()
                     childContext.warning("Fetching target specific `cfg` options", message)
