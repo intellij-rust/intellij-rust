@@ -567,6 +567,12 @@ class RsTypeInferenceWalker(
 
         inferStructTypeArguments(expr, typeParameters)
 
+        if (element is RsStructItem && element.kind == RsStructKind.UNION
+            && expr.structLiteralBody.structLiteralFieldList.size != 1
+        ) {
+            ctx.addDiagnostic(RsDiagnostic.UnionExprWithWrongFieldCount(expr))
+        }
+
         // Handle struct update syntax { ..expression }
         expr.structLiteralBody.expr?.inferTypeCoercableTo(type)
 
