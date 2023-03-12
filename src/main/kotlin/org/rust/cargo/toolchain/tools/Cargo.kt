@@ -153,9 +153,6 @@ class Cargo(
         rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData =
-            fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
-                .unwrapOrElse { return Err(it) }
 
         //TODO: replace fetchBuildScriptsInfo with something more bsp specific
 
@@ -169,6 +166,9 @@ class Cargo(
             }
         }
 
+        val rawData =
+            fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
+                .unwrapOrElse { return Err(it) }
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
                 val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
             fetchBuildScriptsInfo(owner, projectDirectory, rustcVersion, listener)
