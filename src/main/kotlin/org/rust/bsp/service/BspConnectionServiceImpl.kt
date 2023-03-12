@@ -261,6 +261,8 @@ fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets
     val packages = emptyList<CargoWorkspaceData.Package>().toMutableList()
     for (project in projectBazelTargets.targets) {
         val id = project.id.uri
+        if (id !in idToWorkspace)
+            continue;
         val workspace = idToWorkspace[id]!!
         var targets = idToWorkspace[id]?.targets?.map { CargoWorkspaceData.Target(it.crateRootUrl, it.name, resolveTargetKind(it.kind), resolveEdition(it.edition), it.isDoctest, it.requiredFeatures) }
         if (targets.isNullOrEmpty())
@@ -291,7 +293,7 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
 
 fun createDependencies(projectWorkspaceData: RustWorkspaceResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
 {
-    val dependencies = projectWorkspaceData.packageToDepMapper.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.source, it.target, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
+    val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.source, it.target, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
     val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
     for (pair in dependencies) {
         if (pair.first !in dependencyMap) {
@@ -304,14 +306,13 @@ fun createDependencies(projectWorkspaceData: RustWorkspaceResult):  Map<PackageI
 
 fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>>
 {
-    val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.id, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
-    val dependenciesMapper = dependencies.associate { it }
+    val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.packageId, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
     val rawMap = emptyMap<PackageId, MutableList<CargoMetadata.RawDependency>>().toMutableMap()
-    for (pair in projectWorkspaceData.packageToRawMapper) {
-        if (pair.packageId !in rawMap) {
-            rawMap[pair.packageId] = emptyList<CargoMetadata.RawDependency>().toMutableList()
+    for (pair in dependencies) {
+        if (pair.first !in rawMap) {
+            rawMap[pair.first] = emptyList<CargoMetadata.RawDependency>().toMutableList()
         }
-        dependenciesMapper[pair.rawId]?.let { rawMap[pair.packageId]?.add(it) }
+        rawMap[pair.first]?.add(pair.second);
     }
     return rawMap
 }

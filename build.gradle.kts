@@ -196,7 +196,7 @@ allprojects {
 
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
-        implementation("com.github.zpp-This-is-fine:build-server-protocol:2fa1682cdd1bda51f52b2692dcbf3bed08ceb7cc")
+        implementation("com.github.zpp-This-is-fine:build-server-protocol:1c9277a35d101dbf07a910a23f496201b26418cd")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
