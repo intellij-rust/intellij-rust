@@ -13,7 +13,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo() {}
 
         fn main() {
-            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>1/*caret*/</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">1/*caret*/</error>);
         }
     """, """
         fn foo(i: i32) {}
@@ -27,7 +27,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo() {}
 
         fn main() {
-            foo<error descr="This function takes 0 parameters but 2 parameters were supplied [E0061]">(<error>1/*caret*/</error>, <error>false</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 2 parameters were supplied [E0061]">1/*caret*/, false</error>);
         }
     """, """
         fn foo(i: i32, x: bool) {}
@@ -41,7 +41,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(0, <error>1/*caret*/</error>)</error>;
+            foo(0, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">1/*caret*/</error>);
             foo(5);
         }
     """, """
@@ -57,7 +57,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(0, <error>1/*caret*/</error>)</error>;
+            foo(0, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">1/*caret*/</error>);
             foo(5,);
         }
     """, """
@@ -73,7 +73,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(0, <error>false/*caret*/</error>)</error>;
+            foo(0, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false/*caret*/</error>);
             foo(5);
         }
     """, """
@@ -89,7 +89,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32, b: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">(0, false, <error>3/*caret*/</error>, <error>4</error>)</error>;
+            foo(0, false, <error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">3/*caret*/, 4</error>);
             foo(0, 1);
         }
     """, """
@@ -105,7 +105,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32, b: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">(0, false, <error>3/*caret*/</error>, <error>4</error>)</error>;
+            foo(0, false, <error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">3/*caret*/, 4</error>);
             foo(0, 1);
         }
     """, """
@@ -121,7 +121,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32, b: i32) {}
 
         fn main() {
-            foo<error>(true, true, <error>true/*caret*/</error>)</error>;
+            foo(true, true, <error>true/*caret*/</error>);
         }
     """, """
         fn foo(a: bool, b: bool, x: bool) {}
@@ -135,7 +135,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32, b: i32) {}
 
         fn main() {
-            foo<error>(true, false, <error>true/*caret*/</error>)</error>;
+            foo(true, false, <error>true/*caret*/</error>);
         }
     """)
 
@@ -143,7 +143,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: i32, b: i32) {}
 
         fn main() {
-            foo<error>(true, false, <error>true/*caret*/</error>)</error>;
+            foo(true, false, <error>true/*caret*/</error>);
         }
     """)
 
@@ -154,7 +154,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
 
         fn bar(s: S) {
-            s.foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>0/*caret*/</error>)</error>;
+            s.foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">0/*caret*/</error>);
         }
     """, """
         struct S;
@@ -171,7 +171,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo() {}
 
         fn main() {
-            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>Unknown/*caret*/</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">Unknown/*caret*/</error>);
         }
     """, """
         fn foo(x: _) {}
@@ -187,7 +187,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         type Foo = u32;
 
         fn bar(f: Foo) {
-            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>f/*caret*/</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">f/*caret*/</error>);
         }
     """, """
         fn foo(f: Foo) {}
@@ -205,7 +205,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         struct Foo<T = u32>(T);
 
         fn bar(f: Foo) {
-            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>f/*caret*/</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">f/*caret*/</error>);
         }
     """, """
         fn foo(f: Foo) {}
@@ -226,7 +226,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
 
         fn main() {
             let s = S;
-            foo::bar<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>s/*caret*/</error>)</error>;
+            foo::bar(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">s/*caret*/</error>);
         }
     """, """
         mod foo {
@@ -273,7 +273,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         struct S(u32);
 
         fn main() {
-            let s = S<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(0, <error>1/*caret*/</error>)</error>;
+            let s = S(0, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">1/*caret*/</error>);
         }
     """)
 
@@ -282,7 +282,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
 
         fn main() {
             let x = 5;
-            foo<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(<error>x/*caret*/</error>)</error>;
+            foo(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">x/*caret*/</error>);
         }
     """, """
         fn foo(x: i32) {}
@@ -297,7 +297,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(i: i32) {}
 
         fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(1/*caret*/, <error>2</error>)</error>;
+            foo(1/*caret*/, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">2</error>);
         }
     """, """
         fn foo(i: i32, i0: i32) {}
@@ -329,7 +329,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(i: i32, #[cfg(foo)] b: u32) {}
 
         fn main() {
-            foo<error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">(1/*caret*/, <error>2</error>)</error>;
+            foo(1/*caret*/, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">2</error>);
         }
     """)
 
@@ -384,7 +384,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
     fun `test remove parameter simple binding`() = checkFixByText("Remove parameter `b` from function `foo`", """
         fn foo(a: u32, b: u32) {}
         fn bar() {
-            foo<error>(0/*caret*/<error>)</error></error>;
+            foo(0/*caret*/<error>)</error>;
         }
     """, """
         fn foo(a: u32) {}
@@ -396,7 +396,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
     fun `test remove parameter complex binding`() = checkFixByText("Remove `2nd` parameter from function `foo`", """
         fn foo(x: u32, (a, b): (u32, u32)) {}
         fn bar() {
-            foo<error>(0/*caret*/<error>)</error></error>;
+            foo(0/*caret*/<error>)</error>;
         }
     """, """
         fn foo(x: u32) {}
@@ -408,7 +408,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
     fun `test remove multiple parameters`() = checkFixByText("<html>Change signature to foo()</html>", """
         fn foo(a: u32, b: u32) {}
         fn bar() {
-            foo<error>(/*caret*/<error>)</error></error>;
+            foo(/*caret*/<error>)</error>;
         }
     """, """
         fn foo() {}
@@ -420,7 +420,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
     fun `test change type and remove parameters`() = checkFixByText("<html>Change signature to foo(<b>bool</b>)</html>", """
         fn foo(a: u32, b: u32, c: u32) {}
         fn bar() {
-            foo<error>(true/*caret*/<error>)</error></error>;
+            foo(true/*caret*/<error>)</error>;
         }
     """, """
         fn foo(a: bool) {}
@@ -432,7 +432,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
     fun `test remove parameters change usage`() = checkFixByText("<html>Change signature to foo()</html>", """
         fn foo(a: u32, b: u32) {}
         fn bar() {
-            foo<error>(/*caret*/<error>)</error></error>;
+            foo(/*caret*/<error>)</error>;
             foo(1, 2);
         }
     """, """
@@ -490,7 +490,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
 
         fn bar(s: S) {
-            S::foo<error>(&s/*caret*/<error>)</error></error>;
+            S::foo(&s/*caret*/<error>)</error>;
         }
     """, """
         struct S {}
@@ -510,7 +510,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         }
 
         fn bar(s: S) {
-            S::foo<error>(&s/*caret*/, true, <error>1</error>)</error>;
+            S::foo(&s/*caret*/, true, <error>1</error>);
         }
     """, """
         struct S {}
@@ -531,7 +531,7 @@ class ChangeFunctionSignatureFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cla
         fn foo(a: <Struct as Trait>::Item, b: <Struct as Trait>::Item) {}
 
         fn main() {
-            foo<error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">(0, false, <error>3/*caret*/</error>, <error>4</error>)</error>;
+            foo(0, false, <error descr="This function takes 2 parameters but 4 parameters were supplied [E0061]">3/*caret*/, 4</error>);
             foo(0, 1);
         }
     """, """

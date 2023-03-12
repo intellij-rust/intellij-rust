@@ -76,12 +76,9 @@ import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.*
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
 import org.rust.lang.utils.RsErrorCode.*
-import org.rust.lang.utils.SUPPORTED_CALLING_CONVENTIONS
-import org.rust.lang.utils.addToHolder
-import org.rust.lang.utils.areUnstableFeaturesAvailable
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.capitalized
@@ -946,7 +943,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val selfSubst = mapOf(TyTypeParameter.self() to type).toTypeSubst()
         val substitution = (impl.implementedTrait?.subst ?: emptySubstitution).substituteInValues(selfSubst) + selfSubst
-        var missing = false
+        var fixRegistered = false
 
         for (bound in supertraits) {
             val requiredTrait = bound.traitRef ?: continue
@@ -957,24 +954,18 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val canSelect = lookup.canSelect(TraitRef(type, locallyBoundTrait))
             if (!canSelect) {
                 val missingTrait = requiredTrait.getStubOnlyText(substitution)
-                missing = true
-                RsDiagnostic.SuperTraitIsNotImplemented(traitRef, type, missingTrait).addToHolder(holder)
+                if (!fixRegistered) {
+                    fixRegistered = true
+                    val fix = AddMissingSupertraitImplFix(impl)
+                    val range = TextRange(
+                        impl.impl.startOffset,
+                        typeRef.endOffset
+                    )
+                    RsDiagnostic.SuperTraitIsNotImplemented(traitRef, type, missingTrait, QuickFixWithRange(fix, range))
+                } else {
+                    RsDiagnostic.SuperTraitIsNotImplemented(traitRef, type, missingTrait, null)
+                }.addToHolder(holder)
             }
-        }
-
-        if (missing) {
-            // Mark the whole impl with a silent error and a quick fix
-
-            val range = TextRange(
-                impl.impl.startOffset,
-                typeRef.endOffset
-            )
-            holder.holder
-                .newSilentAnnotation(HighlightSeverity.ERROR)
-                .textAttributes(TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES"))
-                .range(range)
-                .withFix(AddMissingSupertraitImplFix(impl))
-                .create()
         }
     }
 
@@ -1161,29 +1152,28 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         if (realCount < expectedCount) {
-            // Mark only the right parenthesis
-            val rparen = args.rparen
-            if (rparen != null) {
-                holder.newErrorAnnotation(rparen, null)?.create()
-            }
-
-            // But enable the quick fix on the whole argument range
+            val fixesWithRange = (listOf(FillFunctionArgumentsFix(args)) + fixes)
+                .map { QuickFixWithRange(it, args.textRange) }
             RsDiagnostic.IncorrectFunctionArgumentCountError(
-                args, expectedCount, realCount, functionType,
-                listOf(FillFunctionArgumentsFix(args)) + fixes,
-                textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
+                args.rparen ?: args,
+                null,
+                expectedCount,
+                realCount,
+                functionType,
+                fixesWithRange,
             ).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
-            args.exprList.drop(expectedCount).forEach {
-                holder.newErrorAnnotation(it, null)?.create()
-            }
-
+            val extraArgs = args.exprList.drop(expectedCount)
+            val fixesWithRange = (listOf(RemoveRedundantFunctionArgumentsFix(args, expectedCount)) + fixes)
+                .map { QuickFixWithRange(it, args.textRange) }
             RsDiagnostic.IncorrectFunctionArgumentCountError(
-                args, expectedCount, realCount, functionType,
-                fixes = listOf(RemoveRedundantFunctionArgumentsFix(args, expectedCount)) + fixes,
-                textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
-            )
-                .addToHolder(holder)
+                extraArgs.firstOrNull() ?: args,
+                if (extraArgs.size <= 1) null else extraArgs.last(),
+                expectedCount,
+                realCount,
+                functionType,
+                fixesWithRange,
+            ).addToHolder(holder)
         }
 
         if (realCount == expectedCount && fixes.isNotEmpty()) {

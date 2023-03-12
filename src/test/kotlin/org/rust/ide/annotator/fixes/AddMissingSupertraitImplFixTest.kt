@@ -10,13 +10,22 @@ import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
 class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
+    fun `test availability range`() = checkFixAvailableInSelectionOnly("Implement missing supertrait(s)", """
+        trait A {}
+        trait B: A {}
+
+        struct S;
+
+        <selection>impl <error>B</error> for S</selection> {}
+    """)
+
     fun `test empty supertrait`() = checkFixByText("Implement missing supertrait(s)", """
         trait A {}
         trait B: A {}
 
         struct S;
 
-        <error>impl <error>B/*caret*/</error> for S</error> {}
+        impl <error>B/*caret*/</error> for S {}
     """, """
         trait A {}
         trait B: A {}
@@ -38,7 +47,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>B/*caret*/</error> for S</error> {}
+        impl <error>B/*caret*/</error> for S {}
     """, """
         trait A {
             type FOO;
@@ -68,7 +77,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>C/*caret*/</error> for S</error> {}
+        impl <error>C/*caret*/</error> for S {}
     """, """
         trait A {}
         trait B {}
@@ -90,7 +99,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>C/*caret*/</error> for S</error> {}
+        impl <error>C/*caret*/</error> for S {}
     """, """
         trait A {}
         trait B: A {}
@@ -112,7 +121,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>C/*caret*/</error> for S</error> {}
+        impl <error>C/*caret*/</error> for S {}
     """, """
         trait A {}
         trait B: A {}
@@ -134,7 +143,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>C/*caret*/</error> for S</error> {}
+        impl <error>C/*caret*/</error> for S {}
     """, """
         trait A<T> {}
         trait B: A<u32> {}
@@ -160,7 +169,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         impl B for S {}
 
-        <error>impl <error>C/*caret*/</error> for S</error> {}
+        impl <error>C/*caret*/</error> for S {}
     """, """
         trait A {}
         trait B {}
@@ -183,7 +192,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>C<u32>/*caret*/</error> for S</error> {}
+        impl <error>C<u32>/*caret*/</error> for S {}
     """, """
         trait A<T> {
             fn foo(&self) -> T;
@@ -209,7 +218,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         impl A<u32> for S {}
 
-        <error>impl <R> <error>C<R>/*caret*/</error> for S</error> {}
+        impl <R> <error>C<R>/*caret*/</error> for S {}
     """, """
         trait A<T> {}
         trait C<T>: A<T> {}
@@ -229,7 +238,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S<T>(T);
 
-        <error>impl <R> <error>B<u32>/*caret*/</error> for S<R></error> {}
+        impl <R> <error>B<u32>/*caret*/</error> for S<R> {}
     """, """
         trait A<T> {}
         trait B<T>: A<T> {}
@@ -247,7 +256,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S<T>(T);
 
-        <error>impl <error>B<u32>/*caret*/</error> for S<bool></error> {}
+        impl <error>B<u32>/*caret*/</error> for S<bool> {}
     """, """
         trait A<T> {}
         trait B<T>: A<T> {}
@@ -271,7 +280,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S<T>(T);
 
-        <error>impl <R> <error>T7<R>/*caret*/</error> for S<R></error> {}
+        impl <R> <error>T7<R>/*caret*/</error> for S<R> {}
     """, """
         trait T1<A> {}
         trait T2<B>: T1<B> {}
@@ -304,7 +313,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S<T>(T);
 
-        <error>impl <R> <error>B<R>/*caret*/</error> for S<u32></error> {}
+        impl <R> <error>B<R>/*caret*/</error> for S<u32> {}
     """, """
         trait A {}
         trait B<T>: A {}
@@ -322,7 +331,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S<T>(T);
 
-        <error>impl <R> <error>B<R>/*caret*/</error> for S<u32></error> where R: A {}
+        impl <R> <error>B<R>/*caret*/</error> for S<u32> where R: A {}
     """, """
         trait A {}
         trait B<T>: A {}
@@ -342,7 +351,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>foo::B/*caret*/</error> for S</error> {}
+        impl <error>foo::B/*caret*/</error> for S {}
     """, """
         use crate::foo::A;
 
@@ -379,7 +388,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         struct S;
 
-        <error>impl <error>B/*caret*/</error> for <Struct as Trait>::Item</error> {}
+        impl <error>B/*caret*/</error> for <Struct as Trait>::Item {}
     """, """
         struct Struct;
         trait Trait { type Item; }
@@ -408,7 +417,7 @@ class AddMissingSupertraitImplFixTest : RsAnnotatorTestBase(RsErrorAnnotator::cl
 
         impl A for S {}
 
-        <error>impl <error>C/*caret*/</error> for <Struct as Trait>::Item</error> {}
+        impl <error>C/*caret*/</error> for <Struct as Trait>::Item {}
     """, """
         struct Struct;
         trait Trait { type Item; }
