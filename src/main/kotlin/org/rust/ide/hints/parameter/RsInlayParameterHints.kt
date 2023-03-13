@@ -9,9 +9,11 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.RsBundle
+import org.rust.ide.hints.type.findExpandedByLeaf
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.existsAfterExpansion
+import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.stdext.buildList
@@ -22,14 +24,14 @@ object RsInlayParameterHints {
     val smart: Boolean get() = smartOption.get()
 
     fun provideHints(elem: PsiElement): List<InlayInfo> {
-        val (callInfo, valueArgumentList) = when (elem) {
-            is RsCallExpr -> (CallInfo.resolve(elem) to elem.valueArgumentList)
-            is RsMethodCall -> (CallInfo.resolve(elem) to elem.valueArgumentList)
-            else -> return emptyList()
-        }
-        if (!elem.existsAfterExpansion) return emptyList()
-        if (callInfo == null) return emptyList()
+        val elementExpanded = findExpandedElement(elem) ?: return emptyList()
+        val callInfo = when (elementExpanded) {
+            is RsCallExpr -> CallInfo.resolve(elementExpanded)
+            is RsMethodCall -> CallInfo.resolve(elementExpanded)
+            else -> null
+        } ?: return emptyList()
 
+        val valueArgumentList = elem.childOfType<RsValueArgumentList>() ?: return emptyList()
         val hints = buildList {
             if (callInfo.selfParameter != null && elem is RsCallExpr) {
                 add(callInfo.selfParameter)
@@ -59,6 +61,18 @@ object RsInlayParameterHints {
                 .map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
         }
         return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
+    }
+
+    private fun findExpandedElement(element: PsiElement): PsiElement? {
+        val valueArgumentList = when (element) {
+            is RsCallExpr -> element.valueArgumentList
+            is RsMethodCall -> element.valueArgumentList
+            else -> return null
+        }
+        val valueArgumentListExpanded = valueArgumentList.findExpandedByLeaf { it.lparen } ?: return null
+        if (valueArgumentListExpanded == valueArgumentList) return element
+        if (valueArgumentListExpanded.exprList.size != valueArgumentList.exprList.size) return null
+        return valueArgumentListExpanded.parent.takeIf { it.elementType == element.elementType }
     }
 
     private fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {

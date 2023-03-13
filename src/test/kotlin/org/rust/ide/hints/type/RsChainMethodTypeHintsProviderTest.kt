@@ -157,6 +157,7 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
     fun `test inside attribute macro call body`() = doTest("""
         $types
 
+        #[test_proc_macros::attr_as_is]
         fn main() {
             let foo = A;
             foo

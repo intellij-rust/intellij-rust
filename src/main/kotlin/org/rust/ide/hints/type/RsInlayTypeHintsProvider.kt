@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfTypes
 import org.rust.RsBundle
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -171,7 +172,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                     if (typeReference.descendantOfTypeOrSelf<RsInferType>() == null) return
                 }
 
-                val expandedDeclaration = declaration.getExpanded { it.let } ?: return
+                val expandedDeclaration = declaration.findExpandedByLeaf(crate) { it.let } ?: return
                 if (isExpanded) testAssert { declaration == expandedDeclaration }
                 val inferredType = expandedDeclaration.pat?.type ?: return
                 val formalType = expandedDeclaration.typeReference?.rawType ?: return
@@ -231,7 +232,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             }
 
             private fun presentTypeForBinding(binding: RsPatBinding, isExpanded: Boolean) {
-                val bindingExpanded = binding.getExpanded { it.identifier } ?: return
+                val bindingExpanded = binding.findExpandedByLeaf(crate) { it.identifier } ?: return
                 if (bindingExpanded.reference.resolve()?.isConstantLike == true) return
                 if (bindingExpanded.type is TyUnknown) return
 
@@ -245,16 +246,6 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                 val finalPresentation = presentation.withDisableAction(project)
                 sink.addInlineElement(offset, false, finalPresentation, false)
             }
-
-            private inline fun <reified T : PsiElement> T.getExpanded(getLeaf: (T) -> PsiElement): T? =
-                when (getCodeStatus(crate)) {
-                    RsCodeStatus.CFG_DISABLED -> null
-                    RsCodeStatus.ATTR_PROC_MACRO_CALL -> {
-                        val leafExpanded = getLeaf(this).findExpansionElements()?.singleOrNull()
-                        leafExpanded?.parent as? T
-                    }
-                    else -> this
-                }
         }
     }
 
@@ -325,3 +316,13 @@ private fun findOriginalOffset(anchor: PsiElement, originalFile: PsiFile): Int? 
     if (originalFile.findElementAt(offset1)?.findExpansionElements()?.size != 1) return null
     return offset1
 }
+
+inline fun <reified T : PsiElement> T.findExpandedByLeaf(explicitCrate: Crate? = null, getLeaf: (T) -> PsiElement): T? =
+    when (getCodeStatus(explicitCrate)) {
+        RsCodeStatus.CFG_DISABLED -> null
+        RsCodeStatus.ATTR_PROC_MACRO_CALL -> {
+            val leafExpanded = getLeaf(this).findExpansionElements()?.singleOrNull()
+            leafExpanded?.parent as? T
+        }
+        else -> this
+    }
