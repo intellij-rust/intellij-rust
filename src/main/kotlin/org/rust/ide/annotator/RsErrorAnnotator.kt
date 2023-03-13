@@ -907,6 +907,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkSuperTraitImplemented(holder, impl, trait)
         checkImplBothCopyAndDrop(holder, impl, trait)
         checkTraitImplOrphanRules(holder, impl)
+        checkImplForCopy(holder, impl, trait)
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
@@ -1060,6 +1061,23 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val traitRef = impl.traitRef ?: return
             RsDiagnostic.TraitImplOrphanRulesError(traitRef).addToHolder(holder)
         }
+    }
+
+    private fun checkImplForCopy(holder: RsAnnotationHolder, impl: RsImplItem,trait: RsTraitItem) {
+        if (trait != trait.knownItems.Copy) return
+        val type = impl.typeReference ?: return
+        type.normType.let {
+            // for ADT it is ok to impl Copy
+            if (it is TyAdt
+                || it == TyUnknown
+                // should show different error than E0206
+                || it is TyPrimitive
+                || it is TyArray
+                || it is TyTuple
+                || (it is TyReference && !it.mutability.isMut)
+                || it is TyPointer) return
+        }
+        RsDiagnostic.ImplCopyForWrongTypeError(type).addToHolder(holder)
     }
 
     private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
