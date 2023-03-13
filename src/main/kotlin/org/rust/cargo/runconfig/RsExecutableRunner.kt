@@ -134,7 +134,7 @@ abstract class RsExecutableRunner(
     }
 
     companion object {
-        private val ARTIFACTS: Key<CompletableFuture<List<CompilerArtifactMessage>>> =
+        val ARTIFACTS: Key<CompletableFuture<List<CompilerArtifactMessage>>> =
             Key.create("CARGO.CONFIGURATION.ARTIFACTS")
 
         var ExecutionEnvironment.artifacts: List<CompilerArtifactMessage>?

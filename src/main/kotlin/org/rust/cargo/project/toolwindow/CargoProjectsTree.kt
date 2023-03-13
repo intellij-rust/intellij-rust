@@ -64,7 +64,7 @@ open class CargoProjectsTree : SimpleTree() {
     }
 }
 
-private fun CargoWorkspace.Target.launchCommand(): String? = when (kind) {
+fun CargoWorkspace.Target.launchCommand(): String? = when (kind) {
     CargoWorkspace.TargetKind.Bin -> "run"
     is CargoWorkspace.TargetKind.Lib -> "build"
     CargoWorkspace.TargetKind.Test -> "test"

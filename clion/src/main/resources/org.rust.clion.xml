@@ -1,4 +1,4 @@
-<idea-plugin package="org.rust.clion" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.rust.clion">
     <!--suppress PluginXmlValidity -->
     <dependencies>
         <plugin id="com.intellij.clion"/>
@@ -13,6 +13,10 @@
 
     <extensions defaultExtensionNs="com.jetbrains.cidr">
         <fus.projectModelTypeProvider implementation="org.rust.clion.statistics.CargoProjectModelTypeProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="clion">
+        <compoundConfigurationContext implementation="org.rust.clion.cargo.CargoCompoundConfigurationContext"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
