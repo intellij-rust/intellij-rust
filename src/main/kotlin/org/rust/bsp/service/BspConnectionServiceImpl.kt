@@ -208,8 +208,8 @@ fun calculateProjectDetailsWithCapabilities(
     val projectWorkspaceData = queryForWorkspaceData(server).get()
 
     val projectPackages = createPackage(projectWorkspaceData, projectBazelTargets)
-    val dependencies = createDependencies(projectWorkspaceData)
-    val rawPackages = createRawDependencies(projectWorkspaceData)
+    val dependencies = createDependencies(projectWorkspaceData, projectBazelTargets)
+    val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets)
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
     return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot)
@@ -297,26 +297,32 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
     }
 }
 
-fun createDependencies(projectWorkspaceData: RustWorkspaceResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
+fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
 {
     val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.source, it.target, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
     val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
+    for (target in projectBazelTargets.targets) {
+        dependencyMap[target.id.uri] = emptySet<CargoWorkspaceData.Dependency>().toMutableSet()
+    }
     for (pair in dependencies) {
         if (pair.first !in dependencyMap) {
-            dependencyMap[pair.first] = emptySet<CargoWorkspaceData.Dependency>().toMutableSet()
+            continue
         }
         dependencyMap[pair.first]?.add(pair.second)
     }
     return dependencyMap
 }
 
-fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>>
+fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, List<CargoMetadata.RawDependency>>
 {
     val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.packageId, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
     val rawMap = emptyMap<PackageId, MutableList<CargoMetadata.RawDependency>>().toMutableMap()
+    for (target in projectBazelTargets.targets) {
+        rawMap[target.id.uri] = emptyList<CargoMetadata.RawDependency>().toMutableList()
+    }
     for (pair in dependencies) {
         if (pair.first !in rawMap) {
-            rawMap[pair.first] = emptyList<CargoMetadata.RawDependency>().toMutableList()
+            continue
         }
         rawMap[pair.first]?.add(pair.second);
     }
