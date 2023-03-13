@@ -2,4 +2,4 @@ status = [
   "check",
 ]
 delete_merged_branches = true
-timeout_sec = 10800
+timeout_sec = 14400
