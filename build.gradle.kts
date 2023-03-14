@@ -561,7 +561,7 @@ project(":toml") {
         plugins.set(listOf(tomlPlugin))
     }
     dependencies {
-        implementation("org.eclipse.jgit:org.eclipse.jgit:6.4.0.202211300538-r") { exclude("org.slf4j") }
+        implementation("org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r") { exclude("org.slf4j") }
 
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
