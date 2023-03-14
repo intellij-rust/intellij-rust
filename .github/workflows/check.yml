@@ -98,6 +98,7 @@ jobs:
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
             DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
+            EVCXR_REPL_VERSION: 0.13.0
 
         steps:
             - uses: actions/checkout@v3
@@ -146,7 +147,7 @@ jobs:
               with:
                   command: install
                   # https://github.com/intellij-rust/intellij-rust/issues/9406
-                  args: evcxr_repl --locked --version 0.13.0
+                  args: evcxr_repl --locked --version ${{ env.EVCXR_REPL_VERSION }}
 
             - name: Install cargo-generate
               # BACKCOMPAT: cargo-generate 0.15.2 requires Rust 1.61.0 or newer
