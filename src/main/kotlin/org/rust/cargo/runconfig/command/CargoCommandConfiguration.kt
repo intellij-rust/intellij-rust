@@ -9,6 +9,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
+import com.intellij.execution.impl.statistics.FusAwareRunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
@@ -16,6 +17,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -43,6 +45,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
+import org.rust.ide.statistics.CargoCommandUsagesCollector
 import org.rust.openapiext.isFeatureEnabled
 import java.io.File
 import java.nio.file.Path
@@ -62,7 +65,8 @@ open class CargoCommandConfiguration(
 ) : RsCommandConfiguration(project, name, factory),
     InputRedirectAware.InputRedirectOptions,
     ConsolePropertiesProvider,
-    TargetEnvironmentAwareRunProfile {
+    TargetEnvironmentAwareRunProfile,
+    FusAwareRunConfiguration {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
@@ -345,6 +349,12 @@ open class CargoCommandConfiguration(
                 }
             }
         }
+    }
+
+    @Suppress("UnstableApiUsage")
+    override fun getAdditionalUsageData(): List<EventPair<*>> {
+        val parsed = ParsedCommand.parse(command) ?: return emptyList()
+        return listOf(EventPair(CargoCommandUsagesCollector.COMMAND, parsed.command))
     }
 }
 
