@@ -5,6 +5,8 @@
 
 package org.rust.cargo.runconfig.buildtool
 
+import ch.epfl.scala.bsp4j.BuildTargetIdentifier
+import ch.epfl.scala.bsp4j.CompileParams
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildViewManager
 import com.intellij.execution.ExecutorRegistry
@@ -32,7 +34,9 @@ import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
+import io.ktor.util.reflect.*
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.CargoRunState
@@ -100,6 +104,20 @@ object CargoBuildManager {
 
         if (isUnitTestMode) {
             lastBuildCommandLine = state.prepareCommandLine()
+        }
+
+        var usesBsp = cargoProject.workspace?.usesBSP
+        if (usesBsp != null && usesBsp) {
+            val bspService = project.service<BspConnectionService>()
+            val packageIndex = state.config.cmd.additionalArguments.indexOf("--package")
+            val targetName = state.config.cmd.additionalArguments[packageIndex + 1]
+            var args = state.config.cmd.additionalArguments.toMutableList()
+            args.removeAt(packageIndex + 1)
+            args.removeAt(packageIndex)
+            val compileParams = CompileParams(listOf(BuildTargetIdentifier(targetName)))
+            compileParams.originId = "someTestId"
+            compileParams.arguments = args
+            return bspService.compileSolution(compileParams)
         }
 
         val buildId = Any()

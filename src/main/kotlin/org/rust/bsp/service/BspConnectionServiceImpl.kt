@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.profiler.model.Transformation
 import com.intellij.project.stateStore
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -24,6 +25,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.io.InputStream
 import java.io.OutputStream
@@ -100,6 +102,20 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
         bspServer = null
         bspClient = null
+    }
+
+
+    override fun compileSolution(params :CompileParams): CompletableFuture<CargoBuildResult> {
+        return getBspServer().buildTargetCompile(params).thenApply {
+            return@thenApply CargoBuildResult(
+                it.statusCode == StatusCode.OK,
+                it.statusCode == StatusCode.CANCELLED,
+                0 //TODO Find proper started time
+            );
+        }
+    }
+    override fun runSolution(): CompletableFuture<CargoBuildResult> {
+        return CompletableFuture();
     }
 
     private fun executeDisconnectActionAndReturnThrowableIfFailed(disconnectAction: () -> Unit): Throwable? =
@@ -212,7 +228,7 @@ fun calculateProjectDetailsWithCapabilities(
     val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets)
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
-    return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot)
+    return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot, true)
 }
 
 private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions?

@@ -50,6 +50,8 @@ interface CargoWorkspace {
 
     val featureGraph: FeatureGraph
 
+    val usesBSP: Boolean
+
     fun findPackageById(id: PackageId): Package? = packages.find { it.id == id }
     fun findPackageByName(name: String, isStd: ThreeState = ThreeState.UNSURE): Package? = packages.find {
         if (it.name != name && it.normName != name) return@find false
@@ -241,7 +243,8 @@ private class WorkspaceImpl(
     packagesData: Collection<CargoWorkspaceData.Package>,
     override val cfgOptions: CfgOptions,
     override val cargoConfig: CargoConfig,
-    val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>
+    val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>,
+    override val usesBSP: Boolean
 ) : CargoWorkspace {
 
     override val workspaceRoot: VirtualFile? by CachedVirtualFile(workspaceRootUrl)
@@ -358,7 +361,8 @@ private class WorkspaceImpl(
             newPackagesData,
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         )
 
         run {
@@ -406,7 +410,8 @@ private class WorkspaceImpl(
             packages.map { it.asPackageData() },
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         ).withDependenciesOf(this)
     }
 
@@ -498,7 +503,8 @@ private class WorkspaceImpl(
             newPackagesData,
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         )
 
         run {
@@ -537,7 +543,8 @@ private class WorkspaceImpl(
         },
         cfgOptions,
         cargoConfig,
-        featuresState
+        featuresState,
+        usesBSP
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -547,7 +554,8 @@ private class WorkspaceImpl(
         packages.map { it.asPackageData() },
         cfgOptions,
         cargoConfig,
-        featuresState
+        featuresState,
+        usesBSP
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -561,7 +569,8 @@ private class WorkspaceImpl(
             packages.map { it.asPackageData().copy(features = packageToFeatures[it].orEmpty(), enabledFeatures = packageToFeatures[it].orEmpty().keys) },
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         ).withDependenciesOf(this).withDisabledFeatures(UserDisabledFeatures.EMPTY)
     }
 
@@ -589,7 +598,8 @@ private class WorkspaceImpl(
                 data.packages,
                 cfgOptions,
                 cargoConfig,
-                emptyMap()
+                emptyMap(),
+                data.usesBSP
             )
 
             // Fill package dependencies
