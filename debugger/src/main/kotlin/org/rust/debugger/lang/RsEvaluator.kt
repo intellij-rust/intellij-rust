@@ -17,6 +17,7 @@ import com.jetbrains.cidr.execution.debugger.CidrEvaluator
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
+import org.rust.debugger.statistics.RsDebuggerUsageCollector
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -41,7 +42,13 @@ class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
     }
 
     override fun doEvaluate(driver: DebuggerDriver, position: XSourcePosition?, expr: XExpression): CidrEvaluatedValue {
-        val v = driver.evaluate(myFrame.thread, myFrame.frame, expr.expression)
-        return CidrEvaluatedValue(v, myFrame.process, position, myFrame, expr.expression)
+        try {
+            val v = driver.evaluate(myFrame.thread, myFrame.frame, expr.expression)
+            RsDebuggerUsageCollector.logEvaluated(true)
+            return CidrEvaluatedValue(v, myFrame.process, position, myFrame, expr.expression)
+        } catch (e: Throwable) {
+            RsDebuggerUsageCollector.logEvaluated(false)
+            throw e
+        }
     }
 }
