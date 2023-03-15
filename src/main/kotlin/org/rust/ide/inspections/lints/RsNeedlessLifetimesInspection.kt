@@ -7,9 +7,9 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.ElideLifetimesFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.ide.inspections.lints.ReferenceLifetime.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*

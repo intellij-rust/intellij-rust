@@ -35,7 +35,7 @@ import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
-import org.rust.ide.annotator.fixes.ApplySuggestionFix
+import org.rust.ide.fixes.ApplySuggestionFix
 import org.rust.ide.status.RsExternalLinterWidget
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile

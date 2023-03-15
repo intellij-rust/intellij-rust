@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.stripWhitespace
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.rangeWithPrevSpace
 import org.rust.lang.core.psi.ext.startOffset

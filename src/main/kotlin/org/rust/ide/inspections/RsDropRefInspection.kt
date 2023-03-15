@@ -6,7 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.rust.ide.inspections.fixes.RemoveRefFix
+import org.rust.ide.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor

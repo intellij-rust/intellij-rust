@@ -22,7 +22,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.RsAnnotationHolder
-import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
+import org.rust.ide.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.FeatureState.ACCEPTED
 import org.rust.lang.core.crate.asNotFake

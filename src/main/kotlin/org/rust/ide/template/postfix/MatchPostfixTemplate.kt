@@ -9,8 +9,8 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
+import org.rust.ide.fixes.AddRemainingArmsFix
+import org.rust.ide.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*

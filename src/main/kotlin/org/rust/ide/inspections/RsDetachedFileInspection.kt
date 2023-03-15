@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.CargoSettingsFilesService
-import org.rust.ide.inspections.fixes.AttachFileToModuleFix
+import org.rust.ide.fixes.AttachFileToModuleFix
 import org.rust.ide.notifications.confirmLoadingUntrustedProject
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.saveAllDocuments

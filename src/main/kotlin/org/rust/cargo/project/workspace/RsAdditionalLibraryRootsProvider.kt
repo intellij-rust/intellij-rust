@@ -131,7 +131,7 @@ private fun CargoWorkspace.Package.toCargoLibrary(): CargoLibrary? {
     val excludedRoots = mutableSetOf<VirtualFile>()
     for (target in targets) {
         val crateRoot = target.crateRoot ?: continue
-        if (target.kind.isLib) {
+        if (target.kind.isLib || target.kind.isCustomBuild) {
             val crateRootDir = crateRoot.parent
             when (VfsUtilCore.getCommonAncestor(root, crateRootDir)) {
                 root -> sourceRoots += root

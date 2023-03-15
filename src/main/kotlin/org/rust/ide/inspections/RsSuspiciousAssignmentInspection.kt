@@ -7,7 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr

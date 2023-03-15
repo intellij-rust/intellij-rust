@@ -18,9 +18,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.annotator.fixes.updateMutable
+import org.rust.ide.fixes.deleteUseSpeck
+import org.rust.ide.fixes.updateMutable
 import org.rust.ide.inspections.RsFieldInitShorthandInspection
-import org.rust.ide.inspections.fixes.deleteUseSpeck
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.refactoring.freshenName
 import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType

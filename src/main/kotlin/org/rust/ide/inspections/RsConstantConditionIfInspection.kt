@@ -10,7 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.prevLeaf
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.asBool

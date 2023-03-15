@@ -9,9 +9,9 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.fixes.RenameFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 

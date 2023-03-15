@@ -19,7 +19,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
-import org.rust.ide.inspections.fixes.QualifyPathFix
+import org.rust.ide.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate

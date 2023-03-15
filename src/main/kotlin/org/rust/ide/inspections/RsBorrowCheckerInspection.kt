@@ -6,9 +6,9 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.rust.ide.annotator.fixes.AddMutableFix
-import org.rust.ide.inspections.fixes.DeriveCopyFix
-import org.rust.ide.inspections.fixes.InitializeWithDefaultValueFix
+import org.rust.ide.fixes.AddMutableFix
+import org.rust.ide.fixes.DeriveCopyFix
+import org.rust.ide.fixes.InitializeWithDefaultValueFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.borrowCheckResult

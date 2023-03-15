@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.rust.ide.inspections.fixes.RemoveMutableFix
+import org.rust.ide.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType

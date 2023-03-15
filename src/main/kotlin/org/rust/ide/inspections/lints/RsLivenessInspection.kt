@@ -7,12 +7,12 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RemoveParameterFix
+import org.rust.ide.fixes.RemoveVariableFix
+import org.rust.ide.fixes.RenameFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.RemoveParameterFix
-import org.rust.ide.inspections.fixes.RemoveVariableFix
-import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.dfa.liveness.DeclarationKind
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Parameter
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Variable

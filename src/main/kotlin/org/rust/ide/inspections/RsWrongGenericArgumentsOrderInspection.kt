@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ide.annotator.fixes.EncloseExprInBracesFix
+import org.rust.ide.fixes.EncloseExprInBracesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic

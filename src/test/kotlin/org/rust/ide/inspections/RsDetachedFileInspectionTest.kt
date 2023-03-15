@@ -11,7 +11,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.inspections.fixes.withMockModuleAttachSelector
+import org.rust.ide.fixes.withMockModuleAttachSelector
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.containingCrate

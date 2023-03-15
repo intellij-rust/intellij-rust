@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ide.inspections.fixes.SimplifyBooleanExpressionFix
+import org.rust.ide.fixes.SimplifyBooleanExpressionFix
 import org.rust.ide.utils.BooleanExprSimplifier
 import org.rust.ide.utils.isPure
 import org.rust.lang.core.psi.RsExpr
