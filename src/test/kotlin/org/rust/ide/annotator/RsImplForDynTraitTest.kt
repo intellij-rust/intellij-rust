@@ -48,4 +48,35 @@ class RsImplForDynTraitTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         impl Bar for dyn Foo {}
     """)
+
+    fun `test no E0785 when one trait is unresolved`() = checkErrors("""
+        auto trait AutoTrait {}
+
+        impl dyn Unresolved + AutoTrait {}
+    """)
+
+    fun `test no E0785 when one trait is unresolved and the type is in parens`() = checkErrors("""
+        auto trait AutoTrait {}
+
+        impl dyn Unresolved + AutoTrait {}
+    """)
+
+    fun `test no E0785 when one trait is unresolved through a type alias`() = checkErrors("""
+        auto trait AutoTrait {}
+        type AliasedTrait = dyn Unresolved + AutoTrait;
+        impl AliasedTrait {}
+    """)
+
+    fun `test no E0785 in impl for non-normalized associated type projection`() = checkErrors("""
+        auto trait AutoTrait {}
+        trait Foo {
+            type Item;
+        }
+        struct S;
+        impl Foo for S {
+            type Item = dyn AutoTrait;
+        }
+
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]"><S as Foo>::Item</error> {}
+    """)
 }

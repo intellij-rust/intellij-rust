@@ -1061,9 +1061,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkImplDynAutoTrait(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.traitRef != null) return
         val typeRef = impl.typeReference ?: return
-        val normType = typeRef.normType
-        if (normType !is TyTraitObject) return
-        if (normType.hasNonAutoTrait) return
+        val type = typeRef.rawType
+        if (type !is TyTraitObject) return
+        if (type.hasNonAutoTrait) return
+        if (type.hasUnresolvedBound) return
 
         RsDiagnostic.CannotImplForDynAutoTraitError(typeRef).addToHolder(holder)
     }
