@@ -1073,7 +1073,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 // should show different error than E0206
                 || it is TyPrimitive
                 || it is TyArray
-                || it is TyTuple
                 || (it is TyReference && !it.mutability.isMut)
                 || it is TyPointer) return
         }

@@ -12,7 +12,7 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
 
         struct Bar;
 
-        impl Copy for <error descr="The trait `Copy` may not be implemented for this type [E0206]">&'static mut Bar</error> { }
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/&'static mut Bar/*error**/ { }
     """)
 
     fun `test E0206 error when impl Copy for trait`() = checkErrors("""
@@ -21,7 +21,7 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
 
         trait Bar {}
 
-        impl Copy for <error descr="The trait `Copy` may not be implemented for this type [E0206]">dyn Bar</error> {}
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/dyn Bar/*error**/ {}
     """)
 
     fun `test E0206 no error when impl Copy for struct`() = checkErrors("""
@@ -56,11 +56,11 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         impl Copy for i32 {}
     """)
 
-    fun `test E0206 no error when impl Copy for tuple`() = checkErrors("""
+    fun `test E0206 error when impl Copy for tuple`() = checkErrors("""
         #[lang = "copy"]
         trait Copy {}
 
-        impl Copy for (i8, i8) {}
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/(i8, i8)/*error**/ {}
     """)
 
     fun `test E0206 no error when impl Copy for reference`() = checkErrors("""
@@ -70,5 +70,17 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         struct Bar {}
 
         impl Copy for &Bar {}
+    """)
+
+    fun `test E0206 no error when impl Copy for union`() = checkErrors("""
+        #[lang = "copy"]
+        trait Copy {}
+
+        union Bar {
+            f1: u32,
+            f2: f32,
+        }
+
+        impl Copy for Bar {}
     """)
 }
