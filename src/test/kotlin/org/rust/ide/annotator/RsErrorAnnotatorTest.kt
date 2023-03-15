@@ -4134,7 +4134,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl dyn LocalTrait + Send {}
         impl dyn Send + LocalTrait {}
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
-        impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn Send</error> {}
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)

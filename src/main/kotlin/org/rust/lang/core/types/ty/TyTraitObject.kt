@@ -29,6 +29,7 @@ import org.rust.lang.core.types.regions.Region
 class TyTraitObject(
     val traits: List<BoundElement<RsTraitItem>>,
     val region: Region = ReUnknown,
+    val hasUnresolvedBound: Boolean = false,
     override val aliasedBy: BoundElement<RsTypeAlias>? = null
 ) : Ty(mergeElementFlags(traits) or region.flags) {
 
@@ -45,12 +46,22 @@ class TyTraitObject(
         get() = traits.map { it.subst }.fold(emptySubstitution) { a, b -> a + b }
 
     override fun superFoldWith(folder: TypeFolder): TyTraitObject =
-        TyTraitObject(traits.map { it.foldWith(folder) }, region.foldWith(folder), aliasedBy?.foldWith(folder))
+        TyTraitObject(
+            traits.map { it.foldWith(folder) },
+            region.foldWith(folder),
+            hasUnresolvedBound,
+            aliasedBy?.foldWith(folder)
+        )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         traits.any { it.visitWith(visitor) } || region.visitWith(visitor)
 
-    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyTraitObject(traits, region, aliasedBy)
+    override fun withAlias(aliasedBy: BoundElement<RsTypeAlias>): Ty = TyTraitObject(
+        traits,
+        region,
+        hasUnresolvedBound,
+        aliasedBy
+    )
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         traits.flatMap { it.getFlattenHierarchy(TyUnknown) }
@@ -60,6 +71,8 @@ class TyTraitObject(
             val traits = traits.map { it.element }
             return traits.singleOrNull() ?: traits.singleOrNull { !it.isAuto }
         }
+
+    val hasNonAutoTrait: Boolean = traits.any { !it.element.isAuto }
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
