@@ -33,24 +33,26 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 o,
                 "println! macro invocation can be simplified",
-                object : LocalQuickFix {
-                    override fun getName() = "Remove unnecessary argument"
-
-                    override fun getFamilyName() = name
-
-                    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val macro = descriptor.psiElement as RsMacroCall
-                        val arg = emptyStringArg(macro.formatMacroArgument!!) ?: return
-                        arg.delete()
-                    }
-                }
+                RemoveUnnecessaryPrintlnArgument()
             )
         }
     }
 
-    private fun emptyStringArg(arg: RsFormatMacroArgument): PsiElement? {
-        val singeArg = arg.formatMacroArgList.singleOrNull() ?: return null
-        if (singeArg.text != "\"\"") return null
-        return singeArg
+    private class RemoveUnnecessaryPrintlnArgument : LocalQuickFix {
+        override fun getName() = "Remove unnecessary argument"
+
+        override fun getFamilyName() = name
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val macro = descriptor.psiElement as RsMacroCall
+            val arg = emptyStringArg(macro.formatMacroArgument!!) ?: return
+            arg.delete()
+        }
     }
+}
+
+private fun emptyStringArg(arg: RsFormatMacroArgument): PsiElement? {
+    val singeArg = arg.formatMacroArgList.singleOrNull() ?: return null
+    if (singeArg.text != "\"\"") return null
+    return singeArg
 }

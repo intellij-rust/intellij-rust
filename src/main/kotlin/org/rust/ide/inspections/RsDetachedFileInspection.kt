@@ -5,7 +5,10 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,9 +17,8 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.CargoSettingsFilesService
 import org.rust.ide.fixes.AttachFileToModuleFix
-import org.rust.ide.notifications.confirmLoadingUntrustedProject
+import org.rust.ide.fixes.ReloadProjectQuickFix
 import org.rust.lang.core.psi.RsFile
-import org.rust.openapiext.saveAllDocuments
 
 class RsDetachedFileInspection : RsLocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -81,15 +83,5 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
 
         private val VirtualFile.disablingKey: String
             get() = NOTIFICATION_STATUS_KEY + path
-    }
-
-    private class ReloadProjectQuickFix : LocalQuickFix {
-        override fun getFamilyName(): String = "Reload project"
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            // It seems it's impossible to be here if project is not trusted but let's be 100% sure
-            if (!project.confirmLoadingUntrustedProject()) return
-            saveAllDocuments()
-            project.cargoProjects.refreshAllProjects()
-        }
     }
 }
