@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ide.annotator.fixes.AddMutableFix
+import org.rust.ide.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr

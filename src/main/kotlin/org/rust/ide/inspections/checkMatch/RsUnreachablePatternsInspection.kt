@@ -8,9 +8,9 @@ package org.rust.ide.inspections.checkMatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.ide.inspections.lints.RsLint
 import org.rust.ide.inspections.lints.RsLintInspection
 import org.rust.ide.utils.checkMatch.*

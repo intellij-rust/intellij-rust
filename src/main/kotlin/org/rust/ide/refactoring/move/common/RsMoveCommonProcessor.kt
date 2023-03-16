@@ -20,7 +20,7 @@ import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.annotator.fixes.MakePublicFix
+import org.rust.ide.fixes.MakePublicFix
 import org.rust.ide.refactoring.move.common.RsMoveUtil.LOG
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModStrict
 import org.rust.ide.refactoring.move.common.RsMoveUtil.convertFromPathOriginal

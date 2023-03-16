@@ -12,9 +12,9 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
-import org.rust.ide.annotator.fixes.AddStructFieldsFix
-import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
-import org.rust.ide.annotator.fixes.RemoveRedundantParenthesesFix
+import org.rust.ide.fixes.AddStructFieldsFix
+import org.rust.ide.fixes.CreateStructFieldFromConstructorFix
+import org.rust.ide.fixes.RemoveRedundantParenthesesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve

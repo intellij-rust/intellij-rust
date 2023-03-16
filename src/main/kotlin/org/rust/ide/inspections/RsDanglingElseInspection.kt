@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsElseBranch
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor

@@ -15,10 +15,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
+import org.rust.ide.fixes.RemoveImportFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
-import org.rust.ide.inspections.fixes.RemoveImportFix
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.findExpansionElements

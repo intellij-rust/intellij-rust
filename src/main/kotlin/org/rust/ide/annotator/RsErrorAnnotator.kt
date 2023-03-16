@@ -23,7 +23,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.annotator.fixes.*
+import org.rust.ide.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES

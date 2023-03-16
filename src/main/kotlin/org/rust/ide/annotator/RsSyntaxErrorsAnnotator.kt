@@ -16,9 +16,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
-import org.rust.ide.annotator.fixes.AddTypeFix
-import org.rust.ide.annotator.fixes.RemoveElementFix
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.ide.fixes.AddTypeFix
+import org.rust.ide.fixes.RemoveElementFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*

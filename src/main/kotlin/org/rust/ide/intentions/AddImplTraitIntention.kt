@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
-import org.rust.ide.inspections.fixes.insertGenericArgumentsIfNeeded
+import org.rust.ide.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
 import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.template.newTemplateBuilder

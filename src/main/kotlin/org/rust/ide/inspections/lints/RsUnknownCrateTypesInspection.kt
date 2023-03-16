@@ -6,7 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.annotator.fixes.NameSuggestionFix
+import org.rust.ide.fixes.NameSuggestionFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.RsPsiPattern

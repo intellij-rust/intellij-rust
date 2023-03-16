@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.psi
 
-import org.rust.ide.inspections.RsFieldInitShorthandInspection
+import org.rust.ide.fixes.ChangeToFieldShorthandFix
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.types.implLookup
@@ -170,7 +170,7 @@ class RsDefaultValueBuilder(
         return when {
             type.isEquivalentTo(binding.type) -> {
                 val field = psiFactory.createStructLiteralField(escapedName, psiFactory.createExpression(escapedName))
-                RsFieldInitShorthandInspection.applyShorthandInit(field)
+                ChangeToFieldShorthandFix.applyShorthandInit(field)
                 field
             }
             isRefContainer(type, binding.type) -> {

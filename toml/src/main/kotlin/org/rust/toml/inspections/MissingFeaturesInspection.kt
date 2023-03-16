@@ -16,7 +16,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.inspections.fixes.EnableCargoFeaturesFix
+import org.rust.ide.fixes.EnableCargoFeaturesFix
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.lang.core.psi.ext.findCargoPackage

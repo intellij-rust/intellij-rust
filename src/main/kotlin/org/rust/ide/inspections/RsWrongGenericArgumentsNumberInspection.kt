@@ -6,8 +6,8 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.rust.ide.inspections.fixes.AddGenericArguments
-import org.rust.ide.inspections.fixes.RemoveGenericArguments
+import org.rust.ide.fixes.AddGenericArguments
+import org.rust.ide.fixes.RemoveGenericArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic

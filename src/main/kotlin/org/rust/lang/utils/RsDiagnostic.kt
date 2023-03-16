@@ -24,12 +24,11 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
-import org.rust.ide.annotator.fixes.*
+import org.rust.ide.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection
-import org.rust.ide.inspections.fixes.*
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
