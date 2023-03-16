@@ -168,6 +168,21 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
         }
     """)
 
+    fun `test if without else in function 6`() = doAvailableTest("""
+        fn foo(f: bool, g: bool) {
+            /*caret*/if f {
+                return;
+            }
+            if g {}
+        }
+    """, """
+        fn foo(f: bool, g: bool) {
+            if !f {
+                if g {}
+            }
+        }
+    """)
+
     fun `test if without else nested 1`() = doAvailableSymmetricTest("""
         fn foo(f: bool, g: bool) -> i32 {
             if f {
