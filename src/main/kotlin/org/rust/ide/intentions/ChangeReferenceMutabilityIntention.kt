@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsRefLikeType
@@ -55,6 +56,8 @@ class SetImmutableIntention : ChangeReferenceMutabilityIntention() {
 
 abstract class ChangeReferenceMutabilityIntention : RsElementBaseIntentionAction<ChangeReferenceMutabilityIntention.Context>() {
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     protected abstract val newMutability: Mutability
 

@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -19,6 +20,8 @@ import kotlin.math.min
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprIntention.Context>() {
     override fun getFamilyName() = "Remove braces from single expression"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(val blockExpr: RsBlockExpr, val expr: RsExpr)
 
@@ -54,5 +57,4 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<UnwrapSingleExprI
         val insertedElement = ctx.blockExpr.replace(element) as RsExpr
         editor.moveCaretToOffset(insertedElement, insertedElement.textOffset + relativeCaretPosition)
     }
-
 }

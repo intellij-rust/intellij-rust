@@ -11,7 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.isGeneratedFile
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.macros.isExpandedFromMacro
+import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
 import org.rust.openapiext.testAssert
 
 object PsiModificationUtil {
@@ -24,10 +26,12 @@ object PsiModificationUtil {
     }
 
     fun canReplace(element: PsiElement): Boolean {
-        return if (!element.isExpandedFromMacro) {
+        val macroCall = element.findMacroCallExpandedFrom()
+        return if (macroCall == null) {
             isWriteableRegardlessMacros(element)
         } else {
-            false
+            val sourceRange = mapRangeFromExpansionToCallBodyStrict(element, element.textRange)
+            sourceRange != null && isWriteableRegardlessMacros(macroCall)
         }
     }
 

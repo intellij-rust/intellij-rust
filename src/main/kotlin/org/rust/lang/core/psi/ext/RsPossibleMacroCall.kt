@@ -61,8 +61,8 @@ val RsPossibleMacroCall.kind: RsPossibleMacroCallKind
         else -> error("unreachable")
     }
 
-val PsiElement.ancestorMacroCall: RsPossibleMacroCall?
-    get() = ancestors
+val PsiElement.contextMacroCall: RsPossibleMacroCall?
+    get() = contexts
         .filterIsInstance<RsPossibleMacroCall>()
         .find { it.isMacroCall }
 

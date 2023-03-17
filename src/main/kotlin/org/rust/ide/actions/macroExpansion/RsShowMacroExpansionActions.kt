@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
-import org.rust.lang.core.psi.ext.ancestorMacroCall
+import org.rust.lang.core.psi.ext.contextMacroCall
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
 import org.rust.openapiext.project
@@ -78,5 +78,5 @@ class RsShowSingleStepMacroExpansionAction : RsShowMacroExpansionActionBase(expa
 fun getMacroUnderCaret(event: DataContext): RsPossibleMacroCall? {
     val elementUnderCaret = event.elementUnderCaretInEditor ?: return null
 
-    return elementUnderCaret.ancestorMacroCall
+    return elementUnderCaret.contextMacroCall
 }

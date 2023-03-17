@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -19,6 +20,8 @@ import org.rust.openapiext.moveCaretToOffset
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
     override fun getText() = "Add derive clause"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     class Context(
         val item: RsStructOrEnumItemElement,

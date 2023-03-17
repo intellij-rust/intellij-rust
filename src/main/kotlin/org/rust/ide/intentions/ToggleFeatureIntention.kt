@@ -14,23 +14,30 @@ import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.RsPsiPattern.anyCfgCondition
+import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.*
 
 class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntention.Context>(), HighPriorityAction {
     override fun getFamilyName() = RsBundle.message("intention.Rust.ToggleFeatureIntention.family.name")
 
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
     data class Context(val featureName: String, val element: RsElement)
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val featureMetaItem = element.ancestorOrSelf<RsMetaItem>()
-            ?.takeIf { m -> m.name == "feature" && m.ancestors.any { anyCfgCondition.accepts(it) } }
+        val expandedElementsOrSelf = element.findExpansionElements() ?: listOf(element)
+        val featureMetaItem = expandedElementsOrSelf
+            .mapNotNull { it.ancestorOrSelf<RsMetaItem>() }
+            .find { m -> m.name == "feature" && m.ancestors.any { anyCfgCondition.accepts(it) } }
             ?: return null
 
         val context = featureMetaItem.litExpr ?: return null
         val featureName = context.stringValue ?: return null
-        val isEnabled = isFeatureEnabled(context, featureName) ?: return null
+        val isEnabled = isCargoFeatureEnabled(context, featureName) ?: return null
 
         text = if (isEnabled) {
             RsBundle.message("intention.Rust.ToggleFeatureIntention.disable", featureName)
@@ -56,12 +63,12 @@ class ToggleFeatureIntention : RsElementBaseIntentionAction<ToggleFeatureIntenti
     // No intention preview because it doesn't modify any code
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
         IntentionPreviewInfo.EMPTY
-}
 
-private fun isFeatureEnabled(element: RsElement, name: String): Boolean? {
-    val pkg = element.containingCargoPackage ?: return null
-    if (pkg.origin != PackageOrigin.WORKSPACE) return null
+    private fun isCargoFeatureEnabled(element: RsElement, name: String): Boolean? {
+        val pkg = element.containingCargoPackage ?: return null
+        if (pkg.origin != PackageOrigin.WORKSPACE) return null
 
-    val state = pkg.featureState[name] ?: return null
-    return state.isEnabled
+        val state = pkg.featureState[name] ?: return null
+        return state.isEnabled
+    }
 }

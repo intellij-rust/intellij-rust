@@ -10,11 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityIntention.Context>() {
     override fun getFamilyName(): String = "Change item visibility"
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     abstract val visibility: String
     abstract fun isApplicable(element: RsVisibilityOwner): Boolean

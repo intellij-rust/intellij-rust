@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLetDecl
@@ -20,6 +21,8 @@ import org.rust.openapiext.moveCaretToOffset
 class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFunctionToClosureIntention.Context>() {
     override fun getText(): String = "Convert function to closure"
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(val targetFunction: RsFunction)
 
@@ -58,5 +61,4 @@ class ConvertFunctionToClosureIntention : RsElementBaseIntentionAction<ConvertFu
             editor?.moveCaretToOffset(replaced, it)
         }
     }
-
 }

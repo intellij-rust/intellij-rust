@@ -13,6 +13,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallCargoExpand
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnderDarkTheme
 import org.rust.stdext.buildList
@@ -20,6 +21,9 @@ import org.rust.stdext.buildList
 class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>(), LowPriorityAction {
     override fun getText(): String = "Show the result of macro expansion (cargo expand)"
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val cargoProject: CargoProject,

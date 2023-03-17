@@ -24,6 +24,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.ide.intentions.util.macros.RsIntentionInsideMacroExpansionEditor
+import org.rust.lang.core.macros.srcRange
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -46,20 +49,30 @@ class RsTemplateBuilder(
     private val listeners: MutableList<TemplateEditingListener> = mutableListOf()
 
     private fun replaceElement(
-        range: RangeMarker,
+        range: RangeMarker?,
         expression: Expression?,
         variableName: String? = null,
         alwaysStopAt: Boolean = true
     ) {
-        elementsToReplace += RsTemplateElement(range, expression, variableName, alwaysStopAt)
+        if (range != null) {
+            elementsToReplace += RsTemplateElement(range, expression, variableName, alwaysStopAt)
+        }
     }
 
     private fun psiToRangeMarker(
         element: PsiElement,
         rangeWithinElement: TextRange = TextRange(0, element.textLength)
-    ): RangeMarker {
-        val range = InjectedLanguageManager.getInstance(element.project)
-            .injectedToHost(element, rangeWithinElement.shiftRight(element.startOffset))
+    ): RangeMarker? {
+        val absoluteRange = rangeWithinElement.shiftRight(element.startOffset)
+        val range = if (editor is RsIntentionInsideMacroExpansionEditor && element.containingFile == editor.psiFileCopy) {
+            val mutableContext = editor.context ?: return null
+            mutableContext.rangeMap.mapTextRangeFromExpansionToCallBody(absoluteRange).singleOrNull()?.srcRange
+                ?.shiftRight(mutableContext.rootMacroCallBodyOffset)
+                ?: return null
+            // TODO injection
+        } else {
+            InjectedLanguageManager.getInstance(element.project).injectedToHost(element, absoluteRange)
+        }
         return hostDocument.createRangeMarker(range)
     }
 
@@ -150,16 +163,24 @@ class RsTemplateBuilder(
         }
     }
 
-    fun runInline() {
-        val project = hostPsiFile.project
-
+    private fun doPostponedOperationsAndCommit(editor: Editor) {
         PsiDocumentManager.getInstance(hostPsiFile.project).apply {
             doPostponedOperationsAndUnblockDocument(editor.document)
             commitDocument(editor.document)
-            if (editor != hostEditor) {
-                doPostponedOperationsAndUnblockDocument(hostEditor.document)
-                commitDocument(hostEditor.document)
-            }
+        }
+    }
+
+    fun runInline() {
+        val project = hostPsiFile.project
+
+        if (editor is RsIntentionInsideMacroExpansionEditor) {
+            if (editor.context?.broken == true) return
+            IntentionInMacroUtil.finishActionInMacroExpansionCopy(editor)
+        }
+
+        doPostponedOperationsAndCommit(editor)
+        if (editor != hostEditor) {
+            doPostponedOperationsAndCommit(hostEditor)
         }
 
         if (elementsToReplace.isEmpty()) {

@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.ide.intentions.util.macros.RsIntentionInsideMacroExpansionEditor
 import org.rust.lang.core.psi.ext.isIntentionPreviewElement
 import org.rust.openapiext.checkWriteAccessAllowed
 
@@ -37,12 +39,17 @@ fun Editor.buildAndRunTemplate(
 }
 
 fun Editor.newTemplateBuilder(context: PsiElement): RsTemplateBuilder {
-    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(this)
-    val hostPsiFile = InjectedLanguageManager.getInstance(context.project).getTopLevelFile(context.containingFile)
+    // First macros, then injections (assume that macro expansion can't contain language injections)
+    val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(IntentionInMacroUtil.unwrapEditor(this))
+    val contextualPsiFile = if (this is RsIntentionInsideMacroExpansionEditor) originalFile else context.containingFile
+    val hostPsiFile = InjectedLanguageManager.getInstance(context.project).getTopLevelFile(contextualPsiFile)
     return RsTemplateBuilder(hostPsiFile, this, hostEditor)
 }
 
 fun Editor.canRunTemplateFor(element: PsiElement): Boolean {
     val containingFile = element.containingFile
+    if (this is RsIntentionInsideMacroExpansionEditor) {
+        return containingFile == originalFile || containingFile == psiFileCopy
+    }
     return PsiDocumentManager.getInstance(containingFile.project).getPsiFile(document) == containingFile
 }
