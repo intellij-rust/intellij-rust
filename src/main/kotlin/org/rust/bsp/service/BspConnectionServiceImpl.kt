@@ -258,7 +258,7 @@ private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind
     {
         "application" -> CargoWorkspace.TargetKind.Bin
         "test" -> CargoWorkspace.TargetKind.Test
-        "library" -> CargoWorkspace.TargetKind.Lib()
+        "library" -> CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB)
         else -> CargoWorkspace.TargetKind.Unknown
     }
 }
