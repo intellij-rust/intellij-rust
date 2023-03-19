@@ -315,7 +315,7 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
 
 fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
 {
-    val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.source, it.target, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
+    val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.target, it.name, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
     val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
     for (target in projectBazelTargets.targets) {
         dependencyMap[target.id.uri] = emptySet<CargoWorkspaceData.Dependency>().toMutableSet()
