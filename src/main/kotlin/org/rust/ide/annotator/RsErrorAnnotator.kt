@@ -1084,7 +1084,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         type.normType.let {
             // for ADT it is ok to impl Copy
             if (it is TyAdt
-                || it == TyUnknown
                 // should show different error than E0206
                 || it is TyPrimitive
                 || it is TyArray

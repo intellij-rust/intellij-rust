@@ -42,11 +42,11 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         impl Copy for Bar {}
     """)
 
-    fun `test E0206 no error when impl Copy for unknown type`() = checkErrors("""
+    fun `test E0206 error when impl Copy for unknown type`() = checkErrors("""
         #[lang = "copy"]
         trait Copy {}
 
-        impl Copy for Bar {}
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/Bar/*error**/ {}
     """)
 
     fun `test E0206 no error when impl Copy for primitive type`() = checkErrors("""
@@ -82,5 +82,16 @@ class RsImplCopyRestrictionsTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         }
 
         impl Copy for Bar {}
+    """)
+
+    fun `test E0206 error when impl Copy for not a type`() = checkErrors("""
+        #[lang = "copy"]
+        trait Copy {}
+
+        fn baz(){}
+        const THING: u32 = 0xABAD1DEA;
+
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/THING/*error**/ {}
+        impl Copy for /*error descr="The trait `Copy` may not be implemented for this type [E0206]"*/baz()/*error**/ {}
     """)
 }
